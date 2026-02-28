@@ -250,26 +250,45 @@ function fmtInt(n) { return n == null ? '—' : Number(n).toLocaleString('pl-PL'
 function renderPriceList() {
   const container = document.getElementById('pricelist-body');
   const searchVal = document.getElementById('pricelist-search')?.value?.toLowerCase() || '';
-  let html = '';
+
+  let html = `<div class="table-wrap">
+    <table style="table-layout: fixed; width: 100%;">
+      <thead>
+        <tr>
+          <th style="width: 15%;">Indeks</th>
+          <th style="width: 35%;">Nazwa produktu</th>
+          <th class="text-right" style="width: 12%;">Cena PLN</th>
+          <th class="text-right" style="width: 10%;">Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
+          <th class="text-right" style="width: 10%;">Szt./transp.</th>
+          <th class="text-right" style="width: 10%;">Waga (kg)</th>
+          <th class="text-center" style="width: 8%;">Akcje</th>
+        </tr>
+      </thead>`;
+
+  let hasAnyItems = false;
 
   CATEGORIES.forEach(cat => {
     const items = products.filter(p => p.category === cat && (
       !searchVal || p.id.toLowerCase().includes(searchVal) || p.name.toLowerCase().includes(searchVal)
     ));
     if (items.length === 0 && searchVal) return;
+    if (items.length === 0 && !searchVal) return; // Skip empty categories completely for cleaner layout
 
-    html += `<div class="cat-header">${cat} <span class="cat-count">(${items.length} produktów)</span></div>`;
-    html += `<div class="table-wrap"><table>
-      <thead><tr>
-        <th>Indeks</th><th>Nazwa produktu</th><th class="text-right">Cena PLN</th>
-        <th class="text-right">Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
-        <th class="text-right">Szt./transport</th><th class="text-right">Waga (kg)</th><th class="text-center">Akcje</th>
-      </tr></thead><tbody>`;
+    hasAnyItems = true;
+
+    html += `<tbody>
+      <tr>
+        <td colspan="7" style="padding: 0; border: none;">
+          <div class="cat-header" style="margin: 1rem 0 0.4rem 0;">
+            ${cat} <span class="cat-count">(${items.length} produktów)</span>
+          </div>
+        </td>
+      </tr>`;
 
     items.forEach(p => {
       html += `<tr data-id="${p.id}">
-        <td class="text-nowrap"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${p.id}')">${p.id}</code></td>
-        <td><span class="editable" onclick="editCell(this,'name','${p.id}')">${p.name}</span></td>
+        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${p.id}')">${p.id}</code></td>
+        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${p.id}')">${p.name}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'price','${p.id}')">${fmt(p.price)}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'area','${p.id}')">${p.area != null ? fmt(p.area) : '—'}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${p.id}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
@@ -280,8 +299,15 @@ function renderPriceList() {
         </td>
       </tr>`;
     });
-    html += '</tbody></table></div>';
+
+    html += `</tbody>`;
   });
+
+  html += `</table></div>`;
+
+  if (!hasAnyItems) {
+    html = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Brak wyników do wyświetlenia...</div>`;
+  }
 
   container.innerHTML = html;
 }
