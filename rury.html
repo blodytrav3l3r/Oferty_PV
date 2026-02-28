@@ -16,34 +16,48 @@
   <!-- HEADER -->
   <header class="header">
     <div class="header-inner">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="2">
-          <defs>
-            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="100%" stop-color="#8b5cf6" />
-            </linearGradient>
-          </defs>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" />
-        </svg>
-        <span>Oferty rury</span>
+      <div class="header-left">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="2">
+            <defs>
+              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="100%" stop-color="#8b5cf6" />
+              </linearGradient>
+            </defs>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" />
+          </svg>
+          <span>Oferty rury</span>
+        </div>
+
+        <div style="border-left: 1px solid rgba(255,255,255,0.1); display:flex; gap:0.5rem; padding-left: 0.8rem;">
+          <a href="index.html" class="nav-module-btn">🏠 Pulpit</a>
+          <a href="studnie.html" class="nav-module-btn">🏗️ Studnie</a>
+        </div>
       </div>
-      <nav class="nav">
-        <button class="nav-btn active" data-section="offer" id="nav-offer"
-          style="--nav-accent:#10b981; --nav-glow:rgba(16,185,129,0.12)">📝 Nowa Oferta</button>
-        <button class="nav-btn" data-section="saved" id="nav-saved"
-          style="--nav-accent:#f59e0b; --nav-glow:rgba(245,158,11,0.12)">💾 Zapisane Oferty</button>
-        <button class="nav-btn" data-section="pricelist" id="nav-pricelist">📋 Cennik</button>
-      </nav>
-      <div id="header-user-info" style="display:flex; align-items:center; gap:0.5rem; font-size:0.78rem;">
-        <span id="header-username" style="color:var(--text-secondary); font-weight:500;"></span>
-        <span id="header-role-badge"
-          style="font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;"></span>
-        <button onclick="appLogout()"
-          style="padding:0.25rem 0.5rem; border:1px solid var(--border-glass); border-radius:6px; background:var(--bg-glass); color:var(--text-muted); font:500 0.7rem 'Inter',sans-serif; cursor:pointer; transition:all 0.2s;"
-          onmouseenter="this.style.color='#f87171'; this.style.borderColor='rgba(248,113,113,0.3)'"
-          onmouseleave="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-glass)'">Wyloguj</button>
+
+      <div class="header-center">
+        <nav class="nav">
+          <button class="nav-btn active" data-section="offer" id="nav-offer"
+            style="--nav-accent:#10b981; --nav-glow:rgba(16,185,129,0.12)">📝 Nowa Oferta</button>
+          <button class="nav-btn" data-section="saved" id="nav-saved"
+            style="--nav-accent:#f59e0b; --nav-glow:rgba(245,158,11,0.12)">💾 Zapisane Oferty</button>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <button class="nav-btn" data-section="pricelist" id="nav-pricelist" style="margin-right:0.5rem">📋
+          Cennik</button>
+        <div id="header-user-info" style="display:flex; align-items:center; gap:0.5rem; font-size:0.78rem;">
+          <span id="header-username" style="color:var(--text-secondary); font-weight:500;"></span>
+          <span id="header-role-badge"
+            style="font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; margin-right:0.5rem;"></span>
+          <button onclick="appLogout()"
+            style="padding:0.35rem 0.8rem; border:1px solid var(--border-glass); border-radius:6px; background:var(--bg-glass); color:var(--text-muted); font:500 0.75rem 'Inter',sans-serif; cursor:pointer; transition:all 0.2s;"
+            onmouseenter="this.style.color='#f87171'; this.style.borderColor='rgba(248,113,113,0.3)'"
+            onmouseleave="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-glass)'">Wyloguj</button>
+        </div>
       </div>
     </div>
   </header>
