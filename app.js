@@ -1409,7 +1409,8 @@ function saveOffer() {
     totalNetto,
     totalBrutto: totalNetto * 1.23,
     createdAt: editingOfferId ? (existingOffer?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    lastEditedBy: currentUser ? currentUser.username : ''
   };
 
   if (editingOfferId) {
@@ -1596,9 +1597,12 @@ function showOfferHistory(id) {
 
     return `
       <div style="background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:8px; padding:1rem; margin-bottom:0.8rem;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; border-bottom:1px dashed var(--border-glass); padding-bottom:0.4rem;">
           <strong style="color:var(--text-primary);">${new Date(h.updatedAt).toLocaleString()}</strong>
-          <span>👤 ${h.userName || '—'}</span>
+          <div style="text-align:right;">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Zapisana przez: <strong style="color:var(--text-secondary);">${h.lastEditedBy || h.userName || '—'}</strong></div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Nadpisana przez: <strong style="color:var(--accent);">${nextState.lastEditedBy || nextState.userName || '—'}</strong></div>
+          </div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
