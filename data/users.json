@@ -1,0 +1,56 @@
+[
+  {
+    "id": "user_admin",
+    "username": "admin",
+    "password": "$2b$10$B6BL2ud.wjLQTYJB.X/41uwH5i/hErHmxzfrgFh6abdqG3Ob8/MvS",
+    "role": "admin",
+    "createdAt": "2026-02-28T12:13:07.278Z",
+    "firstName": "",
+    "lastName": "",
+    "phone": "",
+    "email": "",
+    "symbol": "AD"
+  },
+  {
+    "id": "user_1772281242468",
+    "username": "lukasz",
+    "password": "$2b$10$FyxHFgdkmaKqz30LJGSKB.eOWQTApOwjYWD2TeV.OxL85r.2J.o9e",
+    "role": "pro",
+    "createdAt": "2026-02-28T12:20:42.468Z",
+    "firstName": "Łukasz",
+    "lastName": "Kobyłka",
+    "phone": "795620027",
+    "email": "lukasz.kobylka@pv-prefabet.com.pl",
+    "symbol": "LK",
+    "subUsers": [
+      "user_1772284238834",
+      "user_1772284361757"
+    ]
+  },
+  {
+    "id": "user_1772284238834",
+    "username": "andrzej",
+    "password": "$2b$10$GUBytXMZsskSZEndKoJflO7NeS/L.FOqcj1rdgb6LrSiTsYPrIeme",
+    "role": "user",
+    "firstName": "Andrzej",
+    "lastName": "Prochownik",
+    "phone": "796253654",
+    "email": "andrzej .prochownik@pv-prefabet.com.pl",
+    "symbol": "AP",
+    "subUsers": [],
+    "createdAt": "2026-02-28T13:10:38.834Z"
+  },
+  {
+    "id": "user_1772284361757",
+    "username": "adam",
+    "password": "$2b$10$tnykNbR2lTk1/zrn7pHmduwge76Xf3vPfy0MIK4Q1W3KtHN9v2RKa",
+    "role": "user",
+    "firstName": "Adam",
+    "lastName": "Klos",
+    "phone": "654785652",
+    "email": "adam.klos@pv-prefabet.com.pl",
+    "symbol": "AK",
+    "subUsers": [],
+    "createdAt": "2026-02-28T13:12:41.757Z"
+  }
+]

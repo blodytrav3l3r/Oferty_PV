@@ -82,7 +82,7 @@ async function loadProducts() {
     });
 
     if (modified) {
-      await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: saved }) });
+      await fetch('/api/products', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data: saved }) });
     }
 
     return saved;
@@ -94,13 +94,14 @@ async function loadProducts() {
 
 async function saveProducts(data) {
   try {
-    await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
+    await fetch('/api/products', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
   } catch (err) { console.error('saveProducts error:', err); }
 }
 
 async function loadOffers() {
   try {
-    const res = await fetch('/api/offers');
+    const res = await fetch('/api/offers', { headers: authHeaders() });
+    if (res.status === 401) { window.location.href = 'index.html'; return []; }
     const json = await res.json();
     return json.data || [];
   } catch (err) { console.error('loadOffers error:', err); return []; }
@@ -108,13 +109,13 @@ async function loadOffers() {
 
 async function saveOffersData(data) {
   try {
-    await fetch('/api/offers', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
+    await fetch('/api/offers', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
   } catch (err) { console.error('saveOffersData error:', err); }
 }
 
 async function loadClientsDb() {
   try {
-    const res = await fetch('/api/clients');
+    const res = await fetch('/api/clients', { headers: authHeaders() });
     const json = await res.json();
     return json.data || [];
   } catch (err) { console.error('loadClientsDb error:', err); return []; }
@@ -122,11 +123,30 @@ async function loadClientsDb() {
 
 async function saveClientsDbData(data) {
   try {
-    await fetch('/api/clients', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
+    await fetch('/api/clients', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
   } catch (err) { console.error('saveClientsDbData error:', err); }
 }
 
-/* ===== GLOBALS ===== */
+/* ===== AUTH HELPER ===== */
+let currentUser = null;
+
+function getAuthToken() {
+  return localStorage.getItem('authToken');
+}
+
+function authHeaders(extra = {}) {
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json', ...extra };
+  if (token) headers['X-Auth-Token'] = token;
+  return headers;
+}
+
+function appLogout() {
+  fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() }).catch(() => { });
+  localStorage.removeItem('authToken');
+  window.location.href = 'index.html';
+}
+
 /* ===== GLOBALS ===== */
 let products = [];
 let offers = [];
@@ -164,6 +184,27 @@ window.toggleCard = function (contentId, iconId) {
 
 /* ===== INIT ===== */
 document.addEventListener('DOMContentLoaded', async () => {
+  // Check authentication
+  const token = getAuthToken();
+  if (!token) { window.location.href = 'index.html'; return; }
+  try {
+    const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
+    const authData = await authRes.json();
+    if (!authData.user) { window.location.href = 'index.html'; return; }
+    currentUser = authData.user;
+  } catch (e) { window.location.href = 'index.html'; return; }
+
+  // Display user info in header
+  const userEl = document.getElementById('header-username');
+  const roleEl = document.getElementById('header-role-badge');
+  if (userEl) userEl.textContent = '👤 ' + currentUser.username;
+  if (roleEl) {
+    roleEl.textContent = currentUser.role === 'admin' ? 'ADMIN' : 'USER';
+    roleEl.style.background = currentUser.role === 'admin' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)';
+    roleEl.style.color = currentUser.role === 'admin' ? '#f59e0b' : '#60a5fa';
+    roleEl.style.border = currentUser.role === 'admin' ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(59,130,246,0.3)';
+  }
+
   products = await loadProducts();
   offers = await loadOffers();
   clientsDb = await loadClientsDb();
@@ -535,8 +576,15 @@ function renderCatalogProducts() {
 
 function generateOfferNumber() {
   const d = new Date();
-  const count = offers.length + 1;
-  return `OF/${String(count).padStart(3, '0')}/${d.getFullYear()}`;
+  if (currentUser && currentUser.symbol) {
+    const userOffers = offers.filter(o => o.userId === currentUser.id);
+    const count = userOffers.length + 1;
+    return `OF/${String(count).padStart(3, '0')}/${currentUser.symbol}/${d.getFullYear()}`;
+  } else {
+    // Fallback if no user or no symbol
+    const count = offers.length + 1;
+    return `OF/${String(count).padStart(3, '0')}/${d.getFullYear()}`;
+  }
 }
 
 function addOfferItem(productId) {
@@ -1320,8 +1368,11 @@ function saveOffer() {
     totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
   });
 
+  const existingOffer = editingOfferId ? offers.find(o => o.id === editingOfferId) : null;
   const offer = {
     id: editingOfferId || 'offer_' + Date.now(),
+    userId: existingOffer?.userId || (currentUser ? currentUser.id : null),
+    userName: existingOffer?.userName || (currentUser ? currentUser.username : ''),
     number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, notes,
     items: JSON.parse(JSON.stringify(currentOfferItems)),
     transportKm,
@@ -1331,7 +1382,7 @@ function saveOffer() {
     transportCost,
     totalNetto,
     totalBrutto: totalNetto * 1.23,
-    createdAt: editingOfferId ? (offers.find(o => o.id === editingOfferId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    createdAt: editingOfferId ? (existingOffer?.createdAt || new Date().toISOString()) : new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 
@@ -1344,11 +1395,14 @@ function saveOffer() {
   }
   saveOffersData(offers);
 
-  // Download offer as a separate JSON file
-  downloadOfferFile(offer);
+  // Ask if user wants to download as XLSX
+  if (confirm('Oferta zapisana! Czy pobrać plik XLSX?')) {
+    exportOfferXlsx(offer.id);
+  }
 
-  showToast('Oferta zapisana i pobrana jako plik! ✔', 'success');
-  clearOfferForm();
+  showToast('Oferta zapisana ✔', 'success');
+  editingOfferId = offer.id;
+  renderSavedOffers();
 }
 
 function clearOfferForm() {
@@ -1378,7 +1432,16 @@ function renderSavedOffers() {
     return;
   }
 
-  container.innerHTML = offers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(o => `
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isPro = currentUser && currentUser.role === 'pro';
+  const subUsers = (currentUser && currentUser.subUsers) || [];
+
+  container.innerHTML = offers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(o => {
+    const isOwner = currentUser && o.userId === currentUser.id;
+    const isSubUserOffer = isPro && subUsers.includes(o.userId);
+    const canEdit = isAdmin || isOwner || isSubUserOffer;
+
+    return `
     <div class="offer-list-item">
       <div class="offer-info" style="min-width:0;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
@@ -1390,6 +1453,7 @@ function renderSavedOffers() {
         <div class="meta" style="margin-top:0.3rem;">
           <span>📅 <strong>${o.date}</strong></span>
           <span>📦 <strong>${o.items.length}</strong> poz.</span>
+          ${isAdmin && o.userName ? `<span style="color:var(--accent-hover)">👤 <strong>${o.userName}</strong></span>` : ''}
         </div>
         ${o.clientName || o.investName || o.clientContact ? `
         <div class="offer-client-badges">
@@ -1399,14 +1463,15 @@ function renderSavedOffers() {
         </div>` : ''}
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-        <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj">✏️ Edytuj</button>
+        ${canEdit ? `<button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj">✏️ Edytuj</button>` : ''}
         <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj">📋 Duplikuj</button>
         <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON">💾 JSON</button>
+        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX">📊 XLSX</button>
         <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF">📄 PDF</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń">🗑️ Usuń</button>
+        ${canEdit ? `<button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń">🗑️ Usuń</button>` : ''}
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 function loadOffer(id) {
@@ -1436,6 +1501,8 @@ function duplicateOffer(id) {
   const newOffer = JSON.parse(JSON.stringify(offer));
   newOffer.id = 'offer_' + Date.now();
   newOffer.number = offer.number + ' (kopia)';
+  newOffer.userId = currentUser ? currentUser.id : null;
+  newOffer.userName = currentUser ? currentUser.username : '';
   newOffer.createdAt = new Date().toISOString();
   newOffer.updatedAt = new Date().toISOString();
   offers.push(newOffer);
@@ -1652,38 +1719,104 @@ function showClientsDb() {
   overlay.className = 'modal-overlay';
   overlay.id = 'clients-db-modal';
 
-  let clientsHtml = '';
-  if (clientsDb.length === 0) {
-    clientsHtml = '<p style="text-align:center;color:var(--text-muted);padding:2rem;">Baza klientów jest pusta.</p>';
-  } else {
-    clientsHtml = '<div class="offer-list" style="max-height:60vh;overflow-y:auto;padding-right:0.5rem;margin-bottom:1rem;">' + clientsDb.map(c => `
-      <div class="offer-list-item" style="cursor:pointer;" onclick="selectClientFromDb('${c.id}')">
-        <div class="offer-info">
-          <h3>${c.name}</h3>
-          <div class="meta" style="font-size:0.75rem;">
-            <span>NIP: ${c.nip || '—'}</span>
-            <span>Adres: ${c.address || '—'}</span>
-            <span>Kontakt: ${c.contact || '—'}</span>
-          </div>
-        </div>
-        <div class="offer-actions" style="margin-left:auto;">
-          <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${c.id}')" title="Usuń z bazy" style="color:var(--danger)">✕</button>
-        </div>
-      </div>
-    `).join('') + '</div>';
-  }
-
   overlay.innerHTML = `
-    <div class="modal" style="max-width:600px;">
-      <div class="modal-header">
-        <h3>📂 Baza klientów</h3>
+    <div class="modal" style="max-width:1200px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); max-height:90vh; display:flex; flex-direction:column;">
+      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:0;">
+        <h3 style="font-size:1.25rem; font-weight:700; color:var(--text);">📂 Baza klientów <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${clientsDb.length})</span></h3>
         <button class="btn-icon" onclick="closeModal()">✕</button>
       </div>
-      ${clientsHtml}
+      <div style="padding:0.8rem 0; border-bottom:1px solid var(--border);">
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <div style="position:relative; flex:1;">
+            <input type="text" id="clients-search-input" placeholder="🔍 Szukaj po nazwie lub NIP..." 
+              oninput="filterClientsDb(this.value)"
+              style="width:100%; padding:0.6rem 0.8rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; outline:none; transition:border-color 0.2s;"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+      </div>
+      <div id="clients-db-list" style="flex:1; overflow-y:auto; padding:0.5rem 0;"></div>
     </div>`;
 
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+  renderClientsDbList('');
+  setTimeout(() => document.getElementById('clients-search-input')?.focus(), 100);
+}
+
+function filterClientsDb(query) {
+  renderClientsDbList(query);
+}
+
+function renderClientsDbList(query) {
+  const container = document.getElementById('clients-db-list');
+  if (!container) return;
+
+  const q = (query || '').toLowerCase().trim();
+  const filtered = q ? clientsDb.filter(c =>
+    (c.name && c.name.toLowerCase().includes(q)) ||
+    (c.nip && c.nip.includes(q))
+  ) : clientsDb;
+
+  if (clientsDb.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:3rem; font-size:0.9rem;">Baza klientów jest pusta.<br><span style="font-size:0.8rem;">Zapisz klienta przyciskiem 💾 w formularzu oferty.</span></div>';
+    return;
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Brak wyników dla „' + q + '"</div>';
+    return;
+  }
+
+  let html = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+    <thead>
+      <tr style="border-bottom:2px solid var(--border); color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">
+        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Firma</th>
+        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600; width:130px;">NIP</th>
+        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Adres</th>
+        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Kontakt</th>
+        <th style="padding:0.5rem 0.8rem; text-align:center; font-weight:600; width:60px;">Akcje</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  filtered.forEach(c => {
+    let nameDisplay = c.name;
+    let nipDisplay = c.nip || '—';
+
+    // Highlight matching text if searching
+    if (q) {
+      const nameIdx = c.name.toLowerCase().indexOf(q);
+      if (nameIdx >= 0) {
+        nameDisplay = c.name.substring(0, nameIdx) + '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' + c.name.substring(nameIdx, nameIdx + q.length) + '</mark>' + c.name.substring(nameIdx + q.length);
+      }
+      if (c.nip) {
+        const nipIdx = c.nip.indexOf(q);
+        if (nipIdx >= 0) {
+          nipDisplay = c.nip.substring(0, nipIdx) + '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' + c.nip.substring(nipIdx, nipIdx + q.length) + '</mark>' + c.nip.substring(nipIdx + q.length);
+        }
+      }
+    }
+
+    html += `<tr onclick="selectClientFromDb('${c.id}')" 
+      style="border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;"
+      onmouseenter="this.style.background='rgba(99,102,241,0.06)'" 
+      onmouseleave="this.style.background='transparent'">
+      <td style="padding:0.6rem 0.8rem; font-weight:600; color:var(--text);">${nameDisplay}</td>
+      <td style="padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);">${nipDisplay}</td>
+      <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.address || '—'}</td>
+      <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.contact || '—'}</td>
+      <td style="padding:0.6rem 0.8rem; text-align:center;">
+        <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${c.id}')" title="Usuń z bazy" 
+          style="color:var(--danger); font-size:0.85rem; opacity:0.6; transition:opacity 0.2s;"
+          onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }
 
 function selectClientFromDb(id) {
@@ -1703,9 +1836,9 @@ function deleteClientFromDb(id) {
   clientsDb = clientsDb.filter(c => c.id !== id);
   saveClientsDbData(clientsDb);
 
-  // Refresh modal
-  closeModal();
-  showClientsDb();
+  // Refresh list in-place
+  const searchInput = document.getElementById('clients-search-input');
+  renderClientsDbList(searchInput ? searchInput.value : '');
   showToast('Klient usunięty z bazy', 'info');
 }
 
@@ -1887,3 +2020,325 @@ function applyItemDiscounts() {
   updateOfferSummary();
   showToast('Zaktualizowano rabaty dla wybranych pozycji', 'success');
 }
+
+/* ===== XLSX EXPORT ===== */
+function exportOfferXlsx(id) {
+  const offer = offers.find(o => o.id === id);
+  if (!offer) return;
+
+  const costPerTrip = offer.transportCostPerTrip || 0;
+  const transportResult = calculateTransports(offer.items);
+  const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
+  const transportCost = transportResult.totalTransports * costPerTrip;
+
+  // ─── Sheet 1: OFERTA ───
+  const rows = [];
+
+  // Header section
+  rows.push(['OFERTA HANDLOWA']);
+  rows.push([]);
+  rows.push(['Nr oferty:', offer.number, '', 'Data:', offer.date]);
+  rows.push([]);
+  rows.push(['DANE KLIENTA']);
+  rows.push(['Firma:', offer.clientName || '']);
+  rows.push(['NIP:', offer.clientNip || '']);
+  rows.push(['Adres:', offer.clientAddress || '']);
+  rows.push(['Kontakt:', offer.clientContact || '']);
+  rows.push([]);
+  rows.push(['INWESTYCJA']);
+  rows.push(['Nazwa:', offer.investName || '']);
+  rows.push(['Adres:', offer.investAddress || '']);
+  rows.push([]);
+  rows.push(['TRANSPORT']);
+  rows.push(['Kilometry:', offer.transportKm || 0, 'PLN/km:', offer.transportRate || 0]);
+  rows.push(['Koszt/kurs:', costPerTrip, 'Ilość kursów:', transportResult.totalTransports]);
+  rows.push([]);
+
+  // Items table header
+  const headerRow = 18; // 0-indexed row where item table header starts
+  rows.push(['Lp.', 'Indeks', 'Nazwa produktu', 'PEHD', 'Cena jedn.', 'Ilość ✏️', 'Metry', 'Rabat % ✏️', 'Po rabacie', 'Transport/szt', 'Netto', 'Brutto', 'Waga/szt']);
+
+  let totalNetto = 0;
+  let totalWeight = 0;
+
+  offer.items.forEach((item, i) => {
+    const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+    const pehdCost = item.pehdCostPerUnit || 0;
+    const unitAfterDiscount = priceAfterDiscount + pehdCost;
+    const tpu = transportDist[item.productId] || 0;
+    const unitTotal = unitAfterDiscount + tpu;
+    const netto = unitTotal * item.quantity;
+    const brutto = netto * 1.23;
+
+    totalNetto += netto;
+    totalWeight += (item.weight || 0) * item.quantity;
+
+    let pName = item.name;
+    let pehdLabel = '';
+    if (item.pehdType === 'PEHD-3MM') pehdLabel = 'PEHD 3mm';
+    if (item.pehdType === 'PEHD-4MM') pehdLabel = 'PEHD 4mm';
+    if (item.autoAdded) pName += ' (uszczelka)';
+
+    rows.push([
+      i + 1,
+      item.productId,
+      pName,
+      pehdLabel,
+      item.unitPrice,
+      item.quantity,         // ✏️ editable
+      item.meters || 0,
+      item.discount,         // ✏️ editable
+      unitAfterDiscount,
+      tpu > 0 ? tpu : '',
+      netto,
+      brutto,
+      item.weight || ''
+    ]);
+  });
+
+  // Summary rows
+  const totalVat = totalNetto * 0.23;
+  const totalBrutto = totalNetto + totalVat;
+
+  rows.push([]);
+  rows.push(['', '', '', '', '', '', '', '', 'RAZEM Netto:', '', totalNetto]);
+  rows.push(['', '', '', '', '', '', '', '', 'Transport:', '', transportCost]);
+  rows.push(['', '', '', '', '', '', '', '', 'VAT (23%):', '', totalVat]);
+  rows.push(['', '', '', '', '', '', '', '', 'SUMA BRUTTO:', '', totalBrutto]);
+  rows.push([]);
+  rows.push(['Łączna waga:', totalWeight, 'kg']);
+
+  if (offer.notes) {
+    rows.push([]);
+    rows.push(['Uwagi:', offer.notes]);
+  }
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Column widths
+  ws['!cols'] = [
+    { wch: 5 },   // Lp
+    { wch: 20 },  // Indeks
+    { wch: 55 },  // Nazwa
+    { wch: 12 },  // PEHD
+    { wch: 12 },  // Cena
+    { wch: 10 },  // Ilość
+    { wch: 10 },  // Metry
+    { wch: 10 },  // Rabat
+    { wch: 14 },  // Po rabacie
+    { wch: 14 },  // Transport
+    { wch: 14 },  // Netto
+    { wch: 14 },  // Brutto
+    { wch: 10 },  // Waga
+  ];
+
+  // Number formatting for currency columns
+  const itemStartRow = headerRow + 1;
+  const itemEndRow = itemStartRow + offer.items.length;
+  for (let r = itemStartRow; r < itemEndRow; r++) {
+    ['E', 'I', 'J', 'K', 'L'].forEach(col => {
+      const ref = col + (r + 1);
+      if (ws[ref] && typeof ws[ref].v === 'number') {
+        ws[ref].z = '#,##0.00';
+      }
+    });
+  }
+
+  // Format summary numbers
+  for (let r = itemEndRow + 1; r < rows.length; r++) {
+    const ref = 'K' + (r + 1);
+    if (ws[ref] && typeof ws[ref].v === 'number') {
+      ws[ref].z = '#,##0.00';
+    }
+  }
+
+  // ─── Sheet 2: METADATA (hidden data for re-import) ───
+  const metaRows = [['KEY', 'VALUE']];
+  metaRows.push(['offerId', offer.id]);
+  metaRows.push(['number', offer.number]);
+  metaRows.push(['date', offer.date]);
+  metaRows.push(['clientName', offer.clientName || '']);
+  metaRows.push(['clientNip', offer.clientNip || '']);
+  metaRows.push(['clientAddress', offer.clientAddress || '']);
+  metaRows.push(['clientContact', offer.clientContact || '']);
+  metaRows.push(['investName', offer.investName || '']);
+  metaRows.push(['investAddress', offer.investAddress || '']);
+  metaRows.push(['notes', offer.notes || '']);
+  metaRows.push(['transportKm', offer.transportKm || 0]);
+  metaRows.push(['transportRate', offer.transportRate || 0]);
+  metaRows.push(['itemCount', offer.items.length]);
+
+  // Store full item data as JSON for lossless re-import
+  offer.items.forEach((item, i) => {
+    metaRows.push([`item_${i}`, JSON.stringify(item)]);
+  });
+
+  const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
+  wsMeta['!cols'] = [{ wch: 15 }, { wch: 120 }];
+
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Oferta');
+  XLSX.utils.book_append_sheet(wb, wsMeta, 'Dane');
+
+  // Download
+  const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
+  XLSX.writeFile(wb, `Oferta_${safeNumber}_${offer.date}.xlsx`);
+  showToast('Pobrano plik XLSX', 'success');
+}
+
+/* ===== XLSX IMPORT ===== */
+function importOfferFromXlsx() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.xlsx,.xls';
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+
+        // Try to find metadata sheet first (lossless import)
+        const metaSheet = wb.Sheets['Dane'];
+        if (metaSheet) {
+          const metaData = XLSX.utils.sheet_to_json(metaSheet, { header: 1 });
+          const meta = {};
+          metaData.forEach(row => {
+            if (row[0] && row[0] !== 'KEY') meta[row[0]] = row[1];
+          });
+
+          // Read items from metadata (full JSON roundtrip)
+          const items = [];
+          const itemCount = parseInt(meta.itemCount) || 0;
+          for (let i = 0; i < itemCount; i++) {
+            const key = `item_${i}`;
+            if (meta[key]) {
+              try {
+                items.push(JSON.parse(meta[key]));
+              } catch (e) { /* skip broken items */ }
+            }
+          }
+
+          // Now check the Oferta sheet for user edits to quantity and discount
+          const ofertaSheet = wb.Sheets['Oferta'];
+          if (ofertaSheet) {
+            const ofertaData = XLSX.utils.sheet_to_json(ofertaSheet, { header: 1 });
+
+            // Find header row
+            let headerRowIdx = -1;
+            for (let r = 0; r < ofertaData.length; r++) {
+              if (ofertaData[r] && ofertaData[r][0] === 'Lp.' && String(ofertaData[r][5]).includes('Ilość')) {
+                headerRowIdx = r;
+                break;
+              }
+            }
+
+            if (headerRowIdx >= 0 && items.length > 0) {
+              // Read edited values from the spreadsheet
+              for (let i = 0; i < items.length; i++) {
+                const row = ofertaData[headerRowIdx + 1 + i];
+                if (!row) continue;
+
+                const newQty = parseFloat(row[5]);
+                const newDiscount = parseFloat(row[7]);
+
+                if (!isNaN(newQty) && newQty >= 0) {
+                  items[i].quantity = newQty;
+                  if (items[i].lengthM) {
+                    items[i].meters = newQty * items[i].lengthM;
+                  }
+                }
+                if (!isNaN(newDiscount) && newDiscount >= 0 && newDiscount <= 100) {
+                  items[i].discount = newDiscount;
+                }
+              }
+            }
+          }
+
+          if (items.length === 0) {
+            showToast('Plik nie zawiera pozycji oferty', 'error');
+            return;
+          }
+
+          const transportKm = parseFloat(meta.transportKm) || 0;
+          const transportRate = parseFloat(meta.transportRate) || 0;
+          const transportCostPerTrip = transportKm * transportRate;
+          const transportResult = calculateTransports(items);
+          const transportDist = calculateTransportDistributionStandalone(items, transportCostPerTrip);
+
+          let totalNetto = 0;
+          items.forEach(item => {
+            const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+            const tpu = transportDist[item.productId] || 0;
+            totalNetto += (priceAfterDiscount + tpu) * item.quantity;
+          });
+
+          const offer = {
+            id: meta.offerId || 'offer_' + Date.now(),
+            number: meta.number || 'XLSX-Import',
+            date: meta.date || new Date().toISOString().slice(0, 10),
+            clientName: meta.clientName || '',
+            clientNip: meta.clientNip || '',
+            clientAddress: meta.clientAddress || '',
+            clientContact: meta.clientContact || '',
+            investName: meta.investName || '',
+            investAddress: meta.investAddress || '',
+            notes: meta.notes || '',
+            items,
+            transportKm,
+            transportRate,
+            transportCostPerTrip,
+            transportCount: transportResult.totalTransports,
+            transportCost: transportResult.totalTransports * transportCostPerTrip,
+            totalNetto,
+            totalBrutto: totalNetto * 1.23,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          // Check for duplicate
+          const existingIdx = offers.findIndex(o => o.id === offer.id);
+          if (existingIdx >= 0) {
+            if (confirm(`Oferta "${offer.number}" już istnieje. Nadpisać?`)) {
+              offers[existingIdx] = offer;
+            } else {
+              return;
+            }
+          } else {
+            offers.push(offer);
+          }
+
+          saveOffersData(offers);
+          renderSavedOffers();
+          showToast(`Zaimportowano z XLSX: ${offer.number}`, 'success');
+        } else {
+          showToast('Plik XLSX nie zawiera arkusza "Dane" — nie można zaimportować', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Błąd odczytu pliku XLSX: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+  input.click();
+}
+
+// Automatically switch tab based on URL query parameter
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  if (tab) {
+    // If there's a button matching data-section, click it
+    const tabBtn = document.querySelector(`.nav-btn[data-section="${tab}"]`);
+    if (tabBtn) {
+      // Delay slightly to ensure any initial setup (like auth) completes first
+      setTimeout(() => tabBtn.click(), 100);
+    }
+  }
+});

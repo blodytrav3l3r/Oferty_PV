@@ -2,264 +2,874 @@
 <html lang="pl">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description"
-    content="Aplikacja do tworzenia ofert handlowych na rury WITROS - betonowe, żelbetowe, jajowe">
-  <title>WITROS — Generator Ofert</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WITROS — Generator Ofert</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0f172a 100%);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+            animation: bgShift 20s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes bgShift {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-3%, -3%) rotate(3deg);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2rem;
+            margin: auto 0;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.3rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+        }
+
+        /* ── Login Form ── */
+        .login-box {
+            max-width: 380px;
+            margin: 0 auto 2.5rem;
+            padding: 2rem;
+            border-radius: 16px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(20px);
+        }
+
+        .login-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1.2rem;
+            color: #e2e8f0;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            margin-bottom: 0.7rem;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .login-box input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+        }
+
+        .login-box input::placeholder {
+            color: #64748b;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            font: 600 0.95rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.3rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .login-error {
+            color: #f87171;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            min-height: 1.2rem;
+        }
+
+        /* ── User Bar ── */
+        .user-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 0.6rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.08);
+        }
+
+        .user-bar .user-name {
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .user-bar .user-role {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .user-bar .role-admin {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .user-bar .role-user {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .small-btn {
+            padding: 0.35rem 0.8rem;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.6);
+            color: #94a3b8;
+            font: 500 0.75rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .small-btn:hover {
+            color: #e2e8f0;
+            border-color: rgba(148, 163, 184, 0.3);
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .small-btn.danger {
+            color: #f87171;
+        }
+
+        .small-btn.danger:hover {
+            border-color: rgba(248, 113, 113, 0.3);
+        }
+
+        /* ── Special Offers Button ── */
+        .btn-offers {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 50px;
+            color: #a5b4fc;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-offers:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(79, 70, 229, 0.2));
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #ffffff;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-offers-icon {
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.6));
+        }
+
+        .btn-offers-arrow {
+            margin-left: 0.2rem;
+            font-size: 1.3rem;
+            transition: transform 0.3s;
+        }
+
+        .btn-offers:hover .btn-offers-arrow {
+            transform: translateX(4px);
+        }
+
+        /* ── Cards ── */
+        .cards {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            position: relative;
+            width: 320px;
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(20px);
+            text-decoration: none;
+            color: #e2e8f0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 20px 20px 0 0;
+            transition: height 0.4s ease;
+        }
+
+        .card-rury::before {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+
+        .card-studnie::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(148, 163, 184, 0.25);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .card:hover::before {
+            height: 4px;
+        }
+
+        .card-rury:hover {
+            box-shadow: 0 25px 60px rgba(59, 130, 246, 0.15);
+        }
+
+        .card-studnie:hover {
+            box-shadow: 0 25px 60px rgba(16, 185, 129, 0.15);
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.2rem;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+
+        .card-rury .card-title {
+            color: #60a5fa;
+        }
+
+        .card-studnie .card-title {
+            color: #34d399;
+        }
+
+        .card-desc {
+            font-size: 0.88rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .card-badge {
+            display: inline-block;
+            margin-top: 1.2rem;
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .card-rury .card-badge {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .card-studnie .card-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* ── Admin Panel ── */
+        .admin-panel {
+            max-width: 600px;
+            margin: 2rem auto 0;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            text-align: left;
+        }
+
+        .admin-panel h4 {
+            font-size: 0.9rem;
+            color: #f59e0b;
+            margin-bottom: 1rem;
+        }
+
+        .admin-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .admin-panel th {
+            text-align: left;
+            padding: 0.4rem 0.6rem;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .admin-panel td {
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+            color: #e2e8f0;
+        }
+
+        .new-user-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .new-user-form input,
+        .new-user-form select {
+            padding: 0.5rem 0.7rem;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            color: #e2e8f0;
+            font: 400 0.8rem 'Inter', sans-serif;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .new-user-form select option {
+            background: #1e293b;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 1.5rem;
+            font-size: 0.75rem;
+            color: #475569;
+            z-index: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 700px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .cards {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 90%;
+                max-width: 320px;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <div class="container">
+        <div class="logo">WITROS</div>
+        <div class="subtitle">Generator Ofert Handlowych</div>
 
-
-  <!-- HEADER -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="2">
-          <defs>
-            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="100%" stop-color="#8b5cf6" />
-            </linearGradient>
-          </defs>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" />
-        </svg>
-        <span>WITROS Oferty</span>
-      </div>
-      <nav class="nav">
-        <button class="nav-btn active" data-section="offer" id="nav-offer">📝 Nowa Oferta</button>
-        <button class="nav-btn" data-section="saved" id="nav-saved">💾 Zapisane</button>
-        <button class="nav-btn" data-section="pricelist" id="nav-pricelist">📋 Cennik</button>
-      </nav>
-    </div>
-  </header>
-
-  <main class="main">
-
-    <!-- ===== SECTION: NEW OFFER ===== -->
-    <div class="section active" id="section-offer">
-      <div class="toolbar">
-        <h2 style="font-size:1rem;font-weight:700">Nowa oferta</h2>
-        <div class="toolbar-spacer"></div>
-        <button class="btn btn-secondary" onclick="clearOfferForm()">🔄 Nowa</button>
-        <button class="btn btn-primary" onclick="saveOffer()">💾 Zapisz</button>
-      </div>
-
-      <!-- Client & offer info — compact layout (single toggleable card) -->
-      <div class="card card-compact" style="margin-bottom: 1rem;">
-        <div class="card-title-sm" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-          <div style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; flex: 1;"
-            onclick="toggleCard('client-offer-content', 'client-offer-icon')">
-            <span>📋 Dane klienta i oferty</span>
-            <span id="client-offer-icon">🔼</span>
-          </div>
-          <div style="display:flex; gap:0.5rem;" onclick="event.stopPropagation()">
-            <button class="btn btn-secondary btn-sm" onclick="showClientsDb()"
-              style="padding:0.2rem 0.5rem; font-size:0.75rem;">📂 Wczytaj</button>
-            <button class="btn btn-primary btn-sm" onclick="saveClientToDb()"
-              style="padding:0.2rem 0.5rem; font-size:0.75rem;">💾 Zapisz</button>
-          </div>
+        <!-- Login Form -->
+        <div id="login-section" class="login-box">
+            <h3>🔐 Logowanie</h3>
+            <input type="text" id="login-username" placeholder="Login" autocomplete="username">
+            <input type="password" id="login-password" placeholder="Hasło" autocomplete="current-password">
+            <button class="login-btn" onclick="doLogin()">Zaloguj się</button>
+            <div class="login-error" id="login-error"></div>
         </div>
 
-        <div id="client-offer-content" class="card-content">
-          <div class="offer-header-grid" style="margin-bottom:0; margin-top:0.8rem;">
-            <!-- Client side -->
-            <div>
-              <div class="form-row form-row-4 form-row-compact">
-                <div class="form-group-sm"><label class="form-label-sm">Firma</label><input
-                    class="form-input form-input-sm" id="client-name" placeholder="Budimex S.A."></div>
-                <div class="form-group-sm"><label class="form-label-sm">NIP</label><input
-                    class="form-input form-input-sm" id="client-nip" placeholder="1234567890"
-                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
-                <div class="form-group-sm"><label class="form-label-sm">Adres firmy</label><input
-                    class="form-input form-input-sm" id="client-address" placeholder="ul. Przykładowa 1, Warszawa">
+        <!-- User Bar (after login) -->
+        <div id="user-section" class="hidden">
+            <div class="user-bar">
+                <span>👤 <span class="user-name" id="user-display-name"></span></span>
+                <span class="user-role" id="user-display-role"></span>
+                <button class="small-btn" onclick="showChangePassword()">🔑 Zmień hasło</button>
+                <button class="small-btn danger" onclick="doLogout()">Wyloguj</button>
+            </div>
+
+            <div style="display:flex; justify-content:center; margin-bottom: 2rem;">
+                <a href="rury.html?tab=saved" class="btn-offers">
+                    <span class="btn-offers-icon">📄</span>
+                    <span>Przejdź do Bazy Ofert</span>
+                    <span class="btn-offers-arrow">→</span>
+                </a>
+            </div>
+
+            <div class="cards">
+                <a href="rury.html" class="card card-rury">
+                    <span class="card-icon">🔩</span>
+                    <div class="card-title">Oferty Rury</div>
+                    <div class="card-desc">
+                        Kalkulator ofert na rury betonowe, żelbetowe, jajowe z PEHD
+                    </div>
+                    <span class="card-badge">OTWÓRZ →</span>
+                </a>
+
+                <a href="studnie.html" class="card card-studnie">
+                    <span class="card-icon">🏗️</span>
+                    <div class="card-title">Oferty Studnie</div>
+                    <div class="card-desc">
+                        Kalkulator ofert na studnie betonowe i żelbetowe
+                    </div>
+                    <span class="card-badge">WKRÓTCE</span>
+                </a>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="admin-panel" class="admin-panel hidden" style="max-width: 1200px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <h4 style="margin: 0;">👥 Zarządzanie użytkownikami</h4>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button id="add-user-btn" class="small-btn"
+                            style="background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(16,185,129,0.3);"
+                            onclick="createUser()">➕ Dodaj</button>
+                        <button id="cancel-edit-btn" class="small-btn hidden"
+                            style="background:rgba(239,68,68,0.15); color:#f87171; border-color:rgba(239,68,68,0.3);"
+                            onclick="cancelEditUser()">❌ Anuluj</button>
+                    </div>
                 </div>
-                <div class="form-group-sm"><label class="form-label-sm">Kontakt</label><input
-                    class="form-input form-input-sm" id="client-contact" placeholder="Jan Kowalski, 600 100 200"></div>
-              </div>
-              <div class="form-row form-row-2 form-row-compact">
-                <div class="form-group-sm"><label class="form-label-sm">Nazwa inwestycji</label><input
-                    class="form-input form-input-sm" id="invest-name" placeholder="Budowa kanalizacji deszczowej"></div>
-                <div class="form-group-sm"><label class="form-label-sm">Adres inwestycji</label><input
-                    class="form-input form-input-sm" id="invest-address" placeholder="ul. Nowa 5, Kraków"></div>
-              </div>
-            </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Imię i Nazwisko</th>
+                                <th>Symbol</th>
+                                <th>Login</th>
+                                <th>Email</th>
+                                <th>Telefon</th>
+                                <th>Rola</th>
+                                <th>Data utworzenia</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="new-user-form">
+                    <input type="text" id="new-user-firstname" placeholder="Imię" style="flex: 1 1 90px;">
+                    <input type="text" id="new-user-lastname" placeholder="Nazwisko" style="flex: 1 1 110px;">
+                    <input type="text" id="new-user-symbol" placeholder="Symbol" style="flex: 1 1 70px;"
+                        title="Symbol używany w numeracji ofert">
+                    <input type="text" id="new-user-login" placeholder="Nowy login" minlength="3"
+                        style="flex: 1 1 90px;">
+                    <input type="password" id="new-user-password" placeholder="Hasło" minlength="4"
+                        style="flex: 1 1 100px;">
+                    <input type="email" id="new-user-email" placeholder="Email" style="flex: 1 1 130px;">
+                    <input type="text" id="new-user-phone" placeholder="Telefon" style="flex: 1 1 100px;">
+                    <select id="new-user-role" style="flex: 1 1 120px;" onchange="toggleSubUsersList()">
+                        <option value="user">Użytkownik</option>
+                        <option value="pro">PRO (Kierownik)</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <!-- SubUsers container (only visible if role === 'pro') -->
+                <div id="sub-users-container" class="hidden"
+                    style="margin-top:0.8rem; background:rgba(0,0,0,0.1); padding:0.5rem; border-radius:6px; font-size:0.8rem;">
+                    <strong style="display:block; margin-bottom:0.5rem; color:#94a3b8;">Przypisani użytkownicy (widzi
+                        ich oferty)</strong>
+                    <div id="sub-users-list" style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        <!-- Checkboxes will be rendered here -->
+                    </div>
+                </div>
 
-            <!-- Offer side -->
-            <div>
-              <div class="form-row form-row-4 form-row-compact">
-                <div class="form-group-sm"><label class="form-label-sm">Nr oferty</label><input
-                    class="form-input form-input-sm" id="offer-number"></div>
-                <div class="form-group-sm"><label class="form-label-sm">Data</label><input
-                    class="form-input form-input-sm" type="date" id="offer-date"></div>
-                <div class="form-group-sm"><label class="form-label-sm">Kilometry</label><input
-                    class="form-input form-input-sm" type="number" step="1" id="transport-km" value="100"
-                    onchange="renderOfferItems()"></div>
-                <div class="form-group-sm"><label class="form-label-sm">PLN/km</label><input
-                    class="form-input form-input-sm" type="number" step="0.1" id="transport-rate" value="10"
-                    onchange="renderOfferItems()"></div>
-              </div>
-              <div class="form-group-sm"><label class="form-label-sm">Uwagi</label><textarea
-                  class="form-textarea form-input-sm" id="offer-notes" rows="1"
-                  placeholder="np. Cena obejmuje transport do 100 km..."></textarea></div>
+                <div class="login-error" id="admin-error"></div>
             </div>
-          </div>
         </div>
-      </div>
-      <!-- Product search -->
-      <div class="card" style="margin-bottom: 1rem;">
-        <div class="card-title"
-          style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0;"
-          onclick="toggleCard('product-search-content', 'product-search-icon')">
-          <span>� Wyszukaj produkty</span>
-          <span id="product-search-icon" style="font-size:0.8rem;">🔼</span>
-        </div>
-        <div id="product-search-content" class="card-content" style="margin-top:0.8rem;">
-          <div class="offer-search-row">
-            <div class="offer-product-search">
-              <div class="search-box">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-                <input class="form-input" id="product-search" placeholder="Wyszukaj produkt po nazwie lub indeksie..."
-                  style="padding-left:2.4rem" autocomplete="off">
-              </div>
-              <div class="product-dropdown" id="product-dropdown"></div>
-            </div>
-            <button class="btn btn-secondary offer-catalog-btn" id="toggle-catalog-btn" onclick="toggleCatalog()">📂
-              Ukryj
-              katalog produktów</button>
-          </div>
-          <div id="product-catalog" class="product-catalog">
-            <div class="catalog-tabs" id="catalog-tabs"></div>
-            <div class="catalog-products" id="catalog-products"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Selected items -->
-      <div class="card" style="margin-bottom: 1rem;">
-        <div class="card-title">📦 Pozycje oferty</div>
-        <div id="offer-items-content" style="margin-top:0;">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Lp.</th>
-                  <th>Nazwa produktu</th>
-                  <th class="text-right">Cena jedn.</th>
-                  <th class="text-center">Metry</th>
-                  <th class="text-center">Ilość</th>
-                  <th class="text-center">Rabat</th>
-                  <th class="text-right">Po rabacie</th>
-                  <th class="text-right">Transport/szt.</th>
-                  <th class="text-right">Netto</th>
-                  <th class="text-right">Brutto</th>
-                  <th class="text-center">Akcje</th>
-                </tr>
-              </thead>
-              <tbody id="offer-items-body">
-                <tr>
-                  <td colspan="11" class="text-center" style="padding:2rem;color:var(--text-muted)">Wyszukaj i dodaj
-                    produkty z cennika powyżej</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Transport breakdown -->
-          <div id="transport-breakdown" style="margin-top:.6rem; margin-bottom: 1rem;"></div>
-        </div>
-
-        <div
-          style="position: sticky; bottom: 0; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(12px); border-top: 1px solid var(--border-glass); margin: 0 -1rem -0.8rem -1rem; padding: 1.2rem 1.5rem; z-index: 100; box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);">
-
-
-
-          <div class="summary-grid"
-            style="margin-top: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: stretch; text-align: center;">
-            <div class="summary-card"
-              style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-              <div class="label" style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.2rem;">Cena Netto
-              </div>
-              <div class="value accent" id="sum-netto-products"
-                style="font-size: 1.4rem; color: var(--text-primary); margin: 0;">
-                0,00 PLN</div>
-            </div>
-            <div class="summary-card"
-              style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--border-glass); border-right: 1px solid var(--border-glass);">
-              <div class="label" style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.2rem;">Koszt
-                transportu</div>
-              <div class="value" id="sum-transport-cost" style="color:var(--warn); font-size: 1.4rem; margin: 0;">0,00
-                PLN</div>
-              <div class="summary-sub" id="sum-transport-details"
-                style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">0 × 0,00 PLN/kurs</div>
-            </div>
-            <div class="summary-card"
-              style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative;">
-              <div class="label" style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.2rem;">RAZEM
-                Netto</div>
-              <div class="value success" id="sum-total-netto"
-                style="font-size: 1.6rem; font-weight: 800; color: var(--success); margin: 0;">0,00 PLN</div>
-              <div class="summary-sub" id="sum-brutto-details"
-                style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Brutto: 0,00 PLN</div>
-            </div>
-            <div class="summary-card"
-              style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--border-glass); align-items: center;">
-              <button class="btn btn-secondary btn-sm" onclick="showItemDiscountModal()"
-                style="font-size: 0.9rem; padding: 0.6rem 1rem; border: 1px solid var(--primary); color: var(--primary); background: rgba(99, 102, 241, 0.05); font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; width: 100%; max-width: 180px;">
-                % Edytuj rabaty
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- ===== SECTION: SAVED OFFERS ===== -->
-    <div class="section" id="section-saved">
-      <div class="toolbar">
-        <h2 style="font-size:1rem;font-weight:700">💾 Zapisane oferty</h2>
-        <div class="toolbar-spacer"></div>
-        <button class="btn btn-primary" onclick="importOfferFromFile()">📂 Importuj</button>
-      </div>
-      <div class="offer-list" id="saved-offers-list"></div>
-    </div>
+    <div class="footer">WITROS © 2026 • Generator Ofert</div>
 
-    <!-- ===== SECTION: PRICE LIST ===== -->
-    <div class="section" id="section-pricelist">
-      <div class="toolbar">
-        <h2 style="font-size:1rem;font-weight:700">📋 Cennik produktów</h2>
-        <div class="toolbar-spacer"></div>
-        <div class="search-box" style="margin:0;width:100%;max-width:350px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <input class="form-input form-input-sm" id="pricelist-search" placeholder="Szukaj..."
-            style="padding-left:2.2rem !important">
-        </div>
-        <button class="btn btn-primary" onclick="showAddProductModal()">➕ Dodaj</button>
-        <button class="btn btn-secondary" onclick="saveAsDefaultPriceList()">💾 Zapisz do resetu</button>
-        <button class="btn btn-secondary" onclick="downloadPricelistFile()">⬇️ Zapisz do repozytorium</button>
-        <button class="btn btn-secondary" onclick="resetPriceList()">🔄 Reset</button>
-      </div>
-      <div class="card">
-        <div id="pricelist-body"></div>
-      </div>
-    </div>
+    <script>
+        let adminUsers = [];
+        let editingUserId = null;
+        let selectedSubUsers = [];
 
-  </main>
+        function toggleSubUsersList() {
+            const role = document.getElementById('new-user-role').value;
+            const container = document.getElementById('sub-users-container');
+            const listObj = document.getElementById('sub-users-list');
+            if (role === 'pro') {
+                container.classList.remove('hidden');
+                // render normal users as checkboxes
+                const regularUsers = adminUsers.filter(u => u.role !== 'admin' && u.id !== editingUserId);
+                if (regularUsers.length === 0) {
+                    listObj.innerHTML = '<span style="color:#64748b;">Brak innych użytkowników do przypisania</span>';
+                } else {
+                    listObj.innerHTML = regularUsers.map(u => `
+                        <label style="display:flex; align-items:center; gap:0.3rem; background:var(--bg-lighter); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; border:1px solid var(--border-glass);">
+                            <input type="checkbox" value="${u.id}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
+                            ${u.firstName && u.lastName ? u.firstName + ' ' + u.lastName : u.username}
+                        </label>
+                    `).join('');
+                }
+            } else {
+                container.classList.add('hidden');
+                selectedSubUsers = [];
+            }
+        }
 
-  <!-- Toast container -->
-  <div id="toast-container" class="toast-container"></div>
+        function updateSubUsers(checkbox) {
+            if (checkbox.checked) {
+                if (!selectedSubUsers.includes(checkbox.value)) selectedSubUsers.push(checkbox.value);
+            } else {
+                selectedSubUsers = selectedSubUsers.filter(id => id !== checkbox.value);
+            }
+        }
 
-  <script src="pricelist.js"></script>
-  <script src="app.js"></script>
+        function getToken() {
+            return localStorage.getItem('authToken');
+        }
+
+        function authHeaders() {
+            const token = getToken();
+            return token ? { 'X-Auth-Token': token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+        }
+
+        // Check session on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            const token = getToken();
+            if (token) {
+                try {
+                    const res = await fetch('/api/auth/me', { headers: authHeaders() });
+                    const data = await res.json();
+                    if (data.user) {
+                        showLoggedIn(data.user);
+                        return;
+                    }
+                } catch (e) { }
+            }
+            showLogin();
+        });
+
+        // Handle Enter key in login fields
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !document.getElementById('login-section').classList.contains('hidden')) {
+                doLogin();
+            }
+        });
+
+        function showLogin() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('user-section').classList.add('hidden');
+        }
+
+        function showLoggedIn(user) {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('user-section').classList.remove('hidden');
+            document.getElementById('user-display-name').textContent = user.username;
+            const roleEl = document.getElementById('user-display-role');
+            roleEl.textContent = user.role === 'admin' ? 'ADMIN' : 'UŻYTKOWNIK';
+            roleEl.className = 'user-role ' + (user.role === 'admin' ? 'role-admin' : 'role-user');
+
+            if (user.role === 'admin') {
+                document.getElementById('admin-panel').classList.remove('hidden');
+                loadUsers();
+            } else {
+                document.getElementById('admin-panel').classList.add('hidden');
+            }
+        }
+
+        async function doLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            errorEl.textContent = '';
+
+            if (!username || !password) {
+                errorEl.textContent = 'Podaj login i hasło';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    errorEl.textContent = data.error || 'Błąd logowania';
+                    return;
+                }
+                localStorage.setItem('authToken', data.token);
+                showLoggedIn(data.user);
+            } catch (e) {
+                errorEl.textContent = 'Błąd połączenia z serwerem';
+            }
+        }
+
+        async function doLogout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
+            } catch (e) { }
+            localStorage.removeItem('authToken');
+            showLogin();
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/users', { headers: authHeaders() });
+                const data = await res.json();
+                adminUsers = data.data || [];
+                const tbody = document.getElementById('users-table-body');
+                tbody.innerHTML = adminUsers.map(u => {
+                    let html = `
+          <tr>
+            <td style="font-weight:600; font-size:0.8rem;">${(u.firstName || '') + ' ' + (u.lastName || '')}</td>
+            <td style="color:#e2e8f0; font-weight:700;">${u.symbol || '—'}</td>
+            <td style="color:#e2e8f0;">${u.username}</td>
+            <td style="color:#94a3b8; font-size:0.75rem;">${u.email || '—'}</td>
+            <td style="color:#94a3b8; font-size:0.75rem;">${u.phone || '—'}</td>
+            <td><span class="user-role ${u.role === 'admin' ? 'role-admin' : (u.role === 'pro' ? 'role-pro' : 'role-user')}" style="font-size:0.65rem;">${u.role.toUpperCase()}</span></td>
+            <td style="color:#94a3b8; font-size:0.75rem;">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('pl') : '—'}</td>
+            <td>
+              <button class="small-btn" onclick="startEditUser('${u.id}')" title="Edytuj" style="margin-right:4px;">✏️</button>
+              ${u.username !== 'admin' ? `<button class="small-btn danger" onclick="deleteUser('${u.id}')" title="Usuń">🗑️</button>` : ''}
+            </td>
+          </tr>`;
+                    if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
+                        const subUsersNames = u.subUsers.map(subId => {
+                            const subU = adminUsers.find(x => x.id === subId);
+                            return subU ? (subU.firstName && subU.lastName ? subU.firstName + ' ' + subU.lastName : subU.username) : 'Nieznany';
+                        });
+                        html += `
+          <tr style="background: rgba(255,255,255,0.02);">
+            <td colspan="8" style="padding-top: 0.3rem; padding-bottom: 0.5rem; border-top: none;">
+                <div style="font-size: 0.7rem; color: #cbd5e1; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; padding-left: 0.5rem;">
+                    <span style="font-weight:600; color:#fbbf24; font-size: 0.65rem;">👥 PRZYPISANI:</span>
+                    ${subUsersNames.map(name => `<span style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 0.15rem 0.5rem; border-radius: 12px;">${name}</span>`).join('')}
+                </div>
+            </td>
+          </tr>`;
+                    }
+                    return html;
+                }).join('');
+            } catch (e) { }
+        }
+
+        function startEditUser(id) {
+            const u = adminUsers.find(x => x.id === id);
+            if (!u) return;
+            editingUserId = id;
+            document.getElementById('new-user-firstname').value = u.firstName || '';
+            document.getElementById('new-user-lastname').value = u.lastName || '';
+            document.getElementById('new-user-symbol').value = u.symbol || '';
+            document.getElementById('new-user-login').value = u.username;
+            document.getElementById('new-user-password').value = '';
+            document.getElementById('new-user-password').placeholder = 'Nowe hasło (opcjonalnie)';
+            document.getElementById('new-user-email').value = u.email || '';
+            document.getElementById('new-user-phone').value = u.phone || '';
+            document.getElementById('new-user-role').value = u.role;
+            selectedSubUsers = [...(u.subUsers || [])];
+            toggleSubUsersList();
+
+            document.getElementById('add-user-btn').textContent = '💾 Zapisz';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+        }
+
+        function cancelEditUser() {
+            editingUserId = null;
+            document.getElementById('new-user-firstname').value = '';
+            document.getElementById('new-user-lastname').value = '';
+            document.getElementById('new-user-symbol').value = '';
+            document.getElementById('new-user-login').value = '';
+            document.getElementById('new-user-password').value = '';
+            document.getElementById('new-user-password').placeholder = 'Hasło';
+            document.getElementById('new-user-email').value = '';
+            document.getElementById('new-user-phone').value = '';
+            document.getElementById('new-user-role').value = 'user';
+            selectedSubUsers = [];
+            toggleSubUsersList();
+
+            document.getElementById('add-user-btn').textContent = '➕ Dodaj';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+            document.getElementById('admin-error').textContent = '';
+        }
+
+        async function createUser() {
+            const firstName = document.getElementById('new-user-firstname').value.trim();
+            const lastName = document.getElementById('new-user-lastname').value.trim();
+            const symbol = document.getElementById('new-user-symbol').value.trim();
+            const login = document.getElementById('new-user-login').value.trim();
+            const password = document.getElementById('new-user-password').value;
+            const email = document.getElementById('new-user-email').value.trim();
+            const phone = document.getElementById('new-user-phone').value.trim();
+            const role = document.getElementById('new-user-role').value;
+            const errorEl = document.getElementById('admin-error');
+            errorEl.textContent = '';
+
+            if (!login) {
+                errorEl.textContent = 'Podaj login';
+                return;
+            }
+            // For new users, password is required
+            if (!editingUserId && !password) {
+                errorEl.textContent = 'Podaj hasło dla nowego użytkownika';
+                return;
+            }
+
+            try {
+                const isEditing = !!editingUserId;
+                const url = isEditing ? `/api/users/${editingUserId}` : '/api/auth/register';
+                const method = isEditing ? 'PUT' : 'POST';
+                const payload = { username: login, role, firstName, lastName, symbol, phone, email, subUsers: selectedSubUsers };
+                if (password) payload.password = password;
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    errorEl.textContent = data.error || (isEditing ? 'Błąd zapisu' : 'Błąd tworzenia konta');
+                    return;
+                }
+                cancelEditUser(); // Clears form and resets state
+                loadUsers();
+            } catch (e) {
+                errorEl.textContent = 'Błąd połączenia';
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Czy na pewno usunąć tego użytkownika?')) return;
+            try {
+                await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
+                loadUsers();
+            } catch (e) { }
+        }
+
+        function showChangePassword() {
+            const oldPw = prompt('Podaj stare hasło:');
+            if (!oldPw) return;
+            const newPw = prompt('Podaj nowe hasło (min. 4 znaki):');
+            if (!newPw) return;
+            if (newPw.length < 4) { alert('Hasło musi mieć min. 4 znaki'); return; }
+
+            fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
+            }).then(r => r.json()).then(data => {
+                if (data.ok) {
+                    alert('Hasło zmienione!');
+                } else {
+                    alert(data.error || 'Błąd zmiany hasła');
+                }
+            }).catch(() => alert('Błąd połączenia'));
+        }
+    </script>
 </body>
 
 </html>

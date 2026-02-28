@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "WITROS Oferty - Generator ofert handlowych",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "express": "^4.21.0",
     "localforage": "^1.10.0"
   }

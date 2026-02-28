@@ -39,6 +39,25 @@ body {
   line-height: 1.6;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -125,8 +144,8 @@ body::before {
 }
 
 .nav-btn.active {
-  color: var(--accent-hover);
-  background: rgba(99, 102, 241, 0.12);
+  color: var(--nav-accent, var(--accent-hover));
+  background: var(--nav-glow, rgba(99, 102, 241, 0.12));
 }
 
 .nav-btn.active::after {
@@ -136,7 +155,7 @@ body::before {
   left: 20%;
   right: 20%;
   height: 2px;
-  background: var(--accent);
+  background: var(--nav-accent, var(--accent));
   border-radius: 1px;
 }
 
@@ -254,6 +273,32 @@ body::before {
 .form-input-sm {
   padding: .35rem .55rem !important;
   font-size: .8rem !important;
+}
+
+/* User Roles */
+.user-role {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.role-admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.role-pro {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.role-user {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 /* Buttons */
