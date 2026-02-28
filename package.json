@@ -1,0 +1,17 @@
+{
+  "name": "antigravity",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "WITROS Oferty - Generator ofert handlowych",
+  "dependencies": {
+    "express": "^4.21.0",
+    "localforage": "^1.10.0"
+  }
+}
