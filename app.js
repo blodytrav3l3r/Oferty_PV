@@ -1388,9 +1388,22 @@ function saveOffer() {
 
   if (editingOfferId) {
     const idx = offers.findIndex(o => o.id === editingOfferId);
-    if (idx >= 0) offers[idx] = offer;
+    if (idx >= 0) {
+      // Save snapshot of previous state
+      const oldOffer = offers[idx];
+      if (!oldOffer.history) oldOffer.history = [];
+      const historySnapshot = JSON.parse(JSON.stringify(oldOffer));
+      // Remove history from snapshot to prevent infinite nesting expansion
+      delete historySnapshot.history;
+
+      const newHistory = [...oldOffer.history, historySnapshot];
+      offer.history = newHistory;
+
+      offers[idx] = offer;
+    }
     editingOfferId = null;
   } else {
+    offer.history = [];
     offers.push(offer);
   }
   saveOffersData(offers);
@@ -1465,6 +1478,7 @@ function renderSavedOffers() {
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
         ${canEdit ? `<button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj">✏️ Edytuj</button>` : ''}
         <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj">📋 Duplikuj</button>
+        ${(o.history && o.history.length > 0) ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian">⏳ Historia</button>` : ''}
         <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON">💾 JSON</button>
         <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX">📊 XLSX</button>
         <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF">📄 PDF</button>
@@ -1524,6 +1538,101 @@ function downloadExistingOffer(id) {
   if (!offer) return;
   downloadOfferFile(offer);
   showToast('Pobrano plik oferty', 'success');
+}
+
+/* ===== OFFER HISTORY ===== */
+function showOfferHistory(id) {
+  const offer = offers.find(o => o.id === id);
+  if (!offer || !offer.history || offer.history.length === 0) {
+    showToast('Brak historii dla tej oferty', 'info');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'offer-history-modal';
+
+  let historyHtml = offer.history.map((h, i) => {
+    // Find next state (either next history item or current offer)
+    const nextState = i === offer.history.length - 1 ? offer : offer.history[i + 1];
+    const priceDiff = nextState.totalBrutto - h.totalBrutto;
+
+    let diffHtml = '';
+    if (Math.abs(priceDiff) > 0.01) {
+      if (priceDiff > 0) {
+        diffHtml = `<span style="color:var(--danger); font-size:0.8rem; font-weight:700;">+${fmt(priceDiff)} PLN</span>`;
+      } else {
+        diffHtml = `<span style="color:var(--success); font-size:0.8rem; font-weight:700;">${fmt(priceDiff)} PLN</span>`;
+      }
+    } else {
+      diffHtml = `<span style="color:var(--text-muted); font-size:0.8rem;">Bez zmian</span>`;
+    }
+
+    return `
+      <div style="background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:8px; padding:1rem; margin-bottom:0.8rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <strong style="color:var(--text-primary);">${new Date(h.updatedAt).toLocaleString()}</strong>
+          <span>👤 ${h.userName || '—'}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.85rem; color:var(--text-secondary);">Wersja przed zmianą</div>
+            <div style="font-size:1.1rem; font-weight:700;">💰 ${fmt(h.totalBrutto)} PLN</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Pozycji: ${h.items ? h.items.length : 0}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.2rem;">Różnica do kolejnej wersji:</div>
+            ${diffHtml}
+            <div style="margin-top:0.6rem;">
+              <button class="btn btn-sm btn-secondary" onclick="restoreOfferVersion('${id}', ${i})">Pobierz do edycji</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).reverse().join('');
+
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:800px; width:95%; border-radius:12px; max-height:90vh; display:flex; flex-direction:column;">
+      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
+        <h3 style="font-weight:700;">⏳ Historia zmian oferty: ${offer.number}</h3>
+        <button class="btn-icon" onclick="closeModal()">✕</button>
+      </div>
+      <div style="padding:1rem 0; overflow-y:auto; flex:1;">
+        ${historyHtml}
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+}
+
+function restoreOfferVersion(offerId, historyIndex) {
+  const offer = offers.find(o => o.id === offerId);
+  if (!offer || !offer.history || !offer.history[historyIndex]) return;
+
+  const snapshot = offer.history[historyIndex];
+
+  // Load snapshot as new offer with current editing id
+  editingOfferId = offer.id;
+  document.getElementById('offer-number').value = snapshot.number || offer.number;
+  document.getElementById('offer-date').value = snapshot.date || offer.date;
+  document.getElementById('client-name').value = snapshot.clientName || '';
+  document.getElementById('client-nip').value = snapshot.clientNip || '';
+  document.getElementById('client-address').value = snapshot.clientAddress || '';
+  document.getElementById('client-contact').value = snapshot.clientContact || '';
+  document.getElementById('invest-name').value = snapshot.investName || '';
+  document.getElementById('invest-address').value = snapshot.investAddress || '';
+  document.getElementById('offer-notes').value = snapshot.notes || '';
+  document.getElementById('transport-km').value = snapshot.transportKm || 100;
+  document.getElementById('transport-rate').value = snapshot.transportRate || 10;
+
+  currentOfferItems = JSON.parse(JSON.stringify(snapshot.items || []));
+  renderOfferItems();
+
+  closeModal();
+  showSection('offer');
+  showToast('Wczytano starszą wersję w trybie edycji! Pamiętaj aby ją zapisać.', 'success');
 }
 
 /* ===== IMPORT OFFER FROM FILE ===== */
