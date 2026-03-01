@@ -213,7 +213,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderPriceList();
   renderSavedOffers();
   setupOfferForm();
-  showSection('offer');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get('tab');
+  if (tab) {
+    showSection(tab);
+  } else {
+    showSection('offer');
+  }
 });
 
 /* ===== NAVIGATION ===== */
