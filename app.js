@@ -440,6 +440,51 @@ function downloadPricelistFile() {
   showToast('Pobrano plik cennika na dysk', 'success');
 }
 
+/* ===== EXCEL IMPORT / EXPORT ===== */
+function exportRuryToExcel() {
+  if (!products || products.length === 0) {
+    showToast('Brak danych do eksportu', 'error');
+    return;
+  }
+  const ws = XLSX.utils.json_to_sheet(products);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Cennik Rury");
+  XLSX.writeFile(wb, "Cennik_Rury_Export.xlsx");
+  showToast('Wyeksportowano cennik rur do Excela', 'success');
+}
+
+function importRuryFromExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+
+      if (!json || json.length === 0) {
+        showToast('Skoroszyt jest pusty lub ma zły format', 'error');
+        return;
+      }
+
+      // Apply imported data
+      products = json;
+      saveProducts(products);
+      renderPriceList();
+      showToast('Pomyślnie zaimportowano cennik rur z Excela', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Błąd podczas importu pliku Excel', 'error');
+    }
+    event.target.value = ''; // Reset input
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 function showAddProductModal() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -1895,6 +1940,8 @@ function filterClientsDb(query) {
   renderClientsDbList(query);
 }
 
+let editingClientId = null;
+
 function renderClientsDbList(query) {
   const container = document.getElementById('clients-db-list');
   if (!container) return;
@@ -1922,47 +1969,97 @@ function renderClientsDbList(query) {
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600; width:130px;">NIP</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Adres</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Kontakt</th>
-        <th style="padding:0.5rem 0.8rem; text-align:center; font-weight:600; width:60px;">Akcje</th>
+        <th style="padding:0.5rem 0.8rem; text-align:center; font-weight:600; width:80px;">Akcje</th>
       </tr>
     </thead>
     <tbody>`;
 
   filtered.forEach(c => {
-    let nameDisplay = c.name;
-    let nipDisplay = c.nip || '—';
+    if (editingClientId === c.id) {
+      html += `<tr style="border-bottom:1px solid var(--border-glass); background:rgba(99,102,241,0.05);">
+        <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-name" class="form-input form-input-sm" value="${c.name.replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
+        <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-nip" class="form-input form-input-sm" value="${(c.nip || '').replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
+        <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-address" class="form-input form-input-sm" value="${(c.address || '').replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
+        <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-contact" class="form-input form-input-sm" value="${(c.contact || '').replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
+        <td style="padding:0.4rem 0.6rem; text-align:center; display:flex; gap:0.2rem; justify-content:center;">
+          <button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${c.id}')" title="Zapisz" style="color:var(--primary); font-size:1rem;">💾</button>
+          <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" style="color:var(--text-muted); font-size:0.85rem;">✕</button>
+        </td>
+      </tr>`;
+    } else {
+      let nameDisplay = c.name;
+      let nipDisplay = c.nip || '—';
 
-    // Highlight matching text if searching
-    if (q) {
-      const nameIdx = c.name.toLowerCase().indexOf(q);
-      if (nameIdx >= 0) {
-        nameDisplay = c.name.substring(0, nameIdx) + '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' + c.name.substring(nameIdx, nameIdx + q.length) + '</mark>' + c.name.substring(nameIdx + q.length);
-      }
-      if (c.nip) {
-        const nipIdx = c.nip.indexOf(q);
-        if (nipIdx >= 0) {
-          nipDisplay = c.nip.substring(0, nipIdx) + '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' + c.nip.substring(nipIdx, nipIdx + q.length) + '</mark>' + c.nip.substring(nipIdx + q.length);
+      // Highlight matching text if searching
+      if (q) {
+        const nameIdx = c.name.toLowerCase().indexOf(q);
+        if (nameIdx >= 0) {
+          nameDisplay = c.name.substring(0, nameIdx) + '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' + c.name.substring(nameIdx, nameIdx + q.length) + '</mark>' + c.name.substring(nameIdx + q.length);
+        }
+        if (c.nip) {
+          const nipIdx = c.nip.indexOf(q);
+          if (nipIdx >= 0) {
+            nipDisplay = c.nip.substring(0, nipIdx) + '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' + c.nip.substring(nipIdx, nipIdx + q.length) + '</mark>' + c.nip.substring(nipIdx + q.length);
+          }
         }
       }
-    }
 
-    html += `<tr onclick="selectClientFromDb('${c.id}')" 
-      style="border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;"
-      onmouseenter="this.style.background='rgba(99,102,241,0.06)'" 
-      onmouseleave="this.style.background='transparent'">
-      <td style="padding:0.6rem 0.8rem; font-weight:600; color:var(--text);">${nameDisplay}</td>
-      <td style="padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);">${nipDisplay}</td>
-      <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.address || '—'}</td>
-      <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.contact || '—'}</td>
-      <td style="padding:0.6rem 0.8rem; text-align:center;">
-        <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${c.id}')" title="Usuń z bazy" 
-          style="color:var(--danger); font-size:0.85rem; opacity:0.6; transition:opacity 0.2s;"
-          onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'">✕</button>
-      </td>
-    </tr>`;
+      html += `<tr onclick="selectClientFromDb('${c.id}')" 
+        style="border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;"
+        onmouseenter="this.style.background='rgba(99,102,241,0.06)'" 
+        onmouseleave="this.style.background='transparent'">
+        <td style="padding:0.6rem 0.8rem; font-weight:600; color:var(--text);">${nameDisplay}</td>
+        <td style="padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);">${nipDisplay}</td>
+        <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.address || '—'}</td>
+        <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.contact || '—'}</td>
+        <td style="padding:0.6rem 0.8rem; text-align:center; display:flex; gap:0.2rem; justify-content:center;">
+          <button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${c.id}')" title="Edytuj" style="color:var(--text-secondary); font-size:0.85rem; opacity:0.8;">✏️</button>
+          <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${c.id}')" title="Usuń z bazy" style="color:var(--danger); font-size:0.85rem; opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'">✕</button>
+        </td>
+      </tr>`;
+    }
   });
 
   html += '</tbody></table>';
   container.innerHTML = html;
+}
+
+function editClientInDb(id) {
+  editingClientId = id;
+  const searchInput = document.getElementById('clients-search-input');
+  renderClientsDbList(searchInput ? searchInput.value : '');
+}
+
+function saveEditedClientInDb(id) {
+  const name = document.getElementById('edit-client-name').value.trim();
+  const nip = document.getElementById('edit-client-nip').value.trim();
+  const address = document.getElementById('edit-client-address').value.trim();
+  const contact = document.getElementById('edit-client-contact').value.trim();
+
+  if (!name) {
+    showToast('Wprowadź nazwę firmy', 'error');
+    return;
+  }
+
+  const client = clientsDb.find(c => c.id === id);
+  if (client) {
+    client.name = name;
+    client.nip = nip;
+    client.address = address;
+    client.contact = contact;
+    client.updatedAt = new Date().toISOString();
+    saveClientsDbData(clientsDb);
+    showToast('Zaktualizowano dane klienta', 'success');
+  }
+  editingClientId = null;
+  const searchInput = document.getElementById('clients-search-input');
+  renderClientsDbList(searchInput ? searchInput.value : '');
+}
+
+function cancelEditClient() {
+  editingClientId = null;
+  const searchInput = document.getElementById('clients-search-input');
+  renderClientsDbList(searchInput ? searchInput.value : '');
 }
 
 function selectClientFromDb(id) {

@@ -1,0 +1,362 @@
+[
+  {
+    "id": "JZW-10-625-D",
+    "name": "Konus DN1000",
+    "price": 540,
+    "weight": "624",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Konus"
+  },
+  {
+    "id": "JZW-10-850-D",
+    "name": "Konus+ DN1000",
+    "price": 690,
+    "weight": "884",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Konus+"
+  },
+  {
+    "id": "KDB-10-02-D",
+    "name": "Krąg 1000/250 DN1000",
+    "price": 330,
+    "weight": "260",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/250"
+  },
+  {
+    "id": "KDB-10-05-D",
+    "name": "Krąg 1000/500 DN1000",
+    "price": 350,
+    "weight": "500",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/500"
+  },
+  {
+    "id": "KDB-10-75-D",
+    "name": "Krąg 1000/750 DN1000",
+    "price": 440,
+    "weight": "760",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/750"
+  },
+  {
+    "id": "KDB-10-10-D",
+    "name": "Krąg 1000/1000 DN1000",
+    "price": 540,
+    "weight": "1010",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/1000"
+  },
+  {
+    "id": "KDB-10-05-OT",
+    "name": "Krąg 1000/500 OT DN1000",
+    "price": 350,
+    "weight": "500",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/500 OT"
+  },
+  {
+    "id": "KDB-10-75-OT",
+    "name": "Krąg 1000/750 OT DN1000",
+    "price": 440,
+    "weight": "760",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/750 OT"
+  },
+  {
+    "id": "KDB-10-10-OT",
+    "name": "Krąg 1000/1000 OT DN1000",
+    "price": 540,
+    "weight": "1010",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Krąg 1000/1000 OT"
+  },
+  {
+    "id": "PZE-16-10",
+    "name": "PZE DN1000",
+    "price": 770,
+    "weight": "720",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "PZE"
+  },
+  {
+    "id": "PO-16-10",
+    "name": "PO DN1000",
+    "price": 550,
+    "weight": "328",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "PO"
+  },
+  {
+    "id": "PDD-10-62-00",
+    "name": "Płyta DIN standard DN1000",
+    "price": 700,
+    "weight": "460",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Płyta DIN standard"
+  },
+  {
+    "id": "PN-12-62-F9",
+    "name": "Płyta najazdowa F900 DN1000",
+    "price": 3000,
+    "weight": "1920",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Płyta najazdowa F900"
+  },
+  {
+    "id": "AVR-PR-10",
+    "name": "AVR 100 DN1000",
+    "price": 130,
+    "weight": "82",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "AVR 100"
+  },
+  {
+    "id": "AVR-PR-08",
+    "name": "AVR80 DN1000",
+    "price": 110,
+    "weight": "71",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "AVR80"
+  },
+  {
+    "id": "AVR-PR-06",
+    "name": "AVR60 DN1000",
+    "price": 100,
+    "weight": "60",
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "AVR60"
+  },
+  {
+    "id": "Y-U-SDV-1000",
+    "name": "Uszczela 1000 DN1000",
+    "price": 120,
+    "weight": null,
+    "category": "Studnie DN1000",
+    "dn": "1000",
+    "componentType": "Uszczela 1000"
+  },
+  {
+    "id": "JZW-12-625-D",
+    "name": "Konus DN1200",
+    "price": 690,
+    "weight": "897",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Konus"
+  },
+  {
+    "id": "JZW-12-850-D",
+    "name": "Konus+ DN1200",
+    "price": 890,
+    "weight": "1368",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Konus+"
+  },
+  {
+    "id": "KDB-12-02-D",
+    "name": "Krąg 1200/250 DN1200",
+    "price": 420,
+    "weight": "380",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/250"
+  },
+  {
+    "id": "KDB-12-05-D",
+    "name": "Krąg 1200/500 DN1200",
+    "price": 500,
+    "weight": "680",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/500"
+  },
+  {
+    "id": "KDB-12-75-D",
+    "name": "Krąg 1200/750 DN1200",
+    "price": 630,
+    "weight": "1010",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/750"
+  },
+  {
+    "id": "KDB-12-10-D",
+    "name": "Krąg 1200/1000 DN1200",
+    "price": 700,
+    "weight": "1360",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/1000"
+  },
+  {
+    "id": "KDB-12-05-OT",
+    "name": "Krąg 1200/500 OT DN1200",
+    "price": 500,
+    "weight": "680",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/500 OT"
+  },
+  {
+    "id": "KDB-12-75-OT",
+    "name": "Krąg 1200/750 OT DN1200",
+    "price": 630,
+    "weight": "1010",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/750 OT"
+  },
+  {
+    "id": "KDB-12-10-OT",
+    "name": "Krąg 1200/1000 OT DN1200",
+    "price": 700,
+    "weight": "1360",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Krąg 1200/1000 OT"
+  },
+  {
+    "id": "PZE-18-12",
+    "name": "PZE DN1200",
+    "price": 950,
+    "weight": "910",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "PZE"
+  },
+  {
+    "id": "PO-18-12",
+    "name": "PO DN1200",
+    "price": 620,
+    "weight": "480",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "PO"
+  },
+  {
+    "id": "PDD-12-62-00",
+    "name": "Płyta DIN standard DN1200",
+    "price": 950,
+    "weight": "790",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Płyta DIN standard"
+  },
+  {
+    "id": "PDR-12-10-00",
+    "name": "Płyta redukcyjna DN1200",
+    "price": 1050,
+    "weight": "523",
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Płyta redukcyjna"
+  },
+  {
+    "id": "Y-U-SDV-1200",
+    "name": "Uszczela 1200 DN1200",
+    "price": 200,
+    "weight": null,
+    "category": "Studnie DN1200",
+    "dn": "1200",
+    "componentType": "Uszczela 1200"
+  },
+  {
+    "id": "KDB-20-02-D",
+    "name": "Krąg 2000/250 DN1500",
+    "price": 1500,
+    "weight": "600",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Krąg 2000/250"
+  },
+  {
+    "id": "KDB-20-05-D",
+    "name": "Krąg 2000/500 DN1500",
+    "price": 1500,
+    "weight": "1200",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Krąg 2000/500"
+  },
+  {
+    "id": "KDB-20-75-D",
+    "name": "Krąg 2000/750 DN1500",
+    "price": 2200,
+    "weight": "1800",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Krąg 2000/750"
+  },
+  {
+    "id": "KDB-20-10-D",
+    "name": "Krąg 2000/1000 DN1500",
+    "price": 2200,
+    "weight": "2400",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Krąg 2000/1000"
+  },
+  {
+    "id": "KDB-20-05-OT",
+    "name": "Krąg 2000/500 OT DN1500",
+    "price": 1500,
+    "weight": "1200",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Krąg 2000/500 OT"
+  },
+  {
+    "id": "KDB-20-10-OT",
+    "name": "Krąg 2000/1000 OT DN1500",
+    "price": 2200,
+    "weight": "2400",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Krąg 2000/1000 OT"
+  },
+  {
+    "id": "PDD-20-62-00",
+    "name": "Płyta DIN standard DN1500",
+    "price": 2050,
+    "weight": "2010",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Płyta DIN standard"
+  },
+  {
+    "id": "PDR-20-10-00",
+    "name": "Płyta redukcyjna DN1500",
+    "price": 2100,
+    "weight": "1720",
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Płyta redukcyjna"
+  },
+  {
+    "id": "Y-U-SDV-2000",
+    "name": "Uszczela 2000 DN1500",
+    "price": 480,
+    "weight": null,
+    "category": "Studnie DN1500",
+    "dn": "1500",
+    "componentType": "Uszczela 2000"
+  }
+]

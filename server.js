@@ -288,18 +288,37 @@ app.put('/api/products/default', requireAuth, (req, res) => {
     res.json({ ok: true });
 });
 
+/* ===== PRODUCTS STUDNIE (CENNIK STUDNI) ===== */
+app.get('/api/products-studnie', (req, res) => {
+    const data = readData('products_studnie', null);
+    res.json({ data });
+});
+
+app.put('/api/products-studnie', requireAuth, (req, res) => {
+    writeData('products_studnie', req.body.data);
+    res.json({ ok: true });
+});
+
+/* ===== PRODUCTS STUDNIE DEFAULT (do resetu) ===== */
+app.get('/api/products-studnie/default', (req, res) => {
+    const data = readData('products_studnie_default', null);
+    res.json({ data });
+});
+
+app.put('/api/products-studnie/default', requireAuth, (req, res) => {
+    writeData('products_studnie_default', req.body.data);
+    res.json({ ok: true });
+});
+
 /* ===== OFFERS ===== */
 app.get('/api/offers', requireAuth, (req, res) => {
     let data = readData('offers', []);
-    // Non-admin logic
     if (req.user.role === 'user') {
         data = data.filter(o => o.userId === req.user.id);
     } else if (req.user.role === 'pro') {
-        // PRO users see their own offers + offers of their subUsers
         const allowedIds = [req.user.id, ...(req.user.subUsers || [])];
         data = data.filter(o => allowedIds.includes(o.userId));
     }
-    // admin sees all
     res.json({ data });
 });
 
@@ -308,7 +327,6 @@ app.put('/api/offers', requireAuth, (req, res) => {
     const incoming = req.body.data || [];
 
     if (req.user.role === 'admin') {
-        // Admin saves everything
         writeData('offers', incoming);
     } else if (req.user.role === 'pro') {
         const allowedIds = [req.user.id, ...(req.user.subUsers || [])];
@@ -316,10 +334,40 @@ app.put('/api/offers', requireAuth, (req, res) => {
         const userOffers = incoming.filter(o => !o.userId || allowedIds.includes(o.userId));
         writeData('offers', [...othersOffers, ...userOffers]);
     } else {
-        // User can only modify their own offers; preserve others
         const othersOffers = allOffers.filter(o => o.userId && o.userId !== req.user.id);
         const userOffers = incoming.filter(o => !o.userId || o.userId === req.user.id);
         writeData('offers', [...othersOffers, ...userOffers]);
+    }
+    res.json({ ok: true });
+});
+
+/* ===== OFFERS STUDNIE ===== */
+app.get('/api/offers-studnie', requireAuth, (req, res) => {
+    let data = readData('offers_studnie', []);
+    if (req.user.role === 'user') {
+        data = data.filter(o => o.userId === req.user.id);
+    } else if (req.user.role === 'pro') {
+        const allowedIds = [req.user.id, ...(req.user.subUsers || [])];
+        data = data.filter(o => allowedIds.includes(o.userId));
+    }
+    res.json({ data });
+});
+
+app.put('/api/offers-studnie', requireAuth, (req, res) => {
+    const allOffers = readData('offers_studnie', []);
+    const incoming = req.body.data || [];
+
+    if (req.user.role === 'admin') {
+        writeData('offers_studnie', incoming);
+    } else if (req.user.role === 'pro') {
+        const allowedIds = [req.user.id, ...(req.user.subUsers || [])];
+        const othersOffers = allOffers.filter(o => o.userId && !allowedIds.includes(o.userId));
+        const userOffers = incoming.filter(o => !o.userId || allowedIds.includes(o.userId));
+        writeData('offers_studnie', [...othersOffers, ...userOffers]);
+    } else {
+        const othersOffers = allOffers.filter(o => o.userId && o.userId !== req.user.id);
+        const userOffers = incoming.filter(o => !o.userId || o.userId === req.user.id);
+        writeData('offers_studnie', [...othersOffers, ...userOffers]);
     }
     res.json({ ok: true });
 });

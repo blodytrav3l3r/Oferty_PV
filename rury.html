@@ -275,6 +275,11 @@
         <button class="btn btn-primary" onclick="showAddProductModal()">➕ Dodaj</button>
         <button class="btn btn-secondary" onclick="saveAsDefaultPriceList()">💾 Zapisz do resetu</button>
         <button class="btn btn-secondary" onclick="downloadPricelistFile()">⬇️ Zapisz do repozytorium</button>
+        <button class="btn btn-secondary" onclick="exportRuryToExcel()">📤 Eksportuj Excel</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('import-rury-excel').click()">📥 Importuj
+          Excel</button>
+        <input type="file" id="import-rury-excel" style="display:none" accept=".xlsx,.xls"
+          onchange="importRuryFromExcel(event)">
         <button class="btn btn-secondary" onclick="resetPriceList()">🔄 Reset</button>
       </div>
       <div class="card">
