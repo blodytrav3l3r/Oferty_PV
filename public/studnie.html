@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="WITROS — Kalkulator studni betonowych i żelbetowych">
     <title>WITROS — Kalkulator Studni</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     <style>
         /* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
         .well-app-layout {
@@ -47,6 +47,9 @@
             border-radius: 12px;
             padding: 0.6rem;
             backdrop-filter: blur(12px);
+            height: calc(100vh - 76px);
+            display: flex;
+            flex-direction: column;
         }
 
         .well-diagram-panel h3 {
@@ -57,11 +60,14 @@
             display: flex;
             align-items: center;
             gap: 0.3rem;
+            flex-shrink: 0;
         }
 
         .well-diagram-svg {
             width: 100%;
-            min-height: 350px;
+            flex: 1;
+            height: auto;
+            min-height: 200px;
             border-radius: 8px;
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(99, 102, 241, 0.1);
@@ -72,6 +78,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 0.25rem;
+            flex-shrink: 0;
         }
 
         .well-summary-mini .ws-item {
@@ -1397,8 +1404,8 @@
 
     <div id="toast-container" class="toast-container"></div>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="pricelist_studnie.js"></script>
-    <script src="app_studnie.js"></script>
+    <script src="js/pricelist_studnie.js"></script>
+    <script src="js/app_studnie.js"></script>
 </body>
 
 </html>

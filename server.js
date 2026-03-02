@@ -17,7 +17,7 @@ if (!fs.existsSync(DATA_DIR)) {
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
-app.use(express.static(__dirname, {
+app.use(express.static(path.join(__dirname, 'public'), {
     index: 'index.html',
     extensions: ['html']
 }));
@@ -384,7 +384,8 @@ app.put('/api/clients', requireAuth, (req, res) => {
 });
 
 /* ===== START ===== */
-app.listen(PORT, '0.0.0.0', () => {
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
     console.log(`\n  🚀 WITROS Oferty — serwer działa na:`);
     console.log(`     http://localhost:${PORT}`);
     console.log(`     Dane zapisywane w: ${DATA_DIR}\n`);

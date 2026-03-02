@@ -1486,16 +1486,28 @@ function renderWellDiagram() {
 
     // Canvas
     const svgW = 320;
-    const mL = 15, mR = 55, mT = 15, mB = 15;
+    const mL = 15, mR = 55, mT = 15, mB = 22;
     const drawW = svgW - mL - mR;
-    const maxH = 450;
-    const pxMm = Math.min(maxH / totalMm, 0.3);
+
+    // Przewidzenie najszerszego elementu
+    let maxElemWidth = bodyDN;
+    visible.forEach(c => {
+        let ew = c.dn || bodyDN;
+        if (c.componentType === 'plyta_zamykajaca' || c.componentType === 'pierscien_odciazajacy') ew *= 1.25;
+        if (c.componentType === 'plyta_najazdowa') ew *= 1.2;
+        if (ew > maxElemWidth) maxElemWidth = ew;
+    });
+    if (maxElemWidth < 1000) maxElemWidth = 1000;
+
+    // Skaler: stała proporcja dopasowana do szerokości okna, wysokość viewBoxa naciągnie się dynamicznie!
+    const pxMm = drawW / maxElemWidth;
+
     const drawH = totalMm * pxMm;
     const svgH = drawH + mT + mB;
     svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
 
-    const refDN = 2000;
-    const getW = (dn) => Math.max(((dn || bodyDN) / refDN) * drawW * 0.95, 50);
+    // Zwraca rzeczywistą szerokość pomnożoną przez jednolity skaler
+    const getW = (dn) => Math.max((dn || bodyDN) * pxMm, 50);
     const cx = mL + drawW / 2;
 
     const TC = {
@@ -1529,26 +1541,21 @@ function renderWellDiagram() {
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
             svg_out += `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${c.stroke}" stroke-width="3"/>`;
         } else if (comp.componentType === 'plyta_zamykajaca') {
-            // Płyta odciążająca ma być wyraźnie szersza
             const pw = w * 1.2, px = cx - pw / 2;
             svg_out += `<rect x="${px}" y="${y}" width="${pw}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (comp.componentType === 'pierscien_odciazajacy') {
-            // Pierścień odciążający ma mieć taką samą szerokość co płyta odciążająca
             const pw = w * 1.2, px = cx - pw / 2;
             svg_out += `<rect x="${px}" y="${y}" width="${pw}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (comp.componentType === 'plyta_najazdowa') {
             const pw = w * 1.15, px = cx - pw / 2;
             svg_out += `<rect x="${px}" y="${y}" width="${pw}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (comp.componentType === 'plyta_din') {
-            // Płyta DIN ma mieć taką samą szerokość co kręgi (nie szersza)
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (comp.componentType === 'wlaz') {
-            // Właz na samej górze, węższy (np. fi 600)
             const ww = getW(600);
             const wx = cx - ww / 2;
             svg_out += `<rect x="${wx}" y="${y}" width="${ww}" height="${h}" rx="1" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.95"/>`;
         } else if (comp.componentType === 'avr') {
-            // Pierścienie wyrównawcze mają mieć TAKĄ SAMĄ SZEROKOŚĆ jak właz
             const aw = getW(600);
             const ax = cx - aw / 2;
             svg_out += `<rect x="${ax}" y="${y}" width="${aw}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
@@ -1563,16 +1570,25 @@ function renderWellDiagram() {
             }
         }
 
-        // Label
-        if (h > 13) {
-            svg_out += `<text x="${cx}" y="${y + h / 2 + 3}" text-anchor="middle" fill="white" font-size="${Math.min(9, h * 0.4)}" font-family="Inter,sans-serif" font-weight="600" opacity="0.9">${c.label}</text>`;
+        // ── Label wewnątrz elementu ──
+        if (h > 18) {
+            const fontSize = Math.min(11, Math.max(8, h * 0.35));
+            svg_out += `<text x="${cx}" y="${y + h / 2 + 4}" text-anchor="middle" fill="white" font-size="${fontSize}" font-family="Inter,sans-serif" font-weight="700" opacity="0.95">${c.label}</text>`;
+        } else if (h > 8) {
+            svg_out += `<text x="${cx}" y="${y + h / 2 + 3}" text-anchor="middle" fill="white" font-size="7" font-family="Inter,sans-serif" font-weight="600" opacity="0.8">${c.label}</text>`;
         }
 
-        // Dimension
-        if (h > 10) {
-            const dx = cx + w / 2 + 5;
-            svg_out += `<line x1="${dx + 1}" y1="${y}" x2="${dx + 1}" y2="${y + h}" stroke="#475569" stroke-width="0.5"/>`;
-            svg_out += `<text x="${dx + 5}" y="${y + h / 2 + 3}" text-anchor="start" fill="#64748b" font-size="7" font-family="Inter,sans-serif">${comp.height}</text>`;
+        // ── Wymiar po prawej z kreskami ──
+        if (h > 6) {
+            const dx = cx + w / 2 + 8;
+            // Kreska pionowa wymiaru
+            svg_out += `<line x1="${dx}" y1="${y + 1}" x2="${dx}" y2="${y + h - 1}" stroke="#94a3b8" stroke-width="0.7"/>`;
+            // Kreski poziome (górny i dolny tick)
+            svg_out += `<line x1="${dx - 3}" y1="${y + 1}" x2="${dx + 3}" y2="${y + 1}" stroke="#94a3b8" stroke-width="0.7"/>`;
+            svg_out += `<line x1="${dx - 3}" y1="${y + h - 1}" x2="${dx + 3}" y2="${y + h - 1}" stroke="#94a3b8" stroke-width="0.7"/>`;
+            // Tekst wymiaru
+            const dimFontSize = Math.min(10, Math.max(7, h * 0.3));
+            svg_out += `<text x="${dx + 6}" y="${y + h / 2 + 3.5}" text-anchor="start" fill="#cbd5e1" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${comp.height}</text>`;
         }
 
         y += h;
@@ -1589,47 +1605,43 @@ function renderWellDiagram() {
             const pprod = studnieProducts.find(x => x.id === pr.productId);
             const prDN = pprod ? (parseFloat(pprod.dn) || 160) : 160;
 
-            // Height offset from bottom in mm
             const mmFromBottom = (pel - bottomElev) * 1000;
-            // Draw even if elevation is outside boundaries, as long as it's something
             if (mmFromBottom > -5000 && mmFromBottom < totalMm + 5000) {
-                // radius based on pipe DN
                 const radius = Math.max((prDN / 2) * pxMm, 3);
-
-                // y coordinate (shifted up by radius so mmFromBottom aligns with bottom edge)
                 const prY = (mT + drawH) - (mmFromBottom * pxMm) - radius;
 
-                // x coordinate based on angle (0 front, 90 right, 180 back, 270 left)
                 let px = cx;
                 const a = parseFloat(pr.angle) || 0;
                 const bw = getW(bodyDN);
-
                 const offset = Math.sin((a * Math.PI) / 180) * (bw / 2 - radius);
                 px += offset;
 
                 const isBack = a > 90 && a < 270;
-
-                // Draw hole
                 const pColor = isBack ? 'rgba(71,85,105,0.4)' : '#38bdf8';
                 const sColor = isBack ? 'rgba(100,116,139,0.5)' : '#0ea5e9';
                 const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
 
                 svg_out += `<circle cx="${px}" cy="${prY}" r="${radius}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />`;
 
-                // Label
                 if (!isBack) {
-                    svg_out += `<text x="${px}" y="${prY - radius - 3}" text-anchor="middle" fill="#7dd3fc" font-size="7" font-weight="700">${a}°</text>`;
+                    svg_out += `<text x="${px}" y="${prY - radius - 4}" text-anchor="middle" fill="#7dd3fc" font-size="8" font-weight="700" font-family="Inter,sans-serif">${a}°</text>`;
                 }
             }
         });
     }
 
-    // Total height bar
-    const aX = svgW - 12;
-    svg_out += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" stroke="#6366f1" stroke-width="1" stroke-dasharray="3,2"/>`;
-    svg_out += `<line x1="${aX - 3}" y1="${mT}" x2="${aX + 3}" y2="${mT}" stroke="#6366f1" stroke-width="1"/>`;
-    svg_out += `<line x1="${aX - 3}" y1="${mT + drawH}" x2="${aX + 3}" y2="${mT + drawH}" stroke="#6366f1" stroke-width="1"/>`;
-    svg_out += `<text x="${aX}" y="${mT + drawH / 2}" text-anchor="middle" fill="#818cf8" font-size="8" font-family="Inter,sans-serif" font-weight="600" transform="rotate(-90 ${aX} ${mT + drawH / 2})">${fmtInt(totalMm)} mm</text>`;
+    // ── Łączna wysokość – pasek po prawej ──
+    const aX = svgW - 10;
+    svg_out += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    svg_out += `<line x1="${aX - 4}" y1="${mT}" x2="${aX + 4}" y2="${mT}" stroke="#818cf8" stroke-width="1.5"/>`;
+    svg_out += `<line x1="${aX - 4}" y1="${mT + drawH}" x2="${aX + 4}" y2="${mT + drawH}" stroke="#818cf8" stroke-width="1.5"/>`;
+    // Tło pod tekstem
+    const totalLabel = fmtInt(totalMm) + ' mm';
+    svg_out += `<rect x="${aX - 20}" y="${mT + drawH / 2 - 7}" width="40" height="14" rx="3" fill="rgba(15,23,42,0.85)"/>`;
+    svg_out += `<text x="${aX}" y="${mT + drawH / 2 + 4}" text-anchor="middle" fill="#a5b4fc" font-size="9" font-family="Inter,sans-serif" font-weight="700" transform="rotate(-90 ${aX} ${mT + drawH / 2})">${totalLabel}</text>`;
+
+    // ── Oznaczenie DN na dole ──
+    svg_out += `<text x="${cx}" y="${mT + drawH + mB - 2}" text-anchor="middle" fill="#64748b" font-size="9" font-family="Inter,sans-serif" font-weight="600">DN${bodyDN}</text>`;
 
     svg.innerHTML = svg_out;
 }
