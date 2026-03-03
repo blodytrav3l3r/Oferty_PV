@@ -312,6 +312,7 @@ function createNewWell(name, dn = 1000) {
         przejscia: [],
         rzednaWlazu: null,
         rzednaDna: null,
+        numer: '',
         autoLocked: false,
         material: gp.material,
         wkladka: gp.wkladka,
@@ -531,18 +532,32 @@ function updateElevations() {
     autoSelectComponents(true);
 }
 
+function updateWellNumer() {
+    const well = getCurrentWell();
+    if (!well) return;
+    const numerInput = document.getElementById('input-well-numer');
+    if (!numerInput) return;
+    well.numer = numerInput.value.trim();
+    well.name = well.numer || ('Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')');
+    renderWellsList();
+    updateSummary();
+}
+
 function syncElevationInputs() {
     const well = getCurrentWell();
     const wlazInput = document.getElementById('input-rzedna-wlazu');
     const dnaInput = document.getElementById('input-rzedna-dna');
+    const numerInput = document.getElementById('input-well-numer');
     if (!well) {
         if (wlazInput) wlazInput.value = '';
         if (dnaInput) dnaInput.value = '';
+        if (numerInput) numerInput.value = '';
         updateHeightIndicator();
         return;
     }
     if (wlazInput) wlazInput.value = well.rzednaWlazu != null ? well.rzednaWlazu : '';
     if (dnaInput) dnaInput.value = well.rzednaDna != null ? well.rzednaDna : '';
+    if (numerInput) numerInput.value = well.numer || '';
     updateHeightIndicator();
 }
 
@@ -553,31 +568,35 @@ function updateHeightIndicator() {
     const diffEl = document.getElementById('height-diff-indicator');
     if (!reqEl || !confEl || !diffEl) return;
     if (!well) {
-        confEl.textContent = '0 mm';
-        reqEl.textContent = '— mm';
+        confEl.textContent = '0 m';
+        reqEl.textContent = '— m';
         diffEl.innerHTML = '';
         return;
     }
 
     const stats = calcWellStats(well);
-    confEl.textContent = fmtInt(stats.height) + ' mm';
+    const confM = (stats.height / 1000).toFixed(2).replace('.', ',');
+    confEl.textContent = confM + ' m';
 
     const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
 
     if (well.rzednaWlazu != null && well.rzednaWlazu > rzDna) {
         const requiredMm = Math.round((well.rzednaWlazu - rzDna) * 1000);
-        reqEl.textContent = fmtInt(requiredMm) + ' mm';
+        const reqM = (requiredMm / 1000).toFixed(2).replace('.', ',');
+        reqEl.textContent = reqM + ' m';
 
         const diff = stats.height - requiredMm;
         if (Math.abs(diff) <= 50) {
             diffEl.innerHTML = '<span style="color:#10b981;">✅ Wysokość OK</span>';
         } else if (diff > 0) {
-            diffEl.innerHTML = `<span style="color:#f59e0b;">⚠️ +${fmtInt(diff)} mm za dużo</span>`;
+            const diffM = (diff / 1000).toFixed(2).replace('.', ',');
+            diffEl.innerHTML = `<span style="color:#f59e0b;">⚠️ +${diffM} m za dużo</span>`;
         } else {
-            diffEl.innerHTML = `<span style="color:#f87171;">⚠️ Brakuje ${fmtInt(Math.abs(diff))} mm</span>`;
+            const diffM = (Math.abs(diff) / 1000).toFixed(2).replace('.', ',');
+            diffEl.innerHTML = `<span style="color:#f87171;">⚠️ Brakuje ${diffM} m</span>`;
         }
     } else {
-        reqEl.textContent = '— mm';
+        reqEl.textContent = '— m';
         diffEl.innerHTML = '';
     }
 }
@@ -1039,7 +1058,7 @@ function renderWellsList() {
         const groupWells = wells.map((w, i) => ({ w, i })).filter(item => item.w.dn === dnGroup);
         if (groupWells.length === 0) return;
 
-        html += `<div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin: 1.2rem 0 0.5rem 0.5rem; letter-spacing:1px; font-weight:700;">Wkopy DN${dnGroup}</div>`;
+        html += `<div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin: 1.2rem 0 0.5rem 0.5rem; letter-spacing:1px; font-weight:700;">Studnie DN${dnGroup}</div>`;
 
         groupWells.forEach(({ w, i }) => {
             const isActive = i === currentWellIndex;

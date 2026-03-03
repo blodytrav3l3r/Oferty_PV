@@ -1587,11 +1587,53 @@
                     <!-- CENTER: Config area -->
                     <div>
                         <!-- Toolbar: DN + Elevations + Height + Controls -->
-                        <div class="well-info-card">
-                            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                                <div style="display:flex; align-items:center; gap:0.25rem;">
+                        <div class="well-info-card" style="padding:0.6rem 0.8rem;">
+                            <!-- Row 1: Title -->
+                            <div style="margin-bottom:0.35rem;">
+                                <span style="font-size:1rem; font-weight:800; color:var(--text-primary);">⚙️
+                                    Konfiguracja studni</span>
+                            </div>
+                            <!-- Row 2: Nr + Rz fields + indicators -->
+                            <div style="display:flex; align-items:center; gap:0.35rem; margin-bottom:0.4rem;">
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Nr</label>
+                                    <input type="text" id="input-well-numer" placeholder="Nr studni"
+                                        onchange="updateWellNumer()" onfocus="this.select()"
+                                        style="width:95px; padding:0.28rem 0.4rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:5px; color:#a78bfa; font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="width:1px; height:24px; background:var(--border-glass);"></div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Rz.
+                                        włazu</label>
+                                    <input type="number" step="0.01" id="input-rzedna-wlazu" placeholder="100.50"
+                                        onchange="updateElevations()" onfocus="this.select()"
+                                        style="width:95px; padding:0.28rem 0.4rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:5px; color:var(--text-primary); font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Rz.
+                                        dna</label>
+                                    <input type="number" step="0.01" id="input-rzedna-dna" placeholder="97.20"
+                                        onchange="updateElevations()" onfocus="this.select()"
+                                        style="width:95px; padding:0.28rem 0.4rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:5px; color:var(--text-primary); font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="width:1px; height:24px; background:var(--border-glass);"></div>
+                                <div
+                                    style="display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; color:var(--text-muted); white-space:nowrap;">
+                                    <span>Wym: <strong id="well-required-height" style="color:#818cf8;">—
+                                            m</strong></span>
+                                    <span>Konf: <strong id="well-configured-height" style="color:var(--success);">0
+                                            m</strong></span>
+                                    <span id="height-diff-indicator"></span>
+                                </div>
+                            </div>
+                            <!-- Row 2: DN selector + controls -->
+                            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                                <div style="display:flex; align-items:center; gap:0.35rem;">
                                     <span
-                                        style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">DN</span>
+                                        style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">DN</span>
                                     <div class="dn-selector" style="margin-bottom:0;">
                                         <button class="dn-btn active" onclick="selectDN(1000)">1000</button>
                                         <button class="dn-btn" onclick="selectDN(1200)">1200</button>
@@ -1600,41 +1642,17 @@
                                         <button class="dn-btn" onclick="selectDN(2500)">2500</button>
                                     </div>
                                 </div>
-                                <div style="width:1px; height:22px; background:var(--border-glass);"></div>
-                                <div style="display:flex; align-items:center; gap:0.2rem;">
-                                    <label style="font-size:0.58rem; color:var(--text-muted); white-space:nowrap;">Rz.
-                                        włazu</label>
-                                    <input type="number" step="0.01" id="input-rzedna-wlazu" placeholder="100.50"
-                                        onchange="updateElevations()"
-                                        style="width:72px; padding:0.2rem 0.3rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); font:600 0.75rem 'Inter',sans-serif; text-align:center;">
-                                </div>
-                                <div style="display:flex; align-items:center; gap:0.2rem;">
-                                    <label style="font-size:0.58rem; color:var(--text-muted); white-space:nowrap;">Rz.
-                                        dna</label>
-                                    <input type="number" step="0.01" id="input-rzedna-dna" placeholder="97.20"
-                                        onchange="updateElevations()"
-                                        style="width:72px; padding:0.2rem 0.3rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); font:600 0.75rem 'Inter',sans-serif; text-align:center;">
-                                </div>
-                                <div style="width:1px; height:22px; background:var(--border-glass);"></div>
-                                <div
-                                    style="display:flex; align-items:center; gap:0.5rem; font-size:0.65rem; color:var(--text-muted);">
-                                    <span>Wym: <strong id="well-required-height" style="color:#818cf8;">—
-                                            mm</strong></span>
-                                    <span>Konf: <strong id="well-configured-height" style="color:var(--success);">0
-                                            mm</strong></span>
-                                    <span id="height-diff-indicator"></span>
-                                </div>
                                 <div style="flex:1;"></div>
-                                <div style="display:flex; gap:0.2rem;">
+                                <div style="display:flex; gap:0.3rem;">
                                     <button class="btn btn-secondary btn-sm" onclick="toggleAutoLock()"
                                         id="btn-lock-auto"
-                                        style="font-size:0.65rem; padding:0.2rem 0.5rem; border-color:var(--border-glass);">🔓
+                                        style="font-size:0.8rem; padding:0.3rem 0.6rem; border-color:var(--border-glass);">🔓
                                         Ręczny</button>
                                     <button class="btn btn-primary btn-sm" onclick="autoSelectComponents()"
-                                        id="btn-auto-select" style="font-size:0.65rem; padding:0.2rem 0.5rem;">🔧
+                                        id="btn-auto-select" style="font-size:0.8rem; padding:0.3rem 0.6rem;">🔧
                                         Auto</button>
                                     <button class="btn btn-secondary btn-sm" onclick="clearWellConfig()"
-                                        style="font-size:0.65rem; padding:0.2rem 0.5rem;">🔄</button>
+                                        style="font-size:0.8rem; padding:0.3rem 0.6rem;">🔄</button>
                                 </div>
                             </div>
                         </div>
