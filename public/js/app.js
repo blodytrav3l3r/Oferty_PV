@@ -654,15 +654,20 @@ function renderCatalogProducts() {
 
 function generateOfferNumber() {
   const d = new Date();
-  if (currentUser && currentUser.symbol) {
-    const userOffers = offers.filter(o => o.userId === currentUser.id);
-    const count = userOffers.length + 1;
-    return `OF/${String(count).padStart(3, '0')}/${currentUser.symbol}/${d.getFullYear()}`;
-  } else {
-    // Fallback if no user or no symbol
-    const count = offers.length + 1;
-    return `OF/${String(count).padStart(3, '0')}/${d.getFullYear()}`;
+  const year = d.getFullYear();
+  let symbol = "XX";
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    if (currentUser.symbol) {
+      symbol = currentUser.symbol;
+    } else if (currentUser.firstName && currentUser.lastName) {
+      symbol = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
+    } else if (currentUser.username) {
+      symbol = currentUser.username.substring(0, 2).toUpperCase();
+    }
   }
+
+  const count = typeof offers !== 'undefined' ? offers.length + 1 : 1;
+  return `OF/${String(count).padStart(6, '0')}/${symbol}/${year}`;
 }
 
 function addOfferItem(productId) {

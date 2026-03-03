@@ -12,11 +12,17 @@ let currentCennikTab = 'dn1000';
 let wells = []; // Array of { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
 let wellCounter = 1;
+let wellDiscounts = {}; // Discounts per DN: { 1000: { dennica: 0, nadbudowa: 0 }, ... }
 
 // Multi-offer system
 let offersStudnie = [];
 let editingOfferIdStudnie = null;
 let clientsDb = [];
+
+// Wizard state
+let currentWizardStep = 1;
+let wizardConfirmedParams = new Set();
+const WIZARD_REQUIRED_PARAMS = ['material', 'wkladka', 'klasaBetonu', 'malowanieW', 'malowanieZ', 'kineta', 'redukcjaKinety', 'stopnie', 'spocznikH', 'usytuowanie'];
 
 /* ===== FORMATTING ===== */
 function fmt(n) { return n == null ? '—' : Number(n).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -87,6 +93,156 @@ function syncOfferClientSummary() {
     s('offer-disp-transport', km !== '—' && rate !== '—' ? `${km} km × ${rate} PLN/km` : '—');
 }
 
+/* ===== OFFER NUMBER ===== */
+function generateOfferNumberStudnie() {
+    const d = new Date();
+    const year = d.getFullYear();
+    let symbol = "XX";
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        if (currentUser.symbol) {
+            symbol = currentUser.symbol;
+        } else if (currentUser.firstName && currentUser.lastName) {
+            symbol = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
+        } else if (currentUser.username) {
+            symbol = currentUser.username.substring(0, 2).toUpperCase();
+        }
+    }
+
+    const count = typeof offersStudnie !== 'undefined' ? offersStudnie.length + 1 : 1;
+    return `OS/${String(count).padStart(6, '0')}/${symbol}/${year}`;
+}
+
+/* ===== WIZARD ===== */
+function goToWizardStep(step) {
+    currentWizardStep = step;
+    document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('wizard-step-' + step);
+    if (target) target.classList.add('active');
+    updateWizardIndicator();
+    if (step === 3) updateWizardSummaryBar();
+    if (step === 2) validateWizardStep2();
+}
+
+function wizardNext() {
+    if (currentWizardStep === 1) {
+        goToWizardStep(2);
+    } else if (currentWizardStep === 2) {
+        if (!validateWizardStep2()) {
+            showToast('Wybierz opcję w każdej grupie parametrów', 'error');
+            return;
+        }
+        goToWizardStep(3);
+    }
+}
+
+function wizardPrev() {
+    if (currentWizardStep === 2) goToWizardStep(1);
+    else if (currentWizardStep === 3) goToWizardStep(2);
+}
+
+function getActiveTileValue(paramName) {
+    const group = document.querySelector(`.param-group[data-param="${paramName}"]`);
+    if (!group) return 'brak';
+    const active = group.querySelector('.param-tile.active');
+    return active ? active.getAttribute('data-val') : 'brak';
+}
+
+function validateWizardStep2() {
+    const allConfirmed = WIZARD_REQUIRED_PARAMS.every(p => wizardConfirmedParams.has(p));
+
+    // Read painting values from DOM tiles (works even without a well)
+    const malowanieWVal = getActiveTileValue('malowanieW');
+    const malowanieZVal = getActiveTileValue('malowanieZ');
+
+    let powlokaWValid = true;
+    if (malowanieWVal !== 'brak') {
+        const pwW = document.getElementById('powloka-name-w');
+        powlokaWValid = !!(pwW && pwW.value.trim() !== '');
+    }
+
+    let powlokaZValid = true;
+    if (malowanieZVal !== 'brak') {
+        const pwZ = document.getElementById('powloka-name-z');
+        powlokaZValid = !!(pwZ && pwZ.value.trim() !== '');
+    }
+
+    // Show/hide powłoka name fields based on current tile selection
+    const powlokaWGroup = document.getElementById('powloka-name-w-group');
+    if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
+    const powlokaZGroup = document.getElementById('powloka-name-z-group');
+    if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
+
+    // Clear hidden fields
+    if (malowanieWVal === 'brak') {
+        const pwWInput = document.getElementById('powloka-name-w');
+        if (pwWInput) pwWInput.value = '';
+    }
+    if (malowanieZVal === 'brak') {
+        const pwZInput = document.getElementById('powloka-name-z');
+        if (pwZInput) pwZInput.value = '';
+    }
+
+    const isFullyValid = allConfirmed && powlokaWValid && powlokaZValid;
+
+    const nextBtn = document.getElementById('wizard-next-step2');
+    if (nextBtn) nextBtn.disabled = !isFullyValid;
+
+    // Update visual state of each param group wrapper
+    document.querySelectorAll('.wizard-param-group').forEach(wrapper => {
+        const param = wrapper.dataset.wizardParam;
+        if (!param) return;
+        const confirmed = wizardConfirmedParams.has(param);
+        wrapper.classList.toggle('confirmed', confirmed);
+        wrapper.classList.toggle('needs-selection', !confirmed);
+        const icon = wrapper.querySelector('.status-icon');
+        if (icon) icon.textContent = confirmed ? '✅' : '⚠️';
+    });
+
+    const msg = document.getElementById('wizard-validation-msg');
+    if (msg) msg.classList.toggle('hidden', isFullyValid);
+
+    return isFullyValid;
+}
+
+function updateWizardIndicator() {
+    const dots = document.querySelectorAll('.wizard-step-dot');
+    dots.forEach(dot => {
+        const step = parseInt(dot.dataset.step);
+        dot.classList.remove('active', 'completed');
+        if (step === currentWizardStep) dot.classList.add('active');
+        else if (step < currentWizardStep) dot.classList.add('completed');
+    });
+    const line1 = document.getElementById('wizard-line-1');
+    const line2 = document.getElementById('wizard-line-2');
+    if (line1) line1.classList.toggle('completed', currentWizardStep > 1);
+    if (line2) line2.classList.toggle('completed', currentWizardStep > 2);
+}
+
+function updateWizardSummaryBar() {
+    const client = document.getElementById('client-name')?.value || '';
+    const offer = document.getElementById('offer-number')?.value || '';
+    const wsbClient = document.getElementById('wsb-client');
+    const wsbOffer = document.getElementById('wsb-offer');
+    const wsbParams = document.getElementById('wsb-params');
+    if (wsbClient) wsbClient.textContent = client || '—';
+    if (wsbOffer) wsbOffer.textContent = offer || '—';
+    if (wsbParams) {
+        const well = getCurrentWell();
+        if (well) {
+            const mat = well.material === 'zelbetowa' ? 'Żelbetowa' : 'Betonowa';
+            const wkl = well.wkladka === 'brak' ? '' : ` | PEHD ${well.wkladka}`;
+            wsbParams.textContent = mat + wkl;
+        } else {
+            wsbParams.textContent = '—';
+        }
+    }
+}
+
+function skipWizardToStep3() {
+    wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
+    goToWizardStep(3);
+}
+
 /* ===== STORAGE (REST API) ===== */
 async function loadStudnieProducts() {
     try {
@@ -111,8 +267,43 @@ async function saveStudnieProducts(data) {
 }
 
 /* ===== WELLS MANAGEMENT ===== */
+
+/** Read the wizard step 2 global params from the UI tiles */
+function getWizardGlobalParams() {
+    const params = {
+        material: 'betonowa',
+        wkladka: 'brak',
+        klasaBetonu: 'C40/50',
+        malowanieW: 'brak',
+        malowanieZ: 'brak',
+        powlokaNameW: '',
+        powlokaNameZ: '',
+        kineta: 'brak',
+        redukcjaKinety: 'nie',
+        stopnie: 'brak',
+        spocznikH: '1/2',
+        usytuowanie: 'w_osi'
+    };
+    // Read confirmed selections from wizard param tiles
+    document.querySelectorAll('#wizard-step-2 .param-group').forEach(group => {
+        const paramName = group.getAttribute('data-param');
+        if (!paramName) return;
+        const activeBtn = group.querySelector('.param-tile.active');
+        if (activeBtn) {
+            params[paramName] = activeBtn.getAttribute('data-val');
+        }
+    });
+    // Read text inputs
+    const pwW = document.getElementById('powloka-name-w');
+    if (pwW) params.powlokaNameW = pwW.value || '';
+    const pwZ = document.getElementById('powloka-name-z');
+    if (pwZ) params.powlokaNameZ = pwZ.value || '';
+    return params;
+}
+
 function createNewWell(name, dn = 1000) {
     wellCounter++;
+    const gp = getWizardGlobalParams();
     return {
         id: 'well-' + Date.now() + '-' + wellCounter,
         name: name || ('Studnia DN' + dn + ' (#' + wellCounter + ')'),
@@ -122,13 +313,18 @@ function createNewWell(name, dn = 1000) {
         rzednaWlazu: null,
         rzednaDna: null,
         autoLocked: false,
-        material: 'betonowa',
-        wkladka: 'brak',
-        malowanieW: 'brak',
-        malowanieZ: 'brak',
-        drabinka: 'brak',
-        spocznik: 'brak',
-        kinetaH: '1/1'
+        material: gp.material,
+        wkladka: gp.wkladka,
+        klasaBetonu: gp.klasaBetonu,
+        malowanieW: gp.malowanieW,
+        malowanieZ: gp.malowanieZ,
+        powlokaNameW: gp.powlokaNameW,
+        powlokaNameZ: gp.powlokaNameZ,
+        kineta: gp.kineta,
+        redukcjaKinety: gp.redukcjaKinety,
+        stopnie: gp.stopnie,
+        spocznikH: gp.spocznikH,
+        usytuowanie: gp.usytuowanie
     };
 }
 
@@ -160,13 +356,9 @@ function duplicateWell(index) {
 }
 
 function removeWell(index) {
-    if (wells.length <= 1) {
-        showToast('Nie można usunąć ostatniej studni', 'error');
-        return;
-    }
     if (!confirm(`Usunąć "${wells[index].name}"?`)) return;
     wells.splice(index, 1);
-    if (currentWellIndex >= wells.length) currentWellIndex = wells.length - 1;
+    if (currentWellIndex >= wells.length) currentWellIndex = Math.max(0, wells.length - 1);
     refreshAll();
     showToast('Studnia usunięta', 'info');
 }
@@ -189,6 +381,7 @@ function renameWell(index) {
 }
 
 function getCurrentWell() {
+    if (wells.length === 0) return null;
     return wells[currentWellIndex] || wells[0];
 }
 
@@ -211,12 +404,23 @@ function setupParamTiles() {
         const paramName = group.getAttribute('data-param');
         group.querySelectorAll('.param-tile').forEach(btn => {
             btn.addEventListener('click', () => {
-                const well = getCurrentWell();
-                if (!well) return;
                 const val = btn.getAttribute('data-val');
-                well[paramName] = val;
-                updateParamTilesUI();
-                autoSelectComponents(true);
+                const well = getCurrentWell();
+
+                // Always toggle visual active state (for wizard step 2 without wells)
+                group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // If a well exists, apply param + re-render
+                if (well) {
+                    well[paramName] = val;
+                    updateParamTilesUI();
+                    autoSelectComponents(true);
+                }
+
+                // Wizard tracking (always)
+                wizardConfirmedParams.add(paramName);
+                validateWizardStep2();
             });
         });
     });
@@ -224,23 +428,59 @@ function setupParamTiles() {
 
 function updateParamTilesUI() {
     const well = getCurrentWell();
-    if (!well) return;
-    document.querySelectorAll('.param-group').forEach(group => {
-        const paramName = group.getAttribute('data-param');
-        const currentVal = well[paramName] || 'brak';
-        group.querySelectorAll('.param-tile').forEach(btn => {
-            if (btn.getAttribute('data-val') === currentVal) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+    if (well) {
+        // Sync tiles to well object when well exists
+        document.querySelectorAll('.param-group').forEach(group => {
+            const paramName = group.getAttribute('data-param');
+            const currentVal = well[paramName] || 'brak';
+            group.querySelectorAll('.param-tile').forEach(btn => {
+                if (btn.getAttribute('data-val') === currentVal) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         });
-    });
+
+        // Sync powłoka inputs from well
+        const powlokaWInput = document.getElementById('powloka-name-w');
+        if (powlokaWInput) powlokaWInput.value = well.powlokaNameW || '';
+        const powlokaZInput = document.getElementById('powloka-name-z');
+        if (powlokaZInput) powlokaZInput.value = well.powlokaNameZ || '';
+    }
+    // Note: when no well, tiles keep their visual state from click handlers
+
+    // Show/hide powłoka name fields based on current tile state (works with or without well)
+    const malowanieWVal = getActiveTileValue('malowanieW');
+    const malowanieZVal = getActiveTileValue('malowanieZ');
+
+    const powlokaWGroup = document.getElementById('powloka-name-w-group');
+    if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
+    const powlokaZGroup = document.getElementById('powloka-name-z-group');
+    if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
+
+    if (malowanieWVal === 'brak') {
+        const pwWInput = document.getElementById('powloka-name-w');
+        if (pwWInput) pwWInput.value = '';
+        if (well) well.powlokaNameW = '';
+    }
+    if (malowanieZVal === 'brak') {
+        const pwZInput = document.getElementById('powloka-name-z');
+        if (pwZInput) pwZInput.value = '';
+        if (well) well.powlokaNameZ = '';
+    }
+}
+
+function updateParamInput(paramName, value) {
+    const well = getCurrentWell();
+    if (!well) return;
+    well[paramName] = value;
 }
 
 /* ===== AUTO-LOCK (MANUAL MODE) ===== */
 function toggleAutoLock() {
     const well = getCurrentWell();
+    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
     well.autoLocked = !well.autoLocked;
     updateAutoLockUI();
 }
@@ -250,6 +490,14 @@ function updateAutoLockUI() {
     const btnLock = document.getElementById('btn-lock-auto');
     const btnAuto = document.getElementById('btn-auto-select');
     if (!btnLock || !btnAuto) return;
+    if (!well) {
+        btnLock.innerHTML = '🔓 Ręczny';
+        btnLock.style.backgroundColor = 'var(--bg-glass)';
+        btnLock.style.borderColor = 'var(--border-glass)';
+        btnAuto.disabled = true;
+        btnAuto.style.opacity = '0.4';
+        return;
+    }
 
     if (well.autoLocked) {
         btnLock.innerHTML = '🔒 Tryb ręczny (Włączony)';
@@ -271,6 +519,7 @@ function updateAutoLockUI() {
 /* ===== ELEVATIONS (RZĘDNE) ===== */
 function updateElevations() {
     const well = getCurrentWell();
+    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
     const wlazInput = document.getElementById('input-rzedna-wlazu');
     const dnaInput = document.getElementById('input-rzedna-dna');
 
@@ -286,6 +535,12 @@ function syncElevationInputs() {
     const well = getCurrentWell();
     const wlazInput = document.getElementById('input-rzedna-wlazu');
     const dnaInput = document.getElementById('input-rzedna-dna');
+    if (!well) {
+        if (wlazInput) wlazInput.value = '';
+        if (dnaInput) dnaInput.value = '';
+        updateHeightIndicator();
+        return;
+    }
     if (wlazInput) wlazInput.value = well.rzednaWlazu != null ? well.rzednaWlazu : '';
     if (dnaInput) dnaInput.value = well.rzednaDna != null ? well.rzednaDna : '';
     updateHeightIndicator();
@@ -297,6 +552,12 @@ function updateHeightIndicator() {
     const confEl = document.getElementById('well-configured-height');
     const diffEl = document.getElementById('height-diff-indicator');
     if (!reqEl || !confEl || !diffEl) return;
+    if (!well) {
+        confEl.textContent = '0 mm';
+        reqEl.textContent = '— mm';
+        diffEl.innerHTML = '';
+        return;
+    }
 
     const stats = calcWellStats(well);
     confEl.textContent = fmtInt(stats.height) + ' mm';
@@ -333,10 +594,14 @@ function updateHeightIndicator() {
  * 4. NIE przekraczać wysokości; jeśli brak wyjścia — max +20mm
  * 5. Preferuj najniższą dennicę
  * 6. Uwzględniaj zapasy przejść szczelnych
- * 7. Obsługuj redukcję DN → DN1000 (DN1200, DN1500, DN2000)
+ * 7. Obsługuj redukcję DN → DN1000 (DN1200, DN1500, DN2000, DN2500)
  */
 function autoSelectComponents(autoTriggered = false) {
     const well = getCurrentWell();
+    if (!well) {
+        if (!autoTriggered) showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
 
     if (well.autoLocked) {
         if (!autoTriggered) showToast('Auto-dobór jest zablokowany w Trybie Ręcznym.', 'error');
@@ -444,7 +709,7 @@ function autoSelectComponents(autoTriggered = false) {
     const dn1000Dennicy = dn1000Products.filter(p => p.componentType === 'dennica').sort((a, b) => a.height - b.height);
     const dn1000Kregi = dn1000Products.filter(p => p.componentType === 'krag').sort((a, b) => b.height - a.height);
     const reductionPlate = dnProducts.find(p => p.componentType === 'plyta_redukcyjna');
-    const canReduce = [1200, 1500, 2000].includes(dn) && reductionPlate;
+    const canReduce = [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
 
     // ===== HELPER: Fill kręgi greedily (largest first) =====
     function fillKregi(target, kregiList) {
@@ -768,7 +1033,7 @@ function renderWellsList() {
     if (!container) return;
 
     let html = '';
-    const dktCap = [1000, 1200, 1500, 2000];
+    const dktCap = [1000, 1200, 1500, 2000, 2500];
 
     dktCap.forEach(dnGroup => {
         const groupWells = wells.map((w, i) => ({ w, i })).filter(item => item.w.dn === dnGroup);
@@ -813,11 +1078,125 @@ function renderWellsList() {
 
     const counter = document.getElementById('wells-counter');
     if (counter) counter.textContent = `(${wells.length})`;
+
+    renderDiscountPanel();
+}
+
+/* ===== DISCOUNT PANEL ===== */
+function updateDiscount(dn, type, value) {
+    if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0 };
+    wellDiscounts[dn][type] = parseFloat(value) || 0;
+    renderDiscountPanel();
+    updateSummary();
+    renderOfferSummary();
+}
+
+function getDiscountedTotal() {
+    const dktCap = [1000, 1200, 1500, 2000, 2500];
+    let grandTotal = 0;
+    dktCap.forEach(dn => {
+        const groupWells = wells.filter(w => w.dn === dn);
+        if (groupWells.length === 0) return;
+        let dennicaSum = 0, nadbudowaSum = 0;
+        groupWells.forEach(w => {
+            const s = calcWellStats(w);
+            dennicaSum += s.priceDennica;
+            nadbudowaSum += s.priceNadbudowa;
+        });
+        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
+        const dennicaDisc = dennicaSum * (1 - disc.dennica / 100);
+        const nadbudowaDisc = nadbudowaSum * (1 - disc.nadbudowa / 100);
+        grandTotal += dennicaDisc + nadbudowaDisc;
+    });
+    return grandTotal;
+}
+
+function renderDiscountPanel() {
+    const panel = document.getElementById('wells-discount-panel');
+    if (!panel) return;
+
+    const dktCap = [1000, 1200, 1500, 2000, 2500];
+    const activeDNs = dktCap.filter(dn => wells.some(w => w.dn === dn));
+
+    if (activeDNs.length === 0) {
+        panel.innerHTML = '';
+        return;
+    }
+
+    let grandDennica = 0, grandNadbudowa = 0, grandTotal = 0, grandDiscounted = 0;
+
+    let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:0.5px; margin-bottom:0.3rem;">💰 Rabaty i podsumowanie</div>`;
+
+    activeDNs.forEach(dn => {
+        const groupWells = wells.filter(w => w.dn === dn);
+        let dennicaSum = 0, nadbudowaSum = 0;
+        groupWells.forEach(w => {
+            const s = calcWellStats(w);
+            dennicaSum += s.priceDennica;
+            nadbudowaSum += s.priceNadbudowa;
+        });
+        const totalDN = dennicaSum + nadbudowaSum;
+
+        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
+        const dennicaAfter = dennicaSum * (1 - disc.dennica / 100);
+        const nadbudowaAfter = nadbudowaSum * (1 - disc.nadbudowa / 100);
+        const totalAfter = dennicaAfter + nadbudowaAfter;
+
+        grandDennica += dennicaSum;
+        grandNadbudowa += nadbudowaSum;
+        grandTotal += totalDN;
+        grandDiscounted += totalAfter;
+
+        html += `<div style="background:rgba(255,255,255,0.03); border-radius:6px; padding:0.35rem 0.4rem; margin-bottom:0.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
+            <span style="font-size:0.7rem; font-weight:700; color:#a78bfa;">DN${dn}</span>
+            <span style="font-size:0.65rem; color:var(--text-muted);">${groupWells.length} szt.</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr auto auto; gap:0.15rem 0.3rem; font-size:0.62rem; align-items:center;">
+            <span style="color:var(--text-muted);">Dennica</span>
+            <span style="color:var(--text-secondary); text-align:right;">${fmtInt(dennicaSum)}</span>
+            <div style="display:flex; align-items:center; gap:0.15rem;">
+              <input type="number" min="0" max="100" step="0.5" value="${disc.dennica || 0}"
+                style="width:38px; padding:1px 3px; font-size:0.6rem; text-align:center; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:3px; color:#fff;"
+                onchange="updateDiscount(${dn},'dennica',this.value)" oninput="updateDiscount(${dn},'dennica',this.value)">
+              <span style="color:var(--text-muted);">%</span>
+            </div>
+            <span style="color:var(--text-muted);">Nadbudowa</span>
+            <span style="color:var(--text-secondary); text-align:right;">${fmtInt(nadbudowaSum)}</span>
+            <div style="display:flex; align-items:center; gap:0.15rem;">
+              <input type="number" min="0" max="100" step="0.5" value="${disc.nadbudowa || 0}"
+                style="width:38px; padding:1px 3px; font-size:0.6rem; text-align:center; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:3px; color:#fff;"
+                onchange="updateDiscount(${dn},'nadbudowa',this.value)" oninput="updateDiscount(${dn},'nadbudowa',this.value)">
+              <span style="color:var(--text-muted);">%</span>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:0.2rem; padding-top:0.15rem; border-top:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:0.6rem; color:var(--text-muted);">Po rabacie:</span>
+            <span style="font-size:0.65rem; font-weight:700; color:${totalAfter < totalDN ? '#34d399' : 'var(--text-secondary)'};">${fmtInt(totalAfter)} PLN</span>
+          </div>
+        </div>`;
+    });
+
+    // Grand total
+    const hasDiscount = grandDiscounted < grandTotal;
+    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.3rem 0.2rem 0.1rem; border-top:1px solid rgba(255,255,255,0.1); margin-top:0.2rem;">
+      <span style="font-size:0.7rem; font-weight:700; color:var(--text-primary);">Suma</span>
+      <div style="text-align:right;">
+        ${hasDiscount ? `<div style="font-size:0.55rem; color:var(--text-muted); text-decoration:line-through;">${fmtInt(grandTotal)} PLN</div>` : ''}
+        <div style="font-size:0.75rem; font-weight:700; color:#6366f1;">${fmtInt(grandDiscounted)} PLN</div>
+      </div>
+    </div>`;
+
+    html += `</div>`;
+    panel.innerHTML = html;
 }
 
 /* ===== WELL STATS ===== */
+
 function calcWellStats(well) {
     let price = 0, weight = 0, height = 0, areaInt = 0, areaExt = 0;
+    let priceDennica = 0, priceNadbudowa = 0;
     well.config.forEach(item => {
         const p = studnieProducts.find(pr => pr.id === item.productId);
         if (!p) return;
@@ -846,7 +1225,16 @@ function calcWellStats(well) {
             itemPrice += parseFloat(p.doplataZelbet);
         }
 
-        price += itemPrice * item.quantity;
+        const lineTotal = itemPrice * item.quantity;
+        price += lineTotal;
+
+        // Split into dennica vs nadbudowa
+        if (p.componentType === 'dennica') {
+            priceDennica += lineTotal;
+        } else {
+            priceNadbudowa += lineTotal;
+        }
+
         weight += (p.weight || 0) * item.quantity;
         height += (p.height || 0) * item.quantity;
         areaInt += (p.area || 0) * item.quantity;
@@ -857,15 +1245,17 @@ function calcWellStats(well) {
             const p = studnieProducts.find(pr => pr.id === item.productId);
             if (!p) return;
             price += (p.price || 0);
+            priceNadbudowa += (p.price || 0);
             weight += (p.weight || 0);
         });
     }
-    return { price, weight, height, areaInt, areaExt };
+    return { price, priceDennica, priceNadbudowa, weight, height, areaInt, areaExt };
 }
 
 /* ===== DN SELECTOR ===== */
 function selectDN(dn) {
     const well = getCurrentWell();
+    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
     well.dn = dn;
     updateDNButtons();
     renderTiles();
@@ -874,7 +1264,7 @@ function selectDN(dn) {
 function updateDNButtons() {
     const well = getCurrentWell();
     document.querySelectorAll('.dn-btn').forEach(b => {
-        b.classList.toggle('active', b.textContent.includes(well.dn));
+        b.classList.toggle('active', well ? b.textContent.includes(well.dn) : false);
     });
 }
 
@@ -882,6 +1272,10 @@ function updateDNButtons() {
 function renderTiles() {
     const container = document.getElementById('tiles-container');
     const well = getCurrentWell();
+    if (!well) {
+        if (container) container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
+        return;
+    }
     const dn = well.dn;
 
     const groups = [
@@ -924,7 +1318,7 @@ function renderTiles() {
     const primaryProducts = studnieProducts.filter(p => (p.dn === dn || p.dn === null) && p.category !== 'Uszczelki studni');
     groups.forEach(g => renderGroup(g, primaryProducts));
 
-    if ([1200, 1500, 2000].includes(dn)) {
+    if ([1200, 1500, 2000, 2500].includes(dn)) {
         const redProducts = studnieProducts.filter(p => p.dn === 1000 && p.category !== 'Uszczelki studni' && p.componentType !== 'plyta_redukcyjna' && p.componentType !== 'dennica');
         if (redProducts.length > 0) {
             html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
@@ -943,6 +1337,7 @@ function addWellComponent(productId) {
     if (!product) return;
 
     const well = getCurrentWell();
+    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
 
     // Włączenie trybu ręcznego jeśli dodano jakikolwiek element z palety
     if (!well.autoLocked) {
@@ -1057,6 +1452,7 @@ function updateWellQuantity(index, value) {
 
 function clearWellConfig() {
     const well = getCurrentWell();
+    if (!well) return;
     well.config = [];
     well.autoLocked = false;
     updateAutoLockUI();
@@ -1068,7 +1464,7 @@ function renderWellConfig() {
     const tbody = document.getElementById('well-config-body');
     const well = getCurrentWell();
 
-    if (well.config.length === 0) {
+    if (!well || well.config.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</td></tr>';
         return;
     }
@@ -1155,6 +1551,7 @@ function renderWellConfig() {
 /* ===== MOVE WELL COMPONENT ===== */
 function moveWellComponent(index, direction) {
     const well = getCurrentWell();
+    if (!well) return;
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= well.config.length) return;
 
@@ -1177,6 +1574,7 @@ function moveWellComponent(index, direction) {
 /* ===== SORT WELL CONFIG by well-physical order (top → bottom) ===== */
 function sortWellConfigByOrder() {
     const well = getCurrentWell();
+    if (!well) return;
     const typeOrder = {
         wlaz: 0,
         plyta_din: 1, plyta_najazdowa: 1, plyta_zamykajaca: 1,
@@ -1201,38 +1599,269 @@ function sortWellConfigByOrder() {
 }
 
 function renderWellPrzejscia() {
-    const tbody = document.getElementById('well-przejscia-body');
+    const container = document.getElementById('well-przejscia-tiles');
+    const countEl = document.getElementById('przejscia-count');
     const well = getCurrentWell();
 
-    if (!well.przejscia || well.przejscia.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:1.5rem;color:var(--text-muted);">Brak zdefiniowanych przejść</td></tr>';
+    if (!container) return;
+
+    if (!well || !well.przejscia || well.przejscia.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
+        if (countEl) countEl.textContent = '';
         return;
     }
 
-    let html = '';
+    // Auto-sort by angle (smallest to largest)
+    const sorted = well.przejscia.map((item, origIdx) => ({ item, origIdx }))
+        .sort((a, b) => (a.item.angle || 0) - (b.item.angle || 0));
+
+    // Rebuild przejscia array in sorted order
+    well.przejscia = sorted.map(s => s.item);
+
+    if (countEl) countEl.textContent = `(${well.przejscia.length})`;
+
+    let totalPrice = 0;
+    let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:0.4rem;">';
+
     well.przejscia.forEach((item, index) => {
         const p = studnieProducts.find(pr => pr.id === item.productId);
-        const name = p ? p.category : 'Nieznane';
+        const typeName = p ? p.category : 'Nieznane';
         const dn = p ? p.dn : '—';
         const price = p ? p.price : 0;
+        totalPrice += price;
 
-        html += `<tr>
-            <td>${index + 1}</td>
-            <td style="font-weight:600;">${name}</td>
-            <td style="text-align:center;">${dn}</td>
-            <td style="text-align:center; font-weight:700; color:var(--text-primary);">${item.rzednaWlaczenia || '—'}</td>
-            <td style="text-align:center; color:#818cf8; font-weight:700;">${item.angle}°</td>
-            <td style="text-align:center; opacity:0.8;">${item.angleExecution}°</td>
-            <td style="text-align:center; font-weight:600; color:var(--success);">${item.angleGony}<sup>g</sup></td>
-            <td style="font-size:0.75rem;">${item.notes || '—'}</td>
-            <td style="text-align:right; font-weight:600;">${fmtInt(price)} PLN</td>
-            <td style="text-align:center;">
-                <button class="config-remove-btn" onclick="removePrzejscieFromWell(${index})">✕</button>
-            </td>
-        </tr>`;
+        const angleColor = item.angle === 0 ? '#6366f1' : '#818cf8';
+        const isFirst = index === 0;
+        const isLast = index === well.przejscia.length - 1;
+
+        // Edit mode for this tile
+        if (editPrzejscieIdx === index) {
+            const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie');
+            const allTypes = [...new Set(przejsciaProducts.map(pr => pr.category))].sort();
+            const currentTypeDNs = przejsciaProducts.filter(pr => pr.category === typeName);
+
+            const typeOptions = allTypes.map(t =>
+                `<option value="${t}" ${t === typeName ? 'selected' : ''}>${t}</option>`
+            ).join('');
+
+            const dnOptions = currentTypeDNs.map(pr =>
+                `<option value="${pr.id}" ${pr.id === item.productId ? 'selected' : ''}>DN${pr.dn} — ${fmtInt(pr.price)} PLN</option>`
+            ).join('');
+
+            const execAngle = (item.angle === 0 || item.angle === 360) ? 0 : (360 - item.angle);
+
+            html += `<div style="background:rgba(30,41,59,0.9); border:1.5px solid rgba(96,165,250,0.4); border-radius:8px; padding:0.5rem; position:relative; box-shadow:0 0 12px rgba(96,165,250,0.1);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                <div style="display:flex; align-items:center; gap:0.3rem;">
+                  <span style="background:#60a5fa; color:#fff; font-size:0.55rem; font-weight:800; padding:0.1rem 0.35rem; border-radius:10px;">${index + 1}</span>
+                  <span style="font-size:0.65rem; font-weight:700; color:#60a5fa;">Edycja przejścia</span>
+                </div>
+                <button onclick="cancelPrzejscieEdit()" title="Anuluj" style="background:none; border:none; cursor:pointer; font-size:0.65rem; padding:0.1rem 0.3rem; color:var(--text-muted);">✕</button>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.3rem; margin-bottom:0.3rem;">
+                <div>
+                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Typ przejścia</label>
+                  <select id="edit-type-${index}" class="form-input" onchange="editChangePrzejscieType(${index})" style="padding:0.25rem 0.3rem; font-size:0.62rem; width:100%;">${typeOptions}</select>
+                </div>
+                <div>
+                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Średnica (DN)</label>
+                  <select id="edit-dn-${index}" class="form-input" style="padding:0.25rem 0.3rem; font-size:0.62rem; width:100%;">${dnOptions}</select>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.3rem; margin-bottom:0.3rem;">
+                <div>
+                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Rzędna [m]</label>
+                  <input type="number" class="form-input" id="edit-rzedna-${index}" step="0.01" value="${item.rzednaWlaczenia || ''}" placeholder="142.50" style="padding:0.25rem 0.3rem; font-size:0.62rem;">
+                </div>
+                <div>
+                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Kąt [°]</label>
+                  <input type="number" class="form-input" id="edit-angle-${index}" value="${item.angle}" min="0" max="360" oninput="editUpdateAngles(${index})" style="padding:0.25rem 0.3rem; font-size:0.62rem; color:#818cf8; font-weight:700;">
+                </div>
+                <div>
+                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Uwagi</label>
+                  <input type="text" class="form-input" id="edit-notes-${index}" value="${item.notes || ''}" placeholder="np. Wlot A" style="padding:0.25rem 0.3rem; font-size:0.62rem;">
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; gap:0.8rem; font-size:0.58rem;">
+                  <span style="color:var(--text-muted);">Kąt wyk: <strong id="edit-exec-${index}" style="color:var(--text-primary);">${execAngle}°</strong></span>
+                  <span style="color:var(--text-muted);">Gony: <strong id="edit-gony-${index}" style="color:var(--success);">${item.angleGony}<sup>g</sup></strong></span>
+                </div>
+                <div style="display:flex; gap:0.25rem;">
+                  <button onclick="cancelPrzejscieEdit()" style="padding:0.25rem 0.5rem; font-size:0.6rem; border-radius:5px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--text-muted); cursor:pointer;">Anuluj</button>
+                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.25rem 0.6rem; font-size:0.6rem;">💾 Zapisz</button>
+                </div>
+              </div>
+            </div>`;
+            return;
+        }
+
+        html += `<div style="background:rgba(30,41,59,0.7); border:1px solid rgba(99,102,241,0.15); border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease;"
+                      onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.borderColor='rgba(99,102,241,0.15)'">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+            <div style="display:flex; align-items:center; gap:0.3rem;">
+              <span style="background:${angleColor}; color:#fff; font-size:0.55rem; font-weight:800; padding:0.1rem 0.35rem; border-radius:10px;">${index + 1}</span>
+              <span style="font-size:0.68rem; font-weight:700; color:var(--text-primary);">${typeName}</span>
+            </div>
+            <div style="display:flex; gap:0.15rem;">
+              ${!isFirst ? `<button onclick="movePrzejscie(${index},-1)" title="W górę" style="background:none; border:none; cursor:pointer; font-size:0.6rem; padding:0.1rem 0.2rem; color:var(--text-muted); opacity:0.7;">⬆</button>` : ''}
+              ${!isLast ? `<button onclick="movePrzejscie(${index},1)" title="W dół" style="background:none; border:none; cursor:pointer; font-size:0.6rem; padding:0.1rem 0.2rem; color:var(--text-muted); opacity:0.7;">⬇</button>` : ''}
+              <button onclick="editPrzejscie(${index})" title="Edytuj" style="background:none; border:none; cursor:pointer; font-size:0.6rem; padding:0.1rem 0.2rem; color:#60a5fa; opacity:0.8;">✏️</button>
+              <button onclick="removePrzejscieFromWell(${index})" title="Usuń" style="background:none; border:none; cursor:pointer; font-size:0.65rem; padding:0.1rem 0.2rem; color:#ef4444;">✕</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.15rem 0.5rem; font-size:0.6rem;">
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">DN</span>
+              <span style="font-weight:700; color:#a78bfa;">DN${dn}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">Rzędna</span>
+              <span style="font-weight:700; color:var(--text-primary);">${item.rzednaWlaczenia || '—'}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">Kąt</span>
+              <span style="font-weight:800; color:${angleColor};">${item.angle}°</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">Kąt wyk.</span>
+              <span style="font-weight:600; color:var(--text-secondary);">${item.angleExecution}°</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">Gony</span>
+              <span style="font-weight:700; color:var(--success);">${item.angleGony}<sup>g</sup></span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">Cena</span>
+              <span style="font-weight:700; color:var(--success);">${fmtInt(price)}</span>
+            </div>
+          </div>
+          ${item.notes ? `<div style="font-size:0.55rem; color:var(--text-muted); margin-top:0.2rem; padding-top:0.15rem; border-top:1px solid rgba(255,255,255,0.04); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.notes}">📝 ${item.notes}</div>` : ''}
+        </div>`;
     });
-    tbody.innerHTML = html;
+
+    html += '</div>';
+
+    // Summary bar
+    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; padding:0.3rem 0.4rem; background:rgba(99,102,241,0.08); border-radius:6px; border:1px solid rgba(99,102,241,0.15);">
+      <span style="font-size:0.65rem; color:var(--text-muted);">Suma przejść (${well.przejscia.length} szt.)</span>
+      <span style="font-size:0.75rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span>
+    </div>`;
+
+    container.innerHTML = html;
 }
+
+function movePrzejscie(index, direction) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= well.przejscia.length) return;
+    const temp = well.przejscia[index];
+    well.przejscia[index] = well.przejscia[newIndex];
+    well.przejscia[newIndex] = temp;
+    renderWellPrzejscia();
+    updateSummary();
+}
+
+function editPrzejscie(index) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia || !well.przejscia[index]) return;
+    const item = well.przejscia[index];
+    const p = studnieProducts.find(pr => pr.id === item.productId);
+    const typeName = p ? p.category : 'Nieznane';
+    const dn = p ? p.dn : '—';
+
+    // Get all przejscia products for the DN selector
+    const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map(pr => pr.category))].sort();
+
+    // Build type selector
+    const typeOptions = allTypes.map(t => {
+        const isActive = t === typeName;
+        return `<option value="${t}" ${isActive ? 'selected' : ''}>${t}</option>`;
+    }).join('');
+
+    // Build DN selector for current type
+    const currentTypeDNs = przejsciaProducts.filter(pr => pr.category === typeName);
+    const dnOptions = currentTypeDNs.map(pr => {
+        const isActive = pr.id === item.productId;
+        return `<option value="${pr.id}" ${isActive ? 'selected' : ''}>DN${pr.dn} — ${fmtInt(pr.price)} PLN</option>`;
+    }).join('');
+
+    // Find the tile container
+    const container = document.getElementById('well-przejscia-tiles');
+    if (!container) return;
+    const tiles = container.querySelectorAll('[data-przejscie-idx]');
+    const tile = tiles[index] || container.querySelectorAll(':scope > div > div')[index];
+
+    // Actually, re-render with index in edit mode is simpler
+    editPrzejscieIdx = index;
+    renderWellPrzejscia();
+}
+
+let editPrzejscieIdx = -1;
+
+function savePrzejscieEdit(index) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia || !well.przejscia[index]) return;
+
+    const newProductId = document.getElementById('edit-dn-' + index).value;
+    const rzedna = document.getElementById('edit-rzedna-' + index).value;
+    const angle = parseFloat(document.getElementById('edit-angle-' + index).value) || 0;
+    const notes = document.getElementById('edit-notes-' + index).value.trim();
+
+    const exec = (angle === 0 || angle === 360) ? 0 : (360 - angle);
+    const gons = (angle * 400 / 360).toFixed(2);
+
+    well.przejscia[index] = {
+        productId: newProductId,
+        rzednaWlaczenia: rzedna ? parseFloat(rzedna).toFixed(2) : null,
+        angle: angle,
+        angleExecution: exec,
+        angleGony: gons,
+        notes: notes
+    };
+
+    editPrzejscieIdx = -1;
+    refreshAll();
+    autoSelectComponents(true);
+    showToast('Zapisano zmiany przejścia', 'success');
+    renderWellPrzejscia();
+}
+
+function cancelPrzejscieEdit() {
+    editPrzejscieIdx = -1;
+    renderWellPrzejscia();
+}
+
+function editUpdateAngles(index) {
+    const el = document.getElementById('edit-angle-' + index);
+    if (!el) return;
+    const angle = parseFloat(el.value) || 0;
+    const exec = (angle === 0 || angle === 360) ? 0 : (360 - angle);
+    const gons = (angle * 400 / 360).toFixed(2);
+    const execEl = document.getElementById('edit-exec-' + index);
+    const gonyEl = document.getElementById('edit-gony-' + index);
+    if (execEl) execEl.textContent = exec + '°';
+    if (gonyEl) gonyEl.innerHTML = gons + '<sup>g</sup>';
+}
+
+function editChangePrzejscieType(index) {
+    const typeSelect = document.getElementById('edit-type-' + index);
+    const dnSelect = document.getElementById('edit-dn-' + index);
+    if (!typeSelect || !dnSelect) return;
+    const newType = typeSelect.value;
+    const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie' && pr.category === newType);
+    dnSelect.innerHTML = przejsciaProducts.map(pr =>
+        `<option value="${pr.id}">DN${pr.dn} — ${fmtInt(pr.price)} PLN</option>`
+    ).join('');
+}
+
+window.editPrzejscie = editPrzejscie;
+window.savePrzejscieEdit = savePrzejscieEdit;
+window.cancelPrzejscieEdit = cancelPrzejscieEdit;
+window.editUpdateAngles = editUpdateAngles;
+window.editChangePrzejscieType = editChangePrzejscieType;
 
 function toggleCard(contentId, iconId) {
     const content = document.getElementById(contentId);
@@ -1255,98 +1884,244 @@ function switchBuilderTab(tab) {
 
     if (tab === 'transitions') {
         renderInlinePrzejsciaApp();
+        renderWellPrzejscia();
     }
 }
 
 let inlinePrzejsciaState = { type: null, dnId: null };
+let visiblePrzejsciaTypes = new Set(); // By default, all types are hidden
+
+/* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
+function openPrzejsciaVisibilityPopup() {
+    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+
+    // Create overlay
+    let overlay = document.getElementById('przejscia-visibility-overlay');
+    if (overlay) overlay.remove();
+
+    overlay = document.createElement('div');
+    overlay.id = 'przejscia-visibility-overlay';
+    overlay.style.cssText = `
+        position:fixed; inset:0; z-index:9999;
+        background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+        display:flex; align-items:center; justify-content:center;
+        animation: fadeInOverlay 0.2s ease;
+    `;
+    overlay.onclick = (e) => { if (e.target === overlay) closePrzejsciaVisibilityPopup(); };
+
+    const visibleCount = allTypes.filter(t => visiblePrzejsciaTypes.has(t)).length;
+
+    let tilesHtml = allTypes.map(t => {
+        const isVisible = visiblePrzejsciaTypes.has(t);
+        return `
+            <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}" 
+                 onclick="togglePrzejsciaTypeVisibility('${t.replace(/'/g, "\\\\'")}')"
+                 title="${t}">
+                <div class="przejscia-vis-tile-name">${t}</div>
+            </div>`;
+    }).join('');
+
+    overlay.innerHTML = `
+        <div class="przejscia-vis-popup">
+            <div class="przejscia-vis-header">
+                <div>
+                    <h3 style="margin:0; font-size:0.85rem; font-weight:800; color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
+                    <div class="przejscia-vis-counter" style="font-size:0.6rem; color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}</div>
+                </div>
+                <button onclick="closePrzejsciaVisibilityPopup()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; border-radius:4px; transition:all 0.15s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='var(--text-muted)'">✕</button>
+            </div>
+            <div class="przejscia-vis-actions">
+                <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(true)">Pokaż wszystkie</button>
+                <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(false)">Ukryj wszystkie</button>
+            </div>
+            <div class="przejscia-vis-grid">
+                ${tilesHtml}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Measure longest tile name and set uniform column width
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = '700 0.85rem Inter, sans-serif';
+    const maxTextWidth = Math.max(...allTypes.map(n => ctx.measureText(n).width));
+    const tileMinW = Math.ceil(maxTextWidth + 24); // +24 for padding
+    const gridEl = overlay.querySelector('.przejscia-vis-grid');
+    if (gridEl) gridEl.style.setProperty('--tile-min-w', tileMinW + 'px');
+}
+
+function closePrzejsciaVisibilityPopup() {
+    const overlay = document.getElementById('przejscia-visibility-overlay');
+    if (overlay) overlay.remove();
+    renderInlinePrzejsciaApp();
+}
+
+function togglePrzejsciaTypeVisibility(type) {
+    if (visiblePrzejsciaTypes.has(type)) {
+        visiblePrzejsciaTypes.delete(type);
+    } else {
+        visiblePrzejsciaTypes.add(type);
+    }
+    refreshPrzejsciaVisibilityTiles();
+}
+
+function setPrzejsciaVisibilityAll(visible) {
+    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))];
+    if (visible) {
+        allTypes.forEach(t => visiblePrzejsciaTypes.add(t));
+    } else {
+        visiblePrzejsciaTypes.clear();
+    }
+    refreshPrzejsciaVisibilityTiles();
+}
+
+function refreshPrzejsciaVisibilityTiles() {
+    const overlay = document.getElementById('przejscia-visibility-overlay');
+    if (!overlay) return;
+
+    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+    const visibleCount = allTypes.filter(t => visiblePrzejsciaTypes.has(t)).length;
+
+    // Update counter text
+    const counterEl = overlay.querySelector('.przejscia-vis-counter');
+    if (counterEl) counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
+
+    // Update each tile in-place
+    const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
+    tiles.forEach(tile => {
+        const type = tile.getAttribute('title');
+        const isVisible = visiblePrzejsciaTypes.has(type);
+        tile.classList.toggle('visible', isVisible);
+        tile.classList.toggle('hidden-type', !isVisible);
+    });
+}
+
+window.openPrzejsciaVisibilityPopup = openPrzejsciaVisibilityPopup;
+window.closePrzejsciaVisibilityPopup = closePrzejsciaVisibilityPopup;
+window.togglePrzejsciaTypeVisibility = togglePrzejsciaTypeVisibility;
+window.setPrzejsciaVisibilityAll = setPrzejsciaVisibilityAll;
 
 function renderInlinePrzejsciaApp() {
     const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const types = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+    // Filter to only visible types
+    const types = allTypes.filter(t => visiblePrzejsciaTypes.has(t));
 
     const container = document.getElementById('inline-przejscia-app');
     if (!container) return;
 
+    // Reset type if it's been hidden
+    if (inlinePrzejsciaState.type && !types.includes(inlinePrzejsciaState.type)) {
+        inlinePrzejsciaState.type = types[0] || null;
+        inlinePrzejsciaState.dnId = null;
+    }
     if (!inlinePrzejsciaState.type) {
         inlinePrzejsciaState.type = types[0] || null;
+    }
+
+    const hiddenCount = allTypes.length - types.length;
+    const visibilityBtnLabel = hiddenCount > 0 ? `👁️ Pokaż/Ukryj (${hiddenCount} ukrytych)` : '👁️ Pokaż/Ukryj';
+
+    // If no types visible, show empty state
+    if (types.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding:1.5rem; border:1px dashed rgba(99,102,241,0.2); border-radius:10px; background:rgba(15,23,42,0.3); margin:0.4rem 0;">
+                <div style="font-size:1.5rem; margin-bottom:0.5rem;">🚫</div>
+                <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
+                <button class="btn btn-primary btn-sm" onclick="openPrzejsciaVisibilityPopup()" style="padding:0.35rem 0.8rem; font-size:0.7rem;">
+                    👁️ Pokaż przejścia (${allTypes.length} dostępnych)
+                </button>
+            </div>
+        `;
+        return;
     }
 
     const dnList = inlinePrzejsciaState.type ? przejsciaProducts.filter(p => p.category === inlinePrzejsciaState.type).sort((a, b) => a.dn - b.dn) : [];
     const selectedProduct = inlinePrzejsciaState.dnId ? studnieProducts.find(p => p.id === inlinePrzejsciaState.dnId) : null;
 
     container.innerHTML = `
-        <div style="display:grid; grid-template-columns: 220px 1fr; gap:1.5rem; padding:1.5rem 0;">
-            <!-- Left: Type selector -->
-            <div style="border-right: 1px solid rgba(255,255,255,0.05); padding-right:1rem; padding-left:1.5rem">
-                <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem; letter-spacing:1px; font-weight:700;">Rodzaj materiału</div>
-                ${types.map(t => `
-                    <button class="b-tab-btn ${t === inlinePrzejsciaState.type ? 'active' : ''}" 
-                            style="width: 100%; text-align: left; padding: 0.8rem 1rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;"
-                            onclick="window.inlineSetType('${t}')">
-                        ${t} <span>${t === inlinePrzejsciaState.type ? '➜' : ''}</span>
-                    </button>
-                `).join('')}
+        <!-- Rodzaj tiles - scrollable grid -->
+        <div style="padding:0.4rem 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+                <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Rodzaj materiału</div>
+                <button onclick="openPrzejsciaVisibilityPopup()" style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25); color:#a5b4fc; font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(99,102,241,0.2)';this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.25)'">${visibilityBtnLabel}</button>
             </div>
-
-            <!-- Right: Configurator -->
-            <div style="padding-right:1.5rem;">
-                <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem; letter-spacing:1px; font-weight:700;">Średnica (DN)</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap:0.8rem;">
-                    ${dnList.map(p => `
-                        <div class="fs-dn-tile ${p.id === inlinePrzejsciaState.dnId ? 'active' : ''}" 
-                             style="padding:1rem; min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center;"
-                             onclick="window.inlineSetDN('${p.id}')">
-                            <div class="dn-label" style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">DN ${p.dn}</div>
-                            <div class="price-label" style="font-size:0.85rem; color:var(--success); font-weight:600; margin-top:0.3rem;">${fmtInt(p.price)} PLN</div>
-                        </div>
-                    `).join('')}
+            <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(99,102,241,0.4) transparent;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:0.25rem;">
+                    ${types.map(t => {
+        const isActive = t === inlinePrzejsciaState.type;
+        const dnCount = przejsciaProducts.filter(p => p.category === t).length;
+        return `
+                        <div onclick="window.inlineSetType('${t}')" 
+                             style="padding:0.3rem 0.4rem; border-radius:6px; cursor:pointer; transition:all 0.15s ease;
+                                    background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'};
+                                    border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.06)'};
+                                    ${isActive ? 'box-shadow:0 0 8px rgba(99,102,241,0.15);' : ''}"
+                             onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.25)';this.style.background='${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.06)'}'"
+                             onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'}'"
+                             title="${t}">
+                            <div style="font-size:0.65rem; font-weight:${isActive ? '700' : '600'}; color:${isActive ? '#a78bfa' : 'var(--text-primary)'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t}</div>
+                            <div style="font-size:0.5rem; color:var(--text-muted);">${dnCount} DN</div>
+                        </div>`;
+    }).join('')}
                 </div>
-
-                ${selectedProduct ? `
-                <div style="margin-top:2rem; background:rgba(30,41,59,0.8); border:1px solid rgba(99,102,241,0.25); padding:1.5rem; border-radius:12px; animation: fadeIn 0.3s ease-out;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:1rem;">
-                        <span style="font-size:1.1rem; font-weight:700; color:#fff;">Wybrane przejście: ${selectedProduct.category} DN${selectedProduct.dn}</span>
-                        <span style="font-size:1.3rem; color:var(--success); font-weight:800;">${fmtInt(selectedProduct.price)} PLN</span>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;">
-                        <div class="form-group">
-                            <label class="form-label" style="font-size:0.75rem;">Rzędna włączenia [m]</label>
-                            <input type="number" class="form-input" id="inl-rzedna" step="0.01" placeholder="np. 142.50" style="padding:0.8rem; font-size:1rem;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size:0.75rem;">Kąt stopień [°]</label>
-                            <input type="number" class="form-input" id="inl-angle" value="0" min="0" max="360" oninput="window.inlineUpdateAngles()" style="padding:0.8rem; font-size:1rem; color:var(--indigo-400); font-weight:700;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top:0.8rem;">
-                        <label class="form-label" style="font-size:0.75rem;">Uwagi / Oznaczenie</label>
-                        <input type="text" class="form-input" id="inl-notes" placeholder="np. Wlot A, kierunek ul. Wiejska" style="padding:0.8rem;">
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:1.2rem; background:rgba(15,23,42,0.4); padding:1rem; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
-                        <div>
-                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Kąt wykonania [°]</div>
-                            <div id="inl-exec" style="font-size:1.2rem; font-weight:700; color:var(--text-primary);">360°</div>
-                        </div>
-                        <div>
-                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Kąt gony [gon]</div>
-                            <div id="inl-gony" style="font-size:1.2rem; font-weight:700; color:var(--success);">0.00<sup>g</sup></div>
-                        </div>
-                    </div>
-
-                    <div style="margin-top:1.5rem; text-align:right;">
-                        <button class="btn btn-primary" onclick="window.inlineFinish()" style="padding:0.8rem 2rem; font-size:1rem;">➕ Dodaj do studni</button>
-                    </div>
-                </div>
-                ` : `
-                <div style="margin-top:2rem; flex:1; display:flex; align-items:center; justify-content:center; padding:3rem 1rem; color:var(--text-muted); border:2px dashed rgba(255,255,255,0.05); border-radius:12px; font-size:0.9rem;">
-                    Wybierz średnicę (DN), aby sfinalizować przejście
-                </div>
-                `}
             </div>
         </div>
+
+        <!-- DN selector -->
+        <div style="padding:0.3rem 0;">
+            <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight:700;">Średnica (DN) — ${inlinePrzejsciaState.type || ''}</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(70px, 1fr)); gap:0.25rem;">
+                ${dnList.map(p => `
+                    <div class="fs-dn-tile ${p.id === inlinePrzejsciaState.dnId ? 'active' : ''}" 
+                         style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px;"
+                         onclick="window.inlineSetDN('${p.id}')">
+                        <div style="font-size:0.75rem; font-weight:800; color:var(--text-primary);">DN${p.dn}</div>
+                        <div style="font-size:0.6rem; color:var(--success); font-weight:600;">${fmtInt(p.price)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        ${selectedProduct ? `
+        <div style="background:rgba(30,41,59,0.6); border:1px solid rgba(99,102,241,0.2); padding:0.5rem; border-radius:8px; margin-top:0.3rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <span style="font-size:0.72rem; font-weight:700; color:#fff;">🔗 ${selectedProduct.category} DN${selectedProduct.dn}</span>
+                <span style="font-size:0.8rem; color:var(--success); font-weight:800;">${fmtInt(selectedProduct.price)} PLN</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.3rem; align-items:end;">
+                <div>
+                    <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Rzędna włączenia [m]</label>
+                    <input type="number" class="form-input" id="inl-rzedna" step="0.01" placeholder="142.50" style="padding:0.3rem 0.4rem; font-size:0.7rem;">
+                </div>
+                <div>
+                    <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Kąt [°]</label>
+                    <input type="number" class="form-input" id="inl-angle" value="0" min="0" max="360" oninput="window.inlineUpdateAngles()" style="padding:0.3rem 0.4rem; font-size:0.7rem; color:#818cf8; font-weight:700;">
+                </div>
+                <div>
+                    <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Uwagi</label>
+                    <input type="text" class="form-input" id="inl-notes" placeholder="np. Wlot A" style="padding:0.3rem 0.4rem; font-size:0.7rem;">
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem;">
+                <div style="display:flex; gap:1rem; font-size:0.62rem;">
+                    <span style="color:var(--text-muted);">Kąt wyk: <strong id="inl-exec" style="color:var(--text-primary);">360°</strong></span>
+                    <span style="color:var(--text-muted);">Gony: <strong id="inl-gony" style="color:var(--success);">0.00<sup>g</sup></strong></span>
+                </div>
+                <button class="btn btn-primary" onclick="window.inlineFinish()" style="padding:0.3rem 0.8rem; font-size:0.7rem;">➕ Dodaj</button>
+            </div>
+        </div>
+        ` : `
+        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.06); border-radius:8px; font-size:0.7rem; margin-top:0.3rem;">
+            Wybierz średnicę (DN) aby skonfigurować przejście
+        </div>
+        `}
     `;
 
     if (inlinePrzejsciaState.dnId) window.inlineUpdateAngles();
@@ -1378,6 +2153,7 @@ window.inlineFinish = () => {
     const gons = (angle * 400 / 360).toFixed(2);
 
     const well = getCurrentWell();
+    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
     if (!well.przejscia) well.przejscia = [];
 
     well.przejscia.push({
@@ -1398,6 +2174,7 @@ window.inlineFinish = () => {
 
 function removePrzejscieFromWell(index) {
     const well = getCurrentWell();
+    if (!well) return;
     if (well.przejscia) {
         well.przejscia.splice(index, 1);
         refreshAll();
@@ -1409,6 +2186,20 @@ function removePrzejscieFromWell(index) {
 /* ===== SUMMARY ===== */
 function updateSummary() {
     const well = getCurrentWell();
+    if (!well) {
+        document.getElementById('sum-price').textContent = '0 PLN';
+        document.getElementById('sum-weight').textContent = '0 kg';
+        document.getElementById('sum-height').textContent = '0 mm';
+        document.getElementById('sum-area-int').textContent = '0,00 m²';
+        document.getElementById('sum-area-ext').textContent = '0,00 m²';
+        const titleEl = document.getElementById('well-diagram-title');
+        if (titleEl) titleEl.innerHTML = '🔍 Podgląd studni';
+        document.getElementById('ws-price').textContent = '0 PLN';
+        document.getElementById('ws-weight').textContent = '0 kg';
+        document.getElementById('ws-height').textContent = '0 mm';
+        updateHeightIndicator();
+        return;
+    }
     const stats = calcWellStats(well);
 
     // Bottom bar
@@ -1435,7 +2226,7 @@ function renderWellDiagram() {
     const svg = document.getElementById('well-diagram');
     const well = getCurrentWell();
 
-    if (well.config.length === 0) {
+    if (!well || well.config.length === 0) {
         svg.setAttribute('viewBox', '0 0 300 500');
         svg.innerHTML = `
       <text x="150" y="240" text-anchor="middle" fill="#64748b" font-size="13" font-family="Inter,sans-serif">Dodaj elementy</text>
@@ -1779,6 +2570,7 @@ const CENNIK_TAB_FILTERS = {
     dn1200: p => p.category === 'Studnie DN1200',
     dn1500: p => p.category === 'Studnie DN1500',
     dn2000: p => p.category === 'Studnie DN2000',
+    dn2500: p => p.category === 'Studnie DN2500',
     dennicy: p => p.componentType === 'dennica',
     akcesoria: p => p.category === 'Akcesoria studni' || p.category === 'Uszczelki studni',
     przejscia: p => p.componentType === 'przejscie'
@@ -1836,10 +2628,11 @@ function renderStudniePriceList() {
         dn1000: '🔵 DN1000',
         dn1200: '🟣 DN1200',
         dn1500: '🔴 DN1500',
-        dn2000: '🟠 DN2000'
+        dn2000: '🟠 DN2000',
+        dn2500: '🔴 DN2500'
     };
 
-    let groupOrder = ['dn1000', 'dn1200', 'dn1500', 'dn2000', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy', 'konus', 'krag', 'krag_ot', 'dennica', 'plyta_redukcyjna', 'avr', 'uszczelka', 'przejscie', 'inne'];
+    let groupOrder = ['dn1000', 'dn1200', 'dn1500', 'dn2000', 'dn2500', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy', 'konus', 'krag', 'krag_ot', 'dennica', 'plyta_redukcyjna', 'avr', 'uszczelka', 'przejscie', 'inne'];
 
     const isPrzejscia = currentCennikTab === 'przejscia';
 
@@ -1848,6 +2641,7 @@ function renderStudniePriceList() {
     }
 
     let html = `<div class="table-wrap">
+    ${isPrzejscia ? `<div style="padding:0.5rem; text-align:right;"><button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj nową kategorię przejść (np. GRP)</button></div>` : ''}
     <table style="table-layout: fixed; width: 100%;">
       <thead>
         <tr>
@@ -1883,7 +2677,14 @@ function renderStudniePriceList() {
         const label = groupLabels[groupKey] || groupKey;
 
         html += `<tbody>
-      <tr><td colspan="8" style="padding:0.6rem 0.5rem; font-weight:700; color:var(--text-primary); background:rgba(99,102,241,0.06); font-size:0.85rem; border-bottom:1px solid var(--border);">${label} <span style="opacity:.5">(${items.length})</span></td></tr>`;
+      <tr>
+        <td colspan="8" style="padding:0; border-bottom:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(99,102,241,0.06); font-size:0.85rem;">
+            <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
+            ${isPrzejscia ? `<button class="btn-icon del" title="Usuń całą kategorię" onclick="deletePrzejsciaCategory('${groupKey}')" style="padding:0.2rem 0.5rem; font-size:0.75rem;">🗑️ Usuń kategorię</button>` : ''}
+          </div>
+        </td>
+      </tr>`;
 
         items.forEach(p => {
             html += `<tr>
@@ -1930,6 +2731,53 @@ function renderStudniePriceList() {
     }
 
     container.innerHTML = html;
+}
+
+/* ===== PRZEJŚCIA CAT. MANAGEMENT ===== */
+function addPrzejsciaCategory() {
+    let name = prompt('Podaj nazwę nowej kategorii (np. GRP, Incor):');
+    if (!name) return;
+    name = name.trim();
+    if (!name) return;
+
+    const catName = name.startsWith('W + ') ? name : `W + ${name}`;
+
+    if (studnieProducts.some(p => p.componentType === 'przejscie' && p.category === catName)) {
+        showToast('Taka kategoria już istnieje', 'error');
+        return;
+    }
+
+    const defaultSizes = [110, 160, 200, 250, 315, 400];
+    defaultSizes.forEach(dn => {
+        studnieProducts.push({
+            id: `${catName.replace(/ /g, '-')}-${dn}`,
+            name: `${catName}`,
+            category: catName,
+            dn: dn,
+            componentType: 'przejscie',
+            zapasDol: 300,
+            zapasGora: 300,
+            price: 0,
+            weight: -1 * Math.round(dn / 15),
+            area: null,
+            areaExt: null,
+            transport: null
+        });
+    });
+
+    saveStudnieProducts(studnieProducts);
+    renderStudniePriceList();
+    showToast(`Utworzono kategorię ${catName}`, 'success');
+}
+
+function deletePrzejsciaCategory(cat) {
+    if (!confirm(`Czy na pewno chcesz usunąć całą kategorię: ${cat} oraz wszystkie jej elementy z cennika?`)) return;
+
+    studnieProducts = studnieProducts.filter(p => !(p.componentType === 'przejscie' && p.category === cat));
+
+    saveStudnieProducts(studnieProducts);
+    renderStudniePriceList();
+    showToast(`Usunięto kategorię ${cat}`, 'info');
 }
 
 /* ===== INLINE EDIT ===== */
@@ -2001,7 +2849,12 @@ function showAddStudnieProductModal() {
     <div class="modal">
       <div class="modal-header"><h3>➕ Dodaj element</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
-        <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+        <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+        <input type="text" class="form-input" id="np-custom-category" placeholder="Nazwa nowej kategorii (np. W + PVC)" style="display:none; margin-top:0.5rem;" list="przejscia-cats-list">
+        <datalist id="przejscia-cats-list">
+            ${[...new Set(studnieProducts.filter(p => p.componentType === 'przejscie').map(p => p.category))].filter(Boolean).map(c => `<option value="${c}">`).join('')}
+        </datalist>
+      </div>
       <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
         <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="Indeks"></div>
         <div class="form-group"><label class="form-label">Nazwa</label><input class="form-input" id="np-name" placeholder="Nazwa"></div>
@@ -2036,6 +2889,8 @@ function showAddStudnieProductModal() {
     window.togglePrzejsciaFields = () => {
         const cat = document.getElementById('np-category').value;
         const isPrzejscia = cat === 'Przejścia';
+        const customCatEl = document.getElementById('np-custom-category');
+        if (customCatEl) customCatEl.style.display = isPrzejscia ? 'block' : 'none';
         document.querySelectorAll('.non-przejscia').forEach(el => el.style.display = isPrzejscia ? 'none' : '');
         document.querySelectorAll('.przejscia-only').forEach(el => el.style.display = isPrzejscia ? 'grid' : 'none');
     };
@@ -2051,7 +2906,14 @@ function addStudnieProduct() {
     const areaExt = document.getElementById('np-areaExt').value ? parseFloat(document.getElementById('np-areaExt').value) : null;
     const transport = document.getElementById('np-transport').value ? parseInt(document.getElementById('np-transport').value) : null;
     const weight = document.getElementById('np-weight').value ? parseInt(document.getElementById('np-weight').value) : null;
-    const category = document.getElementById('np-category').value;
+    let category = document.getElementById('np-category').value;
+    const isPrzejscia = category === 'Przejścia';
+
+    if (isPrzejscia) {
+        const customCat = document.getElementById('np-custom-category')?.value.trim();
+        if (!customCat) { showToast('Wpisz nazwę kategorii przejścia', 'error'); return; }
+        category = customCat;
+    }
     const zapasDol = document.getElementById('np-zapasDol')?.value ? parseInt(document.getElementById('np-zapasDol').value) : null;
     const zapasGora = document.getElementById('np-zapasGora')?.value ? parseInt(document.getElementById('np-zapasGora').value) : null;
     const pehd = document.getElementById('np-pehd').value ? parseFloat(document.getElementById('np-pehd').value) : null;
@@ -2061,8 +2923,6 @@ function addStudnieProduct() {
 
     if (!id || !name || isNaN(price)) { showToast('Wypełnij wymagane pola (indeks, nazwa, cena)', 'error'); return; }
     if (studnieProducts.some(p => p.id === id)) { showToast('Element o takim indeksie już istnieje', 'error'); return; }
-
-    const isPrzejscia = category === 'Przejścia';
 
     studnieProducts.push({
         id, name, price,
@@ -2207,9 +3067,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load products
     studnieProducts = await loadStudnieProducts();
 
-    // Init first well
-    wells = [{ id: 'well-1', name: 'Studnia 1', dn: 1000, config: [], rzednaWlazu: null, rzednaDna: null }];
+    // Start with no wells — user adds first well themselves
+    wells = [];
+    wellCounter = 0;
     currentWellIndex = 0;
+
+    // Setup offer defaults
+    document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
 
     // Setup navigation
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -2222,6 +3086,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial render
     refreshAll();
 
+    // Wizard: start at step 1
+    wizardConfirmedParams = new Set();
+    goToWizardStep(1);
+
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');
     if (tab) showSection(tab);
@@ -2229,6 +3097,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     offersStudnie = await loadOffersStudnie();
     clientsDb = await loadClientsDb();
     renderSavedOffersStudnie();
+
+    // Set initial offer number properly based on loaded offers
+    document.getElementById('offer-number').value = generateOfferNumberStudnie();
 });
 
 /* ===== OFFERS STUDNIE (SERVER API) ===== */
@@ -2309,7 +3180,7 @@ function saveOfferStudnie() {
 
 function clearOfferForm() {
     editingOfferIdStudnie = null;
-    document.getElementById('offer-number').value = 'OFR-STD-' + Date.now().toString().slice(-6);
+    document.getElementById('offer-number').value = generateOfferNumberStudnie();
     document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
     document.getElementById('client-name').value = '';
     document.getElementById('client-nip').value = '';
@@ -2321,9 +3192,14 @@ function clearOfferForm() {
     document.getElementById('transport-km').value = '100';
     document.getElementById('transport-rate').value = '10';
     wells = [];
-    addNewWell(1000); // will call auto-switch and refresh
+    wellCounter = 1;
+    currentWellIndex = 0;
+    refreshAll();
     showSection('builder');
     renderOfferSummary();
+    // Reset wizard to step 1
+    wizardConfirmedParams = new Set();
+    goToWizardStep(1);
 }
 
 function renderSavedOffersStudnie() {
@@ -2387,6 +3263,8 @@ function loadSavedOfferStudnie(id) {
     currentWellIndex = 0;
 
     refreshAll();
+    // Skip wizard for loaded offers — go directly to offer view
+    skipWizardToStep3();
     showSection('offer');
     showToast('Wczytano ofertę: ' + offer.number, 'info');
 }

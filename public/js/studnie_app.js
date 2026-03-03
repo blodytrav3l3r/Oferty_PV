@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { }
 
     renderSavedOffers();
-    addWellRow(); // Add first empty row
+    renderGrid(); // Render empty grid
 });
 
 /* ===== NAVIGATION ===== */
@@ -132,14 +132,15 @@ window.clearAllWells = function () {
     if (confirm('Na pewno wyczyścić arkusz?')) {
         currentWells = [];
         wellIdCounter = 1;
-        addWellRow('DN1000');
+        renderGrid();
     }
 }
 
 window.removeWellRow = function (id) {
     currentWells = currentWells.filter(w => w._id !== id);
-    if (currentWells.length === 0) addWellRow('DN1000');
-    else {
+    if (currentWells.length === 0) {
+        renderGrid();
+    } else {
         renderGrid();
         recalcAll();
     }
@@ -565,7 +566,7 @@ window.openRingsModal = function (wellId) {
 
         currentWells = [];
         wellIdCounter = 1;
-        addWellRow();
+        renderGrid();
     }
 
     function renderSavedOffers() {

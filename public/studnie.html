@@ -773,6 +773,445 @@
                 opacity: 1;
             }
         }
+
+        /* ── Wizard Steps ── */
+        .wizard-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            padding: 0.8rem 0;
+        }
+
+        .wizard-step-dot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            z-index: 1;
+        }
+
+        .wizard-dot-number {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid var(--border-glass);
+            color: var(--text-muted);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .wizard-step-dot.active .wizard-dot-number {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: #818cf8;
+            color: white;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+            transform: scale(1.1);
+        }
+
+        .wizard-step-dot.completed .wizard-dot-number {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            border-color: #34d399;
+            color: white;
+        }
+
+        .wizard-dot-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            transition: color 0.3s;
+        }
+
+        .wizard-step-dot.active .wizard-dot-label {
+            color: #c7d2fe;
+        }
+
+        .wizard-step-dot.completed .wizard-dot-label {
+            color: #6ee7b7;
+        }
+
+        .wizard-step-line {
+            width: 80px;
+            height: 2px;
+            background: var(--border-glass);
+            transition: background 0.4s;
+            margin: 0 0.6rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .wizard-step-line.completed {
+            background: linear-gradient(90deg, #34d399, #6366f1);
+        }
+
+        .wizard-step {
+            display: none;
+            animation: wizardFadeIn 0.35s ease-out;
+        }
+
+        .wizard-step.active {
+            display: block;
+        }
+
+        @keyframes wizardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .wizard-card {
+            max-width: 860px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.8rem 2rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        }
+
+        .wizard-card-header {
+            text-align: center;
+            margin-bottom: 1.3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .wizard-card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .wizard-card-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem 0;
+        }
+
+        .wizard-card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .wizard-section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .wizard-form-grid {
+            display: grid;
+            gap: 0.7rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .wizard-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .wizard-form-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .wizard-form-input {
+            padding: 0.5rem 0.65rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font: 500 0.82rem 'Inter', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .wizard-form-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .wizard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .wizard-btn {
+            padding: 0.55rem 1.6rem;
+            border: none;
+            border-radius: 10px;
+            font: 600 0.82rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .wizard-btn-next {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .wizard-btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .wizard-btn-next:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .wizard-btn-prev {
+            background: rgba(30, 41, 59, 0.8);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-glass);
+        }
+
+        .wizard-btn-prev:hover {
+            background: rgba(30, 41, 59, 1);
+            color: var(--text-primary);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .wizard-summary-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.45rem 0.75rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            font-size: 0.72rem;
+            flex-wrap: wrap;
+        }
+
+        .wizard-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            color: var(--text-muted);
+        }
+
+        .wizard-summary-item strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .wizard-summary-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--border-glass);
+        }
+
+        .wizard-summary-edit {
+            margin-left: auto;
+            padding: 0.2rem 0.55rem;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 5px;
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            font: 600 0.65rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wizard-summary-edit:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .wizard-param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            padding: 0.6rem;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background: rgba(15, 23, 42, 0.3);
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .wizard-param-group.needs-selection {
+            border-color: rgba(248, 113, 113, 0.25);
+            background: rgba(248, 113, 113, 0.03);
+        }
+
+        .wizard-param-group.confirmed {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .wizard-param-label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .wizard-param-label .status-icon {
+            font-size: 0.7rem;
+            transition: opacity 0.3s;
+        }
+
+        .wizard-validation-msg {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(248, 113, 113, 0.8);
+            margin-top: 0.6rem;
+            transition: opacity 0.3s;
+        }
+
+        .wizard-validation-msg.hidden {
+            opacity: 0;
+        }
+
+        /* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .przejscia-vis-popup {
+            background: rgba(15, 23, 42, 0.97);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            width: 95vw;
+            max-width: 1100px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.08);
+            animation: fadeInOverlay 0.15s ease;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+        }
+
+        .przejscia-vis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .przejscia-vis-actions {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .przejscia-vis-action-btn {
+            padding: 0.25rem 0.6rem;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+            font: 600 0.6rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .przejscia-vis-action-btn:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+        }
+
+        .przejscia-vis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-w, 160px), 1fr));
+            gap: 0.3rem;
+        }
+
+        .przejscia-vis-tile {
+            padding: 0.4rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-align: center;
+            user-select: none;
+        }
+
+        .przejscia-vis-tile.visible {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1.5px solid rgba(16, 185, 129, 0.45);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.12), inset 0 0 12px rgba(16, 185, 129, 0.06);
+        }
+
+        .przejscia-vis-tile.visible .przejscia-vis-tile-name {
+            color: #6ee7b7;
+        }
+
+        .przejscia-vis-tile.visible:hover {
+            background: rgba(16, 185, 129, 0.22);
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.2), inset 0 0 16px rgba(16, 185, 129, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .przejscia-vis-tile.hidden-type {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1.5px solid rgba(255, 255, 255, 0.05);
+            opacity: 0.45;
+        }
+
+        .przejscia-vis-tile.hidden-type:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        .przejscia-vis-tile-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            line-height: 1.3;
+        }
     </style>
 </head>
 
@@ -832,442 +1271,534 @@
         <!-- ===== SECTION: BUILDER ===== -->
         <div class="section active" id="section-builder">
 
-            <!-- Client & offer info (collapsible, same as rury) -->
-            <div class="card card-compact" style="margin-bottom: 0.5rem;">
-                <div class="card-title-sm"
-                    style="display:grid; grid-template-columns: 1fr 1fr; align-items:center; width:100%; gap:1rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <div style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;"
-                            onclick="toggleCard('st-client-offer-content', 'st-client-offer-icon')">
-                            <span>📋 Dane klienta i oferty</span>
-                            <span id="st-client-offer-icon">🔽</span>
-                        </div>
-                        <div style="display:flex; gap:0.4rem;" onclick="event.stopPropagation()">
-                            <button class="btn btn-secondary btn-sm" onclick="showClientsDb()"
-                                style="padding:0.2rem 0.5rem; font-size:0.7rem;">📂 Wczytaj klienta</button>
-                            <button class="btn btn-primary btn-sm" onclick="saveClientToDb()"
-                                style="padding:0.2rem 0.5rem; font-size:0.7rem;">💾 Zapisz klienta</button>
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:flex-end; gap:0.4rem;" onclick="event.stopPropagation()">
-                        <button class="btn btn-secondary btn-sm" onclick="clearOfferForm()"
-                            style="padding:0.2rem 0.5rem; font-size:0.7rem;">🔄 Nowa Oferta</button>
-                        <button class="btn btn-primary btn-sm" onclick="saveOfferStudnie()"
-                            style="padding:0.2rem 0.5rem; font-size:0.7rem;">💾 Zapisz ofertę</button>
-                    </div>
+            <!-- Wizard Step Indicator -->
+            <div class="wizard-indicator" id="wizard-indicator">
+                <div class="wizard-step-dot active" data-step="1">
+                    <div class="wizard-dot-number">1</div>
+                    <div class="wizard-dot-label">Dane klienta</div>
                 </div>
+                <div class="wizard-step-line" id="wizard-line-1"></div>
+                <div class="wizard-step-dot" data-step="2">
+                    <div class="wizard-dot-number">2</div>
+                    <div class="wizard-dot-label">Parametry studni</div>
+                </div>
+                <div class="wizard-step-line" id="wizard-line-2"></div>
+                <div class="wizard-step-dot" data-step="3">
+                    <div class="wizard-dot-number">3</div>
+                    <div class="wizard-dot-label">Konfiguracja</div>
+                </div>
+            </div>
 
-                <div id="st-client-offer-content" class="card-content" style="display:none;">
-                    <div class="offer-header-grid" style="margin-bottom:0; margin-top:0.6rem;">
-                        <!-- Client side -->
-                        <div>
-                            <div class="form-row form-row-4 form-row-compact">
-                                <div class="form-group-sm"><label class="form-label-sm">Firma</label><input
-                                        class="form-input form-input-sm" id="client-name" placeholder="Budimex S.A.">
-                                </div>
-                                <div class="form-group-sm"><label class="form-label-sm">NIP</label><input
-                                        class="form-input form-input-sm" id="client-nip" placeholder="1234567890"
-                                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                                </div>
-                                <div class="form-group-sm"><label class="form-label-sm">Adres firmy</label><input
-                                        class="form-input form-input-sm" id="client-address"
-                                        placeholder="ul. Przykładowa 1, Warszawa">
-                                </div>
-                                <div class="form-group-sm"><label class="form-label-sm">Kontakt</label><input
-                                        class="form-input form-input-sm" id="client-contact"
-                                        placeholder="Jan Kowalski, 600 100 200"></div>
+            <!-- ══════ WIZARD STEP 1: Client & Offer Data ══════ -->
+            <div class="wizard-step active" id="wizard-step-1">
+                <div class="wizard-card">
+                    <div class="wizard-card-header">
+                        <div class="wizard-card-icon">📋</div>
+                        <h2 class="wizard-card-title">Dane klienta i oferty</h2>
+                        <p class="wizard-card-subtitle">Uzupełnij dane klienta i podstawowe informacje o ofercie</p>
+                    </div>
+                    <div class="wizard-card-body">
+                        <div class="wizard-section-title">👤 Dane klienta</div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Firma</label>
+                                <input class="wizard-form-input" id="client-name" placeholder="Budimex S.A.">
                             </div>
-                            <div class="form-row form-row-2 form-row-compact">
-                                <div class="form-group-sm"><label class="form-label-sm">Nazwa inwestycji</label><input
-                                        class="form-input form-input-sm" id="invest-name"
-                                        placeholder="Budowa kanalizacji deszczowej"></div>
-                                <div class="form-group-sm"><label class="form-label-sm">Adres inwestycji</label><input
-                                        class="form-input form-input-sm" id="invest-address"
-                                        placeholder="ul. Nowa 5, Kraków"></div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">NIP</label>
+                                <input class="wizard-form-input" id="client-nip" placeholder="1234567890"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Adres firmy</label>
+                                <input class="wizard-form-input" id="client-address"
+                                    placeholder="ul. Przykładowa 1, Warszawa">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Kontakt</label>
+                                <input class="wizard-form-input" id="client-contact"
+                                    placeholder="Jan Kowalski, 600 100 200">
                             </div>
                         </div>
 
-                        <!-- Offer side -->
-                        <div>
-                            <div class="form-row form-row-4 form-row-compact">
-                                <div class="form-group-sm"><label class="form-label-sm">Nr oferty</label><input
-                                        class="form-input form-input-sm" id="offer-number"></div>
-                                <div class="form-group-sm"><label class="form-label-sm">Data</label><input
-                                        class="form-input form-input-sm" type="date" id="offer-date"></div>
-                                <div class="form-group-sm"><label class="form-label-sm">Kilometry</label><input
-                                        class="form-input form-input-sm" type="number" step="1" id="transport-km"
-                                        value="100" onchange="renderOfferSummary()"></div>
-                                <div class="form-group-sm"><label class="form-label-sm">PLN/km</label><input
-                                        class="form-input form-input-sm" type="number" step="0.1" id="transport-rate"
-                                        value="10" onchange="renderOfferSummary()"></div>
+                        <div class="wizard-section-title" style="margin-top:1.2rem;">🏗️ Inwestycja</div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Nazwa inwestycji</label>
+                                <input class="wizard-form-input" id="invest-name"
+                                    placeholder="Budowa kanalizacji deszczowej">
                             </div>
-                            <div class="form-group-sm"><label class="form-label-sm">Uwagi</label><textarea
-                                    class="form-textarea form-input-sm" id="offer-notes" rows="1"
-                                    placeholder="np. Cena obejmuje transport do 100 km..."></textarea></div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Adres inwestycji</label>
+                                <input class="wizard-form-input" id="invest-address" placeholder="ul. Nowa 5, Kraków">
+                            </div>
                         </div>
+
+                        <div class="wizard-section-title" style="margin-top:1.2rem;">📄 Oferta</div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Nr oferty</label>
+                                <input class="wizard-form-input" id="offer-number">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Data</label>
+                                <input class="wizard-form-input" type="date" id="offer-date">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Kilometry</label>
+                                <input class="wizard-form-input" type="number" step="1" id="transport-km" value="100">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">PLN/km</label>
+                                <input class="wizard-form-input" type="number" step="0.1" id="transport-rate"
+                                    value="10">
+                            </div>
+                        </div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr; margin-top:0.3rem;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Uwagi</label>
+                                <textarea class="wizard-form-input" id="offer-notes" rows="2"
+                                    placeholder="np. Cena obejmuje transport do 100 km..."
+                                    style="resize:vertical;"></textarea>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:0.5rem; margin-top:0.8rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="showClientsDb()"
+                                style="padding:0.3rem 0.7rem; font-size:0.72rem;">📂 Wczytaj klienta z bazy</button>
+                            <button class="btn btn-primary btn-sm" onclick="saveClientToDb()"
+                                style="padding:0.3rem 0.7rem; font-size:0.72rem;">💾 Zapisz klienta do bazy</button>
+                        </div>
+                    </div>
+                    <div class="wizard-nav">
+                        <div></div>
+                        <button class="wizard-btn wizard-btn-next" onclick="wizardNext()">Dalej →</button>
                     </div>
                 </div>
             </div>
 
-            <div class="well-app-layout">
-
-                <!-- LEFT: Well Diagram -->
-                <div class="well-diagram-panel">
-                    <h3 id="well-diagram-title">🔍 Podgląd studni</h3>
-                    <svg id="well-diagram" class="well-diagram-svg" viewBox="0 0 300 500"
-                        preserveAspectRatio="xMidYMax meet"></svg>
-                    <div class="well-summary-mini">
-                        <div class="ws-item">
-                            <div class="ws-label">Cena netto</div>
-                            <div class="ws-value accent" id="ws-price">0 PLN</div>
-                        </div>
-                        <div class="ws-item">
-                            <div class="ws-label">Waga</div>
-                            <div class="ws-value" id="ws-weight">0 kg</div>
-                        </div>
-                        <div class="ws-item">
-                            <div class="ws-label">Wysokość</div>
-                            <div class="ws-value" id="ws-height">0 mm</div>
-                        </div>
+            <!-- ══════ WIZARD STEP 2: General Well Parameters ══════ -->
+            <div class="wizard-step" id="wizard-step-2">
+                <div class="wizard-card">
+                    <div class="wizard-card-header">
+                        <div class="wizard-card-icon">⚙️</div>
+                        <h2 class="wizard-card-title">Ogólne parametry studni</h2>
+                        <p class="wizard-card-subtitle">Wybierz parametry dla konfiguracji studni — kliknij w każdej
+                            grupie</p>
                     </div>
-                </div>
+                    <div class="wizard-card-body">
+                        <div style="display:flex; flex-direction:column; gap:0.6rem;">
 
-                <!-- CENTER: Config area -->
-                <div>
-                    <!-- Parametry Ogólne -->
-                    <div class="card" style="margin-bottom:0.8rem; padding:0.5rem 0.6rem;">
-                        <div class="card-title"
-                            style="flex-direction:row;justify-content:space-between;cursor:pointer;margin-bottom:0;font-size:0.78rem;padding:0.15rem 0;"
-                            onclick="toggleCard('general-params-content', 'general-params-icon')">
-                            <span>⚙️ Ogólne parametry studni</span>
-                            <span id="general-params-icon" style="font-size:0.75rem;">🔽</span>
-                        </div>
-                        <div id="general-params-content" class="card-content" style="margin-top:0.6rem; display: none;">
-                            <div style="display:flex; flex-direction:column; gap:0.8rem;">
-
-                                <!-- Wiersz 1: Konfiguracja betonowa -->
-                                <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                    <div
-                                        style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                        Materiał</div>
-                                    <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
-                                        data-param="material">
-                                        <button class="param-tile active" data-val="betonowa">Studnia
-                                            betonowa</button>
-                                        <button class="param-tile" data-val="zelbetowa">Studnia żelbetowa</button>
-                                    </div>
+                            <!-- Materiał -->
+                            <div class="wizard-param-group needs-selection" data-wizard-param="material">
+                                <div class="wizard-param-label">Materiał <span class="status-icon">⚠️</span></div>
+                                <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                    data-param="material">
+                                    <button class="param-tile" data-val="betonowa">Studnia betonowa</button>
+                                    <button class="param-tile" data-val="zelbetowa">Studnia żelbetowa</button>
                                 </div>
+                            </div>
 
-                                <!-- Wiersz 2: Wkładka PEHD -->
-                                <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                    <div
-                                        style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                        Wkładka PEHD</div>
-                                    <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
-                                        data-param="wkladka">
-                                        <button class="param-tile active" data-val="brak">Brak</button>
-                                        <button class="param-tile" data-val="3mm">PEHD 3mm</button>
-                                        <button class="param-tile" data-val="4mm">PEHD 4mm</button>
-                                    </div>
+                            <!-- Wkładka PEHD -->
+                            <div class="wizard-param-group needs-selection" data-wizard-param="wkladka">
+                                <div class="wizard-param-label">Wkładka PEHD <span class="status-icon">⚠️</span>
                                 </div>
+                                <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                    data-param="wkladka">
+                                    <button class="param-tile" data-val="brak">Brak</button>
+                                    <button class="param-tile" data-val="3mm">PEHD 3mm</button>
+                                    <button class="param-tile" data-val="4mm">PEHD 4mm</button>
+                                </div>
+                            </div>
 
-                                <!-- Wiersz 3 i 4: Malowanie (Wewnątrz i Zewnątrz) -->
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
-                                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                        <div
-                                            style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                            Malowanie wewnątrz</div>
+                            <!-- Klasa betonu -->
+                            <div class="wizard-param-group needs-selection" data-wizard-param="klasaBetonu">
+                                <div class="wizard-param-label">Klasa betonu <span class="status-icon">⚠️</span></div>
+                                <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                    data-param="klasaBetonu">
+                                    <button class="param-tile" data-val="C40/50">C40/50</button>
+                                    <button class="param-tile" data-val="C40/50(HSR!!!!)">C40/50(HSR!!!!)</button>
+                                    <button class="param-tile" data-val="C45/55">C45/55</button>
+                                    <button class="param-tile" data-val="C45/55(HSR!!!!)">C45/55(HSR!!!!)</button>
+                                    <button class="param-tile" data-val="C70/85">C70/85</button>
+                                    <button class="param-tile" data-val="C70/80(HSR!!!!)">C70/80(HSR!!!!)</button>
+                                </div>
+                            </div>
+
+                            <!-- Powłoka -->
+                            <div
+                                style="display:flex; flex-direction:column; gap:0.6rem; padding: 0.8rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(0,0,0,0.15);">
+                                <div
+                                    style="font-size: 0.8rem; font-weight: 700; color: #a1a1aa; padding-left: 0.2rem; display: flex; align-items: center; gap: 0.4rem;">
+                                    🛡️ POWŁOKA</div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                                    <div class="wizard-param-group needs-selection" data-wizard-param="malowanieW">
+                                        <div class="wizard-param-label">Malowanie wewnątrz <span
+                                                class="status-icon">⚠️</span></div>
                                         <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
                                             data-param="malowanieW">
-                                            <button class="param-tile active" data-val="brak">Brak</button>
+                                            <button class="param-tile" data-val="brak">Brak</button>
                                             <button class="param-tile" data-val="kineta">Tylko kineta</button>
                                             <button class="param-tile" data-val="kineta_dennica">Kineta + ścianki
                                                 dennicy</button>
                                             <button class="param-tile" data-val="cale">Na całej wysokości</button>
                                         </div>
                                     </div>
-                                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                        <div
-                                            style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                            Malowanie zewnątrz</div>
+                                    <div class="wizard-param-group needs-selection" data-wizard-param="malowanieZ">
+                                        <div class="wizard-param-label">Malowanie zewnątrz <span
+                                                class="status-icon">⚠️</span></div>
                                         <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
                                             data-param="malowanieZ">
-                                            <button class="param-tile active" data-val="brak">Brak</button>
-                                            <button class="param-tile" data-val="zewnatrz">Malowana
-                                                zewnątrz</button>
+                                            <button class="param-tile" data-val="brak">Brak</button>
+                                            <button class="param-tile" data-val="zewnatrz">Malowana zewnątrz</button>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Wiersz 5: Drabinka i Spocznik -->
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
-                                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                        <div
-                                            style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                            Rodzaj drabinki</div>
-                                        <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
-                                            data-param="drabinka">
-                                            <button class="param-tile active" data-val="brak">Bez drabinki</button>
-                                            <button class="param-tile" data-val="stalowa">Stalowa
-                                                ocynkowana</button>
-                                            <button class="param-tile" data-val="nierdzewna">Nierdzewna</button>
-                                        </div>
-                                    </div>
-                                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                        <div
-                                            style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                            Spocznik</div>
-                                        <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
-                                            data-param="spocznik">
-                                            <button class="param-tile active" data-val="brak">Brak</button>
-                                            <button class="param-tile" data-val="1/2">1/2</button>
-                                            <button class="param-tile" data-val="2/3">2/3</button>
-                                            <button class="param-tile" data-val="3/4">3/4</button>
-                                            <button class="param-tile" data-val="1/1">1/1</button>
-                                        </div>
-                                    </div>
+                                <div class="wizard-form-group" style="margin-top:0.4rem; display:none;"
+                                    id="powloka-name-w-group">
+                                    <label class="wizard-form-label">Nazwa powłoki wewnątrz <span
+                                            style="color:var(--warn)">*</span></label>
+                                    <input class="wizard-form-input" id="powloka-name-w"
+                                        placeholder="Wpisz nazwę powłoki wewnętrznej..."
+                                        oninput="updateParamInput('powlokaNameW', this.value); validateWizardStep2();">
                                 </div>
+                                <div class="wizard-form-group" style="margin-top:0.4rem; display:none;"
+                                    id="powloka-name-z-group">
+                                    <label class="wizard-form-label">Nazwa powłoki zewnątrz <span
+                                            style="color:var(--warn)">*</span></label>
+                                    <input class="wizard-form-input" id="powloka-name-z"
+                                        placeholder="Wpisz nazwę powłoki zewnętrznej..."
+                                        oninput="updateParamInput('powlokaNameZ', this.value); validateWizardStep2();">
+                                </div>
+                            </div>
 
-                                <!-- Wiersz 6: Kineta -->
-                                <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                                    <div
-                                        style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
-                                        Wysokość kinety</div>
+                            <!-- Kineta i Redukcja -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                                <div class="wizard-param-group needs-selection" data-wizard-param="kineta">
+                                    <div class="wizard-param-label">Kineta <span class="status-icon">⚠️</span></div>
                                     <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
-                                        data-param="kinetaH">
-                                        <button class="param-tile active" data-val="1/1">1/1 (Do pełnej wysokości,
-                                            domyślna)</button>
-                                        <button class="param-tile" data-val="1/2">1/2 (Do połowy wysokości)</button>
-                                        <button class="param-tile" data-val="2/3">2/3 (Dwie trzecie
-                                            wysokości)</button>
-                                        <button class="param-tile" data-val="3/4">3/4 (Trzy czwarte
-                                            wysokości)</button>
+                                        data-param="kineta">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="beton">Beton</button>
+                                        <button class="param-tile" data-val="beton_gfk">Beton z GFK</button>
+                                        <button class="param-tile" data-val="klinkier">Klinkier</button>
+                                        <button class="param-tile" data-val="preco">Preco</button>
+                                        <button class="param-tile" data-val="precotop">PrecoTop</button>
+                                        <button class="param-tile" data-val="unolith">UnoLith</button>
                                     </div>
                                 </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Toolbar: DN + Elevations + Height + Controls -->
-                    <div class="well-info-card">
-                        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                            <div style="display:flex; align-items:center; gap:0.25rem;">
-                                <span
-                                    style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">DN</span>
-                                <div class="dn-selector" style="margin-bottom:0;">
-                                    <button class="dn-btn active" onclick="selectDN(1000)">1000</button>
-                                    <button class="dn-btn" onclick="selectDN(1200)">1200</button>
-                                    <button class="dn-btn" onclick="selectDN(1500)">1500</button>
-                                    <button class="dn-btn" onclick="selectDN(2000)">2000</button>
+                                <div class="wizard-param-group needs-selection" data-wizard-param="redukcjaKinety">
+                                    <div class="wizard-param-label">Redukcja kinety <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="redukcjaKinety">
+                                        <button class="param-tile" data-val="tak">Tak</button>
+                                        <button class="param-tile" data-val="nie">Nie</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div style="width:1px; height:22px; background:var(--border-glass);"></div>
-                            <div style="display:flex; align-items:center; gap:0.2rem;">
-                                <label style="font-size:0.58rem; color:var(--text-muted); white-space:nowrap;">Rz.
-                                    włazu</label>
-                                <input type="number" step="0.01" id="input-rzedna-wlazu" placeholder="100.50"
-                                    onchange="updateElevations()"
-                                    style="width:72px; padding:0.2rem 0.3rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); font:600 0.75rem 'Inter',sans-serif; text-align:center;">
-                            </div>
-                            <div style="display:flex; align-items:center; gap:0.2rem;">
-                                <label style="font-size:0.58rem; color:var(--text-muted); white-space:nowrap;">Rz.
-                                    dna</label>
-                                <input type="number" step="0.01" id="input-rzedna-dna" placeholder="97.20"
-                                    onchange="updateElevations()"
-                                    style="width:72px; padding:0.2rem 0.3rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); font:600 0.75rem 'Inter',sans-serif; text-align:center;">
-                            </div>
-                            <div style="width:1px; height:22px; background:var(--border-glass);"></div>
-                            <div
-                                style="display:flex; align-items:center; gap:0.5rem; font-size:0.65rem; color:var(--text-muted);">
-                                <span>Wym: <strong id="well-required-height" style="color:#818cf8;">— mm</strong></span>
-                                <span>Konf: <strong id="well-configured-height" style="color:var(--success);">0
-                                        mm</strong></span>
-                                <span id="height-diff-indicator"></span>
-                            </div>
-                            <div style="flex:1;"></div>
-                            <div style="display:flex; gap:0.2rem;">
-                                <button class="btn btn-secondary btn-sm" onclick="toggleAutoLock()" id="btn-lock-auto"
-                                    style="font-size:0.65rem; padding:0.2rem 0.5rem; border-color:var(--border-glass);">🔓
-                                    Ręczny</button>
-                                <button class="btn btn-primary btn-sm" onclick="autoSelectComponents()"
-                                    id="btn-auto-select" style="font-size:0.65rem; padding:0.2rem 0.5rem;">🔧
-                                    Auto</button>
-                                <button class="btn btn-secondary btn-sm" onclick="clearWellConfig()"
-                                    style="font-size:0.65rem; padding:0.2rem 0.5rem;">🔄</button>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Builder tabs -->
-                    <div class="builder-sub-nav"
-                        style="display:flex; gap:0.3rem; margin-bottom:0.5rem; background:rgba(15,23,42,0.5); padding:0.3rem; border-radius:8px; border:1px solid var(--border-glass);">
-                        <button class="b-tab-btn active" onclick="switchBuilderTab('concrete')" id="btab-concrete">🏗️
-                            Prefabrykaty betonowe</button>
-                        <button class="b-tab-btn" onclick="switchBuilderTab('transitions')" id="btab-transitions">💧
-                            Przejścia szczelne</button>
-                    </div>
-
-                    <!-- TAB: CONCRETE CONTENT -->
-                    <div id="bcontent-concrete">
-
-
-                        <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
-                            <div class="card-title"
-                                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
-                                onclick="toggleCard('tiles-content', 'tiles-icon')">
-                                <span>🧱 Wybór elementów</span>
-                                <span id="tiles-icon" style="font-size:0.75rem;">🔼</span>
-                            </div>
-                            <div id="tiles-content" class="card-content" style="margin-top:0.5rem;">
-                                <div id="tiles-container"></div>
-                            </div>
-                        </div>
-
-                        <div class="card" style="padding:0.5rem 0.6rem;">
-                            <div class="card-title" style="font-size:0.78rem; padding:0.15rem 0; margin-bottom:0.3rem;">
-                                📦 Konfiguracja betonowa</div>
-                            <div class="table-wrap">
-                                <table class="well-config-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:42px">Poz.</th>
-                                            <th>Element</th>
-                                            <th style="text-align:right">Waga</th>
-                                            <th style="text-align:right">Pow.w.</th>
-                                            <th style="text-align:right">Pow.z.</th>
-                                            <th style="text-align:center; width:50px">Ilość</th>
-                                            <th style="text-align:right">Cena j.</th>
-                                            <th style="text-align:right">Wartość</th>
-                                            <th style="text-align:center; width:35px"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="well-config-body">
-                                        <tr>
-                                            <td colspan="9"
-                                                style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem;">
-                                                Kliknij kafelki powyżej, aby dodać elementy studni
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TAB: TRANSITIONS CONTENT -->
-                    <div id="bcontent-transitions" style="display:none;">
-                        <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
-                            <div class="card-title" style="font-size:0.78rem; padding:0.15rem 0;">➕ Dodaj Przejście
-                                Szczelne</div>
-                            <div id="inline-przejscia-app"></div>
-                        </div>
-                        <div class="card" style="background:rgba(15,23,42,0.4); padding:0.5rem 0.6rem;">
-                            <div class="card-title" style="font-size:0.78rem; padding:0.15rem 0;">📖 Lista dodanych
-                                przejść</div>
-                            <div class="table-wrap">
-                                <table class="well-config-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Lp.</th>
-                                            <th>Rodzaj</th>
-                                            <th style="text-align:center">DN</th>
-                                            <th style="text-align:center">Rzędna</th>
-                                            <th style="text-align:center">Kąt</th>
-                                            <th style="text-align:center">Kąt wyk.</th>
-                                            <th style="text-align:center">Kąt gony</th>
-                                            <th>Uwagi</th>
-                                            <th style="text-align:right">Cena</th>
-                                            <th style="text-align:center">Akcje</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="well-przejscia-body">
-                                        <tr>
-                                            <td colspan="10"
-                                                style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.78rem;">
-                                                Brak zdefiniowanych przejść
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Summary bar -->
-                    <div
-                        style="margin-top:0.5rem; padding:0.5rem 0.6rem; background:rgba(15,23,42,0.6); border-radius:8px; border:1px solid var(--border-glass);">
-                        <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0.5rem; text-align:center;">
-                            <div>
-                                <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">Cena
-                                    netto</div>
-                                <div style="font-size:1rem; font-weight:800; color:var(--success);" id="sum-price">0 PLN
+                            <!-- Rodzaj stopni i Wysokość spocznika -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                                <div class="wizard-param-group needs-selection" data-wizard-param="stopnie">
+                                    <div class="wizard-param-label">Rodzaj stopni <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="stopnie">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="drabinka">Drabinka</button>
+                                        <button class="param-tile" data-val="nierdzewna">Drabinka nierdzewna</button>
+                                    </div>
+                                </div>
+                                <div class="wizard-param-group needs-selection" data-wizard-param="spocznikH">
+                                    <div class="wizard-param-label">Wysokość spocznika <span
+                                            class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="spocznikH">
+                                        <button class="param-tile" data-val="1/2">1/2</button>
+                                        <button class="param-tile" data-val="2/3">2/3</button>
+                                        <button class="param-tile" data-val="3/4">3/4</button>
+                                        <button class="param-tile" data-val="1/1">1/1</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">Waga
+
+                            <!-- Usytuowane -->
+                            <div class="wizard-param-group needs-selection" data-wizard-param="usytuowanie">
+                                <div class="wizard-param-label">Usytuowane <span class="status-icon">⚠️</span></div>
+                                <div style="display:flex; gap:0.3rem; flex-wrap:wrap;" class="param-group"
+                                    data-param="usytuowanie">
+                                    <button class="param-tile" data-val="linia_dolna">Linia dolna</button>
+                                    <button class="param-tile" data-val="linia_gorna">Linia górna</button>
+                                    <button class="param-tile" data-val="w_osi">W osi</button>
+                                    <button class="param-tile" data-val="patrz_uwagi">Patrz uwagi</button>
                                 </div>
-                                <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
-                                    id="sum-weight">0 kg</div>
                             </div>
-                            <div>
-                                <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
-                                    Wysokość</div>
-                                <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
-                                    id="sum-height">0 mm</div>
+                            <div class="wizard-validation-msg" id="wizard-validation-msg">
+                                ⚠️ Wybierz opcję w każdej grupie parametrów, aby kontynuować
                             </div>
-                            <div>
-                                <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">Pow.
-                                    wewn.</div>
-                                <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
-                                    id="sum-area-int">0 m²</div>
-                            </div>
-                            <div>
-                                <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">Pow.
-                                    zewn.</div>
-                                <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
-                                    id="sum-area-ext">0 m²</div>
-                            </div>
+                        </div>
+                        <div class="wizard-nav">
+                            <button class="wizard-btn wizard-btn-prev" onclick="wizardPrev()">← Wstecz</button>
+                            <button class="wizard-btn wizard-btn-next" onclick="wizardNext()" id="wizard-next-step2"
+                                disabled>Dalej →</button>
                         </div>
                     </div>
                 </div>
-
-                <!-- RIGHT: Wells list sidebar -->
-                <div class="wells-sidebar">
-                    <div class="wells-sidebar-panel">
-                        <div class="wells-sidebar-header"
-                            style="flex-direction: column; align-items: stretch; gap: 0.3rem; padding-bottom: 0;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3 style="margin:0; font-size:0.75rem;">🗂️ Lista studni <span class="wells-count"
-                                        id="wells-counter"></span></h3>
-                            </div>
-                            <div
-                                style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.2rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
-                                    onclick="addNewWell(1000)">+1000</button>
-                                <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
-                                    onclick="addNewWell(1200)">+1200</button>
-                                <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
-                                    onclick="addNewWell(1500)">+1500</button>
-                                <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
-                                    onclick="addNewWell(2000)">+2000</button>
-                            </div>
-                            <div
-                                style="display:flex; gap:0.2rem; padding-bottom:0.3rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <button class="btn btn-secondary btn-sm"
-                                    style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1;"
-                                    onclick="clearOfferForm()">🔄 Nowa oferta</button>
-                                <button class="btn btn-success btn-sm"
-                                    style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1;"
-                                    onclick="saveOfferStudnie()">💾 Zapisz</button>
-                            </div>
-                        </div>
-                        <div id="wells-list"></div>
-                    </div>
-                </div>
-
             </div>
-        </div>
+
+            <!-- ══════ WIZARD STEP 3: Calculator ══════ -->
+            <div class="wizard-step" id="wizard-step-3">
+
+                <!-- Summary bar -->
+                <div class="wizard-summary-bar" id="wizard-summary-bar">
+                    <span class="wizard-summary-item">📋 <strong id="wsb-client">—</strong></span>
+                    <span class="wizard-summary-divider"></span>
+                    <span class="wizard-summary-item">📄 <strong id="wsb-offer">—</strong></span>
+                    <span class="wizard-summary-divider"></span>
+                    <span class="wizard-summary-item">⚙️ <strong id="wsb-params">—</strong></span>
+                    <button class="wizard-summary-edit" onclick="goToWizardStep(1)">✏️ Edytuj dane</button>
+                    <button class="wizard-summary-edit" onclick="goToWizardStep(2)">⚙️ Edytuj parametry</button>
+                </div>
+
+                <div class="well-app-layout">
+
+                    <!-- LEFT: Well Diagram -->
+                    <div class="well-diagram-panel">
+                        <h3 id="well-diagram-title">🔍 Podgląd studni</h3>
+                        <svg id="well-diagram" class="well-diagram-svg" viewBox="0 0 300 500"
+                            preserveAspectRatio="xMidYMax meet"></svg>
+                        <div class="well-summary-mini">
+                            <div class="ws-item">
+                                <div class="ws-label">Cena netto</div>
+                                <div class="ws-value accent" id="ws-price">0 PLN</div>
+                            </div>
+                            <div class="ws-item">
+                                <div class="ws-label">Waga</div>
+                                <div class="ws-value" id="ws-weight">0 kg</div>
+                            </div>
+                            <div class="ws-item">
+                                <div class="ws-label">Wysokość</div>
+                                <div class="ws-value" id="ws-height">0 mm</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CENTER: Config area -->
+                    <div>
+                        <!-- Toolbar: DN + Elevations + Height + Controls -->
+                        <div class="well-info-card">
+                            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                <div style="display:flex; align-items:center; gap:0.25rem;">
+                                    <span
+                                        style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">DN</span>
+                                    <div class="dn-selector" style="margin-bottom:0;">
+                                        <button class="dn-btn active" onclick="selectDN(1000)">1000</button>
+                                        <button class="dn-btn" onclick="selectDN(1200)">1200</button>
+                                        <button class="dn-btn" onclick="selectDN(1500)">1500</button>
+                                        <button class="dn-btn" onclick="selectDN(2000)">2000</button>
+                                        <button class="dn-btn" onclick="selectDN(2500)">2500</button>
+                                    </div>
+                                </div>
+                                <div style="width:1px; height:22px; background:var(--border-glass);"></div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label style="font-size:0.58rem; color:var(--text-muted); white-space:nowrap;">Rz.
+                                        włazu</label>
+                                    <input type="number" step="0.01" id="input-rzedna-wlazu" placeholder="100.50"
+                                        onchange="updateElevations()"
+                                        style="width:72px; padding:0.2rem 0.3rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); font:600 0.75rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label style="font-size:0.58rem; color:var(--text-muted); white-space:nowrap;">Rz.
+                                        dna</label>
+                                    <input type="number" step="0.01" id="input-rzedna-dna" placeholder="97.20"
+                                        onchange="updateElevations()"
+                                        style="width:72px; padding:0.2rem 0.3rem; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); font:600 0.75rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="width:1px; height:22px; background:var(--border-glass);"></div>
+                                <div
+                                    style="display:flex; align-items:center; gap:0.5rem; font-size:0.65rem; color:var(--text-muted);">
+                                    <span>Wym: <strong id="well-required-height" style="color:#818cf8;">—
+                                            mm</strong></span>
+                                    <span>Konf: <strong id="well-configured-height" style="color:var(--success);">0
+                                            mm</strong></span>
+                                    <span id="height-diff-indicator"></span>
+                                </div>
+                                <div style="flex:1;"></div>
+                                <div style="display:flex; gap:0.2rem;">
+                                    <button class="btn btn-secondary btn-sm" onclick="toggleAutoLock()"
+                                        id="btn-lock-auto"
+                                        style="font-size:0.65rem; padding:0.2rem 0.5rem; border-color:var(--border-glass);">🔓
+                                        Ręczny</button>
+                                    <button class="btn btn-primary btn-sm" onclick="autoSelectComponents()"
+                                        id="btn-auto-select" style="font-size:0.65rem; padding:0.2rem 0.5rem;">🔧
+                                        Auto</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="clearWellConfig()"
+                                        style="font-size:0.65rem; padding:0.2rem 0.5rem;">🔄</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Builder tabs -->
+                        <div class="builder-sub-nav"
+                            style="display:flex; gap:0.3rem; margin-bottom:0.5rem; background:rgba(15,23,42,0.5); padding:0.3rem; border-radius:8px; border:1px solid var(--border-glass);">
+                            <button class="b-tab-btn active" onclick="switchBuilderTab('concrete')"
+                                id="btab-concrete">🏗️
+                                Prefabrykaty betonowe</button>
+                            <button class="b-tab-btn" onclick="switchBuilderTab('transitions')" id="btab-transitions">💧
+                                Przejścia szczelne</button>
+                        </div>
+
+                        <!-- TAB: CONCRETE CONTENT -->
+                        <div id="bcontent-concrete">
+
+
+                            <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
+                                <div class="card-title"
+                                    style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
+                                    onclick="toggleCard('tiles-content', 'tiles-icon')">
+                                    <span>🧱 Wybór elementów</span>
+                                    <span id="tiles-icon" style="font-size:0.75rem;">🔼</span>
+                                </div>
+                                <div id="tiles-content" class="card-content" style="margin-top:0.5rem;">
+                                    <div id="tiles-container"></div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding:0.5rem 0.6rem;">
+                                <div class="card-title"
+                                    style="font-size:0.78rem; padding:0.15rem 0; margin-bottom:0.3rem;">
+                                    📦 Konfiguracja betonowa</div>
+                                <div class="table-wrap">
+                                    <table class="well-config-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:42px">Poz.</th>
+                                                <th>Element</th>
+                                                <th style="text-align:right">Waga</th>
+                                                <th style="text-align:right">Pow.w.</th>
+                                                <th style="text-align:right">Pow.z.</th>
+                                                <th style="text-align:center; width:50px">Ilość</th>
+                                                <th style="text-align:right">Cena j.</th>
+                                                <th style="text-align:right">Wartość</th>
+                                                <th style="text-align:center; width:35px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="well-config-body">
+                                            <tr>
+                                                <td colspan="9"
+                                                    style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem;">
+                                                    Kliknij kafelki powyżej, aby dodać elementy studni
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: TRANSITIONS CONTENT -->
+                        <div id="bcontent-transitions" style="display:none;">
+                            <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
+                                <div class="card-title" style="font-size:0.78rem; padding:0.15rem 0;">➕ Dodaj
+                                    Przejście Szczelne</div>
+                                <div id="inline-przejscia-app"></div>
+                            </div>
+                            <div class="card" style="background:rgba(15,23,42,0.4); padding:0.5rem 0.6rem;">
+                                <div class="card-title"
+                                    style="font-size:0.78rem; padding:0.15rem 0; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>📖 Lista dodanych przejść</span>
+                                    <span id="przejscia-count"
+                                        style="font-size:0.65rem; color:var(--text-muted);"></span>
+                                </div>
+                                <div id="well-przejscia-tiles"></div>
+                            </div>
+                        </div>
+
+                        <!-- Summary bar -->
+                        <div
+                            style="margin-top:0.5rem; padding:0.5rem 0.6rem; background:rgba(15,23,42,0.6); border-radius:8px; border:1px solid var(--border-glass);">
+                            <div
+                                style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0.5rem; text-align:center;">
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Cena
+                                        netto</div>
+                                    <div style="font-size:1rem; font-weight:800; color:var(--success);" id="sum-price">0
+                                        PLN
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Waga
+                                    </div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-weight">0 kg</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Wysokość</div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-height">0 mm</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Pow.
+                                        wewn.</div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-area-int">0 m²</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Pow.
+                                        zewn.</div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-area-ext">0 m²</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Wells list sidebar -->
+                    <div class="wells-sidebar">
+                        <div class="wells-sidebar-panel">
+                            <div class="wells-sidebar-header"
+                                style="flex-direction: column; align-items: stretch; gap: 0.3rem; padding-bottom: 0;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h3 style="margin:0; font-size:0.75rem;">🗂️ Lista studni <span class="wells-count"
+                                            id="wells-counter"></span></h3>
+                                </div>
+                                <div
+                                    style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:0.2rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(1000)">+1000</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(1200)">+1200</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(1500)">+1500</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(2000)">+2000</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(2500)">+2500</button>
+                                </div>
+                                <div
+                                    style="display:flex; gap:0.2rem; padding-bottom:0.3rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <button class="btn btn-secondary btn-sm"
+                                        style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1;"
+                                        onclick="clearOfferForm()">🔄 Nowa oferta</button>
+                                    <button class="btn btn-success btn-sm"
+                                        style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1;"
+                                        onclick="saveOfferStudnie()">💾 Zapisz</button>
+                                </div>
+                            </div>
+                            <div id="wells-discount-panel"></div>
+                            <div id="wells-list"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- /wizard-step-3 -->
+        </div> <!-- /section-builder -->
 
         <!-- ===== SECTION: OFFER ===== -->
         <div class="section" id="section-offer">
@@ -1339,7 +1870,8 @@
                             style="font-size: 1.6rem; font-weight: 800; color: var(--success); margin: 0;">0,00 PLN
                         </div>
                         <div class="summary-sub" id="sum-brutto-details"
-                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Brutto: 0,00 PLN
+                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Brutto: 0,00
+                            PLN
                         </div>
                     </div>
                 </div>
@@ -1370,7 +1902,8 @@
                         style="padding-left:2.2rem !important">
                 </div>
                 <button class="btn btn-primary" onclick="showAddStudnieProductModal()">➕ Dodaj</button>
-                <button class="btn btn-secondary" onclick="saveAsDefaultStudniePriceList()">💾 Zapisz do resetu</button>
+                <button class="btn btn-secondary" onclick="saveAsDefaultStudniePriceList()">💾 Zapisz do
+                    resetu</button>
                 <button class="btn btn-secondary" onclick="downloadStudniePricelistFile()">⬇️ Zapisz plik</button>
                 <button class="btn btn-secondary" onclick="exportStudnieToExcel()">📤 Eksportuj Excel</button>
                 <button class="btn btn-secondary" onclick="document.getElementById('import-studnie-excel').click()">📥
@@ -1388,6 +1921,8 @@
                     <span class="cennik-tab-icon" style="background:#ec4899;"></span> DN1500</button>
                 <button class="cennik-tab" data-tab="dn2000" onclick="selectCennikTab('dn2000')">
                     <span class="cennik-tab-icon" style="background:#f59e0b;"></span> DN2000</button>
+                <button class="cennik-tab" data-tab="dn2500" onclick="selectCennikTab('dn2500')">
+                    <span class="cennik-tab-icon" style="background:#ef4444;"></span> DN2500</button>
                 <button class="cennik-tab" data-tab="dennicy" onclick="selectCennikTab('dennicy')">
                     <span class="cennik-tab-icon" style="background:#10b981;"></span> Dennicy</button>
                 <button class="cennik-tab" data-tab="akcesoria" onclick="selectCennikTab('akcesoria')">

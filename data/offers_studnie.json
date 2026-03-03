@@ -1,1 +1,936 @@
-[]
+[
+  {
+    "id": "offer_studnie_1772558731606",
+    "userId": "user_admin",
+    "userName": "admin",
+    "number": "OS/000001/AD/2026",
+    "date": "2026-03-03",
+    "clientName": "Budimex S.A.",
+    "clientNip": "5261003187",
+    "clientAddress": "01-204 Warszawa, ul. Siedmiogrodzka 9",
+    "clientContact": "Jan Kowalski 654-952-651",
+    "investName": "",
+    "investAddress": "",
+    "notes": "",
+    "wells": [
+      {
+        "id": "well-1",
+        "name": "Studnia 1",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "rzednaWlazu": 2,
+        "rzednaDna": 0,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "powlokaNameW": "",
+        "kineta": "brak",
+        "stopnie": "brak",
+        "usytuowanie": "linia_dolna",
+        "spocznikH": "1/2",
+        "redukcjaKinety": "tak",
+        "malowanieZ": "brak",
+        "powlokaNameZ": ""
+      },
+      {
+        "id": "well-1772558756394-2",
+        "name": "Studnia DN1200 (#2)",
+        "dn": 1200,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-12-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-12-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-12-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-12-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558756785-3",
+        "name": "Studnia DN1500 (#3)",
+        "dn": 1500,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-15-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-15-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-15-060",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558757153-4",
+        "name": "Studnia DN2000 (#4)",
+        "dn": 2000,
+        "config": [],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558757709-5",
+        "name": "Studnia DN1000 (#5)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 2,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558758265-6",
+        "name": "Studnia DN1000 (#6)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 2,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558758451-7",
+        "name": "Studnia DN1000 (#7)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 3,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558758617-8",
+        "name": "Studnia DN1000 (#8)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 2
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 4,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558759179-9",
+        "name": "Studnia DN1500 (#9)",
+        "dn": 1500,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-15-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-15-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-15-060",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558759381-10",
+        "name": "Studnia DN1500 (#10)",
+        "dn": 1500,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-15-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-15-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-15-060",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558759553-11",
+        "name": "Studnia DN1500 (#11)",
+        "dn": 1500,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-15-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-15-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-15-060",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558759851-12",
+        "name": "Studnia DN1200 (#12)",
+        "dn": 1200,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-12-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-12-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-12-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-12-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558760028-13",
+        "name": "Studnia DN1200 (#13)",
+        "dn": 1200,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-12-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-12-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-12-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-12-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558760327-14",
+        "name": "Studnia DN1000 (#14)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 4
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 6,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558760500-15",
+        "name": "Studnia DN1000 (#15)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 5
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 7,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558760675-16",
+        "name": "Studnia DN1000 (#16)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 6
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 8,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558760844-17",
+        "name": "Studnia DN1000 (#17)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558761011-18",
+        "name": "Studnia DN1000 (#18)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      },
+      {
+        "id": "well-1772558761190-19",
+        "name": "Studnia DN1000 (#19)",
+        "dn": 1000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-06",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 3
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-10-055",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "autoLocked": false,
+        "material": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "w_osi"
+      }
+    ],
+    "transportKm": 100,
+    "transportRate": 10,
+    "totalWeight": 103111,
+    "totalNetto": 92840,
+    "totalBrutto": 114193.2,
+    "createdAt": "2026-03-03T17:25:31.606Z",
+    "updatedAt": "2026-03-03T17:27:27.044Z",
+    "lastEditedBy": "admin"
+  }
+]
