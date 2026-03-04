@@ -372,6 +372,53 @@ app.put('/api/offers-studnie', requireAuth, (req, res) => {
     res.json({ ok: true });
 });
 
+/* ===== ORDERS STUDNIE (Zamówienia) ===== */
+app.get('/api/orders-studnie', requireAuth, (req, res) => {
+    let data = readData('orders_studnie', []);
+    if (req.user.role === 'user') {
+        data = data.filter(o => o.userId === req.user.id);
+    } else if (req.user.role === 'pro') {
+        const allowedIds = [req.user.id, ...(req.user.subUsers || [])];
+        data = data.filter(o => allowedIds.includes(o.userId));
+    }
+    res.json({ data });
+});
+
+app.put('/api/orders-studnie', requireAuth, (req, res) => {
+    const allOrders = readData('orders_studnie', []);
+    const incoming = req.body.data || [];
+
+    if (req.user.role === 'admin') {
+        writeData('orders_studnie', incoming);
+    } else if (req.user.role === 'pro') {
+        const allowedIds = [req.user.id, ...(req.user.subUsers || [])];
+        const othersOrders = allOrders.filter(o => o.userId && !allowedIds.includes(o.userId));
+        const userOrders = incoming.filter(o => !o.userId || allowedIds.includes(o.userId));
+        writeData('orders_studnie', [...othersOrders, ...userOrders]);
+    } else {
+        const othersOrders = allOrders.filter(o => o.userId && o.userId !== req.user.id);
+        const userOrders = incoming.filter(o => !o.userId || o.userId === req.user.id);
+        writeData('orders_studnie', [...othersOrders, ...userOrders]);
+    }
+    res.json({ ok: true });
+});
+
+app.get('/api/orders-studnie/:id', requireAuth, (req, res) => {
+    const data = readData('orders_studnie', []);
+    const order = data.find(o => o.id === req.params.id);
+    if (!order) return res.status(404).json({ error: 'Zamówienie nie znalezione' });
+    res.json({ data: order });
+});
+
+app.patch('/api/orders-studnie/:id', requireAuth, (req, res) => {
+    let data = readData('orders_studnie', []);
+    const idx = data.findIndex(o => o.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Zamówienie nie znalezione' });
+    data[idx] = { ...data[idx], ...req.body, id: req.params.id };
+    writeData('orders_studnie', data);
+    res.json({ ok: true });
+});
+
 /* ===== CLIENTS ===== */
 app.get('/api/clients', requireAuth, (req, res) => {
     const data = readData('clients', []);

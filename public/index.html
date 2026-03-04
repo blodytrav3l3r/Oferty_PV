@@ -35,16 +35,16 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
+            background: #0d1520;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.4);
+            background: #3a3a8a;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.7);
+            background: #6060d0;
         }
 
         body::before {
@@ -55,9 +55,9 @@
             width: 200%;
             height: 200%;
             background:
-                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+                radial-gradient(circle at 20% 30%, #152040 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, #0d2a20 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, #1e1540 0%, transparent 50%);
             animation: bgShift 20s ease-in-out infinite alternate;
             z-index: 0;
         }
@@ -106,9 +106,8 @@
             margin: 0 auto 2.5rem;
             padding: 2rem;
             border-radius: 16px;
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            backdrop-filter: blur(20px);
+            background: #1a2536;
+            border: 1px solid #1a1e25;
         }
 
         .login-box h3 {
@@ -121,9 +120,9 @@
             width: 100%;
             padding: 0.7rem 1rem;
             margin-bottom: 0.7rem;
-            border: 1px solid rgba(148, 163, 184, 0.15);
+            border: 1px solid #1a1e25;
             border-radius: 10px;
-            background: rgba(15, 23, 42, 0.6);
+            background: #0d1520;
             color: #e2e8f0;
             font-family: 'Inter', sans-serif;
             font-size: 0.9rem;
@@ -133,7 +132,7 @@
 
         .login-box input:focus {
             border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+            box-shadow: 0 0 0 3px #182848;
         }
 
         .login-box input::placeholder {
@@ -155,7 +154,7 @@
 
         .login-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 25px #152040;
         }
 
         .login-error {
@@ -174,8 +173,8 @@
             margin-bottom: 2rem;
             padding: 0.6rem 1.5rem;
             border-radius: 12px;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(148, 163, 184, 0.08);
+            background: #1a2536;
+            border: 1px solid #1a1e25;
         }
 
         .user-bar .user-name {
@@ -193,22 +192,22 @@
         }
 
         .user-bar .role-admin {
-            background: rgba(245, 158, 11, 0.15);
+            background: #2d2208;
             color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            border: 1px solid #2d2208;
         }
 
         .user-bar .role-user {
-            background: rgba(59, 130, 246, 0.15);
+            background: #152040;
             color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            border: 1px solid #152040;
         }
 
         .small-btn {
             padding: 0.35rem 0.8rem;
-            border: 1px solid rgba(148, 163, 184, 0.15);
+            border: 1px solid #1a1e25;
             border-radius: 8px;
-            background: rgba(30, 41, 59, 0.6);
+            background: #1a2536;
             color: #94a3b8;
             font: 500 0.75rem 'Inter', sans-serif;
             cursor: pointer;
@@ -218,8 +217,8 @@
 
         .small-btn:hover {
             color: #e2e8f0;
-            border-color: rgba(148, 163, 184, 0.3);
-            background: rgba(30, 41, 59, 0.9);
+            border-color: #1a1e25;
+            background: #1a2536;
         }
 
         .small-btn.danger {
@@ -227,7 +226,7 @@
         }
 
         .small-btn.danger:hover {
-            border-color: rgba(248, 113, 113, 0.3);
+            border-color: #3a1a1a;
         }
 
         /* ── Special Offers Button ── */
@@ -236,29 +235,28 @@
             align-items: center;
             gap: 0.75rem;
             padding: 1rem 2.5rem;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.1));
-            border: 1px solid rgba(99, 102, 241, 0.25);
+            background: linear-gradient(135deg, #1a1a3e, #1a1548);
+            border: 1px solid #282868;
             border-radius: 50px;
             color: #a5b4fc;
             font-size: 1.1rem;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px #080808;
         }
 
         .btn-offers:hover {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(79, 70, 229, 0.2));
-            border-color: rgba(99, 102, 241, 0.5);
+            background: linear-gradient(135deg, #282868, #1a1548);
+            border-color: #4d4da0;
             color: #ffffff;
             transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 12px 30px #1a1548;
         }
 
         .btn-offers-icon {
             font-size: 1.4rem;
-            filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.6));
+            filter: drop-shadow(0 0 5px #6060d0);
         }
 
         .btn-offers-arrow {
@@ -284,9 +282,8 @@
             width: 320px;
             padding: 2.5rem 2rem;
             border-radius: 20px;
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            backdrop-filter: blur(20px);
+            background: #1a2536;
+            border: 1px solid #1a1e25;
             text-decoration: none;
             color: #e2e8f0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -315,8 +312,8 @@
 
         .card:hover {
             transform: translateY(-8px) scale(1.02);
-            border-color: rgba(148, 163, 184, 0.25);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+            border-color: #1a1e25;
+            box-shadow: 0 25px 60px #080808;
         }
 
         .card:hover::before {
@@ -324,11 +321,11 @@
         }
 
         .card-rury:hover {
-            box-shadow: 0 25px 60px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 25px 60px #152040;
         }
 
         .card-studnie:hover {
-            box-shadow: 0 25px 60px rgba(16, 185, 129, 0.15);
+            box-shadow: 0 25px 60px #0d2a20;
         }
 
         .card-icon {
@@ -368,15 +365,15 @@
         }
 
         .card-rury .card-badge {
-            background: rgba(59, 130, 246, 0.15);
+            background: #152040;
             color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            border: 1px solid #152040;
         }
 
         .card-studnie .card-badge {
-            background: rgba(16, 185, 129, 0.1);
+            background: #0d2a20;
             color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            border: 1px solid #0d2a20;
         }
 
         /* ── Admin Panel ── */
@@ -385,8 +382,8 @@
             margin: 2rem auto 0;
             padding: 1.5rem;
             border-radius: 16px;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(245, 158, 11, 0.15);
+            background: #1a2536;
+            border: 1px solid #2d2208;
             text-align: left;
         }
 
@@ -409,12 +406,12 @@
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            border-bottom: 1px solid #1a1e25;
         }
 
         .admin-panel td {
             padding: 0.5rem 0.6rem;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+            border-bottom: 1px solid #1a1e25;
             color: #e2e8f0;
         }
 
@@ -428,9 +425,9 @@
         .new-user-form input,
         .new-user-form select {
             padding: 0.5rem 0.7rem;
-            border: 1px solid rgba(148, 163, 184, 0.15);
+            border: 1px solid #1a1e25;
             border-radius: 8px;
-            background: rgba(15, 23, 42, 0.6);
+            background: #0d1520;
             color: #e2e8f0;
             font: 400 0.8rem 'Inter', sans-serif;
             outline: none;
@@ -454,6 +451,137 @@
             display: none !important;
         }
 
+        /* ── Dashboard Nav Header ── */
+        .dash-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+            padding: 0 1rem;
+            display: none;
+        }
+
+        .dash-header.visible {
+            display: block;
+        }
+
+        .dash-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 42px;
+        }
+
+        .dash-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .dash-nav-logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .dash-nav-apps {
+            display: flex;
+            gap: 0.5rem;
+            padding-left: 1rem;
+            margin-left: 1rem;
+            border-left: 1px solid #1e2530;
+        }
+
+        .dash-nav-tile {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.7rem;
+            border: 1px solid #1a1e25;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+        }
+
+        .dash-nav-tile:hover {
+            background: #1e1e4a;
+            border-color: #1e1e4a;
+            color: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .dash-nav-tile.active {
+            color: #60a5fa;
+            background: #152040;
+            border-color: #60a5fa;
+        }
+
+        .dash-nav-tile.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #60a5fa;
+            border-radius: 1px;
+        }
+
+        .dash-nav-tile-icon {
+            font-size: 0.95rem;
+        }
+
+        .dash-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+        }
+
+        .dash-header-right .dash-username {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .dash-header-right .dash-role {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-right: 0.5rem;
+        }
+
+        .dash-logout-btn {
+            padding: 0.3rem 0.7rem;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            background: transparent;
+            color: #64748b;
+            font: 500 0.72rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dash-logout-btn:hover {
+            color: #f87171;
+            border-color: #3a1a1a;
+        }
+
         @media (max-width: 700px) {
             .logo {
                 font-size: 2.5rem;
@@ -473,6 +601,34 @@
 </head>
 
 <body>
+    <!-- Dashboard Navigation Header (shown after login) -->
+    <header class="dash-header" id="dash-header">
+        <div class="dash-header-inner">
+            <div class="dash-header-left">
+                <span class="dash-nav-logo">WITROS</span>
+                <div class="dash-nav-apps">
+                    <div class="dash-nav-tile active" style="color:#60a5fa; background:#152040; border-color:#60a5fa;">
+                        <span class="dash-nav-tile-icon">🏠</span>
+                        <span>Pulpit</span>
+                    </div>
+                    <a href="studnie.html" class="dash-nav-tile">
+                        <span class="dash-nav-tile-icon">🏗️</span>
+                        <span>Studnie</span>
+                    </a>
+                    <a href="rury.html" class="dash-nav-tile">
+                        <span class="dash-nav-tile-icon">🔩</span>
+                        <span>Rury</span>
+                    </a>
+                </div>
+            </div>
+            <div class="dash-header-right">
+                <span class="dash-username" id="dash-username"></span>
+                <span class="dash-role" id="dash-role"></span>
+                <button class="dash-logout-btn" onclick="doLogout()">Wyloguj</button>
+            </div>
+        </div>
+    </header>
+
     <div class="container">
         <div class="logo">WITROS</div>
         <div class="subtitle">Generator Ofert Handlowych</div>
@@ -519,7 +675,7 @@
                     <div class="card-desc">
                         Kalkulator ofert na studnie betonowe i żelbetowe
                     </div>
-                    <span class="card-badge">WKRÓTCE</span>
+                    <span class="card-badge">OTWÓRZ →</span>
                 </a>
             </div>
 
@@ -529,10 +685,10 @@
                     <h4 style="margin: 0;">👥 Zarządzanie użytkownikami</h4>
                     <div style="display:flex; gap:0.5rem;">
                         <button id="add-user-btn" class="small-btn"
-                            style="background:rgba(16,185,129,0.15); color:#34d399; border-color:rgba(16,185,129,0.3);"
-                            onclick="createUser()">➕ Dodaj</button>
+                            style="background:#0d2a20; color:#34d399; border-color:#0d2a20;" onclick="createUser()">➕
+                            Dodaj</button>
                         <button id="cancel-edit-btn" class="small-btn hidden"
-                            style="background:rgba(239,68,68,0.15); color:#f87171; border-color:rgba(239,68,68,0.3);"
+                            style="background:#3a1515; color:#f87171; border-color:#3a1515;"
                             onclick="cancelEditUser()">❌ Anuluj</button>
                     </div>
                 </div>
@@ -572,7 +728,7 @@
                 </div>
                 <!-- SubUsers container (only visible if role === 'pro') -->
                 <div id="sub-users-container" class="hidden"
-                    style="margin-top:0.8rem; background:rgba(0,0,0,0.1); padding:0.5rem; border-radius:6px; font-size:0.8rem;">
+                    style="margin-top:0.8rem; background:#080808; padding:0.5rem; border-radius:6px; font-size:0.8rem;">
                     <strong style="display:block; margin-bottom:0.5rem; color:#94a3b8;">Przypisani użytkownicy (widzi
                         ich oferty)</strong>
                     <div id="sub-users-list" style="display:flex; flex-wrap:wrap; gap:0.5rem;">
@@ -659,6 +815,7 @@
         function showLogin() {
             document.getElementById('login-section').classList.remove('hidden');
             document.getElementById('user-section').classList.add('hidden');
+            document.getElementById('dash-header').classList.remove('visible');
         }
 
         function showLoggedIn(user) {
@@ -668,6 +825,18 @@
             const roleEl = document.getElementById('user-display-role');
             roleEl.textContent = user.role === 'admin' ? 'ADMIN' : 'UŻYTKOWNIK';
             roleEl.className = 'user-role ' + (user.role === 'admin' ? 'role-admin' : 'role-user');
+
+            // Show dashboard nav header
+            document.getElementById('dash-header').classList.add('visible');
+            const dashUser = document.getElementById('dash-username');
+            const dashRole = document.getElementById('dash-role');
+            if (dashUser) dashUser.textContent = '👤 ' + user.username;
+            if (dashRole) {
+                dashRole.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
+                dashRole.style.background = user.role === 'admin' ? '#2d2208' : '#152040';
+                dashRole.style.color = user.role === 'admin' ? '#f59e0b' : '#60a5fa';
+                dashRole.style.border = user.role === 'admin' ? '1px solid #2d2208' : '1px solid #152040';
+            }
 
             if (user.role === 'admin') {
                 document.getElementById('admin-panel').classList.remove('hidden');
@@ -743,11 +912,11 @@
                             return subU ? (subU.firstName && subU.lastName ? subU.firstName + ' ' + subU.lastName : subU.username) : 'Nieznany';
                         });
                         html += `
-          <tr style="background: rgba(255,255,255,0.02);">
+          <tr style="background: #1e2530;">
             <td colspan="8" style="padding-top: 0.3rem; padding-bottom: 0.5rem; border-top: none;">
                 <div style="font-size: 0.7rem; color: #cbd5e1; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; padding-left: 0.5rem;">
                     <span style="font-weight:600; color:#fbbf24; font-size: 0.65rem;">👥 PRZYPISANI:</span>
-                    ${subUsersNames.map(name => `<span style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 0.15rem 0.5rem; border-radius: 12px;">${name}</span>`).join('')}
+                    ${subUsersNames.map(name => `<span style="background: #080808; border: 1px solid #1e2530; padding: 0.15rem 0.5rem; border-radius: 12px;">${name}</span>`).join('')}
                 </div>
             </td>
           </tr>`;

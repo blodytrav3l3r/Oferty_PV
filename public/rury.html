@@ -31,31 +31,50 @@
           <span>Oferty rury</span>
         </div>
 
-        <div style="border-left: 1px solid rgba(255,255,255,0.1); display:flex; gap:0.5rem; padding-left: 0.8rem;">
-          <a href="index.html" class="nav-module-btn">🏠 Pulpit</a>
-          <a href="studnie.html" class="nav-module-btn">🏗️ Studnie</a>
+        <div class="nav-apps">
+          <a href="index.html" class="nav-tile">
+            <span class="nav-tile-icon">🏠</span>
+            <span class="nav-tile-text">Pulpit</span>
+          </a>
+          <a href="studnie.html" class="nav-tile">
+            <span class="nav-tile-icon">🏗️</span>
+            <span class="nav-tile-text">Studnie</span>
+          </a>
+          <div class="nav-tile active" style="--nav-accent:#6366f1; --nav-glow:#1a1a3e">
+            <span class="nav-tile-icon">🔩</span>
+            <span class="nav-tile-text">Rury</span>
+          </div>
         </div>
       </div>
 
       <div class="header-center">
         <nav class="nav">
-          <button class="nav-btn active" data-section="offer" id="nav-offer"
-            style="--nav-accent:#10b981; --nav-glow:rgba(16,185,129,0.12)">📝 Nowa Oferta</button>
-          <button class="nav-btn" data-section="saved" id="nav-saved"
-            style="--nav-accent:#f59e0b; --nav-glow:rgba(245,158,11,0.12)">💾 Zapisane Oferty</button>
+          <button class="nav-btn nav-tile active" data-section="offer" id="nav-offer"
+            style="--nav-accent:#10b981; --nav-glow:#0d2a20">
+            <span class="nav-tile-icon">📝</span>
+            <span class="nav-tile-text">Nowa Oferta</span>
+          </button>
+          <button class="nav-btn nav-tile" data-section="saved" id="nav-saved"
+            style="--nav-accent:#f59e0b; --nav-glow:#2d2208">
+            <span class="nav-tile-icon">💾</span>
+            <span class="nav-tile-text">Zapisane</span>
+          </button>
+          <button class="nav-btn nav-tile" data-section="pricelist" id="nav-pricelist"
+            style="--nav-accent:#8b5cf6; --nav-glow:#1e1540">
+            <span class="nav-tile-icon">📋</span>
+            <span class="nav-tile-text">Cennik</span>
+          </button>
         </nav>
       </div>
 
       <div class="header-right">
-        <button class="nav-btn" data-section="pricelist" id="nav-pricelist" style="margin-right:0.5rem">📋
-          Cennik</button>
         <div id="header-user-info" style="display:flex; align-items:center; gap:0.5rem; font-size:0.78rem;">
           <span id="header-username" style="color:var(--text-secondary); font-weight:500;"></span>
           <span id="header-role-badge"
             style="font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; margin-right:0.5rem;"></span>
           <button onclick="appLogout()"
             style="padding:0.35rem 0.8rem; border:1px solid var(--border-glass); border-radius:6px; background:var(--bg-glass); color:var(--text-muted); font:500 0.75rem 'Inter',sans-serif; cursor:pointer; transition:all 0.2s;"
-            onmouseenter="this.style.color='#f87171'; this.style.borderColor='rgba(248,113,113,0.3)'"
+            onmouseenter="this.style.color='#f87171'; this.style.borderColor='#3a1a1a'"
             onmouseleave="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-glass)'">Wyloguj</button>
         </div>
       </div>
@@ -204,7 +223,7 @@
         </div>
 
         <div
-          style="position: sticky; bottom: 0; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(12px); border-top: 1px solid var(--border-glass); margin: 0 -1rem -0.8rem -1rem; padding: 1.2rem 1.5rem; z-index: 100; box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);">
+          style="position: sticky; bottom: 0; background: #111827; border-top: 1px solid var(--border-glass); margin: 0 -1rem -0.8rem -1rem; padding: 1.2rem 1.5rem; z-index: 100; box-shadow: 0 -8px 30px #080808;">
 
 
 
@@ -239,7 +258,7 @@
             <div class="summary-card"
               style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--border-glass); align-items: center;">
               <button class="btn btn-secondary btn-sm" onclick="showItemDiscountModal()"
-                style="font-size: 0.9rem; padding: 0.6rem 1rem; border: 1px solid var(--primary); color: var(--primary); background: rgba(99, 102, 241, 0.05); font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; width: 100%; max-width: 180px;">
+                style="font-size: 0.9rem; padding: 0.6rem 1rem; border: 1px solid var(--primary); color: var(--primary); background: #0e0e25; font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; width: 100%; max-width: 180px;">
                 % Edytuj rabaty
               </button>
             </div>

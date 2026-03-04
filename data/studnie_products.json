@@ -1,5 +1,4 @@
-/* ===== DEFAULT PRODUCT DATA — STUDNIE ===== */
-const DEFAULT_PRODUCTS_STUDNIE = [
+[
     {
         "id": "DDD-10-055",
         "name": "Dennica DN1000 H=550",
@@ -10040,16 +10039,4 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         "areaExt": 1.88,
         "transport": null
     }
-];
-
-const CATEGORIES_STUDNIE = [
-    "Studnie DN1000",
-    "Studnie DN1200",
-    "Studnie DN1500",
-    "Studnie DN2000",
-    "Studnie DN2500",
-    "Akcesoria studni",
-    "Uszczelki studni",
-    "Przejścia",
-    "Rury jajowe"
-];
+]

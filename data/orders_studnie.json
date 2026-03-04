@@ -1,6 +1,8 @@
 [
   {
-    "id": "offer_studnie_1772659228615",
+    "id": "order_studnie_1772656326181",
+    "offerId": "offer_studnie_1772656233933",
+    "offerNumber": "OS/000002/AD/2026",
     "userId": "user_admin",
     "userName": "admin",
     "number": "OS/000002/AD/2026",
@@ -14,7 +16,7 @@
     "notes": "",
     "wells": [
       {
-        "id": "well-1772659215449-1",
+        "id": "well-1772656157834-1",
         "name": "Studnia DN1000 (#1)",
         "dn": 1000,
         "config": [
@@ -31,24 +33,45 @@
             "quantity": 1
           },
           {
-            "productId": "AVR-PR-06",
-            "quantity": 1
+            "productId": "KDB-10-10-D",
+            "quantity": 3
           },
           {
-            "productId": "KDB-10-05-D",
-            "quantity": 1
-          },
-          {
-            "productId": "DDD-10-055",
+            "productId": "DDD-10-110",
             "quantity": 1
           }
         ],
-        "przejscia": [],
-        "rzednaWlazu": 2,
+        "przejscia": [
+          {
+            "productId": "PVC-Gładkie-400",
+            "rzednaWlaczenia": null,
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          },
+          {
+            "productId": "PVC-Gładkie-315",
+            "rzednaWlaczenia": null,
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          },
+          {
+            "productId": "PVC-SN8-250",
+            "rzednaWlaczenia": "1.50",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          }
+        ],
+        "rzednaWlazu": 5,
         "rzednaDna": 0,
         "numer": "",
         "autoLocked": false,
-        "material": "zelbetowa",
+        "material": "betonowa",
         "wkladka": "brak",
         "klasaBetonu": "C40/50",
         "agresjaChemiczna": "XA1",
@@ -57,14 +80,14 @@
         "malowanieZ": "brak",
         "powlokaNameW": "",
         "powlokaNameZ": "",
-        "kineta": "brak",
+        "kineta": "precotop",
         "redukcjaKinety": "tak",
         "stopnie": "brak",
         "spocznikH": "1/2",
         "usytuowanie": "linia_dolna"
       },
       {
-        "id": "well-1772659220150-2",
+        "id": "well-1772656206214-2",
         "name": "Studnia DN1200 (#2)",
         "dn": 1200,
         "config": [
@@ -85,158 +108,50 @@
             "quantity": 1
           },
           {
-            "productId": "KDB-12-05-D",
-            "quantity": 1
-          },
-          {
-            "productId": "DDD-12-055",
-            "quantity": 1
-          }
-        ],
-        "przejscia": [],
-        "rzednaWlazu": 2,
-        "rzednaDna": 0,
-        "numer": "",
-        "autoLocked": false,
-        "material": "zelbetowa",
-        "wkladka": "brak",
-        "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
-        "malowanieW": "brak",
-        "malowanieZ": "brak",
-        "powlokaNameW": "",
-        "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
-        "stopnie": "brak",
-        "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna"
-      },
-      {
-        "id": "well-1772659946445-1",
-        "name": "Studnia DN1000 (#1)",
-        "dn": 1000,
-        "config": [],
-        "przejscia": [],
-        "rzednaWlazu": null,
-        "rzednaDna": null,
-        "numer": "",
-        "autoLocked": false,
-        "material": "zelbetowa",
-        "wkladka": "brak",
-        "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
-        "malowanieW": "brak",
-        "malowanieZ": "brak",
-        "powlokaNameW": "",
-        "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
-        "stopnie": "brak",
-        "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna"
-      },
-      {
-        "id": "well-1772659946717-2",
-        "name": "Studnia DN1200 (#2)",
-        "dn": 1200,
-        "config": [],
-        "przejscia": [],
-        "rzednaWlazu": null,
-        "rzednaDna": null,
-        "numer": "",
-        "autoLocked": false,
-        "material": "zelbetowa",
-        "wkladka": "brak",
-        "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
-        "malowanieW": "brak",
-        "malowanieZ": "brak",
-        "powlokaNameW": "",
-        "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
-        "stopnie": "brak",
-        "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna"
-      },
-      {
-        "id": "well-1772659947192-3",
-        "name": "Studnia DN1500 (#3)",
-        "dn": 1500,
-        "config": [
-          {
-            "productId": "WLAZ-150",
-            "quantity": 1
-          },
-          {
-            "productId": "JZW-15-625-D",
-            "quantity": 1
-          },
-          {
-            "productId": "AVR-PR-10",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-15-10-D",
+            "productId": "KDB-12-10-D",
             "quantity": 3
           },
           {
-            "productId": "KDB-15-05-D",
+            "productId": "KDB-12-02-D",
             "quantity": 1
           },
           {
-            "productId": "DDD-15-060",
+            "productId": "DDD-12-080",
             "quantity": 1
           }
         ],
-        "przejscia": [],
+        "przejscia": [
+          {
+            "productId": "PVC-SN8-500",
+            "rzednaWlaczenia": null,
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          }
+        ],
         "rzednaWlazu": 5,
         "rzednaDna": 0,
         "numer": "",
         "autoLocked": false,
-        "material": "zelbetowa",
+        "material": "betonowa",
         "wkladka": "brak",
         "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
+        "agresjaChemiczna": "XA2",
+        "agresjaMrozowa": "XF2",
         "malowanieW": "brak",
         "malowanieZ": "brak",
         "powlokaNameW": "",
         "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
+        "kineta": "precotop",
+        "redukcjaKinety": "nie",
         "stopnie": "brak",
         "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna"
+        "usytuowanie": "linia_dolna",
+        "elements": []
       }
     ],
-    "transportKm": 100,
-    "transportRate": 10,
-    "totalWeight": 13322,
-    "totalNetto": 14900,
-    "totalBrutto": 18327,
-    "createdAt": "2026-03-04T21:20:28.615Z",
-    "updatedAt": "2026-03-04T21:32:38.150Z",
-    "lastEditedBy": "admin"
-  },
-  {
-    "id": "offer_studnie_1772656233933",
-    "userId": "user_admin",
-    "userName": "admin",
-    "number": "OS/000002/AD/2026",
-    "date": "2026-03-04",
-    "clientName": "Budimex S.A.",
-    "clientNip": "5261003187",
-    "clientAddress": "01-204 Warszawa, ul. Siedmiogrodzka 9",
-    "clientContact": "Jan Kowalski 654-952-651",
-    "investName": "",
-    "investAddress": "",
-    "notes": "",
-    "wells": [
+    "originalSnapshot": [
       {
         "id": "well-1772656157834-1",
         "name": "Studnia DN1000 (#1)",
@@ -383,13 +298,11 @@
     ],
     "transportKm": 100,
     "transportRate": 10,
-    "totalWeight": 10908,
+    "totalWeight": 10953,
     "totalNetto": 8810,
     "totalBrutto": 10836.3,
-    "createdAt": "2026-03-04T20:30:33.933Z",
-    "updatedAt": "2026-03-04T20:30:33.933Z",
-    "lastEditedBy": "admin",
-    "hasOrder": true,
-    "orderId": "order_studnie_1772656326181"
+    "createdAt": "2026-03-04T20:32:06.181Z",
+    "updatedAt": "2026-03-04T20:33:13.478Z",
+    "createdBy": "admin"
   }
 ]
