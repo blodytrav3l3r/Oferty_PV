@@ -239,7 +239,7 @@
     "wells": [
       {
         "id": "well-1772656157834-1",
-        "name": "Studnia DN1000 (#1)",
+        "name": "S1",
         "dn": 1000,
         "config": [
           {
@@ -255,11 +255,15 @@
             "quantity": 1
           },
           {
-            "productId": "KDB-10-10-D",
-            "quantity": 3
+            "productId": "AVR-PR-06",
+            "quantity": 1
           },
           {
-            "productId": "DDD-10-110",
+            "productId": "KDB-10-10-D",
+            "quantity": 2
+          },
+          {
+            "productId": "DDD-10-120",
             "quantity": 1
           }
         ],
@@ -290,8 +294,8 @@
           }
         ],
         "rzednaWlazu": 5,
-        "rzednaDna": 0,
-        "numer": "",
+        "rzednaDna": 1,
+        "numer": "S1",
         "autoLocked": false,
         "material": "betonowa",
         "wkladka": "brak",
@@ -306,11 +310,13 @@
         "redukcjaKinety": "tak",
         "stopnie": "brak",
         "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna"
+        "usytuowanie": "linia_dolna",
+        "nadbudowa": "betonowa",
+        "dennicaMaterial": "betonowa"
       },
       {
         "id": "well-1772656206214-2",
-        "name": "Studnia DN1200 (#2)",
+        "name": "S2",
         "dn": 1200,
         "config": [
           {
@@ -331,14 +337,14 @@
           },
           {
             "productId": "KDB-12-10-D",
-            "quantity": 3
+            "quantity": 5
           },
           {
             "productId": "KDB-12-02-D",
             "quantity": 1
           },
           {
-            "productId": "DDD-12-080",
+            "productId": "DDD-12-095",
             "quantity": 1
           }
         ],
@@ -360,9 +366,9 @@
             "notes": ""
           }
         ],
-        "rzednaWlazu": 5,
-        "rzednaDna": 0,
-        "numer": "",
+        "rzednaWlazu": 10,
+        "rzednaDna": 3,
+        "numer": "S2",
         "autoLocked": false,
         "material": "betonowa",
         "wkladka": "brak",
@@ -378,18 +384,85 @@
         "stopnie": "brak",
         "spocznikH": "1/2",
         "usytuowanie": "linia_dolna",
-        "elements": []
+        "elements": [],
+        "nadbudowa": "betonowa",
+        "dennicaMaterial": "betonowa"
+      },
+      {
+        "id": "well-1772746726780-1",
+        "name": "S3",
+        "dn": 1500,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-D",
+            "quantity": 2
+          },
+          {
+            "productId": "KDB-10-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "PDR-15-10-00",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-10-D",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-05-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-15-110",
+            "quantity": 1
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 6,
+        "rzednaDna": 0,
+        "numer": "S3",
+        "autoLocked": false,
+        "zakonczenie": null,
+        "redukcjaDN1000": true,
+        "redukcjaMinH": 2500,
+        "redukcjaZakonczenie": null,
+        "nadbudowa": "betonowa",
+        "dennicaMaterial": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "agresjaChemiczna": "XA2",
+        "agresjaMrozowa": "XF2",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "precotop",
+        "redukcjaKinety": "nie",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "linia_dolna"
       }
     ],
     "transportKm": 100,
     "transportRate": 10,
-    "totalWeight": 10908,
-    "totalNetto": 8810,
-    "totalBrutto": 10836.3,
+    "totalWeight": 25754,
+    "totalNetto": 18280,
+    "totalBrutto": 22484.4,
     "createdAt": "2026-03-04T20:30:33.933Z",
-    "updatedAt": "2026-03-04T20:30:33.933Z",
-    "lastEditedBy": "admin",
-    "hasOrder": true,
-    "orderId": "order_studnie_1772656326181"
+    "updatedAt": "2026-03-05T21:39:37.228Z",
+    "lastEditedBy": "admin"
   }
 ]
