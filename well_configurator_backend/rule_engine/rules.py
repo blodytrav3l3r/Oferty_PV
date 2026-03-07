@@ -36,7 +36,7 @@ class RuleEngine:
         # Jeśli użytkownik wymusił coś w UI (np. "PDD-20")
         if self.config.forced_top_closure_id and not fallback_to_din:
             forced = next((p for p in self.products if p.id == self.config.forced_top_closure_id), None)
-            if forced:
+            if forced and (forced.dn == top_dn or forced.dn is None):
                 return forced
                 
         # Domyślnie Konus (jeśli istnieje dla danego DN - z reguły tylko DN1000, 1200?)

@@ -919,9 +919,15 @@ function openZakonczeniePopup() {
     overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 }
 
-function selectZakonczenie(productId) {
+async function selectZakonczenie(productId) {
     const well = getCurrentWell();
     if (!well) return;
+
+    // Zmiana Zakończenia MA WYMUSIĆ ponowne przeliczenie elementów
+    well.autoLocked = false;
+    updateAutoLockUI();
+    well.configSource = 'AUTO';
+
     well.zakonczenie = productId;
     closeModal();
 
@@ -938,9 +944,13 @@ function selectZakonczenie(productId) {
         showToast('Zakończenie: Auto (Konus)', 'success');
     }
 
+    // Flusz konfiguracji, żeby po zmianie Zakończenia 
+    // solver na pewno zbudował stos od całkowitego zera
+    well.config = [];
+
     // Re-run auto-select if not locked
     if (!well.autoLocked) {
-        autoSelectComponents(true);
+        await autoSelectComponents(true);
     }
     refreshAll();
 }
@@ -964,7 +974,7 @@ function updateZakonczenieButton() {
 }
 
 /* ===== REDUKCJA DN1000 ===== */
-function toggleRedukcja() {
+async function toggleRedukcja() {
     const well = getCurrentWell();
     if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
 
@@ -981,11 +991,34 @@ function toggleRedukcja() {
         showToast('Redukcja DN1000 — WŁĄCZONA', 'success');
     } else {
         showToast('Redukcja DN1000 — WYŁĄCZONA', 'info');
+
+        // Zmiana zdania ("niecę jednak Redukcji") powoduje twardy skasunek wszystkiego i autodobór
+        well.autoLocked = false;
+        updateAutoLockUI();
+        well.configSource = 'AUTO';
+
+        // Reset ewentualnego nadpisanego błędem "Zakoczenia" dla rury DN1000 i samej redukcji
+        well.zakonczenie = null;
+        offerDefaultZakonczenie = null;
+        well.redukcjaZakonczenie = null;
+        offerDefaultRedukcjaZak = null;
+        updateZakonczenieButton();
+
+        const btnZak = document.getElementById('btn-redukcja-zak');
+        if (btnZak) {
+            btnZak.innerHTML = '🔽 Zak. DN1000';
+            btnZak.style.borderColor = 'var(--border-glass)';
+            btnZak.style.color = '';
+        }
     }
+
+    // Całkowite wyczyszczenie koszyka ze starych elementów 
+    // z innej średnicy (np. starego Konusa DN1000 po powrocie do DN1500)
+    well.config = [];
 
     // Re-run autoselect if not locked
     if (!well.autoLocked) {
-        autoSelectComponents(true);
+        await autoSelectComponents(true);
     }
     refreshAll();
 }
@@ -1140,9 +1173,15 @@ function openRedukcjaZakonczeniePopup() {
     document.body.appendChild(overlay);
 }
 
-function selectRedukcjaZakonczenie(productId) {
+async function selectRedukcjaZakonczenie(productId) {
     const well = getCurrentWell();
     if (!well) return;
+
+    // Zmiana Zakończenia MA WYMUSIĆ ponowne przeliczenie elementów
+    well.autoLocked = false;
+    updateAutoLockUI();
+    well.configSource = 'AUTO';
+
     well.redukcjaZakonczenie = productId;
     offerDefaultRedukcjaZak = productId;
     closeModal();
@@ -1169,8 +1208,12 @@ function selectRedukcjaZakonczenie(productId) {
         showToast('Zakończenie redukcji: Auto (Konus DN1000)', 'success');
     }
 
+    // Flusz konfiguracji, żeby po zmianie Zakończenia Redukcji
+    // solver na pewno zbudował stos od całkowitego zera
+    well.config = [];
+
     if (!well.autoLocked && well.redukcjaDN1000) {
-        autoSelectComponents(true);
+        await autoSelectComponents(true);
     }
     refreshAll();
 }
@@ -1423,13 +1466,9 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
                     for (let q = 0; q < newItems[ki].quantity; q++) {
                         segCount++;
                         if (segCount === si) {
-                            // Priority specified by user: 1m -> 0.75m -> 0.5m -> same height fallback
-                            const otProd1m = availProducts.find(p => p.componentType === 'krag_ot' && p.dn === kp.dn && p.height === 1000);
-                            const otProd75 = availProducts.find(p => p.componentType === 'krag_ot' && p.dn === kp.dn && p.height === 750);
-                            const otProd50 = availProducts.find(p => p.componentType === 'krag_ot' && p.dn === kp.dn && p.height === 500);
-                            const otProdSame = availProducts.find(p => p.componentType === 'krag_ot' && p.dn === kp.dn && p.height === kp.height);
-
-                            const otProd = otProd1m || otProd75 || otProd50 || otProdSame;
+                            // Stosuj wiercony krąg TYLKO i wyłącznie o tej samej wielkości,
+                            // aby nie niszczyć matematyki wysokości solvera (np. 50cm = 50cm, 75cm = 75cm)
+                            const otProd = availProducts.find(p => p.componentType === 'krag_ot' && p.dn === kp.dn && p.height === kp.height);
 
                             if (otProd) {
                                 if (newItems[ki].quantity === 1) {
@@ -1478,7 +1517,7 @@ async function fetchConfigFromBackend(well, requiredMm) {
                 id: `T${idx + 1}`,
                 height_from_bottom_mm: Math.round((parseFloat(p.rzednaWlaczenia) - (well.rzednaDna || 0)) * 1000)
             })),
-            forced_top_closure_id: well.zakonczenie || null
+            forced_top_closure_id: well.redukcjaDN1000 ? (well.redukcjaZakonczenie || null) : (well.zakonczenie || null)
         };
         const response = await fetch('http://localhost:8000/api/v1/configure', {
             method: 'POST',
@@ -1561,41 +1600,22 @@ async function autoSelectComponents(autoTriggered = false) {
     const allProducts = availProducts;
 
     // --- Available TOP components ---
-    const topClosureTypes = ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
-    const selectedTopItem = well.config.find(item => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
-        return p && topClosureTypes.includes(p.componentType);
-    });
+    let topProd = null;
 
-    let topProd;
+    // Use well.zakonczenie preference if set AND matches current DN
+    if (well.zakonczenie) {
+        topProd = studnieProducts.find(p => p.id === well.zakonczenie && (p.dn === dn || p.dn === null));
+    }
 
-    if (!selectedTopItem) {
-        let defaultTop = null;
-        // Use well.zakonczenie preference if set AND matches current DN
-        if (well.zakonczenie) {
-            defaultTop = studnieProducts.find(p => p.id === well.zakonczenie && (p.dn === dn || p.dn === null));
-        }
-        // Default by DN: DN1000/1200/1500 → konus, DN2000/2500 → płyta DIN standard
-        if (!defaultTop) {
-            if ([2000, 2500].includes(dn)) {
-                // Large wells: płyta DIN first, then konus
-                defaultTop = dnProducts.find(p => p.componentType === 'plyta_din');
-                if (!defaultTop) defaultTop = dnProducts.find(p => p.componentType === 'konus');
-            } else {
-                // DN1000/1200/1500: konus first, then płyta DIN
-                defaultTop = dnProducts.find(p => p.componentType === 'konus');
-                if (!defaultTop) defaultTop = dnProducts.find(p => p.componentType === 'plyta_din');
-            }
-        }
-        if (defaultTop) {
-            well.config.unshift({ productId: defaultTop.id, quantity: 1 });
-            topProd = defaultTop;
-        } else {
-            if (!autoTriggered) showToast('Nie znaleziono domyślnego zakończenia studni.', 'error');
-            return;
-        }
-    } else {
-        topProd = studnieProducts.find(pr => pr.id === selectedTopItem.productId);
+    // Always default to konus first if possible, fallback to płyta DIN
+    if (!topProd) {
+        topProd = dnProducts.find(p => p.componentType === 'konus');
+        if (!topProd) topProd = dnProducts.find(p => p.componentType === 'plyta_din');
+    }
+
+    if (!topProd) {
+        if (!autoTriggered) showToast('Nie znaleziono domyślnego zakończenia studni.', 'error');
+        return;
     }
 
     // Build top config
@@ -2006,6 +2026,10 @@ async function autoSelectComponents(autoTriggered = false) {
                     if (przejsciaResult.isMinimal) score += 5000; // Penalize minimal clearances
                     // Heavily penalize absence of an AVR ring as requested by user
                     if (avrItems.length === 0) score += 20000;
+
+                    // Strongly penalize the fallback closure (e.g. Płyta DIN replacing Konus)
+                    // so it is only used if the primary closure fails completely (e.g. transition conflicts)
+                    if (topCfg !== topConfigs[0]) score += 50000000;
 
                     score += getNonStdPenalty([...topCfg.items, ...finalKregItems, ...avrItems], dennica);
 
@@ -2732,11 +2756,68 @@ function renderTiles() {
         html += `</div></div>`;
     };
 
-    const primaryProducts = studnieProducts.filter(p => (p.dn === dn || p.dn === null) && p.category !== 'Uszczelki studni');
+    const availProducts = getAvailableProducts(well);
+
+    const filterByWellParams = (p) => {
+        const id = (p.id || '').toUpperCase();
+
+        // 1. Kręgi (KDZ/KDB) i stopnie (-B, -D, -N)
+        if (p.componentType === 'krag' || p.componentType === 'krag_ot') {
+            const isZelbet = well.nadbudowa === 'zelbetowa';
+            if (isZelbet && id.startsWith('KDB')) return false;
+            if (!isZelbet && id.startsWith('KDZ')) return false;
+
+            const stopnie = well.stopnie || 'drabinka';
+
+            // Kręgi kończą się na: -B (brak), -D (drabinka), -N-D (nierdzewna)
+            const hasStepsAny = id.endsWith('-B') || id.endsWith('-D');
+
+            if (hasStepsAny) {
+                if (stopnie === 'nierdzewna') {
+                    if (!id.endsWith('-N-D')) return false;
+                } else if (stopnie === 'brak') {
+                    if (!id.endsWith('-B')) return false;
+                } else {
+                    // drabinka (domyślna)
+                    if (!id.endsWith('-D') || id.endsWith('-N-D')) return false;
+                }
+            }
+        }
+
+        // 2. Dennice (DUZ/DU)
+        if (p.componentType === 'dennica') {
+            const isZelbet = well.dennicaMaterial === 'zelbetowa';
+            if (isZelbet && id.startsWith('DU') && !id.startsWith('DUZ')) return false;
+            if (!isZelbet && id.startsWith('DUZ')) return false;
+        }
+
+        // 3. Płyty (PDZ/PD itp)
+        if (['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'plyta_redukcyjna'].includes(p.componentType)) {
+            const isZelbet = well.nadbudowa === 'zelbetowa';
+            if (isZelbet && id.startsWith('PD') && !id.startsWith('PDZ')) return false;
+            if (!isZelbet && id.startsWith('PDZ')) return false;
+            if (isZelbet && id.startsWith('PZ') && !id.startsWith('PZZ')) return false;
+            if (!isZelbet && id.startsWith('PZZ')) return false;
+        }
+
+        return true;
+    };
+
+    const primaryProducts = availProducts
+        .filter(p => (p.dn === dn || p.dn === null) && p.category !== 'Uszczelki studni')
+        .filter(filterByWellParams);
+
     groups.forEach(g => renderGroup(g, primaryProducts));
 
-    if ([1200, 1500, 2000, 2500].includes(dn)) {
-        const redProducts = studnieProducts.filter(p => p.dn === 1000 && p.category !== 'Uszczelki studni' && p.componentType !== 'plyta_redukcyjna' && p.componentType !== 'dennica');
+    const hasReduction = well.config.some(c => {
+        const p = studnieProducts.find(pr => pr.id === c.productId);
+        return p && p.componentType === 'plyta_redukcyjna';
+    });
+
+    if ([1200, 1500, 2000, 2500].includes(dn) && hasReduction) {
+        const redProducts = availProducts
+            .filter(p => p.dn === 1000 && p.category !== 'Uszczelki studni' && p.componentType !== 'plyta_redukcyjna' && p.componentType !== 'dennica')
+            .filter(filterByWellParams);
         if (redProducts.length > 0) {
             html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
             html += `<h3 style="color:#f59e0b; margin-bottom:1rem; font-size:1.1rem;">⏬ Redukcja (DN1000)</h3>`;
@@ -2983,8 +3064,8 @@ function renderWellConfig() {
         const canMoveUp = index > 0;
         const canMoveDown = index < well.config.length - 1;
 
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:rgba(30,41,59,0.7); border:1px solid rgba(99,102,241,0.15); border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem; cursor:grab;"
-                      onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.borderColor='rgba(99,102,241,0.15)'">
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem; cursor:grab;"
+                      onmouseenter="this.style.filter='brightness(1.1)'" onmouseleave="this.style.filter='brightness(1)'">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             
             <div style="display:flex; align-items:center; gap:0.4rem;">
@@ -2995,16 +3076,15 @@ function renderWellConfig() {
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.1rem;">
-                  <span style="font-size:0.48rem; padding:1px 4px; border-radius:3px; background:${badge.bg}; color:var(--text-secondary); width:fit-content; border:1px solid rgba(255,255,255,0.05);">${badge.label}</span>
                   <div style="font-weight:700; color:var(--text-primary); font-size:0.75rem; line-height:1.2;">${p.name}</div>
                   <div style="font-size:0.6rem; color:var(--text-muted);">${p.id}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
                 </div>
             </div>
 
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.2rem;">
-              <button onclick="removeWellComponent(${index})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); border-radius:4px; cursor:pointer; font-size:0.6rem; padding:0.15rem 0.35rem; color:#ef4444; align-self:flex-end;">✕ Usuń</button>
-              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.2rem;">Waga: <span style="color:var(--text-primary); font-weight:600;">${p.weight ? fmtInt(totalWeight) + ' kg' : '—'}</span></div>
-              <div style="font-size:0.65rem; color:var(--text-muted);">Cena: <span style="font-size:0.8rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span></div>
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Waga:<br><span style="color:var(--text-primary); font-weight:600; font-size:0.65rem;">${p.weight ? fmtInt(totalWeight) + ' kg' : '—'}</span></div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Cena:<br><span style="font-size:0.8rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span></div>
+              <button onclick="removeWellComponent(${index})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:0.8rem; padding:0.3rem; color:#ef4444; display:flex; align-items:center; justify-content:center;">✕</button>
             </div>
 
           </div>
@@ -4379,20 +4459,20 @@ function renderStudniePriceList() {
           <th class="text-center" style="width: 5%;">Hmax3 mm</th>
           <th class="text-right" style="width: 6%;">Cena3</th>
           ` : `
-          <th class="text-right" style="width: 5%;">Wys. mm</th>
-          <th class="text-right" style="width: 5%;">Waga kg</th>
-          <th class="text-right" style="width: 5%;">P. wew</th>
-          <th class="text-right" style="width: 5%;">P. zew</th>
-          <th class="text-right" style="width: 5%;">Ilość</th>
-          <th class="text-right" style="width: 6%;">PEHD</th>
-          <th class="text-right" style="width: 6%;">MalW</th>
-          <th class="text-right" style="width: 6%;">MalZ</th>
-          <th class="text-right" style="width: 5%;">Żelbet</th>
-          <th class="text-right" style="width: 5%;">Drab.Ni.</th>
-          <th class="text-center" style="width: 3%;">Mag WL</th>
-          <th class="text-center" style="width: 3%;">Mag KLB</th>
-          <th class="text-center" style="width: 3%;">F. std WL</th>
-          <th class="text-center" style="width: 3%;">F. std KLB</th>
+          <th class="text-right" style="width: 5%;" title="Wysokość [mm]">Wys.</th>
+          <th class="text-right" style="width: 5%;" title="Waga [kg]">Waga</th>
+          <th class="text-right" style="width: 5%;" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
+          <th class="text-right" style="width: 5%;" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
+          <th class="text-right" style="width: 4%;" title="Maksymalna ilość sztuk na naczepie 24t">Szt</th>
+          <th class="text-right" style="width: 6%;" title="Dopłata do wkładki PEHD [PLN]">PEHD</th>
+          <th class="text-right" style="width: 5%;" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
+          <th class="text-right" style="width: 5%;" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
+          <th class="text-right" style="width: 5%;" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>
+          <th class="text-right" style="width: 5%;" title="Dopłata za stopnie nierdzewne zamiast drabinki [PLN]">Dr.Ni.</th>
+          <th class="text-center" style="width: 3%;" title="Dostępne na magazynie Włocławek (1=Tak, 0=Nie)">M.WL</th>
+          <th class="text-center" style="width: 3%;" title="Dostępne na magazynie Kluczbork (1=Tak, 0=Nie)">M.KLB</th>
+          <th class="text-center" style="width: 3%;" title="Forma Standardowa: Włocławek (1=Tak, 0=Nie)">FS.WL</th>
+          <th class="text-center" style="width: 4%;" title="Forma Standardowa: Kluczbork (1=Tak, 0=Nie)">FS.KLB</th>
           `}
           <th class="text-right" style="width: 6%;">Cena PLN</th>
           <th class="text-center" style="width: 6%;">Akcje</th>
@@ -5016,24 +5096,59 @@ function exportStudnieToExcel() {
         return;
     }
 
-    // Build export rows with ordered columns and Polish headers
-    const rows = studnieProducts.map(p => {
-        const row = {};
-        EXPORT_COLUMNS.forEach(col => {
-            row[col.header] = p[col.key] ?? '';
-        });
-        return row;
+    const wb = XLSX.utils.book_new();
+
+    function getSheetName(p) {
+        const c = p.category || '';
+        const ct = p.componentType || '';
+
+        if (c.toLowerCase().includes('akcesoria') || c.toLowerCase().includes('chemia') || c.toLowerCase().includes('stopnie') || c.toLowerCase().includes('uszczelki') || ct === 'wlaz' || ct === 'osadnik') return 'Akcesoria';
+        if (c.toLowerCase().includes('przejścia') || c.toLowerCase().includes('przejscia') || c.toLowerCase().includes('otwór') || c.toLowerCase().includes('otwor') || ct === 'przejscie') return 'Przejścia';
+        if (c.toLowerCase().includes('kinet') || ct === 'kineta') return 'Kinety';
+        if (c.toLowerCase().includes('dennic') || ct === 'dennica') return 'Dennicy';
+
+        if (p.dn) {
+            if (p.dn == 1000) return 'DN1000';
+            if (p.dn == 1200) return 'DN1200';
+            if (p.dn == 1500) return 'DN1500';
+            if (p.dn == 2000) return 'DN2000';
+            if (p.dn == 2500) return 'DN2500';
+            return 'DN' + p.dn;
+        }
+
+        return 'Akcesoria';
+    }
+
+    // Group products by custom category
+    const categories = {};
+    studnieProducts.forEach(p => {
+        const cat = getSheetName(p);
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(p);
     });
 
-    const ws = XLSX.utils.json_to_sheet(rows);
+    Object.keys(categories).forEach(cat => {
+        // Build export rows with ordered columns and Polish headers
+        const rows = categories[cat].map(p => {
+            const row = {};
+            EXPORT_COLUMNS.forEach(col => {
+                row[col.header] = p[col.key] ?? '';
+            });
+            return row;
+        });
 
-    // Set column widths
-    ws['!cols'] = EXPORT_COLUMNS.map(col => ({ wch: Math.max(col.header.length + 2, 12) }));
+        const ws = XLSX.utils.json_to_sheet(rows);
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Cennik Studni");
+        // Set column widths
+        ws['!cols'] = EXPORT_COLUMNS.map(col => ({ wch: Math.max(col.header.length + 2, 12) }));
+
+        // Ensure valid sheet name (max 31 chars, no forbidden chars)
+        let sheetName = cat.replace(/[\[\]\*\/\\\?\:]/g, '_').substring(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
     XLSX.writeFile(wb, "Cennik_Studni_Export.xlsx");
-    showToast('Wyeksportowano cennik do Excela (' + studnieProducts.length + ' pozycji)', 'success');
+    showToast('Wyeksportowano cennik do Excela (' + studnieProducts.length + ' pozycji w ' + Object.keys(categories).length + ' zakładkach)', 'success');
 }
 
 function importStudnieFromExcel(event) {
@@ -5046,10 +5161,17 @@ function importStudnieFromExcel(event) {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet);
 
-            if (!json || json.length === 0) {
+            let allJson = [];
+            workbook.SheetNames.forEach(sheetName => {
+                const worksheet = workbook.Sheets[sheetName];
+                const sheetJson = XLSX.utils.sheet_to_json(worksheet);
+                if (sheetJson && sheetJson.length > 0) {
+                    allJson = allJson.concat(sheetJson);
+                }
+            });
+
+            if (allJson.length === 0) {
                 showToast('Skoroszyt jest pusty lub ma zły format', 'error');
                 return;
             }
@@ -5061,7 +5183,7 @@ function importStudnieFromExcel(event) {
                 'zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin', 'dn',
                 'hMin1', 'hMax1', 'cena1', 'hMin2', 'hMax2', 'cena2', 'hMin3', 'hMax3', 'cena3'];
 
-            const normalized = json.map(raw => {
+            const normalized = allJson.map(raw => {
                 const product = {};
 
                 // Map columns - support both Polish headers and raw keys
