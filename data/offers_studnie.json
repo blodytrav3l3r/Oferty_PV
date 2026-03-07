@@ -16,27 +16,36 @@
       {
         "id": "well-1772877559193-2",
         "name": "S1",
-        "dn": 1000,
+        "dn": 1200,
         "config": [
           {
             "productId": "WLAZ-150",
             "quantity": 1
           },
           {
-            "productId": "AVR-PR-10",
-            "quantity": 2
-          },
-          {
-            "productId": "PDD-10-62-00",
+            "productId": "PDD-12-62-00",
             "quantity": 1
           },
           {
-            "productId": "KDB-10-75-D",
+            "productId": "KDB-12-10-OT",
             "quantity": 1
           },
           {
-            "productId": "DDD-10-080",
+            "productId": "KDB-12-10-OT",
             "quantity": 1
+          },
+          {
+            "productId": "KDB-12-10-D",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-12-180",
+            "quantity": 1
+          },
+          {
+            "productId": "Y-U-GSG-1200",
+            "quantity": 4,
+            "autoAdded": true
           }
         ],
         "przejscia": [
@@ -47,9 +56,25 @@
             "angleExecution": 0,
             "angleGony": "0.00",
             "notes": ""
+          },
+          {
+            "productId": "PVC-Gładkie-400",
+            "rzednaWlaczenia": "3.00",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          },
+          {
+            "productId": "Otwor-KPED",
+            "rzednaWlaczenia": "4.00",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
           }
         ],
-        "rzednaWlazu": 2,
+        "rzednaWlazu": 5,
         "rzednaDna": 0,
         "numer": "S1",
         "autoLocked": false,
@@ -75,9 +100,11 @@
         "magazyn": "Kluczbork",
         "configStatus": "WARNING",
         "configErrors": [
-          "Przejście #1 [PVC SN8 DN500] (Dennicy): zastosowany zapas minimalny (zostaje w dennicy: dół 0mm, góra 150mm)"
+          "Przejście #2 [PVC Gładkie DN400] (Kręgu): zastosowany zapas minimalny (zostaje w kręgu: dół 400mm, góra 200mm)",
+          "Przejście #3 [Otwór KPED DN500] (Kręgu): zastosowany zapas minimalny (zostaje w kręgu: dół 400mm, góra 100mm)"
         ],
-        "configSource": "AUTO_JS"
+        "configSource": "AUTO_JS",
+        "uszczelka": "GSG"
       },
       {
         "id": "well-1772877601192-3",
@@ -264,11 +291,11 @@
     ],
     "transportKm": 100,
     "transportRate": 10,
-    "totalWeight": 14572,
-    "totalNetto": 11360,
-    "totalBrutto": 13972.8,
+    "totalWeight": 20965,
+    "totalNetto": 15030,
+    "totalBrutto": 18486.9,
     "createdAt": "2026-03-07T09:59:57.293Z",
-    "updatedAt": "2026-03-07T10:33:41.279Z",
+    "updatedAt": "2026-03-07T16:38:14.198Z",
     "lastEditedBy": "admin"
   },
   {

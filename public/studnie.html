@@ -1598,6 +1598,7 @@
                                         <button class="param-tile" data-val="2/3">2/3</button>
                                         <button class="param-tile" data-val="3/4">3/4</button>
                                         <button class="param-tile" data-val="1/1">1/1</button>
+                                        <button class="param-tile" data-val="brak">Brak</button>
                                     </div>
                                 </div>
 
@@ -1610,6 +1611,19 @@
                                         <button class="param-tile" data-val="linia_gorna">Linia górna</button>
                                         <button class="param-tile" data-val="w_osi">W osi</button>
                                         <button class="param-tile" data-val="patrz_uwagi">Patrz uwagi</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="uszczelka">
+                                    <div class="wizard-param-label">Uszczelka <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="uszczelka">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="GSG">GSG</button>
+                                        <button class="param-tile" data-val="SDV">SDV</button>
+                                        <button class="param-tile" data-val="SDV PO">SDV PO</button>
+                                        <button class="param-tile" data-val="NBR">NBR</button>
                                     </div>
                                 </div>
 
@@ -2105,6 +2119,8 @@
                     <span class="cennik-tab-icon" style="background:#64748b;"></span> Akcesoria</button>
                 <button class="cennik-tab" data-tab="przejscia" onclick="selectCennikTab('przejscia')">
                     <span class="cennik-tab-icon" style="background:#14b8a6;"></span> Przejścia</button>
+                <button class="cennik-tab" data-tab="kinety" onclick="selectCennikTab('kinety')">
+                    <span class="cennik-tab-icon" style="background:#8b5cf6;"></span> Kinety</button>
             </div>
             <div class="card">
                 <div id="studnie-pricelist-body"></div>

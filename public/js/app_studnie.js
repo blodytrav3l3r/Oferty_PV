@@ -328,6 +328,7 @@ function getWizardGlobalParams() {
         stopnie: 'brak',
         spocznikH: '1/2',
         usytuowanie: 'w_osi',
+        uszczelka: 'brak',
         magazyn: 'Kluczbork'
     };
     // Read confirmed selections from wizard param tiles
@@ -379,6 +380,7 @@ function createNewWell(name, dn = 1000) {
         stopnie: gp.stopnie,
         spocznikH: gp.spocznikH,
         usytuowanie: gp.usytuowanie,
+        uszczelka: gp.uszczelka,
         magazyn: gp.magazyn
     };
 }
@@ -501,7 +503,56 @@ function getCurrentWell() {
     return wells[currentWellIndex] || wells[0];
 }
 
+function syncGaskets(well) {
+    if (!well || !well.config) return;
+
+    // Filter out existing uszczelki
+    const newConfig = well.config.filter(item => {
+        const p = studnieProducts.find(pr => pr.id === item.productId);
+        return !(p && p.componentType === 'uszczelka');
+    });
+
+    if (well.uszczelka && well.uszczelka !== 'brak') {
+        const uType = well.uszczelka;
+        const requiredGaskets = {};
+
+        // Find elements requiring a gasket
+        newConfig.forEach(item => {
+            const p = studnieProducts.find(pr => pr.id === item.productId);
+            if (p && ['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus'].includes(p.componentType)) {
+                if (p.dn) {
+                    requiredGaskets[p.dn] = (requiredGaskets[p.dn] || 0) + item.quantity;
+                }
+            }
+        });
+
+        // Add corresponding gaskets
+        for (const dn in requiredGaskets) {
+            const qty = requiredGaskets[dn];
+            let gasketName = `Uszczelka GSG DN${dn}`;
+            if (uType === 'GSG') gasketName = `Uszczelka GSG DN${dn}`;
+            else if (uType === 'SDV') gasketName = `Uszczelka SDV DN${dn}`;
+            else if (uType === 'SDV PO') gasketName = `Uszczelka SDV DN${dn} SDV z pierścieniem odciążającym`;
+            else if (uType === 'NBR') gasketName = `Uszczelka GSG DN${dn} z NBR`;
+
+            const gasketProd = studnieProducts.find(p => p.componentType === 'uszczelka' && p.name === gasketName);
+            if (gasketProd) {
+                newConfig.push({
+                    productId: gasketProd.id,
+                    quantity: qty,
+                    autoAdded: true
+                });
+            }
+        }
+    }
+
+    well.config = newConfig;
+}
+
 function refreshAll() {
+    const well = getCurrentWell();
+    if (well) syncGaskets(well);
+
     renderWellsList();
     renderTiles();
     renderWellConfig();
@@ -605,8 +656,9 @@ const WELL_PARAM_DEFS = [
     { key: 'kineta', label: 'Kineta', options: [['brak', 'Brak'], ['beton', 'Beton'], ['beton_gfk', 'Beton GFK'], ['klinkier', 'Klinkier'], ['preco', 'Preco'], ['precotop', 'PrecoTop'], ['unolith', 'UnoLith']] },
     { key: 'redukcjaKinety', label: 'Red. kinety', options: [['tak', 'Tak'], ['nie', 'Nie']] },
     { key: 'stopnie', label: 'Stopnie', options: [['brak', 'Brak'], ['drabinka', 'Drabinka'], ['nierdzewna', 'Nierdzewna']] },
-    { key: 'spocznikH', label: 'Spocznik wys.', options: [['1/2', '1/2'], ['2/3', '2/3'], ['3/4', '3/4'], ['1/1', '1/1']] },
+    { key: 'spocznikH', label: 'Spocznik wys.', options: [['1/2', '1/2'], ['2/3', '2/3'], ['3/4', '3/4'], ['1/1', '1/1'], ['brak', 'Brak']] },
     { key: 'usytuowanie', label: 'Usytuowanie', options: [['linia_dolna', 'Linia dolna'], ['linia_gorna', 'Linia górna'], ['w_osi', 'W osi'], ['patrz_uwagi', 'Patrz uwagi']] },
+    { key: 'uszczelka', label: 'Uszczelka', options: [['brak', 'Brak'], ['GSG', 'GSG'], ['SDV', 'SDV'], ['SDV PO', 'SDV PO'], ['NBR', 'NBR']] },
     { key: 'magazyn', label: 'Magazyn', options: [['Kluczbork', 'Kluczbork'], ['Włocławek', 'Włocławek']] }
 ];
 
@@ -642,6 +694,20 @@ function renderWellParams() {
         });
         html += `</div></div>`;
     });
+
+    if (well.malowanieW && well.malowanieW !== 'brak') {
+        html += `<div style="display:flex; align-items:center; gap:0.4rem; min-height:28px; margin-top:0.2rem;">`;
+        html += `<span style="font-size:0.62rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:85px; text-align:right;">Nazwa p. wew.</span>`;
+        html += `<input type="text" value="${well.powlokaNameW || ''}" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:200px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0.2rem 0.5rem; font-size:0.65rem; border-radius:4px;">`;
+        html += `</div>`;
+    }
+
+    if (well.malowanieZ && well.malowanieZ !== 'brak') {
+        html += `<div style="display:flex; align-items:center; gap:0.4rem; min-height:28px; margin-top:0.2rem;">`;
+        html += `<span style="font-size:0.62rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:85px; text-align:right;">Nazwa p. zew.</span>`;
+        html += `<input type="text" value="${well.powlokaNameZ || ''}" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:200px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0.2rem 0.5rem; font-size:0.65rem; border-radius:4px;">`;
+        html += `</div>`;
+    }
 
     html += `</div>`;
     html += `<div style="display:flex; gap:0.4rem; margin-top:0.5rem; justify-content:flex-end;">`;
@@ -1427,11 +1493,9 @@ async function autoSelectComponents(autoTriggered = false) {
         // Więc można albo skondensować duplikaty, albo po prostu wpisać 1 sztukowa połączone kręgi (tak samo zadziała)
         const newConfig = [];
         for (const bItem of backendResult.items) {
-            const existing = newConfig.find(x => x.productId === bItem.product_id);
-            if (existing) {
-                existing.quantity += (bItem.quantity || 1);
-            } else {
-                newConfig.push({ productId: bItem.product_id, quantity: (bItem.quantity || 1) });
+            const qty = bItem.quantity || 1;
+            for (let i = 0; i < qty; i++) {
+                newConfig.push({ productId: bItem.product_id, quantity: 1 });
             }
         }
         well.config = newConfig;
@@ -1641,10 +1705,10 @@ async function autoSelectComponents(autoTriggered = false) {
             for (const krag of kregiList) {
                 if (left <= 0) break;
                 const qty = Math.floor(left / krag.height);
-                if (qty > 0) {
-                    kregItems.push({ productId: krag.id, quantity: qty });
-                    filled += krag.height * qty;
-                    left -= krag.height * qty;
+                for (let i = 0; i < qty; i++) {
+                    kregItems.push({ productId: krag.id, quantity: 1 });
+                    filled += krag.height;
+                    left -= krag.height;
                 }
             }
         }
@@ -1660,10 +1724,10 @@ async function autoSelectComponents(autoTriggered = false) {
             for (const avr of avrRings) {
                 if (left <= 0) break;
                 const qty = Math.floor(left / avr.height);
-                if (qty > 0) {
-                    avrItems.push({ productId: avr.id, quantity: qty });
-                    avrHeight += avr.height * qty;
-                    left -= avr.height * qty;
+                for (let i = 0; i < qty; i++) {
+                    avrItems.push({ productId: avr.id, quantity: 1 });
+                    avrHeight += avr.height;
+                    left -= avr.height;
                 }
             }
         }
@@ -1896,7 +1960,7 @@ async function autoSelectComponents(autoTriggered = false) {
                         bestScore = score;
                         bestSolution = {
                             topItems: [...topCfg.items],
-                            kregItems: [...finalKregItems],
+                            kregItems: [...finalKregItems].reverse(),
                             dennica: { productId: dennica.id, quantity: 1 },
                             avrItems: [...avrItems],
                             totalHeight: totalFinal,
@@ -2115,7 +2179,7 @@ async function autoSelectComponents(autoTriggered = false) {
                             bestScore = score;
                             bestSolution = {
                                 topItems: [...currentRedTopItems],
-                                kregItems: [...k1000Items, { productId: reductionPlate.id, quantity: 1 }, ...finalBottomKregItems],
+                                kregItems: [...[...k1000Items].reverse(), { productId: reductionPlate.id, quantity: 1 }, ...[...finalBottomKregItems].reverse()],
                                 dennica: { productId: dennica.id, quantity: 1 },
                                 avrItems: [...avrItems],
                                 totalHeight: totalFinal,
@@ -2139,13 +2203,13 @@ async function autoSelectComponents(autoTriggered = false) {
 
     // --- PASS 2: Relaxed tolerances if no solution ---
     if (!bestSolution) {
-        bestSolution = solve(200, 100, 260, false);
+        bestSolution = solve(200, 20, 260, false);
         fallback = true;
     }
 
     // --- PASS 3: Skip przejscia check if still no solution ---
     if (!bestSolution) {
-        bestSolution = solve(200, 100, 260, true);
+        bestSolution = solve(200, 20, 260, true);
         fallback = true;
     }
 
@@ -2153,8 +2217,8 @@ async function autoSelectComponents(autoTriggered = false) {
     if (!bestSolution && canReduce) {
         canReduce = false; // temporarily disable reduction
         bestSolution = solve(50, 20, 260, false);
-        if (!bestSolution) bestSolution = solve(200, 100, 260, false);
-        if (!bestSolution) bestSolution = solve(200, 100, 260, true);
+        if (!bestSolution) bestSolution = solve(200, 20, 260, false);
+        if (!bestSolution) bestSolution = solve(200, 20, 260, true);
         if (bestSolution) {
             fallback = true;
             if (!autoTriggered) showToast('Studnia za niska na redukcję — dobrano bez redukcji', 'warning');
@@ -2665,12 +2729,7 @@ function addWellComponent(productId) {
 
     // Helper to add a single product to well config
     const addSingle = (prod) => {
-        const existing = well.config.find(c => c.productId === prod.id);
-        if (existing) {
-            existing.quantity++;
-        } else {
-            well.config.push({ productId: prod.id, quantity: 1 });
-        }
+        well.config.push({ productId: prod.id, quantity: 1 });
     };
 
     addSingle(product);
@@ -2764,7 +2823,8 @@ function updateWellQuantity(index, value) {
     }
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
-    well.config[index].quantity = qty;
+    // We do not allow changing quantity to > 1 for concrete items, but keeping the function for removals
+    well.config[index].quantity = 1;
     renderWellConfig();
     renderWellDiagram();
     updateSummary();
@@ -2855,8 +2915,8 @@ function renderWellConfig() {
       <td style="text-align:right">${p.area ? fmt(totalAreaInt) : '—'}</td>
       <td style="text-align:right">${p.areaExt ? fmt(totalAreaExt) : '—'}</td>
       <td style="text-align:center">
-        <input type="number" value="${item.quantity}" min="1" max="20"
-          style="width:42px; text-align:center; background:rgba(30,41,59,0.8); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); padding:0.15rem; font-size:0.75rem;"
+        <input type="number" value="1" min="1" max="1" readonly title="Sztuki są rozdzielone"
+          style="width:42px; text-align:center; background:rgba(30,41,59,0.5); opacity:0.8; border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); padding:0.15rem; font-size:0.75rem; cursor:not-allowed;"
           onchange="updateWellQuantity(${index}, this.value)">
       </td>
       <td style="text-align:right; color:var(--text-secondary); font-size:0.75rem;">${fmtInt(p.price)}</td>
@@ -2914,10 +2974,10 @@ function sortWellConfigByOrder() {
         const oa = pa ? (typeOrder[pa.componentType] ?? 99) : 99;
         const ob = pb ? (typeOrder[pb.componentType] ?? 99) : 99;
         if (oa !== ob) return oa - ob;
-        // Within same type, sort by height ascending (largest kręgi at the bottom of the section in UI)
-        const ha = pa ? pa.height : 0;
-        const hb = pb ? pb.height : 0;
-        return ha - hb;
+
+        // Items of the same type keep their relative structural order. 
+        // Previously kręgi were forced sorted by height, which scrambled krag_ot positions.
+        return 0;
     });
 }
 
@@ -3745,7 +3805,9 @@ function renderWellDiagram() {
         const outerDn = getElementOuterDn(comp);
         const w = Math.max(mmToPx(outerDn), 20);
         const x = cx - w / 2;
-        const c = TC[comp.componentType] || { fill: '#334155', stroke: '#64748b', label: '' };
+
+        let localCompType = comp.componentType;
+        const c = TC[localCompType] || { fill: '#334155', stroke: '#64748b', label: '' };
 
         if (comp._cfgIdx !== undefined) {
             svg_out += `<g class="diag-comp-grp" cursor="grab" ` +
@@ -3757,34 +3819,34 @@ function renderWellDiagram() {
                 `ontouchend="window.svgTouchEnd(event)">`;
         }
 
-        if (comp.componentType === 'konus') {
+        if (localCompType === 'konus') {
             // Konus: trapezoid — top = 625mm opening, bottom = well DN
             const topW = Math.max(mmToPx(625), 20);
             const topX = cx - topW / 2;
             svg_out += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${y + h} ${x},${y + h}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (comp.componentType === 'dennica') {
+        } else if (localCompType === 'dennica') {
             // Dennica: rectangle with thick bottom line
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
             svg_out += `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${c.stroke}" stroke-width="3"/>`;
-        } else if (comp.componentType === 'plyta_redukcyjna') {
+        } else if (localCompType === 'plyta_redukcyjna') {
             // Płyta redukcyjna: prostokąt o szerokości DN studni
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (comp.componentType === 'plyta_zamykajaca' || comp.componentType === 'pierscien_odciazajacy') {
+        } else if (localCompType === 'plyta_zamykajaca' || localCompType === 'pierscien_odciazajacy') {
             // Wider plate/ring with outer rim
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (comp.componentType === 'plyta_najazdowa') {
+        } else if (localCompType === 'plyta_najazdowa') {
             // Square drive-over plate
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (comp.componentType === 'plyta_din') {
+        } else if (localCompType === 'plyta_din') {
             // Same width as well shaft
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (comp.componentType === 'wlaz') {
+        } else if (localCompType === 'wlaz') {
             // Właz: 600mm manhole cover
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.95"/>`;
-        } else if (comp.componentType === 'avr') {
+        } else if (localCompType === 'avr') {
             // AVR: 625mm adjustment ring
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (comp.componentType === 'osadnik') {
+        } else if (localCompType === 'osadnik') {
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
             const oy = y + h * 0.65;
             svg_out += `<line x1="${x + 4}" y1="${oy}" x2="${x + w - 4}" y2="${oy}" stroke="${c.stroke}" stroke-width="0.7" stroke-dasharray="3,2" opacity="0.6"/>`;
@@ -3792,7 +3854,7 @@ function renderWellDiagram() {
         } else {
             // Kręgi and other elements
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-            if (comp.componentType === 'krag_ot') {
+            if (localCompType === 'krag_ot') {
                 const hr = Math.min(h * 0.15, 7);
                 if (hr > 2) {
                     svg_out += `<circle cx="${x + 10}" cy="${y + h / 2}" r="${hr}" fill="rgba(15,23,42,0.7)" stroke="${c.stroke}" stroke-width="0.8"/>`;
@@ -3838,8 +3900,13 @@ function renderWellDiagram() {
             if (isNaN(pel)) pel = 0;
 
             const pprod = studnieProducts.find(x => x.id === pr.productId);
-            let prW = 160, prH = 160, isEgg = false;
-            if (pprod && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
+            let prW = 160, prH = 160, isEgg = false, isRect = false;
+
+            if (pprod && pprod.category === 'Otwór KPED') {
+                prW = 1020;
+                prH = 500;
+                isRect = true;
+            } else if (pprod && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
                 const parts = pprod.dn.split('/');
                 prW = parseFloat(parts[0]) || 160;
                 prH = parseFloat(parts[1]) || prW;
@@ -3868,7 +3935,9 @@ function renderWellDiagram() {
                 const sColor = isBack ? 'rgba(100,116,139,0.5)' : '#0ea5e9';
                 const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
 
-                if (isEgg) {
+                if (isRect) {
+                    svg_out += `<rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />`;
+                } else if (isEgg) {
                     // SVG ellipse for jajowe pipe cross-section
                     svg_out += `<ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />`;
                 } else {
@@ -4064,7 +4133,8 @@ const CENNIK_TAB_FILTERS = {
     dn2500: p => p.category === 'Studnie DN2500',
     dennicy: p => p.componentType === 'dennica',
     akcesoria: p => p.category === 'Akcesoria studni' || p.category === 'Uszczelki studni',
-    przejscia: p => p.componentType === 'przejscie'
+    przejscia: p => p.componentType === 'przejscie',
+    kinety: p => p.componentType === 'kineta' || (p.category && p.category.startsWith('Kinety'))
 };
 
 function selectCennikTab(tab) {
@@ -4094,6 +4164,9 @@ function renderStudniePriceList() {
             groupKey = 'dn' + p.dn;
         } else if (currentCennikTab === 'przejscia') {
             groupKey = p.category || 'inne';
+            dynamicGroups.add(groupKey);
+        } else if (currentCennikTab === 'kinety') {
+            groupKey = p.category || ('Kinety DN' + (p.dn || ''));
             dynamicGroups.add(groupKey);
         } else {
             groupKey = p.componentType || 'inne';
@@ -4127,8 +4200,9 @@ function renderStudniePriceList() {
     let groupOrder = ['dn1000', 'dn1200', 'dn1500', 'dn2000', 'dn2500', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy', 'konus', 'krag', 'krag_ot', 'dennica', 'plyta_redukcyjna', 'avr', 'uszczelka', 'przejscie', 'inne'];
 
     const isPrzejscia = currentCennikTab === 'przejscia';
+    const isKinety = currentCennikTab === 'kinety';
 
-    if (isPrzejscia) {
+    if (isPrzejscia || isKinety) {
         groupOrder = Array.from(dynamicGroups).sort();
     } else {
         // Append any custom groups not in the predefined order
@@ -4142,12 +4216,13 @@ function renderStudniePriceList() {
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end;">
         ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj kategorię</button>`}
         <button class="btn btn-secondary" onclick="addStudnieElement()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj element</button>
+        ${isKinety ? `<button class="btn btn-secondary" onclick="generateDefaultKinety()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">🔌 Generuj puste Kinety</button>` : ''}
     </div>
     <table style="table-layout: fixed; width: 100%;">
       <thead>
         <tr>
-          <th style="width: 12%;">Indeks</th>
-          <th style="width: 20%;">${isPrzejscia ? 'Rodzaj przejścia' : 'Nazwa elementu'}</th>
+          <th style="width: 10%;">Indeks</th>
+          <th style="width: ${isPrzejscia ? '18' : isKinety ? '12' : '15'}%;">${isPrzejscia ? 'Rodzaj przejścia' : isKinety ? 'Nazwa kinety' : 'Nazwa elementu'}</th>
           ${isPrzejscia ? `
           <th class="text-center" style="width: 8%;">Średnica (DN)</th>
           <th class="text-right" style="width: 7%;">Waga kg</th>
@@ -4155,6 +4230,18 @@ function renderStudniePriceList() {
           <th class="text-right" style="width: 8%;">Zap. góra</th>
           <th class="text-right" style="width: 8%;">Zap. dół min</th>
           <th class="text-right" style="width: 8%;">Zap. góra min</th>
+          ` : isKinety ? `
+          <th class="text-center" style="width: 4%;">DN</th>
+          <th class="text-center" style="width: 6%;">Wys.Sp.</th>
+          <th class="text-center" style="width: 5%;">Hmin1 mm</th>
+          <th class="text-center" style="width: 5%;">Hmax1 mm</th>
+          <th class="text-right" style="width: 6%;">Cena1</th>
+          <th class="text-center" style="width: 5%;">Hmin2 mm</th>
+          <th class="text-center" style="width: 5%;">Hmax2 mm</th>
+          <th class="text-right" style="width: 6%;">Cena2</th>
+          <th class="text-center" style="width: 5%;">Hmin3 mm</th>
+          <th class="text-center" style="width: 5%;">Hmax3 mm</th>
+          <th class="text-right" style="width: 6%;">Cena3</th>
           ` : `
           <th class="text-right" style="width: 5%;">Wys. mm</th>
           <th class="text-right" style="width: 5%;">Waga kg</th>
@@ -4168,11 +4255,11 @@ function renderStudniePriceList() {
           <th class="text-right" style="width: 5%;">Drab.Ni.</th>
           <th class="text-center" style="width: 3%;">Mag WL</th>
           <th class="text-center" style="width: 3%;">Mag KLB</th>
-          <th class="text-center" style="width: 3%;">Forma std. WL</th>
-          <th class="text-center" style="width: 3%;">Forma std. KLB</th>
+          <th class="text-center" style="width: 3%;">F. std WL</th>
+          <th class="text-center" style="width: 3%;">F. std KLB</th>
           `}
-          <th class="text-right" style="width: 7%;">Cena PLN</th>
-          <th class="text-center" style="width: 8%;">Akcje</th>
+          <th class="text-right" style="width: 6%;">Cena PLN</th>
+          <th class="text-center" style="width: 6%;">Akcje</th>
         </tr>
       </thead>`;
 
@@ -4186,7 +4273,7 @@ function renderStudniePriceList() {
 
         html += `<tbody>
       <tr>
-        <td colspan="${isPrzejscia ? '10' : '18'}" style="padding:0; border-bottom:1px solid var(--border);">
+        <td colspan="${isPrzejscia ? '10' : isKinety ? '15' : '18'}" style="padding:0; border-bottom:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(99,102,241,0.06); font-size:0.85rem;">
             <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
@@ -4213,6 +4300,20 @@ function renderStudniePriceList() {
         <td class="text-right" onclick="editStudnieCell(this,'zapasDolMin','${p.id}')" style="cursor:pointer; color:#fbbf24;">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'zapasGoraMin','${p.id}')" style="cursor:pointer; color:#fbbf24;">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
                `;
+            } else if (isKinety) {
+                html += `
+        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" onclick="editStudnieCell(this,'dn','${p.id}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'spocznikH','${p.id}')" style="cursor:pointer; font-weight:600;">${p.spocznikH || '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'hMin1','${p.id}')" style="cursor:pointer; font-weight:600;">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'hMax1','${p.id}')" style="cursor:pointer; font-weight:600;">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
+        <td class="text-right" onclick="editStudnieCell(this,'cena1','${p.id}')" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'hMin2','${p.id}')" style="cursor:pointer; font-weight:600;">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'hMax2','${p.id}')" style="cursor:pointer; font-weight:600;">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
+        <td class="text-right" onclick="editStudnieCell(this,'cena2','${p.id}')" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'hMin3','${p.id}')" style="cursor:pointer; font-weight:600;">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
+        <td class="text-center" onclick="editStudnieCell(this,'hMax3','${p.id}')" style="cursor:pointer; font-weight:600;">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
+        <td class="text-right" onclick="editStudnieCell(this,'cena3','${p.id}')" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
+                `;
             } else {
                 html += `
         <td class="text-right" onclick="editStudnieCell(this,'height','${p.id}')" style="cursor:pointer; font-weight:600; color:#818cf8;">${p.height != null ? fmtInt(p.height) : '—'}</td>
@@ -4251,6 +4352,46 @@ function renderStudniePriceList() {
     }
 
     container.innerHTML = html;
+}
+
+/* ===== KINETY CAT. MANAGEMENT ===== */
+function generateDefaultKinety(auto = false) {
+    if (!auto && !confirm('Wygenerować szablon cennika kinet dla wszystkich średnic? (nie nadpisze to istniejących ze zgodnym id)')) return;
+
+    const dns = [1000, 1200, 1500, 2000, 2500];
+    const heights = ['1/2', '2/3', '3/4', '1/1'];
+    let added = 0;
+
+    dns.forEach(dn => {
+        heights.forEach(h => {
+            const hId = h.replace('/', '');
+            const id = `KINETA-DN${dn}-${hId}`;
+
+            if (!studnieProducts.find(p => p.id === id)) {
+                studnieProducts.push({
+                    id: id,
+                    name: `Kineta DN${dn} wys. ${h}`,
+                    category: `Kinety DN${dn}`,
+                    componentType: 'kineta',
+                    dn: dn,
+                    spocznikH: h,
+                    hMin1: null, hMax1: null, cena1: 100,
+                    hMin2: null, hMax2: null, cena2: 100,
+                    hMin3: null, hMax3: null, cena3: 100,
+                    price: 100
+                });
+                added++;
+            }
+        });
+    });
+
+    if (added > 0) {
+        saveStudnieProducts(studnieProducts);
+        renderStudniePriceList();
+        if (!auto) showToast(`Dodano ${added} elementów kinet do uzupełnienia.`, 'success');
+    } else {
+        if (!auto) showToast('Wszystkie kinety już istnieją.', 'info');
+    }
 }
 
 /* ===== PRZEJŚCIA CAT. MANAGEMENT ===== */
@@ -4462,7 +4603,8 @@ function editStudnieCell(el, field, id) {
     const product = studnieProducts.find(p => p.id === id);
     const oldVal = product[field] ?? '';
     const input = document.createElement('input');
-    input.type = (field === 'name' || field === 'id') ? 'text' : 'number';
+    const isTextField = ['name', 'id', 'dn', 'spocznikH', 'category'].includes(field);
+    input.type = isTextField ? 'text' : 'number';
     if (input.type === 'number') input.step = 'any';
     input.className = 'edit-input';
     input.value = oldVal;
@@ -4476,7 +4618,13 @@ function editStudnieCell(el, field, id) {
     const save = () => {
         if (isSaving) return;
         isSaving = true;
-        const val = (field === 'name' || field === 'id') ? input.value.trim() : (input.value === '' ? null : Number(input.value));
+        let val = input.value.trim();
+        if (!isTextField) {
+            val = val === '' ? null : Number(val);
+        } else if (field === 'dn' && val !== '' && !val.includes('/')) {
+            const numDn = Number(val);
+            if (!isNaN(numDn)) val = numDn;
+        }
 
         if (field === 'id') {
             if (!val) { showToast('Indeks nie może być pusty', 'error'); renderStudniePriceList(); return; }
@@ -4708,6 +4856,16 @@ const EXPORT_COLUMNS = [
     { key: 'zapasGora', header: 'Zapas góra mm' },
     { key: 'zapasDolMin', header: 'Zapas dół min mm' },
     { key: 'zapasGoraMin', header: 'Zapas góra min mm' },
+    { key: 'spocznikH', header: 'Wys. spocznika' },
+    { key: 'hMin1', header: 'Hmin 1 mm' },
+    { key: 'hMax1', header: 'Hmax 1 mm' },
+    { key: 'cena1', header: 'Cena 1 PLN' },
+    { key: 'hMin2', header: 'Hmin 2 mm' },
+    { key: 'hMax2', header: 'Hmax 2 mm' },
+    { key: 'cena2', header: 'Cena 2 PLN' },
+    { key: 'hMin3', header: 'Hmin 3 mm' },
+    { key: 'hMax3', header: 'Hmax 3 mm' },
+    { key: 'cena3', header: 'Cena 3 PLN' }
 ];
 
 // Build reverse lookup: Polish header -> key
@@ -4764,7 +4922,8 @@ function importStudnieFromExcel(event) {
             const numericFields = ['height', 'weight', 'area', 'areaExt', 'transport', 'price',
                 'doplataPEHD', 'malowanieWewnetrzne', 'malowanieZewnetrzne', 'doplataZelbet',
                 'doplataDrabNierdzewna', 'magazynWL', 'magazynKLB', 'formaStandardowa', 'formaStandardowaKLB',
-                'zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin', 'dn'];
+                'zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin', 'dn',
+                'hMin1', 'hMax1', 'cena1', 'hMin2', 'hMax2', 'cena2', 'hMin3', 'hMax3', 'cena3'];
 
             const normalized = json.map(raw => {
                 const product = {};
@@ -4780,6 +4939,9 @@ function importStudnieFromExcel(event) {
                 product.name = String(product.name || '').trim();
                 product.category = String(product.category || '').trim();
                 product.componentType = String(product.componentType || '').trim();
+                if (product.category.startsWith('Kinety') && !product.componentType) {
+                    product.componentType = 'kineta';
+                }
 
                 // Parse numeric fields
                 numericFields.forEach(f => {
@@ -4869,6 +5031,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Load products
         studnieProducts = await loadStudnieProducts();
+
+        if (!studnieProducts.some(p => p.componentType === 'kineta')) {
+            generateDefaultKinety(true);
+        }
+
+        // Dodanie kategorii Otwór KPED jeśli nie istnieje
+        if (!studnieProducts.some(p => p.id === 'Otwor-KPED' || p.category === 'Otwór KPED')) {
+            studnieProducts.push({
+                id: 'Otwor-KPED',
+                name: 'Otwór KPED',
+                category: 'Otwór KPED',
+                dn: '1020/500', // szerokość/wysokość
+                componentType: 'przejscie',
+                zapasDol: 300,
+                zapasGora: 300,
+                zapasDolMin: 150,
+                zapasGoraMin: 150,
+                price: 500,
+                weight: 0
+            });
+            saveStudnieProducts(studnieProducts);
+        }
 
         // Start with no wells — user adds first well themselves
         wells = [];
