@@ -967,5 +967,60 @@
     "totalBrutto": 20061.3,
     "createdAt": "2026-02-28T12:21:33.894Z",
     "updatedAt": "2026-02-28T12:21:33.894Z"
+  },
+  {
+    "id": "offer_1772875432384",
+    "userId": "user_admin",
+    "userName": "admin",
+    "number": "OF/000007/AD/2026",
+    "date": "2026-03-07",
+    "clientName": "",
+    "clientNip": "",
+    "clientAddress": "",
+    "clientContact": "",
+    "investName": "",
+    "investAddress": "",
+    "notes": "",
+    "items": [
+      {
+        "productId": "RJB-0-06-30-K00-BU",
+        "name": "RURA O PRZEKROJU JAJOWYM C40/50 600/900 / 3000 (Bosy-Bosy)",
+        "unitPrice": 2500,
+        "quantity": 1,
+        "meters": 3,
+        "lengthM": 3,
+        "discount": 10,
+        "weight": 2900,
+        "transport": 8,
+        "pehdType": null,
+        "pehdCostPerUnit": 0,
+        "customLengthM": null
+      },
+      {
+        "productId": "RJB-0-06-30-K00",
+        "name": "RURA O PRZEKROJU JAJOWYM C40/50 600/900 / 3000",
+        "unitPrice": 2500,
+        "quantity": 1,
+        "meters": 3,
+        "lengthM": 3,
+        "discount": 10,
+        "weight": 2900,
+        "transport": 8,
+        "pehdType": null,
+        "pehdCostPerUnit": 0,
+        "customLengthM": null
+      }
+    ],
+    "transportKm": 100,
+    "transportRate": 10,
+    "transportCostPerTrip": 1000,
+    "transportCount": 1,
+    "transportCost": 1000,
+    "totalNetto": 5500,
+    "totalBrutto": 6765,
+    "createdAt": "2026-03-07T09:23:52.384Z",
+    "updatedAt": "2026-03-07T09:23:52.384Z",
+    "lastEditedBy": "admin",
+    "history": []
   }
 ]

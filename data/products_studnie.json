@@ -22,7 +22,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-055",
@@ -47,7 +48,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-060",
@@ -66,13 +68,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 222,
     "doplataDrabNierdzewna": 0,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-065",
@@ -97,7 +100,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-070",
@@ -116,13 +120,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 222,
     "doplataDrabNierdzewna": 50,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-075",
@@ -147,7 +152,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-080",
@@ -166,13 +172,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 222,
     "doplataDrabNierdzewna": 50,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-085",
@@ -197,7 +204,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-090",
@@ -216,13 +224,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 222,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-095",
@@ -247,7 +256,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-100",
@@ -266,13 +276,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 264,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-105",
@@ -297,7 +308,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-110",
@@ -316,13 +328,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 264,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-115",
@@ -347,7 +360,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-120",
@@ -366,13 +380,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 282,
     "doplataDrabNierdzewna": 150,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-125",
@@ -397,7 +412,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-130",
@@ -422,7 +438,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-135",
@@ -447,7 +464,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-140",
@@ -466,13 +484,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 282,
     "doplataDrabNierdzewna": 200,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-145",
@@ -497,7 +516,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-10-150",
@@ -522,7 +542,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-10-165",
@@ -547,7 +568,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "JZW-10-625-D",
@@ -568,11 +590,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "JZW-10-850-D",
@@ -593,11 +616,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-02-D",
@@ -618,11 +642,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-02-D",
@@ -643,11 +668,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-02-N-D",
@@ -668,11 +694,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-02-N-D",
@@ -693,11 +720,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-02-B",
@@ -718,11 +746,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-02-B",
@@ -743,11 +772,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-05-D",
@@ -768,11 +798,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-05-D",
@@ -793,11 +824,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-05-N-D",
@@ -818,11 +850,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-05-N-D",
@@ -843,11 +876,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-05-B",
@@ -868,11 +902,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-05-B",
@@ -893,11 +928,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-75-D",
@@ -918,11 +954,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-75-D",
@@ -943,11 +980,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-75-N-D",
@@ -968,11 +1006,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-75-N-D",
@@ -993,11 +1032,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-75-B",
@@ -1018,11 +1058,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-75-B",
@@ -1043,11 +1084,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-10-D",
@@ -1068,11 +1110,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-10-D",
@@ -1093,11 +1136,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-10-N-D",
@@ -1118,11 +1162,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-10-N-D",
@@ -1143,11 +1188,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-10-B",
@@ -1168,11 +1214,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-10-10-B",
@@ -1193,15 +1240,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-05-OT",
-    "name": "Krąg DN1000/500 OT",
+    "name": "Krąg DN1000/500 z otworami",
     "category": "Studnie DN1000",
     "componentType": "krag_ot",
     "dn": 1000,
@@ -1218,15 +1266,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-75-OT",
-    "name": "Krąg DN1000/750 OT",
+    "name": "Krąg DN1000/750 z otworami",
     "category": "Studnie DN1000",
     "componentType": "krag_ot",
     "dn": 1000,
@@ -1243,15 +1292,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-10-10-OT",
-    "name": "Krąg DN1000/1000 OT",
+    "name": "Krąg DN1000/1000 z otworami",
     "category": "Studnie DN1000",
     "componentType": "krag_ot",
     "dn": 1000,
@@ -1268,11 +1318,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PZE-16-10",
@@ -1293,11 +1344,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PO-16-10",
@@ -1318,11 +1370,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-10-62-00",
@@ -1343,11 +1396,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDDE-10-62-00",
@@ -1372,7 +1426,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "PDR-10-08-00",
@@ -1397,7 +1452,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "AVR-PR-10",
@@ -1422,7 +1478,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "AVR-PR-08",
@@ -1447,7 +1504,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "AVR-PR-06",
@@ -1472,7 +1530,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-1000",
@@ -1497,7 +1556,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-1000-PO",
@@ -1522,7 +1582,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-1000",
@@ -1547,7 +1608,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-1000-NBR",
@@ -1572,7 +1634,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-065",
@@ -1593,11 +1656,12 @@
     "doplataDrabNierdzewna": 50,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-070",
@@ -1616,13 +1680,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 315,
     "doplataDrabNierdzewna": 50,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-075",
@@ -1643,11 +1708,12 @@
     "doplataDrabNierdzewna": 50,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-080",
@@ -1666,13 +1732,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 315,
     "doplataDrabNierdzewna": 50,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-085",
@@ -1693,11 +1760,12 @@
     "doplataDrabNierdzewna": 50,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-090",
@@ -1716,13 +1784,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 315,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-095",
@@ -1743,11 +1812,12 @@
     "doplataDrabNierdzewna": 100,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-100",
@@ -1766,13 +1836,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 315,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-105",
@@ -1793,11 +1864,12 @@
     "doplataDrabNierdzewna": 100,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-110",
@@ -1816,13 +1888,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 315,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-115",
@@ -1843,11 +1916,12 @@
     "doplataDrabNierdzewna": 150,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-120",
@@ -1872,7 +1946,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-125",
@@ -1893,11 +1968,12 @@
     "doplataDrabNierdzewna": 150,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-130",
@@ -1922,7 +1998,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-135",
@@ -1943,11 +2020,12 @@
     "doplataDrabNierdzewna": 150,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-140",
@@ -1966,13 +2044,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 420,
     "doplataDrabNierdzewna": 200,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-145",
@@ -1993,11 +2072,12 @@
     "doplataDrabNierdzewna": 200,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-150",
@@ -2022,7 +2102,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-155",
@@ -2043,11 +2124,12 @@
     "doplataDrabNierdzewna": 200,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-160",
@@ -2068,11 +2150,12 @@
     "doplataDrabNierdzewna": 200,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-165",
@@ -2091,13 +2174,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 510,
     "doplataDrabNierdzewna": 200,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-170",
@@ -2118,11 +2202,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-175",
@@ -2147,7 +2232,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-180",
@@ -2168,11 +2254,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-185",
@@ -2197,7 +2284,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-190",
@@ -2218,11 +2306,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-195",
@@ -2241,13 +2330,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 540,
     "doplataDrabNierdzewna": 300,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-200",
@@ -2268,11 +2358,12 @@
     "doplataDrabNierdzewna": 300,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-12-250",
@@ -2293,11 +2384,12 @@
     "doplataDrabNierdzewna": 400,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "JZW-12-625-D",
@@ -2318,11 +2410,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "JZW-12-850-D",
@@ -2347,7 +2440,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-02-D",
@@ -2368,11 +2462,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-02-D",
@@ -2393,11 +2488,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-02-N-D",
@@ -2418,11 +2514,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-02-N-D",
@@ -2443,11 +2540,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-02-B",
@@ -2468,11 +2566,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-02-B",
@@ -2493,11 +2592,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-05-D",
@@ -2518,11 +2618,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-05-D",
@@ -2543,11 +2644,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-05-N-D",
@@ -2568,11 +2670,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-05-N-D",
@@ -2593,11 +2696,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-05-B",
@@ -2618,11 +2722,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-05-B",
@@ -2643,11 +2748,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-75-D",
@@ -2668,11 +2774,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-75-D",
@@ -2693,11 +2800,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-75-N-D",
@@ -2718,11 +2826,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-75-N-D",
@@ -2743,11 +2852,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-75-B",
@@ -2768,11 +2878,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-75-B",
@@ -2793,11 +2904,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-10-D",
@@ -2818,11 +2930,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-10-D",
@@ -2843,11 +2956,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-10-N-D",
@@ -2868,11 +2982,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-10-N-D",
@@ -2893,11 +3008,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-10-B",
@@ -2918,11 +3034,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-12-10-B",
@@ -2943,15 +3060,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-05-OT",
-    "name": "Krąg DN1200/500 OT",
+    "name": "Krąg DN1200/500 z otworami",
     "category": "Studnie DN1200",
     "componentType": "krag_ot",
     "dn": 1200,
@@ -2968,15 +3086,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-75-OT",
-    "name": "Krąg DN1200/750 OT",
+    "name": "Krąg DN1200/750 z otworami",
     "category": "Studnie DN1200",
     "componentType": "krag_ot",
     "dn": 1200,
@@ -2993,15 +3112,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-12-10-OT",
-    "name": "Krąg DN1200/1000 OT",
+    "name": "Krąg DN1200/1000 z otworami",
     "category": "Studnie DN1200",
     "componentType": "krag_ot",
     "dn": 1200,
@@ -3018,11 +3138,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PZE-18-12",
@@ -3043,11 +3164,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PO-18-12",
@@ -3068,11 +3190,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-12-62-00",
@@ -3093,11 +3216,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDDE-12-62-00",
@@ -3122,7 +3246,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDR-12-10-00",
@@ -3141,13 +3266,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 0,
-    "magazynKLB": 0,
-    "formaStandardowa": 0,
+    "magazynWL": 1,
+    "magazynKLB": 1,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-1200",
@@ -3172,7 +3298,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-1200-PO",
@@ -3197,7 +3324,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-1200",
@@ -3222,7 +3350,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-1200-NBR",
@@ -3247,7 +3376,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-075",
@@ -3266,13 +3396,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 735,
     "doplataDrabNierdzewna": 50,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-15-100",
@@ -3293,11 +3424,12 @@
     "doplataDrabNierdzewna": 100,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-110",
@@ -3318,11 +3450,12 @@
     "doplataDrabNierdzewna": 100,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-115",
@@ -3341,13 +3474,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 735,
     "doplataDrabNierdzewna": 100,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-120",
@@ -3368,11 +3502,12 @@
     "doplataDrabNierdzewna": 150,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-130",
@@ -3393,11 +3528,12 @@
     "doplataDrabNierdzewna": 150,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-135",
@@ -3422,7 +3558,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-140",
@@ -3443,11 +3580,12 @@
     "doplataDrabNierdzewna": 150,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-145",
@@ -3472,7 +3610,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-150",
@@ -3493,11 +3632,12 @@
     "doplataDrabNierdzewna": 200,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-155",
@@ -3518,11 +3658,12 @@
     "doplataDrabNierdzewna": 200,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-160",
@@ -3543,11 +3684,12 @@
     "doplataDrabNierdzewna": 200,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-165",
@@ -3566,13 +3708,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 870,
     "doplataDrabNierdzewna": 200,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-170",
@@ -3593,11 +3736,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-175",
@@ -3622,7 +3766,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-180",
@@ -3643,11 +3788,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-185",
@@ -3672,7 +3818,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-190",
@@ -3693,11 +3840,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-195",
@@ -3716,13 +3864,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 930,
     "doplataDrabNierdzewna": 300,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-200",
@@ -3743,11 +3892,12 @@
     "doplataDrabNierdzewna": 300,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-220",
@@ -3768,11 +3918,12 @@
     "doplataDrabNierdzewna": 350,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-225",
@@ -3791,13 +3942,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": 975,
     "doplataDrabNierdzewna": 350,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-230",
@@ -3818,11 +3970,12 @@
     "doplataDrabNierdzewna": 350,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-15-250",
@@ -3843,11 +3996,12 @@
     "doplataDrabNierdzewna": 400,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "JZW-15-625-D",
@@ -3872,7 +4026,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-05-D",
@@ -3893,11 +4048,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-05-D",
@@ -3918,11 +4074,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-05-N-D",
@@ -3943,11 +4100,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-05-N-D",
@@ -3968,11 +4126,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-05-B",
@@ -3993,11 +4152,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-05-B",
@@ -4018,11 +4178,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-07-D",
@@ -4043,11 +4204,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-07-D",
@@ -4068,11 +4230,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-07-N-D",
@@ -4093,11 +4256,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-07-N-D",
@@ -4118,11 +4282,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-07-B",
@@ -4143,11 +4308,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-07-B",
@@ -4168,11 +4334,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-10-D",
@@ -4193,11 +4360,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-10-D",
@@ -4218,11 +4386,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-10-N-D",
@@ -4243,11 +4412,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-10-N-D",
@@ -4268,11 +4438,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-10-B",
@@ -4293,11 +4464,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-15-10-B",
@@ -4318,15 +4490,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-05-OT",
-    "name": "Krąg DN1500/500 OT",
+    "name": "Krąg DN1500/500 z otworami",
     "category": "Studnie DN1500",
     "componentType": "krag_ot",
     "dn": 1500,
@@ -4343,15 +4516,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-07-OT",
-    "name": "Krąg DN1500/750 OT",
+    "name": "Krąg DN1500/750 z otworami",
     "category": "Studnie DN1500",
     "componentType": "krag_ot",
     "dn": 1500,
@@ -4368,15 +4542,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-15-10-OT",
-    "name": "Krąg DN1500/1000 OT",
+    "name": "Krąg DN1500/1000 z otworami",
     "category": "Studnie DN1500",
     "componentType": "krag_ot",
     "dn": 1500,
@@ -4393,11 +4568,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PZE-245-60",
@@ -4422,7 +4598,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PO-245-188",
@@ -4443,11 +4620,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-15-62-00",
@@ -4468,11 +4646,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDR-15-10-00",
@@ -4491,13 +4670,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 0,
-    "magazynKLB": 0,
-    "formaStandardowa": 0,
+    "magazynWL": 1,
+    "magazynKLB": 1,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-1500",
@@ -4522,7 +4702,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-1500-PO",
@@ -4547,7 +4728,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-1500",
@@ -4572,7 +4754,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-1500-NBR",
@@ -4597,7 +4780,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-100",
@@ -4622,7 +4806,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-110",
@@ -4647,7 +4832,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-120",
@@ -4672,7 +4858,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-130",
@@ -4697,7 +4884,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-140",
@@ -4722,7 +4910,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-150",
@@ -4747,7 +4936,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-160",
@@ -4772,7 +4962,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-170",
@@ -4797,7 +4988,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "DDD-20-180",
@@ -4818,11 +5010,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-190",
@@ -4843,11 +5036,12 @@
     "doplataDrabNierdzewna": 250,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-195",
@@ -4868,11 +5062,12 @@
     "doplataDrabNierdzewna": 300,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-200",
@@ -4893,11 +5088,12 @@
     "doplataDrabNierdzewna": 300,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-210",
@@ -4918,11 +5114,12 @@
     "doplataDrabNierdzewna": 300,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-220",
@@ -4943,11 +5140,12 @@
     "doplataDrabNierdzewna": 350,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-230",
@@ -4968,11 +5166,12 @@
     "doplataDrabNierdzewna": 350,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-240",
@@ -4993,11 +5192,12 @@
     "doplataDrabNierdzewna": 350,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-20-250",
@@ -5018,11 +5218,12 @@
     "doplataDrabNierdzewna": 400,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-02-D",
@@ -5041,13 +5242,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "KDB-20-02-N-D",
@@ -5066,13 +5268,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "KDB-20-02-B",
@@ -5091,13 +5294,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
-    "magazynKLB": 1,
+    "magazynWL": 0,
+    "magazynKLB": 0,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 0
   },
   {
     "id": "KDB-20-05-D",
@@ -5118,11 +5322,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-05-N-D",
@@ -5143,11 +5348,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-05-B",
@@ -5168,11 +5374,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-75-D",
@@ -5193,11 +5400,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-75-N-D",
@@ -5218,11 +5426,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-75-B",
@@ -5243,11 +5452,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-10-D",
@@ -5268,11 +5478,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-10-N-D",
@@ -5293,11 +5504,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-10-B",
@@ -5318,15 +5530,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-05-OT",
-    "name": "Krąg DN2000/500 OT",
+    "name": "Krąg DN2000/500 z otworami",
     "category": "Studnie DN2000",
     "componentType": "krag_ot",
     "dn": 2000,
@@ -5343,15 +5556,16 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-20-10-OT",
-    "name": "Krąg DN2000/1000 OT",
+    "name": "Krąg DN2000/1000 z otworami",
     "category": "Studnie DN2000",
     "componentType": "krag_ot",
     "dn": 2000,
@@ -5368,11 +5582,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-20-62-00",
@@ -5393,11 +5608,12 @@
     "doplataDrabNierdzewna": null,
     "magazynWL": 1,
     "magazynKLB": 1,
-    "formaStandardowa": 0,
+    "formaStandardowa": 1,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-20-62-F9",
@@ -5422,7 +5638,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDR-20-10-00",
@@ -5447,7 +5664,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PZE-20-20",
@@ -5472,7 +5690,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PO-20-20",
@@ -5497,7 +5716,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-2000",
@@ -5522,7 +5742,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-2000-PO",
@@ -5547,7 +5768,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-2000",
@@ -5572,7 +5794,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-2000-NBR",
@@ -5597,7 +5820,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-SDV-2500",
@@ -5622,7 +5846,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-2500-PO",
@@ -5647,7 +5872,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-2500",
@@ -5672,7 +5898,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Y-U-GSG-2500-NBR",
@@ -5697,7 +5924,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-25-250",
@@ -5722,7 +5950,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-25-260",
@@ -5747,7 +5976,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "DDD-25-270",
@@ -5772,7 +6002,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-02-D",
@@ -5797,7 +6028,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-02-D",
@@ -5822,7 +6054,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-02-N-D",
@@ -5847,7 +6080,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-02-N-D",
@@ -5872,7 +6106,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-02-B",
@@ -5897,7 +6132,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-02-B",
@@ -5922,7 +6158,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-05-D",
@@ -5941,13 +6178,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-05-D",
@@ -5966,13 +6204,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-05-N-D",
@@ -5991,13 +6230,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-05-N-D",
@@ -6016,13 +6256,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-05-B",
@@ -6041,13 +6282,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-05-B",
@@ -6066,13 +6308,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-75-D",
@@ -6091,13 +6334,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-75-D",
@@ -6116,13 +6360,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-75-N-D",
@@ -6141,13 +6386,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-75-N-D",
@@ -6166,13 +6412,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-75-B",
@@ -6191,13 +6438,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-75-B",
@@ -6216,13 +6464,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-10-D",
@@ -6241,13 +6490,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-10-D",
@@ -6266,13 +6516,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-10-N-D",
@@ -6291,13 +6542,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-10-N-D",
@@ -6316,13 +6568,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-10-B",
@@ -6341,13 +6594,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDZ-25-10-B",
@@ -6366,17 +6620,18 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-05-OT",
-    "name": "Krąg DN2500/500 OT",
+    "name": "Krąg DN2500/500 z otworami",
     "category": "Studnie DN2500",
     "componentType": "krag_ot",
     "dn": 2500,
@@ -6392,16 +6647,17 @@
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
     "magazynWL": 0,
-    "magazynKLB": 0,
+    "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "KDB-25-10-OT",
-    "name": "Krąg DN2500/1000 OT",
+    "name": "Krąg DN2500/1000 z otworami",
     "category": "Studnie DN2500",
     "componentType": "krag_ot",
     "dn": 2500,
@@ -6417,12 +6673,13 @@
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
     "magazynWL": 0,
-    "magazynKLB": 0,
+    "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-25-62-00",
@@ -6441,13 +6698,14 @@
     "malowanieZewnetrzne": null,
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
-    "magazynWL": 1,
+    "magazynWL": 0,
     "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDD-25-62-F9",
@@ -6472,7 +6730,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PDR-25-10-00",
@@ -6492,12 +6751,13 @@
     "doplataZelbet": null,
     "doplataDrabNierdzewna": null,
     "magazynWL": 0,
-    "magazynKLB": 0,
+    "magazynKLB": 1,
     "formaStandardowa": 0,
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PZE-25-20",
@@ -6522,7 +6782,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PO-25-20",
@@ -6547,7 +6808,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WLAZ-150",
@@ -6572,7 +6834,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WLAZ-110",
@@ -6597,7 +6860,8 @@
     "zapasDol": null,
     "zapasGora": null,
     "zapasDolMin": null,
-    "zapasGoraMin": null
+    "zapasGoraMin": null,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-150",
@@ -6622,7 +6886,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-200",
@@ -6647,7 +6912,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-250",
@@ -6672,7 +6938,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-300",
@@ -6697,7 +6964,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-400",
@@ -6722,7 +6990,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-450",
@@ -6747,7 +7016,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-500",
@@ -6772,7 +7042,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-600",
@@ -6797,7 +7068,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-700",
@@ -6822,7 +7094,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-800",
@@ -6847,7 +7120,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-1000",
@@ -6872,7 +7146,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-1200",
@@ -6897,7 +7172,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-200",
@@ -6922,7 +7198,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-300",
@@ -6947,7 +7224,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-400",
@@ -6972,7 +7250,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-500",
@@ -6997,7 +7276,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-600",
@@ -7022,7 +7302,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-800",
@@ -7047,7 +7328,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Pecor-Quattro-1000",
@@ -7072,7 +7354,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-150",
@@ -7097,7 +7380,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-200",
@@ -7122,7 +7406,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-250",
@@ -7147,7 +7432,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-300",
@@ -7172,7 +7458,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-400",
@@ -7197,7 +7484,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-500",
@@ -7222,7 +7510,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Plasticor-600",
@@ -7247,7 +7536,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Rauvia-ID-300",
@@ -7272,7 +7562,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Rauvia-ID-400",
@@ -7297,7 +7588,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Rauvia-ID-500",
@@ -7322,7 +7614,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "GRP-Rauvia-ID-600",
@@ -7347,7 +7640,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-150",
@@ -7372,7 +7666,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-200",
@@ -7397,7 +7692,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-250",
@@ -7422,7 +7718,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-300",
@@ -7447,7 +7744,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-400",
@@ -7472,7 +7770,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-500",
@@ -7497,7 +7796,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Incor-600",
@@ -7522,7 +7822,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-110",
@@ -7547,7 +7848,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-160",
@@ -7572,7 +7874,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-200",
@@ -7597,7 +7900,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-250",
@@ -7622,7 +7926,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-300",
@@ -7647,7 +7952,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-400",
@@ -7672,7 +7978,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-500",
@@ -7697,7 +8004,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-ID-600",
@@ -7722,7 +8030,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-600",
@@ -7747,7 +8056,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-800",
@@ -7772,7 +8082,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-1000",
@@ -7797,7 +8108,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-1200",
@@ -7822,7 +8134,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-600",
@@ -7847,7 +8160,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-800",
@@ -7872,7 +8186,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-1000",
@@ -7897,7 +8212,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-1200",
@@ -7922,7 +8238,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-1400",
@@ -7947,7 +8264,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-1600",
@@ -7972,7 +8290,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-1800",
@@ -7997,7 +8316,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-2000",
@@ -8022,7 +8342,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-2200",
@@ -8047,7 +8368,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-2400",
@@ -8072,7 +8394,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "K2KAN-XXL-ID-2600",
@@ -8097,7 +8420,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-100",
@@ -8122,7 +8446,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-125",
@@ -8147,7 +8472,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-150",
@@ -8172,7 +8498,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-200",
@@ -8197,7 +8524,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-250",
@@ -8222,7 +8550,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-300",
@@ -8247,7 +8576,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-350",
@@ -8272,7 +8602,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-400",
@@ -8297,7 +8628,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-500",
@@ -8322,7 +8654,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKN-600",
@@ -8347,7 +8680,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-200",
@@ -8372,7 +8706,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-250",
@@ -8397,7 +8732,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-300",
@@ -8422,7 +8758,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-400",
@@ -8447,7 +8784,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-500",
@@ -8472,7 +8810,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-600",
@@ -8497,7 +8836,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-700",
@@ -8522,7 +8862,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kamionka-SKV-800",
@@ -8547,7 +8888,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-100",
@@ -8572,7 +8914,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-125",
@@ -8597,7 +8940,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-150",
@@ -8622,7 +8966,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-200",
@@ -8647,7 +8992,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-300",
@@ -8672,7 +9018,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-350",
@@ -8697,7 +9044,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-400",
@@ -8722,7 +9070,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-500",
@@ -8747,7 +9096,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Kerabase-600",
@@ -8772,7 +9122,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-160",
@@ -8797,7 +9148,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-200",
@@ -8822,7 +9174,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-250",
@@ -8847,7 +9200,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-300",
@@ -8872,7 +9226,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-400",
@@ -8897,7 +9252,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-500",
@@ -8922,7 +9278,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-600",
@@ -8947,7 +9304,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Magnacor-800",
@@ -8972,7 +9330,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-200",
@@ -8997,7 +9356,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-300",
@@ -9022,7 +9382,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-400",
@@ -9047,7 +9408,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-500",
@@ -9072,7 +9434,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-600",
@@ -9097,7 +9460,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-800",
@@ -9122,7 +9486,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-1000",
@@ -9147,7 +9512,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-1200",
@@ -9172,7 +9538,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-90",
@@ -9197,7 +9564,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-100",
@@ -9222,7 +9590,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-110",
@@ -9247,7 +9616,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-125",
@@ -9272,7 +9642,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-140",
@@ -9297,7 +9668,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-150",
@@ -9322,7 +9694,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-160",
@@ -9347,7 +9720,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-180",
@@ -9372,7 +9746,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-200",
@@ -9397,7 +9772,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-225",
@@ -9422,7 +9798,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-250",
@@ -9447,7 +9824,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-280",
@@ -9472,7 +9850,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-300",
@@ -9497,7 +9876,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-315",
@@ -9522,7 +9902,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-355",
@@ -9547,7 +9928,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-400",
@@ -9572,7 +9954,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-450",
@@ -9597,7 +9980,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-500",
@@ -9622,7 +10006,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-560",
@@ -9647,7 +10032,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-600",
@@ -9672,7 +10058,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-630",
@@ -9697,7 +10084,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-700",
@@ -9722,7 +10110,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-800",
@@ -9747,7 +10136,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-1000",
@@ -9772,7 +10162,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-1200",
@@ -9797,7 +10188,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-1400",
@@ -9822,7 +10214,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-90",
@@ -9847,7 +10240,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-125",
@@ -9872,7 +10266,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-140",
@@ -9897,7 +10292,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-180",
@@ -9922,7 +10318,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-225",
@@ -9947,7 +10344,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-280",
@@ -9972,7 +10370,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-355",
@@ -9997,7 +10396,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-450",
@@ -10022,7 +10422,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-560",
@@ -10047,7 +10448,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-630",
@@ -10072,7 +10474,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-710",
@@ -10097,7 +10500,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-800",
@@ -10122,7 +10526,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PE-Gładkie-1000",
@@ -10147,7 +10552,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-90",
@@ -10172,7 +10578,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-110",
@@ -10197,7 +10604,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-125",
@@ -10222,7 +10630,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-140",
@@ -10247,7 +10656,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-160",
@@ -10272,7 +10682,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-180",
@@ -10297,7 +10708,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-200",
@@ -10322,7 +10734,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-225",
@@ -10347,7 +10760,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-250",
@@ -10372,7 +10786,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-280",
@@ -10397,7 +10812,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-315",
@@ -10422,7 +10838,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-355",
@@ -10447,7 +10864,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-400",
@@ -10472,7 +10890,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-450",
@@ -10497,7 +10916,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-500",
@@ -10522,7 +10942,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-560",
@@ -10547,7 +10968,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-630",
@@ -10572,7 +10994,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PEHD-100-710",
@@ -10597,7 +11020,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-150",
@@ -10622,7 +11046,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-200",
@@ -10647,7 +11072,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-250",
@@ -10672,7 +11098,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-300",
@@ -10697,7 +11124,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-400",
@@ -10722,7 +11150,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-500",
@@ -10747,7 +11176,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Plasticor-600",
@@ -10772,7 +11202,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-150",
@@ -10797,7 +11228,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-200",
@@ -10822,7 +11254,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-250",
@@ -10847,7 +11280,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-300",
@@ -10872,7 +11306,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-400",
@@ -10897,7 +11332,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-500",
@@ -10922,7 +11358,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-600",
@@ -10947,7 +11384,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-800",
@@ -10972,7 +11410,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-ID-1000",
@@ -10997,7 +11436,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-110",
@@ -11022,7 +11462,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-160",
@@ -11047,7 +11488,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-200",
@@ -11072,7 +11514,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-250",
@@ -11097,7 +11540,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-315",
@@ -11122,7 +11566,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-400",
@@ -11147,7 +11592,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-500",
@@ -11172,7 +11618,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Pragma-OD-630",
@@ -11197,7 +11644,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-160",
@@ -11222,7 +11670,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-200",
@@ -11247,7 +11696,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-250",
@@ -11272,7 +11722,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-300",
@@ -11297,7 +11748,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-400",
@@ -11322,7 +11774,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-500",
@@ -11347,7 +11800,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-600",
@@ -11372,7 +11826,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-800",
@@ -11397,7 +11852,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Procor-PP-1000",
@@ -11422,7 +11878,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-160",
@@ -11447,7 +11904,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-200",
@@ -11472,7 +11930,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-250",
@@ -11497,7 +11956,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-315",
@@ -11522,7 +11982,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-400",
@@ -11547,7 +12008,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-500",
@@ -11572,7 +12034,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-600",
@@ -11597,7 +12060,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-630",
@@ -11622,7 +12086,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-Gładkie-800",
@@ -11647,7 +12112,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-200",
@@ -11672,7 +12138,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-250",
@@ -11697,7 +12164,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-300",
@@ -11722,7 +12190,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-400",
@@ -11747,7 +12216,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-500",
@@ -11772,7 +12242,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-630",
@@ -11797,7 +12268,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-SN8-800",
@@ -11822,7 +12294,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-lite-110",
@@ -11847,7 +12320,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-lite-160",
@@ -11872,7 +12346,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-lite-200",
@@ -11897,7 +12372,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-lite-250",
@@ -11922,7 +12398,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-lite-315",
@@ -11947,7 +12424,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "PVC-lite-400",
@@ -11972,7 +12450,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-150",
@@ -11997,7 +12476,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-200",
@@ -12022,7 +12502,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-250",
@@ -12047,7 +12528,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-300",
@@ -12072,7 +12554,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-350",
@@ -12097,7 +12580,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-400",
@@ -12122,7 +12606,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-500",
@@ -12147,7 +12632,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-600",
@@ -12172,7 +12658,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-800",
@@ -12197,7 +12684,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Storm-pipe-1000",
@@ -12222,7 +12710,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-300",
@@ -12247,7 +12736,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-350",
@@ -12272,7 +12762,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-400",
@@ -12297,7 +12788,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-450",
@@ -12322,7 +12814,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-500",
@@ -12347,7 +12840,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-600",
@@ -12372,7 +12866,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-700",
@@ -12397,7 +12892,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-800",
@@ -12422,7 +12918,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-900",
@@ -12447,7 +12944,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-1000",
@@ -12472,7 +12970,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-1200",
@@ -12497,7 +12996,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Weholite-1400",
@@ -12522,7 +13022,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-150",
@@ -12547,7 +13048,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-200",
@@ -12572,7 +13074,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-250",
@@ -12597,7 +13100,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-300",
@@ -12622,7 +13126,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-400",
@@ -12647,7 +13152,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-450",
@@ -12672,7 +13178,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-500",
@@ -12697,7 +13204,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-600",
@@ -12722,7 +13230,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-800",
@@ -12747,7 +13256,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "X-Stream-1000",
@@ -12772,7 +13282,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-300",
@@ -12797,7 +13308,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-400",
@@ -12822,7 +13334,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-450",
@@ -12847,7 +13360,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-500",
@@ -12872,7 +13386,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-600",
@@ -12897,7 +13412,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-700",
@@ -12922,7 +13438,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-800",
@@ -12947,7 +13464,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-900",
@@ -12972,7 +13490,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-1000",
@@ -12997,7 +13516,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-1200",
@@ -13022,7 +13542,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Zinplast-ZIN-ZIP-SN8-1400",
@@ -13047,7 +13568,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-150",
@@ -13072,7 +13594,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-200",
@@ -13097,7 +13620,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-250",
@@ -13122,7 +13646,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-300",
@@ -13147,7 +13672,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-400",
@@ -13172,7 +13698,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-500",
@@ -13197,7 +13724,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-600",
@@ -13222,7 +13750,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-150",
@@ -13247,7 +13776,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-200",
@@ -13272,7 +13802,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-250",
@@ -13297,7 +13828,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-300",
@@ -13322,7 +13854,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-400",
@@ -13347,7 +13880,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-500",
@@ -13372,7 +13906,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-600",
@@ -13397,7 +13932,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-700",
@@ -13422,7 +13958,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-800",
@@ -13447,7 +13984,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-900",
@@ -13472,7 +14010,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-1000",
@@ -13497,7 +14036,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Żeliwo-Sferoidalne-1200",
@@ -13522,7 +14062,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-300",
@@ -13547,7 +14088,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-400",
@@ -13572,7 +14114,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-500",
@@ -13597,7 +14140,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-600",
@@ -13622,7 +14166,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-700",
@@ -13647,7 +14192,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-800",
@@ -13672,7 +14218,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-1000",
@@ -13697,7 +14244,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-1200",
@@ -13722,7 +14270,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-1400",
@@ -13747,7 +14296,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-1500",
@@ -13772,7 +14322,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-1600",
@@ -13797,7 +14348,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-1800",
@@ -13822,7 +14374,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-2000",
@@ -13847,7 +14400,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "WITROS-2200",
@@ -13872,7 +14426,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-1400",
@@ -13897,7 +14452,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-1500",
@@ -13922,7 +14478,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-1600",
@@ -13947,7 +14504,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-1800",
@@ -13972,7 +14530,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-2000",
@@ -13997,7 +14556,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Otwory-2200",
@@ -14022,7 +14582,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Jajowa-600",
@@ -14047,7 +14608,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Jajowa-700",
@@ -14072,7 +14634,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Jajowa-800",
@@ -14097,7 +14660,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Jajowa-1000",
@@ -14122,7 +14686,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Jajowa-1200",
@@ -14147,7 +14712,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-63",
@@ -14172,7 +14738,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-100",
@@ -14197,7 +14764,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-135",
@@ -14222,7 +14790,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-140",
@@ -14247,7 +14816,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-150",
@@ -14272,7 +14842,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-160",
@@ -14297,7 +14868,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-180",
@@ -14322,7 +14894,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-185",
@@ -14347,7 +14920,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-200",
@@ -14372,7 +14946,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-205",
@@ -14397,7 +14972,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-225",
@@ -14422,7 +14998,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-250",
@@ -14447,7 +15024,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-270",
@@ -14472,7 +15050,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-300",
@@ -14497,7 +15076,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-335",
@@ -14522,7 +15102,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-340",
@@ -14547,7 +15128,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-355",
@@ -14572,7 +15154,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-400",
@@ -14597,7 +15180,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-420",
@@ -14622,7 +15206,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-500",
@@ -14647,7 +15232,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-525",
@@ -14672,7 +15258,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-+-INSITU-160",
@@ -14697,7 +15284,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-+-INSITU-200",
@@ -14722,7 +15310,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-+-INSITU-250",
@@ -14747,7 +15336,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-+-INSITU-300",
@@ -14772,7 +15362,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "Wiercenie-+-INSITU-400",
@@ -14797,7 +15388,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Pecor-Quattro-200",
@@ -14822,7 +15414,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Pecor-Quattro-300",
@@ -14847,7 +15440,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Pecor-Quattro-400",
@@ -14872,7 +15466,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Plasticor-150",
@@ -14897,7 +15492,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Plasticor-200",
@@ -14922,7 +15518,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Plasticor-250",
@@ -14947,7 +15544,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Plasticor-300",
@@ -14972,7 +15570,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Plasticor-400",
@@ -14997,7 +15596,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Rauvia-ID-300",
@@ -15022,7 +15622,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-GRP-Rauvia-ID-400",
@@ -15047,7 +15648,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Incor-150",
@@ -15072,7 +15674,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Incor-200",
@@ -15097,7 +15700,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Incor-250",
@@ -15122,7 +15726,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Incor-300",
@@ -15147,7 +15752,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Incor-400",
@@ -15172,7 +15778,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-K2KAN-ID-110",
@@ -15197,7 +15804,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-K2KAN-ID-160",
@@ -15222,7 +15830,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-K2KAN-ID-200",
@@ -15247,7 +15856,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-K2KAN-ID-250",
@@ -15272,7 +15882,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-K2KAN-ID-300",
@@ -15297,7 +15908,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-K2KAN-ID-400",
@@ -15322,7 +15934,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-100",
@@ -15347,7 +15960,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-125",
@@ -15372,7 +15986,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-150",
@@ -15397,7 +16012,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-200",
@@ -15422,7 +16038,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-250",
@@ -15447,7 +16064,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-300",
@@ -15472,7 +16090,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-350",
@@ -15497,7 +16116,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKN-400",
@@ -15522,7 +16142,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKV-200",
@@ -15547,7 +16168,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKV-250",
@@ -15572,7 +16194,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKV-300",
@@ -15597,7 +16220,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kamionka-SKV-400",
@@ -15622,7 +16246,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-100",
@@ -15647,7 +16272,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-125",
@@ -15672,7 +16298,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-150",
@@ -15697,7 +16324,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-200",
@@ -15722,7 +16350,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-300",
@@ -15747,7 +16376,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-350",
@@ -15772,7 +16402,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Kerabase-400",
@@ -15797,7 +16428,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Magnacor-160",
@@ -15822,7 +16454,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Magnacor-200",
@@ -15847,7 +16480,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Magnacor-250",
@@ -15872,7 +16506,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Magnacor-300",
@@ -15897,7 +16532,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Magnacor-400",
@@ -15922,7 +16558,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Otwory-200",
@@ -15947,7 +16584,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Otwory-300",
@@ -15972,7 +16610,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Otwory-400",
@@ -15997,7 +16636,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-90",
@@ -16022,7 +16662,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-100",
@@ -16047,7 +16688,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-110",
@@ -16072,7 +16714,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-125",
@@ -16097,7 +16740,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-140",
@@ -16122,7 +16766,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-150",
@@ -16147,7 +16792,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-160",
@@ -16172,7 +16818,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-180",
@@ -16197,7 +16844,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-200",
@@ -16222,7 +16870,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-225",
@@ -16247,7 +16896,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-250",
@@ -16272,7 +16922,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-280",
@@ -16297,7 +16948,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-300",
@@ -16322,7 +16974,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-315",
@@ -16347,7 +17000,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-355",
@@ -16372,7 +17026,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-400",
@@ -16397,7 +17052,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-90",
@@ -16422,7 +17078,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-125",
@@ -16447,7 +17104,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-140",
@@ -16472,7 +17130,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-180",
@@ -16497,7 +17156,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-225",
@@ -16522,7 +17182,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-280",
@@ -16547,7 +17208,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PE-Gładkie-355",
@@ -16572,7 +17234,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-90",
@@ -16597,7 +17260,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-110",
@@ -16622,7 +17286,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-125",
@@ -16647,7 +17312,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-140",
@@ -16672,7 +17338,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-160",
@@ -16697,7 +17364,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-180",
@@ -16722,7 +17390,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-200",
@@ -16747,7 +17416,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-225",
@@ -16772,7 +17442,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-250",
@@ -16797,7 +17468,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-280",
@@ -16822,7 +17494,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-315",
@@ -16847,7 +17520,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-355",
@@ -16872,7 +17546,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PEHD-100-400",
@@ -16897,7 +17572,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Plasticor-150",
@@ -16922,7 +17598,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Plasticor-200",
@@ -16947,7 +17624,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Plasticor-250",
@@ -16972,7 +17650,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Plasticor-300",
@@ -16997,7 +17676,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Plasticor-400",
@@ -17022,7 +17702,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-ID-150",
@@ -17047,7 +17728,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-ID-200",
@@ -17072,7 +17754,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-ID-250",
@@ -17097,7 +17780,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-ID-300",
@@ -17122,7 +17806,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-ID-400",
@@ -17147,7 +17832,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-OD-110",
@@ -17172,7 +17858,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-OD-160",
@@ -17197,7 +17884,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-OD-200",
@@ -17222,7 +17910,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-OD-250",
@@ -17247,7 +17936,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-OD-315",
@@ -17272,7 +17962,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Pragma-OD-400",
@@ -17297,7 +17988,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Procor-PP-160",
@@ -17322,7 +18014,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Procor-PP-200",
@@ -17347,7 +18040,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Procor-PP-250",
@@ -17372,7 +18066,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Procor-PP-300",
@@ -17397,7 +18092,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Procor-PP-400",
@@ -17422,7 +18118,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-Gładkie-160",
@@ -17447,7 +18144,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-Gładkie-200",
@@ -17472,7 +18170,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-Gładkie-250",
@@ -17497,7 +18196,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-Gładkie-315",
@@ -17522,7 +18222,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-Gładkie-400",
@@ -17547,7 +18248,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-SN8-200",
@@ -17572,7 +18274,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-SN8-250",
@@ -17597,7 +18300,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-SN8-300",
@@ -17622,7 +18326,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-SN8-400",
@@ -17647,7 +18352,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-lite-110",
@@ -17672,7 +18378,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-lite-160",
@@ -17697,7 +18404,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-lite-200",
@@ -17722,7 +18430,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-lite-250",
@@ -17747,7 +18456,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-lite-315",
@@ -17772,7 +18482,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-PVC-lite-400",
@@ -17797,7 +18508,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Storm-pipe-150",
@@ -17822,7 +18534,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Storm-pipe-200",
@@ -17847,7 +18560,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Storm-pipe-250",
@@ -17872,7 +18586,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Storm-pipe-300",
@@ -17897,7 +18612,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Storm-pipe-350",
@@ -17922,7 +18638,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Storm-pipe-400",
@@ -17947,7 +18664,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Weholite-300",
@@ -17972,7 +18690,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Weholite-350",
@@ -17997,7 +18716,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Weholite-400",
@@ -18022,7 +18742,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-X-Stream-150",
@@ -18047,7 +18768,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-X-Stream-200",
@@ -18072,7 +18794,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-X-Stream-250",
@@ -18097,7 +18820,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-X-Stream-300",
@@ -18122,7 +18846,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-X-Stream-400",
@@ -18147,7 +18872,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Zinplast-ZIN-ZIP-SN8-300",
@@ -18172,7 +18898,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Zinplast-ZIN-ZIP-SN8-400",
@@ -18197,7 +18924,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-150",
@@ -18222,7 +18950,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-200",
@@ -18247,7 +18976,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-250",
@@ -18272,7 +19002,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-300",
@@ -18297,7 +19028,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-400",
@@ -18322,7 +19054,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-Sferoidalne-150",
@@ -18347,7 +19080,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-Sferoidalne-200",
@@ -18372,7 +19106,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-Sferoidalne-250",
@@ -18397,7 +19132,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-Sferoidalne-300",
@@ -18422,7 +19158,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-Żeliwo-Sferoidalne-400",
@@ -18447,7 +19184,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-WITROS-300",
@@ -18472,7 +19210,8 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   },
   {
     "id": "W-+-WITROS-400",
@@ -18497,6 +19236,7 @@
     "zapasDol": 300,
     "zapasGora": 300,
     "zapasDolMin": 150,
-    "zapasGoraMin": 150
+    "zapasGoraMin": 150,
+    "formaStandardowaKLB": 1
   }
 ]
