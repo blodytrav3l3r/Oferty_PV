@@ -1851,32 +1851,18 @@
 
                             <div class="card" style="padding:0.5rem 0.6rem;">
                                 <div class="card-title"
-                                    style="font-size:0.78rem; padding:0.15rem 0; margin-bottom:0.3rem;">
-                                    📦 Konfiguracja betonowa</div>
-                                <div class="table-wrap">
-                                    <table class="well-config-table">
-                                        <thead>
-                                            <tr>
-                                                <th style="width:42px">Poz.</th>
-                                                <th>Element</th>
-                                                <th style="text-align:right">Waga</th>
-                                                <th style="text-align:right">Pow.w.</th>
-                                                <th style="text-align:right">Pow.z.</th>
-                                                <th style="text-align:center; width:50px">Ilość</th>
-                                                <th style="text-align:right">Cena j.</th>
-                                                <th style="text-align:right">Wartość</th>
-                                                <th style="text-align:center; width:35px"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="well-config-body">
-                                            <tr>
-                                                <td colspan="9"
-                                                    style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem;">
-                                                    Kliknij kafelki powyżej, aby dodać elementy studni
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0.3rem; font-size:0.78rem; padding:0.15rem 0;"
+                                    onclick="toggleCard('well-config-wrap', 'well-config-icon')">
+                                    <span>📦 Konfiguracja betonowa</span>
+                                    <span id="well-config-icon" style="font-size:0.75rem;">🔼</span>
+                                </div>
+                                <div id="well-config-wrap" class="table-wrap card-content">
+                                    <div id="well-config-body" style="display:flex; flex-direction:column; gap:0.4rem;">
+                                        <div
+                                            style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem;">
+                                            Kliknij kafelki powyżej, aby dodać elementy studni
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

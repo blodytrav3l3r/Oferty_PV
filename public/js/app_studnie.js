@@ -549,9 +549,35 @@ function syncGaskets(well) {
     well.config = newConfig;
 }
 
+function syncKineta(well) {
+    if (!well || !well.config) return;
+
+    // Filter out existing kineta
+    const newConfig = well.config.filter(item => {
+        const p = studnieProducts.find(pr => pr.id === item.productId);
+        return !(p && p.componentType === 'kineta');
+    });
+
+    if (well.spocznikH && well.spocznikH !== 'brak') {
+        const kinetaProd = studnieProducts.find(p => p.componentType === 'kineta' && parseInt(p.dn) === parseInt(well.dn) && p.spocznikH === well.spocznikH);
+        if (kinetaProd) {
+            newConfig.push({
+                productId: kinetaProd.id,
+                quantity: 1,
+                autoAdded: true
+            });
+        }
+    }
+
+    well.config = newConfig;
+}
+
 function refreshAll() {
     const well = getCurrentWell();
-    if (well) syncGaskets(well);
+    if (well) {
+        syncGaskets(well);
+        syncKineta(well);
+    }
 
     renderWellsList();
     renderTiles();
@@ -575,7 +601,7 @@ function setupParamTiles() {
     document.querySelectorAll('.param-group').forEach(group => {
         const paramName = group.getAttribute('data-param');
         group.querySelectorAll('.param-tile').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const val = btn.getAttribute('data-val');
                 const well = getCurrentWell();
 
@@ -587,7 +613,10 @@ function setupParamTiles() {
                 if (well) {
                     well[paramName] = val;
                     updateParamTilesUI();
-                    autoSelectComponents(true);
+                    well.autoLocked = false;
+                    updateAutoLockUI();
+                    await autoSelectComponents(false);
+                    refreshAll();
                 }
 
                 // Wizard tracking (always)
@@ -717,13 +746,17 @@ function renderWellParams() {
     container.innerHTML = html;
 }
 
-function updateWellParam(paramKey, value) {
+async function updateWellParam(paramKey, value) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
     const well = getCurrentWell();
     if (!well) return;
     well[paramKey] = value;
     renderWellParams();
     updateParamTilesUI();
+    well.autoLocked = false;
+    updateAutoLockUI();
+    await autoSelectComponents(false);
+    refreshAll();
 }
 
 function resetWellParamsToDefaults() {
@@ -744,10 +777,14 @@ function resetWellParamsToDefaults() {
 window.updateWellParam = updateWellParam;
 window.resetWellParamsToDefaults = resetWellParamsToDefaults;
 
-function updateParamInput(paramName, value) {
+async function updateParamInput(paramName, value) {
     const well = getCurrentWell();
     if (!well) return;
     well[paramName] = value;
+    well.autoLocked = false;
+    updateAutoLockUI();
+    await autoSelectComponents(false);
+    refreshAll();
 }
 
 /* ===== AUTO-LOCK (MANUAL MODE) ===== */
@@ -1674,12 +1711,28 @@ async function autoSelectComponents(autoTriggered = false) {
         return pen;
     }
 
-    const dennicy = dnProducts.filter(p => p.componentType === 'dennica').sort((a, b) => {
+    let minDennicaH = 0;
+    if (well.spocznikH && well.spocznikH !== 'brak') {
+        const sh = well.spocznikH;
+        if (sh === '1/2' || sh === '1_2') minDennicaH = dn * 0.5;
+        else if (sh === '2/3' || sh === '2_3') minDennicaH = dn * (2 / 3);
+        else if (sh === '3/4' || sh === '3_4') minDennicaH = dn * 0.75;
+        else if (sh === '1/1' || sh === 'cale' || sh === '1_1') minDennicaH = dn;
+        else if (!isNaN(parseFloat(sh))) minDennicaH = parseFloat(sh);
+    }
+
+    const dennicy = dnProducts.filter(p => p.componentType === 'dennica' && (p.height || 0) >= minDennicaH).sort((a, b) => {
         const aForm = a[ff] === 1 ? 1 : 0;
         const bForm = b[ff] === 1 ? 1 : 0;
         if (aForm !== bForm) return bForm - aForm; // 1 (Standard) before 0 (Non-standard)
         return a.height - b.height; // Then sort by height ascending
     });
+
+    if (dennicy.length === 0) {
+        showToast(`Brak uformowanej dennicy spełniającej minimalną wysokość Kinety (${Math.round(minDennicaH)}mm).`, 'error');
+        // fallback
+        dennicy.push(...dnProducts.filter(p => p.componentType === 'dennica').sort((a, b) => a.height - b.height));
+    }
 
     const kregiRaw = dnProducts.filter(p => p.componentType === 'krag');
     const kregi = selectRingVariants(kregiRaw, well);
@@ -2492,6 +2545,63 @@ function renderDiscountPanel() {
 
 /* ===== WELL STATS ===== */
 
+function getItemAssessedPrice(well, p) {
+    let itemPrice = p.price || 0;
+
+    if (p.componentType === 'kineta') {
+        let dennicaHeight = 0;
+        const dennicaItem = well.config.find(c => {
+            const pr = studnieProducts.find(x => x.id === c.productId);
+            return pr && pr.componentType === 'dennica';
+        });
+        if (dennicaItem) {
+            dennicaHeight = studnieProducts.find(x => x.id === dennicaItem.productId)?.height || 0;
+        }
+
+        const h1m = parseFloat(p.hMin1); const h1x = parseFloat(p.hMax1);
+        const h2m = parseFloat(p.hMin2); const h2x = parseFloat(p.hMax2);
+        const h3m = parseFloat(p.hMin3); const h3x = parseFloat(p.hMax3);
+
+        if (!isNaN(h1m) && !isNaN(h1x) && dennicaHeight >= h1m && dennicaHeight <= h1x) {
+            itemPrice = parseFloat(p.cena1) || 0;
+        } else if (!isNaN(h2m) && !isNaN(h2x) && dennicaHeight >= h2m && dennicaHeight <= h2x) {
+            itemPrice = parseFloat(p.cena2) || 0;
+        } else if (!isNaN(h3m) && !isNaN(h3x) && dennicaHeight >= h3m && dennicaHeight <= h3x) {
+            itemPrice = parseFloat(p.cena3) || 0;
+        }
+        return itemPrice;
+    }
+
+    // Wkładka PEHD
+    if (well.wkladka && well.wkladka !== 'brak' && p.doplataPEHD) {
+        itemPrice += parseFloat(p.doplataPEHD);
+    }
+
+    // Malowanie wewnątrz
+    if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
+        if (well.malowanieW === 'cale' || p.componentType === 'dennica') {
+            itemPrice += parseFloat(p.malowanieWewnetrzne);
+        }
+    }
+
+    // Malowanie zewnątrz
+    if (well.malowanieZ === 'zewnatrz' && p.malowanieZewnetrzne) {
+        itemPrice += parseFloat(p.malowanieZewnetrzne);
+    }
+
+    // Żelbet (dopłata dla dennicy)
+    if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica' && p.doplataZelbet) {
+        itemPrice += parseFloat(p.doplataZelbet);
+    }
+
+    // Drabinka nierdzewna
+    if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
+        itemPrice += parseFloat(p.doplataDrabNierdzewna);
+    }
+
+    return itemPrice;
+}
+
 function calcWellStats(well) {
     let price = 0, weight = 0, height = 0, areaInt = 0, areaExt = 0;
     let priceDennica = 0, priceNadbudowa = 0;
@@ -2499,40 +2609,13 @@ function calcWellStats(well) {
         const p = studnieProducts.find(pr => pr.id === item.productId);
         if (!p) return;
 
-        let itemPrice = p.price || 0;
-
-        // Wkładka PEHD (jeśli zaznaczona jakakolwiek opcja inna niż brak)
-        if (well.wkladka && well.wkladka !== 'brak' && p.doplataPEHD) {
-            itemPrice += parseFloat(p.doplataPEHD);
-        }
-
-        // Malowanie wewnątrz
-        if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
-            if (well.malowanieW === 'cale' || p.componentType === 'dennica') {
-                itemPrice += parseFloat(p.malowanieWewnetrzne);
-            }
-        }
-
-        // Malowanie zewnątrz
-        if (well.malowanieZ === 'zewnatrz' && p.malowanieZewnetrzne) {
-            itemPrice += parseFloat(p.malowanieZewnetrzne);
-        }
-
-        // Żelbet (dopłata dla dennicy)
-        if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica' && p.doplataZelbet) {
-            itemPrice += parseFloat(p.doplataZelbet);
-        }
-
-        // Drabinka nierdzewna (dopłata gdy stopnie = nierdzewna)
-        if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
-            itemPrice += parseFloat(p.doplataDrabNierdzewna);
-        }
+        let itemPrice = getItemAssessedPrice(well, p);
 
         const lineTotal = itemPrice * item.quantity;
         price += lineTotal;
 
         // Split into dennica vs nadbudowa
-        if (p.componentType === 'dennica') {
+        if (p.componentType === 'dennica' || p.componentType === 'kineta') {
             priceDennica += lineTotal;
         } else {
             priceNadbudowa += lineTotal;
@@ -2552,6 +2635,9 @@ function calcWellStats(well) {
             weight += (p.weight || 0);
         });
     }
+
+
+
     return { price, priceDennica, priceNadbudowa, weight, height, areaInt, areaExt };
 }
 
@@ -2847,7 +2933,7 @@ function renderWellConfig() {
     const well = getCurrentWell();
 
     if (!well || well.config.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</td></tr>';
+        tbody.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</div>';
         return;
     }
 
@@ -2863,7 +2949,8 @@ function renderWellConfig() {
         plyta_redukcyjna: 4,
         krag: 5,
         krag_ot: 5,
-        dennica: 6
+        dennica: 6,
+        kineta: 7
     };
 
     // Type color badges
@@ -2878,14 +2965,16 @@ function renderWellConfig() {
         plyta_redukcyjna: { bg: '#6d28d920', label: '⬛ Redukcja' },
         krag: { bg: '#164e63', label: '🟦 Krąg' },
         krag_ot: { bg: '#312e81', label: '🟪 Krąg OT' },
-        dennica: { bg: '#14532d', label: '🟩 Dennica' }
+        dennica: { bg: '#14532d', label: '🟩 Dennica' },
+        kineta: { bg: '#9d174d', label: '🔌 Kineta' }
     };
 
     let html = '';
     well.config.forEach((item, index) => {
         const p = studnieProducts.find(pr => pr.id === item.productId);
         if (!p) return;
-        const totalPrice = p.price * item.quantity;
+        const itemAssessedPrice = getItemAssessedPrice(well, p);
+        const totalPrice = itemAssessedPrice * item.quantity;
         const totalWeight = (p.weight || 0) * item.quantity;
         const totalAreaInt = (p.area || 0) * item.quantity;
         const totalAreaExt = (p.areaExt || 0) * item.quantity;
@@ -2894,37 +2983,32 @@ function renderWellConfig() {
         const canMoveUp = index > 0;
         const canMoveDown = index < well.config.length - 1;
 
-        html += `<tr data-cfg-idx="${index}">
-      <td>
-        <div style="display:flex; flex-direction:column; gap:1px; align-items:center;">
-          <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="▲">▲</button>
-          <span style="font-size:0.62rem; color:var(--text-muted)">${index + 1}</span>
-          <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="▼">▼</button>
-        </div>
-      </td>
-      <td>
-        <div style="display:flex; align-items:center; gap:0.35rem;">
-          <span style="font-size:0.5rem; padding:1px 4px; border-radius:3px; background:${badge.bg}; color:var(--text-secondary); white-space:nowrap;">${badge.label}</span>
-          <div>
-            <div style="font-weight:600; color:var(--text-primary); font-size:0.76rem; line-height:1.2;">${p.name}</div>
-            <div style="font-size:0.6rem; color:var(--text-muted);">${p.id}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:rgba(30,41,59,0.7); border:1px solid rgba(99,102,241,0.15); border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem; cursor:grab;"
+                      onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.borderColor='rgba(99,102,241,0.15)'">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+                <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.15rem; border-radius:4px;">
+                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" style="background:none; border:none; color:var(--text-muted); font-size:0.6rem; cursor:${canMoveUp ? 'pointer' : 'default'};">▲</button>
+                  <span style="font-size:0.6rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
+                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" style="background:none; border:none; color:var(--text-muted); font-size:0.6rem; cursor:${canMoveDown ? 'pointer' : 'default'};">▼</button>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:0.1rem;">
+                  <span style="font-size:0.48rem; padding:1px 4px; border-radius:3px; background:${badge.bg}; color:var(--text-secondary); width:fit-content; border:1px solid rgba(255,255,255,0.05);">${badge.label}</span>
+                  <div style="font-weight:700; color:var(--text-primary); font-size:0.75rem; line-height:1.2;">${p.name}</div>
+                  <div style="font-size:0.6rem; color:var(--text-muted);">${p.id}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.2rem;">
+              <button onclick="removeWellComponent(${index})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); border-radius:4px; cursor:pointer; font-size:0.6rem; padding:0.15rem 0.35rem; color:#ef4444; align-self:flex-end;">✕ Usuń</button>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.2rem;">Waga: <span style="color:var(--text-primary); font-weight:600;">${p.weight ? fmtInt(totalWeight) + ' kg' : '—'}</span></div>
+              <div style="font-size:0.65rem; color:var(--text-muted);">Cena: <span style="font-size:0.8rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span></div>
+            </div>
+
           </div>
-        </div>
-      </td>
-      <td style="text-align:right">${p.weight ? fmtInt(totalWeight) + ' kg' : '—'}</td>
-      <td style="text-align:right">${p.area ? fmt(totalAreaInt) : '—'}</td>
-      <td style="text-align:right">${p.areaExt ? fmt(totalAreaExt) : '—'}</td>
-      <td style="text-align:center">
-        <input type="number" value="1" min="1" max="1" readonly title="Sztuki są rozdzielone"
-          style="width:42px; text-align:center; background:rgba(30,41,59,0.5); opacity:0.8; border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); padding:0.15rem; font-size:0.75rem; cursor:not-allowed;"
-          onchange="updateWellQuantity(${index}, this.value)">
-      </td>
-      <td style="text-align:right; color:var(--text-secondary); font-size:0.75rem;">${fmtInt(p.price)}</td>
-      <td style="text-align:right; font-weight:700; color:var(--text-primary); font-size:0.75rem;">${fmtInt(totalPrice)}</td>
-      <td style="text-align:center">
-        <button class="config-remove-btn" onclick="removeWellComponent(${index})" style="font-size:0.62rem; padding:0.15rem 0.35rem;">✕</button>
-      </td>
-    </tr>`;
+        </div>`;
     });
 
     tbody.innerHTML = html;
@@ -2950,8 +3034,59 @@ function moveWellComponent(index, direction) {
     well.configSource = 'MANUAL';
 
     renderWellConfig();
-    renderWellDiagram();
-    updateSummary();
+}
+
+/* ===== DRAG & DROP FOR CONCRETE CONFIG ===== */
+let draggedCfgIndex = null;
+
+window.handleCfgDragStart = function (e) {
+    draggedCfgIndex = parseInt(e.currentTarget.getAttribute('data-cfg-idx'));
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.style.opacity = '0.4';
+};
+
+window.handleCfgDragOver = function (e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const tile = e.target.closest('.config-tile');
+    if (tile) {
+        tile.style.borderTop = '2px solid #6366f1';
+    }
+};
+
+window.handleCfgDrop = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const tile = e.target.closest('.config-tile');
+    if (tile && draggedCfgIndex !== null) {
+        tile.style.borderTop = '';
+        const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
+        if (draggedCfgIndex === dropIndex) return;
+
+        const well = getCurrentWell();
+        if (!well) return;
+
+        // Extract the dragged item
+        const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
+
+        // Insert at the new position
+        well.config.splice(dropIndex, 0, draggedItem);
+
+        // Turn on manual lock
+        well.autoLocked = true;
+        updateAutoLockUI();
+        well.configSource = 'MANUAL';
+
+        renderWellConfig();
+        renderWellDiagram();
+        updateSummary();
+    }
+};
+
+window.handleCfgDragEnd = function (e) {
+    e.currentTarget.style.opacity = '1';
+    document.querySelectorAll('.config-tile').forEach(t => t.style.borderTop = '');
+    draggedCfgIndex = null;
 }
 
 /* ===== SORT WELL CONFIG by well-physical order (top → bottom) ===== */
@@ -2966,7 +3101,8 @@ function sortWellConfigByOrder() {
         pierscien_odciazajacy: 3,
         plyta_redukcyjna: 4,
         krag: 5, krag_ot: 5,
-        dennica: 6
+        dennica: 6,
+        kineta: 7
     };
     well.config.sort((a, b) => {
         const pa = studnieProducts.find(p => p.id === a.productId);
@@ -5168,6 +5304,7 @@ function createOrderFromOffer() {
         investAddress: offer.investAddress,
         notes: offer.notes,
         wells: JSON.parse(JSON.stringify(offer.wells)),
+        visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         originalSnapshot: JSON.parse(JSON.stringify(offer.wells)), // frozen copy for diff
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
@@ -5203,6 +5340,7 @@ function saveOrderStudnie() {
 
     // Update order wells with current wells state
     order.wells = JSON.parse(JSON.stringify(wells));
+    order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
 
     // Recalculate totals
@@ -5310,6 +5448,8 @@ async function enterOrderEditMode(orderId) {
 
         orderEditMode = { orderId: order.id, order: order };
 
+        visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
+
         // Load wells from order
         wells = JSON.parse(JSON.stringify(order.wells));
         migrateWellData(wells);
@@ -5405,6 +5545,7 @@ async function saveCurrentOrder() {
 
     // Update order with current wells
     order.wells = JSON.parse(JSON.stringify(wells));
+    order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
 
     // Recalculate totals
@@ -5617,6 +5758,8 @@ function loadSavedOfferStudnie(id) {
     document.getElementById('offer-notes').value = offer.notes || '';
     document.getElementById('transport-km').value = offer.transportKm || 100;
     document.getElementById('transport-rate').value = offer.transportRate || 10;
+
+    visiblePrzejsciaTypes = new Set(offer.visiblePrzejsciaTypes || []);
 
     wells = JSON.parse(JSON.stringify(offer.wells));
     migrateWellData(wells);

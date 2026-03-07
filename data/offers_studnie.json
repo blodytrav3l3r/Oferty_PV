@@ -1,5 +1,297 @@
 [
   {
+    "id": "offer_studnie_1772821364027",
+    "userId": "user_admin",
+    "userName": "admin",
+    "number": "OS/000003/AD/2026",
+    "date": "2026-03-06",
+    "clientName": "Budimex S.A.",
+    "clientNip": "5261003187",
+    "clientAddress": "01-204 Warszawa, ul. Siedmiogrodzka 9",
+    "clientContact": "Jan Kowalski 654-952-651",
+    "investName": "",
+    "investAddress": "",
+    "notes": "",
+    "wells": [
+      {
+        "id": "well-1772821356615-2",
+        "name": "s1",
+        "dn": 1200,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "JZW-10-625-D",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-02-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "PDR-12-10-00",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-12-02-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-12-10-OT",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-12-145",
+            "quantity": 1
+          },
+          {
+            "productId": "KINETA-DN1200-12",
+            "quantity": 1,
+            "autoAdded": true
+          }
+        ],
+        "przejscia": [
+          {
+            "productId": "K2KAN-XXL-600",
+            "rzednaWlaczenia": "0.00",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          },
+          {
+            "productId": "Otwory-300",
+            "rzednaWlaczenia": "0.80",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          },
+          {
+            "productId": "Otwory-400",
+            "rzednaWlaczenia": "1.50",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          }
+        ],
+        "rzednaWlazu": 5,
+        "rzednaDna": 0,
+        "numer": "s1",
+        "autoLocked": false,
+        "zakonczenie": null,
+        "redukcjaDN1000": true,
+        "redukcjaMinH": 2600,
+        "redukcjaZakonczenie": "JZW-10-625-D",
+        "nadbudowa": "betonowa",
+        "dennicaMaterial": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "agresjaChemiczna": "XA1",
+        "agresjaMrozowa": "XF1",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "tak",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "linia_dolna",
+        "magazyn": "Kluczbork",
+        "configStatus": "WARNING",
+        "configErrors": [
+          "Przejście #2 [Otwory DN300] (Dennicy): zastosowany zapas minimalny (zostaje w dennicy: dół 800mm, góra 200mm)",
+          "Przejście #3 [Otwory DN400] (Kręgu): zastosowany zapas minimalny (zostaje w kręgu: dół 200mm, góra 400mm)"
+        ],
+        "configSource": "AUTO_JS"
+      },
+      {
+        "id": "well-1772821743203-3",
+        "name": "s2",
+        "dn": 1500,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "PZE-16-10",
+            "quantity": 1
+          },
+          {
+            "productId": "PO-16-10",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-10-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "PDR-15-10-00",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-05-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-15-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-15-110",
+            "quantity": 1
+          },
+          {
+            "productId": "KINETA-DN1500-12",
+            "quantity": 1,
+            "autoAdded": true
+          }
+        ],
+        "przejscia": [
+          {
+            "productId": "Otwory-500",
+            "rzednaWlaczenia": "5.00",
+            "angle": 0,
+            "angleExecution": 0,
+            "angleGony": "0.00",
+            "notes": ""
+          }
+        ],
+        "rzednaWlazu": 6,
+        "rzednaDna": 0,
+        "numer": "s2",
+        "autoLocked": false,
+        "zakonczenie": null,
+        "redukcjaDN1000": true,
+        "redukcjaMinH": 2500,
+        "redukcjaZakonczenie": "PZE-16-10",
+        "nadbudowa": "betonowa",
+        "dennicaMaterial": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "agresjaChemiczna": "XA1",
+        "agresjaMrozowa": "XF1",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "tak",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "linia_dolna",
+        "magazyn": "Kluczbork",
+        "configStatus": "WARNING",
+        "configErrors": [
+          "Zastosowana rozszerzona tolerancja"
+        ],
+        "configSource": "AUTO_JS"
+      },
+      {
+        "id": "well-1772877494247-1",
+        "name": "12",
+        "dn": 2000,
+        "config": [
+          {
+            "productId": "WLAZ-150",
+            "quantity": 1
+          },
+          {
+            "productId": "AVR-PR-10",
+            "quantity": 1
+          },
+          {
+            "productId": "PDD-20-62-00",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-20-05-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-20-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "KDB-20-10-B",
+            "quantity": 1
+          },
+          {
+            "productId": "DDD-20-120",
+            "quantity": 1
+          },
+          {
+            "productId": "KINETA-DN2000-12",
+            "quantity": 1,
+            "autoAdded": true
+          }
+        ],
+        "przejscia": [],
+        "rzednaWlazu": 12,
+        "rzednaDna": 8,
+        "numer": "12",
+        "autoLocked": false,
+        "zakonczenie": null,
+        "redukcjaDN1000": false,
+        "redukcjaMinH": 2500,
+        "redukcjaZakonczenie": "PZE-16-10",
+        "nadbudowa": "betonowa",
+        "dennicaMaterial": "betonowa",
+        "wkladka": "brak",
+        "klasaBetonu": "C40/50",
+        "agresjaChemiczna": "XA1",
+        "agresjaMrozowa": "XF1",
+        "malowanieW": "brak",
+        "malowanieZ": "brak",
+        "powlokaNameW": "",
+        "powlokaNameZ": "",
+        "kineta": "brak",
+        "redukcjaKinety": "tak",
+        "stopnie": "brak",
+        "spocznikH": "1/2",
+        "usytuowanie": "linia_dolna",
+        "magazyn": "Kluczbork",
+        "configStatus": "OK",
+        "configErrors": [],
+        "configSource": "AUTO_JS"
+      }
+    ],
+    "transportKm": 100,
+    "transportRate": 10,
+    "totalWeight": 35698,
+    "totalNetto": 29860,
+    "totalBrutto": 36727.8,
+    "createdAt": "2026-03-06T18:22:44.027Z",
+    "updatedAt": "2026-03-07T18:34:32.485Z",
+    "lastEditedBy": "admin",
+    "hasOrder": false
+  },
+  {
     "id": "offer_studnie_1772877597293",
     "userId": "user_admin",
     "userName": "admin",
@@ -95,7 +387,7 @@
         "kineta": "brak",
         "redukcjaKinety": "tak",
         "stopnie": "drabinka",
-        "spocznikH": "1/2",
+        "spocznikH": "brak",
         "usytuowanie": "linia_dolna",
         "magazyn": "Kluczbork",
         "configStatus": "WARNING",
@@ -295,264 +587,7 @@
     "totalNetto": 15030,
     "totalBrutto": 18486.9,
     "createdAt": "2026-03-07T09:59:57.293Z",
-    "updatedAt": "2026-03-07T16:38:14.198Z",
-    "lastEditedBy": "admin"
-  },
-  {
-    "id": "offer_studnie_1772821364027",
-    "userId": "user_admin",
-    "userName": "admin",
-    "number": "OS/000003/AD/2026",
-    "date": "2026-03-06",
-    "clientName": "Budimex S.A.",
-    "clientNip": "5261003187",
-    "clientAddress": "01-204 Warszawa, ul. Siedmiogrodzka 9",
-    "clientContact": "Jan Kowalski 654-952-651",
-    "investName": "",
-    "investAddress": "",
-    "notes": "",
-    "wells": [
-      {
-        "id": "well-1772821356615-2",
-        "name": "s1",
-        "dn": 1200,
-        "config": [
-          {
-            "productId": "WLAZ-150",
-            "quantity": 1
-          },
-          {
-            "productId": "JZW-10-625-D",
-            "quantity": 1
-          },
-          {
-            "productId": "PDR-12-10-00",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-10-75-B",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-10-10-B",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-12-10-OT",
-            "quantity": 1
-          },
-          {
-            "productId": "DDD-12-140",
-            "quantity": 1
-          }
-        ],
-        "przejscia": [
-          {
-            "productId": "K2KAN-XXL-600",
-            "rzednaWlaczenia": "0.00",
-            "angle": 0,
-            "angleExecution": 0,
-            "angleGony": "0.00",
-            "notes": ""
-          },
-          {
-            "productId": "Otwory-300",
-            "rzednaWlaczenia": "0.80",
-            "angle": 0,
-            "angleExecution": 0,
-            "angleGony": "0.00",
-            "notes": ""
-          },
-          {
-            "productId": "Otwory-400",
-            "rzednaWlaczenia": "1.50",
-            "angle": 0,
-            "angleExecution": 0,
-            "angleGony": "0.00",
-            "notes": ""
-          }
-        ],
-        "rzednaWlazu": 5,
-        "rzednaDna": 0,
-        "numer": "s1",
-        "autoLocked": false,
-        "zakonczenie": null,
-        "redukcjaDN1000": true,
-        "redukcjaMinH": 2600,
-        "redukcjaZakonczenie": "JZW-10-625-D",
-        "nadbudowa": "betonowa",
-        "dennicaMaterial": "betonowa",
-        "wkladka": "brak",
-        "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
-        "malowanieW": "brak",
-        "malowanieZ": "brak",
-        "powlokaNameW": "",
-        "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
-        "stopnie": "brak",
-        "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna",
-        "magazyn": "Kluczbork",
-        "configStatus": "WARNING",
-        "configErrors": [
-          "Przejście #2 [Otwory DN300] (Dennicy): zastosowany zapas minimalny (zostaje w dennicy: dół 800mm, góra 150mm)",
-          "Przejście #3 [Otwory DN400] (Kręgu): zastosowany zapas minimalny (zostaje w kręgu: dół 250mm, góra 350mm)"
-        ]
-      },
-      {
-        "id": "well-1772821743203-3",
-        "name": "s2",
-        "dn": 1500,
-        "config": [
-          {
-            "productId": "WLAZ-150",
-            "quantity": 1
-          },
-          {
-            "productId": "PZE-16-10",
-            "quantity": 1
-          },
-          {
-            "productId": "PO-16-10",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-10-10-B",
-            "quantity": 3
-          },
-          {
-            "productId": "PDR-15-10-00",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-15-10-B",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-15-05-B",
-            "quantity": 1
-          },
-          {
-            "productId": "DDD-15-115",
-            "quantity": 1
-          }
-        ],
-        "przejscia": [
-          {
-            "productId": "Otwory-500",
-            "rzednaWlaczenia": "5.00",
-            "angle": 0,
-            "angleExecution": 0,
-            "angleGony": "0.00",
-            "notes": ""
-          }
-        ],
-        "rzednaWlazu": 6,
-        "rzednaDna": 0,
-        "numer": "s2",
-        "autoLocked": false,
-        "zakonczenie": null,
-        "redukcjaDN1000": true,
-        "redukcjaMinH": 2500,
-        "redukcjaZakonczenie": "PZE-16-10",
-        "nadbudowa": "betonowa",
-        "dennicaMaterial": "betonowa",
-        "wkladka": "brak",
-        "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
-        "malowanieW": "brak",
-        "malowanieZ": "brak",
-        "powlokaNameW": "",
-        "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
-        "stopnie": "brak",
-        "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna",
-        "magazyn": "Kluczbork",
-        "configStatus": "WARNING",
-        "configErrors": [
-          "Przejście #1: zastosowany zapas minimalny"
-        ]
-      },
-      {
-        "id": "well-1772877494247-1",
-        "name": "12",
-        "dn": 2000,
-        "config": [
-          {
-            "productId": "WLAZ-150",
-            "quantity": 1
-          },
-          {
-            "productId": "PZE-16-10",
-            "quantity": 1
-          },
-          {
-            "productId": "PO-16-10",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-10-10-B",
-            "quantity": 1
-          },
-          {
-            "productId": "PDR-20-10-00",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-20-10-B",
-            "quantity": 1
-          },
-          {
-            "productId": "KDB-20-05-B",
-            "quantity": 1
-          },
-          {
-            "productId": "DDD-20-110",
-            "quantity": 1
-          }
-        ],
-        "przejscia": [],
-        "rzednaWlazu": 12,
-        "rzednaDna": 8,
-        "numer": "12",
-        "autoLocked": false,
-        "zakonczenie": null,
-        "redukcjaDN1000": true,
-        "redukcjaMinH": 2500,
-        "redukcjaZakonczenie": "PZE-16-10",
-        "nadbudowa": "betonowa",
-        "dennicaMaterial": "betonowa",
-        "wkladka": "brak",
-        "klasaBetonu": "C40/50",
-        "agresjaChemiczna": "XA1",
-        "agresjaMrozowa": "XF1",
-        "malowanieW": "brak",
-        "malowanieZ": "brak",
-        "powlokaNameW": "",
-        "powlokaNameZ": "",
-        "kineta": "brak",
-        "redukcjaKinety": "tak",
-        "stopnie": "brak",
-        "spocznikH": "1/2",
-        "usytuowanie": "linia_dolna",
-        "magazyn": "Kluczbork",
-        "configStatus": "OK",
-        "configErrors": []
-      }
-    ],
-    "transportKm": 100,
-    "transportRate": 10,
-    "totalWeight": 34900,
-    "totalNetto": 30270,
-    "totalBrutto": 37232.1,
-    "createdAt": "2026-03-06T18:22:44.027Z",
-    "updatedAt": "2026-03-07T09:58:34.146Z",
+    "updatedAt": "2026-03-07T17:45:30.829Z",
     "lastEditedBy": "admin"
   },
   {
