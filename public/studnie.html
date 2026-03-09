@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WITROS — Kalkulator studni betonowych i żelbetowych">
+    <title>WITROS — Kalkulator Studni</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
+        .well-app-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 260px;
+            gap: 0.6rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1400px) {
+            .well-app-layout {
+                grid-template-columns: 250px 1fr 240px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .well-app-layout {
+                grid-template-columns: 1fr 240px;
+            }
+
+            .well-diagram-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .well-app-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Left: Well Diagram ── */
+        .well-diagram-panel {
+            position: sticky;
+            top: 56px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 0.6rem;
+            height: calc(100vh - 76px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .well-diagram-panel h3 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-shrink: 0;
+        }
+
+        .well-diagram-svg {
+            width: 100%;
+            flex: 1;
+            height: auto;
+            min-height: 200px;
+            border-radius: 8px;
+            background: #0d1520;
+            border: 1px solid #161640;
+        }
+
+        .well-summary-mini {
+            margin-top: 0.4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .well-summary-mini .ws-item {
+            background: #1a2536;
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            padding: 0.25rem;
+            text-align: center;
+        }
+
+        .ws-item .ws-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .ws-item .ws-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.05rem;
+        }
+
+        .ws-item .ws-value.accent {
+            color: var(--success);
+        }
+
+        /* ── Right: Wells sidebar ── */
+        .wells-sidebar {
+            position: sticky;
+            top: 56px;
+            max-height: calc(100vh - 64px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #1e1e4a #0a0e1a;
+        }
+
+        .wells-sidebar-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 0.6rem;
+        }
+
+        .wells-sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+
+        .wells-sidebar-header h3 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .wells-sidebar-header .wells-count {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .wells-add-btn {
+            padding: 0.25rem 0.55rem;
+            border: 1px solid #2e2e75;
+            border-radius: 6px;
+            background: #161640;
+            color: #a5b4fc;
+            font: 600 0.72rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wells-add-btn:hover {
+            background: #22225a;
+            border-color: #4d4da0;
+        }
+
+        .well-list-item {
+            background: #1a2536;
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 0.55rem 0.65rem;
+            margin-bottom: 0.35rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .well-list-item:hover {
+            border-color: #282868;
+            background: #1e2d42;
+        }
+
+        .well-list-item.active {
+            border-color: #4d4da0;
+            background: #131335;
+            box-shadow: 0 0 12px #111130;
+        }
+
+        .well-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .well-list-name {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .well-list-actions {
+            display: flex;
+            gap: 0.1rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .well-list-item:hover .well-list-actions {
+            opacity: 1;
+        }
+
+        .well-list-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.65rem;
+            padding: 0.1rem 0.25rem;
+            border-radius: 3px;
+            transition: background 0.15s;
+            color: var(--text-muted);
+        }
+
+        .well-list-action:hover {
+            background: #1a1e25;
+        }
+
+        .well-list-action.del:hover {
+            background: #301515;
+            color: #f87171;
+        }
+
+        .well-list-meta {
+            display: flex;
+            gap: 0.4rem;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        .well-list-price {
+            font - weight: 700;
+            color: var(--success) !important;
+        }
+
+        .well-list-elevations {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .well-list-elevations span {
+            opacity: 0.8;
+        }
+
+        /* ── Well info fields ── */
+        .well-info-card {
+            background: #0d1520;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .well-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.4rem;
+        }
+
+        .well-info-field label {
+            display: block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+            margin-bottom: 0.2rem;
+        }
+
+        .well-info-field input {
+            width: 100%;
+            padding: 0.35rem 0.45rem;
+            background: #1e2d42;
+            border: 1px solid var(--border-glass);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font: 600 0.8rem 'Inter', sans-serif;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .well-info-field input:focus {
+            outline: none;
+            border-color: #4d4da0;
+        }
+
+        .well-info-field .computed {
+            text - align: center;
+            padding: 0.35rem 0.45rem;
+            font: 700 0.85rem 'Inter', sans-serif;
+            color: #818cf8;
+        }
+
+        /* ── Tiles & Config ── */
+        .tiles-section {
+            margin - bottom: 0.6rem;
+        }
+
+        .tiles-section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-secondary);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.35rem;
+        }
+
+        .tile {
+            background: #1e2d42;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 0.4rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--tile-accent, #6366f1);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tile:hover {
+            border-color: var(--tile-accent, #3a3a8a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px #0a0a0a;
+        }
+
+        .tile:hover::before {
+            opacity: 1;
+        }
+
+        .tile:active {
+            transform: translateY(0);
+        }
+
+        .tile-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+
+        .tile-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.62rem;
+            color: var(--text-muted);
+        }
+
+        .tile-price {
+            font - weight: 700;
+            color: var(--tile-accent, #818cf8);
+        }
+
+        /* DN Selector */
+        .dn-selector {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .dn-btn {
+            padding: 0.3rem 0.7rem;
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            background: #1a2536;
+            color: var(--text-secondary);
+            font: 600 0.75rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .dn-btn:hover {
+            border-color: #2e2e75;
+            color: var(--text-primary);
+        }
+
+        .dn-btn.active {
+            background: #1e1e4a;
+            border-color: #4d4da0;
+            color: #a5b4fc;
+        }
+
+        /* Config table */
+        .well-config-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .well-config-table th {
+            padding: 0.3rem 0.4rem;
+            text-align: left;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .well-config-table td {
+            padding: 0.25rem 0.4rem;
+            font-size: 0.78rem;
+            border-bottom: 1px solid #14171c;
+            color: var(--text-secondary);
+        }
+
+        .well-config-table tr:hover td {
+            background: #0e0e25;
+        }
+
+        .config-remove-btn {
+            background: none;
+            border: 1px solid #3a1a1a;
+            color: #f87171;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .config-remove-btn:hover {
+            background: #251010;
+            border-color: #7a3030;
+        }
+
+        .cfg-move-btn {
+            background: none;
+            border: 1px solid #1e2530;
+            color: var(--text-muted);
+            font-size: 0.55rem;
+            padding: 1px 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+
+        .cfg-move-btn:hover:not(:disabled) {
+            background: #1e1e4a;
+            border-color: #3a3a8a;
+            color: #818cf8;
+        }
+
+        .cfg-move-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        /* Tile type colors */
+        .tile[data-type="dennica"] {
+            --tile-accent: #10b981;
+        }
+
+        .tile[data-type="krag"],
+        .tile[data-type="krag_ot"] {
+            --tile-accent: #6366f1;
+        }
+
+        .tile[data-type="konus"] {
+            --tile-accent: #f59e0b;
+        }
+
+        .tile.active-top-closure {
+            border-color: #6060d0 !important;
+            box-shadow: 0 0 0 2px #4d4da0;
+            background: #1e1e4a !important;
+        }
+
+        .tile.active-top-closure::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #6366f1;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tile[data-type="plyta_din"],
+        .tile[data-type="plyta_najazdowa"],
+        .tile[data-type="plyta_zamykajaca"] {
+            --tile-accent: #ec4899;
+        }
+
+        .tile[data-type="plyta_redukcyjna"] {
+            --tile-accent: #8b5cf6;
+        }
+
+        .tile[data-type="pierscien_odciazajacy"] {
+            --tile-accent: #06b6d4;
+        }
+
+        .tile[data-type="avr"] {
+            --tile-accent: #64748b;
+        }
+
+        .tile[data-type="uszczelka"] {
+            --tile-accent: #84cc16;
+        }
+
+        /* Cennik Tabs */
+        .cennik-tab {
+            padding: 0.45rem 1rem;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            background: #1a2536;
+            color: var(--text-muted);
+            font: 600 0.8rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .cennik-tab:hover {
+            border-color: #3a4050;
+            color: var(--text-secondary);
+        }
+
+        .cennik-tab.active {
+            background: #1a1a3e;
+            border-color: #3a3a8a;
+            color: #c7d2fe;
+            box-shadow: 0 0 12px #131335;
+        }
+
+        .cennik-tab-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        /* Offer */
+        .offer-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .offer-stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .offer-stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .offer-stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+        }
+
+        /* Inline Builder Tabs */
+        .b-tab-btn {
+            flex: 1;
+            padding: 0.45rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+
+        .b-tab-btn:hover {
+            color: var(--text-primary);
+            background: #121720;
+        }
+
+        .b-tab-btn.active {
+            background: #1e1e4a;
+            border-color: #2e2e75;
+            color: var(--text-primary);
+        }
+
+        .param-tile {
+            padding: 0.35rem 0.8rem;
+            border-radius: 6px;
+            background: #1a2536;
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            white-space: nowrap;
+        }
+
+        .param-tile:hover {
+            border-color: #5a3010;
+            color: var(--text-primary);
+        }
+
+        .param-tile.active {
+            background: #2d1a08;
+            border-color: #f97316;
+            color: #ffedd5;
+            box-shadow: 0 0 10px #2d1a08;
+        }
+
+        /* Inline Transitions App styles reusing fs-* names but localized */
+        .fs-sidebar {
+            background: #0d1520;
+            border-right: 1px solid #1e2530;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .fs-type-btn {
+            width: 100%;
+            padding: 1.2rem;
+            margin-bottom: 0.8rem;
+            background: #121720;
+            border: 1px solid #1e2530;
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fs-type-btn:hover {
+            background: #161640;
+            border-color: #2e2e75;
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .fs-type-btn.active {
+            background: linear-gradient(135deg, #22225a, #1e1540);
+            border-color: #4d4da0;
+            color: #fff;
+            box-shadow: 0 4px 15px #0a0a0a;
+        }
+
+        .fs-main {
+            padding: 2.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .fs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .fs-dn-tile {
+            background: #1a2536;
+            border: 1px solid #1e2530;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fs-dn-tile:hover {
+            border-color: var(--indigo-500);
+            transform: translateY(-5px);
+            background: #131335;
+        }
+
+        .fs-dn-tile.active {
+            border-color: var(--indigo-500);
+            background: #1e1e4a;
+            box-shadow: 0 0 20px #22225a;
+        }
+
+        .fs-dn-tile .dn-label {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .fs-dn-tile .price-label {
+            font-size: 0.85rem;
+            color: var(--success);
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        .fs-inputs-pane {
+            background: #1e2d42;
+            border: 1px solid #22225a;
+            border-radius: 20px;
+            padding: 2rem;
+            animation: slideUp 0.4s ease-out;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* ── Wizard Steps ── */
+        .wizard-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 0.6rem;
+            padding: 0.3rem 0;
+        }
+
+        .wizard-step-dot {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.3rem;
+            z-index: 1;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .wizard-step-dot:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .wizard-dot-number {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.65rem;
+            background: #1e293b;
+            border: 2px solid #334155;
+            color: var(--text-muted);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .wizard-step-dot.active .wizard-dot-number {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: #818cf8;
+            color: white;
+            box-shadow: 0 0 8px #4338ca;
+        }
+
+        .wizard-step-dot.completed .wizard-dot-number {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            border-color: #34d399;
+            color: white;
+        }
+
+        .wizard-dot-label {
+            font-size: 0.62rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            transition: color 0.3s;
+        }
+
+        .wizard-step-dot.active .wizard-dot-label {
+            color: #c7d2fe;
+        }
+
+        .wizard-step-dot.completed .wizard-dot-label {
+            color: #6ee7b7;
+        }
+
+        .wizard-step-line {
+            width: 50px;
+            height: 2px;
+            background: #334155;
+            transition: background 0.4s;
+            margin: 0 0.35rem;
+        }
+
+        .wizard-step-line.completed {
+            background: linear-gradient(90deg, #34d399, #6366f1);
+        }
+
+        .wizard-step {
+            display: none;
+            animation: wizardFadeIn 0.35s ease-out;
+        }
+
+        .wizard-step.active {
+            display: block;
+        }
+
+        @keyframes wizardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .wizard-card {
+            max - width: 860px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.8rem 2rem;
+            box-shadow: 0 8px 32px #080808;
+        }
+
+        .wizard-card-header {
+            text - align: center;
+            margin-bottom: 1.3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .wizard-card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .wizard-card-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem 0;
+        }
+
+        .wizard-card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .wizard-section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid #1e2530;
+        }
+
+        .wizard-form-grid {
+            display: grid;
+            gap: 0.7rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .wizard-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .wizard-form-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .wizard-form-input {
+            padding: 0.5rem 0.65rem;
+            background: #1e2d42;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font: 500 0.82rem 'Inter', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .wizard-form-input:focus {
+            outline: none;
+            border-color: #4d4da0;
+            box-shadow: 0 0 0 3px #161640;
+        }
+
+        .wizard-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .wizard-btn {
+            padding: 0.55rem 1.6rem;
+            border: none;
+            border-radius: 10px;
+            font: 600 0.82rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .wizard-btn-next {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px #2e2e75;
+        }
+
+        .wizard-btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px #3a3a8a;
+        }
+
+        .wizard-btn-next:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .wizard-btn-prev {
+            background: #1e2d42;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-glass);
+        }
+
+        .wizard-btn-prev:hover {
+            background: #1e293b;
+            color: var(--text-primary);
+            border-color: #2e2e75;
+        }
+
+        .wizard-summary-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.45rem 0.75rem;
+            background: #0d1520;
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            font-size: 0.72rem;
+            flex-wrap: wrap;
+        }
+
+        .wizard-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            color: var(--text-muted);
+        }
+
+        .wizard-summary-item strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .wizard-summary-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--border-glass);
+        }
+
+        .wizard-summary-edit {
+            margin - left: auto;
+            padding: 0.2rem 0.55rem;
+            border: 1px solid #2e2e75;
+            border-radius: 5px;
+            background: #161640;
+            color: #a5b4fc;
+            font: 600 0.65rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wizard-summary-edit:hover {
+            background: #22225a;
+            border-color: #4d4da0;
+        }
+
+        .wizard-param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            padding: 0.6rem;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background: #0d1520;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .wizard-param-group.needs-selection {
+            border-color: #2a1111;
+            background: #140d0d;
+        }
+
+        .wizard-param-group.confirmed {
+            border-color: #0d2a20;
+            background: #061c14;
+        }
+
+        .wizard-param-label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .wizard-param-label .status-icon {
+            font-size: 0.7rem;
+            transition: opacity 0.3s;
+        }
+
+        .wizard-validation-msg {
+            text - align: center;
+            font-size: 0.75rem;
+            color: #f87171;
+            margin-top: 0.6rem;
+            transition: opacity 0.3s;
+        }
+
+        .wizard-validation-msg.hidden {
+            opacity: 0;
+        }
+
+        /* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .przejscia-vis-popup {
+            background: #0d1520;
+            border: 1px solid #22225a;
+            border-radius: 12px;
+            padding: 1rem;
+            width: 95vw;
+            max-width: 1100px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px #050505, 0 0 40px #131335;
+            animation: fadeInOverlay 0.15s ease;
+            scrollbar-width: thin;
+            scrollbar-color: #1e1e4a #0a0e1a;
+        }
+
+        .przejscia-vis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid #1e2530;
+        }
+
+        .przejscia-vis-actions {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .przejscia-vis-action-btn {
+            padding: 0.25rem 0.6rem;
+            border-radius: 5px;
+            border: 1px solid #1e2530;
+            background: #1e2530;
+            color: var(--text-secondary);
+            font: 600 0.6rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .przejscia-vis-action-btn:hover {
+            background: #1e1e4a;
+            border-color: #2e2e75;
+            color: #a5b4fc;
+        }
+
+        .przejscia-vis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-w, 160px), 1fr));
+            gap: 0.3rem;
+        }
+
+        .przejscia-vis-tile {
+            padding: 0.4rem 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-align: center;
+            user-select: none;
+        }
+
+        .przejscia-vis-tile.visible {
+            background: #0f3328;
+            border: 1.5px solid #0d2a20;
+            box-shadow: 0 0 10px #0d2a20, inset 0 0 12px #0d2a20;
+        }
+
+        .przejscia-vis-tile.visible .przejscia-vis-tile-name {
+            color: #6ee7b7;
+        }
+
+        .przejscia-vis-tile.visible:hover {
+            background: #0d2a20;
+            border-color: #0d2a20;
+            box-shadow: 0 0 16px #0d2a20, inset 0 0 16px #0d2a20;
+            transform: translateY(-1px);
+        }
+
+        .przejscia-vis-tile.hidden-type {
+            background: #1e2530;
+            border: 1.5px solid #1e2530;
+            opacity: 0.45;
+        }
+
+        .przejscia-vis-tile.hidden-type:hover {
+            background: #1e2530;
+            border-color: #1e2530;
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        .przejscia-vis-tile-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg-s)" stroke-width="2">
+                        <defs>
+                            <linearGradient id="lg-s" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#10b981" />
+                                <stop offset="100%" stop-color="#34d399" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="4" y="4" width="16" height="16" rx="2" />
+                        <path d="M4 12h16M12 4v16" />
+                    </svg>
+                    <span>Kalkulator Studni</span>
+                </div>
+                <div class="nav-apps">
+                    <a href="index.html" class="nav-tile">
+                        <span class="nav-tile-icon">🏠</span>
+                        <span class="nav-tile-text">Pulpit</span>
+                    </a>
+                    <div class="nav-tile active" style="--nav-accent:#10b981; --nav-glow:#0f3328">
+                        <span class="nav-tile-icon">🏗️</span>
+                        <span class="nav-tile-text">Studnie</span>
+                    </div>
+                    <a href="rury.html" class="nav-tile">
+                        <span class="nav-tile-icon">🔩</span>
+                        <span class="nav-tile-text">Rury</span>
+                    </a>
+                </div>
+            </div>
+            <div class="header-center">
+                <nav class="nav">
+                    <button class="nav-btn nav-tile active" data-section="builder" id="nav-builder"
+                        style="--nav-accent:#10b981; --nav-glow:#0d2b22" onclick="showSection('builder')">
+                        <span class="nav-tile-icon">🏗️</span>
+                        <span class="nav-tile-text">Konfiguracja</span>
+                    </button>
+                    <button class="nav-btn nav-tile" data-section="offer" id="nav-offer"
+                        style="--nav-accent:#3b82f6; --nav-glow:#152040" onclick="showSection('offer')">
+                        <span class="nav-tile-icon">📊</span>
+                        <span class="nav-tile-text">Oferta</span>
+                    </button>
+                    <button class="nav-btn nav-tile" data-section="saved" id="nav-saved"
+                        style="--nav-accent:#f59e0b; --nav-glow:#2d2208" onclick="showSection('saved')">
+                        <span class="nav-tile-icon">💾</span>
+                        <span class="nav-tile-text">Zapisane</span>
+                    </button>
+                    <button class="nav-btn nav-tile" data-section="pricelist" id="nav-pricelist"
+                        style="--nav-accent:#8b5cf6; --nav-glow:#1e1540" onclick="showSection('pricelist')">
+                        <span class="nav-tile-icon">📋</span>
+                        <span class="nav-tile-text">Cennik</span>
+                    </button>
+                </nav>
+            </div>
+            <div class="header-right">
+                <div id="header-user-info" style="display:flex; align-items:center; gap:0.5rem; font-size:0.78rem;">
+                    <span id="header-username" style="color:var(--text-secondary); font-weight:500;"></span>
+                    <span id="header-role-badge"
+                        style="font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; margin-right:0.5rem;"></span>
+                    <div id="backend-status-indicator" title="Łączenie z serwerem obliczeniowym..."
+                        style="cursor:help; display:flex; align-items:center; justify-content:center; padding: 0.35rem; border: 1px solid var(--border-glass); border-radius: 6px; background: var(--bg-glass);">
+                        <span
+                            style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#fdba74; box-shadow:0 0 8px #fdba74; transition:all 0.3s;"></span>
+                    </div>
+                    <button onclick="appLogout()"
+                        style="padding:0.35rem 0.8rem; border:1px solid var(--border-glass); border-radius:6px; background:var(--bg-glass); color:var(--text-muted); font:500 0.75rem 'Inter',sans-serif; cursor:pointer; transition:all 0.2s;"
+                        onmouseenter="this.style.color='#f87171'; this.style.borderColor='#3a1a1a'"
+                        onmouseleave="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border-glass)'">Wyloguj</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- ===== SECTION: BUILDER ===== -->
+        <div class="section active" id="section-builder">
+
+            <!-- Wizard Step Indicator -->
+            <div class="wizard-indicator" id="wizard-indicator">
+                <div class="wizard-step-dot active" data-step="1" onclick="wizardNavStep(1)">
+                    <div class="wizard-dot-number">1</div>
+                    <div class="wizard-dot-label">Dane klienta</div>
+                </div>
+                <div class="wizard-step-line" id="wizard-line-1"></div>
+                <div class="wizard-step-dot" data-step="2" onclick="wizardNavStep(2)">
+                    <div class="wizard-dot-number">2</div>
+                    <div class="wizard-dot-label">Parametry studni</div>
+                </div>
+                <div class="wizard-step-line" id="wizard-line-2"></div>
+                <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
+                    <div class="wizard-dot-number">3</div>
+                    <div class="wizard-dot-label">Konfiguracja</div>
+                </div>
+            </div>
+
+            <!-- ══════ WIZARD STEP 1: Client & Offer Data ══════ -->
+            <div class="wizard-step active" id="wizard-step-1">
+                <div class="wizard-card">
+                    <div class="wizard-card-header"
+                        style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.8rem; padding-bottom:0.6rem; border-bottom:1px solid #1b2334;">
+                        <div
+                            style="font-size:1.4rem; background:#1a1a3e; width:2.4rem; height:2.4rem; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            📋</div>
+                        <div>
+                            <h2 class="wizard-card-title" style="margin:0; font-size:1.15rem; font-weight:700;">Dane
+                                klienta i oferty</h2>
+                            <p class="wizard-card-subtitle" style="margin:0; font-size:0.75rem; color:#71717a;">
+                                Uzupełnij dane klienta i podstawowe informacje o ofercie</p>
+                        </div>
+                    </div>
+                    <div class="wizard-card-body">
+                        <div class="wizard-section-title">👤 Dane klienta</div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Firma</label>
+                                <input class="wizard-form-input" id="client-name" placeholder="Budimex S.A.">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">NIP</label>
+                                <input class="wizard-form-input" id="client-nip" placeholder="1234567890"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Adres firmy</label>
+                                <input class="wizard-form-input" id="client-address"
+                                    placeholder="ul. Przykładowa 1, Warszawa">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Kontakt</label>
+                                <input class="wizard-form-input" id="client-contact"
+                                    placeholder="Jan Kowalski, 600 100 200">
+                            </div>
+                        </div>
+
+                        <div class="wizard-section-title" style="margin-top:1.2rem;">🏗️ Inwestycja</div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Nazwa inwestycji</label>
+                                <input class="wizard-form-input" id="invest-name"
+                                    placeholder="Budowa kanalizacji deszczowej">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Adres inwestycji</label>
+                                <input class="wizard-form-input" id="invest-address" placeholder="ul. Nowa 5, Kraków">
+                            </div>
+                        </div>
+
+                        <div class="wizard-section-title" style="margin-top:1.2rem;">📄 Oferta</div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Nr oferty</label>
+                                <input class="wizard-form-input" id="offer-number">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Data</label>
+                                <input class="wizard-form-input" type="date" id="offer-date">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Kilometry</label>
+                                <input class="wizard-form-input" type="number" step="1" id="transport-km" value="100">
+                            </div>
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">PLN/km</label>
+                                <input class="wizard-form-input" type="number" step="0.1" id="transport-rate"
+                                    value="10">
+                            </div>
+                        </div>
+                        <div class="wizard-form-grid" style="grid-template-columns: 1fr; margin-top:0.3rem;">
+                            <div class="wizard-form-group">
+                                <label class="wizard-form-label">Uwagi</label>
+                                <textarea class="wizard-form-input" id="offer-notes" rows="2"
+                                    placeholder="np. Cena obejmuje transport do 100 km..."
+                                    style="resize:vertical;"></textarea>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:0.5rem; margin-top:0.8rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="showClientsDb()"
+                                style="padding:0.3rem 0.7rem; font-size:0.72rem;">📂 Wczytaj klienta z bazy</button>
+                            <button class="btn btn-primary btn-sm" onclick="saveClientToDb()"
+                                style="padding:0.3rem 0.7rem; font-size:0.72rem;">💾 Zapisz klienta do bazy</button>
+                        </div>
+                    </div>
+                    <div class="wizard-nav">
+                        <div></div>
+                        <button class="wizard-btn wizard-btn-next" onclick="wizardNext()">Dalej →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════ WIZARD STEP 2: General Well Parameters ══════ -->
+            <div class="wizard-step" id="wizard-step-2">
+                <div class="wizard-card">
+                    <div class="wizard-card-header"
+                        style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.8rem; padding-bottom:0.6rem; border-bottom:1px solid #1b2334;">
+                        <div
+                            style="font-size:1.4rem; background:#0d2b22; width:2.4rem; height:2.4rem; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            ⚙️</div>
+                        <div>
+                            <h2 class="wizard-card-title" style="margin:0; font-size:1.15rem; font-weight:700;">Ogólne
+                                parametry studni</h2>
+                            <p class="wizard-card-subtitle" style="margin:0; font-size:0.75rem; color:#71717a;">Wybierz
+                                parametry dla konfiguracji studni — kliknij w każdej grupie</p>
+                        </div>
+                    </div>
+                    <div class="wizard-card-body">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.7rem; align-items: start;">
+
+                            <!-- KOLUMNA 1: KONSTRUKCJA -->
+                            <div
+                                style="display:flex; flex-direction:column; gap:0.5rem; padding:0.7rem; border:1px solid #1a2233; border-radius:10px; background:#0f1419;">
+                                <div
+                                    style="font-size:0.72rem; font-weight:700; color:#6366f1; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:0.35rem; padding-bottom:0.3rem; border-bottom:1px solid #1e1e4a;">
+                                    🏗️ Konstrukcja</div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="magazyn">
+                                    <div class="wizard-param-label">Magazyn <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="magazyn">
+                                        <button class="param-tile" data-val="Kluczbork">Kluczbork</button>
+                                        <button class="param-tile" data-val="Włocławek">Włocławek</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="nadbudowa">
+                                    <div class="wizard-param-label">Nadbudowa <span class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="nadbudowa">
+                                        <button class="param-tile" data-val="betonowa">Beton</button>
+                                        <button class="param-tile" data-val="zelbetowa">Żelbet</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="dennicaMaterial">
+                                    <div class="wizard-param-label">Dennica <span class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="dennicaMaterial">
+                                        <button class="param-tile" data-val="betonowa">Beton</button>
+                                        <button class="param-tile" data-val="zelbetowa">Żelbet</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="klasaBetonu">
+                                    <div class="wizard-param-label">Klasa betonu <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="klasaBetonu">
+                                        <button class="param-tile" data-val="C40/50">C40/50</button>
+                                        <button class="param-tile" data-val="C40/50(HSR!!!!)">C40/50 HSR</button>
+                                        <button class="param-tile" data-val="C45/55">C45/55</button>
+                                        <button class="param-tile" data-val="C45/55(HSR!!!!)">C45/55 HSR</button>
+                                        <button class="param-tile" data-val="C70/85">C70/85</button>
+                                        <button class="param-tile" data-val="C70/80(HSR!!!!)">C70/80 HSR</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="wkladka">
+                                    <div class="wizard-param-label">Wkładka PEHD <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="wkladka">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="3mm">3mm</button>
+                                        <button class="param-tile" data-val="4mm">4mm</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="agresjaChemiczna">
+                                    <div class="wizard-param-label">Agresja chemiczna <span
+                                            class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="agresjaChemiczna">
+                                        <button class="param-tile" data-val="XA1">XA1</button>
+                                        <button class="param-tile" data-val="XA2">XA2</button>
+                                        <button class="param-tile" data-val="XA3">XA3</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="agresjaMrozowa">
+                                    <div class="wizard-param-label">Agresja mrozowa <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="agresjaMrozowa">
+                                        <button class="param-tile" data-val="XF1">XF1</button>
+                                        <button class="param-tile" data-val="XF2">XF2</button>
+                                        <button class="param-tile" data-val="XF3">XF3</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KOLUMNA 2: POWŁOKA I KINETA -->
+                            <div
+                                style="display:flex; flex-direction:column; gap:0.5rem; padding:0.7rem; border:1px solid #1a2233; border-radius:10px; background:#0f1419;">
+                                <div
+                                    style="font-size:0.72rem; font-weight:700; color:#10b981; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:0.35rem; padding-bottom:0.3rem; border-bottom:1px solid #0f3328;">
+                                    🛡️ Powłoka i Kineta</div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="malowanieW">
+                                    <div class="wizard-param-label">Malowanie wewnątrz <span
+                                            class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="malowanieW">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="kineta">Kineta</button>
+                                        <button class="param-tile" data-val="kineta_dennica">Kineta+dennicy</button>
+                                        <button class="param-tile" data-val="cale">Cała wys.</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="malowanieZ">
+                                    <div class="wizard-param-label">Malowanie zewnątrz <span
+                                            class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="malowanieZ">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="zewnatrz">Malowana</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-form-group" style="margin-top:0.2rem; display:none;"
+                                    id="powloka-name-w-group">
+                                    <label class="wizard-form-label">Nazwa powłoki wew. <span
+                                            style="color:var(--warn)">*</span></label>
+                                    <input class="wizard-form-input" id="powloka-name-w" placeholder="Nazwa powłoki..."
+                                        oninput="updateParamInput('powlokaNameW', this.value); validateWizardStep2();">
+                                </div>
+                                <div class="wizard-form-group" style="margin-top:0.2rem; display:none;"
+                                    id="malowanie-wew-cena-group">
+                                    <label class="wizard-form-label">Koszt mal. wew. (PLN/m²) <span
+                                            style="color:var(--warn)">*</span></label>
+                                    <input class="wizard-form-input" id="malowanie-wew-cena" type="number" step="0.01"
+                                        placeholder="Koszt za 1m²..."
+                                        oninput="updateParamInput('malowanieWewCena', this.value); validateWizardStep2();">
+                                </div>
+                                <div class="wizard-form-group" style="margin-top:0.2rem; display:none;"
+                                    id="powloka-name-z-group">
+                                    <label class="wizard-form-label">Nazwa powłoki zew. <span
+                                            style="color:var(--warn)">*</span></label>
+                                    <input class="wizard-form-input" id="powloka-name-z" placeholder="Nazwa powłoki..."
+                                        oninput="updateParamInput('powlokaNameZ', this.value); validateWizardStep2();">
+                                </div>
+                                <div class="wizard-form-group" style="margin-top:0.2rem; display:none;"
+                                    id="malowanie-zew-cena-group">
+                                    <label class="wizard-form-label">Koszt mal. zew. (PLN/m²) <span
+                                            style="color:var(--warn)">*</span></label>
+                                    <input class="wizard-form-input" id="malowanie-zew-cena" type="number" step="0.01"
+                                        placeholder="Koszt za 1m²..."
+                                        oninput="updateParamInput('malowanieZewCena', this.value); validateWizardStep2();">
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="kineta">
+                                    <div class="wizard-param-label">Kineta <span class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="kineta">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="beton">Beton</button>
+                                        <button class="param-tile" data-val="beton_gfk">GFK</button>
+                                        <button class="param-tile" data-val="klinkier">Klinkier</button>
+                                        <button class="param-tile" data-val="preco">Preco</button>
+                                        <button class="param-tile" data-val="precotop">PrecoTop</button>
+                                        <button class="param-tile" data-val="unolith">UnoLith</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="redukcjaKinety">
+                                    <div class="wizard-param-label">Redukcja kinety <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="redukcjaKinety">
+                                        <button class="param-tile" data-val="tak">Tak</button>
+                                        <button class="param-tile" data-val="nie">Nie</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KOLUMNA 3: OSPRZĘT -->
+                            <div
+                                style="display:flex; flex-direction:column; gap:0.5rem; padding:0.7rem; border:1px solid #1a2233; border-radius:10px; background:#0f1419;">
+                                <div
+                                    style="font-size:0.72rem; font-weight:700; color:#f59e0b; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:0.35rem; padding-bottom:0.3rem; border-bottom:1px solid #2d2208;">
+                                    🔧 Osprzęt</div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="stopnie">
+                                    <div class="wizard-param-label">Rodzaj stopni <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="stopnie">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="drabinka">Drabinka</button>
+                                        <button class="param-tile" data-val="nierdzewna">Nierdzewna</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="spocznikH">
+                                    <div class="wizard-param-label">Wysokość spocznika <span
+                                            class="status-icon">⚠️</span></div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="spocznikH">
+                                        <button class="param-tile" data-val="1/2">1/2</button>
+                                        <button class="param-tile" data-val="2/3">2/3</button>
+                                        <button class="param-tile" data-val="3/4">3/4</button>
+                                        <button class="param-tile" data-val="1/1">1/1</button>
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="usytuowanie">
+                                    <div class="wizard-param-label">Usytuowanie <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="usytuowanie">
+                                        <button class="param-tile" data-val="linia_dolna">Linia dolna</button>
+                                        <button class="param-tile" data-val="linia_gorna">Linia górna</button>
+                                        <button class="param-tile" data-val="w_osi">W osi</button>
+                                        <button class="param-tile" data-val="patrz_uwagi">Patrz uwagi</button>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-param-group needs-selection" data-wizard-param="uszczelka">
+                                    <div class="wizard-param-label">Uszczelka <span class="status-icon">⚠️</span>
+                                    </div>
+                                    <div style="display:flex; gap:0.25rem; flex-wrap:wrap;" class="param-group"
+                                        data-param="uszczelka">
+                                        <button class="param-tile" data-val="brak">Brak</button>
+                                        <button class="param-tile" data-val="GSG">GSG</button>
+                                        <button class="param-tile" data-val="SDV">SDV</button>
+                                        <button class="param-tile" data-val="SDV PO">SDV PO</button>
+                                        <button class="param-tile" data-val="NBR">NBR</button>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                        </div>
+                        <div class="wizard-validation-msg" id="wizard-validation-msg">
+                            ⚠️ Wybierz opcję w każdej grupie parametrów, aby kontynuować
+                        </div>
+                    </div>
+                    <div class="wizard-nav">
+                        <button class="wizard-btn wizard-btn-prev" onclick="wizardPrev()">← Wstecz</button>
+                        <button class="wizard-btn wizard-btn-next" onclick="wizardNext()" id="wizard-next-step2"
+                            disabled>Dalej →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════ WIZARD STEP 3: Calculator ══════ -->
+            <div class="wizard-step" id="wizard-step-3">
+
+                <!-- Summary bar -->
+                <div class="wizard-summary-bar" id="wizard-summary-bar">
+                    <span class="wizard-summary-item">📋 <strong id="wsb-client">—</strong></span>
+                    <span class="wizard-summary-divider"></span>
+                    <span class="wizard-summary-item">📄 <strong id="wsb-offer">—</strong></span>
+                    <span class="wizard-summary-divider"></span>
+                    <span class="wizard-summary-item">⚙️ <strong id="wsb-params">—</strong></span>
+                    <button class="wizard-summary-edit" onclick="goToWizardStep(1)">✏️ Edytuj dane</button>
+                    <button class="wizard-summary-edit" onclick="goToWizardStep(2)">⚙️ Edytuj parametry</button>
+                </div>
+
+                <div class="well-app-layout">
+
+                    <!-- LEFT: Well Diagram -->
+                    <div class="well-diagram-panel" id="drop-zone-diagram" ondragover="allowDropWellComponent(event)"
+                        ondragleave="dragLeaveWellComponent(event)" ondrop="dropWellComponent(event)">
+                        <h3 id="well-diagram-title"
+                            style="margin:0 0 0.5rem 0; font-size: 0.75rem; font-weight: 700; color: var(--text-primary);">
+                            🔍 Podgląd studni
+                        </h3>
+                        <div class="well-summary-mini"
+                            style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 0.2rem; justify-items:stretch;">
+                            <div class="ws-item" style="padding: 0.2rem;">
+                                <div class="ws-label" style="font-size: 0.65rem; white-space: nowrap;">Wymagane</div>
+                                <div class="ws-value" id="ws-req-height"
+                                    style="font-size: 0.75rem; white-space: nowrap;">—</div>
+                            </div>
+                            <div class="ws-item" style="padding: 0.2rem;">
+                                <div class="ws-label" style="font-size: 0.65rem; white-space: nowrap;">Zbudowano</div>
+                                <div class="ws-value accent" id="ws-height"
+                                    style="font-size: 0.75rem; white-space: nowrap;">0 mm</div>
+                            </div>
+                            <div class="ws-item" style="padding: 0.2rem;">
+                                <div class="ws-label" style="font-size: 0.65rem; white-space: nowrap;">Zostało</div>
+                                <div class="ws-value" id="ws-diff-height"
+                                    style="font-size: 0.75rem; white-space: nowrap;">—</div>
+                            </div>
+                            <div id="svg-trash" class="ws-item"
+                                style="padding: 0.2rem; justify-content:center; align-items:center; border-radius:6px; background:rgba(239,68,68,0.1); border:1px dashed rgba(239,68,68,0.4); color:#f87171; cursor:pointer;"
+                                title="Przeciągnij tutaj, aby usunąć"
+                                onmouseenter="if(window.svgDragStartIndex>=0){this.style.background='rgba(239,68,68,0.3)';this.style.borderColor='#ef4444';}"
+                                onmouseleave="this.style.background='rgba(239,68,68,0.1)';this.style.borderColor='rgba(239,68,68,0.4)';">
+                                <div class="ws-label" style="color:#f87171; font-size: 0.65rem; white-space: nowrap;">
+                                    Usuń</div>
+                                <div class="ws-value" style="font-size: 0.85rem; margin-top:-2px;">🗑️</div>
+                            </div>
+                        </div>
+                        <div class="well-summary-mini"
+                            style="margin-top: 0.4rem; background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.2); padding: 0.3rem; border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 0.3rem;">
+                            <div class="ws-label"
+                                style="color: #4ade80; font-size: 0.75rem; font-weight: 600; margin: 0; white-space: nowrap;">
+                                Cena:</div>
+                            <div class="ws-value" id="ws-price"
+                                style="color: #4ade80; font-size: 0.75rem; margin: 0; font-weight: 700; white-space: nowrap;">
+                                0</div>
+                        </div>
+                        <svg id="well-diagram" class="well-diagram-svg" viewBox="0 0 300 500"
+                            preserveAspectRatio="xMidYMax meet"></svg>
+                    </div>
+
+                    <!-- CENTER: Config area -->
+                    <div>
+                        <!-- Toolbar: DN + Elevations + Height + Controls -->
+                        <div class="well-info-card" style="padding:0.6rem 0.8rem;">
+                            <!-- Row 1: Title -->
+                            <div style="margin-bottom:0.35rem;">
+                                <span style="font-size:1rem; font-weight:800; color:var(--text-primary);">⚙️
+                                    Konfiguracja studni</span>
+                            </div>
+                            <!-- Row 2: Nr + Rz fields + indicators -->
+                            <div style="display:flex; align-items:center; gap:0.35rem; margin-bottom:0.4rem;">
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Nr</label>
+                                    <input type="text" id="input-well-numer" placeholder="Nr studni"
+                                        oninput="updateWellNumer()" onfocus="this.select()"
+                                        style="width:95px; padding:0.28rem 0.4rem; background:#1e293b; border:1px solid var(--border-glass); border-radius:5px; color:#a78bfa; font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="width:1px; height:24px; background:var(--border-glass);"></div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Rz.
+                                        włazu</label>
+                                    <input type="number" step="0.01" id="input-rzedna-wlazu" placeholder="100.50"
+                                        onchange="updateElevations()" onfocus="this.select()"
+                                        style="width:95px; padding:0.28rem 0.4rem; background:#1e293b; border:1px solid var(--border-glass); border-radius:5px; color:var(--text-primary); font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Rz.
+                                        dna</label>
+                                    <input type="number" step="0.01" id="input-rzedna-dna" placeholder="97.20"
+                                        onchange="updateElevations()" onfocus="this.select()"
+                                        style="width:95px; padding:0.28rem 0.4rem; background:#1e293b; border:1px solid var(--border-glass); border-radius:5px; color:var(--text-primary); font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <label
+                                        style="font-size:0.78rem; color:var(--text-muted); font-weight:600; white-space:nowrap;">Dopłata</label>
+                                    <input type="number" step="1" id="input-doplata" placeholder="0"
+                                        onchange="updateDoplata()" onfocus="this.select()"
+                                        style="width:80px; padding:0.28rem 0.4rem; background:#1e293b; border:1px solid var(--border-glass); border-radius:5px; color:var(--success); font:700 0.85rem 'Inter',sans-serif; text-align:center;">
+                                </div>
+                                <div style="width:1px; height:24px; background:var(--border-glass);"></div>
+                                <div
+                                    style="display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; color:var(--text-muted); white-space:nowrap;">
+                                    <span>Wym: <strong id="well-required-height" style="color:#818cf8;">—
+                                            m</strong></span>
+                                    <span>Konf: <strong id="well-configured-height" style="color:var(--success);">0
+                                            m</strong></span>
+                                    <span id="height-diff-indicator"></span>
+                                </div>
+                            </div>
+                            <div id="well-config-errors-container"
+                                style="display:none; margin-bottom:0.4rem; padding:0.4rem 0.6rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; color:#ef4444; font-size:0.75rem; font-weight:600; line-height:1.4;">
+                            </div>
+                            <!-- Row 2: DN selector + controls -->
+                            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                                <div style="display:flex; align-items:center; gap:0.35rem;">
+                                    <span
+                                        style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">DN</span>
+                                    <div class="dn-selector" style="margin-bottom:0;">
+                                        <button class="dn-btn active" onclick="selectDN(1000)">1000</button>
+                                        <button class="dn-btn" onclick="selectDN(1200)">1200</button>
+                                        <button class="dn-btn" onclick="selectDN(1500)">1500</button>
+                                        <button class="dn-btn" onclick="selectDN(2000)">2000</button>
+                                        <button class="dn-btn" onclick="selectDN(2500)">2500</button>
+                                    </div>
+                                </div>
+                                <div style="flex:1;"></div>
+                                <div style="display:flex; gap:0.3rem;">
+                                    <button class="btn btn-secondary btn-sm" onclick="toggleAutoLock()"
+                                        id="btn-lock-auto"
+                                        style="font-size:0.8rem; padding:0.3rem 0.6rem; border-color:var(--border-glass);">🔓
+                                        Ręczny</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="toggleRedukcja()"
+                                        id="btn-redukcja"
+                                        style="font-size:0.8rem; padding:0.3rem 0.6rem; border-color:var(--border-glass);">⏬
+                                        Redukcja DN1000</button>
+                                    <div id="redukcja-min-wrap" style="display:none; align-items:center; gap:0.2rem;">
+                                        <label
+                                            style="font-size:0.65rem; color:var(--text-muted); white-space:nowrap;">Min:</label>
+                                        <input type="number" id="redukcja-min-h" value="2.5" step="0.1" min="0.5"
+                                            max="10" onchange="onRedukcjaMinChange(this.value)"
+                                            style="width:3.2rem; font-size:0.75rem; padding:0.2rem 0.3rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:4px; color:var(--text-primary); text-align:center;">
+                                        <span style="font-size:0.65rem; color:var(--text-muted);">m</span>
+                                        <button class="btn btn-secondary btn-sm"
+                                            onclick="openRedukcjaZakonczeniePopup()" id="btn-redukcja-zak"
+                                            style="font-size:0.7rem; padding:0.2rem 0.5rem; border-color:var(--border-glass);">🔽
+                                            Zak. DN1000</button>
+                                    </div>
+                                    <button class="btn btn-secondary btn-sm" onclick="openZakonczeniePopup()"
+                                        id="btn-zakonczenie"
+                                        style="font-size:0.8rem; padding:0.3rem 0.6rem; border-color:var(--border-glass);">🔽
+                                        Zakończenie</button>
+                                    <button class="btn btn-primary btn-sm" onclick="autoSelectComponents()"
+                                        id="btn-auto-select" style="font-size:0.8rem; padding:0.3rem 0.6rem;">🔧
+                                        Auto</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="clearWellConfig()"
+                                        style="font-size:0.8rem; padding:0.3rem 0.6rem;">🔄</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-well parameters (editable, inherited from wizard step 2) -->
+                        <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
+                            <div class="card-title"
+                                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
+                                onclick="toggleCard('well-params-content', 'well-params-icon')">
+                                <span>📋 Parametry tej studni</span>
+                                <span id="well-params-icon" style="font-size:0.75rem;">🔽</span>
+                            </div>
+                            <div id="well-params-content" class="card-content" style="display:none; margin-top:0.5rem;">
+                                <div id="well-params-container"></div>
+                            </div>
+                        </div>
+
+                        <!-- Builder tabs -->
+                        <div class="builder-sub-nav"
+                            style="display:flex; gap:0.3rem; margin-bottom:0.5rem; background:#0d1520; padding:0.3rem; border-radius:8px; border:1px solid var(--border-glass);">
+                            <button class="b-tab-btn active" onclick="switchBuilderTab('concrete')"
+                                id="btab-concrete">🏗️
+                                Prefabrykaty betonowe</button>
+                            <button class="b-tab-btn" onclick="switchBuilderTab('transitions')" id="btab-transitions">💧
+                                Przejścia szczelne</button>
+                        </div>
+
+                        <!-- TAB: CONCRETE CONTENT -->
+                        <div id="bcontent-concrete">
+
+
+                            <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
+                                <div class="card-title"
+                                    style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
+                                    onclick="toggleCard('tiles-content', 'tiles-icon')">
+                                    <span>🧱 Wybór elementów</span>
+                                    <span id="tiles-icon" style="font-size:0.75rem;">🔼</span>
+                                </div>
+                                <div id="tiles-content" class="card-content" style="margin-top:0.5rem;">
+                                    <div id="tiles-container"></div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding:0.5rem 0.6rem;">
+                                <div class="card-title"
+                                    style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0.3rem; font-size:0.78rem; padding:0.15rem 0;"
+                                    onclick="toggleCard('well-config-wrap', 'well-config-icon')">
+                                    <span>📦 Konfiguracja betonowa</span>
+                                    <span id="well-config-icon" style="font-size:0.75rem;">🔼</span>
+                                </div>
+                                <div id="well-config-wrap" class="table-wrap card-content">
+                                    <div id="well-config-body" style="display:flex; flex-direction:column; gap:0.4rem;">
+                                        <div
+                                            style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem;">
+                                            Kliknij kafelki powyżej, aby dodać elementy studni
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: TRANSITIONS CONTENT -->
+                        <div id="bcontent-transitions" style="display:none;">
+                            <div class="card" style="margin-bottom:0.5rem; padding:0.5rem 0.6rem;">
+                                <div class="card-title" style="font-size:0.78rem; padding:0.15rem 0;">➕ Dodaj
+                                    Przejście Szczelne</div>
+                                <div id="inline-przejscia-app"></div>
+                            </div>
+                            <div class="card" style="background:#0d1520; padding:0.5rem 0.6rem;">
+                                <div class="card-title"
+                                    style="font-size:0.78rem; padding:0.15rem 0; display:flex; justify-content:space-between; align-items:center;">
+                                    <span>📖 Lista dodanych przejść</span>
+                                    <span id="przejscia-count"
+                                        style="font-size:0.65rem; color:var(--text-muted);"></span>
+                                </div>
+                                <div id="well-przejscia-tiles"></div>
+                            </div>
+                        </div>
+
+                        <!-- Summary bar -->
+                        <div
+                            style="margin-top:0.5rem; padding:0.5rem 0.6rem; background:#0d1520; border-radius:8px; border:1px solid var(--border-glass);">
+                            <div
+                                style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0.5rem; text-align:center;">
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Cena
+                                        netto</div>
+                                    <div style="font-size:1rem; font-weight:800; color:var(--success);" id="sum-price">0
+                                        PLN
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Waga
+                                    </div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-weight">0 kg</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Wysokość</div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-height">0 mm</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Pow.
+                                        wewn.</div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-area-int">0 m²</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.58rem; text-transform:uppercase; color:var(--text-muted);">
+                                        Pow.
+                                        zewn.</div>
+                                    <div style="font-size:1rem; font-weight:700; color:var(--text-primary);"
+                                        id="sum-area-ext">0 m²</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Wells list sidebar -->
+                    <div class="wells-sidebar">
+                        <div class="wells-sidebar-panel">
+                            <div class="wells-sidebar-header"
+                                style="flex-direction: column; align-items: stretch; gap: 0.3rem; padding-bottom: 0;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h3 style="margin:0; font-size:0.75rem;">🗂️ Lista studni <span class="wells-count"
+                                            id="wells-counter"></span></h3>
+                                </div>
+                                <div
+                                    style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:0.2rem; padding-bottom:0.4rem; border-bottom:1px solid #1a2233;">
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(1000)">+1000</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(1200)">+1200</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(1500)">+1500</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(2000)">+2000</button>
+                                    <button class="btn btn-primary btn-sm" style="padding:0.25rem; font-size:0.65rem;"
+                                        onclick="addNewWell(2500)">+2500</button>
+                                </div>
+                                <div
+                                    style="display:flex; gap:0.2rem; padding-bottom:0.3rem; border-bottom:1px solid #1a2233;">
+                                    <button class="btn btn-secondary btn-sm"
+                                        style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1;"
+                                        onclick="clearOfferForm()">🔄 Nowa oferta</button>
+                                    <button class="btn btn-secondary btn-sm"
+                                        style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1; background:rgba(99,102,241,0.15); color:#a5b4fc; border-color:rgba(99,102,241,0.3);"
+                                        onclick="window.openGlobalRecalcModal()">⚙️ Przelicz ofertę</button>
+                                    <button class="btn btn-success btn-sm"
+                                        style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1;"
+                                        onclick="saveOfferStudnie()">💾 Zapisz</button>
+                                    <button class="btn btn-sm"
+                                        style="padding:0.25rem 0.4rem; font-size:0.65rem; flex:1; background:#0f3328; border:1px solid #0d2a20; color:#34d399;"
+                                        onclick="createOrderFromOffer()">📦 Zamówienie</button>
+                                </div>
+                            </div>
+                            <div id="wells-discount-panel"></div>
+                            <div id="wells-list"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- /wizard-step-3 -->
+        </div> <!-- /section-builder -->
+
+        <!-- ===== SECTION: OFFER ===== -->
+        <div class="section" id="section-offer">
+
+            <!-- Client & offer info summary (read from builder form) -->
+            <div class="card card-compact" style="margin-bottom: 1rem;">
+                <div class="card-title-sm"
+                    style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                    <span>📋 Dane klienta i oferty</span>
+                    <div style="display:flex; gap:0.4rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="clearOfferForm()"
+                            style="padding:0.2rem 0.5rem; font-size:0.7rem;">🔄 Nowa Oferta</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveOfferStudnie()"
+                            style="padding:0.2rem 0.5rem; font-size:0.7rem;">💾 Zapisz ofertę</button>
+                        <button class="btn btn-sm" onclick="createOrderFromOffer()"
+                            style="padding:0.2rem 0.5rem; font-size:0.7rem; background:#0f3328; border:1px solid #0d2a20; color:#34d399;">📦
+                            Utwórz zamówienie</button>
+                    </div>
+                </div>
+                <div class="card-content" style="margin-top:0.5rem;">
+                    <div id="offer-client-summary"
+                        style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:0.4rem; font-size:0.78rem; color:var(--text-secondary);">
+                        <div><span style="color:var(--text-muted); font-size:0.65rem;">Firma:</span> <span
+                                id="offer-disp-name">—</span></div>
+                        <div><span style="color:var(--text-muted); font-size:0.65rem;">NIP:</span> <span
+                                id="offer-disp-nip">—</span></div>
+                        <div><span style="color:var(--text-muted); font-size:0.65rem;">Nr oferty:</span> <span
+                                id="offer-disp-number">—</span></div>
+                        <div><span style="color:var(--text-muted); font-size:0.65rem;">Data:</span> <span
+                                id="offer-disp-date">—</span></div>
+                        <div><span style="color:var(--text-muted); font-size:0.65rem;">Inwestycja:</span> <span
+                                id="offer-disp-invest">—</span></div>
+                        <div><span style="color:var(--text-muted); font-size:0.65rem;">Transport:</span> <span
+                                id="offer-disp-transport">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 1rem;">
+                <div class="toolbar" style="margin-top:0; margin-bottom: 0.5rem; padding: 0;">
+                    <h2 style="font-size:1rem;font-weight:700">📊 Zestawienie ofertowe (Studnie)</h2>
+                </div>
+                <!-- Transport breakdown will go here -->
+                <div id="transport-breakdown" style="margin-bottom: 1rem;"></div>
+                <div id="offer-summary-body"></div>
+            </div>
+
+            <!-- Summary Foot -->
+            <div
+                style="position: sticky; bottom: 0; background: #111827; border-top: 1px solid var(--border-glass); margin: 0 -1rem -0.8rem -1rem; padding: 1.2rem 1.5rem; z-index: 100; box-shadow: 0 -8px 30px #080808;">
+                <div class="summary-grid"
+                    style="margin-top: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: stretch; text-align: center;">
+                    <div class="summary-card"
+                        style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="label" style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.2rem;">
+                            Waga Netto</div>
+                        <div class="value accent" id="sum-netto-weight"
+                            style="font-size: 1.4rem; color: var(--text-primary); margin: 0;">0 kg</div>
+                    </div>
+                    <div class="summary-card"
+                        style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--border-glass); border-right: 1px solid var(--border-glass);">
+                        <div class="label" style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.2rem;">
+                            Koszt transportu</div>
+                        <div class="value" id="sum-transport-cost"
+                            style="color:var(--warn); font-size: 1.4rem; margin: 0;">0,00 PLN</div>
+                    </div>
+                    <div class="summary-card"
+                        style="padding: 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative;">
+                        <div class="label" style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.2rem;">
+                            RAZEM Netto</div>
+                        <div class="value success" id="sum-total-netto"
+                            style="font-size: 1.6rem; font-weight: 800; color: var(--success); margin: 0;">0,00 PLN
+                        </div>
+                        <div class="summary-sub" id="sum-brutto-details"
+                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Brutto: 0,00
+                            PLN
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SECTION: SAVED OFFERS ===== -->
+        <div class="section" id="section-saved">
+            <div class="toolbar">
+                <h2 style="font-size:1rem;font-weight:700">💾 Zapisane oferty studni</h2>
+                <div class="toolbar-spacer"></div>
+                <button class="btn btn-primary" onclick="importOfferFromFileStudnie()">📂 Importuj JSON</button>
+            </div>
+            <div class="offer-list" id="saved-offers-list"></div>
+        </div>
+
+        <!-- ===== SECTION: PRICE LIST ===== -->
+        <div class="section" id="section-pricelist">
+            <div class="toolbar" style="flex-wrap:wrap;">
+                <h2 style="font-size:1rem;font-weight:700">📋 Cennik elementów studni</h2>
+                <div class="toolbar-spacer"></div>
+                <div class="search-box" style="margin:0;width:100%;max-width:350px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input class="form-input form-input-sm" id="studnie-pricelist-search" placeholder="Szukaj..."
+                        style="padding-left:2.2rem !important">
+                </div>
+                <button class="btn btn-primary" onclick="showAddStudnieProductModal()">➕ Dodaj</button>
+                <button class="btn btn-secondary" onclick="saveAsDefaultStudniePriceList()">💾 Zapisz do
+                    resetu</button>
+                <button class="btn btn-secondary" onclick="downloadStudniePricelistFile()">⬇️ Zapisz plik</button>
+                <button class="btn btn-secondary" onclick="exportStudnieToExcel()">📤 Eksportuj Excel</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('import-studnie-excel').click()">📥
+                    Importuj Excel</button>
+                <input type="file" id="import-studnie-excel" style="display:none" accept=".xlsx,.xls"
+                    onchange="importStudnieFromExcel(event)">
+                <button class="btn btn-secondary" onclick="resetStudniePriceList()">🔄 Reset</button>
+            </div>
+            <div class="cennik-tabs" style="display:flex; gap:0.3rem; margin-bottom:0.8rem; flex-wrap:wrap;">
+                <button class="cennik-tab active" data-tab="dn1000" onclick="selectCennikTab('dn1000')">
+                    <span class="cennik-tab-icon" style="background:#6366f1;"></span> DN1000</button>
+                <button class="cennik-tab" data-tab="dn1200" onclick="selectCennikTab('dn1200')">
+                    <span class="cennik-tab-icon" style="background:#8b5cf6;"></span> DN1200</button>
+                <button class="cennik-tab" data-tab="dn1500" onclick="selectCennikTab('dn1500')">
+                    <span class="cennik-tab-icon" style="background:#ec4899;"></span> DN1500</button>
+                <button class="cennik-tab" data-tab="dn2000" onclick="selectCennikTab('dn2000')">
+                    <span class="cennik-tab-icon" style="background:#f59e0b;"></span> DN2000</button>
+                <button class="cennik-tab" data-tab="dn2500" onclick="selectCennikTab('dn2500')">
+                    <span class="cennik-tab-icon" style="background:#ef4444;"></span> DN2500</button>
+                <button class="cennik-tab" data-tab="dennicy" onclick="selectCennikTab('dennicy')">
+                    <span class="cennik-tab-icon" style="background:#10b981;"></span> Dennicy</button>
+                <button class="cennik-tab" data-tab="akcesoria" onclick="selectCennikTab('akcesoria')">
+                    <span class="cennik-tab-icon" style="background:#64748b;"></span> Akcesoria</button>
+                <button class="cennik-tab" data-tab="przejscia" onclick="selectCennikTab('przejscia')">
+                    <span class="cennik-tab-icon" style="background:#14b8a6;"></span> Przejścia</button>
+                <button class="cennik-tab" data-tab="kinety" onclick="selectCennikTab('kinety')">
+                    <span class="cennik-tab-icon" style="background:#8b5cf6;"></span> Kinety</button>
+            </div>
+            <div class="card">
+                <div id="studnie-pricelist-body"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="toast-container" class="toast-container"></div>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="js/pricelist_studnie.js"></script>
+    <script src="js/app_studnie.js"></script>
+</body>
+
+</html>
