@@ -3001,7 +3001,7 @@ function renderTiles() {
             const isInConfig = well.config.some(c => c.productId === p.id);
             const activeClass = (isTopClosure && isInConfig) ? 'active-top-closure' : '';
 
-            html += `<div class="tile ${activeClass}" data-type="${p.componentType}" onclick="addWellComponent('${p.id}')" draggable="true" ondragstart="dragWellComponent(event, '${p.id}')">
+            html += `<div class="tile ${activeClass}" data-type="${p.componentType}" onclick="addWellComponent('${p.id}')" draggable="true" ondragstart="dragWellComponent(event, '${p.id}')" ondragend="dragEndWellComponent(event)">
         <div class="tile-name">${p.name}</div>
         <div class="tile-meta">
           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -3088,16 +3088,96 @@ function renderTiles() {
 /* ===== WELL CONFIGURATION ===== */
 
 /* --- Drag & Drop for Well Components --- */
+window.currentDraggedPlaceholderId = null;
+
 function dragWellComponent(ev, productId) {
     ev.dataTransfer.setData("text/plain", productId);
     ev.dataTransfer.effectAllowed = "copy";
+    window.currentDraggedPlaceholderId = productId;
+}
+
+function dragEndWellComponent(ev) {
+    const dz = document.getElementById('drop-zone-diagram');
+    if (dz) dz.classList.remove('drag-over');
+
+    const well = getCurrentWell();
+    if (well && window.currentDraggedPlaceholderId) {
+        well.config = well.config.filter(c => !c.isPlaceholder);
+        window.requestAnimationFrame(() => {
+            renderWellConfig();
+            renderWellDiagram();
+        });
+    }
+    window.currentDraggedPlaceholderId = null;
 }
 
 function allowDropWellComponent(ev) {
     ev.preventDefault();
-    ev.dataTransfer.dropEffect = "copy";
+    ev.dataTransfer.dropEffect = (draggedCfgIndex !== null) ? "move" : "copy";
     const dz = document.getElementById('drop-zone-diagram');
     if (dz) dz.classList.add('drag-over');
+
+    const well = getCurrentWell();
+    if (!well) return;
+
+    let targetIdx = well.config.length;
+    let found = false;
+    const grps = Array.from(dz.querySelectorAll('g.diag-comp-grp'));
+
+    for (let g of grps) {
+        const rect = g.getBoundingClientRect();
+        if (ev.clientY < rect.top + rect.height / 2) {
+            targetIdx = parseInt(g.getAttribute('data-cfg-idx'));
+            found = true;
+            break;
+        }
+    }
+    if (!found && grps.length > 0) {
+        targetIdx = well.config.length;
+    }
+
+    if (window.currentDraggedPlaceholderId) {
+        const plIdx = well.config.findIndex(c => c.isPlaceholder);
+        // Avoid flickering by not rendering if position mapped is practically same
+        let currentEffIdx = plIdx;
+        let newEffIdx = targetIdx;
+        if (plIdx > -1 && plIdx < targetIdx) newEffIdx -= 1;
+
+        if (plIdx === -1 || plIdx !== newEffIdx) {
+            const p = studnieProducts.find(x => x.id === window.currentDraggedPlaceholderId);
+            if (p) {
+                if (plIdx > -1) well.config.splice(plIdx, 1);
+
+                let insertIdx = targetIdx;
+                if (plIdx > -1 && plIdx < targetIdx) insertIdx -= 1;
+                insertIdx = Math.max(0, Math.min(well.config.length, insertIdx));
+
+                well.config.splice(insertIdx, 0, {
+                    productId: window.currentDraggedPlaceholderId,
+                    quantity: 1,
+                    height: p.height || 0,
+                    isPlaceholder: true
+                });
+
+                window.requestAnimationFrame(() => {
+                    renderWellConfig();
+                    renderWellDiagram();
+                });
+            }
+        }
+    } else if (draggedCfgIndex !== null) {
+        let insertIdx = targetIdx;
+        if (draggedCfgIndex < targetIdx) insertIdx -= 1;
+        insertIdx = Math.max(0, Math.min(well.config.length, insertIdx));
+
+        if (draggedCfgIndex !== insertIdx) {
+            const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
+            well.config.splice(insertIdx, 0, draggedItem);
+            draggedCfgIndex = insertIdx;
+
+            window.requestAnimationFrame(() => renderWellDiagram());
+        }
+    }
 }
 
 function dragLeaveWellComponent(ev) {
@@ -3110,9 +3190,40 @@ function dropWellComponent(ev) {
     const dz = document.getElementById('drop-zone-diagram');
     if (dz) dz.classList.remove('drag-over');
 
-    const productId = ev.dataTransfer.getData("text/plain");
-    if (productId) {
-        addWellComponent(productId);
+    const well = getCurrentWell();
+    if (well && window.currentDraggedPlaceholderId) {
+        // Zamiast kasować na bezczelnego, szukamy gdzie jest nasz placeholder
+        const plIdx = well.config.findIndex(c => c.isPlaceholder);
+        if (plIdx > -1) {
+            well.config[plIdx].isPlaceholder = false;
+        } else {
+            // Bezpiecznik: jeśli go nie było, dodaj na koniec
+            well.config.push({
+                productId: window.currentDraggedPlaceholderId,
+                quantity: 1
+            });
+        }
+
+        window.currentDraggedPlaceholderId = null;
+
+        // Włączamy ręczny reżim
+        well.autoLocked = true;
+        updateAutoLockUI();
+        well.configSource = 'MANUAL';
+
+        renderWellConfig();
+        renderWellDiagram();
+        updateSummary();
+    } else if (well && draggedCfgIndex !== null) {
+        // Zostało puszczone na puste pole SVG, resetujemy flagi i zapisujemy
+        well.config.forEach(c => c.isPlaceholder = false);
+        well.autoLocked = true;
+        updateAutoLockUI();
+        well.configSource = 'MANUAL';
+
+        renderWellConfig();
+        renderWellDiagram();
+        updateSummary();
     }
 }
 
@@ -3336,8 +3447,11 @@ function renderWellConfig() {
         const canMoveUp = index > 0;
         const canMoveDown = index < well.config.length - 1;
 
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem; cursor:grab;"
-                      onmouseenter="this.style.filter='brightness(1.1)'" onmouseleave="this.style.filter='brightness(1)'">
+        const isPlaceholder = item.isPlaceholder;
+        const plStyle = isPlaceholder ? 'opacity:0.7; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); pointer-events: none;' : '';
+
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem; cursor:grab; ${plStyle}"
+                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.1)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; window.unhighlightSvg('cfg', ${index})}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             
             <div style="display:flex; align-items:center; gap:0.4rem;">
@@ -3395,14 +3509,73 @@ window.handleCfgDragStart = function (e) {
     draggedCfgIndex = parseInt(e.currentTarget.getAttribute('data-cfg-idx'));
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.4';
+
+    // Robimy z niego ducha na czas ciągnięcia
+    const well = getCurrentWell();
+    if (well && well.config[draggedCfgIndex]) {
+        well.config[draggedCfgIndex].isPlaceholder = true;
+        window.requestAnimationFrame(() => renderWellDiagram());
+    }
 };
 
 window.handleCfgDragOver = function (e) {
+    if (draggedCfgIndex === null && !window.currentDraggedPlaceholderId) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     const tile = e.target.closest('.config-tile');
-    if (tile) {
-        tile.style.borderTop = '2px solid #6366f1';
+
+    if (draggedCfgIndex !== null) {
+        if (tile) {
+            tile.style.borderTop = '2px solid #6366f1';
+            const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
+            const well = getCurrentWell();
+            if (well && draggedCfgIndex !== dropIndex) {
+                const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
+                well.config.splice(dropIndex, 0, draggedItem);
+                draggedCfgIndex = dropIndex;
+                window.requestAnimationFrame(() => renderWellDiagram());
+            }
+        }
+    } else if (window.currentDraggedPlaceholderId) {
+        if (tile) {
+            const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
+            const well = getCurrentWell();
+            if (well) {
+                // Find existing placeholder index
+                const plIdx = well.config.findIndex(c => c.isPlaceholder);
+
+                if (plIdx !== dropIndex) {
+                    const p = studnieProducts.find(x => x.id === window.currentDraggedPlaceholderId);
+                    if (p) {
+                        // Remove old placeholder
+                        if (plIdx > -1) well.config.splice(plIdx, 1);
+
+                        // Because splicing might shift indices, find new effective drop index
+                        let targetIdx = dropIndex;
+                        if (plIdx > -1 && plIdx < dropIndex) targetIdx -= 1; // It shifted down
+
+                        well.config.splice(targetIdx, 0, {
+                            productId: window.currentDraggedPlaceholderId,
+                            quantity: 1,
+                            height: p.height || 0,
+                            isPlaceholder: true
+                        });
+
+                        window.requestAnimationFrame(() => {
+                            renderWellConfig();
+                            renderWellDiagram();
+                        });
+                    }
+                }
+            }
+        }
+    }
+};
+
+window.handleCfgDragLeave = function (e) {
+    const tile = e.target.closest('.config-tile');
+    if (tile && draggedCfgIndex !== null) {
+        tile.style.borderTop = '';
     }
 };
 
@@ -3410,28 +3583,39 @@ window.handleCfgDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();
     const tile = e.target.closest('.config-tile');
-    if (tile && draggedCfgIndex !== null) {
-        tile.style.borderTop = '';
-        const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
-        if (draggedCfgIndex === dropIndex) return;
 
+    if (tile) {
+        const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
         const well = getCurrentWell();
         if (!well) return;
 
-        // Extract the dragged item
-        const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
+        if (draggedCfgIndex !== null) {
+            tile.style.borderTop = '';
 
-        // Insert at the new position
-        well.config.splice(dropIndex, 0, draggedItem);
+            well.config.forEach(c => c.isPlaceholder = false);
 
-        // Turn on manual lock
-        well.autoLocked = true;
-        updateAutoLockUI();
-        well.configSource = 'MANUAL';
+            well.autoLocked = true;
+            updateAutoLockUI();
+            well.configSource = 'MANUAL';
 
-        renderWellConfig();
-        renderWellDiagram();
-        updateSummary();
+            renderWellConfig();
+            renderWellDiagram();
+            updateSummary();
+        } else if (window.currentDraggedPlaceholderId) {
+            tile.style.borderTop = '';
+            well.config = well.config.filter(c => !c.isPlaceholder);
+
+            well.config.splice(dropIndex, 0, { productId: window.currentDraggedPlaceholderId, quantity: 1 });
+            window.currentDraggedPlaceholderId = null;
+
+            well.autoLocked = true;
+            updateAutoLockUI();
+            well.configSource = 'MANUAL';
+
+            renderWellConfig();
+            renderWellDiagram();
+            updateSummary();
+        }
     }
 };
 
@@ -3439,7 +3623,18 @@ window.handleCfgDragEnd = function (e) {
     e.currentTarget.style.opacity = '1';
     document.querySelectorAll('.config-tile').forEach(t => t.style.borderTop = '');
     draggedCfgIndex = null;
-}
+
+    const well = getCurrentWell();
+    if (well) {
+        well.config.forEach(c => c.isPlaceholder = false);
+        window.requestAnimationFrame(() => {
+            renderWellConfig();
+            renderWellDiagram();
+        });
+    }
+};
+
+
 
 /* ===== SORT WELL CONFIG by well-physical order (top → bottom) ===== */
 function sortWellConfigByOrder() {
@@ -3474,6 +3669,64 @@ function renderWellPrzejscia() {
     const countEl = document.getElementById('przejscia-count');
     const well = getCurrentWell();
 
+    if (!window.activateQuickEdit) {
+        window.activateQuickEdit = function (element, index, field) {
+            if (element.querySelector('input')) return; // Aboard if already in edit mode
+            const well = getCurrentWell();
+            if (!well || !well.przejscia || !well.przejscia[index]) return;
+
+            const val = field === 'angle' ? well.przejscia[index].angle : (well.przejscia[index].rzednaWlaczenia || '');
+            const step = field === 'angle' ? '1' : '0.01';
+            const w = element.offsetWidth;
+
+            element.innerHTML = `<input type="number" step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            const inp = element.querySelector('input');
+            inp.focus();
+        };
+
+        window.saveQuickEdit = function (index, field, value) {
+            const well = getCurrentWell();
+            if (!well || !well.przejscia || !well.przejscia[index]) return;
+
+            if (value.trim() === '') {
+                renderWellPrzejscia();
+                return; // Revert to old value if nothing was typed
+            }
+
+            let numVal = parseFloat(value);
+
+            if (field === 'angle') {
+                if (isNaN(numVal)) numVal = 0;
+                if (numVal < 0) numVal = 0;
+                if (numVal > 360) numVal = 360;
+                well.przejscia[index].angle = numVal;
+                well.przejscia[index].angleExecution = (numVal === 0 || numVal === 360) ? 0 : (360 - numVal);
+                well.przejscia[index].angleGony = (numVal * 400 / 360).toFixed(2);
+            } else if (field === 'rzednaWlaczenia') {
+                if (isNaN(numVal)) {
+                    well.przejscia[index].rzednaWlaczenia = '';
+                } else {
+                    const rzWlazu = parseFloat(well.rzednaWlazu);
+                    const rzDna = parseFloat(well.rzednaDna);
+
+                    if (!isNaN(rzDna) && numVal < rzDna) {
+                        showToast('Rzędna nie może być niższa niż rzędna dna!', 'error');
+                        numVal = rzDna;
+                    }
+                    if (!isNaN(rzWlazu) && numVal > rzWlazu) {
+                        showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
+                        numVal = rzWlazu;
+                    }
+                    well.przejscia[index].rzednaWlaczenia = parseFloat(numVal).toFixed(2);
+                }
+            }
+
+            renderWellPrzejscia();
+            renderWellDiagram();
+            updateSummary();
+        };
+    }
+
     if (!container) return;
 
     if (!well || !well.przejscia || well.przejscia.length === 0) {
@@ -3482,9 +3735,69 @@ function renderWellPrzejscia() {
         return;
     }
 
-    // Auto-sort by angle (smallest to largest)
-    const sorted = well.przejscia.map((item, origIdx) => ({ item, origIdx }))
-        .sort((a, b) => (a.item.angle || 0) - (b.item.angle || 0));
+    const typeBadge = {
+        wlaz: { bg: '#374151' },
+        plyta_din: { bg: '#1e3a5f' },
+        plyta_najazdowa: { bg: '#1e3a5f' },
+        plyta_zamykajaca: { bg: '#1e3a5f' },
+        pierscien_odciazajacy: { bg: '#1e3a5f' },
+        konus: { bg: '#7c3aed30' },
+        avr: { bg: '#44403c' },
+        plyta_redukcyjna: { bg: '#6d28d920' },
+        krag: { bg: '#164e63' },
+        krag_ot: { bg: '#312e81' },
+        dennica: { bg: '#14532d' },
+        kineta: { bg: '#9d174d' }
+    };
+
+    const rzDna = parseFloat(well.rzednaDna) || 0;
+    const configMap = [];
+    let currY = 0;
+    let dennicaProcessedCount = 0;
+    for (let j = well.config.length - 1; j >= 0; j--) {
+        const cItem = well.config[j];
+        const p = studnieProducts.find(pr => pr.id === cItem.productId);
+        if (!p) continue;
+        let h = 0;
+        if (p.componentType === 'dennica') {
+            for (let q = 0; q < cItem.quantity; q++) {
+                dennicaProcessedCount++;
+                h += (p.height || 0) - (dennicaProcessedCount > 1 ? 100 : 0);
+            }
+        } else {
+            h = (p.height || 0) * cItem.quantity;
+        }
+        const badge = typeBadge[p.componentType] || { bg: '#333333' };
+        configMap.push({ index: j, name: p.name, start: currY, end: currY + h, bg: badge.bg });
+        currY += h;
+    }
+
+    // Auto-sort by element level (assignedIndex) and then by angle
+    const sorted = well.przejscia.map((item) => {
+        let pel = parseFloat(item.rzednaWlaczenia);
+        if (isNaN(pel)) pel = rzDna;
+        const mmFromBottom = (pel - rzDna) * 1000;
+        let assignedIndex = -1;
+        for (let cm of configMap) {
+            if (mmFromBottom >= cm.start && mmFromBottom < cm.end) {
+                assignedIndex = cm.index;
+                break;
+            }
+        }
+        if (assignedIndex === -1 && well.config.length > 0) {
+            if (mmFromBottom < 0) {
+                assignedIndex = configMap[0].index;
+            } else {
+                assignedIndex = configMap[configMap.length - 1].index;
+            }
+        }
+        return { item, assignedIndex };
+    }).sort((a, b) => {
+        if (a.assignedIndex !== b.assignedIndex) {
+            return b.assignedIndex - a.assignedIndex;
+        }
+        return (a.item.angle || 0) - (b.item.angle || 0);
+    });
 
     // Rebuild przejscia array in sorted order
     well.przejscia = sorted.map(s => s.item);
@@ -3494,7 +3807,42 @@ function renderWellPrzejscia() {
     let totalPrice = 0;
     let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem;">';
 
+    let prevAssignedIndex = -999;
+
     well.przejscia.forEach((item, index) => {
+        let pel = parseFloat(item.rzednaWlaczenia);
+        if (isNaN(pel)) pel = rzDna;
+        const mmFromBottom = (pel - rzDna) * 1000;
+
+        let assignedIndex = -1;
+        let assignedName = "Brak dopasowania";
+        let assignedBg = "rgba(0,0,0,0.25)";
+        for (let cm of configMap) {
+            if (mmFromBottom >= cm.start && mmFromBottom < cm.end) {
+                assignedIndex = cm.index;
+                assignedName = cm.name;
+                assignedBg = cm.bg;
+                break;
+            }
+        }
+        if (assignedIndex === -1 && well.config.length > 0) {
+            const tgt = (mmFromBottom < 0) ? configMap[0] : configMap[configMap.length - 1];
+            assignedIndex = tgt.index;
+            assignedName = tgt.name;
+            assignedBg = tgt.bg;
+        }
+
+        if (assignedIndex !== prevAssignedIndex) {
+            const rawRGB = assignedBg.length > 7 ? assignedBg.substring(0, 7) : assignedBg;
+            if (index > 0) html += `<div style="height:0.5rem;"></div>`;
+            html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(30,41,59,0.8) 100%); border-left:3px solid ${rawRGB}; border-radius:6px; color:var(--text-muted); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
+                <span style="font-size:0.9rem; filter:grayscale(0.4);">📍</span> 
+                <span>Dotyczy:</span> 
+                <span style="color:#e2e8f0; font-size:0.75rem; padding-left:0.2rem;">${assignedName}</span>
+            </div>`;
+            prevAssignedIndex = assignedIndex;
+        }
+
         const p = studnieProducts.find(pr => pr.id === item.productId);
         const typeName = p ? p.category : 'Nieznane';
         const dn = p ? p.dn : '—';
@@ -3581,35 +3929,57 @@ function renderWellPrzejscia() {
             return;
         }
 
-        html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid #1e3a8a; border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem;"
-                      onmouseenter="this.style.filter='brightness(1.1)'" onmouseleave="this.style.filter='brightness(1)'">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+        if (!item.flowType) {
+            item.flowType = (index === 0 && item.angle === 0) ? 'wylot' : 'wlot';
+        }
+        const flowLabel = item.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+        const flowBg = item.flowType === 'wylot' ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)';
+        const flowColor = item.flowType === 'wylot' ? '#fca5a5' : '#93c5fd';
+        const flowBorder = item.flowType === 'wylot' ? 'rgba(239,68,68,0.6)' : 'rgba(59,130,246,0.6)';
+        const flowIcon = item.flowType === 'wylot' ? '📤' : '📥';
+
+        html += `<div data-prz-idx="${index}" draggable="true" ondragstart="handlePrzDragStart(event)" ondragover="handlePrzDragOver(event)" ondrop="handlePrzDrop(event)" ondragend="handlePrzDragEnd(event)" 
+                      style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; padding:0.45rem; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; cursor:grab;"
+                      onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', ${index}); window.highlightSvg('cfg', ${assignedIndex});" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', ${index}); window.unhighlightSvg('cfg', ${assignedIndex});">
+          
+          <!-- FLOW TYPE BUTTON -->
+          <button onclick="openFlowTypePopup(${index})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.3rem 0.5rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
+            <span style="font-size:1.1rem; margin-bottom:0.1rem;">${flowIcon}</span>
+            <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${flowLabel}</span>
+          </button>
+
+          <!-- DETAILS -->
+          <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:1rem;">
             
-            <div style="display:flex; align-items:center; gap:0.4rem;">
-                <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.15rem; border-radius:4px;">
-                  <button ${!isFirst ? 'onclick="movePrzejscie(' + index + ', -1)" class="cfg-move-btn"' : 'disabled'} title="W górę" style="background:none; border:none; color:var(--text-muted); font-size:0.6rem; cursor:${!isFirst ? 'pointer' : 'default'}">▲</button>
-                  <span style="font-size:0.6rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
-                  <button ${!isLast ? 'onclick="movePrzejscie(' + index + ', 1)" class="cfg-move-btn"' : 'disabled'} title="W dół" style="background:none; border:none; color:var(--text-muted); font-size:0.6rem; cursor:${!isLast ? 'pointer' : 'default'}">▼</button>
-                </div>
-
-                <div style="display:flex; flex-direction:column; gap:0.1rem;">
-                  <div style="font-weight:700; color:var(--text-primary); font-size:0.75rem; line-height:1.2;">${typeName}</div>
-                  <div style="font-size:0.6rem; color:var(--text-muted);">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn}</div>
-                  ${item.notes ? `<div style="font-size:0.55rem; color:#94a3b8; font-style:italic;">📝 ${item.notes}</div>` : ''}
-                </div>
+            <div style="display:flex; flex-direction:column; gap:0.15rem;">
+               <div style="display:flex; align-items:center; gap:0.6rem;">
+                 <span style="font-size:1.0rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.5);">${typeName}</span>
+                 <span style="font-size:1.0rem; color:#a78bfa; font-weight:800;">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn}</span>
+               </div>
+               ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px;">📝 ${item.notes}</div>` : ''}
             </div>
 
-            <div style="display:flex; align-items:center; gap:0.6rem;">
-              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Rzędna:<br><span style="color:var(--text-primary); font-weight:600; font-size:0.65rem;">${item.rzednaWlaczenia || '—'}</span></div>
-              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Kąt:<br><span style="color:${angleColor}; font-weight:600; font-size:0.65rem;">${item.angle}°</span></div>
-              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right; display:none;">Kąt wyk:<br><span style="color:var(--text-secondary); font-weight:600; font-size:0.65rem;">${item.angleExecution}°</span></div>
-              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right; display:none;">Gony:<br><span style="color:var(--success); font-weight:600; font-size:0.65rem;">${item.angleGony}<sup>g</sup></span></div>
-              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Cena:<br><span style="font-size:0.8rem; font-weight:800; color:var(--success);">${fmtInt(price)} PLN</span></div>
-              
-              <button onclick="editPrzejscie(${index})" title="Edytuj" style="background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.3); border-radius:6px; cursor:pointer; font-size:0.8rem; padding:0.3rem; color:#60a5fa; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(96,165,250,0.2)'" onmouseleave="this.style.background='rgba(96,165,250,0.1)'">✏️</button>
-              <button onclick="removePrzejscieFromWell(${index})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:0.8rem; padding:0.3rem; color:#ef4444; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.2)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'">✕</button>
+            <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem;">
+              <div style="text-align:center; min-width:80px;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Rzędna</div>
+                <div onclick="window.activateQuickEdit(this, ${index}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.rzednaWlaczenia || '—'}</div>
+              </div>
+              <div style="text-align:center; min-width:80px; position:relative; padding-bottom:0.1rem;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt</div>
+                <div onclick="window.activateQuickEdit(this, ${index}, 'angle')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:transform 0.2s; display:inline-block;" onmouseenter="this.style.transform='scale(1.15)'" onmouseleave="this.style.transform='scale(1)'">${item.angle}°</div>
+              </div>
+              <div style="text-align:right; min-width:70px;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Cena</div>
+                <div style="font-size:0.95rem; font-weight:800; color:var(--success);">${fmtInt(price)} <span style="font-size:0.7rem;">PLN</span></div>
+              </div>
             </div>
 
+          </div>
+
+          <!-- ACTIONS -->
+          <div style="display:flex; align-items:center; gap:0.25rem; padding-left:0.5rem; border-left:1px dashed rgba(255,255,255,0.1);">
+            <button onclick="editPrzejscie(${index})" title="Edytuj" style="background:rgba(96,165,250,0.15); border:1px solid rgba(96,165,250,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#60a5fa; transition:all 0.2s;" onmouseenter="this.style.background='rgba(96,165,250,0.3)'" onmouseleave="this.style.background='rgba(96,165,250,0.15)'">✏️</button>
+            <button onclick="removePrzejscieFromWell(${index})" title="Usuń" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#ef4444; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.15)'">✕</button>
           </div>
         </div>`;
     });
@@ -3635,6 +4005,53 @@ function movePrzejscie(index, direction) {
     well.przejscia[newIndex] = temp;
     renderWellPrzejscia();
     updateSummary();
+}
+
+/* ===== DRAG & DROP FOR PRZEJŚCIA ===== */
+let draggedPrzIndex = null;
+
+window.handlePrzDragStart = function (e) {
+    draggedPrzIndex = parseInt(e.currentTarget.getAttribute('data-prz-idx'));
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.style.opacity = '0.4';
+};
+
+window.handlePrzDragOver = function (e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const tile = e.target.closest('[data-prz-idx]');
+    if (tile) {
+        tile.style.borderTop = '2px solid #3b82f6';
+    }
+};
+
+window.handlePrzDrop = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const tile = e.target.closest('[data-prz-idx]');
+    if (tile && draggedPrzIndex !== null) {
+        tile.style.borderTop = '';
+        const dropIndex = parseInt(tile.getAttribute('data-prz-idx'));
+        if (draggedPrzIndex === dropIndex) return;
+
+        const well = getCurrentWell();
+        if (!well) return;
+
+        // Extract the dragged item
+        const draggedItem = well.przejscia.splice(draggedPrzIndex, 1)[0];
+
+        // Insert at the new position
+        well.przejscia.splice(dropIndex, 0, draggedItem);
+
+        renderWellPrzejscia();
+        updateSummary();
+    }
+};
+
+window.handlePrzDragEnd = function (e) {
+    e.currentTarget.style.opacity = '1';
+    document.querySelectorAll('[data-prz-idx]').forEach(t => t.style.borderTop = '');
+    draggedPrzIndex = null;
 }
 
 function syncEditState() {
@@ -4053,13 +4470,17 @@ window.inlineFinish = () => {
     if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
     if (!well.przejscia) well.przejscia = [];
 
+    const isFirst = well.przejscia ? well.przejscia.length === 0 : true;
+    const flowType = (isFirst && angle === 0) ? 'wylot' : 'wlot';
+
     well.przejscia.push({
         productId: id,
         rzednaWlaczenia: rzedna ? parseFloat(rzedna).toFixed(2) : null,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
-        notes: notes
+        notes: notes,
+        flowType: flowType
     });
 
     inlinePrzejsciaState.dnId = null;
@@ -4067,6 +4488,48 @@ window.inlineFinish = () => {
     autoSelectComponents(true);
     showToast('Dodano przejście szczelne', 'success');
     renderInlinePrzejsciaApp();
+};
+
+window.openFlowTypePopup = function (index) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia || !well.przejscia[index]) return;
+
+    let modal = document.getElementById('flow-type-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'flow-type-modal';
+        modal.innerHTML = `
+        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('flow-type-modal').style.display='none'">
+           <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:300px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+               <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz typ przepływu</h3>
+               <div style="display:flex; gap:1rem; justify-content:center;">
+                  <button id="flow-wlot-btn" style="flex:1; background:rgba(59,130,246,0.2); color:#93c5fd; border:2px solid rgba(59,130,246,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                     <span style="font-size:2.5rem;">📥</span>WLOT
+                  </button>
+                  <button id="flow-wylot-btn" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:2px solid rgba(239,68,68,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                     <span style="font-size:2.5rem;">📤</span>WYLOT
+                  </button>
+               </div>
+               <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('flow-type-modal').style.display='none'">Anuluj</button>
+           </div>
+        </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    document.getElementById('flow-type-modal').style.display = 'flex';
+
+    document.getElementById('flow-wlot-btn').onclick = () => {
+        well.przejscia[index].flowType = 'wlot';
+        document.getElementById('flow-type-modal').style.display = 'none';
+        renderWellPrzejscia();
+    };
+
+    document.getElementById('flow-wylot-btn').onclick = () => {
+        well.przejscia[index].flowType = 'wylot';
+        document.getElementById('flow-type-modal').style.display = 'none';
+        renderWellPrzejscia();
+    };
 };
 
 function removePrzejscieFromWell(index) {
@@ -4153,6 +4616,18 @@ function updateSummary() {
     updateHeightIndicator();
 }
 
+/* ===== SVG HIGHLIGHTING ===== */
+window.highlightSvg = function (type, index) {
+    document.querySelectorAll('.svg-' + type + '-' + index).forEach(el => {
+        el.style.filter = 'drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9)) brightness(1.3)';
+    });
+};
+window.unhighlightSvg = function (type, index) {
+    document.querySelectorAll('.svg-' + type + '-' + index).forEach(el => {
+        el.style.filter = '';
+    });
+};
+
 /* ===== WELL DIAGRAM (SVG) ===== */
 function renderWellDiagram() {
     const svg = document.getElementById('well-diagram');
@@ -4201,15 +4676,17 @@ function renderWellDiagram() {
                     effH = Math.max(0, effH - 100);
                 }
             }
-            components.push({ ...p, height: effH, _originalHeight: p.height, _cfgIdx: index, _isFirst: i === 0, _isLast: i === item.quantity - 1 });
+            components.push({ ...p, height: effH, _originalHeight: p.height, _cfgIdx: index, _isFirst: i === 0, _isLast: i === item.quantity - 1, isPlaceholder: !!item.isPlaceholder });
         }
     });
 
     const visible = components.filter(c =>
-        (c.height || 0) > 0 ||
-        c.componentType === 'wlaz' ||
-        c.componentType === 'plyta_zamykajaca' ||
-        c.componentType === 'plyta_najazdowa'
+        c.componentType !== 'uszczelka' && (
+            (c.height || 0) > 0 ||
+            c.componentType === 'wlaz' ||
+            c.componentType === 'plyta_zamykajaca' ||
+            c.componentType === 'plyta_najazdowa'
+        )
     );
 
     // Sortowanie wyłączone - wizualizacja pokazuje elementy W DOKŁADNEJ KOLEJNOŚCI jak w tablicy config,
@@ -4322,8 +4799,15 @@ function renderWellDiagram() {
         let localCompType = comp.componentType;
         const c = TC[localCompType] || { fill: '#334155', stroke: '#64748b', label: '' };
 
+        const isPlaceholder = comp.isPlaceholder;
+        const pointerEvents = isPlaceholder ? 'pointer-events="none"' : '';
+        const plStyle = isPlaceholder ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9));' : '';
+
         if (comp._cfgIdx !== undefined) {
-            svg_out += `<g class="diag-comp-grp" cursor="grab" ` +
+            svg_out += `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
+                `data-cfg-idx="${comp._cfgIdx}" draggable="true" ` +
+                `ondragstart="window.handleCfgDragStart(event)" ` +
+                `ondragend="window.handleCfgDragEnd(event)" ` +
                 `onmousedown="window.svgPointerDown(event, ${comp._cfgIdx})" ` +
                 `onmouseenter="window.svgPointerEnter(event, ${comp._cfgIdx})" ` +
                 `onmouseleave="window.svgPointerLeave(event)" ` +
@@ -4408,7 +4892,7 @@ function renderWellDiagram() {
     if (well.przejscia && well.przejscia.length > 0 && well.rzednaDna !== null && well.rzednaWlazu !== null) {
         const bottomElev = parseFloat(well.rzednaDna) || 0;
 
-        well.przejscia.forEach(pr => {
+        well.przejscia.forEach((pr, idx) => {
             let pel = parseFloat(pr.rzednaWlaczenia);
             if (isNaN(pel)) pel = 0;
 
@@ -4449,12 +4933,12 @@ function renderWellDiagram() {
                 const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
 
                 if (isRect) {
-                    svg_out += `<rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />`;
+                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;"><rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 } else if (isEgg) {
                     // SVG ellipse for jajowe pipe cross-section
-                    svg_out += `<ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />`;
+                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;"><ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 } else {
-                    svg_out += `<circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />`;
+                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;"><circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 }
 
                 if (!isBack) {
@@ -6680,83 +7164,74 @@ window.decDiagramWellQty = function (idx) {
     }
 }
 
-/* --- SVG Diagram Drag & Drop (Native Mouse & Touch) --- */
 window.svgDragStartIndex = -1;
 
 window.svgPointerDown = function (ev, idx) {
     ev.preventDefault();
+    const well = getCurrentWell();
+    if (!well) return;
     window.svgDragStartIndex = idx;
-    const currentTarget = ev.currentTarget;
-    if (currentTarget) currentTarget.setAttribute('opacity', '0.7');
-};
-
-window.svgPointerEnter = function (ev, idx) {
-    if (window.svgDragStartIndex >= 0 && window.svgDragStartIndex !== idx) {
-        ev.currentTarget.setAttribute('opacity', '0.4');
-    }
-};
-
-window.svgPointerLeave = function (ev) {
-    if (window.svgDragStartIndex >= 0) {
-        ev.currentTarget.setAttribute('opacity', '1');
-    }
-};
-
-window.svgDoSwap = function (sourceIdx, targetIdx) {
-    if (sourceIdx >= 0 && targetIdx >= 0 && sourceIdx !== targetIdx) {
-        const well = getCurrentWell();
-        if (!well) return;
-        const item = well.config.splice(sourceIdx, 1)[0];
-        well.config.splice(targetIdx, 0, item);
-
-        if (!well.autoLocked) {
-            well.autoLocked = true;
-            if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
-        }
-        well.configSource = 'MANUAL';
-        renderWellConfig();
-        renderWellDiagram();
-        updateSummary();
-    }
-};
-
-window.svgPointerUp = function (ev, targetIdx) {
-    ev.currentTarget.setAttribute('opacity', '1');
-    if (window.svgDragStartIndex >= 0) {
-        const sourceIdx = window.svgDragStartIndex;
-        window.svgDragStartIndex = -1;
-        window.svgDoSwap(sourceIdx, targetIdx);
-    }
-    window.svgDragStartIndex = -1;
-    renderWellDiagram();
+    well.config[idx].isPlaceholder = true;
+    window.requestAnimationFrame(() => renderWellDiagram());
 };
 
 window.svgTouchStart = function (ev, idx) {
     ev.preventDefault();
+    const well = getCurrentWell();
+    if (!well) return;
     window.svgDragStartIndex = idx;
-    ev.currentTarget.setAttribute('opacity', '0.7');
+    well.config[idx].isPlaceholder = true;
+    window.requestAnimationFrame(() => renderWellDiagram());
 };
 
-window.svgTouchEnd = function (ev) {
+function handleLiveSvgDrag(clientY) {
     if (window.svgDragStartIndex >= 0) {
-        const sourceIdx = window.svgDragStartIndex;
-        window.svgDragStartIndex = -1;
-        const touch = ev.changedTouches[0];
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        const g = el ? el.closest('g.diag-comp-grp') : null;
-        if (g) {
-            const onup = g.getAttribute('onmouseup');
-            if (onup) {
-                const match = onup.match(/svgPointerUp\(event,\s*(\d+)\)/);
-                if (match && match[1]) {
-                    window.svgDoSwap(sourceIdx, parseInt(match[1]));
-                    return;
-                }
+        const well = getCurrentWell();
+        if (!well) return;
+        const dz = document.getElementById('drop-zone-diagram');
+        if (!dz) return;
+
+        let targetIdx = well.config.length;
+        let found = false;
+        const grps = Array.from(dz.querySelectorAll('g.diag-comp-grp:not([pointer-events="none"])'));
+
+        for (let g of grps) {
+            const rect = g.getBoundingClientRect();
+            if (clientY < rect.top + rect.height / 2) {
+                targetIdx = parseInt(g.getAttribute('data-cfg-idx'));
+                found = true;
+                break;
             }
         }
-        renderWellDiagram();
+        if (!found && grps.length > 0) {
+            targetIdx = well.config.length;
+        }
+
+        let insertIdx = targetIdx;
+        if (window.svgDragStartIndex < targetIdx) insertIdx -= 1;
+        insertIdx = Math.max(0, Math.min(well.config.length, insertIdx));
+
+        if (window.svgDragStartIndex !== insertIdx) {
+            const draggedItem = well.config.splice(window.svgDragStartIndex, 1)[0];
+            well.config.splice(insertIdx, 0, draggedItem);
+            window.svgDragStartIndex = insertIdx;
+
+            window.requestAnimationFrame(() => renderWellDiagram());
+        }
     }
-};
+}
+
+document.addEventListener('mousemove', (ev) => {
+    if (window.svgDragStartIndex >= 0) {
+        handleLiveSvgDrag(ev.clientY);
+    }
+});
+
+document.addEventListener('touchmove', (ev) => {
+    if (window.svgDragStartIndex >= 0 && ev.touches.length > 0) {
+        handleLiveSvgDrag(ev.touches[0].clientY);
+    }
+}, { passive: false });
 
 document.addEventListener('mouseup', (ev) => {
     if (window.svgDragStartIndex >= 0) {
@@ -6777,10 +7252,20 @@ document.addEventListener('mouseup', (ev) => {
             shouldRemove = true;
         }
 
+        const well = getCurrentWell();
+        if (well) {
+            well.config.forEach(c => c.isPlaceholder = false);
+            well.autoLocked = true;
+            if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
+            well.configSource = 'MANUAL';
+        }
+
         if (shouldRemove) {
             window.decDiagramWellQty(sourceIdx);
         } else {
+            renderWellConfig();
             renderWellDiagram();
+            updateSummary();
         }
 
         // Reset trash visual state
@@ -6788,6 +7273,18 @@ document.addEventListener('mouseup', (ev) => {
             trash.style.background = 'rgba(239,68,68,0.1)';
             trash.style.borderColor = 'rgba(239,68,68,0.4)';
         }
+    }
+});
+
+document.addEventListener('touchend', (ev) => {
+    if (window.svgDragStartIndex >= 0) {
+        // Syntetyczne mapowanie na to samo zachowanie co mouseup
+        const mouseUpEvent = new MouseEvent('mouseup', {
+            clientX: ev.changedTouches[0].clientX,
+            clientY: ev.changedTouches[0].clientY,
+            bubbles: true
+        });
+        document.dispatchEvent(mouseUpEvent);
     }
 });
 
