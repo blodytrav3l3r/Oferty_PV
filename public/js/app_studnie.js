@@ -1672,146 +1672,136 @@ async function autoSelectComponents(autoTriggered = false) {
         updateSummary();
         return;
     }
-    // FALLBACK jeśli API rzuca błędami (zepsuta konfiguracja) lub backend jest offline:
-    console.warn("Backend niedostępny lub rzucił brak walidacji. Spadek do lokalnego kodu JS kalkulatora.");
 
-    // --- Filter products by warehouse availability ---
-    // (Juz wywolane wyzej: const availProducts = getAvailableProducts(well);)
+    // Jeżeli API odpowiedziało, ale uznało że budowa z żądanymi restrykcjami (np max +20mm) jest NIEMOŻLIWA:
+    if (backendResult && !backendResult.is_valid) {
+        console.warn("Backend OR-Tools odrzucił układ bez ułożenia:", backendResult.errors);
+
+        const apiErrors = (backendResult.errors && backendResult.errors.length > 0)
+            ? backendResult.errors
+            : ["Algorytm AI nie odnalazł ułożenia spełniającego wymogi rygorów wysokości lub kolizji."];
+
+        if (!autoTriggered) {
+            apiErrors.forEach(e => showToast(e, 'error'));
+        }
+
+        well.configSource = 'AUTO_AI';
+        well.configStatus = 'ERROR';
+        well.configErrors = apiErrors;
+        well.config = [];
+
+        refreshAll();
+        return; // Zakończ odpytywanie - wymuszamy AI i BLOKUJEMY przepinanie na słabszy kod JS!
+    }
+
+    // FALLBACK tylko wtedy, gdy API nie ma w ogóle łączności (wyłączony port 8000, brak serwera Pyt):
+    console.warn("Backend niedostępny lub środowisko Python nie działa. Spadek do lokalnego kodu awaryjnego JS.");
+    const result = runJsAutoSelection(well, requiredMm, availProducts);
+    if (result.error) {
+        if (!autoTriggered) showToast(result.error, "error");
+        well.configStatus = "ERROR";
+        well.configErrors = [result.error];
+        refreshAll();
+        return;
+    }
+    well.config = result.config;
+
+    const errors = result.errors || [];
+    if (result.fallback) errors.push(result.fallbackReason ? `Zastosowana rozszerzona tolerancja - ${result.fallbackReason}` : "Zastosowana rozszerzona tolerancja");
+    if (errors.length > 0 && result.isMinimal) {
+        well.configStatus = "WARNING";
+    } else if (errors.length > 0) {
+        well.configStatus = "WARNING";
+    } else {
+        well.configStatus = "OK";
+    }
+    well.configErrors = errors;
+    well.configSource = "AUTO_JS";
+
+    refreshAll();
+    const diffStr = result.diff >= 0 ? `+${result.diff}mm` : `${result.diff}mm`;
+    const redLabel = result.reductionUsed ? " + Redukcja DN1000" : "";
+    const fallbackLabel = result.fallback ? " ⚠️ (rozszerzona tolerancja)" : "";
+    let statusIcon = "✅";
+    if (well.configStatus === "WARNING") statusIcon = "⚠️";
+    if (well.configStatus === "ERROR") statusIcon = "❗";
+    if (!autoTriggered) {
+        showToast(`${statusIcon} Auto-dobór: ${fmtInt(result.totalHeight)} mm (${diffStr}) | ${result.topLabel}${redLabel}${fallbackLabel}`, well.configStatus === "OK" ? "success" : "warning");
+    }
+}
+
+function runJsAutoSelection(well, requiredMm, availProducts) {
+    const dn = well.dn;
+    const mag = well.magazyn || 'Kluczbork';
+    const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
     const dnProducts = availProducts.filter(p => p.dn === dn);
     const allProducts = availProducts;
 
-    // --- Available TOP components ---
+    // --- 1. Zakończenie studni ---
     let topProd = null;
-
-    // Use well.zakonczenie preference if set AND matches current DN
     if (well.zakonczenie) {
         topProd = studnieProducts.find(p => p.id === well.zakonczenie && (p.dn === dn || p.dn === null));
     }
-
-    // Always default to konus first if possible, fallback to płyta DIN
     if (!topProd) {
         topProd = dnProducts.find(p => p.componentType === 'konus');
         if (!topProd) topProd = dnProducts.find(p => p.componentType === 'plyta_din');
     }
-
-    if (!topProd) {
-        if (!autoTriggered) showToast('Nie znaleziono domyślnego zakończenia studni.', 'error');
-        return;
-    }
-
-    // Build top config
-    let labelParts = [];
-    let items = [];
-    let topHeight = 0;
-
-    if (topProd.componentType === 'plyta_zamykajaca' || topProd.componentType === 'plyta_najazdowa' || topProd.componentType === 'pierscien_odciazajacy') {
-        // Always pair plate + ring from the SAME DN
-        const sameDnProducts = studnieProducts.filter(p => p.dn === topProd.dn);
-        const paired = sameDnProducts.find(p => p.componentType === 'pierscien_odciazajacy');
-        const plyta = (topProd.componentType === 'pierscien_odciazajacy')
-            ? sameDnProducts.find(p => p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa')
-            : topProd;
-        if (paired && plyta) {
-            labelParts.push(plyta.name + ' + Pierścień');
-            items.push({ productId: plyta.id, quantity: 1 });
-            items.push({ productId: paired.id, quantity: 1 });
-            topHeight += plyta.height + paired.height;
-        } else {
-            labelParts.push(topProd.name);
-            items.push({ productId: topProd.id, quantity: 1 });
-            topHeight += topProd.height;
-        }
-    } else {
-        labelParts.push(topProd.name);
-        items.push({ productId: topProd.id, quantity: 1 });
-        topHeight += topProd.height;
-    }
-
-    // Add Wlaz
-    let wlazItem = well.config.find(c => {
-        const pr = studnieProducts.find(p => p.id === c.productId);
-        return pr && pr.componentType === 'wlaz';
-    });
-    if (!wlazItem) {
-        const wlaz150 = studnieProducts.find(p => p.id === 'WLAZ-150');
-        if (wlaz150) wlazItem = { productId: wlaz150.id, quantity: 1 };
-    }
-    if (wlazItem) {
-        const wlazProd = studnieProducts.find(p => p.id === wlazItem.productId);
-        if (wlazProd) {
-            items.unshift(wlazItem);
-            topHeight += wlazProd.height * wlazItem.quantity;
-            labelParts.unshift(wlazProd.name);
-        }
-    }
+    if (!topProd) return { error: 'Nie znaleziono domyślnego zakończenia studni.' };
 
     const topConfigs = [];
+    const buildTopConfig = (topP) => {
+        let items = [];
+        let h = 0;
+        let lbl = '';
+        if (['plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'].includes(topP.componentType)) {
+            const sameDn = studnieProducts.filter(p => p.dn === topP.dn);
+            const ring = sameDn.find(p => p.componentType === 'pierscien_odciazajacy');
+            const plate = (topP.componentType === 'pierscien_odciazajacy')
+                ? sameDn.find(p => p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa')
+                : topP;
+            if (ring && plate) {
+                items.push({ productId: plate.id, quantity: 1 }, { productId: ring.id, quantity: 1 });
+                h += plate.height + ring.height;
+                lbl = plate.name + ' + Pierścień';
+            } else {
+                items.push({ productId: topP.id, quantity: 1 });
+                h += topP.height;
+                lbl = topP.name;
+            }
+        } else {
+            items.push({ productId: topP.id, quantity: 1 });
+            h += topP.height;
+            lbl = topP.name;
+        }
+
+        let wlazItem = well.config.find(c => studnieProducts.find(p => p.id === c.productId)?.componentType === 'wlaz');
+        if (!wlazItem) {
+            const wlaz150 = studnieProducts.find(p => p.id === 'WLAZ-150');
+            if (wlaz150) wlazItem = { productId: wlaz150.id, quantity: 1 };
+        }
+        if (wlazItem) {
+            const wlazProd = studnieProducts.find(p => p.id === wlazItem.productId);
+            if (wlazProd) {
+                items.unshift(wlazItem);
+                h += wlazProd.height * wlazItem.quantity;
+                lbl = wlazProd.name + ' + ' + lbl;
+            }
+        }
+        return { items, height: h, label: lbl, prod: topP };
+    };
+
+    topConfigs.push(buildTopConfig(topProd));
     const isRelief = ['plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'].includes(topProd.componentType);
-
-    if (items.length > 0) {
-        topConfigs.push({ label: labelParts.join(' + '), items: items, height: topHeight, isRelief: isRelief });
-    }
-
-    // Auto-fallback: If user chose plate + ring, but well is too short to fit any krąg, fall back to Płyta DIN
-    if (isRelief) {
-        let dinProd = dnProducts.find(p => p.componentType === 'plyta_din');
-        if (!dinProd) dinProd = dnProducts.find(p => p.componentType === 'konus'); // ultimate fallback
+    if (isRelief || topProd.componentType === 'konus') {
+        const dinProd = dnProducts.find(p => p.componentType === 'plyta_din');
         if (dinProd) {
-            let fbItems = [{ productId: dinProd.id, quantity: 1 }];
-            let fbHeight = dinProd.height;
-            let fbLabel = dinProd.name;
-            if (wlazItem) {
-                const wp = studnieProducts.find(p => p.id === wlazItem.productId);
-                if (wp) {
-                    fbItems.unshift(wlazItem);
-                    fbHeight += wp.height * wlazItem.quantity;
-                    fbLabel = wp.name + ' + ' + fbLabel;
-                }
-            }
-            topConfigs.push({ label: fbLabel, items: fbItems, height: fbHeight, isRelief: false });
+            const fbCfg = buildTopConfig(dinProd);
+            fbCfg.label += ' (zamiennik)';
+            topConfigs.push(fbCfg);
         }
     }
 
-    // Auto-fallback: If konus is chosen, add Płyta DIN Standard as fallback for konus conflict with transitions
-    if (topProd.componentType === 'konus') {
-        let dinFallback = dnProducts.find(p => p.componentType === 'plyta_din');
-        if (dinFallback) {
-            let fbItems = [{ productId: dinFallback.id, quantity: 1 }];
-            let fbHeight = dinFallback.height;
-            let fbLabel = dinFallback.name + ' (zamiennik konusa)';
-            if (wlazItem) {
-                const wp = studnieProducts.find(p => p.id === wlazItem.productId);
-                if (wp) {
-                    fbItems.unshift(wlazItem);
-                    fbHeight += wp.height * wlazItem.quantity;
-                    fbLabel = wp.name + ' + ' + fbLabel;
-                }
-            }
-            topConfigs.push({ label: fbLabel, items: fbItems, height: fbHeight, isRelief: false });
-        }
-    }
-
-    if (topConfigs.length === 0) {
-        showToast('Błąd konfiguracji wybranego zakończenia.', 'error');
-        return;
-    }
-
-    // --- Body components (main DN) ---
-    const mag = well.magazyn || 'Kluczbork';
-    const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
-
-    function getNonStdPenalty(itemsList, dennicaItem) {
-        let pen = 0;
-        if (dennicaItem && dennicaItem[ff] !== 1) pen += 20000000;
-        if (itemsList) {
-            for (const item of itemsList) {
-                const p = availProducts.find(pr => pr.id === item.productId);
-                if (p && p[ff] !== 1) pen += 20000000;
-            }
-        }
-        return pen;
-    }
-
+    // --- 2. Minimalna Dennica (spocznik) ---
     let minDennicaH = 0;
     if (well.spocznikH && well.spocznikH !== 'brak') {
         const sh = well.spocznikH;
@@ -1822,649 +1812,316 @@ async function autoSelectComponents(autoTriggered = false) {
         else if (!isNaN(parseFloat(sh))) minDennicaH = parseFloat(sh);
     }
 
-    const dennicy = dnProducts.filter(p => p.componentType === 'dennica' && (p.height || 0) >= minDennicaH).sort((a, b) => {
-        const aForm = a[ff] === 1 ? 1 : 0;
-        const bForm = b[ff] === 1 ? 1 : 0;
-        if (aForm !== bForm) return bForm - aForm; // 1 (Standard) before 0 (Non-standard)
-        return a.height - b.height; // Then sort by height ascending
+    let holes = (well.przejscia || []).map(p => {
+        return {
+            z: parseFloat(p.przejscieZ) || 0,
+            ruraDz: parseFloat(p.ruraDz) || 0,
+            zdD: parseFloat(p.zapasDol) || 0,
+            zdDM: parseFloat(p.zapasDolMin) || 0,
+            zdG: parseFloat(p.zapasGora) || 0,
+            zdGM: parseFloat(p.zapasGoraMin) || 0
+        };
     });
 
-    if (dennicy.length === 0) {
-        showToast(`Brak uformowanej dennicy spełniającej minimalną wysokość Kinety (${Math.round(minDennicaH)}mm).`, 'error');
-        // fallback
-        dennicy.push(...dnProducts.filter(p => p.componentType === 'dennica').sort((a, b) => a.height - b.height));
-    }
+    let maxReqH = minDennicaH;
+    let maxReqHMin = minDennicaH;
 
-    const kregiRaw = dnProducts.filter(p => p.componentType === 'krag');
-    const kregi = selectRingVariants(kregiRaw, well);
+    holes.forEach(h => {
+        const effZdD = h.z === 0 ? 0 : h.zdD;
+        const effZdDM = h.z === 0 ? 0 : h.zdDM;
+        const reqH = h.z + h.ruraDz + h.zdG;
+        if (reqH > maxReqH) maxReqH = reqH;
+        const reqHMin = h.z + h.ruraDz + h.zdGM;
+        if (reqHMin > maxReqHMin) maxReqHMin = reqHMin;
+    });
+
+    let dennicy = dnProducts.filter(p => p.componentType === 'dennica').sort((a, b) => {
+        const aForm = a[ff] === 1 ? 1 : 0;
+        const bForm = b[ff] === 1 ? 1 : 0;
+        if (aForm !== bForm) return bForm - aForm;
+        return a.height - b.height;
+    });
+    if (dennicy.length === 0) return { error: 'Brak dennic w magazynie.' };
+
     const avrRings = allProducts.filter(p => p.componentType === 'avr').sort((a, b) => b.height - a.height);
+    const kregiRaw = dnProducts.filter(p => p.componentType === 'krag');
+    const kregi = kregiRaw.filter(p => p[ff] === 1).sort((a, b) => b.height - a.height);
+    if (kregi.length === 0) kregi.push(...kregiRaw.sort((a, b) => b.height - a.height));
 
-    // --- Reduction DN1000 components (for DN1200/1500/2000) ---
     const dn1000Products = availProducts.filter(p => p.dn === 1000);
-    const dn1000KregiRaw = dn1000Products.filter(p => p.componentType === 'krag');
-    const dn1000Kregi = selectRingVariants(dn1000KregiRaw, well);
+    const dn1000Kregi = dn1000Products.filter(p => p.componentType === 'krag').filter(p => p[ff] === 1).sort((a, b) => b.height - a.height);
+    if (dn1000Kregi.length === 0) dn1000Kregi.push(...dn1000Products.filter(p => p.componentType === 'krag').sort((a, b) => b.height - a.height));
+
     let reductionPlate = dnProducts.find(p => p.componentType === 'plyta_redukcyjna');
-    if (!reductionPlate) {
-        // Fallback do pełnej listy studnieProducts, gdyby w availProducts brakowało flag magazynowych
-        reductionPlate = studnieProducts.find(p => p.componentType === 'plyta_redukcyjna' && p.dn === dn);
-    }
+    if (!reductionPlate) reductionPlate = studnieProducts.find(p => p.componentType === 'plyta_redukcyjna' && p.dn === dn);
     let canReduce = well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
 
-    // ===== HELPER: Fill kręgi greedily (largest first) =====
-    function fillKregi(target, kregiList) {
-        const kregItems = [];
+    function fillKregi(target, kList) {
+        let kItems = [];
         let filled = 0;
         if (target > 0) {
             let left = target;
-            for (const krag of kregiList) {
+            for (const k of kList) {
                 if (left <= 0) break;
-                const qty = Math.floor(left / krag.height);
+                const qty = Math.floor(left / k.height);
                 for (let i = 0; i < qty; i++) {
-                    kregItems.push({ productId: krag.id, quantity: 1 });
-                    filled += krag.height;
-                    left -= krag.height;
+                    kItems.push({ productId: k.id, quantity: 1, _h: k.height });
+                    filled += k.height;
+                    left -= k.height;
                 }
             }
         }
-        return { kregItems, filled };
+        return { kItems, filled };
     }
 
-    // ===== HELPER: Fill AVR =====
-    function fillAVR(deficit, maxAvr) {
-        let avrHeight = 0;
-        const avrItems = [];
-        if (deficit > 0 && deficit <= maxAvr) {
-            let left = deficit;
-            for (const avr of avrRings) {
-                if (left <= 0) break;
-                const qty = Math.floor(left / avr.height);
-                for (let i = 0; i < qty; i++) {
-                    avrItems.push({ productId: avr.id, quantity: 1 });
-                    avrHeight += avr.height;
-                    left -= avr.height;
-                }
+    function checkConflicts(kItems, denH, reduceH, topItems) {
+        let segs = [];
+        let y = 0;
+        segs.push({ type: 'dennica', h: denH, start: 0, end: denH });
+        y += denH;
+
+        for (let k of kItems) {
+            if (k.productId === reductionPlate?.id) {
+                segs.push({ type: 'plyta_redukcyjna', h: reduceH, start: y, end: y + reduceH });
+                y += reduceH;
+            } else {
+                segs.push({ type: 'krag', h: k._h, start: y, end: y + k._h });
+                y += k._h;
             }
         }
-        return { avrItems, avrHeight };
-    }
+        for (let t of [...topItems].reverse()) {
+            const tp = studnieProducts.find(p => p.id === t.productId);
+            if (tp) {
+                segs.push({ type: tp.componentType, h: tp.height, start: y, end: y + tp.height });
+                y += tp.height;
+            }
+        }
 
-    // ===== HELPER: Validate przejścia against segment map =====
-    // Returns { valid, isMinimal, errors[], konusConflict: bool, criticalConflict: bool, reductionConflict: bool }
-    function validatePrzejscia(bottomUp) {
-        if (!well.przejscia || well.przejscia.length === 0) return { valid: true, isMinimal: false, errors: [] };
-        let usedMinimal = false;
-        const errors = [];
+        let isMinimal = false;
+        let valid = true;
+        let errors = [];
 
-        // Znajdź pozycję płyty redukcyjnej (żadne przejście nie może wystąpić powyżej jej osi dolnej)
-        const reductionSeg = bottomUp.find(s => s.type === 'plyta_redukcyjna' || s.type === 'reduction');
-        const reductionTopMm = reductionSeg ? reductionSeg.start : null;
+        holes.forEach((h, idx) => {
+            const hTop = h.z + h.ruraDz;
+            const hBot = h.z;
+            const effZdD = h.z === 0 ? 0 : h.zdD;
+            const resTop = hTop + h.zdG;
+            const resBot = hBot - effZdD;
+            const resTopMin = hTop + h.zdGM;
+            const effZdDM = h.z === 0 ? 0 : h.zdDM;
+            const resBotMin = hBot - effZdDM;
 
-        for (let pi = 0; pi < well.przejscia.length; pi++) {
-            const pr = well.przejscia[pi];
-            let pel = parseFloat(pr.rzednaWlaczenia);
-            if (isNaN(pel)) pel = rzDna;
-            const mmFromBottom = (pel - rzDna) * 1000;
+            let strictValid = true;
+            let minValid = true;
 
-            const pprod = studnieProducts.find(x => x.id === pr.productId);
-            let prDNNum = 160;
-            if (pprod) {
-                if (typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-                    prDNNum = parseFloat(pprod.dn.split('/')[1]) || 160;
+            for (let s of segs) {
+                if (s.type !== 'dennica' || true) {
+                    if (s.end >= resBot && s.end <= resTop) strictValid = false;
+                    if (s.end >= resBotMin && s.end <= resTopMin) minValid = false;
+                }
+
+                const isForbidden = ['konus', 'plyta_din', 'plyta_redukcyjna', 'pierscien_odciazajacy'].includes(s.type);
+                if (isForbidden) {
+                    if ((hTop > s.start && hBot < s.end)) {
+                        strictValid = false; minValid = false;
+                        errors.push(`Kolizja otworu z elementem ${s.type}`);
+                    }
+                }
+                if (s.type === 'plyta_redukcyjna') {
+                    if (hBot >= s.start) {
+                        strictValid = false; minValid = false;
+                        errors.push(`Przejście nie może być powyżej płyty redukcyjnej`);
+                    }
+                }
+            }
+
+            if (!strictValid) {
+                if (minValid) {
+                    isMinimal = true;
                 } else {
-                    prDNNum = parseFloat(pprod.dn) || 160;
+                    valid = false;
+                    errors.push(`Kolizja otworu Z=${h.z} ze złączami`);
                 }
             }
+        });
 
-            const prName = pprod ? `${pprod.name} DN${prDNNum}` : `Przejście DN${prDNNum}`;
-            const holeCenter = mmFromBottom;
-            const holeRadius = prDNNum / 2;
-
-            // ZASADA PŁYTY REDUKCYJNEJ: Przejście nie może być powyżej płyty
-            if (reductionTopMm !== null && holeCenter >= reductionTopMm) {
-                errors.push(`Przejście #${pi + 1} [${prName}]: BŁĄD — otwór w strefie redukcji (wymagane podniesienie redukcji)`);
-                return { valid: false, isMinimal: false, errors, reductionConflict: true };
-            }
-
-            if (!pprod) continue;
-            const zGora = parseFloat(pprod.zapasGora) || 0;
-            const zDol = parseFloat(pprod.zapasDol) || 0;
-            const zGoraMin = parseFloat(pprod.zapasGoraMin) || 0;
-            const zDolMin = parseFloat(pprod.zapasDolMin) || 0;
-
-            let holeValid = false;
-            let holeMinimal = false;
-            let holeMinimalStr = '';
-            let collisionStr = '';
-            let elTypeStr = '';
-
-            // FORBIDDEN ZONES
-            const FORBIDDEN_TYPES = ['plyta_din', 'plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy', 'plyta_redukcyjna', 'reduction'];
-            const KONUS_TYPES = ['konus'];
-
-            for (let fz = 0; fz < bottomUp.length; fz++) {
-                const fzEl = bottomUp[fz];
-                if (holeCenter >= fzEl.start && holeCenter < fzEl.end) {
-                    if (KONUS_TYPES.includes(fzEl.type)) {
-                        errors.push(`Przejście #${pi + 1} [${prName}]: otwór w strefie konusa — wymagana zmiana na Płytę Standard`);
-                        return { valid: false, isMinimal: false, errors, konusConflict: true };
-                    }
-                    if (FORBIDDEN_TYPES.includes(fzEl.type)) {
-                        const isDin = fzEl.type === 'plyta_din';
-                        errors.push(`Przejście #${pi + 1} [${prName}]: BŁĄD${isDin ? ' KRYTYCZNY' : ''} — otwór w zabronionej strefie (${fzEl.type})`);
-                        return { valid: false, isMinimal: false, errors, criticalConflict: isDin };
-                    }
-                    break;
-                }
-            }
-
-            // OBLICZANIE LUZÓW
-            for (let i = 0; i < bottomUp.length; i++) {
-                const el = bottomUp[i];
-                if (holeCenter >= el.start && holeCenter < el.end) {
-                    elTypeStr = el.type === 'dennica' ? 'dennicy' : (el.type.startsWith('krag') ? 'kręgu' : el.type);
-                    const isBottomMost = (i === 0);
-
-                    // Specjalna zasada dla zapasu dół w dennicy = zignoruj
-                    const isPipeAtBottom = (isBottomMost && Math.abs(holeCenter) < 1);
-                    const effectiveZDol = isPipeAtBottom ? -9999 : zDol;
-                    const effectiveZDolMin = isPipeAtBottom ? -9999 : zDolMin;
-
-                    const bottomClearance = holeCenter - el.start - holeRadius;
-                    const topClearance = el.end - holeCenter - holeRadius;
-
-                    // Sprawdzamy czy mieści się z luzem standardowym
-                    if (bottomClearance >= effectiveZDol && topClearance >= zGora) {
-                        holeValid = true;
-                    }
-                    // Fallback na min
-                    else if (bottomClearance >= effectiveZDolMin && topClearance >= zGoraMin) {
-                        holeValid = true;
-                        holeMinimal = true;
-                        holeMinimalStr = `(zostaje w ${elTypeStr}: dół ${bottomClearance.toFixed(0)}mm, góra ${topClearance.toFixed(0)}mm)`;
-                    } else {
-                        collisionStr = `(w ${elTypeStr} wymagane: dół ${effectiveZDol.toFixed(0)}mm, góra ${zGora.toFixed(0)}mm | aktualnie: dół ${bottomClearance.toFixed(0)}mm, góra ${topClearance.toFixed(0)}mm)`;
-                    }
-                    break;
-                }
-            }
-
-            if (!holeValid) {
-                const elLabel = elTypeStr ? `(${elTypeStr.charAt(0).toUpperCase() + elTypeStr.slice(1)})` : '(połączenie)';
-                if (collisionStr) {
-                    errors.push(`Przejście #${pi + 1} [${prName}] ${elLabel}: kolizja zapasów ${collisionStr}`);
-                } else {
-                    errors.push(`Przejście #${pi + 1} [${prName}] ${elLabel}: kolizja na połączeniu elementów`);
-                }
-                return { valid: false, isMinimal: false, errors };
-            }
-            if (holeMinimal) {
-                usedMinimal = true;
-                const elLabel = elTypeStr ? `(${elTypeStr.charAt(0).toUpperCase() + elTypeStr.slice(1)})` : '';
-                errors.push(`Przejście #${pi + 1} [${prName}] ${elLabel}: zastosowano zapas minimalny ${holeMinimalStr}`);
-            }
-        }
-        return { valid: true, isMinimal: usedMinimal, errors };
+        return { valid, isMinimal, errors };
     }
 
-    // ===== HELPER: Build segment map from bottom =====
-    function buildSegmentMap(dennica, kregItems, avrItems, topItems) {
-        const bottomUp = [];
-        bottomUp.push({ type: 'dennica', height: dennica.height, start: 0, end: dennica.height });
-        let currY = dennica.height;
-        for (const kItem of kregItems) {
-            const kProd = studnieProducts.find(p => p.id === kItem.productId);
-            if (!kProd) continue;
-            for (let i = 0; i < kItem.quantity; i++) {
-                const segType = (kProd.componentType === 'krag_ot') ? 'krag_ot' : 'krag';
-                bottomUp.push({ type: segType, height: kProd.height, start: currY, end: currY + kProd.height });
-                currY += kProd.height;
-            }
-        }
-        for (const aItem of avrItems) {
-            const aProd = studnieProducts.find(p => p.id === aItem.productId);
-            if (aProd) {
-                for (let i = 0; i < aItem.quantity; i++) {
-                    bottomUp.push({ type: 'avr', height: aProd.height, start: currY, end: currY + aProd.height });
-                    currY += aProd.height;
-                }
-            }
-        }
-        // Add top closure segments (konus, płyta DIN, pierścień, płyta odciążająca, wlaz)
-        if (topItems && topItems.length > 0) {
-            // Top items are ordered top-to-bottom (wlaz first, then plate/konus),
-            // but segments build bottom-to-top. Reverse to add in ascending order.
-            const reversed = [...topItems].reverse();
-            for (const tItem of reversed) {
-                const tProd = studnieProducts.find(p => p.id === tItem.productId);
-                if (!tProd) continue;
-                for (let i = 0; i < tItem.quantity; i++) {
-                    bottomUp.push({ type: tProd.componentType, height: tProd.height, start: currY, end: currY + tProd.height });
-                    currY += tProd.height;
-                }
-            }
-        }
-        return bottomUp;
-    }
-
-    // ===== MAIN SOLVER =====
-    function solve(tolBelow, tolAbove, maxAvr, skipPrzejsciaCheck) {
-        let bestSolution = null;
+    function solve(tolBelow, tolAbove, maxAvr, skipHolesValid) {
+        let best = null;
         let bestScore = Infinity;
 
         for (const topCfg of topConfigs) {
-            const bodyTarget = requiredMm - topCfg.height;
-            if (bodyTarget < 0) continue;
+            for (const dennica of dennicy) {
+                if (dennica.height < maxReqHMin) continue;
+                let reqD = maxReqH;
+                let denIsMin = false;
+                if (dennica.height < reqD) denIsMin = true;
 
-            // --- SCENARIO A: Normal (same DN) --- (skip if reduction is forced)
-            if (!canReduce) for (const dennica of dennicy) {
-                const kregTargetBase = bodyTarget - dennica.height;
-                const minAvr = avrRings.length > 0 ? avrRings[avrRings.length - 1].height : 0;
+                const targetBody = requiredMm - topCfg.height - dennica.height;
+                if (targetBody < 0) continue;
 
-                const targetsToTry = [kregTargetBase];
-                // If possible, try to forcibly leave a gap for at least the smallest AVR ring
-                if (minAvr > 0 && kregTargetBase > minAvr) {
-                    targetsToTry.push(kregTargetBase - minAvr);
+                const { kItems, filled } = fillKregi(targetBody, kregi);
+
+                const deficit = requiredMm - (dennica.height + topCfg.height + filled);
+                if (deficit > maxAvr || deficit < -tolAbove) continue;
+
+                let avrItems = [];
+                let avrH = 0;
+                let left = deficit;
+                for (const avr of avrRings) {
+                    if (left <= 0) break;
+                    const qty = Math.floor(left / avr.height);
+                    if (qty > 0) {
+                        avrItems.push({ productId: avr.id, quantity: qty });
+                        left -= avr.height * qty;
+                        avrH += avr.height * qty;
+                    }
                 }
+                const diff = (dennica.height + topCfg.height + filled + avrH) - requiredMm;
+                if (diff < -tolBelow || diff > tolAbove) continue;
 
-                for (const currentTarget of targetsToTry) {
-                    const { kregItems, filled: kregFilled } = fillKregi(currentTarget, kregi);
+                const conf = checkConflicts(kItems, dennica.height, 0, topCfg.items);
+                if (!conf.valid && !skipHolesValid) continue;
 
-                    // Rejection rule: If it's a relief plate but no krag could fit, reject this topCfg 
-                    // and wait for the loop to naturally move to the fallback DIN config
-                    if (topCfg.isRelief && kregItems.length === 0) continue;
+                let score = dennica.height * 1000 + kItems.length * 10;
+                if (diff !== 0) score += Math.abs(diff) * 5;
+                if (conf.isMinimal || denIsMin) score += 50000;
+                if (topCfg.label.includes('zamiennik')) score += 100000;
 
-                    const totalWithoutAVR = topCfg.height + kregFilled + dennica.height;
-                    const deficit = requiredMm - totalWithoutAVR;
-                    if (deficit > maxAvr) continue;
-                    if (deficit < -tolAbove) continue;
-                    const { avrItems, avrHeight } = fillAVR(deficit, maxAvr);
-                    const totalFinal = totalWithoutAVR + avrHeight;
-                    const diff = totalFinal - requiredMm;
-                    if (diff > tolAbove) continue;
-                    if (diff < -tolBelow) continue;
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = {
+                        topItems: [...topCfg.items],
+                        kregItems: kItems.map(ki => ({ productId: ki.productId, quantity: ki.quantity })),
+                        dennica: { productId: dennica.id, quantity: 1 },
+                        avrItems: avrItems,
+                        totalHeight: dennica.height + topCfg.height + filled + avrH,
+                        diff: diff,
+                        topLabel: topCfg.label,
+                        errors: conf.errors,
+                        isMinimal: conf.isMinimal || denIsMin
+                    };
+                }
+            }
+        }
 
-                    // Przejscia validation (includes forbidden zone checks)
-                    let przejsciaResult = { valid: true, isMinimal: false, errors: [] };
-                    let segmentsA = buildSegmentMap(dennica, kregItems, avrItems, topCfg.items);
-                    przejsciaResult = validatePrzejscia(segmentsA);
+        if (canReduce) {
+            let topRedItems = [];
+            let topRedH = 0;
+            const redTopProducts = dn1000Products.filter(p => ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType));
+            const rZak = well.redukcjaZakonczenie ? redTopProducts.find(p => p.id === well.redukcjaZakonczenie) : redTopProducts.find(p => p.componentType === 'konus');
+            if (rZak) {
+                topRedItems.push({ productId: rZak.id, quantity: 1 });
+                topRedH += rZak.height;
+            }
 
-                    if (!skipPrzejsciaCheck) {
-                        if (!przejsciaResult.valid) {
-                            // konusConflict → skip this topCfg, solver will try next (Płyta Standard)
-                            if (przejsciaResult.konusConflict) break; // break target loop, will break out of dennica later
-                            continue; // try next target/dennica
+            let dynamicMinBottom = well.redukcjaMinH || 2500;
+            let lift = 0;
+            while (lift < 5) {
+                for (const dennica of dennicy) {
+                    if (dennica.height < maxReqHMin) continue;
+                    let bottomNeed = Math.max(dynamicMinBottom - dennica.height, 0);
+                    const bKregi = fillKregi(bottomNeed, kregi);
+                    const bSec = dennica.height + bKregi.filled;
+
+                    const dn1000Need = requiredMm - bSec - reductionPlate.height - topRedH;
+                    if (dn1000Need < 0) continue;
+
+                    const t1000 = fillKregi(dn1000Need, dn1000Kregi);
+                    const currentTotal = bSec + reductionPlate.height + topRedH + t1000.filled;
+
+                    const deficit = requiredMm - currentTotal;
+                    if (deficit > maxAvr || deficit < -tolAbove) continue;
+                    let avrItems = [];
+                    let avrH = 0;
+                    let left = deficit;
+                    for (const avr of avrRings) {
+                        if (left <= 0) break;
+                        const qty = Math.floor(left / avr.height);
+                        if (qty > 0) {
+                            avrItems.push({ productId: avr.id, quantity: qty });
+                            left -= avr.height * qty;
+                            avrH += avr.height * qty;
                         }
-                    } else {
-                        // Even if skipping checks, we MUST avoid Konus if the transition intersects it,
-                        // so it falls back to Płyta Standard instead of keeping Konus.
-                        if (!przejsciaResult.valid && przejsciaResult.konusConflict) break;
                     }
 
-                    // Apply drilled rings (OT) for transitions above dennica
-                    const otResult = applyDrilledRings(kregItems, segmentsA, well, availProducts);
-                    const finalKregItems = otResult.items;
+                    const diff = currentTotal + avrH - requiredMm;
+                    if (diff < -tolBelow || diff > tolAbove) continue;
 
-                    // If hole spans dennica-ring junction → try taller dennica
-                    if (otResult.needsTallerDennica) continue;
+                    let redKItems = [];
+                    bKregi.kItems.forEach(k => redKItems.push(k));
+                    redKItems.push({ productId: reductionPlate.id, quantity: 1, _h: reductionPlate.height });
+                    t1000.kItems.forEach(k => redKItems.push(k));
 
-                    let score = dennica.height * 10000;
-                    if (diff >= 0) score += diff * 3;
-                    else score += Math.abs(diff);
-                    score += (kregItems.length + avrItems.length) * 0.1;
-                    if (przejsciaResult.isMinimal) score += 20000000; // Penalize minimal clearances to force normal clearances whenever possible
-                    // Heavily penalize absence of an AVR ring as requested by user
-                    if (avrItems.length === 0) score += 20000;
+                    const conf = checkConflicts(redKItems, dennica.height, reductionPlate.height, topRedItems);
 
-                    // Strongly penalize the fallback closure (e.g. Płyta DIN replacing Konus)
-                    // so it is only used if the primary closure fails completely (e.g. transition conflicts)
-                    if (topCfg !== topConfigs[0]) score += 50000000;
-                    if (przejsciaResult.criticalConflict) score += 100000000; // avoid critical conflicts at all costs
+                    if (!conf.valid && !skipHolesValid) {
+                        if (conf.errors.some(e => e.includes('redukcyjnej') || e.includes('konus'))) {
+                            break;
+                        }
+                        continue;
+                    }
 
-                    score += getNonStdPenalty([...topCfg.items, ...finalKregItems, ...avrItems], dennica);
+                    let score = dennica.height * 1000 + 4000;
+
+                    const oversizedBottom = bSec - dynamicMinBottom;
+                    if (oversizedBottom > 0) {
+                        score += oversizedBottom * 40;
+                    }
+
+                    if (diff !== 0) score += Math.abs(diff) * 5;
+                    if (conf.isMinimal) score += 50000;
 
                     if (score < bestScore) {
                         bestScore = score;
-                        bestSolution = {
-                            topItems: [...topCfg.items],
-                            kregItems: [...finalKregItems].reverse(),
+                        best = {
+                            reductionUsed: true,
+                            topItems: [...topRedItems],
+                            kregItems: [
+                                ...t1000.kItems.map(ki => ({ productId: ki.productId, quantity: ki.quantity })).reverse(),
+                                { productId: reductionPlate.id, quantity: 1 },
+                                ...bKregi.kItems.map(ki => ({ productId: ki.productId, quantity: ki.quantity })).reverse()
+                            ],
                             dennica: { productId: dennica.id, quantity: 1 },
-                            avrItems: [...avrItems],
-                            totalHeight: totalFinal,
+                            avrItems: avrItems,
+                            totalHeight: currentTotal + avrH,
                             diff: diff,
-                            topLabel: topCfg.label,
-                            reductionItems: null,
-                            configErrors: przejsciaResult.errors,
-                            isMinimalClearance: przejsciaResult.isMinimal,
-                            hasCriticalConflict: przejsciaResult.criticalConflict
+                            topLabel: rZak ? rZak.name + ' (Redukcja)' : 'Redukcja',
+                            errors: conf.errors,
+                            isMinimal: conf.isMinimal || (dennica.height < maxReqH)
                         };
                     }
                 }
-            }
-
-            // --- SCENARIO B: Reduction (DN → DN1000) ---
-            // Structure: Dennica DN(well) + Kręgi DN(well) (min 2500mm combined) + Płyta redukcyjna + Kręgi DN1000 + Zakończenie DN1000
-            if (canReduce) {
-                const redHeight = reductionPlate.height; // 200mm
-                const MIN_BOTTOM_SECTION = well.redukcjaMinH || 2500; // configurable minimum dennica + kręgi DN(well)
-
-                // Top closure for reduction must be DN1000
-                const dn1000TopProducts = dn1000Products.filter(p =>
-                    ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType)
-                );
-
-                // Build DN1000 top config
-                let redTopItems = [];
-                let redTopHeight = 0;
-                let redTopLabel = '';
-
-                // Check if user selected a specific zakończenie for reduction
-                const redZak = well.redukcjaZakonczenie;
-                if (redZak) {
-                    // Use the directly selected DN1000 product
-                    const redProd = dn1000TopProducts.find(p => p.id === redZak);
-                    if (redProd) {
-                        // If plate type that needs pierścień, add as pair
-                        if (redProd.componentType === 'plyta_najazdowa' || redProd.componentType === 'plyta_zamykajaca' || redProd.componentType === 'pierscien_odciazajacy') {
-                            const pairedRing = dn1000Products.find(p => p.componentType === 'pierscien_odciazajacy');
-                            const pairedPlate = (redProd.componentType === 'pierscien_odciazajacy')
-                                ? dn1000Products.find(p => p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa')
-                                : redProd;
-                            if (pairedRing && pairedPlate) {
-                                redTopItems.push({ productId: pairedPlate.id, quantity: 1 });
-                                redTopItems.push({ productId: pairedRing.id, quantity: 1 });
-                                redTopHeight += pairedPlate.height + pairedRing.height;
-                                redTopLabel = pairedPlate.name + ' + Pierścień';
-                            } else {
-                                redTopItems.push({ productId: redProd.id, quantity: 1 });
-                                redTopHeight += redProd.height;
-                                redTopLabel = redProd.name;
-                            }
-                        } else {
-                            redTopItems.push({ productId: redProd.id, quantity: 1 });
-                            redTopHeight += redProd.height;
-                            redTopLabel = redProd.name;
-                        }
-                    }
-                }
-                if (redTopItems.length === 0) {
-                    // Reduction: konus DN1000 first, fallback to plyta_din DN1000
-                    let dn1000Default = dn1000Products.find(p => p.componentType === 'konus');
-                    if (!dn1000Default) dn1000Default = dn1000Products.find(p => p.componentType === 'plyta_din');
-                    if (dn1000Default) {
-                        redTopItems.push({ productId: dn1000Default.id, quantity: 1 });
-                        redTopHeight += dn1000Default.height;
-                        redTopLabel = dn1000Default.name;
-                    }
-                }
-
-                // Add wlaz on top
-                if (wlazItem) {
-                    const wlazProd = studnieProducts.find(p => p.id === wlazItem.productId);
-                    if (wlazProd) {
-                        redTopItems.unshift(wlazItem);
-                        redTopHeight += wlazProd.height * wlazItem.quantity;
-                    }
-                }
-
-                let dynamicMinBottom = well.redukcjaMinH || 2500;
-                let reductionConflictDetected = false;
-                let liftingTries = 0;
-
-                while (liftingTries < 10) {
-                    reductionConflictDetected = false;
-                    for (const dennica of dennicy) {
-                        // Bottom section: dennica + kręgi DN(well) must be >= dynamicMinBottom
-                        const bottomNeeded = Math.max(dynamicMinBottom - dennica.height, 0);
-                        const { kregItems: bottomKregItems, filled: bottomKregFilled } = fillKregi(bottomNeeded, kregi);
-                        const actualBottomSection = dennica.height + bottomKregFilled;
-
-                        // If bottom section is below minimum, try adding more
-                        if (actualBottomSection < dynamicMinBottom - 100) continue; // allow 100mm tolerance
-
-                        // Remaining height for DN1000 section
-                        const dn1000SectionTargetBase = requiredMm - actualBottomSection - redHeight - redTopHeight;
-                        if (dn1000SectionTargetBase < 0) continue;
-
-                        const minAvr = avrRings.length > 0 ? avrRings[avrRings.length - 1].height : 0;
-                        const targetsToTry = [dn1000SectionTargetBase];
-                        if (minAvr > 0 && dn1000SectionTargetBase > minAvr) {
-                            targetsToTry.push(dn1000SectionTargetBase - minAvr);
-                        }
-
-                        for (const currentTarget of targetsToTry) {
-                            const { kregItems: k1000ItemsBase, filled: k1000FilledBase } = fillKregi(currentTarget, dn1000Kregi);
-                            const k1000Items = [...k1000ItemsBase];
-
-                            let currentRedTopItems = [...redTopItems];
-                            let currentRedTopHeight = redTopHeight;
-                            let currentRedTopLabel = redTopLabel;
-
-                            // Fallback: If it's a relief plate but no DN1000 krag fits, switch to plyta DIN
-                            const isRedTopRelief = redZak ? true : false; // roughly
-                            const hasReliefName = redTopLabel.includes('Odciążająca');
-                            if (hasReliefName && k1000Items.length === 0) {
-                                let dn1000Default = dn1000Products.find(p => p.componentType === 'plyta_din');
-                                if (!dn1000Default) dn1000Default = dn1000Products.find(p => p.componentType === 'konus');
-                                if (dn1000Default) {
-                                    currentRedTopItems = [{ productId: dn1000Default.id, quantity: 1 }];
-                                    currentRedTopHeight = dn1000Default.height;
-                                    currentRedTopLabel = dn1000Default.name;
-                                    if (wlazItem) {
-                                        const wlazProd = studnieProducts.find(p => p.id === wlazItem.productId);
-                                        if (wlazProd) {
-                                            currentRedTopItems.unshift(wlazItem);
-                                            currentRedTopHeight += wlazProd.height * wlazItem.quantity;
-                                        }
-                                    }
-                                    // Recalculate k1000 items since top height changed
-                                    const newDn1000SectionTarget = requiredMm - actualBottomSection - redHeight - currentRedTopHeight;
-                                    const isForcedAvr = (currentTarget !== dn1000SectionTargetBase);
-                                    const finalNewTarget = isForcedAvr ? (newDn1000SectionTarget - minAvr) : newDn1000SectionTarget;
-
-                                    const newFill = fillKregi(finalNewTarget, dn1000Kregi);
-                                    k1000Items.length = 0;
-                                    k1000Items.push(...newFill.kregItems);
-                                }
-                            }
-
-                            // Recalculate k1000Filled properly
-                            const k1000ActualFilled = k1000Items.reduce((acc, k) => {
-                                const kp = studnieProducts.find(p => p.id === k.productId);
-                                return acc + (kp ? kp.height * k.quantity : 0);
-                            }, 0);
-
-                            const totalWithoutAVR = currentRedTopHeight + actualBottomSection + redHeight + k1000ActualFilled;
-                            const deficit = requiredMm - totalWithoutAVR;
-                            if (deficit > maxAvr) continue;
-                            if (deficit < -tolAbove) continue;
-                            const { avrItems, avrHeight } = fillAVR(deficit, maxAvr);
-                            const totalFinal = totalWithoutAVR + avrHeight;
-                            const diff = totalFinal - requiredMm;
-                            if (diff > tolAbove) continue;
-                            if (diff < -tolBelow) continue;
-
-                            // Build full segment map for validation and OT rings
-                            const redSegments = [];
-                            redSegments.push({ type: 'dennica', height: dennica.height, start: 0, end: dennica.height });
-                            let cyR = dennica.height;
-                            for (const kItem of bottomKregItems) {
-                                const kProd = studnieProducts.find(p => p.id === kItem.productId);
-                                if (!kProd) continue;
-                                for (let qi = 0; qi < kItem.quantity; qi++) {
-                                    redSegments.push({ type: 'krag', height: kProd.height, start: cyR, end: cyR + kProd.height });
-                                    cyR += kProd.height;
-                                }
-                            }
-                            redSegments.push({ type: 'reduction', height: redHeight, start: cyR, end: cyR + redHeight });
-                            cyR += redHeight;
-                            for (const kItem of k1000Items) {
-                                const kProd = studnieProducts.find(p => p.id === kItem.productId);
-                                if (!kProd) continue;
-                                for (let qi = 0; qi < kItem.quantity; qi++) {
-                                    redSegments.push({ type: 'krag', height: kProd.height, start: cyR, end: cyR + kProd.height });
-                                    cyR += kProd.height;
-                                }
-                            }
-                            // Add top closure segments to segment map
-                            const redTopReversed = [...currentRedTopItems].reverse();
-                            for (const tItem of redTopReversed) {
-                                const tProd = studnieProducts.find(p => p.id === tItem.productId);
-                                if (!tProd) continue;
-                                for (let ti = 0; ti < tItem.quantity; ti++) {
-                                    redSegments.push({ type: tProd.componentType, height: tProd.height, start: cyR, end: cyR + tProd.height });
-                                    cyR += tProd.height;
-                                }
-                            }
-
-                            let redPrzejsciaErrors = [];
-                            let redIsMinimal = false;
-                            let redCritical = false;
-                            const prRes = validatePrzejscia(redSegments);
-
-                            if (!skipPrzejsciaCheck) {
-                                if (!prRes.valid) {
-                                    if (prRes.konusConflict) break; // skip to next topCfg
-                                    if (prRes.reductionConflict) { reductionConflictDetected = true; continue; }
-                                    continue;
-                                }
-                                redPrzejsciaErrors = prRes.errors;
-                                redIsMinimal = prRes.isMinimal;
-                                redCritical = prRes.criticalConflict;
-                            } else {
-                                if (!prRes.valid && prRes.konusConflict) break;
-                                if (!prRes.valid && prRes.reductionConflict) { reductionConflictDetected = true; continue; }
-                                redPrzejsciaErrors = prRes.errors;
-                                redIsMinimal = prRes.isMinimal;
-                                redCritical = prRes.criticalConflict;
-                            }
-
-                            // Apply OT rings for bottom section
-                            const otResult = applyDrilledRings(bottomKregItems, redSegments, well, availProducts);
-                            const finalBottomKregItems = otResult.items;
-
-                            // If hole spans dennica-ring junction → try taller dennica
-                            if (otResult.needsTallerDennica) continue;
-
-                            // Reduction adds cost, so penalize slightly
-                            let score = dennica.height * 10000 + 500;
-                            if (diff >= 0) score += diff * 3;
-                            else score += Math.abs(diff);
-                            score += (bottomKregItems.length + k1000Items.length + avrItems.length) * 0.1;
-                            if (redIsMinimal) score += 20000000;
-                            if (redCritical) score += 100000000;
-
-                            // Heavily penalize absence of an AVR ring as requested by user
-                            if (avrItems.length === 0) score += 20000;
-
-                            score += getNonStdPenalty([...currentRedTopItems, { productId: reductionPlate.id }, ...k1000Items, ...finalBottomKregItems, ...avrItems], dennica);
-
-                            if (score < bestScore) {
-                                bestScore = score;
-                                bestSolution = {
-                                    topItems: [...currentRedTopItems],
-                                    kregItems: [...[...k1000Items].reverse(), { productId: reductionPlate.id, quantity: 1 }, ...[...finalBottomKregItems].reverse()],
-                                    dennica: { productId: dennica.id, quantity: 1 },
-                                    avrItems: [...avrItems],
-                                    totalHeight: totalFinal,
-                                    diff: diff,
-                                    topLabel: currentRedTopLabel,
-                                    reductionItems: [{ productId: reductionPlate.id, quantity: 1 }],
-                                    configErrors: redPrzejsciaErrors,
-                                    isMinimalClearance: redIsMinimal,
-                                    hasCriticalConflict: redCritical
-                                };
-                            }
-                        }
-                    }
-                    if (reductionConflictDetected) {
-                        dynamicMinBottom += 250; // Podnieś układ redukcyjny w górę o kolejny krąg (25cm)
-                        liftingTries++;
-                    } else {
-                        break;
-                    }
-                }
+                dynamicMinBottom += 250;
+                lift++;
             }
         }
-        return bestSolution;
+
+        return best;
     }
 
-    // --- PASS 1: Strict tolerances (maxAvr = 260mm = 26cm max!) ---
-    let bestSolution = solve(50, 20, 260, false);
+    let solution = solve(50, 20, 260, false);
     let fallback = false;
-    let fallbackReason = '';
+    let fallbackReason = "";
+    if (!solution) { solution = solve(50, 20, 260, true); if (solution) { fallback = true; fallbackReason = "kolizje przejść ominięte awaryjnie"; } }
 
-    // --- PASS 2: Relaxed tolerances if no solution ---
-    if (!bestSolution) {
-        bestSolution = solve(200, 20, 260, false);
-        if (bestSolution) {
-            fallback = true;
-            fallbackReason = 'brak możliwości doboru elementów dla ścisłej tolerancji wys. -50 / +20 mm';
-        }
-    }
+    if (!solution) { return { error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 26cm).` }; }
 
-    // --- PASS 3: Skip przejscia check if still no solution ---
-    if (!bestSolution) {
-        bestSolution = solve(200, 20, 260, true);
-        if (bestSolution) {
-            fallback = true;
-            fallbackReason = 'kolizja przejść szczelnych ze złączami lub kręgami uniemożliwiła standardowy dobór';
-        }
-    }
-
-    // --- PASS 4-6: If reduction was enabled but no solution found, fall back to no reduction ---
-    if (!bestSolution && canReduce) {
-        canReduce = false; // temporarily disable reduction
-        bestSolution = solve(50, 20, 260, false);
-        if (bestSolution) {
-            fallback = true;
-            fallbackReason = 'studnia zbyt niska na zastosowanie redukcji, dobrano układ bez redukcji';
-        } else {
-            bestSolution = solve(200, 20, 260, false);
-            if (bestSolution) {
-                fallback = true;
-                fallbackReason = 'studnia zbyt niska na zastosowanie redukcji oraz brak możliwości doboru elementów dla ścisłej tolerancji';
-            } else {
-                bestSolution = solve(200, 20, 260, true);
-                if (bestSolution) {
-                    fallback = true;
-                    fallbackReason = 'studnia zbyt niska na redukcję i kolizja przejść szczelnych';
-                }
-            }
-        }
-        if (bestSolution && !autoTriggered) {
-            showToast('Studnia za niska na redukcję — dobrano bez redukcji', 'warning');
-        }
-        canReduce = true; // restore
-    }
-
-    if (!bestSolution) {
-        if (!autoTriggered) showToast(`Nie znaleziono kombinacji dla ${fmtInt(requiredMm)} mm`, 'error');
-        well.configStatus = 'ERROR';
-        well.configErrors = ['Nie znaleziono prawidłowej konfiguracji elementów'];
-        refreshAll();
-        return;
-    }
-
-    // Build config in order: top → AVR → kręgi → dennica
-    // For reduction: kręgi = [DN1000 kręgi, płyta redukcyjna, DN-well kręgi]
-    const wlazItems = bestSolution.topItems.filter(item => {
+    const wlazItems = solution.topItems.filter(item => {
         const p = studnieProducts.find(pr => pr.id === item.productId);
         return p && p.componentType === 'wlaz';
     });
-    const otherTopItems = bestSolution.topItems.filter(item => {
+    const otherTopItems = solution.topItems.filter(item => {
         const p = studnieProducts.find(pr => pr.id === item.productId);
         return p && p.componentType !== 'wlaz';
     });
 
-    const newConfig = [
-        ...wlazItems,
-        ...bestSolution.avrItems,
-        ...otherTopItems,
-        ...bestSolution.kregItems,
-        bestSolution.dennica
-    ];
+    const kregItemsOrdered = solution.reductionUsed ? solution.kregItems : [...solution.kregItems].reverse();
 
-    // --- POST-PROCESSING: Konus + Krąg 250mm -> Konus+ ---
+    let newConfig = [...wlazItems, ...solution.avrItems, ...otherTopItems, ...kregItemsOrdered, solution.dennica];
+
     for (let i = 0; i < newConfig.length - 1; i++) {
         const itemKonus = newConfig[i];
         const prodKonus = studnieProducts.find(p => p.id === itemKonus.productId);
@@ -2485,7 +2142,6 @@ async function autoSelectComponents(autoTriggered = false) {
                 const itemKrag = newConfig[nextKragIdx];
                 const prodKrag = studnieProducts.find(p => p.id === itemKrag.productId);
 
-                // Wymieniamy tylko jeśli obok jest surowy krąg 250mm
                 if (prodKrag && prodKrag.height === 250 && prodKrag.componentType === 'krag') {
                     const konusPlus = availProducts.find(p => p.componentType === 'konus' && p.dn === prodKonus.dn && p.name.includes('Konus+'));
                     if (konusPlus) {
@@ -2498,48 +2154,22 @@ async function autoSelectComponents(autoTriggered = false) {
                     }
                 }
             }
-            break; // tylko jeden top closure
+            break;
         }
     }
 
-    well.config = newConfig;
-    // Only sort if not a reduction well (reduction items are already in proper structural order)
-    if (!bestSolution.reductionItems) {
-        sortWellConfigByOrder();
-    }
-
-    // Set technical status
-    const errors = bestSolution.configErrors || [];
-    if (fallback) {
-        errors.push(fallbackReason ? `Zastosowana rozszerzona tolerancja - ${fallbackReason}` : 'Zastosowana rozszerzona tolerancja');
-    }
-    if (bestSolution.hasCriticalConflict) {
-        well.configStatus = 'ERROR';
-    } else if (errors.length > 0 && bestSolution.isMinimalClearance) {
-        well.configStatus = 'WARNING';
-    } else if (errors.length > 0) {
-        well.configStatus = 'WARNING';
-    } else {
-        well.configStatus = 'OK';
-    }
-    well.configErrors = errors;
-    well.configSource = 'AUTO_JS';
-
-    refreshAll();
-
-    const diffStr = bestSolution.diff >= 0
-        ? `+${bestSolution.diff}mm`
-        : `${bestSolution.diff}mm`;
-    const redLabel = bestSolution.reductionItems ? ' + Redukcja DN1000' : '';
-    const fallbackLabel = fallback ? ' ⚠️ (rozszerzona tolerancja)' : '';
-    let statusIcon = '✅';
-    if (well.configStatus === 'WARNING') statusIcon = '⚠️';
-    if (well.configStatus === 'ERROR') statusIcon = '❗';
-
-    if (!autoTriggered) {
-        showToast(`${statusIcon} Auto-dobór: ${fmtInt(bestSolution.totalHeight)} mm (${diffStr}) | ${bestSolution.topLabel}${redLabel}${fallbackLabel}`, well.configStatus === 'OK' ? 'success' : 'warning');
-    }
+    return {
+        config: newConfig,
+        totalHeight: solution.totalHeight,
+        diff: solution.diff,
+        isMinimal: solution.isMinimal,
+        errors: solution.errors,
+        topLabel: solution.topLabel,
+        fallback,
+        fallbackReason
+    };
 }
+
 
 /* ===== WELLS LIST RENDERING ===== */
 function renderWellsList() {
@@ -4621,11 +4251,46 @@ window.highlightSvg = function (type, index) {
     document.querySelectorAll('.svg-' + type + '-' + index).forEach(el => {
         el.style.filter = 'drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9)) brightness(1.3)';
     });
+
+    // Auto-highlight corresponding list tile
+    if (type === 'cfg') {
+        const tile = document.querySelector('.config-tile[data-cfg-idx="' + index + '"]');
+        if (tile) tile.style.filter = 'brightness(1.1)';
+    } else if (type === 'prz') {
+        const tile = document.querySelector('div[data-prz-idx="' + index + '"]');
+        if (tile) tile.style.filter = 'brightness(1.1)';
+    }
 };
 window.unhighlightSvg = function (type, index) {
     document.querySelectorAll('.svg-' + type + '-' + index).forEach(el => {
         el.style.filter = '';
     });
+
+    if (type === 'cfg') {
+        const tile = document.querySelector('.config-tile[data-cfg-idx="' + index + '"]');
+        if (tile) tile.style.filter = 'brightness(1)';
+    } else if (type === 'prz') {
+        const tile = document.querySelector('div[data-prz-idx="' + index + '"]');
+        if (tile) tile.style.filter = 'brightness(1)';
+    }
+};
+
+window.svgPointerEnter = function (ev, idx) {
+    if (window.svgDragStartIndex >= 0) return; // blokowanie hovera w trkacie ciągnięcia
+    window.highlightSvg('cfg', idx);
+};
+
+window.svgPointerLeave = function (ev, idx) {
+    window.unhighlightSvg('cfg', idx);
+};
+
+window.svgPrzPointerEnter = function (ev, idx) {
+    if (window.svgDragStartIndex >= 0) return;
+    window.highlightSvg('prz', idx);
+};
+
+window.svgPrzPointerLeave = function (ev, idx) {
+    window.unhighlightSvg('prz', idx);
 };
 
 /* ===== WELL DIAGRAM (SVG) ===== */
@@ -4810,7 +4475,7 @@ function renderWellDiagram() {
                 `ondragend="window.handleCfgDragEnd(event)" ` +
                 `onmousedown="window.svgPointerDown(event, ${comp._cfgIdx})" ` +
                 `onmouseenter="window.svgPointerEnter(event, ${comp._cfgIdx})" ` +
-                `onmouseleave="window.svgPointerLeave(event)" ` +
+                `onmouseleave="window.svgPointerLeave(event, ${comp._cfgIdx})" ` +
                 `onmouseup="window.svgPointerUp(event, ${comp._cfgIdx})" ` +
                 `ontouchstart="window.svgTouchStart(event, ${comp._cfgIdx})" ` +
                 `ontouchend="window.svgTouchEnd(event)">`;
@@ -4933,12 +4598,12 @@ function renderWellDiagram() {
                 const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
 
                 if (isRect) {
-                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;"><rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
+                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 } else if (isEgg) {
                     // SVG ellipse for jajowe pipe cross-section
-                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;"><ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
+                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 } else {
-                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;"><circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
+                    svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 }
 
                 if (!isBack) {

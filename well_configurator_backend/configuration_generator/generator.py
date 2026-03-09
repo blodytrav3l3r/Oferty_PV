@@ -59,7 +59,7 @@ class ConfigurationGenerator:
                 target_distance=target_kregi_h, 
                 available_rings=kregi_list_dn, 
                 tolerance_below=50, 
-                tolerance_above=10
+                tolerance_above=20
             )
             
             if not success:
