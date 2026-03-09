@@ -3492,7 +3492,7 @@ function renderWellPrzejscia() {
     if (countEl) countEl.textContent = `(${well.przejscia.length})`;
 
     let totalPrice = 0;
-    let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.4rem;">';
+    let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem;">';
 
     well.przejscia.forEach((item, index) => {
         const p = studnieProducts.find(pr => pr.id === item.productId);
@@ -3523,110 +3523,103 @@ function renderWellPrzejscia() {
             const execAngle = (editPrzejscieState.angle === 0 || editPrzejscieState.angle === 360) ? 0 : (360 - editPrzejscieState.angle);
             const gons = (editPrzejscieState.angle * 400 / 360).toFixed(2);
 
-            html += `<div style="background:rgba(30,41,59,0.9); border:1.5px solid rgba(96,165,250,0.4); border-radius:8px; padding:0.5rem; position:relative; box-shadow:0 0 12px rgba(96,165,250,0.1);">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                <div style="display:flex; align-items:center; gap:0.3rem;">
-                  <span style="background:#60a5fa; color:#fff; font-size:0.55rem; font-weight:800; padding:0.1rem 0.35rem; border-radius:10px;">${index + 1}</span>
-                  <span style="font-size:0.65rem; font-weight:700; color:#60a5fa;">Edycja przejścia</span>
+            html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.8) 0%, rgba(30,41,59,0.95) 100%); border:1px solid rgba(96,165,250,0.5); border-left:4px solid #3b82f6; border-radius:8px; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(96,165,250,0.15); margin-bottom:0.3rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <div style="display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.2); padding:0.2rem 0.4rem; border-radius:4px;">
+                    <span style="font-size:0.65rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
+                  </div>
+                  <span style="font-size:0.75rem; font-weight:700; color:#60a5fa;">Edycja wariantu</span>
                 </div>
-                <button onclick="cancelPrzejscieEdit()" title="Anuluj" style="background:none; border:none; cursor:pointer; font-size:0.65rem; padding:0.1rem 0.3rem; color:var(--text-muted);">✕</button>
+                <button onclick="cancelPrzejscieEdit()" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-muted);">✕</button>
               </div>
               
-              <div style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Kategoria / Typ przejścia</div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.4rem; max-height:80px; overflow-y:auto; scrollbar-width:thin;">
+              <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Kategoria przejścia</div>
+              <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem; max-height:80px; overflow-y:auto; scrollbar-width:thin;">
                 ${allTypes.map(t => {
                 const isActive = t === editPrzejscieState.type;
-                return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.4rem; font-size:0.6rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(96,165,250,0.5)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#a5b4fc' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#93c5fd' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
             }).join('')}
               </div>
 
-              <div style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Średnica (DN)</div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem;">
+              <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Średnica (DN)</div>
+              <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.6rem;">
                 ${currentTypeDNs.map(pr => {
                 const isActive = pr.id === editPrzejscieState.dnId;
                 const dnLbl = (typeof pr.dn === 'string' && pr.dn.includes('/')) ? pr.dn : 'DN' + pr.dn;
-                return `<div onclick="window.editInlineSetDN('${pr.id}')" style="padding:0.25rem 0.4rem; font-size:0.6rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(34,197,94,0.5)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#4ade80' : 'var(--text-primary)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                return `<div onclick="window.editInlineSetDN('${pr.id}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(34,197,94,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#4ade80' : 'var(--text-primary)'}; transition:all 0.15s;">${dnLbl}</div>`;
             }).join('')}
               </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.3rem; margin-bottom:0.3rem;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-bottom:0.4rem;">
                 <div>
-                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Rzędna [m]</label>
-                  <input type="number" class="form-input" id="edit-rzedna-${index}" step="0.01" value="${editPrzejscieState.rzedna}" placeholder="142.50" style="padding:0.25rem 0.3rem; font-size:0.62rem;" onchange="window.syncEditState()">
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Rzędna włączenia [m]</label>
+                  <input type="number" class="form-input" id="edit-rzedna-${index}" step="0.01" value="${editPrzejscieState.rzedna}" placeholder="142.50" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
                 </div>
                 <div>
-                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Kąt [°]</label>
-                  <input type="number" class="form-input" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.25rem 0.3rem; font-size:0.62rem; color:#818cf8; font-weight:700;">
-                </div>
-                <div>
-                  <label style="font-size:0.5rem; color:var(--text-muted); display:block; margin-bottom:0.1rem;">Uwagi</label>
-                  <input type="text" class="form-input" id="edit-notes-${index}" value="${editPrzejscieState.notes}" placeholder="np. Wlot A" style="padding:0.25rem 0.3rem; font-size:0.62rem;" onchange="window.syncEditState()">
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Kąt włączenia [°]</label>
+                  <input type="number" class="form-input" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size:0.75rem; color:#818cf8; font-weight:800; text-align:center;">
                 </div>
               </div>
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; gap:0.8rem; font-size:0.58rem;">
-                  <span style="color:var(--text-muted);">Kąt wyk: <strong id="edit-exec-${index}" style="color:var(--text-primary);">${execAngle}°</strong></span>
+              
+              <div style="margin-bottom:0.5rem;">
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Uwagi dodatkowe</label>
+                  <input type="text" class="form-input" id="edit-notes-${index}" value="${editPrzejscieState.notes}" placeholder="np. Wlot A, PVC" style="padding:0.3rem 0.4rem; font-size:0.7rem;" onchange="window.syncEditState()">
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.4rem; border-top:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex; gap:0.8rem; font-size:0.65rem;">
+                  <span style="color:var(--text-muted);">Wyk: <strong id="edit-exec-${index}" style="color:var(--text-primary);">${execAngle}°</strong></span>
                   <span style="color:var(--text-muted);">Gony: <strong id="edit-gony-${index}" style="color:var(--success);">${gons}<sup>g</sup></strong></span>
                 </div>
-                <div style="display:flex; gap:0.25rem;">
-                  <button onclick="cancelPrzejscieEdit()" style="padding:0.25rem 0.5rem; font-size:0.6rem; border-radius:5px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--text-muted); cursor:pointer;">Anuluj</button>
-                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.25rem 0.6rem; font-size:0.6rem;">💾 Zapisz</button>
+                <div style="display:flex; gap:0.4rem;">
+                  <button onclick="cancelPrzejscieEdit()" style="padding:0.3rem 0.6rem; font-size:0.7rem; border-radius:5px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
+                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.7rem;">💾 Zapisz</button>
                 </div>
               </div>
             </div>`;
             return;
         }
 
-        html += `<div style="background:rgba(30,41,59,0.7); border:1px solid rgba(99,102,241,0.15); border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease;"
-                      onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.borderColor='rgba(99,102,241,0.15)'">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-            <div style="display:flex; align-items:center; gap:0.3rem;">
-              <span style="background:${angleColor}; color:#fff; font-size:0.55rem; font-weight:800; padding:0.1rem 0.35rem; border-radius:10px;">${index + 1}</span>
-              <span style="font-size:0.68rem; font-weight:700; color:var(--text-primary);">${typeName}</span>
+        html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid #1e3a8a; border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem;"
+                      onmouseenter="this.style.filter='brightness(1.1)'" onmouseleave="this.style.filter='brightness(1)'">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+                <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.15rem; border-radius:4px;">
+                  <button ${!isFirst ? 'onclick="movePrzejscie(' + index + ', -1)" class="cfg-move-btn"' : 'disabled'} title="W górę" style="background:none; border:none; color:var(--text-muted); font-size:0.6rem; cursor:${!isFirst ? 'pointer' : 'default'}">▲</button>
+                  <span style="font-size:0.6rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
+                  <button ${!isLast ? 'onclick="movePrzejscie(' + index + ', 1)" class="cfg-move-btn"' : 'disabled'} title="W dół" style="background:none; border:none; color:var(--text-muted); font-size:0.6rem; cursor:${!isLast ? 'pointer' : 'default'}">▼</button>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:0.1rem;">
+                  <div style="font-weight:700; color:var(--text-primary); font-size:0.75rem; line-height:1.2;">${typeName}</div>
+                  <div style="font-size:0.6rem; color:var(--text-muted);">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn}</div>
+                  ${item.notes ? `<div style="font-size:0.55rem; color:#94a3b8; font-style:italic;">📝 ${item.notes}</div>` : ''}
+                </div>
             </div>
-            <div style="display:flex; gap:0.15rem;">
-              ${!isFirst ? `<button onclick="movePrzejscie(${index},-1)" title="W górę" style="background:none; border:none; cursor:pointer; font-size:0.6rem; padding:0.1rem 0.2rem; color:var(--text-muted); opacity:0.7;">⬆</button>` : ''}
-              ${!isLast ? `<button onclick="movePrzejscie(${index},1)" title="W dół" style="background:none; border:none; cursor:pointer; font-size:0.6rem; padding:0.1rem 0.2rem; color:var(--text-muted); opacity:0.7;">⬇</button>` : ''}
-              <button onclick="editPrzejscie(${index})" title="Edytuj" style="background:none; border:none; cursor:pointer; font-size:0.6rem; padding:0.1rem 0.2rem; color:#60a5fa; opacity:0.8;">✏️</button>
-              <button onclick="removePrzejscieFromWell(${index})" title="Usuń" style="background:none; border:none; cursor:pointer; font-size:0.65rem; padding:0.1rem 0.2rem; color:#ef4444;">✕</button>
+
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Rzędna:<br><span style="color:var(--text-primary); font-weight:600; font-size:0.65rem;">${item.rzednaWlaczenia || '—'}</span></div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Kąt:<br><span style="color:${angleColor}; font-weight:600; font-size:0.65rem;">${item.angle}°</span></div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right; display:none;">Kąt wyk:<br><span style="color:var(--text-secondary); font-weight:600; font-size:0.65rem;">${item.angleExecution}°</span></div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right; display:none;">Gony:<br><span style="color:var(--success); font-weight:600; font-size:0.65rem;">${item.angleGony}<sup>g</sup></span></div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-align:right;">Cena:<br><span style="font-size:0.8rem; font-weight:800; color:var(--success);">${fmtInt(price)} PLN</span></div>
+              
+              <button onclick="editPrzejscie(${index})" title="Edytuj" style="background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.3); border-radius:6px; cursor:pointer; font-size:0.8rem; padding:0.3rem; color:#60a5fa; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(96,165,250,0.2)'" onmouseleave="this.style.background='rgba(96,165,250,0.1)'">✏️</button>
+              <button onclick="removePrzejscieFromWell(${index})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; font-size:0.8rem; padding:0.3rem; color:#ef4444; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.2)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'">✕</button>
             </div>
+
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.15rem 0.5rem; font-size:0.6rem;">
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">DN</span>
-              <span style="font-weight:700; color:#a78bfa;">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN' + dn}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Rzędna</span>
-              <span style="font-weight:700; color:var(--text-primary);">${item.rzednaWlaczenia || '—'}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Kąt</span>
-              <span style="font-weight:800; color:${angleColor};">${item.angle}°</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Kąt wyk.</span>
-              <span style="font-weight:600; color:var(--text-secondary);">${item.angleExecution}°</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Gony</span>
-              <span style="font-weight:700; color:var(--success);">${item.angleGony}<sup>g</sup></span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Cena</span>
-              <span style="font-weight:700; color:var(--success);">${fmtInt(price)}</span>
-            </div>
-          </div>
-          ${item.notes ? `<div style="font-size:0.55rem; color:var(--text-muted); margin-top:0.2rem; padding-top:0.15rem; border-top:1px solid rgba(255,255,255,0.04); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.notes}">📝 ${item.notes}</div>` : ''}
         </div>`;
     });
 
     html += '</div>';
 
     // Summary bar
-    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; padding:0.3rem 0.4rem; background:rgba(99,102,241,0.08); border-radius:6px; border:1px solid rgba(99,102,241,0.15);">
-      <span style="font-size:0.65rem; color:var(--text-muted);">Suma przejść (${well.przejscia.length} szt.)</span>
-      <span style="font-size:0.75rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span>
+    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(99,102,241,0.08); border-radius:6px; border:1px solid rgba(99,102,241,0.2);">
+      <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">Suma wszystkich przejść (${well.przejscia.length} szt.)</span>
+      <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span>
     </div>`;
 
     container.innerHTML = html;
