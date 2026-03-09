@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.endpoints import router
 from database.local_db import engine, Base
 from data.seed import seed_db
+from sync.sync_js_to_db import start_watcher_task
 
 app = FastAPI(title="Well Configurator Offline API", version="1.0.0")
 
@@ -23,4 +24,5 @@ def startup_event():
     # normalnie migracje w alembic, tutaj Base.metadata
     Base.metadata.create_all(bind=engine)
     seed_db()
+    start_watcher_task()
     print("API started, local database prepared and seeded.")

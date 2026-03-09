@@ -417,10 +417,17 @@ async function resetPriceList() {
   showToast('Cennik przywrócony', 'info');
 }
 
-function manuallySaveProductsDB() {
-  if (!confirm('Czy na pewno chcesz zapisać aktualny cennik do bazy danych?')) return;
-  saveProducts(products);
-  showToast('Zapisano produkty do bazy danych', 'success');
+async function manuallySaveProductsDB() {
+  if (!confirm('Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?')) return;
+  try {
+    saveProducts(products); // Zapis do bieżącej instancji
+    await fetch('/api/products/default', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data: products }) });
+    renderPriceList();
+    renderTiles();
+    showToast('Zapisano produkty jako wartości fabryczne', 'success');
+  } catch (err) {
+    showToast('Błąd zapisu jako wartości fabryczne', 'error');
+  }
 }
 
 /* ===== EXCEL IMPORT / EXPORT ===== */

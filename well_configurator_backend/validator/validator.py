@@ -94,9 +94,10 @@ def validate_transitions(segments: List[Dict], transitions: List[TransitionInput
             if seg['start'] <= hole_center < seg['end']:
                 el_type_str = "dennicy" if seg['type'] == 'dennica' else ("kręgu" if "krag" in seg['type'] else seg['type'])
                 is_bottom_most = (idx == 0)
+                is_pipe_at_bottom = is_bottom_most and abs(hole_center) < 1
 
-                eff_z_dol = 0.0 if (is_bottom_most and abs(hole_center) < 1) else z_dol
-                eff_z_dol_min = 0.0 if (is_bottom_most and abs(hole_center) < 1) else z_dol_min
+                eff_z_dol = -9999.0 if is_pipe_at_bottom else z_dol
+                eff_z_dol_min = -9999.0 if is_pipe_at_bottom else z_dol_min
 
                 bottom_clearance = hole_center - seg['start'] - hole_radius
                 top_clearance = seg['end'] - hole_center - hole_radius

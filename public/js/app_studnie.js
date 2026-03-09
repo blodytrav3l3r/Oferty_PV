@@ -1964,9 +1964,10 @@ async function autoSelectComponents(autoTriggered = false) {
                     elTypeStr = el.type === 'dennica' ? 'dennicy' : (el.type.startsWith('krag') ? 'kręgu' : el.type);
                     const isBottomMost = (i === 0);
 
-                    // Specjalna zasada dla zapasu dół w dennicy = zera
-                    const effectiveZDol = (isBottomMost && Math.abs(holeCenter) < 1) ? 0 : zDol;
-                    const effectiveZDolMin = (isBottomMost && Math.abs(holeCenter) < 1) ? 0 : zDolMin;
+                    // Specjalna zasada dla zapasu dół w dennicy = zignoruj
+                    const isPipeAtBottom = (isBottomMost && Math.abs(holeCenter) < 1);
+                    const effectiveZDol = isPipeAtBottom ? -9999 : zDol;
+                    const effectiveZDolMin = isPipeAtBottom ? -9999 : zDolMin;
 
                     const bottomClearance = holeCenter - el.start - holeRadius;
                     const topClearance = el.end - holeCenter - holeRadius;
@@ -5493,25 +5494,17 @@ async function resetStudniePriceList() {
     showToast('Cennik studni przywrócony', 'info');
 }
 
-async function saveAsDefaultStudniePriceList() {
-    if (!confirm('Ustawić aktualny cennik jako domyślny punkt do resetu?')) return;
+async function manuallySaveStudnieProductsDB() {
+    if (!confirm('Czy na pewno chcesz zapisać listę produktów studni jako wartości fabryczne (do resetu)?')) return;
     try {
+        await saveStudnieProducts(studnieProducts);
         await fetch('/api/products-studnie/default', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data: studnieProducts }) });
-        showToast('Zapisano cennik jako domyślny', 'success');
+        renderStudniePriceList();
+        renderTiles();
+        showToast('Zapisano produkty studni jako wartości fabryczne', 'success');
     } catch (err) {
-        showToast('Błąd zapisu cennika domyślnego', 'error');
+        showToast('Błąd zapisu jako wartości fabryczne', 'error');
     }
-}
-
-function downloadStudniePricelistFile() {
-    const fileContent = `/* ===== DEFAULT PRODUCT DATA — STUDNIE ===== */\nconst DEFAULT_PRODUCTS_STUDNIE = ${JSON.stringify(studnieProducts, null, 4)};\n\nconst CATEGORIES_STUDNIE = ${JSON.stringify(CATEGORIES_STUDNIE, null, 4)};\n`;
-    const blob = new Blob([fileContent], { type: 'application/javascript' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'pricelist_studnie.js';
-    a.click();
-    URL.revokeObjectURL(url);
 }
 
 /* ===== EXCEL IMPORT / EXPORT ===== */
