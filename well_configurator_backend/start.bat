@@ -1,7 +1,7 @@
 @echo off
 echo Uruchamianie serwera Well Configurator...
 if not exist "venv\Scripts\activate.bat" (
-    echo BŁĄD: Wirtualne środowisko nie istnieje! Uruchom najpierw install.bat.
+    echo BLAD: Wirtualne srodowisko nie istnieje! Uruchom najpierw install.bat.
     pause
     exit /b
 )

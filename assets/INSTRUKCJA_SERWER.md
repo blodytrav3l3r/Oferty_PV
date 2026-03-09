@@ -1,4 +1,4 @@
-# 🚀 WITROS Oferty — Instrukcja uruchomienia serwera przez Internet
+#  WITROS Oferty — Instrukcja uruchomienia serwera przez Internet
 
 ## Spis treści
 1. [Wymagania](#1-wymagania)
@@ -45,7 +45,7 @@ npm start
 
 Powinien pojawić się komunikat:
 ```
-  🚀 WITROS Oferty — serwer działa na:
+   WITROS Oferty — serwer działa na:
      http://localhost:3000
      Dane zapisywane w: d:\Antigravity\data
 ```
@@ -53,7 +53,7 @@ Powinien pojawić się komunikat:
 ### Krok 3: Otwórz aplikację
 W przeglądarce wejdź na: **http://localhost:3000**
 
-> ⚠️ Na tym etapie aplikacja działa tylko na Twoim komputerze. Aby udostępnić ją przez Internet, przejdź do następnego rozdziału.
+>  Na tym etapie aplikacja działa tylko na Twoim komputerze. Aby udostępnić ją przez Internet, przejdź do następnego rozdziału.
 
 ---
 
@@ -152,7 +152,7 @@ Otrzymasz adres `https://xyz.trycloudflare.com`.
 
 ### Opcja C: Przekierowanie portów na routerze
 
-> ⚠️ Ta opcja wymaga stałego adresu IP lub usługi Dynamic DNS (np. no-ip.com).
+>  Ta opcja wymaga stałego adresu IP lub usługi Dynamic DNS (np. no-ip.com).
 
 **1. Sprawdź swój adres IP w sieci lokalnej:**
 ```powershell
@@ -343,4 +343,4 @@ Regularnie kopiuj ten folder w bezpieczne miejsce!
 
 ---
 
-> 💡 **Podsumowanie:** Najszybszy start to **ngrok** (5 minut). Najlepsza opcja na stałe to **VPS + PM2 + Nginx + HTTPS**. Najtańsza opcja to **Oracle Cloud Free Tier** (darmowy VPS na zawsze).
+>  **Podsumowanie:** Najszybszy start to **ngrok** (5 minut). Najlepsza opcja na stałe to **VPS + PM2 + Nginx + HTTPS**. Najtańsza opcja to **Oracle Cloud Free Tier** (darmowy VPS na zawsze).

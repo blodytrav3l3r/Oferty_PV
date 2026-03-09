@@ -7,7 +7,7 @@ echo.
 echo [1/3] Sprawdzanie instalacji Pythona...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo BŁĄD: Python nie jest zainstalowany lub nie zdefiniowano go w zmiennych środowiskowych PATH.
+    echo BLAD: Python nie jest zainstalowany lub nie zdefiniowano go w zmiennych srodowiskowych PATH.
     echo Pobierz i zainstaluj Pythona z https://www.python.org/downloads/
     pause
     exit /b

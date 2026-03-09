@@ -11,7 +11,7 @@ Modularny, produkcyjny system konfiguratora studni kanalizacyjnych, zbudowany po
 - **Testy**: `pytest`
 
 ## Architektura i Pakiety
-- `api/`: Definicja FastAPI Endpointów (`endpoints.py`), modekli Pydantic oraz definicja samej aplikacji.
+- `api/`: Definicja FastAPI Endpointów (`endpoints.py`), modeli Pydantic oraz definicja samej aplikacji.
 - `database/`: Konfiguracja SQLAlchemy, pliki CRUD i modele encji `tables.py`.
 - `rule_engine/`: Zestaw szukanych/najlepszych reguł dla wyciągania płyt i dennic.
 - `optimizer/`: Zaawansowany model CP-SAT Solver z optymalizacją wybierania jak zdefiniowanych kręgów komina budowlanego.
@@ -42,9 +42,10 @@ http://localhost:8000/docs
 *(Tam możliwa jest interakcja z endpointem `/api/v1/configure` wyliczającym wymaganą wysokość studni DN1500 / DN2000).*
 
 ## Model Redukcji w Przykładowej Studni
-Jeśli konfigurujsz DN1500 na wysokość 3500mm, algorytm:
-1. Znajdzie optymalną Dennicę DN1500 H=600.
-2. Spróbuje zoptymalizować pozostałe miejsce z głównych kręgów DN1500 używając CP-SAT.
-3. Zaaplikuje płytę redukcyjną z uwzględnieniem tolerancji zapasów - DN1500/DN1000 H=200.
-4. Zamknie konstrukcję Konusem DN1000.
-5. Jeżeli wystąpiły zapasy w rejonie przejść lub zmuszono studnię do zrobienia "Kreg_OT" funkcja natychmiastowo to wymusi we frazie `validator.py`.
+Jeśli konfigurujesz DN1500 na wysokość 3500mm, algorytm:
+1.  Znajdzie optymalną Dennicę DN1500 H=600.
+2.  Spróbuje zoptymalizować pozostałe miejsce z głównych kręgów DN1500 używając CP-SAT.
+3.  Zaaplikuje płytę redukcyjną z uwzględnieniem tolerancji zapasów - DN1500/DN1000 H=200.
+4.  Zamknie konstrukcję Konusem DN1000.
+5.  Jeżeli wystąpiły zapasy w rejonie przejść lub zmuszono studnię do zrobienia "Kreg_OT" funkcja natychmiastowo to wymusi we fazie `validator.py`.
+6.  Dobierze domyślny właz (~15 cm) jako warstwę wieńczącą.

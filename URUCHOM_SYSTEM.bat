@@ -4,7 +4,7 @@ title WITROS Oferty - Launcher
 
 echo.
 echo  =======================================================
-echo       🚀 WITROS Oferty - KREATOR uruchamiania
+echo       WITROS Oferty - KREATOR uruchamiania
 echo  =======================================================
 echo.
 echo  Wybierz tryb uruchomienia calego środowiska:
