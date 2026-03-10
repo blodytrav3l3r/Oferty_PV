@@ -7362,6 +7362,7 @@ function openZleceniaProdukcyjne() {
         dz.style.flex = '1';
         dz.style.border = 'none'; // remove outer border if any
         dz.style.background = 'transparent';
+        dz.style.padding = '0.8rem 1.2rem'; // Match modal side-padding
     }
 
     buildZleceniaWellList();
@@ -7382,6 +7383,7 @@ function closeZleceniaModal() {
         dz.style.flex = '';
         dz.style.border = '';
         dz.style.background = '';
+        dz.style.padding = ''; // Reset inline padding
         mainLayout.insertBefore(dz, mainLayout.firstChild);
     }
 }
