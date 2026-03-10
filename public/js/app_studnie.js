@@ -7590,7 +7590,14 @@ function populateZleceniaForm(el) {
     
     const dinVal = existing?.din ?? din;
     const spocznikMatVal = existing?.spocznik ?? '';
-    const rodzajStudniVal = existing?.rodzajStudni ?? '';
+    
+    let domyslnyRodzajStudni = '';
+    if (product && product.componentType === 'dennica') {
+        domyslnyRodzajStudni = (well.dennicaMaterial === 'zelbetowa') ? 'zelbet' : 'beton';
+    } else {
+        domyslnyRodzajStudni = (well.nadbudowa === 'zelbetowa') ? 'zelbet' : 'beton';
+    }
+    const rodzajStudniVal = existing?.rodzajStudni || domyslnyRodzajStudni;
 
     // Map well params to display labels
     const kinetaOptions = [
