@@ -1,0 +1,366 @@
+<div id="section-builder" class="section active">
+  <div id="" class="well-app-layout">
+    <div id="drop-zone-diagram" class="well-diagram-panel">
+      <div id="" class="well-summary-mini">
+        <div id="" class="ws-item">
+          <div id="" class="ws-label">
+          </div>
+          <div id="ws-req-height" class="ws-value">
+          </div>
+        </div>
+        <div id="" class="ws-item">
+          <div id="" class="ws-label">
+          </div>
+          <div id="ws-height" class="ws-value accent">
+          </div>
+        </div>
+        <div id="" class="ws-item">
+          <div id="" class="ws-label">
+          </div>
+          <div id="ws-diff-height" class="ws-value">
+          </div>
+        </div>
+        <div id="svg-trash" class="ws-item">
+          <div id="" class="ws-label">
+          </div>
+          <div id="" class="ws-value">
+          </div>
+        </div>
+      </div>
+      <div id="" class="well-summary-mini">
+        <div id="" class="ws-label">
+        </div>
+        <div id="ws-price" class="ws-value">
+        </div>
+      </div>
+    </div>
+    <div id="" class="well-center-column">
+      <div id="wizard-indicator" class="wizard-indicator">
+        <div id="" class="wizard-step-dot active">
+          <div id="" class="wizard-dot-number">
+          </div>
+          <div id="" class="wizard-dot-label">
+          </div>
+        </div>
+        <div id="wizard-line-1" class="wizard-step-line">
+        </div>
+        <div id="" class="wizard-step-dot">
+          <div id="" class="wizard-dot-number">
+          </div>
+          <div id="" class="wizard-dot-label">
+          </div>
+        </div>
+        <div id="wizard-line-2" class="wizard-step-line">
+        </div>
+        <div id="" class="wizard-step-dot">
+          <div id="" class="wizard-dot-number">
+          </div>
+          <div id="" class="wizard-dot-label">
+          </div>
+        </div>
+      </div>
+      <div id="wizard-step-1" class="wizard-step active">
+        <div id="" class="wizard-card">
+          <div id="" class="wizard-card-header">
+            <div id="" class="">
+            </div>
+            <div id="" class="">
+            </div>
+          </div>
+          <div id="" class="wizard-card-body">
+            <div id="" class="wizard-section-title">
+            </div>
+            <div id="" class="wizard-form-grid">
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+            </div>
+            <div id="" class="wizard-section-title">
+            </div>
+            <div id="" class="wizard-form-grid">
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+            </div>
+            <div id="" class="wizard-section-title">
+            </div>
+            <div id="" class="wizard-form-grid">
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+              <div id="" class="wizard-form-group">
+              </div>
+            </div>
+            <div id="" class="wizard-form-grid">
+              <div id="" class="wizard-form-group">
+              </div>
+            </div>
+            <div id="" class="">
+            </div>
+          </div>
+          <div id="" class="wizard-nav">
+            <div id="" class="">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="wizard-step-2" class="wizard-step">
+        <div id="" class="wizard-card">
+          <div id="" class="wizard-card-header">
+            <div id="" class="">
+            </div>
+            <div id="" class="">
+            </div>
+          </div>
+          <div id="" class="wizard-card-body">
+            <div id="" class="">
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+              </div>
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="powloka-name-w-group" class="wizard-form-group">
+                </div>
+                <div id="malowanie-wew-cena-group" class="wizard-form-group">
+                </div>
+                <div id="powloka-name-z-group" class="wizard-form-group">
+                </div>
+                <div id="malowanie-zew-cena-group" class="wizard-form-group">
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+              </div>
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+                <div id="" class="wizard-param-group needs-selection">
+                  <div id="" class="wizard-param-label">
+                  </div>
+                  <div id="" class="param-group">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="wizard-validation-msg" class="wizard-validation-msg">
+            </div>
+          </div>
+          <div id="" class="wizard-nav">
+          </div>
+        </div>
+      </div>
+      <div id="wizard-step-3" class="wizard-step">
+        <div id="wizard-summary-bar" class="wizard-summary-bar">
+        </div>
+        <div id="" class="">
+          <div id="" class="well-info-card">
+            <div id="" class="">
+            </div>
+            <div id="" class="">
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+              </div>
+            </div>
+            <div id="well-config-errors-container" class="">
+            </div>
+            <div id="" class="">
+              <div id="" class="">
+                <div id="" class="dn-selector">
+                </div>
+              </div>
+              <div id="" class="">
+              </div>
+              <div id="" class="">
+                <div id="redukcja-min-wrap" class="">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="" class="card">
+            <div id="" class="card-title">
+            </div>
+            <div id="well-params-content" class="card-content">
+              <div id="well-params-container" class="">
+              </div>
+            </div>
+          </div>
+          <div id="" class="builder-sub-nav">
+          </div>
+          <div id="bcontent-concrete" class="">
+            <div id="" class="card">
+              <div id="" class="card-title">
+              </div>
+              <div id="tiles-content" class="card-content">
+                <div id="tiles-container" class="">
+                </div>
+              </div>
+            </div>
+            <div id="" class="card">
+              <div id="" class="card-title">
+              </div>
+              <div id="well-config-wrap" class="table-wrap card-content">
+                <div id="well-config-body" class="">
+                  <div id="" class="">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="bcontent-transitions" class="">
+            <div id="" class="card">
+              <div id="" class="card-title">
+              </div>
+              <div id="inline-przejscia-app" class="">
+              </div>
+            </div>
+            <div id="" class="card">
+              <div id="" class="card-title">
+              </div>
+              <div id="well-przejscia-tiles" class="">
+              </div>
+            </div>
+          </div>
+          <div id="" class="">
+            <div id="" class="">
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="sum-price" class="">
+                </div>
+              </div>
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="sum-weight" class="">
+                </div>
+              </div>
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="sum-height" class="">
+                </div>
+              </div>
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="sum-area-int" class="">
+                </div>
+              </div>
+              <div id="" class="">
+                <div id="" class="">
+                </div>
+                <div id="sum-area-ext" class="">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
