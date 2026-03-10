@@ -13,7 +13,9 @@
             display: grid;
             grid-template-columns: 280px 1fr 260px;
             gap: 0.6rem;
-            align-items: start;
+            align-items: stretch;
+            height: calc(100vh - 110px); /* 100vh minus header and margins */
+            overflow: hidden;
         }
 
         @media (max-width: 1400px) {
@@ -43,6 +45,8 @@
             grid-template-columns: 1fr;
             max-width: 1000px;
             margin: 0 auto;
+            height: auto;
+            overflow: visible;
         }
 
         .well-app-layout.intro-mode .well-diagram-panel,
@@ -52,15 +56,14 @@
 
         /* ── Left: Well Diagram ── */
         .well-diagram-panel {
-            position: sticky;
-            top: 56px;
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
             border-radius: 12px;
             padding: 0.6rem;
-            height: calc(100vh - 76px);
+            height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .well-diagram-panel h3 {
@@ -120,11 +123,10 @@
 
         /* ── Right: Wells sidebar ── */
         .wells-sidebar {
-            position: sticky;
-            top: 56px;
-            height: calc(100vh - 76px);
+            height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .wells-sidebar-panel {
@@ -136,6 +138,13 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+
+        .well-center-column {
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 0.4rem;
+            scrollbar-width: thin;
         }
 
         .wells-sidebar-header {

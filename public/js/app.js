@@ -1475,6 +1475,7 @@ function saveOffer() {
   const clientContact = document.getElementById('client-contact').value.trim();
   const investName = document.getElementById('invest-name').value.trim();
   const investAddress = document.getElementById('invest-address').value.trim();
+  const investContractor = document.getElementById('invest-contractor').value.trim();
   const notes = document.getElementById('offer-notes').value.trim();
   const transportKm = Number(document.getElementById('transport-km').value) || 0;
   const transportRate = Number(document.getElementById('transport-rate').value) || 0;
@@ -1499,7 +1500,7 @@ function saveOffer() {
     id: editingOfferId || 'offer_' + Date.now(),
     userId: existingOffer?.userId || (currentUser ? currentUser.id : null),
     userName: existingOffer?.userName || (currentUser ? currentUser.username : ''),
-    number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, notes,
+    number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, investContractor, notes,
     items: JSON.parse(JSON.stringify(currentOfferItems)),
     transportKm,
     transportRate,
@@ -1555,6 +1556,7 @@ function clearOfferForm() {
   document.getElementById('client-contact').value = '';
   document.getElementById('invest-name').value = '';
   document.getElementById('invest-address').value = '';
+  document.getElementById('invest-contractor').value = '';
   document.getElementById('offer-notes').value = '';
   document.getElementById('transport-km').value = '100';
   document.getElementById('transport-rate').value = '10';
@@ -1627,6 +1629,7 @@ function loadOffer(id) {
   document.getElementById('client-contact').value = offer.clientContact || '';
   document.getElementById('invest-name').value = offer.investName || '';
   document.getElementById('invest-address').value = offer.investAddress || '';
+  document.getElementById('invest-contractor').value = offer.investContractor || '';
   document.getElementById('offer-notes').value = offer.notes || '';
   document.getElementById('transport-km').value = offer.transportKm || 100;
   document.getElementById('transport-rate').value = offer.transportRate || 10;
@@ -1753,6 +1756,7 @@ function restoreOfferVersion(offerId, historyIndex) {
   document.getElementById('client-contact').value = snapshot.clientContact || '';
   document.getElementById('invest-name').value = snapshot.investName || '';
   document.getElementById('invest-address').value = snapshot.investAddress || '';
+  document.getElementById('invest-contractor').value = snapshot.investContractor || '';
   document.getElementById('offer-notes').value = snapshot.notes || '';
   document.getElementById('transport-km').value = snapshot.transportKm || 100;
   document.getElementById('transport-rate').value = snapshot.transportRate || 10;

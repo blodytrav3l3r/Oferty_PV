@@ -126,6 +126,16 @@ db.exec(`
         status TEXT,
         data TEXT
     );
+    CREATE TABLE IF NOT EXISTS production_orders_rel (
+        id TEXT PRIMARY KEY,
+        userId TEXT,
+        orderId TEXT,
+        wellId TEXT,
+        elementIndex INTEGER,
+        createdAt TEXT,
+        updatedAt TEXT,
+        data TEXT
+    );
 `);
 
 /* ===== HELPERS ===== */
@@ -710,6 +720,66 @@ app.patch('/api/orders-studnie/:id', requireAuth, (req, res) => {
         db.prepare('UPDATE orders_studnie_rel SET status = ?, data = ? WHERE id = ?').run(
             order.status || 'nowe', JSON.stringify(order), req.params.id
         );
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
+app.get('/api/production-orders', requireAuth, (req, res) => {
+    try {
+        let rows = db.prepare('SELECT * FROM production_orders_rel').all();
+        if (req.user.role === 'user') {
+            rows = rows.filter(o => o.userId === req.user.id);
+        } else if (req.user.role === 'pro') {
+            const userRow = db.prepare('SELECT subUsers FROM users WHERE id = ?').get(req.user.id);
+            const sub = JSON.parse(userRow?.subUsers || '[]');
+            const allowedIds = [req.user.id, ...sub];
+            rows = rows.filter(o => allowedIds.includes(o.userId));
+        }
+        const mapped = rows.map(r => {
+            if (r.data) {
+                try { return { ...JSON.parse(r.data), id: r.id }; } catch (e) { }
+            }
+            return r;
+        });
+        res.json({ data: mapped });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/production-orders', requireAuth, (req, res) => {
+    try {
+        const incoming = req.body.data || [];
+        db.exec('BEGIN TRANSACTION');
+        const stmt = db.prepare('INSERT OR REPLACE INTO production_orders_rel (id, userId, orderId, wellId, elementIndex, createdAt, updatedAt, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        for (const o of incoming) {
+            stmt.run(o.id, o.userId || req.user.id, o.orderId || null, o.wellId || null, o.elementIndex ?? 0, o.createdAt || new Date().toISOString(), new Date().toISOString(), JSON.stringify(o));
+        }
+        db.exec('COMMIT');
+        res.json({ ok: true });
+    } catch (e) {
+        if (db.inTransaction) db.exec('ROLLBACK');
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/production-orders/:id', requireAuth, (req, res) => {
+    try {
+        const row = db.prepare('SELECT * FROM production_orders_rel WHERE id = ?').get(req.params.id);
+        if (!row) return res.status(404).json({ error: 'Zlecenie nie znalezione' });
+        const order = row.data ? JSON.parse(row.data) : row;
+        res.json({ data: order });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/production-orders/:id', requireAuth, (req, res) => {
+    try {
+        db.prepare('DELETE FROM production_orders_rel WHERE id = ?').run(req.params.id);
         res.json({ ok: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
