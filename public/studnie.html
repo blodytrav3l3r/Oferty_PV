@@ -38,6 +38,18 @@
             }
         }
 
+        /* ── Layout modifier for steps 1 and 2 ── */
+        .well-app-layout.intro-mode {
+            grid-template-columns: 1fr;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .well-app-layout.intro-mode .well-diagram-panel,
+        .well-app-layout.intro-mode .wells-sidebar {
+            display: none !important;
+        }
+
         /* ── Left: Well Diagram ── */
         .well-diagram-panel {
             position: sticky;
@@ -1310,7 +1322,7 @@
         <!-- ===== SECTION: BUILDER ===== -->
         <div class="section active" id="section-builder">
 
-            <div class="well-app-layout">
+            <div class="well-app-layout intro-mode">
                 <!-- LEFT: Well Diagram -->
                 <div class="well-diagram-panel" id="drop-zone-diagram" ondragover="allowDropWellComponent(event)"
                     ondragleave="dragLeaveWellComponent(event)" ondrop="dropWellComponent(event)">

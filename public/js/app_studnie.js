@@ -130,6 +130,15 @@ function goToWizardStep(step) {
     updateWizardIndicator();
     if (step === 3) updateWizardSummaryBar();
     if (step === 2) validateWizardStep2();
+
+    const layout = document.querySelector('.well-app-layout');
+    if (layout) {
+        if (step === 1 || step === 2) {
+            layout.classList.add('intro-mode');
+        } else {
+            layout.classList.remove('intro-mode');
+        }
+    }
 }
 
 function wizardNext() {
@@ -409,12 +418,20 @@ function createNewWell(name, dn = 1000) {
 
 /* ===== OFFER LOCK (after order is created) ===== */
 const OFFER_LOCKED_MSG = '🔒 Oferta zablokowana — posiada zamówienie. Edytuj zamówienie zamiast oferty.';
+const WELL_LOCKED_MSG = '🔒 Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 function isOfferLocked() {
     if (orderEditMode) return false; // Order editing mode is always allowed
     if (!editingOfferIdStudnie) return false;
     const offer = offersStudnie.find(o => o.id === editingOfferIdStudnie);
     if (!offer) return false;
     return !!(offer.hasOrder || ordersStudnie.some(ord => ord.offerId === offer.id));
+}
+
+function isWellLocked(wellIdx) {
+    const idx = wellIdx !== undefined ? wellIdx : currentWellIndex;
+    const well = wells[idx];
+    if (!well) return false;
+    return productionOrders.some(po => po.wellId === well.id && po.status === 'accepted');
 }
 
 function renderOfferLockBanner() {
@@ -496,6 +513,7 @@ function duplicateWell(index) {
 
 function removeWell(index) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked(index)) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     if (!confirm(`Usunąć "${wells[index].name}"?`)) return;
     wells.splice(index, 1);
     if (currentWellIndex >= wells.length) currentWellIndex = Math.max(0, wells.length - 1);
@@ -794,6 +812,7 @@ function renderWellParams() {
 
 async function updateWellParam(paramKey, value) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const well = getCurrentWell();
     if (!well) return;
     well[paramKey] = value;
@@ -1267,6 +1286,7 @@ async function selectRedukcjaZakonczenie(productId) {
 /* ===== ELEVATIONS (RZĘDNE) ===== */
 function updateElevations() {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const well = getCurrentWell();
     if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
     const wlazInput = document.getElementById('input-rzedna-wlazu');
@@ -2230,9 +2250,11 @@ function renderWellsList() {
                 errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.join('<br>')}</div>`;
             }
 
-            html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}" onclick="selectWell(${i})">
+            const wellLockBadge = isWellLocked(i) ? '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;">🔒</span>' : '';
+
+            html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}" onclick="selectWell(${i})">
               <div class="well-list-header">
-                <div class="well-list-name">${w.name}${sourceBadge}${statusBadge}${changeBadge}</div>
+                <div class="well-list-name">${w.name}${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}</div>
                 <div class="well-list-actions">
                   <button class="well-list-action" title="Zmień nazwę" onclick="event.stopPropagation(); renameWell(${i})">✏️</button>
                   <button class="well-list-action" title="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})">📋</button>
@@ -2859,6 +2881,7 @@ function dropWellComponent(ev) {
 
 function addWellComponent(productId) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const product = studnieProducts.find(p => p.id === productId);
     if (!product) return;
 
@@ -2951,6 +2974,7 @@ function addWellComponent(productId) {
 
 function removeWellComponent(index) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
 
@@ -3114,6 +3138,7 @@ function renderWellConfig() {
 function moveWellComponent(index, direction) {
     const well = getCurrentWell();
     if (!well) return;
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= well.config.length) return;
 
@@ -3212,6 +3237,7 @@ window.handleCfgDragLeave = function (e) {
 window.handleCfgDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const tile = e.target.closest('.config-tile');
 
     if (tile) {
@@ -3732,6 +3758,7 @@ let editPrzejscieState = { type: null, dnId: null, rzedna: '', angle: 0, notes: 
 
 function savePrzejscieEdit(index) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
@@ -4164,6 +4191,7 @@ window.openFlowTypePopup = function (index) {
 
 function removePrzejscieFromWell(index) {
     if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
     const well = getCurrentWell();
     if (!well) return;
     if (well.przejscia) {
@@ -4294,9 +4322,9 @@ window.svgPrzPointerLeave = function (ev, idx) {
 };
 
 /* ===== WELL DIAGRAM (SVG) ===== */
-function renderWellDiagram() {
-    const svg = document.getElementById('well-diagram');
-    const well = getCurrentWell();
+function renderWellDiagram(targetSvg, targetWell) {
+    const svg = targetSvg || document.getElementById('well-diagram');
+    const well = targetWell || getCurrentWell();
 
     if (!well || well.config.length === 0) {
         svg.setAttribute('viewBox', '0 0 300 500');
@@ -4371,7 +4399,7 @@ function renderWellDiagram() {
 
     // Canvas
     const svgW = 340;
-    const mL = 45, mR = 55, mT = 15, mB = 22; // mL=45 makes space for UI buttons
+    const mL = 75, mR = 25, mT = 15, mB = 22; // mL=75 dla szerszego pasa wymiarowego po lewej
     const drawW = svgW - mL - mR;
 
     // ── Real physical outer diameters for each element type ──
@@ -4449,6 +4477,8 @@ function renderWellDiagram() {
     let svg_out = '';
     let y = mT;
 
+    let dimLinesY = [];
+
     visible.forEach(comp => {
         let h = (comp.height || 0) * pxMm;
 
@@ -4456,6 +4486,9 @@ function renderWellDiagram() {
         if (h === 0) {
             h = 18; // px wymuszone wizualnie, by element był nakładką
         }
+
+        dimLinesY.push(y);
+        dimLinesY.push(y + h);
 
         const outerDn = getElementOuterDn(comp);
         const w = Math.max(mmToPx(outerDn), 20);
@@ -4527,23 +4560,23 @@ function renderWellDiagram() {
 
         // ── Label wewnątrz elementu ──
         if (h > 18) {
-            const fontSize = Math.min(11, Math.max(8, h * 0.35));
+            const fontSize = Math.min(13, Math.max(10, h * 0.35));
             svg_out += `<text x="${cx}" y="${y + h / 2 + 4}" text-anchor="middle" fill="white" font-size="${fontSize}" font-family="Inter,sans-serif" font-weight="700" opacity="0.95">${c.label}</text>`;
         } else if (h > 8) {
-            svg_out += `<text x="${cx}" y="${y + h / 2 + 3}" text-anchor="middle" fill="white" font-size="7" font-family="Inter,sans-serif" font-weight="600" opacity="0.8">${c.label}</text>`;
+            svg_out += `<text x="${cx}" y="${y + h / 2 + 3}" text-anchor="middle" fill="white" font-size="9" font-family="Inter,sans-serif" font-weight="600" opacity="0.8">${c.label}</text>`;
         }
 
-        // ── Wymiar po prawej z kreskami ──
+        // ── Wymiar elementu (przeniesiony z prawej na lewą) ──
         if (h > 6) {
-            const dx = cx + mmToPx(maxElemWidth) / 2 + 8;
+            const dx = 32;
             // Kreska pionowa wymiaru
             svg_out += `<line x1="${dx}" y1="${y + 1}" x2="${dx}" y2="${y + h - 1}" stroke="#94a3b8" stroke-width="0.7"/>`;
             // Kreski poziome (górny i dolny tick)
             svg_out += `<line x1="${dx - 3}" y1="${y + 1}" x2="${dx + 3}" y2="${y + 1}" stroke="#94a3b8" stroke-width="0.7"/>`;
             svg_out += `<line x1="${dx - 3}" y1="${y + h - 1}" x2="${dx + 3}" y2="${y + h - 1}" stroke="#94a3b8" stroke-width="0.7"/>`;
-            // Tekst wymiaru
-            const dimFontSize = Math.min(10, Math.max(7, h * 0.3));
-            svg_out += `<text x="${dx + 6}" y="${y + h / 2 + 3.5}" text-anchor="start" fill="#cbd5e1" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${comp.height}</text>`;
+            // Tekst wymiaru (pionowo z lewej strony)
+            const dimFontSize = Math.min(11, Math.max(8, h * 0.3));
+            svg_out += `<text x="${dx - 4}" y="${y + h / 2}" transform="rotate(-90 ${dx - 4} ${y + h / 2})" text-anchor="middle" fill="#cbd5e1" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${comp.height}</text>`;
         }
 
         if (comp._cfgIdx !== undefined) {
@@ -4586,6 +4619,9 @@ function renderWellDiagram() {
                 const radiusH = Math.max((prH / 2) * pxMm, 3);
                 const prY = (mT + drawH) - (mmFromBottom * pxMm) - radiusH;
 
+                dimLinesY.push(prY - radiusH);
+                dimLinesY.push(prY + radiusH);
+
                 let px = cx;
                 const a = parseFloat(pr.angle) || 0;
                 const bw = mmToPx(bodyDN);
@@ -4606,25 +4642,91 @@ function renderWellDiagram() {
                     svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 }
 
+                const tColor = isBack ? 'rgba(148,163,184,0.7)' : '#bae6fd';
+                const fSz = 11; // Nieznacznie większa czcionka
+
                 if (!isBack) {
-                    svg_out += `<text x="${px}" y="${prY - radiusH - 4}" text-anchor="middle" fill="#7dd3fc" font-size="8" font-weight="700" font-family="Inter,sans-serif">${a}°</text>`;
+                    svg_out += `<text x="${px}" y="${prY + 3.5}" text-anchor="middle" fill="#ffffff" font-size="${fSz + 1}" font-weight="800" font-family="Inter,sans-serif" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${a}°</text>`;
                 }
+
+                // Delikatna linia pomocnicza łącząca rurę z zunifikowaną osią wymiarową wskazująca wpięcie
+                const dimColor = isBack ? '#64748b' : '#38bdf8';
+                svg_out += `<line x1="25" y1="${prY}" x2="${px - radiusW - 2}" y2="${prY}" stroke="${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
             }
         });
     }
 
-    // ── Łączna wysokość – pasek po prawej ──
-    const aX = svgW - 10;
-    svg_out += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,3"/>`;
-    svg_out += `<line x1="${aX - 4}" y1="${mT}" x2="${aX + 4}" y2="${mT}" stroke="#818cf8" stroke-width="1.5"/>`;
-    svg_out += `<line x1="${aX - 4}" y1="${mT + drawH}" x2="${aX + 4}" y2="${mT + drawH}" stroke="#818cf8" stroke-width="1.5"/>`;
-    // Tło pod tekstem
-    const totalLabel = fmtInt(totalMm) + ' mm';
-    svg_out += `<rect x="${aX - 20}" y="${mT + drawH / 2 - 7}" width="40" height="14" rx="3" fill="rgba(15,23,42,0.85)"/>`;
-    svg_out += `<text x="${aX}" y="${mT + drawH / 2 + 4}" text-anchor="middle" fill="#a5b4fc" font-size="9" font-family="Inter,sans-serif" font-weight="700" transform="rotate(-90 ${aX} ${mT + drawH / 2})">${totalLabel}</text>`;
+    // --- POJEDYNCZA LINIA WYMIAROWA PO LEWEJ STRONIE ---
+    if (dimLinesY.length > 0) {
+        dimLinesY = [...new Set(dimLinesY.map(v => Math.round(v * 10) / 10))].sort((a, b) => b - a);
+        const dX = 52;
+        const dimColor = '#94a3b8'; // neutral grey
+
+        dimLinesY.forEach(pY => {
+            svg_out += `<line x1="${dX - 4}" y1="${pY}" x2="${dX + 4}" y2="${pY}" stroke="${dimColor}" stroke-width="1.2"/>`;
+        });
+
+        for (let i = 0; i < dimLinesY.length - 1; i++) {
+            const yB = dimLinesY[i];     // dolny punkt elementu/przejścia (wartość Y rośnie w dół)
+            const yT = dimLinesY[i + 1];   // górny punkt elementu/przejścia
+            const distY = yB - yT;
+            const distMm = Math.round(distY / pxMm);
+
+            if (distMm > 1) { // Rysuj jeżeli dystans jest zauważalny
+                svg_out += `<line x1="${dX}" y1="${yB}" x2="${dX}" y2="${yT}" stroke="${dimColor}" stroke-width="1.2"/>`;
+
+                let labelText = `${distMm}`;
+                let isPipe = false;
+
+                // Sprawdzamy czy ten segment to idealnie rura/przejście
+                if (well.przejscia && well.przejscia.length > 0) {
+                    well.przejscia.forEach(pr => {
+                        let pel = parseFloat(pr.rzednaWlaczenia) || 0;
+                        const pprod = studnieProducts.find(x => x.id === pr.productId);
+                        let prH = 160;
+                        if (pprod && pprod.category === 'Otwór KPED') {
+                            prH = 500;
+                        } else if (pprod && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
+                            prH = parseFloat(pprod.dn.split('/')[1]) || 160;
+                        } else if (pprod) {
+                            prH = parseFloat(pprod.dn) || 160;
+                        }
+
+                        const mmFromBottom = (pel - (parseFloat(well.rzednaDna) || 0)) * 1000;
+                        const radiusH = Math.max((prH / 2) * pxMm, 3);
+                        const prY = (mT + drawH) - (mmFromBottom * pxMm) - radiusH;
+
+                        const pyB = Math.round((prY + radiusH) * 10) / 10;
+                        const pyT = Math.round((prY - radiusH) * 10) / 10;
+
+                        // Compare segment rounded values with pipe boundary
+                        if (Math.abs(yB - pyB) <= 1.2 && Math.abs(yT - pyT) <= 1.2) {
+                            labelText = `DN ${Math.round(prH)}`; // oznacz jako rura
+                            isPipe = true;
+                        }
+                    });
+                }
+
+                const fSz = 11;
+                const textColor = isPipe ? '#38bdf8' : '#cbd5e1';
+                const fW = isPipe ? '700' : '600';
+                const textOpts = `text-anchor="middle" fill="${textColor}" font-size="${fSz}" font-family="Inter,sans-serif" font-weight="${fW}"`;
+                svg_out += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" ${textOpts}>${labelText}</text>`;
+            }
+        }
+    }
+
+    // ── Łączna wysokość – pasek po lewej stronie ──
+    const aX = 12;
+    const aDimColor = '#94a3b8';
+    svg_out += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" stroke="${aDimColor}" stroke-width="1.2"/>`;
+    svg_out += `<line x1="${aX - 4}" y1="${mT}" x2="${aX + 4}" y2="${mT}" stroke="${aDimColor}" stroke-width="1.2"/>`;
+    svg_out += `<line x1="${aX - 4}" y1="${mT + drawH}" x2="${aX + 4}" y2="${mT + drawH}" stroke="${aDimColor}" stroke-width="1.2"/>`;
+    const totalLabel = fmtInt(totalMm);
+    svg_out += `<text x="${aX - 5}" y="${mT + drawH / 2}" transform="rotate(-90 ${aX - 5} ${mT + drawH / 2})" text-anchor="middle" fill="${aDimColor}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${totalLabel}</text>`;
 
     // ── Oznaczenie DN na dole ──
-    svg_out += `<text x="${cx}" y="${mT + drawH + mB - 2}" text-anchor="middle" fill="#64748b" font-size="9" font-family="Inter,sans-serif" font-weight="600">DN${bodyDN}</text>`;
+    svg_out += `<text x="${cx}" y="${mT + drawH + mB - 2}" text-anchor="middle" fill="#64748b" font-size="11" font-family="Inter,sans-serif" font-weight="600">DN${bodyDN}</text>`;
 
     svg.innerHTML = svg_out;
 }
@@ -6029,6 +6131,7 @@ function createOrderFromOffer() {
         clientContact: offer.clientContact,
         investName: offer.investName,
         investAddress: offer.investAddress,
+        investContractor: offer.investContractor,
         notes: offer.notes,
         wells: JSON.parse(JSON.stringify(offer.wells)),
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
@@ -6205,6 +6308,7 @@ async function enterOrderEditMode(orderId) {
         document.getElementById('client-contact').value = order.clientContact || '';
         document.getElementById('invest-name').value = order.investName || '';
         document.getElementById('invest-address').value = order.investAddress || '';
+        document.getElementById('invest-contractor').value = order.investContractor || '';
 
         // Skip wizard → go to step 3 (config)
         skipWizardToStep3();
@@ -6338,6 +6442,7 @@ function saveOfferStudnie() {
     const clientContact = document.getElementById('client-contact').value.trim();
     const investName = document.getElementById('invest-name').value.trim();
     const investAddress = document.getElementById('invest-address').value.trim();
+    const investContractor = document.getElementById('invest-contractor').value.trim();
     const notes = document.getElementById('offer-notes').value.trim();
     const transportKm = parseFloat(document.getElementById('transport-km').value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate').value) || 0;
@@ -6355,7 +6460,7 @@ function saveOfferStudnie() {
         id: editingOfferIdStudnie || 'offer_studnie_' + Date.now(),
         userId: existingOffer?.userId || (currentUser ? currentUser.id : null),
         userName: existingOffer?.userName || (currentUser ? currentUser.username : ''),
-        number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, notes,
+        number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, investContractor, notes,
         wells: JSON.parse(JSON.stringify(wells)),
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         transportKm,
@@ -6393,6 +6498,7 @@ function clearOfferForm() {
     document.getElementById('client-contact').value = '';
     document.getElementById('invest-name').value = '';
     document.getElementById('invest-address').value = '';
+    document.getElementById('invest-contractor').value = '';
     document.getElementById('offer-notes').value = '';
     document.getElementById('transport-km').value = '100';
     document.getElementById('transport-rate').value = '10';
@@ -6496,6 +6602,7 @@ function loadSavedOfferStudnie(id) {
     document.getElementById('client-contact').value = offer.clientContact || '';
     document.getElementById('invest-name').value = offer.investName || '';
     document.getElementById('invest-address').value = offer.investAddress || '';
+    document.getElementById('invest-contractor').value = offer.investContractor || '';
     document.getElementById('offer-notes').value = offer.notes || '';
     document.getElementById('transport-km').value = offer.transportKm || 100;
     document.getElementById('transport-rate').value = offer.transportRate || 10;
@@ -7195,4 +7302,500 @@ window.applyGlobalRecalc = async function () {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => { setTimeout(() => { setupParamTiles(); updateParamTilesUI(); }, 500); });
+/* ===== ZLECENIA PRODUKCYJNE (Production Orders) ===== */
+let productionOrders = [];
+let zleceniaElementsList = []; // [{wellIndex, elementIndex, well, product, configItem}]
+let zleceniaSelectedIdx = -1;
+
+async function loadProductionOrders() {
+    try {
+        const resp = await fetch('/api/production-orders', { headers: authHeaders() });
+        if (resp.ok) {
+            const json = await resp.json();
+            productionOrders = json.data || [];
+        }
+    } catch (e) { console.error('loadProductionOrders error:', e); }
+}
+
+async function saveProductionOrdersData(data) {
+    try {
+        await fetch('/api/production-orders', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({ data })
+        });
+    } catch (e) { console.error('saveProductionOrdersData error:', e); }
+}
+
+function parseWysokoscGlebokosc(productName) {
+    // Parse "H=450/300" from product name like "Dennica DN1000 H=450/300"
+    const m = productName && productName.match(/H\s*=\s*(\d+)\s*\/\s*(\d+)/i);
+    if (m) return { wysokosc: parseInt(m[1]), glebokosc: parseInt(m[2]) };
+    return { wysokosc: 0, glebokosc: 0 };
+}
+
+function getStudniaDIN(dn) {
+    if ([1000, 1200].includes(dn)) return 'AT/2009-03-1733';
+    if ([1500, 2000, 2500].includes(dn)) return 'PN-EN 1917:2004';
+    return 'AT/2009-03-1733'; // default for krag_ot
+}
+
+function calcStopnieExecution(angle) {
+    const a = parseFloat(angle) || 0;
+    return a > 0 ? (360 - a) : 0;
+}
+
+function openZleceniaProdukcyjne() {
+    if (wells.length === 0) {
+        showToast('Najpierw dodaj studnie', 'error');
+        return;
+    }
+    const modal = document.getElementById('zlecenia-modal');
+    if (modal) modal.classList.add('active');
+    buildZleceniaWellList();
+    // Auto select first element
+    if (zleceniaElementsList.length > 0) {
+        selectZleceniaElement(0);
+    }
+}
+
+function closeZleceniaModal() {
+    const modal = document.getElementById('zlecenia-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+function buildZleceniaWellList() {
+    zleceniaElementsList = [];
+    wells.forEach((well, wIdx) => {
+        well.config.forEach((item, eIdx) => {
+            const p = studnieProducts.find(pr => pr.id === item.productId);
+            if (p && (p.componentType === 'dennica' || p.componentType === 'krag_ot')) {
+                zleceniaElementsList.push({
+                    wellIndex: wIdx,
+                    elementIndex: eIdx,
+                    well: well,
+                    product: p,
+                    configItem: item
+                });
+            }
+        });
+    });
+    renderZleceniaList();
+}
+
+function renderZleceniaList() {
+    const container = document.getElementById('zlecenia-elements-list');
+    const countEl = document.getElementById('zlecenia-el-count');
+    if (!container) return;
+
+    const search = (document.getElementById('zlecenia-search')?.value || '').toLowerCase();
+
+    let html = '';
+    zleceniaElementsList.forEach((el, i) => {
+        const matchesSearch = !search ||
+            el.product.name.toLowerCase().includes(search) ||
+            el.well.name.toLowerCase().includes(search) ||
+            ('dn' + el.well.dn).toLowerCase().includes(search);
+        if (!matchesSearch) return;
+
+        const isSaved = productionOrders.some(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
+        const savedOrder = productionOrders.find(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
+        const isAccepted = savedOrder && savedOrder.status === 'accepted';
+        const isActive = i === zleceniaSelectedIdx;
+        html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" onclick="selectZleceniaElement(${i})">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${el.product.name}</div>
+            <div style="display:flex; gap:0.6rem; margin-top:0.15rem; font-size:0.62rem; color:var(--text-muted);">
+                <span>📍 ${el.well.name}</span>
+                <span>DN${el.well.dn}</span>
+                ${el.product.height ? '<span>H: ' + el.product.height + 'mm</span>' : ''}
+            </div>
+            ${isAccepted ? '<div style="font-size:0.55rem; color:#34d399; margin-top:0.1rem; font-weight:700;">🔒 Zaakceptowane — studnia zablokowana</div>' : (isSaved ? '<div style="font-size:0.55rem; color:#fbbf24; margin-top:0.1rem; font-weight:700;">⏳ Wersja robocza</div>' : '')}
+        </div>`;
+    });
+
+    if (html === '') html = '<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.72rem;">Brak elementów (dennic / kręgów z otworem)</div>';
+    container.innerHTML = html;
+    if (countEl) countEl.textContent = zleceniaElementsList.length + ' elementów';
+}
+
+function filterZleceniaList() {
+    renderZleceniaList();
+}
+
+function selectZleceniaElement(idx) {
+    zleceniaSelectedIdx = idx;
+    renderZleceniaList();
+    const el = zleceniaElementsList[idx];
+    if (!el) return;
+    populateZleceniaForm(el);
+    renderZleceniaSvgPreview(el.well);
+}
+
+function renderZleceniaSvgPreview(well) {
+    const svg = document.getElementById('zlecenia-svg-preview');
+    const info = document.getElementById('zlecenia-well-info-mini');
+    if (!svg) return;
+
+    // Use the REAL well diagram renderer with the target SVG
+    renderWellDiagram(svg, well);
+
+    if (info) {
+        const stats = calcWellStats(well);
+        info.innerHTML = `<strong>${well.name}</strong> — DN${well.dn} — H: ${fmtInt(stats.height)}mm — ${fmtInt(stats.weight)}kg`;
+    }
+}
+
+function populateZleceniaForm(el) {
+    const { well, product, configItem, elementIndex, wellIndex } = el;
+    const container = document.getElementById('zlecenia-form-content');
+    if (!container) return;
+
+    const parsed = parseWysokoscGlebokosc(product.name);
+    const dnoKineta = parsed.wysokosc - parsed.glebokosc;
+    const din = getStudniaDIN(well.dn);
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Get user name
+    const userName = currentUser ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() || currentUser.username : '';
+    // Get firma from offer client
+    const clientName = document.getElementById('client-name')?.value || '';
+
+    // Check for existing saved production order
+    const existing = productionOrders.find(po => po.wellId === well.id && po.elementIndex === elementIndex);
+
+    // Get przejscia for this well
+    const przejsciaHtml = (well.przejscia && well.przejscia.length > 0)
+        ? well.przejscia.map((prz, i) => {
+            const przProd = studnieProducts.find(pr => pr.id === prz.productId);
+            const przName = przProd ? przProd.name : 'Przejście';
+            return `<div style="display:flex; justify-content:space-between; padding:0.3rem 0.4rem; border-bottom:1px solid var(--border-glass);">
+                <span>${i + 1}. ${przName}</span>
+                <span style="color:var(--text-muted);">${prz.rzedna || ''} ${prz.angle ? prz.angle + '°' : ''}</span>
+            </div>`;
+        }).join('')
+        : '<div style="padding:0.5rem; text-align:center; color:var(--text-muted);">Brak przejść</div>';
+
+    // Stopnie select — derive current value
+    const stopnieVal = existing?.rodzajStopni || '';
+    const stopnieOptions = [
+        ['', 'Brak'],
+        ['drabinka_a_stalowa', 'Drabinka Typ A/stalowa'],
+        ['drabinka_a_szlachetna', 'Drabinka Typ A/stal szlachetna'],
+        ['drabinka_b_stalowa', 'Drabinka Typ B/stalowa'],
+        ['drabinka_b_szlachetna', 'Drabinka Typ B/stal szlachetna'],
+        ['inne', 'Inne']
+    ];
+    const stopnieOptionsHtml = stopnieOptions.map(([v, l]) =>
+        `<option value="${v}" ${v === stopnieVal ? 'selected' : ''}>${l}</option>`
+    ).join('');
+
+    const katStopni = existing?.katStopni || '';
+    const wykonanie = katStopni ? calcStopnieExecution(katStopni) : '';
+
+    // Map well params to display labels
+    const kinetaLabel = { 'brak': 'Brak', 'beton': 'Beton', 'beton_gfk': 'Beton GFK', 'klinkier': 'Klinkier', 'preco': 'Preco', 'precotop': 'PrecoTop', 'unolith': 'UnoLith' };
+    const spocznikLabel = { '1/2': '1/2', '2/3': '2/3', '3/4': '3/4', '1/1': '1/1', 'brak': 'Brak' };
+    const usytLabel = { 'linia_dolna': 'Linia dolna', 'linia_gorna': 'Linia górna', 'w_osi': 'W osi', 'patrz_uwagi': 'Patrz uwagi' };
+
+    container.innerHTML = `
+    <!-- Dane zlecenia -->
+    <div class="card card-compact" style="margin-bottom:0.6rem;">
+        <div class="card-title-sm">📋 Dane zlecenia</div>
+        <div class="form-row form-row-2 form-row-compact">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Obiekt</label>
+                <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || ''}" placeholder="Nazwa obiektu...">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Data</label>
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${existing?.data || todayStr}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Adres</label>
+                <input type="text" id="zl-adres" class="form-input form-input-sm" value="${existing?.adres || ''}" placeholder="Adres obiektu...">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Nazwisko (przygotował)</label>
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${existing?.nazwisko || userName}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Wykonawca</label>
+                <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${existing?.wykonawca || ''}" placeholder="Wykonawca...">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Data wysłania do produkcji</label>
+                <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${existing?.dataProdukcji || ''}">
+            </div>
+        </div>
+        <div style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Fakturowane na</label>
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${existing?.fakturowane || clientName}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Dane studni + Przejścia side by side -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin-bottom:0.6rem;">
+        <div class="card card-compact">
+            <div class="card-title-sm">🏗️ Dane elementu</div>
+            <div class="well-info-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="well-info-field">
+                    <label>SNr</label>
+                    <input type="text" id="zl-snr" value="${well.numer || ''}" readonly>
+                </div>
+                <div class="well-info-field">
+                    <label>Średnica</label>
+                    <div class="computed">DN${well.dn}</div>
+                </div>
+                <div class="well-info-field">
+                    <label>Wysokość</label>
+                    <div class="computed">${parsed.wysokosc || (product.height || 0)} mm</div>
+                </div>
+                <div class="well-info-field">
+                    <label>Głębokość</label>
+                    <div class="computed">${parsed.glebokosc || '—'} mm</div>
+                </div>
+                <div class="well-info-field" style="grid-column:1/-1;">
+                    <label>Dno wraz z kinetą</label>
+                    <div class="computed">${dnoKineta > 0 ? dnoKineta + ' mm' : '—'}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-compact">
+            <div class="card-title-sm">🔗 Przejścia</div>
+            <div style="background:#0d1520; border:1px solid var(--border-glass); border-radius:var(--radius-sm); max-height:200px; overflow-y:auto; font-size:0.72rem; color:var(--text-secondary);">
+                ${przejsciaHtml}
+            </div>
+        </div>
+    </div>
+
+    <!-- Uwagi -->
+    <div class="card card-compact" style="margin-bottom:0.6rem;">
+        <div class="card-title-sm">📝 Uwagi</div>
+        <div class="form-group-sm">
+            <textarea id="zl-uwagi" class="form-textarea" rows="3" placeholder="Uwagi do zlecenia..." style="min-height:50px;">${existing?.uwagi || ''}</textarea>
+        </div>
+    </div>
+
+    <!-- Parametry studni -->
+    <div class="card card-compact" style="margin-bottom:0.6rem;">
+        <div class="card-title-sm">⚙️ Parametry studni</div>
+        <div class="form-row form-row-2 form-row-compact">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Redukcja kinety</label>
+                <input type="text" id="zl-red-kinety" class="form-input form-input-sm" value="${well.redukcjaKinety === 'tak' ? 'Tak' : 'Nie'}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Wysokość spocznika</label>
+                <input type="text" id="zl-spocznik-h" class="form-input form-input-sm" value="${spocznikLabel[well.spocznikH] || well.spocznikH || 'Brak'}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Studnia wd. DIN</label>
+                <input type="text" id="zl-din" class="form-input form-input-sm" value="${din}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Rodzaj stopni</label>
+                <select id="zl-rodzaj-stopni" class="form-select form-input-sm" onchange="onZleceniaStopnieChange()">
+                    ${stopnieOptionsHtml}
+                </select>
+            </div>
+        </div>
+        <div id="zl-stopnie-inne-wrap" style="display:${stopnieVal === 'inne' ? 'block' : 'none'}; margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Inne (opis)</label>
+                <input type="text" id="zl-stopnie-inne" class="form-input form-input-sm" value="${existing?.stopnieInne || ''}" placeholder="Opis...">
+            </div>
+        </div>
+        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Ustalanie kąta stopni</label>
+                <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360"
+                    oninput="onZleceniaKatChange()">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Wykonanie</label>
+                <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Usytuowanie</label>
+                <input type="text" id="zl-usytuowanie" class="form-input form-input-sm" value="${usytLabel[well.usytuowanie] || well.usytuowanie || ''}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Kineta</label>
+                <input type="text" id="zl-kineta" class="form-input form-input-sm" value="${kinetaLabel[well.kineta] || well.kineta || 'Brak'}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
+            <div class="form-group-sm">
+                <label class="form-label-sm">Spocznik</label>
+                <input type="text" id="zl-spocznik" class="form-input form-input-sm" value="${spocznikLabel[well.spocznikH] || well.spocznikH || 'Brak'}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+            <div class="form-group-sm">
+                <label class="form-label-sm">Klasa betonu</label>
+                <input type="text" id="zl-klasa-betonu" class="form-input form-input-sm" value="${well.klasaBetonu || 'C40/50'}" readonly style="color:#818cf8; font-weight:700;">
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+function onZleceniaStopnieChange() {
+    const sel = document.getElementById('zl-rodzaj-stopni');
+    const wrap = document.getElementById('zl-stopnie-inne-wrap');
+    if (sel && wrap) {
+        wrap.style.display = sel.value === 'inne' ? 'block' : 'none';
+    }
+}
+
+function onZleceniaKatChange() {
+    const katInput = document.getElementById('zl-kat-stopni');
+    const wykInput = document.getElementById('zl-wykonanie');
+    if (katInput && wykInput) {
+        const angle = parseFloat(katInput.value) || 0;
+        const exec = angle > 0 ? calcStopnieExecution(angle) : '';
+        wykInput.value = exec ? exec + '°' : '';
+    }
+}
+
+async function saveProductionOrder() {
+    if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
+        showToast('Najpierw wybierz element z listy', 'error');
+        return;
+    }
+
+    const el = zleceniaElementsList[zleceniaSelectedIdx];
+    const { well, product, elementIndex, wellIndex } = el;
+
+    const existingIdx = productionOrders.findIndex(po => po.wellId === well.id && po.elementIndex === elementIndex);
+
+    const order = {
+        id: existingIdx >= 0 ? productionOrders[existingIdx].id : 'prodorder_' + Date.now(),
+        userId: currentUser ? currentUser.id : null,
+        wellId: well.id,
+        wellName: well.name,
+        elementIndex: elementIndex,
+        productName: product.name,
+        productId: product.id,
+        dn: well.dn,
+
+        // Form fields
+        obiekt: document.getElementById('zl-obiekt')?.value || '',
+        data: document.getElementById('zl-data')?.value || '',
+        adres: document.getElementById('zl-adres')?.value || '',
+        nazwisko: document.getElementById('zl-nazwisko')?.value || '',
+        wykonawca: document.getElementById('zl-wykonawca')?.value || '',
+        dataProdukcji: document.getElementById('zl-data-produkcji')?.value || '',
+        fakturowane: document.getElementById('zl-fakturowane')?.value || '',
+
+        // Well specs
+        snr: well.numer || '',
+        srednica: well.dn,
+        wysokosc: document.getElementById('zl-wysokosc')?.value || '',
+        glebokosc: document.getElementById('zl-glebokosc')?.value || '',
+        dnoKineta: document.getElementById('zl-dno-kineta')?.value || '',
+
+        // Przejscia snapshot
+        przejscia: well.przejscia ? JSON.parse(JSON.stringify(well.przejscia)) : [],
+
+        uwagi: document.getElementById('zl-uwagi')?.value || '',
+
+        // Params
+        redukcjaKinety: well.redukcjaKinety,
+        spocznikH: well.spocznikH,
+        din: getStudniaDIN(well.dn),
+        rodzajStopni: document.getElementById('zl-rodzaj-stopni')?.value || '',
+        stopnieInne: document.getElementById('zl-stopnie-inne')?.value || '',
+        katStopni: document.getElementById('zl-kat-stopni')?.value || '',
+        wykonanie: document.getElementById('zl-wykonanie')?.value || '',
+        usytuowanie: well.usytuowanie,
+        kineta: well.kineta,
+        spocznik: well.spocznikH,
+        klasaBetonu: well.klasaBetonu,
+
+        createdAt: existingIdx >= 0 ? productionOrders[existingIdx].createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: existingIdx >= 0 ? (productionOrders[existingIdx].status || 'draft') : 'draft'
+    };
+
+    if (existingIdx >= 0) {
+        productionOrders[existingIdx] = order;
+    } else {
+        productionOrders.push(order);
+    }
+
+    await saveProductionOrdersData(productionOrders);
+    renderZleceniaList();
+    showToast('✅ Zlecenie produkcyjne zapisane', 'success');
+}
+
+async function deleteProductionOrder(id) {
+    if (!confirm('Usunąć to zlecenie produkcyjne?')) return;
+    try {
+        await fetch('/api/production-orders/' + id, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        productionOrders = productionOrders.filter(po => po.id !== id);
+        renderZleceniaList();
+        showToast('Zlecenie usunięte', 'info');
+    } catch (e) { console.error('deleteProductionOrder error:', e); }
+}
+
+async function acceptProductionOrder() {
+    if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
+        showToast('Najpierw wybierz element z listy', 'error');
+        return;
+    }
+    const el = zleceniaElementsList[zleceniaSelectedIdx];
+    const po = productionOrders.find(p => p.wellId === el.well.id && p.elementIndex === el.elementIndex);
+    if (!po) { showToast('Najpierw zapisz zlecenie produkcyjne', 'error'); return; }
+    if (po.status === 'accepted') { showToast('Zlecenie już zaakceptowane', 'info'); return; }
+    if (!confirm('Zaakceptować zlecenie? Studnia zostanie zablokowana od edycji.')) return;
+    po.status = 'accepted';
+    po.acceptedAt = new Date().toISOString();
+    po.acceptedBy = currentUser ? currentUser.username : '';
+    await saveProductionOrdersData(productionOrders);
+    renderZleceniaList();
+    showToast('🔒 Zlecenie zaakceptowane — studnia zablokowana', 'success');
+}
+
+async function revokeProductionOrder() {
+    if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
+        showToast('Najpierw wybierz element z listy', 'error');
+        return;
+    }
+    const el = zleceniaElementsList[zleceniaSelectedIdx];
+    const po = productionOrders.find(p => p.wellId === el.well.id && p.elementIndex === el.elementIndex);
+    if (!po) { showToast('Brak zlecenia do cofnięcia', 'error'); return; }
+    if (po.status !== 'accepted') { showToast('Zlecenie nie jest zaakceptowane', 'info'); return; }
+    if (!confirm('Cofnąć akceptację? Studnia zostanie odblokowana.')) return;
+    po.status = 'draft';
+    delete po.acceptedAt;
+    delete po.acceptedBy;
+    await saveProductionOrdersData(productionOrders);
+    renderZleceniaList();
+    showToast('🔓 Akceptacja cofnięta — studnia odblokowana', 'info');
+}
+
+window.openZleceniaProdukcyjne = openZleceniaProdukcyjne;
+window.closeZleceniaModal = closeZleceniaModal;
+window.selectZleceniaElement = selectZleceniaElement;
+window.filterZleceniaList = filterZleceniaList;
+window.saveProductionOrder = saveProductionOrder;
+window.deleteProductionOrder = deleteProductionOrder;
+window.acceptProductionOrder = acceptProductionOrder;
+window.revokeProductionOrder = revokeProductionOrder;
+window.onZleceniaStopnieChange = onZleceniaStopnieChange;
+window.onZleceniaKatChange = onZleceniaKatChange;
+
+document.addEventListener('DOMContentLoaded', () => { setTimeout(() => { setupParamTiles(); updateParamTilesUI(); loadProductionOrders(); }, 500); });
