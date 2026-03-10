@@ -7459,6 +7459,9 @@ function populateZleceniaForm(el) {
     const userName = currentUser ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() || currentUser.username : '';
     // Get firma from offer client
     const clientName = document.getElementById('client-name')?.value || '';
+    const investName = document.getElementById('invest-name')?.value || '';
+    const investAddress = document.getElementById('invest-address')?.value || '';
+    const investContractor = document.getElementById('invest-contractor')?.value || '';
 
     // Check for existing saved production order
     const existing = productionOrders.find(po => po.wellId === well.id && po.elementIndex === elementIndex);
@@ -7504,7 +7507,7 @@ function populateZleceniaForm(el) {
         <div class="form-row form-row-2 form-row-compact">
             <div class="form-group-sm">
                 <label class="form-label-sm">Obiekt</label>
-                <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || ''}" placeholder="Nazwa obiektu...">
+                <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || investName}" placeholder="Nazwa obiektu...">
             </div>
             <div class="form-group-sm">
                 <label class="form-label-sm">Data</label>
@@ -7514,7 +7517,7 @@ function populateZleceniaForm(el) {
         <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
             <div class="form-group-sm">
                 <label class="form-label-sm">Adres</label>
-                <input type="text" id="zl-adres" class="form-input form-input-sm" value="${existing?.adres || ''}" placeholder="Adres obiektu...">
+                <input type="text" id="zl-adres" class="form-input form-input-sm" value="${existing?.adres || investAddress}" placeholder="Adres obiektu...">
             </div>
             <div class="form-group-sm">
                 <label class="form-label-sm">Nazwisko (przygotował)</label>
@@ -7524,7 +7527,7 @@ function populateZleceniaForm(el) {
         <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
             <div class="form-group-sm">
                 <label class="form-label-sm">Wykonawca</label>
-                <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${existing?.wykonawca || ''}" placeholder="Wykonawca...">
+                <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${existing?.wykonawca || investContractor}" placeholder="Wykonawca...">
             </div>
             <div class="form-group-sm">
                 <label class="form-label-sm">Data wysłania do produkcji</label>
@@ -7601,12 +7604,15 @@ function populateZleceniaForm(el) {
                 <label class="form-label-sm">Studnia wd. DIN</label>
                 <input type="text" id="zl-din" class="form-input form-input-sm" value="${din}" readonly style="color:#818cf8; font-weight:700;">
             </div>
-            <div class="form-group-sm">
-                <label class="form-label-sm">Rodzaj stopni</label>
-                <select id="zl-rodzaj-stopni" class="form-select form-input-sm" onchange="onZleceniaStopnieChange()">
-                    ${stopnieOptionsHtml}
-                </select>
+        </div>
+        <div class="form-group-sm" style="margin-top:0.4rem;">
+            <label class="form-label-sm">Rodzaj stopni</label>
+            <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem;" class="zl-param-group">
+                ${stopnieOptions.map(([v, l]) =>
+                    `<button type="button" class="param-tile ${v === stopnieVal ? 'active' : ''}" style="padding:0.35rem 0.5rem; font-size:0.65rem;" onclick="selectZleceniaTile(this, 'zl-rodzaj-stopni', '${v}')">${l}</button>`
+                ).join('')}
             </div>
+            <input type="hidden" id="zl-rodzaj-stopni" value="${stopnieVal}">
         </div>
         <div id="zl-stopnie-inne-wrap" style="display:${stopnieVal === 'inne' ? 'block' : 'none'}; margin-top:0.4rem;">
             <div class="form-group-sm">
@@ -7649,11 +7655,28 @@ function populateZleceniaForm(el) {
     `;
 }
 
+function selectZleceniaTile(btn, targetId, val) {
+    const group = btn.closest('.zl-param-group');
+    if (group) {
+        group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
+    }
+    btn.classList.add('active');
+    
+    const input = document.getElementById(targetId);
+    if (input) {
+        input.value = val;
+    }
+    
+    if (targetId === 'zl-rodzaj-stopni') {
+        onZleceniaStopnieChange();
+    }
+}
+
 function onZleceniaStopnieChange() {
-    const sel = document.getElementById('zl-rodzaj-stopni');
+    const hiddenInput = document.getElementById('zl-rodzaj-stopni');
     const wrap = document.getElementById('zl-stopnie-inne-wrap');
-    if (sel && wrap) {
-        wrap.style.display = sel.value === 'inne' ? 'block' : 'none';
+    if (hiddenInput && wrap) {
+        wrap.style.display = hiddenInput.value === 'inne' ? 'block' : 'none';
     }
 }
 
