@@ -7656,40 +7656,34 @@ function populateZleceniaForm(el) {
     <!-- Dane zlecenia -->
     <div class="card card-compact" style="margin-bottom:0.6rem;">
         <div class="card-title-sm">📋 Dane zlecenia</div>
-        <div class="form-row form-row-2 form-row-compact">
-            <div class="form-group-sm">
-                <label class="form-label-sm">Obiekt</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; padding:0.2rem 0;">
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || investName}" placeholder="Nazwa obiektu...">
             </div>
-            <div class="form-group-sm">
-                <label class="form-label-sm">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${existing?.data || todayStr}" readonly style="color:#818cf8; font-weight:700;">
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Data</label>
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${existing?.data || todayStr}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
             </div>
-        </div>
-        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
-            <div class="form-group-sm">
-                <label class="form-label-sm">Adres</label>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Adres</label>
                 <input type="text" id="zl-adres" class="form-input form-input-sm" value="${existing?.adres || investAddress}" placeholder="Adres obiektu...">
             </div>
-            <div class="form-group-sm">
-                <label class="form-label-sm">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${existing?.nazwisko || userName}" readonly style="color:#818cf8; font-weight:700;">
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Nazwisko (przygotował)</label>
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${existing?.nazwisko || userName}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
             </div>
-        </div>
-        <div class="form-row form-row-2 form-row-compact" style="margin-top:0.4rem;">
-            <div class="form-group-sm">
-                <label class="form-label-sm">Wykonawca</label>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Wykonawca</label>
                 <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${existing?.wykonawca || investContractor}" placeholder="Wykonawca...">
             </div>
-            <div class="form-group-sm">
-                <label class="form-label-sm">Data wysłania do produkcji</label>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Data produkcji</label>
                 <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${existing?.dataProdukcji || ''}">
             </div>
-        </div>
-        <div style="margin-top:0.4rem;">
-            <div class="form-group-sm">
-                <label class="form-label-sm">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${existing?.fakturowane || clientName}" readonly style="color:#818cf8; font-weight:700;">
+            <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
+                <label class="form-label-sm" style="color:var(--text-secondary);">Fakturowane na</label>
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${existing?.fakturowane || clientName}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
             </div>
         </div>
     </div>
