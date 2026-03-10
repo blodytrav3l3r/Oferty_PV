@@ -7666,23 +7666,23 @@ function populateZleceniaForm(el) {
                     <span style="font-weight:bold; color:#818cf8; font-size:0.85rem;">${well.name || ''}</span>
                 </div>
                 
-                <!-- Underneath grid -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:#0d1520; padding:0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
-                    <div style="display:flex; flex-direction:column;">
+                <!-- Underneath list -->
+                <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.2rem; background:#0d1520; padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Średnica</span>
-                        <span style="font-weight:bold; color:var(--text-primary);">DN${well.dn}</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">DN${well.dn}</span>
                     </div>
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Wysokość</span>
-                        <span style="font-weight:bold; color:var(--text-primary);">${parsed.wysokosc || (product.height || 0)} mm</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Głębokość</span>
-                        <span style="font-weight:bold; color:var(--text-primary);">${parsed.glebokosc || '—'} mm</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${parsed.glebokosc || '—'} mm</span>
                     </div>
-                    <div style="display:flex; flex-direction:column;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Dno wraz z kinetą</span>
-                        <span style="font-weight:bold; color:var(--text-primary);">${dnoKineta > 0 ? dnoKineta + ' mm' : '—'}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Wysokość</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${parsed.wysokosc || (product.height || 0)} mm</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:0.3rem; margin-top:0.1rem; border-top:1px dashed rgba(255,255,255,0.1);">
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Grubość dna</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${dnoKineta > 0 ? dnoKineta + ' mm' : '—'}</span>
                     </div>
                 </div>
                 
