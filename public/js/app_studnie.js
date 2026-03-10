@@ -7352,6 +7352,18 @@ function openZleceniaProdukcyjne() {
     }
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.add('active');
+    
+    // MOVEMENT OF MAIN SVG DIAGRAM TO MODAL
+    const zwp = document.getElementById('zlecenia-well-preview');
+    const dz = document.getElementById('drop-zone-diagram');
+    if (zwp && dz) {
+        zwp.innerHTML = '';
+        zwp.appendChild(dz);
+        dz.style.flex = '1';
+        dz.style.border = 'none'; // remove outer border if any
+        dz.style.background = 'transparent';
+    }
+
     buildZleceniaWellList();
     // Auto select first element
     if (zleceniaElementsList.length > 0) {
@@ -7362,6 +7374,16 @@ function openZleceniaProdukcyjne() {
 function closeZleceniaModal() {
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.remove('active');
+    
+    // RESTORE MAIN SVG DIAGRAM TO MAIN LAYOUT
+    const mainLayout = document.querySelector('.well-app-layout');
+    const dz = document.getElementById('drop-zone-diagram');
+    if (mainLayout && dz) {
+        dz.style.flex = '';
+        dz.style.border = '';
+        dz.style.background = '';
+        mainLayout.insertBefore(dz, mainLayout.firstChild);
+    }
 }
 
 function buildZleceniaWellList() {
@@ -7427,8 +7449,16 @@ function selectZleceniaElement(idx) {
     renderZleceniaList();
     const el = zleceniaElementsList[idx];
     if (!el) return;
+    
+    // Set global well context to the order's well
+    if (currentWellIndex !== el.wellIndex) {
+        currentWellIndex = el.wellIndex;
+    }
+    
+    // Ensure the diagram updates with correct index and UI gets refreshed
+    renderWellDiagram();
+    
     populateZleceniaForm(el);
-    renderZleceniaSvgPreview(el.well);
 }
 
 function renderZleceniaSvgPreview(well) {
