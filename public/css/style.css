@@ -83,13 +83,13 @@ body::before {
 }
 
 .header-inner {
-  max-width: 1600px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   min-height: 56px;
-  padding: 0.3rem 0;
+  padding: 0.3rem 1.5rem;
   gap: 1rem;
 }
 
@@ -204,7 +204,7 @@ body::before {
 
 /* Main */
 .main {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: .8rem 1.5rem 2rem;
 }
