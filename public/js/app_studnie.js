@@ -441,11 +441,11 @@ function renderOfferLockBanner() {
 
     let lockBanner = document.getElementById('offer-lock-banner');
     if (!lockBanner) {
-        const builderSection = document.getElementById('section-builder');
-        if (!builderSection) return;
+        const centerCol = document.querySelector('.well-center-column');
+        if (!centerCol) return;
         lockBanner = document.createElement('div');
         lockBanner.id = 'offer-lock-banner';
-        builderSection.insertBefore(lockBanner, builderSection.firstChild);
+        centerCol.insertBefore(lockBanner, centerCol.firstChild);
     }
 
     if (!isOfferLocked()) {
@@ -6333,12 +6333,12 @@ async function enterOrderEditMode(orderId) {
 function renderOrderModeBanner() {
     let banner = document.getElementById('order-mode-banner');
     if (!banner) {
-        // Create banner div at the top of the builder section
-        const builderSection = document.getElementById('section-builder');
-        if (!builderSection) return;
+        // Create banner div at the top of the center column
+        const centerCol = document.querySelector('.well-center-column');
+        if (!centerCol) return;
         banner = document.createElement('div');
         banner.id = 'order-mode-banner';
-        builderSection.insertBefore(banner, builderSection.firstChild);
+        centerCol.insertBefore(banner, centerCol.firstChild);
     }
 
     if (!orderEditMode) {

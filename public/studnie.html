@@ -145,6 +145,29 @@
             overflow-y: auto;
             padding-right: 0.4rem;
             scrollbar-width: thin;
+            scrollbar-color: #3730a3 #0f172a;
+        }
+
+        .well-center-column::-webkit-scrollbar,
+        #wells-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .well-center-column::-webkit-scrollbar-track,
+        #wells-list::-webkit-scrollbar-track {
+            background: #0f172a;
+            border-radius: 4px;
+        }
+
+        .well-center-column::-webkit-scrollbar-thumb,
+        #wells-list::-webkit-scrollbar-thumb {
+            background: #3730a3;
+            border-radius: 4px;
+        }
+
+        .well-center-column::-webkit-scrollbar-thumb:hover,
+        #wells-list::-webkit-scrollbar-thumb:hover {
+            background: #4f46e5;
         }
 
         .wells-sidebar-header {
@@ -170,6 +193,8 @@
             padding-right: 4px;
             /* for scrollbar */
             margin-right: -4px;
+            scrollbar-width: thin;
+            scrollbar-color: #3730a3 #0f172a;
         }
 
         .wells-sidebar-header .wells-count {
