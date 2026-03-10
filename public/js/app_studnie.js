@@ -7654,9 +7654,9 @@ function populateZleceniaForm(el) {
 
     container.innerHTML = `
     <!-- Dane zlecenia -->
-    <div class="card card-compact" style="margin-bottom:0.6rem;">
+    <div class="card card-compact" style="margin-bottom:0.4rem;">
         <div class="card-title-sm">📋 Dane zlecenia</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; padding:0.2rem 0;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; padding:0.2rem 0;">
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm" style="color:var(--text-secondary);">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || investName}" placeholder="Nazwa obiektu...">
@@ -7689,7 +7689,7 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Dane studni + Przejścia side by side -->
-    <div style="display:grid; grid-template-columns:0.8fr 1.8fr; gap:0.6rem; margin-bottom:0.6rem;">
+    <div style="display:grid; grid-template-columns:0.8fr 1.8fr; gap:0.4rem; margin-bottom:0.4rem;">
         <div class="card card-compact">
             <div class="card-title-sm">🏗️ Dane elementu</div>
             <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.75rem;">
@@ -7745,7 +7745,7 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Uwagi -->
-    <div class="card card-compact" style="margin-bottom:0.6rem;">
+    <div class="card card-compact" style="margin-bottom:0.4rem;">
         <div class="card-title-sm">📝 Uwagi</div>
         <div class="form-group-sm">
             <textarea id="zl-uwagi" class="form-textarea" rows="3" placeholder="Uwagi do zlecenia..." style="min-height:50px;">${existing?.uwagi || ''}</textarea>
@@ -7753,12 +7753,12 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Parametry studni w dwóch kolumnach -->
-    <div class="card card-compact" style="margin-bottom:0.6rem;">
+    <div class="card card-compact" style="margin-bottom:0.4rem;">
         <div class="card-title-sm">⚙️ Parametry studni</div>
         
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; align-items:start;">
             <!-- Kolumna 1 -->
-            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
                 <div class="form-group-sm">
                     <label class="form-label-sm">Redukcja kinety</label>
                     <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem;" class="zl-param-group">
@@ -7810,7 +7810,7 @@ function populateZleceniaForm(el) {
             </div>
 
             <!-- Kolumna 2 -->
-            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
                 <div class="form-group-sm">
                     <label class="form-label-sm">Wysokość spocznika</label>
                     <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem;" class="zl-param-group">
