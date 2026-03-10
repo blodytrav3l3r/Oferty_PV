@@ -3555,7 +3555,7 @@ function renderWellPrzejscia() {
             }).join('')}
               </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-bottom:0.4rem;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Rzędna włączenia [m]</label>
                   <input type="number" class="form-input" id="edit-rzedna-${index}" step="0.01" value="${editPrzejscieState.rzedna}" placeholder="142.50" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
@@ -7654,9 +7654,9 @@ function populateZleceniaForm(el) {
 
     container.innerHTML = `
     <!-- Dane zlecenia -->
-    <div class="card card-compact" style="margin-bottom:0.4rem;">
+    <div class="card card-compact" style="margin-bottom:0.5rem;">
         <div class="card-title-sm">📋 Dane zlecenia</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; padding:0.2rem 0;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm" style="color:var(--text-secondary);">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || investName}" placeholder="Nazwa obiektu...">
@@ -7689,10 +7689,10 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Dane studni + Przejścia side by side -->
-    <div style="display:grid; grid-template-columns:0.8fr 1.8fr; gap:0.4rem; margin-bottom:0.4rem;">
+    <div style="display:grid; grid-template-columns:0.8fr 1.8fr; gap:0.5rem; margin-bottom:0.5rem;">
         <div class="card card-compact">
             <div class="card-title-sm">🏗️ Dane elementu</div>
-            <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.75rem;">
+            <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
                 <!-- Numer Studni -->
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <span style="color:var(--text-secondary); font-size:0.75rem; text-transform:uppercase; font-weight:600;">Numer studni</span>
@@ -7745,7 +7745,7 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Uwagi -->
-    <div class="card card-compact" style="margin-bottom:0.4rem;">
+    <div class="card card-compact" style="margin-bottom:0.5rem;">
         <div class="card-title-sm">📝 Uwagi</div>
         <div class="form-group-sm">
             <textarea id="zl-uwagi" class="form-textarea" rows="3" placeholder="Uwagi do zlecenia..." style="min-height:50px;">${existing?.uwagi || ''}</textarea>
@@ -7753,10 +7753,10 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Parametry studni w dwóch kolumnach -->
-    <div class="card card-compact" style="margin-bottom:0.4rem;">
+    <div class="card card-compact" style="margin-bottom:0.5rem;">
         <div class="card-title-sm">⚙️ Parametry studni</div>
         
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; align-items:start;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
             <!-- Kolumna 1 -->
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
                 <div class="form-group-sm">
