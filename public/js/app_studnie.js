@@ -7354,10 +7354,10 @@ function openZleceniaProdukcyjne() {
     if (modal) modal.classList.add('active');
     
     // MOVEMENT OF MAIN SVG DIAGRAM TO MODAL
-    const zwp = document.getElementById('zlecenia-well-preview');
+    const zwp = document.querySelector('.zlecenia-left');
     const dz = document.getElementById('drop-zone-diagram');
     if (zwp && dz) {
-        zwp.innerHTML = '';
+        zwp.innerHTML = ''; // clear original preview container
         zwp.appendChild(dz);
         dz.style.flex = '1';
         dz.style.border = 'none'; // remove outer border if any
