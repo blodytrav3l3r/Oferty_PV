@@ -3634,16 +3634,14 @@ function renderWellPrzejscia() {
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt</div>
                 <div onclick="window.activateQuickEdit(this, ${index}, 'angle')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:transform 0.2s; display:inline-block;" onmouseenter="this.style.transform='scale(1.15)'" onmouseleave="this.style.transform='scale(1)'">${item.angle}°</div>
               </div>
-              ${item.spadekKineta !== undefined && item.spadekKineta !== null && item.spadekKineta !== '' ? `
               <div style="text-align:center; min-width:60px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w kinecie</div>
-                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekKineta}%</div>
-              </div>` : ''}
-              ${item.spadekMufa !== undefined && item.spadekMufa !== null && item.spadekMufa !== '' ? `
+                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
+              </div>
               <div style="text-align:center; min-width:60px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w mufie</div>
-                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekMufa}%</div>
-              </div>` : ''}
+                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
+              </div>
               <div style="text-align:right; min-width:70px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Cena</div>
                 <div style="font-size:0.95rem; font-weight:800; color:var(--success);">${fmtInt(price)} <span style="font-size:0.7rem;">PLN</span></div>
