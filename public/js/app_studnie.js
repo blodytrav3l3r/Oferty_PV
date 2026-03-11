@@ -2919,14 +2919,6 @@ function addWellComponent(productId) {
         well.config.push({ productId: prod.id, quantity: 1 });
     };
 
-    // Auto-enable gaskets (GSG) if the user adds a component that can use them and it's set to 'brak'
-    if (['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus', 'dennica'].includes(product.componentType)) {
-        if (!well.uszczelka || well.uszczelka === 'brak') {
-            well.uszczelka = 'GSG';
-            if (typeof renderWellParams === 'function') renderWellParams();
-        }
-    }
-
     addSingle(product);
     let pairedName = '';
 
@@ -3276,14 +3268,6 @@ window.handleCfgDrop = function (e) {
             well.autoLocked = true;
             updateAutoLockUI();
             well.configSource = 'MANUAL';
-
-            const product = studnieProducts.find(p => p.id === addedProductId);
-            if (product && ['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus', 'dennica'].includes(product.componentType)) {
-                if (!well.uszczelka || well.uszczelka === 'brak') {
-                    well.uszczelka = 'GSG';
-                    if (typeof renderWellParams === 'function') renderWellParams();
-                }
-            }
 
             syncGaskets(well);
 
