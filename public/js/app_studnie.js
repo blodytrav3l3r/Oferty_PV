@@ -2874,6 +2874,8 @@ function dropWellComponent(ev) {
         updateAutoLockUI();
         well.configSource = 'MANUAL';
 
+        syncGaskets(well);
+
         renderWellConfig();
         renderWellDiagram();
         updateSummary();
@@ -2883,6 +2885,8 @@ function dropWellComponent(ev) {
         well.autoLocked = true;
         updateAutoLockUI();
         well.configSource = 'MANUAL';
+
+        syncGaskets(well);
 
         renderWellConfig();
         renderWellDiagram();
