@@ -3335,6 +3335,7 @@ function renderWellPrzejscia() {
             if (field === 'angle') { val = well.przejscia[index].angle; step = '1'; }
             else if (field === 'spadekKineta') { val = well.przejscia[index].spadekKineta || ''; step = '0.1'; }
             else if (field === 'spadekMufa') { val = well.przejscia[index].spadekMufa || ''; step = '0.1'; }
+            else if (field === 'heightMm') { val = ''; step = '1'; }
             else { val = well.przejscia[index].rzednaWlaczenia || ''; step = '0.01'; }
             const w = element.offsetWidth;
 
@@ -3382,6 +3383,33 @@ function renderWellPrzejscia() {
                 well.przejscia[index].spadekKineta = isNaN(numVal) ? null : parseFloat(numVal).toFixed(1);
             } else if (field === 'spadekMufa') {
                 well.przejscia[index].spadekMufa = isNaN(numVal) ? null : parseFloat(numVal).toFixed(1);
+            } else if (field === 'heightMm') {
+                // Compute element bottom ordinate and derive new rzedna
+                const rzDnaQ = parseFloat(well.rzednaDna) || 0;
+                const cfgMap = [];
+                let cY = 0, dpc = 0;
+                for (let j = well.config.length - 1; j >= 0; j--) {
+                    const ci = well.config[j];
+                    const pr = studnieProducts.find(p => p.id === ci.productId);
+                    if (!pr) continue;
+                    let hh = 0;
+                    if (pr.componentType === 'dennica') {
+                        for (let q = 0; q < ci.quantity; q++) { dpc++; hh += (pr.height || 0) - (dpc > 1 ? 100 : 0); }
+                    } else { hh = (pr.height || 0) * ci.quantity; }
+                    cfgMap.push({ index: j, start: cY, end: cY + hh });
+                    cY += hh;
+                }
+                let curRz = parseFloat(well.przejscia[index].rzednaWlaczenia);
+                if (isNaN(curRz)) curRz = rzDnaQ;
+                const curMm = (curRz - rzDnaQ) * 1000;
+                let elStart = 0;
+                for (let cm of cfgMap) {
+                    if (curMm >= cm.start && curMm < cm.end) { elStart = cm.start; break; }
+                }
+                if (isNaN(numVal)) numVal = 0;
+                if (numVal < 0) numVal = 0;
+                const newRzedna = rzDnaQ + (elStart + numVal) / 1000;
+                well.przejscia[index].rzednaWlaczenia = parseFloat(newRzedna).toFixed(2);
             }
 
             renderWellPrzejscia();
@@ -3516,6 +3544,13 @@ function renderWellPrzejscia() {
         const isFirst = index === 0;
         const isLast = index === well.przejscia.length - 1;
 
+        // Compute height from element bottom to transition
+        let elementStartMm = 0;
+        for (let cm of configMap) {
+            if (mmFromBottom >= cm.start && mmFromBottom < cm.end) { elementStartMm = cm.start; break; }
+        }
+        const heightMm = Math.round(mmFromBottom - elementStartMm);
+
         // Edit mode for this tile
         if (editPrzejscieIdx === index) {
             const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie');
@@ -3641,13 +3676,17 @@ function renderWellPrzejscia() {
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w mufie</div>
                 <div onclick="window.activateQuickEdit(this, ${index}, 'spadekMufa')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
               </div>
-              <div style="text-align:center; min-width:80px;">
-                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Rzędna</div>
-                <div onclick="window.activateQuickEdit(this, ${index}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.rzednaWlaczenia || '—'}</div>
-              </div>
               <div style="text-align:center; min-width:80px; position:relative; padding-bottom:0.1rem;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt</div>
                 <div onclick="window.activateQuickEdit(this, ${index}, 'angle')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:transform 0.2s; display:inline-block;" onmouseenter="this.style.transform='scale(1.15)'" onmouseleave="this.style.transform='scale(1)'">${item.angle}°</div>
+              </div>
+              <div style="text-align:center; min-width:70px;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Wysokość [mm]</div>
+                <div onclick="window.activateQuickEdit(this, ${index}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" style="font-size:1.05rem; font-weight:800; color:#f59e0b; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#fbbf24'" onmouseleave="this.style.color='#f59e0b'">${heightMm} mm</div>
+              </div>
+              <div style="text-align:center; min-width:80px;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Rzędna</div>
+                <div onclick="window.activateQuickEdit(this, ${index}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.rzednaWlaczenia || '—'}</div>
               </div>
               <div style="text-align:right; min-width:70px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Cena</div>
