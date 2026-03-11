@@ -18,6 +18,15 @@ if (!fs.existsSync(DATA_DIR)) {
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
+// Disable caching for JS files in development
+app.use((req, res, next) => {
+    if (req.path.endsWith('.js') || req.path.endsWith('.css') || req.path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public'), {
     index: 'index.html',
     extensions: ['html']
