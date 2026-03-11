@@ -555,10 +555,19 @@ function syncGaskets(well) {
     if (well.uszczelka && well.uszczelka !== 'brak') {
         const uType = well.uszczelka;
         const requiredGaskets = {};
-        const denniceCountByDn = {};
+
+        // Find the bottom-most dennica index
+        let bottomDennicaIndex = -1;
+        for (let i = newConfig.length - 1; i >= 0; i--) {
+            const p = studnieProducts.find(pr => pr.id === newConfig[i].productId);
+            if (p && p.componentType === 'dennica') {
+                bottomDennicaIndex = i;
+                break;
+            }
+        }
 
         // Find elements requiring a gasket
-        newConfig.forEach(item => {
+        newConfig.forEach((item, index) => {
             const p = studnieProducts.find(pr => pr.id === item.productId);
             if (p && ['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus'].includes(p.componentType)) {
                 if (p.dn) {
@@ -566,16 +575,18 @@ function syncGaskets(well) {
                 }
             } else if (p && p.componentType === 'dennica') {
                 if (p.dn) {
-                    denniceCountByDn[p.dn] = (denniceCountByDn[p.dn] || 0) + item.quantity;
+                    if (index === bottomDennicaIndex) {
+                        // The structural bottom dennica only needs a gasket if quantity > 1
+                        if (item.quantity > 1) {
+                            requiredGaskets[p.dn] = (requiredGaskets[p.dn] || 0) + (item.quantity - 1);
+                        }
+                    } else {
+                        // All other non-bottom dennice need gaskets for themselves
+                        requiredGaskets[p.dn] = (requiredGaskets[p.dn] || 0) + item.quantity;
+                    }
                 }
             }
         });
-
-        for (const dn in denniceCountByDn) {
-            if (denniceCountByDn[dn] > 1) {
-                requiredGaskets[dn] = (requiredGaskets[dn] || 0) + (denniceCountByDn[dn] - 1);
-            }
-        }
 
         // Add corresponding gaskets
         for (const dn in requiredGaskets) {
