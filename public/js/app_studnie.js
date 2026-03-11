@@ -2669,8 +2669,8 @@ function renderTiles() {
     const filterByWellParams = (p) => {
         const id = (p.id || '').toUpperCase();
 
-        // 1. Kręgi (KDZ/KDB) i stopnie (-B, -D, -N)
-        if (p.componentType === 'krag' || p.componentType === 'krag_ot') {
+        // 1. Kręgi (KDZ/KDB), Konus (JZW) i stopnie (-B, -D, -N)
+        if (p.componentType === 'krag' || p.componentType === 'krag_ot' || p.componentType === 'konus') {
             const isZelbet = well.nadbudowa === 'zelbetowa';
             if (isZelbet && id.startsWith('KDB')) return false;
             if (!isZelbet && id.startsWith('KDZ')) return false;
@@ -2918,6 +2918,14 @@ function addWellComponent(productId) {
     const addSingle = (prod) => {
         well.config.push({ productId: prod.id, quantity: 1 });
     };
+
+    // Auto-enable gaskets (GSG) if the user adds a component that can use them and it's set to 'brak'
+    if (['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus', 'dennica'].includes(product.componentType)) {
+        if (!well.uszczelka || well.uszczelka === 'brak') {
+            well.uszczelka = 'GSG';
+            if (typeof renderWellParams === 'function') renderWellParams();
+        }
+    }
 
     addSingle(product);
     let pairedName = '';
@@ -3261,12 +3269,23 @@ window.handleCfgDrop = function (e) {
             tile.style.borderTop = '';
             well.config = well.config.filter(c => !c.isPlaceholder);
 
-            well.config.splice(dropIndex, 0, { productId: window.currentDraggedPlaceholderId, quantity: 1 });
+            const addedProductId = window.currentDraggedPlaceholderId;
+            well.config.splice(dropIndex, 0, { productId: addedProductId, quantity: 1 });
             window.currentDraggedPlaceholderId = null;
 
             well.autoLocked = true;
             updateAutoLockUI();
             well.configSource = 'MANUAL';
+
+            const product = studnieProducts.find(p => p.id === addedProductId);
+            if (product && ['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus', 'dennica'].includes(product.componentType)) {
+                if (!well.uszczelka || well.uszczelka === 'brak') {
+                    well.uszczelka = 'GSG';
+                    if (typeof renderWellParams === 'function') renderWellParams();
+                }
+            }
+
+            syncGaskets(well);
 
             renderWellConfig();
             renderWellDiagram();
