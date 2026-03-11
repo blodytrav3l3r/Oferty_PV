@@ -6989,6 +6989,17 @@ window.svgPointerDown = function (ev, idx) {
     ev.preventDefault();
     const well = getCurrentWell();
     if (!well) return;
+
+    // If Zlecenia modal is open, select element instead of dragging
+    const zlModal = document.getElementById('zlecenia-modal');
+    if (zlModal && zlModal.classList.contains('active')) {
+        const targetIdx = zleceniaElementsList.findIndex(el => el.wellIndex === currentWellIndex && el.elementIndex === idx);
+        if (targetIdx >= 0) {
+            selectZleceniaElement(targetIdx);
+        }
+        return;
+    }
+
     window.svgDragStartIndex = idx;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
