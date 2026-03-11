@@ -3331,8 +3331,11 @@ function renderWellPrzejscia() {
             const well = getCurrentWell();
             if (!well || !well.przejscia || !well.przejscia[index]) return;
 
-            const val = field === 'angle' ? well.przejscia[index].angle : (well.przejscia[index].rzednaWlaczenia || '');
-            const step = field === 'angle' ? '1' : '0.01';
+            let val, step;
+            if (field === 'angle') { val = well.przejscia[index].angle; step = '1'; }
+            else if (field === 'spadekKineta') { val = well.przejscia[index].spadekKineta || ''; step = '0.1'; }
+            else if (field === 'spadekMufa') { val = well.przejscia[index].spadekMufa || ''; step = '0.1'; }
+            else { val = well.przejscia[index].rzednaWlaczenia || ''; step = '0.01'; }
             const w = element.offsetWidth;
 
             element.innerHTML = `<input type="number" step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
@@ -3375,6 +3378,10 @@ function renderWellPrzejscia() {
                     }
                     well.przejscia[index].rzednaWlaczenia = parseFloat(numVal).toFixed(2);
                 }
+            } else if (field === 'spadekKineta') {
+                well.przejscia[index].spadekKineta = isNaN(numVal) ? null : parseFloat(numVal).toFixed(1);
+            } else if (field === 'spadekMufa') {
+                well.przejscia[index].spadekMufa = isNaN(numVal) ? null : parseFloat(numVal).toFixed(1);
             }
 
             renderWellPrzejscia();
@@ -3628,11 +3635,11 @@ function renderWellPrzejscia() {
             <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem;">
               <div style="text-align:center; min-width:60px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w kinecie</div>
-                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
+                <div onclick="window.activateQuickEdit(this, ${index}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
               </div>
               <div style="text-align:center; min-width:60px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w mufie</div>
-                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
+                <div onclick="window.activateQuickEdit(this, ${index}, 'spadekMufa')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
               </div>
               <div style="text-align:center; min-width:80px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Rzędna</div>
