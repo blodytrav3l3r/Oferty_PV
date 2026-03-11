@@ -3567,11 +3567,11 @@ function renderWellPrzejscia() {
                   <input type="number" class="form-input" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size:0.75rem; color:#818cf8; font-weight:800; text-align:center;">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spad.Kin [%]</label>
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w kinecie [%]</label>
                   <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="0.1" value="${editPrzejscieState.spadekKineta}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spad.Muf [%]</label>
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w mufie [%]</label>
                   <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="0.1" value="${editPrzejscieState.spadekMufa}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
                 </div>
               </div>
@@ -3636,12 +3636,12 @@ function renderWellPrzejscia() {
               </div>
               ${item.spadekKineta !== undefined && item.spadekKineta !== null && item.spadekKineta !== '' ? `
               <div style="text-align:center; min-width:60px;">
-                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;" title="Spadek w kinecie">Spadek K.</div>
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w kinecie</div>
                 <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekKineta}%</div>
               </div>` : ''}
               ${item.spadekMufa !== undefined && item.spadekMufa !== null && item.spadekMufa !== '' ? `
               <div style="text-align:center; min-width:60px;">
-                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;" title="Spadek w mufie">Spadek M.</div>
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w mufie</div>
                 <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3);">${item.spadekMufa}%</div>
               </div>` : ''}
               <div style="text-align:right; min-width:70px;">
