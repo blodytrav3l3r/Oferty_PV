@@ -3684,6 +3684,14 @@ function renderWellPrzejscia() {
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Wysokość [mm]</div>
                 <div onclick="window.activateQuickEdit(this, ${index}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" style="font-size:1.05rem; font-weight:800; color:#f59e0b; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#fbbf24'" onmouseleave="this.style.color='#f59e0b'">${heightMm} mm</div>
               </div>
+              <div style="text-align:center; min-width:65px;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt wykonania</div>
+                <div style="font-size:1.0rem; font-weight:700; color:#38bdf8;" title="360° - kąt">${(item.angle === 0 || item.angle === 360) ? '0' : (360 - item.angle)}°</div>
+              </div>
+              <div style="text-align:center; min-width:60px;">
+                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt gony</div>
+                <div style="font-size:1.0rem; font-weight:700; color:#2dd4bf;" title="Kąt wykonania w gonach">${((item.angle === 0 || item.angle === 360) ? 0 : ((360 - item.angle) * 400 / 360)).toFixed(2)}g</div>
+              </div>
               <div style="text-align:center; min-width:80px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Rzędna</div>
                 <div onclick="window.activateQuickEdit(this, ${index}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.rzednaWlaczenia || '—'}</div>
