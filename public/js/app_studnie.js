@@ -3390,14 +3390,10 @@ function renderWellPrzejscia() {
         };
     }
 
-    const zlMirror = document.getElementById('zlecenia-przejscia-mirror');
-
-    if (!container && !zlMirror) return;
+    if (!container) return;
 
     if (!well || !well.przejscia || well.przejscia.length === 0) {
-        const emptyHtml = '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
-        if (container) container.innerHTML = emptyHtml;
-        if (zlMirror) zlMirror.innerHTML = emptyHtml;
+        container.innerHTML = '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
         if (countEl) countEl.textContent = '';
         return;
     }
@@ -3677,13 +3673,7 @@ function renderWellPrzejscia() {
       <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span>
     </div>`;
 
-    if (container) {
-        container.style.padding = '0';
-        container.innerHTML = html;
-    }
-
-    // Mirror into Zlecenia modal if open
-    if (zlMirror) zlMirror.innerHTML = html;
+    container.innerHTML = html;
 }
 
 function movePrzejscie(index, direction) {
@@ -7611,7 +7601,24 @@ function populateZleceniaForm(el) {
         currY += h;
     }
 
-    const przejsciaCount = (well.przejscia || []).length;
+    // Filter transitions assigned to this element
+    const assignedPrzejscia = (well.przejscia || []).filter(item => {
+        let pel = parseFloat(item.rzednaWlaczenia);
+        if (isNaN(pel)) pel = rzDna;
+        const mmFromBottom = (pel - rzDna) * 1000;
+        let assignedIndex = -1;
+        for (let cm of configMap) {
+            if (mmFromBottom >= cm.start && mmFromBottom < cm.end) {
+                assignedIndex = cm.index;
+                break;
+            }
+        }
+        if (assignedIndex === -1 && configMap.length > 0) {
+            assignedIndex = (mmFromBottom < 0) ? configMap[0].index : configMap[configMap.length - 1].index;
+        }
+        return assignedIndex === elementIndex;
+    });
+    const przejsciaCount = assignedPrzejscia.length;
 
     // Stopnie select — derive current value
     const stopnieVal = existing?.rodzajStopni || '';
@@ -7895,9 +7902,62 @@ function populateZleceniaForm(el) {
         </div>
     </div>
     `;
+    // Render filtered przejścia into the mirror container
+    const mirrorEl = document.getElementById('zlecenia-przejscia-mirror');
+    if (mirrorEl) {
+        if (assignedPrzejscia.length === 0) {
+            mirrorEl.innerHTML = '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
+        } else {
+            mirrorEl.innerHTML = assignedPrzejscia.map((item, i) => {
+                const przProd = studnieProducts.find(pr => pr.id === item.productId);
+                const przName = przProd ? przProd.category : 'Nieznane';
+                const dn = przProd ? przProd.dn : '—';
+                if (!item.flowType) {
+                    item.flowType = (i === 0 && (item.angle === 0 || item.angle === '0')) ? 'wylot' : 'wlot';
+                }
+                const flowLabel = item.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+                const flowBg = item.flowType === 'wylot' ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)';
+                const flowColor = item.flowType === 'wylot' ? '#fca5a5' : '#93c5fd';
+                const flowBorder = item.flowType === 'wylot' ? 'rgba(239,68,68,0.6)' : 'rgba(59,130,246,0.6)';
+                const flowIcon = item.flowType === 'wylot' ? '📤' : '📥';
+                const angleColor = (item.angle === 0 || item.angle === '0') ? '#6366f1' : '#818cf8';
 
-    // Populate the przejscia mirror from the configurator's renderWellPrzejscia
-    renderWellPrzejscia();
+                return `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; padding:0.45rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+                    <div style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.3rem 0.5rem; display:flex; flex-direction:column; align-items:center; min-width:55px;">
+                        <span style="font-size:1.1rem; margin-bottom:0.1rem;">${flowIcon}</span>
+                        <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${flowLabel}</span>
+                    </div>
+                    <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.8rem;">
+                        <div style="display:flex; flex-direction:column; gap:0.15rem;">
+                            <div style="display:flex; align-items:center; gap:0.6rem;">
+                                <span style="font-size:1.0rem; font-weight:800; color:var(--text-primary);">${przName}</span>
+                                <span style="font-size:1.0rem; color:#a78bfa; font-weight:800;">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn}</span>
+                            </div>
+                            ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px;">📝 ${item.notes}</div>` : ''}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:1.5rem; margin-right:0.5rem;">
+                            <div style="text-align:center; min-width:60px;">
+                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Spadek w kinecie</div>
+                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
+                            </div>
+                            <div style="text-align:center; min-width:60px;">
+                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Spadek w mufie</div>
+                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
+                            </div>
+                            <div style="text-align:center; min-width:80px;">
+                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Rzędna</div>
+                                <div style="font-size:1.05rem; font-weight:800; color:var(--text-primary);">${item.rzednaWlaczenia || '—'}</div>
+                            </div>
+                            <div style="text-align:center; min-width:80px;">
+                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Kąt</div>
+                                <div style="font-size:1.05rem; font-weight:800; color:${angleColor};">${item.angle}°</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
 }
 
 function selectZleceniaTile(btn, targetId, val) {
