@@ -7694,8 +7694,11 @@ function populateZleceniaForm(el) {
     container.innerHTML = `
     <!-- Dane zlecenia -->
     <div class="card card-compact" style="margin-bottom:0.5rem;">
-        <div class="card-title-sm">📋 Dane zlecenia</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
+        <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').textContent=b.style.display==='none'?'▶':'▼';" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
+            <span>📋 Dane zlecenia</span>
+            <span class="zl-toggle" style="font-size:0.6rem; color:var(--text-muted);">▶</span>
+        </div>
+        <div style="display:none; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm" style="color:var(--text-secondary);">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || investName}" placeholder="Nazwa obiektu...">
