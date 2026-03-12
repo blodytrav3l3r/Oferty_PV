@@ -7863,12 +7863,12 @@ function populateZleceniaForm(el) {
             </div>
         </div>
 
-        <div class="card card-compact">
-            <div class="card-title-sm" style="display:flex; justify-content:space-between;">
+        <div class="card card-compact" style="display:flex; flex-direction:column;">
+            <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
                 <span>🔗 Przejścia </span>
                 <span style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
             </div>
-            <div id="zlecenia-przejscia-mirror" style="border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); height:-webkit-fill-available;">
+            <div id="zlecenia-przejscia-mirror" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto;">
             </div>
         </div>
     </div>
