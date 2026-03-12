@@ -3669,13 +3669,13 @@ function renderWellPrzejscia() {
         const flowIcon = item.flowType === 'wylot' ? '📤' : '📥';
 
         html += `<div data-prz-idx="${index}" draggable="true" ondragstart="handlePrzDragStart(event)" ondragover="handlePrzDragOver(event)" ondrop="handlePrzDrop(event)" ondragend="handlePrzDragEnd(event)" 
-                      style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; padding:0.45rem; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; cursor:grab;"
+                      style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; height:49px; padding:0 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; cursor:grab;"
                       onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', ${index}); window.highlightSvg('cfg', ${assignedIndex});" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', ${index}); window.unhighlightSvg('cfg', ${assignedIndex});">
           
           <!-- FLOW TYPE BUTTON -->
-          <button onclick="openFlowTypePopup(${index})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.3rem 0.5rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
-            <span style="font-size:1.1rem; margin-bottom:0.1rem;">${flowIcon}</span>
-            <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${flowLabel}</span>
+          <button onclick="openFlowTypePopup(${index})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
+            <span style="font-size:1.1rem; margin-bottom:0px;">${flowIcon}</span>
+            <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-top:-2px;">${flowLabel}</span>
           </button>
 
           <!-- DETAILS -->
@@ -8023,10 +8023,10 @@ function populateZleceniaForm(el) {
                 }
                 const heightMm = Math.round(mmFromBottom - elementStartMm);
 
-                return `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; padding:0.45rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
-                    <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.3rem 0.5rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
-                        <span style="font-size:1.1rem; margin-bottom:0.1rem;">${flowIcon}</span>
-                        <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${flowLabel}</span>
+                return `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; height:49px; padding:0 0.45rem; box-sizing:border-box; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
+                    <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
+                        <span style="font-size:1.1rem; margin-bottom:0px;">${flowIcon}</span>
+                        <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-top:-2px;">${flowLabel}</span>
                     </button>
                     <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.8rem;">
                         <div style="display:flex; flex-direction:column; gap:0.15rem;">
