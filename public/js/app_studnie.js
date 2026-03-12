@@ -8087,6 +8087,53 @@ function selectZleceniaTile(btn, targetId, val) {
     
     if (targetId === 'zl-rodzaj-stopni') {
         onZleceniaStopnieChange();
+    } else if (targetId === 'zl-rodzaj-studni') {
+        if (typeof window.zleceniaSelectedIdx === 'number' && window.zleceniaElementsList) {
+            const el = window.zleceniaElementsList[window.zleceniaSelectedIdx];
+            if (el && el.well && el.product) {
+                // Zachowaj tymczasowe uwagi z okienka przed jego przeładowaniem
+                const tempUwagi = document.getElementById('zl-uwagi') ? document.getElementById('zl-uwagi').value : '';
+                
+                // Ustaw odpowiednią globalną cechę studni w zależności od edytowanego elementu
+                if (el.product.componentType === 'dennica') {
+                    el.well.dennicaMaterial = val === 'zelbet' ? 'zelbetowa' : 'betonowa';
+                } else {
+                    el.well.nadbudowa = val === 'zelbet' ? 'zelbetowa' : 'betonowa';
+                }
+                
+                const oldWellIdx = el.wellIndex;
+                const oldCat = el.product.category;
+
+                // 1. Zaktualizowanie komponentów by dobrać wyrobienie Żelbet/Beton (i uaktualnić ich ceny)
+                if (typeof window.autoSelectComponents === 'function') {
+                    window.autoSelectComponents(false);
+                }
+                
+                // 2. Przebudowanie głównych widoków pod spodem
+                if (typeof window.renderWellConfig === 'function') window.renderWellConfig();
+                if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+                if (typeof window.updateSummary === 'function') window.updateSummary();
+                
+                // 3. Przebudowa Listy elementów w Zleceniu, tak by zaktualizować wewnętrzne obiekty Ceny/Produktów
+                if (typeof window.buildZleceniaWellList === 'function') {
+                    window.buildZleceniaWellList();
+                }
+                
+                // 4. Spróbujmy znaleźć przeliczony index elementu i go wybrać powtórnie
+                let newTargetIdx = window.zleceniaElementsList.findIndex(e => e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat);
+                if (newTargetIdx === -1) {
+                    newTargetIdx = window.zleceniaElementsList.findIndex(e => e.wellIndex === oldWellIdx);
+                }
+                
+                if (newTargetIdx >= 0 && typeof window.selectZleceniaElement === 'function') {
+                    window.selectZleceniaElement(newTargetIdx);
+                    // Odtworzenie wpisanych na sucho uwag
+                    if (document.getElementById('zl-uwagi')) {
+                        document.getElementById('zl-uwagi').value = tempUwagi;
+                    }
+                }
+            }
+        }
     }
 }
 
