@@ -7818,8 +7818,8 @@ function populateZleceniaForm(el) {
         </div>
     </div>
 
-    <!-- Dane studni + Przejścia side by side -->
-    <div style="display:grid; grid-template-columns:0.8fr 1.8fr; gap:0.5rem; margin-bottom:0.5rem;">
+    <!-- Dane studni i Uwagi obok siebie -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
         <div class="card card-compact">
             <div class="card-title-sm">🏗️ Dane elementu</div>
             <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
@@ -7830,20 +7830,20 @@ function populateZleceniaForm(el) {
                 </div>
                 
                 <!-- Underneath list -->
-                <div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.2rem; background:#0d1520; padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:#0d1520; padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Średnica</span>
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">DN${well.dn}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Głębokość</span>
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${parsed.glebokosc || '—'} mm</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Wysokość</span>
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${parsed.wysokosc || (product.height || 0)} mm</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:0.3rem; margin-top:0.1rem; border-top:1px dashed rgba(255,255,255,0.1);">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Grubość dna</span>
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${dnoKineta > 0 ? dnoKineta + ' mm' : '—'}</span>
                     </div>
@@ -7854,7 +7854,7 @@ function populateZleceniaForm(el) {
                     <label class="form-label-sm" style="color:var(--text-secondary);">Rodzaj studni</label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;" class="zl-param-group">
                         ${rodzajStudniOptions.map(([v, l]) =>
-                            `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.8rem; font-size:0.95rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
+                            `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
                         ).join('')}
                     </div>
                     <input type="hidden" id="zl-rodzaj-studni" value="${rodzajStudniVal}">
@@ -7864,20 +7864,20 @@ function populateZleceniaForm(el) {
         </div>
 
         <div class="card card-compact" style="display:flex; flex-direction:column;">
-            <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                <span>🔗 Przejścia </span>
-                <span style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
-            </div>
-            <div id="zlecenia-przejscia-mirror" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto;">
+            <div class="card-title-sm">📝 Uwagi</div>
+            <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
+                <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${existing?.uwagi || ''}</textarea>
             </div>
         </div>
     </div>
 
-    <!-- Uwagi -->
-    <div class="card card-compact" style="margin-bottom:0.5rem;">
-        <div class="card-title-sm">📝 Uwagi</div>
-        <div class="form-group-sm">
-            <textarea id="zl-uwagi" class="form-textarea" rows="3" placeholder="Uwagi do zlecenia..." style="min-height:50px;">${existing?.uwagi || ''}</textarea>
+    <!-- Przejścia (Pełna szerokość) -->
+    <div class="card card-compact" style="display:flex; flex-direction:column; margin-bottom:0.5rem; width:100%; box-sizing:border-box; overflow-x:auto;">
+        <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+            <span>🔗 Przejścia </span>
+            <span style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
+        </div>
+        <div id="zlecenia-przejscia-mirror" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
         </div>
     </div>
 
