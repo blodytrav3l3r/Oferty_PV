@@ -3433,6 +3433,10 @@ function renderWellPrzejscia() {
             renderWellPrzejscia();
             renderWellDiagram();
             updateSummary();
+            const zlModal = document.getElementById('zlecenia-modal');
+            if (zlModal && zlModal.classList.contains('active') && window.zleceniaElementsList && typeof zleceniaSelectedIdx === 'number') {
+                populateZleceniaForm(window.zleceniaElementsList[window.zleceniaSelectedIdx]);
+            }
         };
     }
 
@@ -4292,12 +4296,20 @@ window.openFlowTypePopup = function (index) {
         well.przejscia[index].flowType = 'wlot';
         document.getElementById('flow-type-modal').style.display = 'none';
         renderWellPrzejscia();
+        const zlModal = document.getElementById('zlecenia-modal');
+        if (zlModal && zlModal.classList.contains('active') && window.zleceniaElementsList && typeof zleceniaSelectedIdx === 'number') {
+            populateZleceniaForm(window.zleceniaElementsList[window.zleceniaSelectedIdx]);
+        }
     };
 
     document.getElementById('flow-wylot-btn').onclick = () => {
         well.przejscia[index].flowType = 'wylot';
         document.getElementById('flow-type-modal').style.display = 'none';
         renderWellPrzejscia();
+        const zlModal = document.getElementById('zlecenia-modal');
+        if (zlModal && zlModal.classList.contains('active') && window.zleceniaElementsList && typeof zleceniaSelectedIdx === 'number') {
+            populateZleceniaForm(window.zleceniaElementsList[window.zleceniaSelectedIdx]);
+        }
     };
 };
 
@@ -7988,6 +8000,7 @@ function populateZleceniaForm(el) {
             mirrorEl.innerHTML = '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
         } else {
             mirrorEl.innerHTML = assignedPrzejscia.map((item, i) => {
+                const globalIndex = well.przejscia.indexOf(item);
                 const przProd = studnieProducts.find(pr => pr.id === item.productId);
                 const przName = przProd ? przProd.category : 'Nieznane';
                 const dn = przProd ? przProd.dn : '—';
@@ -8001,11 +8014,20 @@ function populateZleceniaForm(el) {
                 const flowIcon = item.flowType === 'wylot' ? '📤' : '📥';
                 const angleColor = (item.angle === 0 || item.angle === '0') ? '#6366f1' : '#818cf8';
 
+                let pel = parseFloat(item.rzednaWlaczenia);
+                if (isNaN(pel)) pel = rzDna;
+                const mmFromBottom = (pel - rzDna) * 1000;
+                let elementStartMm = 0;
+                for (let cm of configMap) {
+                    if (mmFromBottom >= cm.start && mmFromBottom < cm.end) { elementStartMm = cm.start; break; }
+                }
+                const heightMm = Math.round(mmFromBottom - elementStartMm);
+
                 return `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flowBorder}; border-radius:10px; padding:0.45rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;">
-                    <div style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.3rem 0.5rem; display:flex; flex-direction:column; align-items:center; min-width:55px;">
+                    <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flowBg}; color:${flowColor}; border:1px solid ${flowBorder}; border-radius:8px; padding:0.3rem 0.5rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
                         <span style="font-size:1.1rem; margin-bottom:0.1rem;">${flowIcon}</span>
                         <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">${flowLabel}</span>
-                    </div>
+                    </button>
                     <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.8rem;">
                         <div style="display:flex; flex-direction:column; gap:0.15rem;">
                             <div style="display:flex; align-items:center; gap:0.6rem;">
@@ -8014,24 +8036,36 @@ function populateZleceniaForm(el) {
                             </div>
                             ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px;">📝 ${item.notes}</div>` : ''}
                         </div>
-                        <div style="display:flex; align-items:center; gap:1.5rem; margin-right:0.5rem;">
-                            <div style="text-align:center; min-width:60px;">
-                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Spadek w kinecie</div>
-                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
-                            </div>
-                            <div style="text-align:center; min-width:60px;">
-                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Spadek w mufie</div>
-                                <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
-                            </div>
-                            <div style="text-align:center; min-width:80px;">
-                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Rzędna</div>
-                                <div style="font-size:1.05rem; font-weight:800; color:var(--text-primary);">${item.rzednaWlaczenia || '—'}</div>
-                            </div>
-                            <div style="text-align:center; min-width:80px;">
-                                <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem;">Kąt</div>
-                                <div style="font-size:1.05rem; font-weight:800; color:${angleColor};">${item.angle}°</div>
-                            </div>
-                        </div>
+                        <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem;">
+                          <div style="text-align:center; min-width:60px;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w k.</div>
+                            <div onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
+                          </div>
+                          <div style="text-align:center; min-width:60px;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w m.</div>
+                            <div onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekMufa')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekMufa != null && item.spadekMufa !== '' ? item.spadekMufa + '%' : '—'}</div>
+                          </div>
+                          <div style="text-align:center; min-width:80px; position:relative; padding-bottom:0.1rem;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt</div>
+                            <div onclick="window.activateQuickEdit(this, ${globalIndex}, 'angle')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:transform 0.2s; display:inline-block;" onmouseenter="this.style.transform='scale(1.15)'" onmouseleave="this.style.transform='scale(1)'">${item.angle}°</div>
+                          </div>
+                          <div style="text-align:center; min-width:70px;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Wysokość</div>
+                            <div onclick="window.activateQuickEdit(this, ${globalIndex}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" style="font-size:1.05rem; font-weight:800; color:#f59e0b; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#fbbf24'" onmouseleave="this.style.color='#f59e0b'">${heightMm} mm</div>
+                          </div>
+                          <div style="text-align:center; min-width:65px;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt wyk.</div>
+                            <div style="font-size:1.0rem; font-weight:700; color:#38bdf8;" title="360° - kąt">${(item.angle === 0 || item.angle === 360) ? '0' : (360 - item.angle)}°</div>
+                          </div>
+                          <div style="text-align:center; min-width:60px;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Kąt gony</div>
+                            <div style="font-size:1.0rem; font-weight:700; color:#2dd4bf;" title="Kąt wykonania w gonach">${((item.angle === 0 || item.angle === 360) ? 0 : ((360 - item.angle) * 400 / 360)).toFixed(2)}g</div>
+                          </div>
+                          <div style="text-align:center; min-width:80px;">
+                            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Rzędna</div>
+                            <div onclick="window.activateQuickEdit(this, ${globalIndex}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.5rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.rzednaWlaczenia || '—'}</div>
+                          </div>
+                       </div>
                     </div>
                 </div>`;
             }).join('');
