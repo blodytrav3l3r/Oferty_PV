@@ -7818,8 +7818,8 @@ function populateZleceniaForm(el) {
         </div>
     </div>
 
-    <!-- Dane studni i Uwagi obok siebie -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+    <!-- Dane studni i Przejścia obok siebie -->
+    <div style="display:grid; grid-template-columns:230px 1fr; gap:0.5rem; margin-bottom:0.5rem;">
         <div class="card card-compact">
             <div class="card-title-sm">🏗️ Dane elementu</div>
             <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
@@ -7844,7 +7844,7 @@ function populateZleceniaForm(el) {
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${parsed.wysokosc || (product.height || 0)} mm</span>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Grubość dna</span>
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Gr. dna</span>
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${dnoKineta > 0 ? dnoKineta + ' mm' : '—'}</span>
                     </div>
                 </div>
@@ -7863,21 +7863,21 @@ function populateZleceniaForm(el) {
             </div>
         </div>
 
-        <div class="card card-compact" style="display:flex; flex-direction:column;">
-            <div class="card-title-sm">📝 Uwagi</div>
-            <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
-                <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${existing?.uwagi || ''}</textarea>
+        <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto;">
+            <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                <span>🔗 Przejścia </span>
+                <span style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
+            </div>
+            <div id="zlecenia-przejscia-mirror" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
             </div>
         </div>
     </div>
 
-    <!-- Przejścia (Pełna szerokość) -->
-    <div class="card card-compact" style="display:flex; flex-direction:column; margin-bottom:0.5rem; width:100%; box-sizing:border-box; overflow-x:auto;">
-        <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-            <span>🔗 Przejścia </span>
-            <span style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
-        </div>
-        <div id="zlecenia-przejscia-mirror" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
+    <!-- Uwagi (Pełna szerokość pod spodem) -->
+    <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
+        <div class="card-title-sm">📝 Uwagi</div>
+        <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
+            <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${existing?.uwagi || ''}</textarea>
         </div>
     </div>
 
