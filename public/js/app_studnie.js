@@ -6221,7 +6221,7 @@ async function saveOrdersDataStudnie(data) {
     }
 }
 
-function createOrderFromOffer() {
+async function createOrderFromOffer() {
     // First save the current offer
     const number = document.getElementById('offer-number').value.trim();
     if (!number) { showToast('Najpierw zapisz ofertę', 'error'); return; }
@@ -6240,14 +6240,59 @@ function createOrderFromOffer() {
         ordersStudnie = ordersStudnie.filter(o => o.offerId !== offer.id);
     }
 
+    // Determine assigned user for order numbering
+    let assignedUserId = currentUser ? currentUser.id : null;
+    let assignedUserName = currentUser ? currentUser.username : '';
+
+    // If pro or admin — ask which user to assign the order to
+    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
+        try {
+            const usersResp = await fetch('/api/users', { headers: authHeaders() });
+            const usersData = await usersResp.json();
+            const allUsers = usersData.data || [];
+
+            if (allUsers.length > 0) {
+                const selectedUser = await showUserSelectionPopup(allUsers, assignedUserId);
+                if (selectedUser === null) {
+                    showToast('Anulowano tworzenie zamówienia', 'info');
+                    return;
+                }
+                assignedUserId = selectedUser.id;
+                assignedUserName = selectedUser.username;
+            }
+        } catch (e) {
+            console.error('Błąd pobierania użytkowników:', e);
+        }
+    }
+
+    // Claim order number from server
+    let orderNumber = '';
+    try {
+        const claimResp = await fetch('/api/claim-order-number/' + assignedUserId, {
+            method: 'POST',
+            headers: authHeaders()
+        });
+        const claimData = await claimResp.json();
+        if (claimResp.ok && claimData.number) {
+            orderNumber = claimData.number;
+        } else {
+            showToast('Błąd generowania numeru zamówienia: ' + (claimData.error || ''), 'error');
+            return;
+        }
+    } catch (e) {
+        showToast('Błąd połączenia przy generowaniu numeru zamówienia', 'error');
+        return;
+    }
+
     // Create order from offer — deep copy everything, save original snapshot
     const order = {
         id: 'order_studnie_' + Date.now(),
         offerId: offer.id,
         offerNumber: offer.number,
-        userId: offer.userId,
-        userName: offer.userName,
+        userId: assignedUserId,
+        userName: assignedUserName,
         number: offer.number,
+        orderNumber: orderNumber,
         date: offer.date,
         clientName: offer.clientName,
         clientNip: offer.clientNip,
@@ -6279,10 +6324,79 @@ function createOrderFromOffer() {
     saveOrdersDataStudnie(ordersStudnie);
     renderSavedOffersStudnie();
 
-    showToast('📦 Zamówienie utworzone z oferty ' + offer.number, 'success');
+    showToast(`📦 Zamówienie ${orderNumber} utworzone z oferty ${offer.number}`, 'success');
 
     // Open order in the same window (uses main studnie editor in order mode)
     window.location.href = '/studnie?order=' + order.id;
+}
+
+/** Show popup for pro/admin to select which user to assign the order to */
+function showUserSelectionPopup(users, defaultUserId) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; display:flex; align-items:center; justify-content:center;';
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;';
+
+        let html = `<div style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;">👤 Przypisz zamówienie do użytkownika</div>`;
+        html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:1rem;">Numer zamówienia zostanie wygenerowany z sekwencji wybranego użytkownika.</div>`;
+        html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
+
+        users.forEach(u => {
+            const displayName = (u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}` : u.username;
+            const isDefault = u.id === defaultUserId;
+            const symbol = u.symbol || '??';
+            const roleBadge = u.role === 'admin' ? '🔑' : (u.role === 'pro' ? '⭐' : '👤');
+
+            html += `<button class="user-select-btn" data-user-id="${u.id}" style="
+                display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
+                background:${isDefault ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
+                border:1px solid ${isDefault ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.06)'};
+                border-radius:10px; cursor:pointer; color:#e2e8f0; font:500 0.85rem Inter,sans-serif;
+                transition:all 0.15s; text-align:left; width:100%;
+            " onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)';this.style.background='rgba(99,102,241,0.1)'"
+               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='rgba(255,255,255,0.03)'}">
+                <span style="font-size:1.1rem;">${roleBadge}</span>
+                <div style="flex:1;">
+                    <div style="font-weight:700;">${displayName}</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">Symbol: ${symbol} | Nr start: ${u.orderStartNumber || 1}</div>
+                </div>
+                ${isDefault ? '<span style="font-size:0.65rem; color:#818cf8; font-weight:700;">DOMYŚLNY</span>' : ''}
+            </button>`;
+        });
+
+        html += `</div>`;
+        html += `<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">`;
+        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:transparent; color:#94a3b8; cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
+        html += `</div>`;
+
+        modal.innerHTML = html;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Handle button clicks
+        modal.querySelectorAll('.user-select-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const userId = btn.getAttribute('data-user-id');
+                const selectedUser = users.find(u => u.id === userId);
+                document.body.removeChild(overlay);
+                resolve(selectedUser);
+            });
+        });
+
+        modal.querySelector('#user-select-cancel').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve(null);
+        });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+                resolve(null);
+            }
+        });
+    });
 }
 
 function saveOrderStudnie() {

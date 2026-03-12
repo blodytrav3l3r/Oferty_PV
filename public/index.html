@@ -720,6 +720,7 @@
                         style="flex: 1 1 100px;">
                     <input type="email" id="new-user-email" placeholder="Email" style="flex: 1 1 130px;">
                     <input type="text" id="new-user-phone" placeholder="Telefon" style="flex: 1 1 100px;">
+                    <input type="number" id="new-user-order-start" placeholder="Nr start. zleceń" min="1" value="1" style="flex: 1 1 90px;" title="Numer od którego zaczną się numery zleceń tego użytkownika">
                     <select id="new-user-role" style="flex: 1 1 120px;" onchange="toggleSubUsersList()">
                         <option value="user">Użytkownik</option>
                         <option value="pro">PRO (Kierownik)</option>
@@ -938,6 +939,7 @@
             document.getElementById('new-user-password').placeholder = 'Nowe hasło (opcjonalnie)';
             document.getElementById('new-user-email').value = u.email || '';
             document.getElementById('new-user-phone').value = u.phone || '';
+            document.getElementById('new-user-order-start').value = u.orderStartNumber || 1;
             document.getElementById('new-user-role').value = u.role;
             selectedSubUsers = [...(u.subUsers || [])];
             toggleSubUsersList();
@@ -956,6 +958,7 @@
             document.getElementById('new-user-password').placeholder = 'Hasło';
             document.getElementById('new-user-email').value = '';
             document.getElementById('new-user-phone').value = '';
+            document.getElementById('new-user-order-start').value = '1';
             document.getElementById('new-user-role').value = 'user';
             selectedSubUsers = [];
             toggleSubUsersList();
@@ -991,7 +994,7 @@
                 const isEditing = !!editingUserId;
                 const url = isEditing ? `/api/users/${editingUserId}` : '/api/auth/register';
                 const method = isEditing ? 'PUT' : 'POST';
-                const payload = { username: login, role, firstName, lastName, symbol, phone, email, subUsers: selectedSubUsers };
+                const payload = { username: login, role, firstName, lastName, symbol, phone, email, subUsers: selectedSubUsers, orderStartNumber: parseInt(document.getElementById('new-user-order-start').value) || 1 };
                 if (password) payload.password = password;
 
                 const res = await fetch(url, {

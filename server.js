@@ -145,7 +145,21 @@ db.exec(`
         updatedAt TEXT,
         data TEXT
     );
+    CREATE TABLE IF NOT EXISTS order_counters (
+        userId TEXT,
+        year INTEGER,
+        lastNumber INTEGER DEFAULT 0,
+        PRIMARY KEY (userId, year)
+    );
 `);
+
+// Migration: add orderStartNumber column to users if missing
+try {
+    db.exec(`ALTER TABLE users ADD COLUMN orderStartNumber INTEGER DEFAULT 1`);
+    console.log('  ✅ Dodano kolumnę orderStartNumber do users');
+} catch (e) {
+    // Column already exists — ignore
+}
 
 /* ===== HELPERS ===== */
 
@@ -183,6 +197,7 @@ function getUserObject(row) {
         email: row.email,
         symbol: row.symbol,
         subUsers: JSON.parse(row.subUsers || '[]'),
+        orderStartNumber: row.orderStartNumber || 1,
         createdAt: row.createdAt
     };
 }
@@ -268,7 +283,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.post('/api/auth/register', requireAuth, requireAdmin, (req, res) => {
-    const { username, password, role, firstName, lastName, phone, email, symbol, subUsers } = req.body;
+    const { username, password, role, firstName, lastName, phone, email, symbol, subUsers, orderStartNumber } = req.body;
     if (!username || !password) {
         return res.status(400).json({ error: 'Podaj login i hasło' });
     }
@@ -287,6 +302,7 @@ app.post('/api/auth/register', requireAuth, requireAdmin, (req, res) => {
     const hash = bcrypt.hashSync(password, 10);
     const validRoles = ['admin', 'pro', 'user'];
     const newUserRole = validRoles.includes(role) ? role : 'user';
+    const startNum = parseInt(orderStartNumber) || 1;
 
     const newUser = {
         id: 'user_' + Date.now(),
@@ -301,8 +317,8 @@ app.post('/api/auth/register', requireAuth, requireAdmin, (req, res) => {
         createdAt: new Date().toISOString()
     };
 
-    db.prepare(`INSERT INTO users (id, username, password, role, firstName, lastName, phone, email, symbol, subUsers, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        newUser.id, newUser.username, hash, newUser.role, newUser.firstName, newUser.lastName, newUser.phone, newUser.email, newUser.symbol, JSON.stringify(newUser.subUsers), newUser.createdAt
+    db.prepare(`INSERT INTO users (id, username, password, role, firstName, lastName, phone, email, symbol, subUsers, createdAt, orderStartNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        newUser.id, newUser.username, hash, newUser.role, newUser.firstName, newUser.lastName, newUser.phone, newUser.email, newUser.symbol, JSON.stringify(newUser.subUsers), newUser.createdAt, startNum
     );
 
     res.json({ user: newUser });
@@ -352,11 +368,11 @@ app.post('/api/auth/change-password', requireAuth, (req, res) => {
 app.get('/api/users', requireAuth, requireAdmin, (req, res) => {
     const rows = db.prepare('SELECT * FROM users').all();
     const users = rows.map(r => getUserObject(r));
-    res.json({ data: users.map(u => ({ id: u.id, username: u.username, role: u.role, firstName: u.firstName, lastName: u.lastName, phone: u.phone, email: u.email, symbol: u.symbol, subUsers: u.subUsers || [], createdAt: u.createdAt })) });
+    res.json({ data: users.map(u => ({ id: u.id, username: u.username, role: u.role, firstName: u.firstName, lastName: u.lastName, phone: u.phone, email: u.email, symbol: u.symbol, subUsers: u.subUsers || [], orderStartNumber: u.orderStartNumber || 1, createdAt: u.createdAt })) });
 });
 
 app.put('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
-    const { username, password, role, firstName, lastName, phone, email, symbol, subUsers } = req.body;
+    const { username, password, role, firstName, lastName, phone, email, symbol, subUsers, orderStartNumber } = req.body;
 
     const row = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
     if (!row) {
@@ -401,8 +417,10 @@ app.put('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
     if (symbol !== undefined) user.symbol = symbol;
     if (subUsers !== undefined) user.subUsers = Array.isArray(subUsers) ? subUsers : [];
 
-    db.prepare(`UPDATE users SET username=?, password=?, role=?, firstName=?, lastName=?, phone=?, email=?, symbol=?, subUsers=? WHERE id=?`).run(
-        user.username, newPasswordHash, user.role, user.firstName, user.lastName, user.phone, user.email, user.symbol, JSON.stringify(user.subUsers), user.id
+    const newOrderStart = (orderStartNumber !== undefined) ? (parseInt(orderStartNumber) || 1) : (row.orderStartNumber || 1);
+
+    db.prepare(`UPDATE users SET username=?, password=?, role=?, firstName=?, lastName=?, phone=?, email=?, symbol=?, subUsers=?, orderStartNumber=? WHERE id=?`).run(
+        user.username, newPasswordHash, user.role, user.firstName, user.lastName, user.phone, user.email, user.symbol, JSON.stringify(user.subUsers), newOrderStart, user.id
     );
 
     res.json({ ok: true });
@@ -820,6 +838,59 @@ app.put('/api/clients', requireAuth, (req, res) => {
         res.json({ ok: true });
     } catch (e) {
         if (db.inTransaction) db.exec('ROLLBACK');
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/* ===== ORDER NUMBER GENERATION ===== */
+app.get('/api/next-order-number/:userId', requireAuth, (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const userRow = db.prepare('SELECT symbol, orderStartNumber FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+
+        const symbol = userRow.symbol || '??';
+        const startNum = userRow.orderStartNumber || 1;
+        const year = new Date().getFullYear();
+
+        const counter = db.prepare('SELECT lastNumber FROM order_counters WHERE userId = ? AND year = ?').get(userId, year);
+        let nextNumber;
+        if (!counter) {
+            nextNumber = startNum;
+        } else {
+            nextNumber = Math.max(counter.lastNumber + 1, startNum);
+        }
+
+        const formatted = `${symbol}/${String(nextNumber).padStart(3, '0')}/${year}`;
+        res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/claim-order-number/:userId', requireAuth, (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const userRow = db.prepare('SELECT symbol, orderStartNumber FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+
+        const symbol = userRow.symbol || '??';
+        const startNum = userRow.orderStartNumber || 1;
+        const year = new Date().getFullYear();
+
+        const counter = db.prepare('SELECT lastNumber FROM order_counters WHERE userId = ? AND year = ?').get(userId, year);
+        let nextNumber;
+        if (!counter) {
+            nextNumber = startNum;
+            db.prepare('INSERT INTO order_counters (userId, year, lastNumber) VALUES (?, ?, ?)').run(userId, year, nextNumber);
+        } else {
+            nextNumber = Math.max(counter.lastNumber + 1, startNum);
+            db.prepare('UPDATE order_counters SET lastNumber = ? WHERE userId = ? AND year = ?').run(nextNumber, userId, year);
+        }
+
+        const formatted = `${symbol}/${String(nextNumber).padStart(3, '0')}/${year}`;
+        res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
+    } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
