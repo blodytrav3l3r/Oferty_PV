@@ -74,12 +74,13 @@ body::before {
 
 /* Header */
 .header {
-  background: #0a0e1a;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-glass);
   padding: 0 1rem;
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .header-inner {
@@ -88,7 +89,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 56px;
+  min-height: 57px;
   padding: 0.3rem 1.5rem;
   gap: 1rem;
 }

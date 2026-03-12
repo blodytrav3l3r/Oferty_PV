@@ -368,7 +368,15 @@ app.post('/api/auth/change-password', requireAuth, (req, res) => {
 app.get('/api/users', requireAuth, requireAdmin, (req, res) => {
     const rows = db.prepare('SELECT * FROM users').all();
     const users = rows.map(r => getUserObject(r));
-    res.json({ data: users.map(u => ({ id: u.id, username: u.username, role: u.role, firstName: u.firstName, lastName: u.lastName, phone: u.phone, email: u.email, symbol: u.symbol, subUsers: u.subUsers || [], orderStartNumber: u.orderStartNumber || 1, createdAt: u.createdAt })) });
+    const year = new Date().getFullYear();
+    res.json({ data: users.map(u => {
+        const startNum = u.orderStartNumber || 1;
+        const counter = db.prepare('SELECT lastNumber FROM order_counters WHERE userId = ? AND year = ?').get(u.id, year);
+        const nextNum = counter ? Math.max(counter.lastNumber + 1, startNum) : startNum;
+        const symbol = u.symbol || '??';
+        const nextOrderNumber = `${symbol}/${String(nextNum).padStart(6, '0')}/${year}`;
+        return { id: u.id, username: u.username, role: u.role, firstName: u.firstName, lastName: u.lastName, phone: u.phone, email: u.email, symbol: u.symbol, subUsers: u.subUsers || [], orderStartNumber: startNum, nextOrderNumber, createdAt: u.createdAt };
+    }) });
 });
 
 app.put('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
@@ -889,7 +897,7 @@ app.get('/api/next-order-number/:userId', requireAuth, (req, res) => {
             nextNumber = Math.max(counter.lastNumber + 1, startNum);
         }
 
-        const formatted = `${symbol}/${String(nextNumber).padStart(3, '0')}/${year}`;
+        const formatted = `${symbol}/${String(nextNumber).padStart(6, '0')}/${year}`;
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
     } catch (e) {
         res.status(500).json({ error: e.message });

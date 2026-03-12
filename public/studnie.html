@@ -11,16 +11,18 @@
         /* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
         .well-app-layout {
             display: grid;
-            grid-template-columns: 280px 1fr 260px;
-            gap: 0.6rem;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 0;
+            margin: -0.8rem -1.5rem -2rem -1.5rem;
             align-items: stretch;
-            height: calc(100vh - 110px); /* 100vh minus header and margins */
+            height: calc(100vh - 58px); /* 100vh minus header */
             overflow: hidden;
+            background: var(--bg-primary);
         }
 
         @media (max-width: 1400px) {
             .well-app-layout {
-                grid-template-columns: 250px 1fr 240px;
+                grid-template-columns: 300px 1fr 300px;
             }
         }
 
@@ -56,10 +58,10 @@
 
         /* ── Left: Well Diagram ── */
         .well-diagram-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 0.6rem;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-glass);
+            border-radius: 0;
+            padding: 0.8rem 1.2rem;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -67,14 +69,19 @@
         }
 
         .well-diagram-panel h3 {
-            font-size: 0.75rem;
+            padding: 0.8rem 1.2rem;
+            margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
+            border-bottom: 1px solid var(--border-glass);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 0.82rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 0.4rem;
             display: flex;
             align-items: center;
             gap: 0.3rem;
             flex-shrink: 0;
+            min-height: 57px;
+            background: var(--bg-secondary);
         }
 
         .well-diagram-svg {
@@ -127,13 +134,15 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-glass);
         }
 
         .wells-sidebar-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 0.6rem;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0.8rem 1.2rem;
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -171,10 +180,15 @@
         }
 
         .wells-sidebar-header {
+            padding: 0.8rem 1.2rem;
+            margin: -0.8rem -1.2rem 0.6rem -1.2rem;
+            border-bottom: 1px solid var(--border-glass);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.6rem;
+            min-height: 57px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: var(--bg-secondary);
         }
 
         .wells-sidebar-header h3 {

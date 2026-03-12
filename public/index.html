@@ -702,6 +702,7 @@
                                 <th>Email</th>
                                 <th>Telefon</th>
                                 <th>Rola</th>
+                                <th>Nr startowy</th>
                                 <th>Data utworzenia</th>
                                 <th>Akcje</th>
                             </tr>
@@ -901,6 +902,7 @@
             <td style="color:#94a3b8; font-size:0.75rem;">${u.email || '—'}</td>
             <td style="color:#94a3b8; font-size:0.75rem;">${u.phone || '—'}</td>
             <td><span class="user-role ${u.role === 'admin' ? 'role-admin' : (u.role === 'pro' ? 'role-pro' : 'role-user')}" style="font-size:0.65rem;">${u.role.toUpperCase()}</span></td>
+            <td style="color:#34d399; font-weight:700; font-size:0.75rem; white-space:nowrap;">${u.orderStartNumber || 1}</td>
             <td style="color:#94a3b8; font-size:0.75rem;">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('pl') : '—'}</td>
             <td>
               <button class="small-btn" onclick="startEditUser('${u.id}')" title="Edytuj" style="margin-right:4px;">✏️</button>
@@ -914,7 +916,7 @@
                         });
                         html += `
           <tr style="background: #1e2530;">
-            <td colspan="8" style="padding-top: 0.3rem; padding-bottom: 0.5rem; border-top: none;">
+            <td colspan="9" style="padding-top: 0.3rem; padding-bottom: 0.5rem; border-top: none;">
                 <div style="font-size: 0.7rem; color: #cbd5e1; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; padding-left: 0.5rem;">
                     <span style="font-weight:600; color:#fbbf24; font-size: 0.65rem;">👥 PRZYPISANI:</span>
                     ${subUsersNames.map(name => `<span style="background: #080808; border: 1px solid #1e2530; padding: 0.15rem 0.5rem; border-radius: 12px;">${name}</span>`).join('')}
