@@ -842,6 +842,34 @@ app.put('/api/clients', requireAuth, (req, res) => {
     }
 });
 
+/* ===== USERS FOR ORDER ASSIGNMENT (admin + pro) ===== */
+app.get('/api/users-for-assignment', requireAuth, (req, res) => {
+    try {
+        const myRow = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+        if (!myRow) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+        const me = getUserObject(myRow);
+
+        let userIds = [me.id];
+        if (me.role === 'admin') {
+            // Admin sees all users
+            const allRows = db.prepare('SELECT * FROM users').all();
+            const allUsers = allRows.map(r => getUserObject(r));
+            return res.json({ data: allUsers.map(u => ({ id: u.id, username: u.username, role: u.role, firstName: u.firstName, lastName: u.lastName, symbol: u.symbol, orderStartNumber: u.orderStartNumber || 1 })) });
+        } else if (me.role === 'pro') {
+            // Pro sees themselves + sub-users
+            const subIds = me.subUsers || [];
+            userIds = [me.id, ...subIds];
+        }
+        // user role: only themselves
+        const placeholders = userIds.map(() => '?').join(',');
+        const rows = db.prepare(`SELECT * FROM users WHERE id IN (${placeholders})`).all(...userIds);
+        const users = rows.map(r => getUserObject(r));
+        res.json({ data: users.map(u => ({ id: u.id, username: u.username, role: u.role, firstName: u.firstName, lastName: u.lastName, symbol: u.symbol, orderStartNumber: u.orderStartNumber || 1 })) });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 /* ===== ORDER NUMBER GENERATION ===== */
 app.get('/api/next-order-number/:userId', requireAuth, (req, res) => {
     try {

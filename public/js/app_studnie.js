@@ -6247,7 +6247,7 @@ async function createOrderFromOffer() {
     // If pro or admin — ask which user to assign the order to
     if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
         try {
-            const usersResp = await fetch('/api/users', { headers: authHeaders() });
+            const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
             const usersData = await usersResp.json();
             const allUsers = usersData.data || [];
 
