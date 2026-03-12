@@ -3679,17 +3679,17 @@ function renderWellPrzejscia() {
           </button>
 
           <!-- DETAILS -->
-          <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+            <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:1rem; white-space:nowrap;">
             
-            <div style="display:flex; flex-direction:column; gap:0.15rem;">
-               <div style="display:flex; align-items:center; gap:0.6rem;">
+            <div style="display:flex; flex-direction:column; gap:0.15rem; min-width:120px; overflow:hidden;">
+               <div style="display:flex; align-items:center; gap:0.6rem; white-space:nowrap;">
                  <span style="font-size:1.0rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.5);">${typeName}</span>
                  <span style="font-size:1.0rem; color:#a78bfa; font-weight:800;">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn}</span>
                </div>
-               ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px;">📝 ${item.notes}</div>` : ''}
+               ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📝 ${item.notes}</div>` : ''}
             </div>
 
-            <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem;">
+            <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem; white-space:nowrap;">
               <div style="text-align:center; min-width:60px;">
                 <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w kinecie</div>
                 <div onclick="window.activateQuickEdit(this, ${index}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
@@ -8028,15 +8028,15 @@ function populateZleceniaForm(el) {
                         <span style="font-size:1.1rem; margin-bottom:0px;">${flowIcon}</span>
                         <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-top:-2px;">${flowLabel}</span>
                     </button>
-                    <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.8rem;">
-                        <div style="display:flex; flex-direction:column; gap:0.15rem;">
-                            <div style="display:flex; align-items:center; gap:0.6rem;">
+                    <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.8rem; white-space:nowrap;">
+                        <div style="display:flex; flex-direction:column; gap:0.15rem; min-width:120px; overflow:hidden;">
+                            <div style="display:flex; align-items:center; gap:0.6rem; white-space:nowrap;">
                                 <span style="font-size:1.0rem; font-weight:800; color:var(--text-primary);">${przName}</span>
                                 <span style="font-size:1.0rem; color:#a78bfa; font-weight:800;">${typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn}</span>
                             </div>
-                            ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px;">📝 ${item.notes}</div>` : ''}
+                            ${item.notes ? `<div style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📝 ${item.notes}</div>` : ''}
                         </div>
-                        <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem;">
+                        <div style="display:flex; align-items:center; gap:1.5rem; margin-right: 0.5rem; white-space:nowrap;">
                           <div style="text-align:center; min-width:60px;">
                             <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px;">Spadek w k.</div>
                             <div onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0 0.3rem; transition:color 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${item.spadekKineta != null && item.spadekKineta !== '' ? item.spadekKineta + '%' : '—'}</div>
