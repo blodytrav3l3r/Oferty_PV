@@ -54,10 +54,10 @@
             <span class="nav-tile-icon">📝</span>
             <span class="nav-tile-text">Nowa Oferta</span>
           </button>
-          <button class="nav-btn nav-tile" data-section="saved" id="nav-saved"
+          <button class="nav-btn nav-tile" data-section="sales" id="nav-sales"
             style="--nav-accent:#f59e0b; --nav-glow:#2d2208">
-            <span class="nav-tile-icon">💾</span>
-            <span class="nav-tile-text">Zapisane</span>
+            <span class="nav-tile-icon">🗄️</span>
+            <span class="nav-tile-text">Kartoteka Ofert</span>
           </button>
           <button class="nav-btn nav-tile" data-section="pricelist" id="nav-pricelist"
             style="--nav-accent:#8b5cf6; --nav-glow:#1e1540">
@@ -269,18 +269,8 @@
       </div>
     </div>
 
-    <!-- ===== SECTION: SAVED OFFERS ===== -->
-    <div class="section" id="section-saved">
-      <div class="toolbar">
-        <h2 style="font-size:1rem;font-weight:700">💾 Zapisane oferty</h2>
-        <div class="toolbar-spacer"></div>
-        <button class="btn btn-primary" onclick="importOfferFromFile()">📂 Importuj JSON</button>
-        <button class="btn btn-primary" onclick="importOfferFromXlsx()">📊 Importuj XLSX</button>
-      </div>
-      <div class="offer-list" id="saved-offers-list"></div>
-    </div>
 
-    <!-- ===== SECTION: PRICE LIST ===== -->
+
     <div class="section" id="section-pricelist">
       <div class="toolbar">
         <h2 style="font-size:1rem;font-weight:700">📋 Cennik produktów</h2>
@@ -300,10 +290,42 @@
           Excel</button>
         <input type="file" id="import-rury-excel" style="display:none" accept=".xlsx,.xls"
           onchange="importRuryFromExcel(event)">
-        <button class="btn btn-secondary" onclick="resetPriceList()">🔄 Reset</button>
       </div>
-      <div class="card">
-        <div id="pricelist-body"></div>
+      
+      <div id="pricelist-body" style="margin-top: 1rem;"></div>
+    </div>
+
+    <!-- ===== SECTION: OFFERS ARCHIVE (KARTOTEKA) ===== -->
+    <div class="section" id="section-sales">
+      <div class="toolbar">
+        <h2 style="font-size:1rem;font-weight:700">🗄️ Kartoteka Ofert (Lokalne i Globalne)</h2>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="importOfferFromFile()">📂 Importuj JSON</button>
+        <button class="btn btn-primary btn-sm" onclick="importOfferFromXlsx()">📊 Importuj XLSX</button>
+      </div>
+      
+      <div class="app-container" style="max-width: 1400px; margin: 0 auto;">
+        
+        <!-- Top Section: My Local/Synced Offers -->
+        <section class="card pv-card" style="padding: 1.5rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-glass); margin-bottom: 2rem;">
+          <h3 style="margin-top:0; border-bottom:1px solid var(--border-glass); padding-bottom:0.5rem; margin-bottom:1rem; font-size:1rem;">Moje Lokalne i Zsynchronizowane Oferty</h3>
+          <div id="pv-local-offers-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
+             <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Ładowanie ofert z PouchDB...</div>
+          </div>
+        </section>
+
+        <!-- Bottom Section: Global Marketplace -->
+        <section class="card pv-card" style="padding: 1.5rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-glass);">
+          <h3 style="margin-top:0; border-bottom:1px solid var(--border-glass); padding-bottom:0.5rem; margin-bottom:1rem; font-size:1rem;">🌍 Wyszukiwarka Globalna (Marketplace)</h3>
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+             <input type="text" id="pv-global-search-input" class="form-input" placeholder="Szukaj w klastrze CouchDB (10,000,000 ofert)..." style="flex: 1;" autocomplete="off">
+             <button class="btn btn-primary" id="pv-global-search-btn" style="width: auto;">Szukaj Globalnie</button>
+          </div>
+          <div id="pv-global-search-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+             <div style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 2rem; font-style: italic;">Użyj wyszukiwarki powyżej.</div>
+          </div>
+        </section>
+
       </div>
     </div>
 
@@ -312,7 +334,17 @@
   <!-- Toast container -->
   <div id="toast-container" class="toast-container"></div>
 
+  <!-- PouchDB and PV Marketplace dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.find.min.js"></script>
+  <script type="module" src="js/pv/PV_SyncManager.js"></script>
+  <script type="module" src="js/pv/PV_MarketplaceManager.js"></script>
+  <script type="module" src="js/pv/pv_sales_ui.js"></script>
+
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/shared/formatters.js"></script>
+  <script src="js/shared/auth.js"></script>
+  <script src="js/shared/ui.js"></script>
   <script src="js/pricelist.js"></script>
   <script src="js/app.js"></script>
 </body>

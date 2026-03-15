@@ -2,18 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from database.local_db import get_db
-from database.crud import get_products_by_dn
 from api.schemas import WellConfigInput, WellConfigResult, SyncRequest, SyncItem
 from configuration_generator.generator import ConfigurationGenerator
 from ml.ranker import ConfigurationRanker
-from sync.sync_manager import SyncManager
+from database.couchdb_provider import CouchDBProvider
 
 router = APIRouter()
 ranker = ConfigurationRanker()
 
 @router.post("/configure", response_model=List[WellConfigResult])
-def configure_well(config: WellConfigInput, db: Session = Depends(get_db)):
+def configure_well(config: WellConfigInput):
     """
     Kalkuluje kompletną studnię podając listę uporządkowanych elementów
     """
@@ -46,20 +44,9 @@ def configure_well(config: WellConfigInput, db: Session = Depends(get_db)):
     return ranked_results
 
 @router.post("/sync/push")
-def sync_push(sync_data: SyncRequest, db: Session = Depends(get_db)):
-    """
-    Synchronizacja "offline-first". Wypchnięcie zmian do bazy serwera/zapisanie w bazie lokalnej.
-    """
-    manager = SyncManager(db)
-    # Omijamy faktyczne transformacje dict() dla ułatwienia mocka
-    # result = manager.sync_up(sync_data.changes)
-    return {"status": "ok", "message": "Changes accepted and queued for sync if offline."}
+def sync_push(sync_data: SyncRequest):
+    return {"status": "ok", "message": "Mode: Direct CouchDB. Offline sync disabled."}
 
 @router.get("/sync/pull")
-def sync_pull(db: Session = Depends(get_db)):
-    """
-    Pobiera aktualizacje asortymentu w postaci nowego słownika elementów 
-    """
-    manager = SyncManager(db)
-    items = manager.sync_down()
-    return {"items_to_update": len(items)}
+def sync_pull():
+    return {"status": "online", "mode": "Direct CouchDB"}

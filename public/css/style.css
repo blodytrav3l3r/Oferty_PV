@@ -1218,3 +1218,19 @@ tbody tr:hover {
     box-shadow: none;
   }
 }
+/* --- UI Helpers (extracted from inline styles) --- */
+.ui-text-muted-sm { font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.1rem; letter-spacing:0.5px; }
+.ui-text-mute { color:var(--text-muted); }
+.ui-text-sec { color:var(--text-secondary); }
+.ui-badge { padding:0.35rem 0.5rem; font-size:0.65rem; }
+.ui-badge-sm { padding:0.3rem 0.4rem; font-size:0.7rem; }
+.ui-col-5 { width: 5%; }
+.ui-col-6 { width: 6%; }
+.ui-col-8 { width: 8%; }
+.ui-row-gap { display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem; }
+.ui-center-min { text-align:center; min-width:60px; }
+.ui-text-lg { font-size:0.78rem; }
+.ui-text-sm { font-size:0.72rem; }
+.ui-pointer-bold { cursor:pointer; font-weight:600; }
+.ui-flex-between { display:flex; justify-content:space-between; align-items:center; }
+

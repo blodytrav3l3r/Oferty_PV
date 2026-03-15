@@ -5,7 +5,8 @@ Modularny, produkcyjny system konfiguratora studni kanalizacyjnych, zbudowany po
 ## Technologie
 - **Wymagania**: Python 3.10+
 - **API**: FastAPI, Pydantic
-- **Modelowanie / Baza danych**: SQLAlchemy (SQLite wbudowany jako tryb lokalny - offline-first, przygotowane w `tables.py` obiekty na synchronizację do centralnej bazy)
+- **Modelowanie**: Proste dataclassy (zamiast SQLAlchemy), synchronizacja bezpośrednio z CouchDB.
+- **Direct Mode**: Bezpośrednie połączenie z CouchDB (zastępuje SQLite) w celu uzyskania najbardziej aktualnych cen i stanów.
 - **Solver**: Google OR-Tools (moduł `optimizer/cp_optimizer.py`) do układania z klocków (np. 1000mm, 500mm, 250mm) optymalnej sumy dla wysokości.
 - **ML Ranking**: Szablon rankingowy na podstawie modułu `ml/ranker.py` (rozszerzalny dla np. LightGBM `lgb.Booster`).
 - **Testy**: `pytest`
@@ -34,12 +35,10 @@ Uruchom plik `install.bat` (dwukrotne kliknięcie). Skrypt automatycznie:
 2. **Uruchomienie Serwera API**:
 Uruchom plik `start.bat`. Skrypt ten samoistnie aktywuje środowisko wirtualne i podniesie serwer korzystając z `run.py`.
  
-> Podczas pierwszego uruchomienia API (port `:8000`) dokona migracji bazy danych SQLite i zasilenia tabel testowymi elementami z użyciem modułu `seed.py`.
-
 3. **Dokumentacja API**:
 Świetne interaktywne API ukaże się po otwarciu przeglądarki pod adresem:
 http://localhost:8000/docs
-*(Tam możliwa jest interakcja z endpointem `/api/v1/configure` wyliczającym wymaganą wysokość studni DN1500 / DN2000).*
+*(Tam możliwa jest interakcja z endpointem `/api/v1/configure`).*
 
 ## Model Redukcji w Przykładowej Studni
 Jeśli konfigurujesz DN1500 na wysokość 3500mm, algorytm:

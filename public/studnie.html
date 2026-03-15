@@ -15,7 +15,8 @@
             gap: 0;
             margin: -0.8rem -1.5rem -2rem -1.5rem;
             align-items: stretch;
-            height: calc(100vh - 58px); /* 100vh minus header */
+            height: calc(100vh - 58px);
+            /* 100vh minus header */
             overflow: hidden;
             background: var(--bg-primary);
         }
@@ -45,7 +46,7 @@
         /* ── Layout modifier for steps 1 and 2 ── */
         .well-app-layout.intro-mode {
             grid-template-columns: 1fr;
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             height: auto;
             overflow: visible;
@@ -72,7 +73,7 @@
             padding: 0.8rem 1.2rem;
             margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
             border-bottom: 1px solid var(--border-glass);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             font-size: 0.82rem;
             font-weight: 700;
             color: var(--text-primary);
@@ -152,7 +153,7 @@
         .well-center-column {
             height: 100%;
             overflow-y: auto;
-            padding-right: 0.4rem;
+            padding: 0 1rem;
             scrollbar-width: thin;
             scrollbar-color: #3730a3 #0f172a;
         }
@@ -187,7 +188,7 @@
             align-items: center;
             justify-content: space-between;
             min-height: 57px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             background: var(--bg-secondary);
         }
 
@@ -947,7 +948,7 @@
         }
 
         .wizard-card {
-            max-width: 860px;
+            max-width: 1200px;
             margin: 0 auto;
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
@@ -957,7 +958,7 @@
         }
 
         .wizard-card-header {
-            text-align: center;
+            text-align: left;
             margin-bottom: 1.3rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-glass);
@@ -1334,10 +1335,10 @@
                         <span class="nav-tile-icon">📊</span>
                         <span class="nav-tile-text">Oferta</span>
                     </button>
-                    <button class="nav-btn nav-tile" data-section="saved" id="nav-saved"
-                        style="--nav-accent:#f59e0b; --nav-glow:#2d2208" onclick="showSection('saved')">
-                        <span class="nav-tile-icon">💾</span>
-                        <span class="nav-tile-text">Zapisane</span>
+                    <button class="nav-btn nav-tile" data-section="sales" id="nav-sales"
+                        style="--nav-accent:#f59e0b; --nav-glow:#2d2208" onclick="showSection('sales')">
+                        <span class="nav-tile-icon">🗄️</span>
+                        <span class="nav-tile-text">Kartoteka Ofert</span>
                     </button>
                     <button class="nav-btn nav-tile" data-section="pricelist" id="nav-pricelist"
                         style="--nav-accent:#8b5cf6; --nav-glow:#1e1540" onclick="showSection('pricelist')">
@@ -1449,10 +1450,15 @@
                                     📋</div>
                                 <div>
                                     <h2 class="wizard-card-title" style="margin:0; font-size:1.15rem; font-weight:700;">
-                                        Dane
-                                        klienta i oferty</h2>
+                                        Dane klienta i oferty</h2>
                                     <p class="wizard-card-subtitle" style="margin:0; font-size:0.75rem; color:#71717a;">
                                         Uzupełnij dane klienta i podstawowe informacje o ofercie</p>
+                                </div>
+                                <div style="display:flex; gap:0.5rem; margin-left:auto;">
+                                    <button class="btn btn-secondary btn-sm" onclick="showClientsDb()"
+                                        style="padding:0.4rem 0.8rem; font-size:0.75rem;">📂 Wczytaj klienta</button>
+                                    <button class="btn btn-primary btn-sm" onclick="saveClientToDb()"
+                                        style="padding:0.4rem 0.8rem; font-size:0.75rem;">💾 Zapisz klienta</button>
                                 </div>
                             </div>
                             <div class="wizard-card-body">
@@ -1526,15 +1532,6 @@
                                             placeholder="np. Cena obejmuje transport do 100 km..."
                                             style="resize:vertical;"></textarea>
                                     </div>
-                                </div>
-
-                                <div style="display:flex; gap:0.5rem; margin-top:0.8rem;">
-                                    <button class="btn btn-secondary btn-sm" onclick="showClientsDb()"
-                                        style="padding:0.3rem 0.7rem; font-size:0.72rem;">📂 Wczytaj klienta z
-                                        bazy</button>
-                                    <button class="btn btn-primary btn-sm" onclick="saveClientToDb()"
-                                        style="padding:0.3rem 0.7rem; font-size:0.72rem;">💾 Zapisz klienta do
-                                        bazy</button>
                                 </div>
                             </div>
                             <div class="wizard-nav">
@@ -2209,15 +2206,6 @@
             </div>
         </div>
 
-        <!-- ===== SECTION: SAVED OFFERS ===== -->
-        <div class="section" id="section-saved">
-            <div class="toolbar">
-                <h2 style="font-size:1rem;font-weight:700">💾 Zapisane oferty studni</h2>
-                <div class="toolbar-spacer"></div>
-                <button class="btn btn-primary" onclick="importOfferFromFileStudnie()">📂 Importuj JSON</button>
-            </div>
-            <div class="offer-list" id="saved-offers-list"></div>
-        </div>
 
         <!-- ===== SECTION: PRICE LIST ===== -->
         <div class="section" id="section-pricelist">
@@ -2265,6 +2253,51 @@
             </div>
             <div class="card">
                 <div id="studnie-pricelist-body"></div>
+            </div>
+        </div>
+
+        <!-- ===== SECTION: OFFERS ARCHIVE (KARTOTEKA) ===== -->
+        <div class="section" id="section-sales">
+            <div class="toolbar">
+                <h2 style="font-size:1rem;font-weight:700">🗄️ Kartoteka Ofert (Lokalne i Globalne)</h2>
+                <div class="toolbar-spacer"></div>
+            </div>
+
+            <div class="app-container" style="max-width: 1400px; margin: 0 auto;">
+
+                <!-- Top Section: My Local/Synced Offers -->
+                <section class="card pv-card"
+                    style="padding: 1.5rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-glass); margin-bottom: 2rem;">
+                    <h3
+                        style="margin-top:0; border-bottom:1px solid var(--border-glass); padding-bottom:0.5rem; margin-bottom:1rem; font-size:1rem;">
+                        Moje Lokalne i Zsynchronizowane Oferty</h3>
+                    <div id="pv-local-offers-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">
+                            Ładowanie ofert z PouchDB...</div>
+                    </div>
+                </section>
+
+                <!-- Bottom Section: Global Marketplace -->
+                <section class="card pv-card"
+                    style="padding: 1.5rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-glass);">
+                    <h3
+                        style="margin-top:0; border-bottom:1px solid var(--border-glass); padding-bottom:0.5rem; margin-bottom:1rem; font-size:1rem;">
+                        🌍 Wyszukiwarka Globalna (Marketplace)</h3>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <input type="text" id="pv-global-search-input" class="form-input"
+                            placeholder="Szukaj w klastrze CouchDB (10,000,000 ofert)..." style="flex: 1;"
+                            autocomplete="off">
+                        <button class="btn btn-primary" id="pv-global-search-btn" style="width: auto;">Szukaj
+                            Globalnie</button>
+                    </div>
+                    <div id="pv-global-search-results"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                        <div
+                            style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 2rem; font-style: italic;">
+                            Użyj wyszukiwarki powyżej.</div>
+                    </div>
+                </section>
+
             </div>
         </div>
 
@@ -2323,7 +2356,7 @@
             padding: 0.8rem 1.2rem;
             margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
             border-bottom: 1px solid var(--border-glass);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             min-height: 57px;
@@ -2336,8 +2369,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            min-height: 57px; /* matches the button bar height */
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 57px;
+            /* matches the button bar height */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .zlecenia-right-list {
@@ -2410,7 +2444,8 @@
 
             <!-- CENTER: Production Order Form -->
             <div class="zlecenia-center">
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1.2rem; border-bottom:1px solid var(--border-glass); background:var(--bg-secondary); z-index:10; box-shadow:0 2px 10px rgba(0,0,0,0.1); min-height:57px;">
+                <div
+                    style="display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1.2rem; border-bottom:1px solid var(--border-glass); background:var(--bg-secondary); z-index:10; box-shadow:0 2px 10px rgba(0,0,0,0.1); min-height:57px;">
                     <div class="card-title" style="margin-bottom:0;">🏭 Zlecenie Produkcyjne</div>
                     <div style="display:flex; gap:0.4rem;">
                         <button class="btn btn-sm" onclick="acceptProductionOrder()"
@@ -2423,7 +2458,8 @@
                         <button class="btn btn-sm btn-danger" onclick="closeZleceniaModal()">✕ Zamknij</button>
                     </div>
                 </div>
-                <div id="zlecenia-form-content" style="flex:1; overflow-y:auto; padding:0.8rem 1.2rem; display:flex; flex-direction:column; gap:0.8rem;">
+                <div id="zlecenia-form-content"
+                    style="flex:1; overflow-y:auto; padding:0.8rem 1.2rem; display:flex; flex-direction:column; gap:0.8rem;">
                     <div style="text-align:center; padding:3rem; color:var(--text-muted);">
                         Wybierz element z listy po prawej stronie
                     </div>
@@ -2447,7 +2483,29 @@
 
     <div id="toast-container" class="toast-container"></div>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+    <!-- PouchDB and PV Marketplace dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.find.min.js"></script>
+    <script type="module" src="js/pv/PV_SyncManager.js"></script>
+    <script type="module" src="js/pv/PV_MarketplaceManager.js"></script>
+    <script type="module" src="js/pv/pv_sales_ui.js"></script>
+
+    <script src="js/shared/formatters.js"></script>
+    <script src="js/shared/auth.js"></script>
+    <script src="js/shared/ui.js"></script>
     <script src="js/pricelist_studnie.js"></script>
+
+    <!-- Split app_studnie modules -->
+    <script src="js/studnie/globals.js"></script>
+    <script src="js/studnie/uiHelpers.js"></script>
+    <script src="js/studnie/pricelistManager.js"></script>
+    <script src="js/studnie/wellManager.js"></script>
+    <script src="js/studnie/autoSelect.js"></script>
+    <script src="js/studnie/wellDiagram.js"></script>
+    <script src="js/studnie/offerManager.js"></script>
+    <script src="js/studnie/orderManager.js"></script>
+
     <script src="js/app_studnie.js"></script>
 </body>
 

@@ -1,3 +1,11 @@
+/* ===== PouchDB Plugins ===== */
+if (typeof PouchDB !== 'undefined') {
+    const findPlugin = typeof window !== 'undefined' ? (window.PouchDBFind || window.pouchdbFind || window.pouchdb_find) : null;
+    if (findPlugin) {
+        try { PouchDB.plugin(findPlugin); } catch(e) {}
+    }
+}
+
 /* ===== PRODUCT LENGTH (from ID pattern) ===== */
 function getProductLength(id) {
   // ID format: XXX-X-DD-LL-XXX where LL = length in hundreds of mm
@@ -54,7 +62,7 @@ async function loadProducts() {
     const json = await res.json();
     let saved = json.data;
 
-    if (!saved) {
+    if (!saved || saved.length === 0) {
       // First run: seed server with defaults
       const data = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
       await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
@@ -75,7 +83,8 @@ async function loadProducts() {
       const dp = DEFAULT_PRODUCTS.find(p => p.id === sp.id);
       if (dp) {
         if (sp.area === undefined || (sp.area === null && dp.area !== null)) { sp.area = dp.area; modified = true; }
-        if (sp.category === undefined) { sp.category = dp.category; modified = true; }
+        // Fix corrupted category if it was set to 'studnie' by the previous backend bug
+        if (sp.category === undefined || sp.category === 'studnie') { sp.category = dp.category; modified = true; }
         if (sp.transport === undefined) { sp.transport = dp.transport; modified = true; }
         if (sp.weight === undefined) { sp.weight = dp.weight; modified = true; }
       }
@@ -100,21 +109,56 @@ async function saveProducts(data) {
 
 async function loadOffers() {
   try {
+    // Czekamy na dostępność PVSalesUI jeśli jest w trakcie ładowania
+    if (!window.pvSalesUI || !window.pvSalesUI.marketplaceManager) {
+        // Jeśli nie zainicjalizowane, spróbujmy poczekać sekundę lub pobierzmy bezpośrednio jeśli to możliwe
+        await new Promise(r => setTimeout(r, 500));
+    }
+
+    if (window.pvSalesUI && window.pvSalesUI.marketplaceManager) {
+        const db = window.pvSalesUI.marketplaceManager.localOffers;
+        const result = await db.find({
+            selector: { type: 'offer' }
+        });
+        // Mapujemy PouchDB _id na tradycyjne id dla kompatybilności wstecznej UI
+        return result.docs.map(doc => ({ ...doc, id: doc._id }));
+    }
+    
+    // Fallback do starego API (tylko w fazie przejściowej)
     const res = await fetch('/api/offers', { headers: authHeaders() });
     if (res.status === 401) { window.location.href = 'index.html'; return []; }
     const json = await res.json();
     return json.data || [];
-  } catch (err) { console.error('loadOffers error:', err); return []; }
+  } catch (err) { 
+    console.error('loadOffers PouchDB error:', err); 
+    return []; 
+  }
 }
 
 async function saveOffersData(data) {
+  // Now logically handled by StorageService - keep as stub if needed, 
+  // but most calls will go directly to storageService.saveOffer()
   try {
-    await fetch('/api/offers', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
+    if (window.pvSalesUI && window.pvSalesUI.marketplaceManager) {
+        const { storageService } = await import('./shared/StorageService.js');
+        for(const offer of data) {
+            const doc = { ...offer, _id: offer.id, type: 'offer' };
+            await storageService.saveOffer(doc);
+        }
+        console.log('[StorageService] Offers collection synced.');
+    }
   } catch (err) { console.error('saveOffersData error:', err); }
 }
 
 async function loadClientsDb() {
   try {
+    if (window.pvSalesUI && window.pvSalesUI.syncManager) {
+        const db = window.pvSalesUI.syncManager.localClients;
+        const result = await db.find({
+            selector: { type: 'client' }
+        });
+        return result.docs.map(doc => ({ ...doc, id: doc._id }));
+    }
     const res = await fetch('/api/clients', { headers: authHeaders() });
     const json = await res.json();
     return json.data || [];
@@ -123,29 +167,26 @@ async function loadClientsDb() {
 
 async function saveClientsDbData(data) {
   try {
+    if (window.pvSalesUI && window.pvSalesUI.syncManager) {
+        const db = window.pvSalesUI.syncManager.localClients;
+        for(const client of data) {
+            const doc = { ...client, _id: client.id, type: 'client' };
+            try {
+                const existing = await db.get(client.id);
+                doc._rev = existing._rev;
+            } catch(e) {}
+            await db.put(doc);
+        }
+        console.log('[PouchDB] Clients synced to local database.');
+        return;
+    }
     await fetch('/api/clients', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
   } catch (err) { console.error('saveClientsDbData error:', err); }
 }
 
 /* ===== AUTH HELPER ===== */
 let currentUser = null;
-
-function getAuthToken() {
-  return localStorage.getItem('authToken');
-}
-
-function authHeaders(extra = {}) {
-  const token = getAuthToken();
-  const headers = { 'Content-Type': 'application/json', ...extra };
-  if (token) headers['X-Auth-Token'] = token;
-  return headers;
-}
-
-function appLogout() {
-  fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() }).catch(() => { });
-  localStorage.removeItem('authToken');
-  window.location.href = 'index.html';
-}
+// getAuthToken(), authHeaders(), appLogout() — dostępne z shared/auth.js
 
 /* ===== GLOBALS ===== */
 let products = [];
@@ -192,6 +233,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const authData = await authRes.json();
     if (!authData.user) { window.location.href = 'index.html'; return; }
     currentUser = authData.user;
+    sessionStorage.setItem('user', JSON.stringify(currentUser));
   } catch (e) { window.location.href = 'index.html'; return; }
 
   // Display user info in header
@@ -231,27 +273,34 @@ function setupNavigation() {
 }
 
 function showSection(id) {
+  // Alias for backward compatibility
+  if (id === 'saved') id = 'sales';
+
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('section-' + id)?.classList.add('active');
-  document.querySelector(`.nav-btn[data-section="${id}"]`)?.classList.add('active');
-  if (id === 'saved') renderSavedOffers();
+  
+  const targetSection = document.getElementById('section-' + id);
+  if(targetSection) targetSection.classList.add('active');
+  
+  const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
+  if(targetBtn) targetBtn.classList.add('active');
+
+  if (id === 'sales' && window.pvSalesUI) {
+      window.pvSalesUI.loadLocalOffers();
+  }
   if (id === 'pricelist') renderPriceList();
+  
+  // Update URL so reload doesn't lose state
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.set('tab', id);
+  window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 }
 
 /* ===== TOAST ===== */
-function showToast(msg, type = 'success') {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.innerHTML = msg;
-  container.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 300); }, 2500);
-}
+// showToast() — dostępne z shared/ui.js
 
 /* ===== FORMAT ===== */
-function fmt(n) { return n == null ? '—' : Number(n).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function fmtInt(n) { return n == null ? '—' : Number(n).toLocaleString('pl-PL'); }
+// fmt(), fmtInt() — dostępne z shared/formatters.js
 
 /* ===== PRICE LIST ===== */
 function renderPriceList() {
@@ -1466,7 +1515,7 @@ function downloadOfferFile(offer) {
 }
 
 /* ===== SAVE OFFER ===== */
-function saveOffer() {
+async function saveOffer() {
   const number = document.getElementById('offer-number').value.trim();
   const date = document.getElementById('offer-date').value;
   const clientName = document.getElementById('client-name').value.trim();
@@ -1495,11 +1544,21 @@ function saveOffer() {
     totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
   });
 
-  const existingOffer = editingOfferId ? offers.find(o => o.id === editingOfferId) : null;
-  const offer = {
-    id: editingOfferId || 'offer_' + Date.now(),
-    userId: existingOffer?.userId || (currentUser ? currentUser.id : null),
-    userName: existingOffer?.userName || (currentUser ? currentUser.username : ''),
+  const { storageService } = await import('./shared/StorageService.js');
+  
+  let existingDoc = null;
+  if (editingOfferId) {
+      try {
+          existingDoc = await storageService.getOfferById(editingOfferId);
+      } catch (e) {}
+  }
+
+  const offerDoc = {
+    _id: editingOfferId || 'offer_' + Date.now(),
+    _rev: existingDoc ? existingDoc._rev : undefined,
+    type: 'offer',
+    userId: existingDoc?.userId || (currentUser ? currentUser.id : null),
+    userName: existingDoc?.userName || (currentUser ? currentUser.username : ''),
     number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, investContractor, notes,
     items: JSON.parse(JSON.stringify(currentOfferItems)),
     transportKm,
@@ -1509,41 +1568,29 @@ function saveOffer() {
     transportCost,
     totalNetto,
     totalBrutto: totalNetto * 1.23,
-    createdAt: editingOfferId ? (existingOffer?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: existingDoc?.createdAt || new Date().toISOString(),
     lastEditedBy: currentUser ? currentUser.username : ''
   };
 
-  if (editingOfferId) {
-    const idx = offers.findIndex(o => o.id === editingOfferId);
-    if (idx >= 0) {
-      // Save snapshot of previous state
-      const oldOffer = offers[idx];
-      if (!oldOffer.history) oldOffer.history = [];
-      const historySnapshot = JSON.parse(JSON.stringify(oldOffer));
-      // Remove history from snapshot to prevent infinite nesting expansion
-      delete historySnapshot.history;
+  try {
+      if (offerDoc.items.length === 0) {
+          showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
+          return;
+      }
+      const result = await storageService.saveOffer(offerDoc);
+      showToast('Oferta zapisana ✔', 'success');
+      editingOfferId = result.id || offerDoc._id;
 
-      const newHistory = [...oldOffer.history, historySnapshot];
-      offer.history = newHistory;
-
-      offers[idx] = offer;
-    }
-    editingOfferId = null;
-  } else {
-    offer.history = [];
-    offers.push(offer);
+      // Update local array for immediate sync (optional, can be fully reactive later)
+      const idx = offers.findIndex(o => o.id === offerDoc._id);
+      if (idx >= 0) offers[idx] = { ...offerDoc, id: offerDoc._id };
+      else offers.push({ ...offerDoc, id: offerDoc._id });
+      
+      // If we are in "Kartoteka" view elsewhere, notice changes via PouchDB listener
+  } catch (err) {
+      console.error('[App] Save error:', err);
+      showToast('Błąd zapisu oferty', 'error');
   }
-  saveOffersData(offers);
-
-  // Ask if user wants to download as XLSX
-  if (confirm('Oferta zapisana! Czy pobrać plik XLSX?')) {
-    exportOfferXlsx(offer.id);
-  }
-
-  showToast('Oferta zapisana ✔', 'success');
-  editingOfferId = offer.id;
-  renderSavedOffers();
 }
 
 function clearOfferForm() {
@@ -1567,6 +1614,10 @@ function clearOfferForm() {
 /* ===== SAVED OFFERS ===== */
 function renderSavedOffers() {
   const container = document.getElementById('saved-offers-list');
+  if (!container) {
+    if (window.pvSalesUI) window.pvSalesUI.loadLocalOffers();
+    return;
+  }
   if (offers.length === 0) {
     container.innerHTML = `<div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -1620,24 +1671,38 @@ function renderSavedOffers() {
 function loadOffer(id) {
   const offer = offers.find(o => o.id === id);
   if (!offer) return;
+  
+  // Normalize if it's legacy data not yet normalized by StorageService
+  const normalized = (typeof storageService !== 'undefined' && storageService.normalizeOffer) 
+    ? storageService.normalizeOffer(offer) 
+    : offer;
+
   editingOfferId = id;
-  document.getElementById('offer-number').value = offer.number;
-  document.getElementById('offer-date').value = offer.date;
-  document.getElementById('client-name').value = offer.clientName || '';
-  document.getElementById('client-nip').value = offer.clientNip || '';
-  document.getElementById('client-address').value = offer.clientAddress || '';
-  document.getElementById('client-contact').value = offer.clientContact || '';
-  document.getElementById('invest-name').value = offer.investName || '';
-  document.getElementById('invest-address').value = offer.investAddress || '';
-  document.getElementById('invest-contractor').value = offer.investContractor || '';
-  document.getElementById('offer-notes').value = offer.notes || '';
-  document.getElementById('transport-km').value = offer.transportKm || 100;
-  document.getElementById('transport-rate').value = offer.transportRate || 10;
-  currentOfferItems = JSON.parse(JSON.stringify(offer.items));
+  document.getElementById('offer-number').value = normalized.number || '';
+  document.getElementById('offer-date').value = normalized.date || new Date().toISOString().slice(0, 10);
+  document.getElementById('client-name').value = normalized.clientName || '';
+  document.getElementById('client-nip').value = normalized.clientNip || '';
+  document.getElementById('client-address').value = normalized.clientAddress || '';
+  document.getElementById('client-contact').value = normalized.clientContact || '';
+  document.getElementById('invest-name').value = normalized.investName || '';
+  document.getElementById('invest-address').value = normalized.investAddress || '';
+  document.getElementById('invest-contractor').value = normalized.investContractor || '';
+  document.getElementById('offer-notes').value = normalized.notes || '';
+  document.getElementById('transport-km').value = normalized.transportKm || 100;
+  document.getElementById('transport-rate').value = normalized.transportRate || 10;
+  currentOfferItems = JSON.parse(JSON.stringify(normalized.items || []));
+  
   renderOfferItems();
   showSection('offer');
-  showToast('Wczytano ofertę: ' + offer.number, 'info');
+  showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
 }
+
+// Ensure compatibility with PVSalesUI calls
+window.loadSavedOfferData = function(doc, id) {
+    offers = offers.filter(o => o.id !== id);
+    offers.push({ ...doc, id: id });
+    loadOffer(id);
+};
 
 function duplicateOffer(id) {
   const offer = offers.find(o => o.id === id);
@@ -1763,10 +1828,13 @@ function restoreOfferVersion(offerId, historyIndex) {
 
   currentOfferItems = JSON.parse(JSON.stringify(snapshot.items || []));
   renderOfferItems();
+  
+  // Switch to the form view
+  const navOffer = document.getElementById('nav-offer');
+  if (navOffer) navOffer.click();
 
-  closeModal();
-  showSection('offer');
-  showToast('Wczytano starszą wersję w trybie edycji! Pamiętaj aby ją zapisać.', 'success');
+  if (typeof closeModal === 'function') closeModal();
+  if (typeof window.showToast === 'function') window.showToast('Wersja z historii wczytana', 'success');
 }
 
 /* ===== IMPORT OFFER FROM FILE ===== */
@@ -2625,15 +2693,39 @@ function importOfferFromXlsx() {
 }
 
 // Automatically switch tab based on URL query parameter
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab');
+  const editId = params.get('edit');
+
   if (tab) {
-    // If there's a button matching data-section, click it
     const tabBtn = document.querySelector(`.nav-btn[data-section="${tab}"]`);
     if (tabBtn) {
-      // Delay slightly to ensure any initial setup (like auth) completes first
       setTimeout(() => tabBtn.click(), 100);
     }
+  }
+
+  if (editId) {
+    // Wait for pvSalesUI to be initialized
+    const checkInit = setInterval(async () => {
+      if (window.pvSalesUI && window.pvSalesUI.marketplaceManager) {
+        clearInterval(checkInit);
+        try {
+          const doc = await window.pvSalesUI.marketplaceManager.localOffers.get(editId);
+          const restoreIdx = params.get('restore');
+
+          if (restoreIdx !== null && doc.history && doc.history[restoreIdx]) {
+            console.log('[App] Przywracanie wersji historycznej:', restoreIdx);
+            window.loadSavedOfferData(doc.history[restoreIdx], editId);
+            showToast('Wersja historyczna oferty załadowana', 'success');
+          } else if (typeof window.loadSavedOfferData === 'function') {
+            window.loadSavedOfferData(doc, editId);
+            showToast('Oferta załadowana do edycji', 'success');
+          }
+        } catch (err) {
+          console.error('[App] Błąd auto-ładowania oferty:', err);
+        }
+      }
+    }, 100);
   }
 });

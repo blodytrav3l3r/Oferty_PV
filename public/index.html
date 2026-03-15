@@ -652,7 +652,7 @@
             </div>
 
             <div style="display:flex; justify-content:center; margin-bottom: 2rem;">
-                <a href="rury.html?tab=saved" class="btn-offers">
+                <a href="rury.html?tab=sales" class="btn-offers">
                     <span class="btn-offers-icon">📄</span>
                     <span>Przejdź do Bazy Ofert</span>
                     <span class="btn-offers-arrow">→</span>
@@ -821,6 +821,7 @@
         }
 
         function showLoggedIn(user) {
+            sessionStorage.setItem('user', JSON.stringify(user));
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('user-section').classList.remove('hidden');
             document.getElementById('user-display-name').textContent = user.username;
@@ -871,6 +872,7 @@
                     return;
                 }
                 localStorage.setItem('authToken', data.token);
+                sessionStorage.setItem('user', JSON.stringify(data.user));
                 showLoggedIn(data.user);
             } catch (e) {
                 errorEl.textContent = 'Błąd połączenia z serwerem';
