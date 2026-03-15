@@ -7,6 +7,10 @@ const COUCHDB_URL = process.env.COUCHDB_URL;
 const DB_PREFIX = process.env.PV_DB_PREFIX || 'pv_';
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni
 
+// Tryb deweloperski bez CouchDB
+const DEV_OFFLINE_LOGIN = process.env.DEV_OFFLINE_LOGIN === 'true';
+const memorySessions = new Map();
+
 /**
  * Tworzy nową sesję dla użytkownika.
  */
@@ -21,7 +25,12 @@ async function createSession(userId) {
         type: 'session'
     };
 
-    await axios.put(`${COUCHDB_URL}/${DB_PREFIX}sessions/${token}`, sessionDoc);
+    if (DEV_OFFLINE_LOGIN) {
+        memorySessions.set(token, { ...sessionDoc, _memory: true });
+        console.log(`[AUTH-DEV] Session created in RAM: ${token} for ${userId}`);
+    } else {
+        await axios.put(`${COUCHDB_URL}/${DB_PREFIX}sessions/${token}`, sessionDoc);
+    }
     return token;
 }
 
@@ -30,6 +39,16 @@ async function createSession(userId) {
  */
 async function getSession(token) {
     if (!token) return null;
+
+    if (DEV_OFFLINE_LOGIN && memorySessions.has(token)) {
+        const session = memorySessions.get(token);
+        if (Date.now() - session.createdAt > SESSION_MAX_AGE_MS) {
+            memorySessions.delete(token);
+            return null;
+        }
+        return session;
+    }
+
     try {
         const res = await axios.get(`${COUCHDB_URL}/${DB_PREFIX}sessions/${token}`);
         const session = res.data;
@@ -44,6 +63,9 @@ async function getSession(token) {
  * Kasuje sesję po tokenie.
  */
 async function deleteSession(token) {
+    if (DEV_OFFLINE_LOGIN) {
+        memorySessions.delete(token);
+    }
     try {
         const res = await axios.get(`${COUCHDB_URL}/${DB_PREFIX}sessions/${token}`);
         await axios.delete(`${COUCHDB_URL}/${DB_PREFIX}sessions/${token}?rev=${res.data._rev}`);
@@ -72,6 +94,18 @@ async function requireAuth(req, res, next) {
         };
         next();
     } catch (e) {
+        // Fallback dla trybu DEV, gdy user nie istnieje w bazie (np. logowanie na 'test')
+        if (DEV_OFFLINE_LOGIN) {
+            console.log(`[AUTH-DEV] User fetch failed, providing mock data for: ${session.userId}`);
+            req.user = {
+                id: session.userId,
+                username: session.userId === 'test_id' ? 'test' : session.userId,
+                role: 'admin',
+                symbol: 'DEV',
+                subUsers: []
+            };
+            return next();
+        }
         return res.status(401).json({ error: 'Użytkownik nie istnieje w bazie CouchDB' });
     }
 }

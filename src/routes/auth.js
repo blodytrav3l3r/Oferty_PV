@@ -17,6 +17,18 @@ router.post('/login', async (req, res) => {
     }
 
     try {
+        // Tryb deweloperski bez CouchDB
+        if (process.env.DEV_OFFLINE_LOGIN === 'true' && (username === 'test' || username === 'admin')) {
+            console.log(`[AUTH-DEV] Bypassing CouchDB for user: ${username}`);
+            const userId = username === 'test' ? 'test_id' : 'admin_id';
+            const token = await createSession(userId);
+            res.cookie('authToken', token, { httpOnly: false, maxAge: SESSION_MAX_AGE_MS });
+            return res.json({
+                token,
+                user: { id: userId, username: username, role: 'admin' }
+            });
+        }
+
         // Wyszukanie użytkownika po username w CouchDB
         const searchRes = await axios.post(`${COUCHDB_URL}/${DB_PREFIX}users/_find`, {
             selector: { username: username }
