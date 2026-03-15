@@ -18,14 +18,14 @@ router.post('/login', async (req, res) => {
 
     try {
         // Tryb deweloperski bez CouchDB
-        if (process.env.DEV_OFFLINE_LOGIN === 'true' && (username === 'test' || username === 'admin')) {
-            console.log(`[AUTH-DEV] Bypassing CouchDB for user: ${username}`);
-            const userId = username === 'test' ? 'test_id' : 'admin_id';
+        if (process.env.DEV_OFFLINE_LOGIN === 'true' && username === 'test' && password === 'test') {
+            console.log(`[AUTH-DEV] Bypassing CouchDB for user: test`);
+            const userId = 'test_id';
             const token = await createSession(userId);
             res.cookie('authToken', token, { httpOnly: false, maxAge: SESSION_MAX_AGE_MS });
             return res.json({
                 token,
-                user: { id: userId, username: username, role: 'admin' }
+                user: { id: userId, username: 'test', role: 'admin' }
             });
         }
 
