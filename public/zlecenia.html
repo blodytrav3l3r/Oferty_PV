@@ -1,441 +1,534 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="WITROS — Kartoteka Zleceń Produkcyjnych." />
+        <title>WITROS — Kartoteka Zleceń</title>
+        <link rel="stylesheet" href="css/style.css?v=2.0" />
+        <style>
+            /* ===== Kartoteka Zleceń — Premium Design ===== */
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="WITROS — Kartoteka Zleceń Produkcyjnych.">
-  <title>WITROS — Kartoteka Zleceń</title>
-  <link rel="stylesheet" href="css/style.css?v=2.0">
-  <style>
-    /* ===== Kartoteka Zleceń — Premium Design ===== */
+            .zlecenia-page {
+                max-width: 1860px;
+                margin: 0 auto;
+                padding: 0 1rem;
+            }
 
-    .zlecenia-page {
-      max-width: 1860px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
+            /* Summary stats bar */
+            .zlecenia-stats {
+                display: flex;
+                gap: 0.8rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+            }
+            .zlecenia-stat-card {
+                flex: 1;
+                min-width: 160px;
+                max-width: 250px;
+                background: var(--bg-card);
+                border: 1px solid var(--border-glass);
+                border-radius: 10px;
+                padding: 0.8rem 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.8rem;
+                transition: all 0.2s;
+                cursor: default;
+            }
+            .zlecenia-stat-card:hover {
+                border-color: rgba(129, 140, 248, 0.3);
+                box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+            }
+            .zlecenia-stat-icon {
+                font-size: 1.6rem;
+                width: 42px;
+                height: 42px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+                flex-shrink: 0;
+            }
+            .zlecenia-stat-info {
+                flex: 1;
+            }
+            .zlecenia-stat-value {
+                font-size: 1.4rem;
+                font-weight: 800;
+                color: var(--text-primary);
+                line-height: 1.2;
+            }
+            .zlecenia-stat-label {
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
 
-    /* Summary stats bar */
-    .zlecenia-stats {
-      display: flex;
-      gap: 0.8rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .zlecenia-stat-card {
-      flex: 1;
-      min-width: 160px;
-      max-width: 250px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-glass);
-      border-radius: 10px;
-      padding: 0.8rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      transition: all 0.2s;
-      cursor: default;
-    }
-    .zlecenia-stat-card:hover {
-      border-color: rgba(129,140,248,0.3);
-      box-shadow: 0 2px 12px rgba(99,102,241,0.08);
-    }
-    .zlecenia-stat-icon {
-      font-size: 1.6rem;
-      width: 42px;
-      height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      flex-shrink: 0;
-    }
-    .zlecenia-stat-info { flex: 1; }
-    .zlecenia-stat-value {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--text-primary);
-      line-height: 1.2;
-    }
-    .zlecenia-stat-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+            /* Filter tabs */
+            .zlecenia-filters {
+                display: flex;
+                gap: 0.4rem;
+            }
+            .zlecenia-filter-tab {
+                padding: 0.4rem 0.9rem;
+                border-radius: 8px;
+                border: 1px solid var(--border-glass);
+                background: transparent;
+                color: var(--text-muted);
+                font-size: 0.75rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .zlecenia-filter-tab:hover {
+                background: rgba(255, 255, 255, 0.04);
+                color: var(--text-primary);
+            }
+            .zlecenia-filter-tab.active {
+                background: rgba(129, 140, 248, 0.12);
+                border-color: rgba(129, 140, 248, 0.4);
+                color: #818cf8;
+            }
 
-    /* Filter tabs */
-    .zlecenia-filters {
-      display: flex;
-      gap: 0.4rem;
-    }
-    .zlecenia-filter-tab {
-      padding: 0.4rem 0.9rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-glass);
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .zlecenia-filter-tab:hover {
-      background: rgba(255,255,255,0.04);
-      color: var(--text-primary);
-    }
-    .zlecenia-filter-tab.active {
-      background: rgba(129,140,248,0.12);
-      border-color: rgba(129,140,248,0.4);
-      color: #818cf8;
-    }
+            /* Table styling */
+            .zlecenia-table-container {
+                overflow-x: auto;
+                border-radius: 12px;
+                border: 1px solid var(--border-glass);
+                background: var(--bg-card);
+                scrollbar-width: thin;
+            }
+            .zlecenia-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.85rem;
+            }
+            .zlecenia-table th {
+                text-align: left;
+                padding: 0.7rem 1rem;
+                background: rgba(0, 0, 0, 0.2);
+                color: var(--text-muted);
+                font-weight: 700;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 1px solid var(--border-glass);
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                white-space: nowrap;
+            }
+            .zlecenia-table td {
+                padding: 0.65rem 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+                color: var(--text-primary);
+                vertical-align: middle;
+            }
+            .zlecenia-table tbody tr {
+                transition: background 0.15s;
+            }
+            .zlecenia-table tbody tr:hover {
+                background: rgba(129, 140, 248, 0.04);
+            }
+            .zlecenia-table tbody tr:last-child td {
+                border-bottom: none;
+            }
 
-    /* Table styling */
-    .zlecenia-table-container {
-      overflow-x: auto;
-      border-radius: 12px;
-      border: 1px solid var(--border-glass);
-      background: var(--bg-card);
-      scrollbar-width: thin;
-    }
-    .zlecenia-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    .zlecenia-table th {
-      text-align: left;
-      padding: 0.7rem 1rem;
-      background: rgba(0,0,0,0.2);
-      color: var(--text-muted);
-      font-weight: 700;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--border-glass);
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      white-space: nowrap;
-    }
-    .zlecenia-table td {
-      padding: 0.65rem 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      color: var(--text-primary);
-      vertical-align: middle;
-    }
-    .zlecenia-table tbody tr {
-      transition: background 0.15s;
-    }
-    .zlecenia-table tbody tr:hover {
-      background: rgba(129,140,248,0.04);
-    }
-    .zlecenia-table tbody tr:last-child td {
-      border-bottom: none;
-    }
+            /* Order number column */
+            .order-num {
+                font-family: 'JetBrains Mono', 'Consolas', monospace;
+                font-size: 0.9rem;
+                font-weight: 800;
+                color: #c084fc;
+            }
+            .order-num-missing {
+                color: var(--text-muted);
+                font-style: italic;
+                font-size: 0.8rem;
+            }
 
-    /* Order number column */
-    .order-num {
-      font-family: 'JetBrains Mono', 'Consolas', monospace;
-      font-size: 0.9rem;
-      font-weight: 800;
-      color: #c084fc;
-    }
-    .order-num-missing {
-      color: var(--text-muted);
-      font-style: italic;
-      font-size: 0.8rem;
-    }
+            /* Status badges */
+            .status-badge {
+                padding: 0.25rem 0.65rem;
+                border-radius: 20px;
+                font-size: 0.7rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                white-space: nowrap;
+            }
+            .status-draft {
+                background: rgba(245, 158, 11, 0.12);
+                color: #fbbf24;
+                border: 1px solid rgba(245, 158, 11, 0.25);
+            }
+            .status-accepted {
+                background: rgba(16, 185, 129, 0.12);
+                color: #34d399;
+                border: 1px solid rgba(16, 185, 129, 0.25);
+            }
 
-    /* Status badges */
-    .status-badge {
-      padding: 0.25rem 0.65rem;
-      border-radius: 20px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-    }
-    .status-draft {
-      background: rgba(245,158,11,0.12);
-      color: #fbbf24;
-      border: 1px solid rgba(245,158,11,0.25);
-    }
-    .status-accepted {
-      background: rgba(16,185,129,0.12);
-      color: #34d399;
-      border: 1px solid rgba(16,185,129,0.25);
-    }
+            /* Sales order badge */
+            .sales-order-badge {
+                background: rgba(129, 140, 248, 0.08);
+                color: #818cf8;
+                border: 1px solid rgba(129, 140, 248, 0.2);
+                padding: 0.2rem 0.5rem;
+                font-size: 0.78rem;
+                font-family: monospace;
+                font-weight: 800;
+                border-radius: 6px;
+                display: inline-block;
+            }
 
-    /* Sales order badge */
-    .sales-order-badge {
-      background: rgba(129,140,248,0.08);
-      color: #818cf8;
-      border: 1px solid rgba(129,140,248,0.2);
-      padding: 0.2rem 0.5rem;
-      font-size: 0.78rem;
-      font-family: monospace;
-      font-weight: 800;
-      border-radius: 6px;
-      display: inline-block;
-    }
+            /* Person badges */
+            .person-badge {
+                font-size: 0.78rem;
+                padding: 0.15rem 0.45rem;
+                border-radius: 6px;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                white-space: nowrap;
+            }
+            .person-handler {
+                background: rgba(6, 182, 212, 0.08);
+                color: #22d3ee;
+            }
+            .person-creator {
+                background: rgba(255, 255, 255, 0.04);
+                color: var(--text-secondary);
+            }
 
-    /* Person badges */
-    .person-badge {
-      font-size: 0.78rem;
-      padding: 0.15rem 0.45rem;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      white-space: nowrap;
-    }
-    .person-handler {
-      background: rgba(6,182,212,0.08);
-      color: #22d3ee;
-    }
-    .person-creator {
-      background: rgba(255,255,255,0.04);
-      color: var(--text-secondary);
-    }
+            /* Action buttons */
+            .action-btn {
+                padding: 0.3rem 0.45rem;
+                border-radius: 6px;
+                border: 1px solid var(--border-glass);
+                background: transparent;
+                cursor: pointer;
+                font-size: 0.72rem;
+                transition: all 0.2s;
+                color: var(--text-secondary);
+                line-height: 1;
+            }
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            .action-btn-edit {
+                border-color: rgba(14, 165, 233, 0.3);
+                color: #38bdf8;
+            }
+            .action-btn-edit:hover {
+                background: rgba(14, 165, 233, 0.1);
+            }
+            .action-btn-delete {
+                border-color: rgba(239, 68, 68, 0.3);
+                color: #f87171;
+            }
+            .action-btn-delete:hover {
+                background: rgba(239, 68, 68, 0.12);
+            }
 
-    /* Action buttons */
-    .action-btn {
-      padding: 0.3rem 0.45rem;
-      border-radius: 6px;
-      border: 1px solid var(--border-glass);
-      background: transparent;
-      cursor: pointer;
-      font-size: 0.72rem;
-      transition: all 0.2s;
-      color: var(--text-secondary);
-      line-height: 1;
-    }
-    .action-btn:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(255,255,255,0.15);
-    }
-    .action-btn-edit {
-      border-color: rgba(14,165,233,0.3);
-      color: #38bdf8;
-    }
-    .action-btn-edit:hover {
-      background: rgba(14,165,233,0.1);
-    }
-    .action-btn-delete {
-      border-color: rgba(239,68,68,0.3);
-      color: #f87171;
-    }
-    .action-btn-delete:hover {
-      background: rgba(239,68,68,0.12);
-    }
+            /* Well name + project */
+            .well-cell-name {
+                font-weight: 700;
+                font-size: 0.85rem;
+                color: var(--text-primary);
+            }
+            .well-cell-project {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                margin-top: 1px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 250px;
+            }
 
-    /* Well name + project */
-    .well-cell-name {
-      font-weight: 700;
-      font-size: 0.85rem;
-      color: var(--text-primary);
-    }
-    .well-cell-project {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-top: 1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 250px;
-    }
+            /* Element cell */
+            .element-cell {
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: var(--text-secondary);
+            }
 
-    /* Element cell */
-    .element-cell {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
+            /* Date cell */
+            .date-cell {
+                font-size: 0.78rem;
+                color: var(--text-secondary);
+                white-space: nowrap;
+            }
 
-    /* Date cell */
-    .date-cell {
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      white-space: nowrap;
-    }
+            /* Batch action bar */
+            .zlecenia-batch-bar {
+                display: none;
+                align-items: center;
+                gap: 0.6rem;
+                padding: 0.6rem 1rem;
+                background: linear-gradient(
+                    135deg,
+                    rgba(99, 102, 241, 0.15) 0%,
+                    rgba(129, 140, 248, 0.08) 100%
+                );
+                border: 1px solid rgba(129, 140, 248, 0.3);
+                border-radius: 10px;
+                margin-bottom: 0.8rem;
+                animation: batchBarIn 0.2s ease-out;
+            }
+            @keyframes batchBarIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .batch-info {
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: #818cf8;
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .batch-count {
+                background: rgba(129, 140, 248, 0.2);
+                padding: 0.15rem 0.5rem;
+                border-radius: 8px;
+                font-weight: 800;
+                font-size: 0.85rem;
+            }
+            .batch-actions {
+                display: flex;
+                gap: 0.4rem;
+                margin-left: auto;
+            }
+            .batch-btn {
+                padding: 0.4rem 0.8rem;
+                border-radius: 8px;
+                border: 1px solid var(--border-glass);
+                background: rgba(255, 255, 255, 0.04);
+                color: var(--text-primary);
+                font-size: 0.75rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 0.3rem;
+            }
+            .batch-btn:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            .batch-btn-print {
+                border-color: rgba(14, 165, 233, 0.4);
+                color: #38bdf8;
+            }
+            .batch-btn-print:hover {
+                background: rgba(14, 165, 233, 0.12);
+            }
+            .batch-btn-label {
+                border-color: rgba(168, 85, 247, 0.4);
+                color: #c084fc;
+            }
+            .batch-btn-label:hover {
+                background: rgba(168, 85, 247, 0.12);
+            }
+        </style>
+    </head>
 
-    /* Batch action bar */
-    .zlecenia-batch-bar {
-      display: none;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.6rem 1rem;
-      background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(129,140,248,0.08) 100%);
-      border: 1px solid rgba(129,140,248,0.3);
-      border-radius: 10px;
-      margin-bottom: 0.8rem;
-      animation: batchBarIn 0.2s ease-out;
-    }
-    @keyframes batchBarIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .batch-info {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #818cf8;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-    .batch-count {
-      background: rgba(129,140,248,0.2);
-      padding: 0.15rem 0.5rem;
-      border-radius: 8px;
-      font-weight: 800;
-      font-size: 0.85rem;
-    }
-    .batch-actions {
-      display: flex;
-      gap: 0.4rem;
-      margin-left: auto;
-    }
-    .batch-btn {
-      padding: 0.4rem 0.8rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-glass);
-      background: rgba(255,255,255,0.04);
-      color: var(--text-primary);
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .batch-btn:hover {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.15);
-    }
-    .batch-btn-print {
-      border-color: rgba(14,165,233,0.4);
-      color: #38bdf8;
-    }
-    .batch-btn-print:hover {
-      background: rgba(14,165,233,0.12);
-    }
-    .batch-btn-label {
-      border-color: rgba(168,85,247,0.4);
-      color: #c084fc;
-    }
-    .batch-btn-label:hover {
-      background: rgba(168,85,247,0.12);
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- HEADER (hidden when inside SPA iframe) -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="header-left">
-        <div class="logo">
-          <span>Kartoteka Zleceń</span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="main">
-    <div class="section active" id="section-zlecenia">
-
-      <div class="toolbar">
-        <h2 style="font-size:1rem;font-weight:700">🏭 Kartoteka Zleceń Produkcyjnych</h2>
-        <div class="toolbar-spacer"></div>
-        <button class="btn btn-primary btn-sm" onclick="AppZlecenia.loadOrders()" title="Odśwież bazę zleceń">
-          🔄 Odśwież
-        </button>
-      </div>
-
-      <div class="zlecenia-page">
-
-        <!-- Summary stats -->
-        <div class="zlecenia-stats" id="zlecenia-stats"></div>
-
-        <!-- Main card -->
-        <section style="margin-bottom: 2rem;">
-
-          <!-- Header: filters + search -->
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.8rem;">
-            <div class="zlecenia-filters" id="zlecenia-filter-tabs">
-              <button class="zlecenia-filter-tab active" data-filter="all" onclick="AppZlecenia.setFilter('all')">Wszystkie</button>
-              <button class="zlecenia-filter-tab" data-filter="draft" onclick="AppZlecenia.setFilter('draft')">⏳ Oczekujące</button>
-              <button class="zlecenia-filter-tab" data-filter="accepted" onclick="AppZlecenia.setFilter('accepted')">✅ Zatwierdzone</button>
+    <body>
+        <!-- HEADER (hidden when inside SPA iframe) -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <span>Kartoteka Zleceń</span>
+                    </div>
+                </div>
             </div>
+        </header>
 
-            <div class="search-box" style="margin:0; width:380px; position:relative;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute; left:0.7rem; top:50%; transform:translateY(-50%); width:1rem; color:var(--text-muted);">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              <input type="text" id="zlecenia-search-input" class="form-input form-input-sm" placeholder="Szukaj: nr zlecenia, budowa, opiekun..." style="font-weight:normal; padding-left:2.4rem !important; width:100%;">
+        <main class="main">
+            <div class="section active" id="section-zlecenia">
+                <div class="toolbar">
+                    <h2 style="font-size: 1rem; font-weight: 700">
+                        🏭 Kartoteka Zleceń Produkcyjnych
+                    </h2>
+                    <div class="toolbar-spacer"></div>
+                    <button
+                        class="btn btn-primary btn-sm"
+                        onclick="AppZlecenia.loadOrders()"
+                        title="Odśwież bazę zleceń"
+                    >
+                        🔄 Odśwież
+                    </button>
+                </div>
+
+                <div class="zlecenia-page">
+                    <!-- Summary stats -->
+                    <div class="zlecenia-stats" id="zlecenia-stats"></div>
+
+                    <!-- Main card -->
+                    <section style="margin-bottom: 2rem">
+                        <!-- Header: filters + search -->
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                margin-bottom: 0.8rem;
+                                flex-wrap: wrap;
+                                gap: 0.8rem;
+                            "
+                        >
+                            <div class="zlecenia-filters" id="zlecenia-filter-tabs">
+                                <button
+                                    class="zlecenia-filter-tab active"
+                                    data-filter="all"
+                                    onclick="AppZlecenia.setFilter('all')"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    class="zlecenia-filter-tab"
+                                    data-filter="draft"
+                                    onclick="AppZlecenia.setFilter('draft')"
+                                >
+                                    ⏳ Oczekujące
+                                </button>
+                                <button
+                                    class="zlecenia-filter-tab"
+                                    data-filter="accepted"
+                                    onclick="AppZlecenia.setFilter('accepted')"
+                                >
+                                    ✅ Zatwierdzone
+                                </button>
+                            </div>
+
+                            <div
+                                class="search-box"
+                                style="margin: 0; width: 380px; position: relative"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    style="
+                                        position: absolute;
+                                        left: 0.7rem;
+                                        top: 50%;
+                                        transform: translateY(-50%);
+                                        width: 1rem;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m21 21-4.35-4.35" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    id="zlecenia-search-input"
+                                    class="form-input form-input-sm"
+                                    placeholder="Szukaj: nr zlecenia, budowa, opiekun..."
+                                    style="
+                                        font-weight: normal;
+                                        padding-left: 2.4rem !important;
+                                        width: 100%;
+                                    "
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Batch action bar (visible when items selected) -->
+                        <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
+                            <div class="batch-info">
+                                ✅ Zaznaczono: <span class="batch-count">0</span>
+                            </div>
+                            <div class="batch-actions">
+                                <button
+                                    class="batch-btn batch-btn-print"
+                                    onclick="AppZlecenia.printBatchZlecenia()"
+                                >
+                                    🖨️ Drukuj zlecenia
+                                </button>
+                                <button
+                                    class="batch-btn batch-btn-label"
+                                    onclick="AppZlecenia.printBatchEtykiety()"
+                                >
+                                    🏷️ Drukuj etykiety
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="zlecenia-table-container">
+                            <table class="zlecenia-table" id="zlecenia-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center">
+                                            <input
+                                                type="checkbox"
+                                                id="zlecenia-select-all"
+                                                onclick="AppZlecenia.toggleSelectAll(this)"
+                                                style="
+                                                    cursor: pointer;
+                                                    width: 16px;
+                                                    height: 16px;
+                                                    accent-color: #818cf8;
+                                                "
+                                                title="Zaznacz wszystkie"
+                                            />
+                                        </th>
+                                        <th style="width: 140px">Nr zlecenia</th>
+                                        <th style="width: 130px">Data</th>
+                                        <th>Budowa / Studnia</th>
+                                        <th style="width: 150px">Nr zamówienia</th>
+                                        <th>Element</th>
+                                        <th>Opiekun</th>
+                                        <th>Generator</th>
+                                        <th style="width: 105px">Status</th>
+                                        <th style="width: 150px; text-align: right">Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="zlecenia-table-body">
+                                    <tr>
+                                        <td
+                                            colspan="10"
+                                            style="
+                                                text-align: center;
+                                                padding: 2rem;
+                                                color: var(--text-muted);
+                                                font-style: italic;
+                                            "
+                                        >
+                                            Ładowanie danych z serwera...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
             </div>
-          </div>
+        </main>
 
-          <!-- Batch action bar (visible when items selected) -->
-          <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
-            <div class="batch-info">
-              ✅ Zaznaczono: <span class="batch-count">0</span>
-            </div>
-            <div class="batch-actions">
-              <button class="batch-btn batch-btn-print" onclick="AppZlecenia.printBatchZlecenia()">
-                🖨️ Drukuj zlecenia
-              </button>
-              <button class="batch-btn batch-btn-label" onclick="AppZlecenia.printBatchEtykiety()">
-                🏷️ Drukuj etykiety
-              </button>
-            </div>
-          </div>
-          
-          <!-- Table -->
-          <div class="zlecenia-table-container">
-            <table class="zlecenia-table" id="zlecenia-table">
-                <thead>
-                    <tr>
-                        <th style="width:40px; text-align:center;">
-                          <input type="checkbox" id="zlecenia-select-all" onclick="AppZlecenia.toggleSelectAll(this)" style="cursor:pointer; width:16px; height:16px; accent-color:#818cf8;" title="Zaznacz wszystkie">
-                        </th>
-                        <th style="width:140px">Nr zlecenia</th>
-                        <th style="width:130px">Data</th>
-                        <th>Budowa / Studnia</th>
-                        <th style="width:150px">Nr zamówienia</th>
-                        <th>Element</th>
-                        <th>Opiekun</th>
-                        <th>Generator</th>
-                        <th style="width:105px">Status</th>
-                        <th style="width:150px; text-align:right">Akcje</th>
-                    </tr>
-                </thead>
-                <tbody id="zlecenia-table-body">
-                    <tr><td colspan="10" style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Ładowanie danych z serwera...</td></tr>
-                </tbody>
-            </table>
-          </div>
-        </section>
+        <!-- Toast container -->
+        <div id="toast-container" class="toast-container"></div>
 
-      </div>
-    </div>
-  </main>
-
-  <!-- Toast container -->
-  <div id="toast-container" class="toast-container"></div>
-
-  <!-- Dependencies -->
-  <script src="js/shared/formatters.js?v=2.0"></script>
-  <script src="js/shared/auth.js?v=2.0"></script>
-  <script src="js/shared/ui.js?v=2.0"></script>
-  <script src="js/spa/zlecenia.js?v=2.0"></script>
-
-</body>
+        <!-- Dependencies -->
+        <script src="js/shared/formatters.js?v=2.0"></script>
+        <script src="js/shared/auth.js?v=2.0"></script>
+        <script src="js/shared/ui.js?v=2.0"></script>
+        <script src="js/spa/zlecenia.js?v=2.0"></script>
+    </body>
 </html>

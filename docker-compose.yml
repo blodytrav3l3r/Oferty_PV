@@ -1,33 +1,39 @@
 version: '3.8'
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: witros-oferty
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - HOST=0.0.0.0
-    volumes:
-      - witros_data:/app/data
-    networks:
-      - witros-network
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: witros-oferty
+        restart: unless-stopped
+        ports:
+            - '3000:3000'
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+            - HOST=0.0.0.0
+        volumes:
+            - witros_data:/app/data
+        networks:
+            - witros-network
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
 
 volumes:
-  witros_data:
-    driver: local
+    witros_data:
+        driver: local
 
 networks:
-  witros-network:
-    driver: bridge
+    witros-network:
+        driver: bridge

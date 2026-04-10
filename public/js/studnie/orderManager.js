@@ -789,6 +789,7 @@ async function loadProductionOrders() {
     } catch (e) {
         console.error('loadProductionOrders error:', e);
     }
+    return productionOrders;
 }
 
 async function saveProductionOrdersData(data) {
@@ -1386,7 +1387,7 @@ function populateZleceniaForm(el) {
     const investContractor = document.getElementById('invest-contractor')?.value || '';
 
     // Check for existing saved production order
-    const existing = productionOrders.find(
+    const existing = (productionOrders || []).find(
         (po) => po.wellId === well.id && po.elementIndex === elementIndex
     );
     const isAccepted = existing && existing.status === 'accepted';
@@ -2270,10 +2271,13 @@ async function acceptProductionOrder() {
                 showToast('Brak przypisanego użytkownika', 'error');
                 return;
             }
-            const claimResp = await fetch('/api/orders-studnie/claim-production-number/' + targetUserId, {
-                method: 'POST',
-                headers: authHeaders()
-            });
+            const claimResp = await fetch(
+                '/api/orders-studnie/claim-production-number/' + targetUserId,
+                {
+                    method: 'POST',
+                    headers: authHeaders()
+                }
+            );
             const claimData = await claimResp.json();
             if (claimResp.ok && claimData.number) {
                 po.productionOrderNumber = claimData.number;
