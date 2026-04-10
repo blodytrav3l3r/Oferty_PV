@@ -8,7 +8,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
     next();
 }
 
-export function securityHeaders(req: Request, res: Response, next: NextFunction): void {
+export function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');

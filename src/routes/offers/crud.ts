@@ -1,33 +1,23 @@
 import express from 'express';
-import prisma from '../prismaClient';
-import { logAudit } from '../db';
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import prisma from '../../prismaClient';
+import { logAudit } from '../../db';
+import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
-import { generateOfferRuryPDF, generateOfferStudniePDF } from '../services/pdfGenerator';
-import { generateOfferRuryDOCX, generateOfferStudnieDOCX } from '../services/docxGenerator';
+import { buildRoleWhereClause } from '../../utils/roleFilter';
+import { logger } from '../../utils/logger';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
 
-/* ===== OFFERS (RURY + STUDNIE) ===== */
+/* ===== OFFERS RURY — GET ===== */
 
-// GET /api/offers-rury - Pobiera oferty rur
-router.get('/', requireAuth as any, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        let offers: any[];
-        if (authReq.user?.role === 'admin') {
-            offers = await prisma.offers_rel.findMany();
-        } else if (authReq.user?.role === 'pro') {
-            const allowedIds = [authReq.user?.id, ...(authReq.user?.subUsers || [])];
-            offers = await prisma.offers_rel.findMany({
-                where: { userId: { in: allowedIds } }
-            });
-        } else {
-            offers = await prisma.offers_rel.findMany({
-                where: { userId: authReq.user?.id }
-            });
-        }
+        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
+        const offers = await prisma.offers_rel.findMany({
+            where: roleClause
+        });
 
         const mapped: any[] = [];
         for (const offer of offers) {
@@ -65,23 +55,15 @@ router.get('/', requireAuth as any, async (req, res) => {
     }
 });
 
-// GET /api/offers/studnie - Pobiera oferty typu 'studnia_oferta'
-router.get('/studnie', requireAuth as any, async (req, res) => {
+/* ===== OFFERS STUDNIE — GET ===== */
+
+router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        let offers: any[];
-        if (authReq.user?.role === 'admin') {
-            offers = await prisma.offers_studnie_rel.findMany();
-        } else if (authReq.user?.role === 'pro') {
-            const allowedIds = [authReq.user?.id, ...(authReq.user?.subUsers || [])];
-            offers = await prisma.offers_studnie_rel.findMany({
-                where: { userId: { in: allowedIds } }
-            });
-        } else {
-            offers = await prisma.offers_studnie_rel.findMany({
-                where: { userId: authReq.user?.id }
-            });
-        }
+        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
+        const offers = await prisma.offers_studnie_rel.findMany({
+            where: roleClause
+        });
 
         const mapped = offers.map((offer) => {
             let parsedData: any = {};
@@ -110,8 +92,9 @@ router.get('/studnie', requireAuth as any, async (req, res) => {
     }
 });
 
-// POST /api/offers-rury - Zapis pojedynczej oferty Rury
-router.post('/', requireAuth as any, async (req, res) => {
+/* ===== OFFERS RURY — POST (single) ===== */
+
+router.post('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -216,16 +199,17 @@ router.post('/', requireAuth as any, async (req, res) => {
             results.push({ id: docId, ok: true });
         }
 
-        console.log(`[POST] Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`);
+        logger.info('Offers', `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`);
         res.json({ ok: true, results });
     } catch (e: any) {
-        console.error('[POST offers] Error:', e.message);
+        logger.error('Offers', 'POST offers error', e.message);
         res.status(500).json({ error: e.message });
     }
 });
 
-// POST /api/offers-studnie - Zapis pojedynczej oferty Studnie
-router.post('/studnie', requireAuth as any, async (req, res) => {
+/* ===== OFFERS STUDNIE — POST (single) ===== */
+
+router.post('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -293,18 +277,17 @@ router.post('/studnie', requireAuth as any, async (req, res) => {
             results.push({ id: docId, ok: true });
         }
 
-        console.log(
-            `[POST] Zapisano ${results.length} ofert studnie przez ${authReq.user?.username}`
-        );
+        logger.info('Offers', `Zapisano ${results.length} ofert studnie przez ${authReq.user?.username}`);
         res.json({ ok: true, results });
     } catch (e: any) {
-        console.error('[POST offers/studnie] Error:', e.message);
+        logger.error('Offers', 'POST offers/studnie error', e.message);
         res.status(500).json({ error: e.message });
     }
 });
 
-// PUT /api/offers - Masowy zapis (rury)
-router.put('/', requireAuth as any, async (req, res) => {
+/* ===== OFFERS RURY — PUT (bulk) ===== */
+
+router.put('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -362,8 +345,9 @@ router.put('/', requireAuth as any, async (req, res) => {
     }
 });
 
-// PUT /api/offers/studnie - Masowy zapis Studni
-router.put('/studnie', requireAuth as any, async (req, res) => {
+/* ===== OFFERS STUDNIE — PUT (bulk) ===== */
+
+router.put('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -401,8 +385,9 @@ router.put('/studnie', requireAuth as any, async (req, res) => {
     }
 });
 
-// DELETE /api/offers-rury/:id - Usuwanie oferty Rury
-router.delete('/:id', requireAuth as any, async (req, res) => {
+/* ===== DELETE ===== */
+
+router.delete('/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -440,15 +425,14 @@ router.delete('/:id', requireAuth as any, async (req, res) => {
             where: { id }
         });
 
-        console.log(`[DELETE] Oferta rury ${id} usunieta przez ${authReq.user?.username}`);
+        logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
         res.json({ ok: true });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
 
-// DELETE /api/offers-studnie/:id - Usuwanie oferty Studnie
-router.delete('/studnie/:id', requireAuth as any, async (req, res) => {
+router.delete('/studnie/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -473,73 +457,9 @@ router.delete('/studnie/:id', requireAuth as any, async (req, res) => {
             where: { id }
         });
 
-        console.log(`[DELETE] Oferta studnie ${id} usunieta przez ${authReq.user?.username}`);
+        logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
         res.json({ ok: true });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-/* ===== EXPORT ENDPOINTS ===== */
-
-// GET /api/offers-rury/:id/export-pdf
-router.get('/:id/export-pdf', requireAuth as any, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const pdfBuffer = await generateOfferRuryPDF(id);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${id}.pdf"`);
-        res.send(pdfBuffer);
-    } catch (e: any) {
-        console.error('[PDF Export Error]', e.message);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// GET /api/offers-studnie/:id/export-pdf
-router.get('/studnie/:id/export-pdf', requireAuth as any, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const pdfBuffer = await generateOfferStudniePDF(id);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${id}.pdf"`);
-        res.send(pdfBuffer);
-    } catch (e: any) {
-        console.error('[PDF Export Error]', e.message);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// GET /api/offers-rury/:id/export-docx
-router.get('/:id/export-docx', requireAuth as any, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const docxBuffer = await generateOfferRuryDOCX(id);
-        res.setHeader(
-            'Content-Type',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        );
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${id}.docx"`);
-        res.send(docxBuffer);
-    } catch (e: any) {
-        console.error('[DOCX Export Error]', e.message);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// GET /api/offers-studnie/:id/export-docx
-router.get('/studnie/:id/export-docx', requireAuth as any, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const docxBuffer = await generateOfferStudnieDOCX(id);
-        res.setHeader(
-            'Content-Type',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        );
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${id}.docx"`);
-        res.send(docxBuffer);
-    } catch (e: any) {
-        console.error('[DOCX Export Error]', e.message);
         res.status(500).json({ error: e.message });
     }
 });

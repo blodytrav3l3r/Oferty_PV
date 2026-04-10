@@ -5,6 +5,7 @@ import {
     validateManhole
 } from '../services/antygrawity';
 import { requireAuth } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ const router = express.Router();
  *   hasPierscienOdciazajacy: boolean (optional, default: false)
  * }
  */
-router.post('/auto-select', requireAuth as any, async (req, res) => {
+router.post('/auto-select', requireAuth, async (req, res) => {
     try {
         const config = req.body;
 
@@ -43,7 +44,7 @@ router.post('/auto-select', requireAuth as any, async (req, res) => {
             res.status(400).json(result);
         }
     } catch (err: any) {
-        console.error('[POST /api/products-studnie/auto-select] Błąd:', err.message);
+        logger.error('AutoSelect', 'auto-select error', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -55,7 +56,7 @@ router.post('/auto-select', requireAuth as any, async (req, res) => {
  * Query params:
  * - magazyn: string ('WL' or 'KLB', default: 'WL')
  */
-router.get('/available-components/:dn', requireAuth as any, async (req, res) => {
+router.get('/available-components/:dn', requireAuth, async (req, res) => {
     try {
         const dn = parseInt(req.params.dn);
         const magazyn = (req.query.magazyn as string) || 'WL';
@@ -67,7 +68,7 @@ router.get('/available-components/:dn', requireAuth as any, async (req, res) => 
         const components = await getAvailableComponents(dn, magazyn);
         res.json({ components });
     } catch (err: any) {
-        console.error('[GET /api/products-studnie/available-components] Błąd:', err.message);
+        logger.error('AutoSelect', 'available-components error', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -82,7 +83,7 @@ router.get('/available-components/:dn', requireAuth as any, async (req, res) => 
  *   config: object
  * }
  */
-router.post('/validate', requireAuth as any, async (req, res) => {
+router.post('/validate', requireAuth, async (req, res) => {
     try {
         const { components, config } = req.body;
 
@@ -93,7 +94,7 @@ router.post('/validate', requireAuth as any, async (req, res) => {
         const validation = validateManhole(components, config);
         res.json(validation);
     } catch (err: any) {
-        console.error('[POST /api/products-studnie/validate] Błąd:', err.message);
+        logger.error('AutoSelect', 'validate error', err.message);
         res.status(500).json({ error: err.message });
     }
 });

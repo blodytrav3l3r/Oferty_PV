@@ -1,6 +1,7 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -53,11 +54,9 @@ async function migrateFromLegacyIfNeeded(): Promise<void> {
                 data: { key: KEY_CURRENT, value: json }
             });
         }
-        console.log(
-            `[Migracja] Przeniesiono ${products.length} produktów studni do nowego formatu JSON.`
-        );
+        logger.info('Migration', `Przeniesiono ${products.length} produktów studni do nowego formatu JSON.`);
     } catch (err: any) {
-        console.error('[Migracja studnie] Błąd:', err.message);
+        logger.error('Migration', 'Migracja studnie error', err.message);
     }
 
     // Migracja starych wartości fabrycznych (klucz 'default_studnie' → KEY_DEFAULT)
@@ -75,11 +74,11 @@ async function migrateFromLegacyIfNeeded(): Promise<void> {
                     update: { value: oldDefault.value },
                     create: { key: KEY_DEFAULT, value: oldDefault.value }
                 });
-                console.log('[Migracja] Przeniesiono wartości fabryczne studni do nowego klucza.');
+                logger.info('Migration', 'Przeniesiono wartości fabryczne studni do nowego klucza.');
             }
         }
     } catch (err: any) {
-        console.error('[Migracja default_studnie] Błąd:', err.message);
+        logger.error('Migration', 'Migracja default_studnie error', err.message);
     }
 }
 
@@ -97,7 +96,7 @@ router.get('/', async (_req, res) => {
         const data = row ? JSON.parse(row.value || '[]') : [];
         res.json({ data });
     } catch (err: any) {
-        console.error('[GET /api/products-studnie] Błąd:', err.message);
+        logger.error('ProductsStudnie', 'GET error', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -105,7 +104,7 @@ router.get('/', async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/products-studnie → Zapisuje bieżący cennik studni
 // ──────────────────────────────────────────
-router.put('/', requireAuth as any, async (req, res) => {
+router.put('/', requireAuth, async (req, res) => {
     try {
         const arr = req.body.data;
         if (!Array.isArray(arr)) {
@@ -126,7 +125,7 @@ router.put('/', requireAuth as any, async (req, res) => {
 
         res.json({ ok: true, count: arr.length });
     } catch (err: any) {
-        console.error('[PUT /api/products-studnie] Błąd:', err.message);
+        logger.error('ProductsStudnie', 'PUT error', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -142,7 +141,7 @@ router.get('/default', async (_req, res) => {
         const data = row ? JSON.parse(row.value || '[]') : [];
         res.json({ data });
     } catch (err: any) {
-        console.error('[GET /api/products-studnie/default] Błąd:', err.message);
+        logger.error('ProductsStudnie', 'GET default error', err.message);
         res.json({ data: [] });
     }
 });
@@ -150,7 +149,7 @@ router.get('/default', async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/products-studnie/default → Zapisuje wartości fabryczne studni
 // ──────────────────────────────────────────
-router.put('/default', requireAuth as any, async (req, res) => {
+router.put('/default', requireAuth, async (req, res) => {
     try {
         const arr = req.body.data || [];
         const json = JSON.stringify(arr);
@@ -167,7 +166,7 @@ router.put('/default', requireAuth as any, async (req, res) => {
 
         res.json({ ok: true, count: arr.length });
     } catch (err: any) {
-        console.error('[PUT /api/products-studnie/default] Błąd:', err.message);
+        logger.error('ProductsStudnie', 'PUT default error', err.message);
         res.status(500).json({ error: err.message });
     }
 });

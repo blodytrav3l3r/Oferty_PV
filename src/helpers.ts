@@ -3,26 +3,26 @@ export interface UserDoc {
     username: string;
     password: string;
     role: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
-    symbol?: string;
-    subUsers?: string;
-    createdAt?: string;
-    orderStartNumber?: number;
-    productionOrderStartNumber?: number;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    symbol?: string | null;
+    subUsers?: string | null;
+    createdAt?: string | null;
+    orderStartNumber?: number | null;
+    productionOrderStartNumber?: number | null;
 }
 
 export interface User {
     id: string;
     username: string;
     role: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
-    symbol?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    symbol?: string | null;
     subUsers: string[];
 }
 
@@ -62,10 +62,10 @@ export function filterRowsByRole(docs: UserDoc[], user: User): UserDoc[] {
     return docs.filter((d) => d.id === user.id);
 }
 
-export function parseJsonField(raw: string | null | undefined, fallback: any = {}): any {
+export function parseJsonField<T>(raw: string | null | undefined, fallback: T): T {
     if (!raw) return fallback;
     try {
-        return JSON.parse(raw);
+        return JSON.parse(raw) as T;
     } catch (_e) {
         return fallback;
     }

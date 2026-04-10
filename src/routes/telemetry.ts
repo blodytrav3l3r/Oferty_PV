@@ -2,11 +2,12 @@ import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import crypto from 'crypto';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
 // POST /api/telemetry/override
-router.post('/override', requireAuth as any, (req, res) => {
+router.post('/override', requireAuth, (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { originalConfig, finalConfig, overrideReason } = req.body;
@@ -32,17 +33,17 @@ router.post('/override', requireAuth as any, (req, res) => {
                 return res.json({ success: true, id });
             })
             .catch((e: any) => {
-                console.error('[Telemetry] Błąd zapisu:', e);
+                logger.error('Telemetry', 'Błąd zapisu', e);
                 return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
             });
     } catch (e: any) {
-        console.error('[Telemetry] Błąd zapisu:', e);
+        logger.error('Telemetry', 'Błąd zapisu', e);
         return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
     }
 });
 
 // GET /api/telemetry/logs (Admin only)
-router.get('/logs', requireAuth as any, (req, res) => {
+router.get('/logs', requireAuth, (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user?.role !== 'admin') {
         return res.status(403).json({ error: 'Brak uprawnień' });

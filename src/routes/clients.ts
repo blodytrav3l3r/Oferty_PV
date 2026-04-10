@@ -1,26 +1,18 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import { buildRoleWhereClause } from '../utils/roleFilter';
 
 const router = express.Router();
 
 // GET /api/clients - Pobiera klientów z bazy użytkownika
-router.get('/', requireAuth as any, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        let clients: any[];
-        if (authReq.user?.role === 'admin') {
-            clients = await prisma.clients_rel.findMany();
-        } else if (authReq.user?.role === 'pro') {
-            const allowedIds = [authReq.user?.id, ...(authReq.user?.subUsers || [])];
-            clients = await prisma.clients_rel.findMany({
-                where: { userId: { in: allowedIds } }
-            });
-        } else {
-            clients = await prisma.clients_rel.findMany({
-                where: { userId: authReq.user?.id }
-            });
-        }
+        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
+        const clients = await prisma.clients_rel.findMany({
+            where: roleClause
+        });
 
         res.json({ data: clients });
     } catch (e: any) {
@@ -29,7 +21,7 @@ router.get('/', requireAuth as any, async (req, res) => {
 });
 
 // PUT /api/clients - Synchronizacja klientów
-router.put('/', requireAuth as any, async (req, res) => {
+router.put('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const arr = req.body.data || [];

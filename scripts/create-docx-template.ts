@@ -15,8 +15,7 @@ import {
     AlignmentType,
     Header,
     Footer,
-    PageNumber,
-    BorderStyle
+    PageNumber
 } from 'docx';
 import fs from 'fs';
 import path from 'path';

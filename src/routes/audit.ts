@@ -1,6 +1,7 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 // GET /api/audit/:entityType/:entityId?limit=20&offset=0
-router.get('/:entityType/:entityId', requireAuth as any, async (req, res) => {
+router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
     try {
         const { entityType, entityId } = req.params;
         const limit = Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT);
@@ -60,7 +61,7 @@ router.get('/:entityType/:entityId', requireAuth as any, async (req, res) => {
 });
 
 // GET /api/audit/rebuild/:entityType/:entityId/:logId
-router.get('/rebuild/:entityType/:entityId/:logId', requireAuth as any, async (req, res) => {
+router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res) => {
     try {
         const { entityType, entityId, logId } = req.params;
 
@@ -76,7 +77,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth as any, async (r
             where: {
                 entityType,
                 entityId,
-                createdAt: { lte: targetLog.createdAt }
+                createdAt: { lte: targetLog.createdAt ?? undefined }
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -130,8 +131,8 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth as any, async (r
                 entityType,
                 entityId,
                 createdAt: {
-                    gt: baseLogRow.createdAt,
-                    lte: targetLog.createdAt
+                    gt: baseLogRow.createdAt ?? undefined,
+                    lte: targetLog.createdAt ?? undefined
                 }
             },
             orderBy: { createdAt: 'asc' }
@@ -145,13 +146,13 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth as any, async (r
                 delete patch._diffMode;
                 currentState = { ...currentState, ...patch };
             } catch (_e) {
-                console.warn('[Audit Rebuild] Pominięto uszkodzony JSON w logu:', log.id);
+                logger.warn('AuditRebuild', `Pominięto uszkodzony JSON w logu: ${log.id}`);
             }
         }
 
         res.json({ data: currentState });
     } catch (e: any) {
-        console.error('[Audit Rebuild] Błąd:', e);
+        logger.error('AuditRebuild', 'Błąd', e);
         res.status(500).json({ error: e.message });
     }
 });

@@ -7,6 +7,8 @@ import compression from 'compression';
 
 import { ensureAdminExists } from './src/middleware/auth';
 import { httpsRedirect, securityHeaders } from './src/middleware/security';
+import { createRateLimiter } from './src/middleware/rateLimiter';
+import { logger } from './src/utils/logger';
 
 dotenv.config();
 
@@ -16,7 +18,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 /* ===== HEALTH CHECK (before security middleware to avoid HTTPS redirect) ===== */
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -67,14 +69,21 @@ if (NODE_ENV === 'production') {
     );
 }
 
+/* ===== API RATE LIMITING ===== */
+const apiLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minut
+    maxHits: 300,
+    message: 'Zbyt wiele żądań. Odczekaj chwilę.'
+});
+
 /* ===== ROUTES ===== */
 import authRoutes from './src/routes/auth';
 import userRoutes from './src/routes/users';
 import productRoutes from './src/routes/products';
 import productStudnieRoutes from './src/routes/productsStudnie';
 import productStudnieAutoRoutes from './src/routes/productsStudnieAuto';
-import offerRoutes from './src/routes/offers';
-import orderRoutes from './src/routes/orders';
+import offerRoutes from './src/routes/offers/index';
+import orderRoutes from './src/routes/orders/index';
 import clientRoutes from './src/routes/clients';
 import pvMarketplaceRoutes from './src/routes/pv_marketplace';
 import auditRoutes from './src/routes/audit';
@@ -82,7 +91,7 @@ import settingsRoutes from './src/routes/settings';
 import telemetryRoutes from './src/routes/telemetry';
 
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/users', apiLimiter, userRoutes);
 app.use('/api/users-for-assignment', (req, res, next) => {
     req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
     userRoutes(req, res, next);
@@ -101,26 +110,25 @@ app.use('/api/offers-studnie', (req, res, next) => {
     offerRoutes(req, res, next);
 });
 
-app.use('/api/orders-studnie', orderRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/pv-marketplace', pvMarketplaceRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/orders-studnie', apiLimiter, orderRoutes);
+app.use('/api/clients', apiLimiter, clientRoutes);
+app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
+app.use('/api/audit', apiLimiter, auditRoutes);
+app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 
 /* ===== GLOBAL ERROR HANDLER ===== */
-app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('[ERROR]', err.stack || err.message);
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    logger.error('Server', 'Unhandled error', err.stack || err.message);
     res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
 });
 
 /* ===== INIT ===== */
 ensureAdminExists().then(() => {
     app.listen(PORT, HOST, () => {
-        console.log(`\n  🚀 WITROS Oferty — serwer działa na:`);
-        console.log(`     http://localhost:${PORT}`);
-        console.log(`     Tryb: ${NODE_ENV === 'production' ? '🔒 PRODUKCJA' : '🔧 DEVELOPMENT'}`);
-        console.log(`     Baza: SQLite (lokalna)\n`);
+        logger.info('Server', `WITROS Oferty — serwer działa na: http://localhost:${PORT}`);
+        logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
+        logger.info('Server', 'Baza: SQLite (lokalna)');
     });
 });
 

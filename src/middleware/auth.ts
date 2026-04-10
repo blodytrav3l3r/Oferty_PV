@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { getUserObject, User } from '../helpers';
+import { logger } from '../utils/logger';
 
 export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni
 
@@ -10,6 +11,14 @@ export interface Session {
     token: string;
     userId: string;
     createdAt: bigint;
+}
+
+declare global {
+    namespace Express {
+        interface Request {
+            user?: User;
+        }
+    }
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -71,7 +80,7 @@ export async function deleteSession(token: string): Promise<void> {
  * Middleware: wymaga autoryzacji (ważna sesja).
  */
 export async function requireAuth(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> {
@@ -102,7 +111,7 @@ export async function requireAuth(
  * Middleware: wymaga roli admin (po requireAuth).
  */
 export async function requireAdmin(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> {
@@ -117,13 +126,14 @@ export async function requireAdmin(
  * Zapewnia istnienie admina podczas pierwszego uruchomienia
  */
 export async function ensureAdminExists(): Promise<void> {
-    console.log('[INFO] Checking for admin user...');
+    logger.info('Auth', 'Checking for admin user...');
     try {
         const admin = await prisma.users.findUnique({
             where: { username: 'admin' }
         });
         if (!admin) {
-            const hash = bcrypt.hashSync('admin123', 10);
+            const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
+            const hash = bcrypt.hashSync(defaultPassword, 10);
             await prisma.users.create({
                 data: {
                     id: 'usr_admin',
@@ -134,9 +144,9 @@ export async function ensureAdminExists(): Promise<void> {
                     lastName: 'Admin'
                 }
             });
-            console.log('[OK] Default admin created.');
+            logger.info('Auth', 'Default admin created.');
         }
     } catch (e: any) {
-        console.error('[ERROR] ensureAdminExists', e.message);
+        logger.error('Auth', 'ensureAdminExists failed', e.message);
     }
 }

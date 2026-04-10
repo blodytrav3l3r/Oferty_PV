@@ -1,22 +1,26 @@
 import prisma from './prismaClient';
+import { logger } from './utils/logger';
 
 /**
  * Oblicza diff między dwoma obiektami (shallow, 1. poziom kluczy).
  * Zwraca { changed, old } — tylko zmienione pola.
  */
-function computeDiff(oldObj: any, newObj: any): { changed: any; old: any } | null {
-    if (!oldObj || !newObj) return { changed: newObj, old: oldObj };
+export function computeDiff(
+    oldObj: Record<string, unknown> | null,
+    newObj: Record<string, unknown> | null
+): { changed: Record<string, unknown>; old: Record<string, unknown> } | null {
+    if (!oldObj || !newObj) return { changed: newObj || {}, old: oldObj || {} };
 
-    const changed: any = {};
-    const old: any = {};
+    const changed: Record<string, unknown> = {};
+    const old: Record<string, unknown> = {};
     const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
 
     for (const key of allKeys) {
-        const oldVal = JSON.stringify((oldObj as any)[key]);
-        const newVal = JSON.stringify((newObj as any)[key]);
+        const oldVal = JSON.stringify(oldObj[key]);
+        const newVal = JSON.stringify(newObj[key]);
         if (oldVal !== newVal) {
-            changed[key] = (newObj as any)[key];
-            old[key] = (oldObj as any)[key];
+            changed[key] = newObj[key];
+            old[key] = oldObj[key];
         }
     }
 
@@ -32,8 +36,8 @@ export async function logAudit(
     entityId: string,
     userId: string,
     action: string,
-    newData: any,
-    oldData: any = null
+    newData: Record<string, unknown> | null,
+    oldData: Record<string, unknown> | null = null
 ): Promise<void> {
     try {
         const now = new Date().toISOString();
@@ -101,7 +105,7 @@ export async function logAudit(
             }
         });
     } catch (e: any) {
-        console.error('[AuditLog Error]', e.message);
+        logger.error('AuditLog', 'Błąd zapisu logu', e.message);
     }
 }
 
@@ -120,12 +124,10 @@ export async function cleanupAuditLogs(): Promise<void> {
             }
         });
         if (result.count > 0) {
-            console.log(
-                `[AuditLog] Wyczyszczono ${result.count} logów starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`
-            );
+            logger.info('AuditLog', `Wyczyszczono ${result.count} logów starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`);
         }
     } catch (e: any) {
-        console.error('[AuditLog Cleanup Error]', e.message);
+        logger.error('AuditLog', 'Błąd czyszczenia logów', e.message);
     }
 }
 

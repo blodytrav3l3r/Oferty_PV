@@ -6,7 +6,7 @@ const router = express.Router();
 
 /* ===== YEAR LETTER (Litera roku obrotowego) ===== */
 
-router.get('/year-letter', requireAuth as any, async (req, res) => {
+router.get('/year-letter', requireAuth, async (_req, res) => {
     try {
         const year = new Date().getFullYear();
         const key = 'year_letter_' + year;
@@ -19,7 +19,7 @@ router.get('/year-letter', requireAuth as any, async (req, res) => {
     }
 });
 
-router.put('/year-letter', requireAuth as any, requireAdmin as any, async (req, res) => {
+router.put('/year-letter', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { letter } = req.body;
         if (!letter || typeof letter !== 'string' || letter.length !== 1) {

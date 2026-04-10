@@ -26,7 +26,7 @@ async function getNextOrderNumber(user: any, year: number): Promise<string> {
 }
 
 // GET /api/users (admin only)
-router.get('/', requireAuth as any, requireAdmin as any, async (req, res) => {
+router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     try {
         const users = await prisma.users.findMany();
         const year = new Date().getFullYear();
@@ -66,7 +66,7 @@ router.get('/', requireAuth as any, requireAdmin as any, async (req, res) => {
 });
 
 // PUT /api/users/:id (admin only)
-router.put('/:id', requireAuth as any, requireAdmin as any, async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     const {
         username,
         password,
@@ -148,7 +148,7 @@ router.put('/:id', requireAuth as any, requireAdmin as any, async (req, res) => 
 });
 
 // DELETE /api/users/:id (admin only)
-router.delete('/:id', requireAuth as any, requireAdmin as any, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (req.params.id === authReq.user?.id)
         return res.status(400).json({ error: 'Nie możesz usunąć siebie' });
@@ -164,7 +164,7 @@ router.delete('/:id', requireAuth as any, requireAdmin as any, async (req, res) 
 });
 
 // GET /api/users-for-assignment (alias: /for-assignment)
-router.get('/for-assignment', requireAuth as any, async (req, res) => {
+router.get('/for-assignment', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const users = await prisma.users.findMany();

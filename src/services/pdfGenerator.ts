@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import prisma from '../prismaClient';
 import fs from 'fs';
 import path from 'path';
+import { logger } from '../utils/logger';
 
 function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -59,7 +60,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
     try {
         offerData = offer.data ? JSON.parse(offer.data) : {};
     } catch (e) {
-        console.warn('Failed to parse offer data:', e);
+        logger.warn('PdfStudnie', 'Failed to parse offer data', e);
     }
 
     // wellsExport zawiera studnie z obliczonymi cenami (zapisane przez frontend)
@@ -71,11 +72,11 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         wells = offerData.wells;
     }
 
-    console.log(`[PDF Studnie] Generowanie PDF dla oferty ${offerId}`);
-    console.log(`[PDF Studnie] Znaleziono ${wells.length} studni w offer.data`);
-    console.log('[PDF Studnie] Offer data keys:', Object.keys(offerData));
+    logger.info('PdfStudnie', `Generowanie PDF dla oferty ${offerId}`);
+    logger.debug('PdfStudnie', `Znaleziono ${wells.length} studni w offer.data`);
+    logger.debug('PdfStudnie', `Offer data keys: ${Object.keys(offerData).join(', ')}`);
     if (wells.length > 0) {
-        console.log('[PDF Studnie] Przykładowa studnia:', wells[0]);
+        logger.debug('PdfStudnie', 'Przykładowa studnia', wells[0]);
     }
 
     // Oblicz transport z offer.data
@@ -115,7 +116,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         items.push(...dnItems);
     }
 
-    console.log(`[PDF Studnie] Przygotowano ${items.length} items, grandTotal: ${grandTotal}`);
+    logger.debug('PdfStudnie', `Przygotowano ${items.length} items, grandTotal: ${grandTotal}`);
 
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
@@ -467,7 +468,7 @@ export async function lookupOfferUsers(
                     phone: u.phone || ''
                 };
         } catch (e) {
-            console.warn('lookupOfferUsers: guardian lookup failed', e);
+            logger.warn('PdfUsers', 'Guardian lookup failed', e);
         }
     }
 
@@ -483,7 +484,7 @@ export async function lookupOfferUsers(
                     phone: u.phone || ''
                 };
         } catch (e) {
-            console.warn('lookupOfferUsers: author lookup failed', e);
+            logger.warn('PdfUsers', 'Author lookup failed', e);
         }
     } else if (authorId && authorId === guardianId) {
         // Jeżeli autor = opiekun, nie duplikuj
@@ -560,13 +561,13 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         const naglowekBuf = fs.readFileSync(naglowekPath);
         naglowekBase64 = `data:image/png;base64,${naglowekBuf.toString('base64')}`;
     } catch (e) {
-        console.warn('Failed to load naglowek.png:', e);
+        logger.warn('PdfAssets', 'Failed to load naglowek.png', e);
     }
     try {
         const stopkaBuf = fs.readFileSync(stopkaPath);
         stopkaBase64 = `data:image/png;base64,${stopkaBuf.toString('base64')}`;
     } catch (e) {
-        console.warn('Failed to load stopka.png:', e);
+        logger.warn('PdfAssets', 'Failed to load stopka.png', e);
     }
 
     // Build client data

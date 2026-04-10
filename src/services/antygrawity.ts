@@ -6,6 +6,8 @@
  */
 
 import prisma from '../prismaClient';
+import { WellComponent, PassageConfig } from '../types';
+import { logger } from '../utils/logger';
 
 // Valid DN sizes
 const VALID_DN_SIZES = [1000, 1200, 1500, 2000, 2500];
@@ -21,7 +23,7 @@ export interface ManholeConfig {
     targetHeight: number;
     magazyn?: string;
     zakonczenieType?: string;
-    przejscia?: any[];
+    przejscia?: PassageConfig[];
     hasPlytaOdciazajaca?: boolean;
     hasPierscienOdciazajacy?: boolean;
 }
@@ -30,9 +32,9 @@ export interface SelectionResult {
     success: boolean;
     errors: string[];
     warnings: string[];
-    components: any[];
+    components: WellComponent[];
     totalHeight: number;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
 }
 
 /**
@@ -146,7 +148,7 @@ export async function selectManholeComponents(config: ManholeConfig): Promise<Se
         remainingHeight -= ending.height || 0;
 
         // Step 5: Add reduction plate if needed
-        let reductionPlate: any = null;
+        let reductionPlate: WellComponent | null = null;
         if (needsReduction) {
             reductionPlate = await selectPlytaRedukcyjna(
                 targetDn,
@@ -249,7 +251,7 @@ export async function selectManholeComponents(config: ManholeConfig): Promise<Se
     } catch (error: any) {
         result.success = false;
         result.errors.push(`Błąd systemu: ${error.message}`);
-        console.error('[ANTYGRAWITY ERROR]', error);
+        logger.error('Antygrawity', 'Błąd systemu', error);
     }
 
     return result;
@@ -262,7 +264,7 @@ async function selectDennica(
     dn: number,
     magazynField: string,
     formaStdField: string
-): Promise<any> {
+): Promise<WellComponent | null> {
     const dennice = await (prisma as any).products_studnie_rel.findMany({
         where: {
             componentType: 'dennica',
@@ -283,7 +285,7 @@ async function selectKragByDn(
     magazynField: string,
     formaStdField: string,
     _targetHeight?: number
-): Promise<any> {
+): Promise<WellComponent | null> {
     const krags = await (prisma as any).products_studnie_rel.findMany({
         where: {
             componentType: 'krag',
@@ -304,7 +306,7 @@ async function selectZakonczenie(
     type: string,
     magazynField: string,
     formaStdField: string
-): Promise<any> {
+): Promise<WellComponent | null> {
     if (type === 'plyta_din') {
         const dinPlates = await (prisma as any).products_studnie_rel.findMany({
             where: {
@@ -336,7 +338,7 @@ async function selectPlytaRedukcyjna(
     toDn: number,
     magazynField: string,
     formaStdField: string
-): Promise<any> {
+): Promise<WellComponent | null> {
     const plates = await (prisma as any).products_studnie_rel.findMany({
         where: {
             componentType: 'plyta_redukcyjna',
@@ -363,8 +365,8 @@ async function selectKragiNadbudowy(
     totalHeight: number,
     magazynField: string,
     formaStdField: string
-): Promise<any[]> {
-    const selected: any[] = [];
+): Promise<WellComponent[]> {
+    const selected: WellComponent[] = [];
     let remainingHeight = totalHeight;
 
     const availableRings = await (prisma as any).products_studnie_rel.findMany({
@@ -381,7 +383,7 @@ async function selectKragiNadbudowy(
     }
 
     while (remainingHeight > 0) {
-        let bestFit = null;
+        let bestFit: WellComponent | null = null;
 
         for (const ring of availableRings) {
             if ((ring.height || 0) <= remainingHeight) {
@@ -412,7 +414,7 @@ async function selectKragiNadbudowy(
 /**
  * Select drilled ring (OT - otwarty)
  */
-async function selectKragOt(dn: number, magazynField: string, formaStdField: string): Promise<any> {
+async function selectKragOt(dn: number, magazynField: string, formaStdField: string): Promise<WellComponent | null> {
     const otRings = await (prisma as any).products_studnie_rel.findMany({
         where: {
             componentType: 'krag_ot',
@@ -429,8 +431,8 @@ async function selectKragOt(dn: number, magazynField: string, formaStdField: str
  * Place passages in components with proper zapasy (clearances)
  */
 async function placePrzejscia(
-    components: any[],
-    przejscia: any[],
+    components: WellComponent[],
+    przejscia: PassageConfig[],
     _magazynField: string,
     _formaStdField: string
 ): Promise<{
@@ -458,17 +460,18 @@ async function placePrzejscia(
             zapasDolMin,
             zapasGoraMin
         } = przejscie;
+        const hFromBottom = (height_from_bottom as number) || 0;
 
         let cumulativeHeight = 0;
-        let targetComponent: any = null;
+        let targetComponent: WellComponent | null = null;
         let positionInComponent = 0;
 
         for (const component of components) {
             const componentTop = cumulativeHeight + (component.height || 0);
 
-            if (height_from_bottom >= cumulativeHeight && height_from_bottom <= componentTop) {
+            if (hFromBottom >= cumulativeHeight && hFromBottom <= componentTop) {
                 targetComponent = component;
-                positionInComponent = height_from_bottom - cumulativeHeight;
+                positionInComponent = hFromBottom - cumulativeHeight;
                 break;
             }
 
@@ -477,7 +480,7 @@ async function placePrzejscia(
 
         if (!targetComponent) {
             result.errors.push(
-                `Przejście DN${dn_przejscia} na wysokości ${height_from_bottom}mm poza zakresem studni`
+                `Przejście DN${dn_przejscia || '?'} na wysokości ${hFromBottom}mm poza zakresem studni`
             );
             result.success = false;
             continue;
@@ -489,7 +492,7 @@ async function placePrzejscia(
 
         if (isOnJoint && targetComponent.layer !== 'dennica') {
             result.errors.push(
-                `Przejście DN${dn_przejscia} wychodzi na połączeniu elementów - niedozwolone`
+                `Przejście DN${dn_przejscia || '?'} wychodzi na połączeniu elementów - niedozwolone`
             );
             result.success = false;
         }
@@ -503,10 +506,10 @@ async function placePrzejscia(
             result.warnings.push('Przejście podniesione w dennicy - wymagany krąg wiercony OT');
         }
 
-        const recommendedZapasDol = zapasDol || 300;
-        const recommendedZapasGora = zapasGora || 300;
-        const minZapasDol = zapasDolMin || 150;
-        const minZapasGora = zapasGoraMin || 150;
+        const recommendedZapasDol = (zapasDol as number) || 300;
+        const recommendedZapasGora = (zapasGora as number) || 300;
+        const minZapasDol = (zapasDolMin as number) || 150;
+        const minZapasGora = (zapasGoraMin as number) || 150;
 
         const actualZapasDol = positionInComponent;
         const actualZapasGora = (targetComponent.height || 0) - positionInComponent;
@@ -514,12 +517,12 @@ async function placePrzejscia(
         if (actualZapasDol < recommendedZapasDol) {
             if (actualZapasDol < minZapasDol) {
                 result.errors.push(
-                    `Przejście DN${dn_przejscia}: zapas dolny ${actualZapasDol}mm < minimalny ${minZapasDol}mm`
+                    `Przejście DN${dn_przejscia || '?'}: zapas dolny ${actualZapasDol}mm < minimalny ${minZapasDol}mm`
                 );
                 result.success = false;
             } else {
                 result.warnings.push(
-                    `Przejście DN${dn_przejscia}: zapas dolny ${actualZapasDol}mm < zalecany ${recommendedZapasDol}mm`
+                    `Przejście DN${dn_przejscia || '?'}: zapas dolny ${actualZapasDol}mm < zalecany ${recommendedZapasDol}mm`
                 );
             }
         }
@@ -527,12 +530,12 @@ async function placePrzejscia(
         if (actualZapasGora < recommendedZapasGora) {
             if (actualZapasGora < minZapasGora) {
                 result.errors.push(
-                    `Przejście DN${dn_przejscia}: zapas górny ${actualZapasGora}mm < minimalny ${minZapasGora}mm`
+                    `Przejście DN${dn_przejscia || '?'}: zapas górny ${actualZapasGora}mm < minimalny ${minZapasGora}mm`
                 );
                 result.success = false;
             } else {
                 result.warnings.push(
-                    `Przejście DN${dn_przejscia}: zapas górny ${actualZapasGora}mm < zalecany ${recommendedZapasGora}mm`
+                    `Przejście DN${dn_przejscia || '?'}: zapas górny ${actualZapasGora}mm < zalecany ${recommendedZapasGora}mm`
                 );
             }
         }
@@ -549,18 +552,25 @@ async function placePrzejscia(
 /**
  * Insert OT ring at specified position
  */
-function insertOtRing(components: any[], otRing: any, position: number | null): any[] {
-    const newComponents = [...components];
-
-    newComponents.forEach((comp, idx) => {
-        if (position !== null && idx >= position) {
-            comp.position = comp.position + 1;
+function insertOtRing(components: WellComponent[], otRing: WellComponent, position: number | null): WellComponent[] {
+    const safePosition = position || 0;
+    
+    // Tworzenie całkowicie nowych klonów dla zmienionych pozycji
+    const newComponents = components.map((comp, idx) => {
+        if (idx >= safePosition) {
+            return { ...comp, position: (comp.position || 0) + 1 };
         }
+        return comp; // Jeśli pozycja nie wymaga zmiany zostaw oryginalną (Płytka referencja)
     });
 
-    otRing.position = (position || 0) + 1;
-    otRing.layer = 'krag_ot';
-    newComponents.splice(position || 0, 0, otRing);
+    // Pełny klon pierścienia dodany do struktury
+    const newOtRing = {
+        ...otRing,
+        position: safePosition + 1,
+        layer: 'krag_ot'
+    };
+
+    newComponents.splice(safePosition, 0, newOtRing);
 
     return newComponents;
 }
@@ -568,7 +578,7 @@ function insertOtRing(components: any[], otRing: any, position: number | null): 
 /**
  * Get available components for a given DN and warehouse
  */
-export async function getAvailableComponents(dn: number, magazyn: string = 'WL'): Promise<any[]> {
+export async function getAvailableComponents(dn: number, magazyn: string = 'WL'): Promise<WellComponent[]> {
     const magazynField = `magazyn${magazyn}`;
     const formaStdField = `formaStandardowa${magazyn}`;
 
@@ -587,8 +597,8 @@ export async function getAvailableComponents(dn: number, magazyn: string = 'WL')
  * Validate manhole configuration
  */
 export function validateManhole(
-    components: any[],
-    _config: any
+    components: WellComponent[],
+    _config: Record<string, unknown>
 ): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
 

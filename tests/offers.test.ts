@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import offerRoutes from '../src/routes/offers';
+import offerRoutes from '../src/routes/offers/index';
 
 describe('Offers Routes', () => {
     let app: express.Application;

@@ -10,6 +10,8 @@ import {
     AuthenticatedRequest
 } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
+import { loginSchema, registerSchema, changePasswordSchema, validateData } from '../validators/authSchema';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -20,11 +22,8 @@ const loginLimiter = createRateLimiter({
 });
 
 // POST /api/auth/login
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Podaj login i hasło' });
-    }
 
     try {
         const user = await prisma.users.findUnique({
@@ -66,13 +65,13 @@ router.post('/login', loginLimiter, async (req, res) => {
             }
         });
     } catch (e: any) {
-        console.error('[AUTH] Login error:', e.message);
+        logger.error('Auth', 'Login error', e.message);
         res.status(500).json({ error: 'Błąd serwera bazy danych' });
     }
 });
 
 // POST /api/auth/register (admin only)
-router.post('/register', requireAuth as any, requireAdmin as any, async (req, res) => {
+router.post('/register', requireAuth, requireAdmin, validateData(registerSchema), async (req, res) => {
     const {
         username,
         password,
@@ -86,9 +85,6 @@ router.post('/register', requireAuth as any, requireAdmin as any, async (req, re
         orderStartNumber,
         productionOrderStartNumber
     } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Podaj login i hasło' });
-    }
 
     try {
         const existing = await prisma.users.findUnique({
@@ -148,19 +144,16 @@ router.post('/logout', async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', requireAuth as any, (req, res) => {
+router.get('/me', requireAuth, (req, res) => {
     const authReq = req as AuthenticatedRequest;
     // req.user jest już wypełniony przez middleware requireAuth
     res.json({ user: authReq.user });
 });
 
 // POST /api/auth/change-password
-router.post('/change-password', requireAuth as any, async (req, res) => {
+router.post('/change-password', requireAuth, validateData(changePasswordSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
-        return res.status(400).json({ error: 'Podaj stare i nowe hasło' });
-    }
 
     try {
         const user = await prisma.users.findUnique({

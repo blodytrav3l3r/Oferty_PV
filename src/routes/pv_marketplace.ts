@@ -1,6 +1,7 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -60,7 +61,7 @@ router.post('/search', async (req, res) => {
             bookmark: null
         });
     } catch (err: any) {
-        console.error('[PV Search] Error:', err.message);
+        logger.error('PvMarketplace', 'Search error', err.message);
         res.status(500).json({ error: 'Search service unavailable' });
     }
 });
@@ -68,7 +69,7 @@ router.post('/search', async (req, res) => {
 /**
  * MODERACJA: Akcje administratora
  */
-router.post('/moderate/:offerId', requireAuth as any, requireAdmin as any, async (req, res) => {
+router.post('/moderate/:offerId', requireAuth, requireAdmin, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user?.role !== 'admin') {
         return res.status(403).json({ error: 'Only admins can moderate offers' });
