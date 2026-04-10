@@ -1,0 +1,65 @@
+# Dependencies (will be installed fresh via npm ci)
+node_modules/
+
+# Build output (will be rebuilt in Docker)
+dist/
+
+# Generated Prisma client (will be regenerated)
+generated/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment (Docker sets its own)
+.env
+.env.local
+.env.*.local
+
+# Database files (template is created in Dockerfile)
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+data/backup/
+data/migration_backup/
+local_catalog.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test & coverage
+coverage/
+tests/
+
+# Docs & examples
+README.md
+CHANGELOG.md
+1 Pliki przykładowe/
+
+# CI/CD
+.github/
+
+# Gemini / AI
+.kilo/
+.gemini/
+
+# Python backend (separate service)
+well_configurator_backend/
+
+# Temp files
+*.tmp
+*.temp
+order_data.json
