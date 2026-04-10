@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Zlecenie Produkcyjne {{NR_ZLECENIA}}</title>
+    <style>
+        @page { size: A4 portrait; margin: 8mm 5mm 6mm 5mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; background: #fff; }
+        
+        .page { width: 100%; max-width: 200mm; margin: 0 auto; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        td, th { border: .5pt solid #000; padding: 1px 3px; vertical-align: middle; font-size: 9pt; }
+        
+        .no-border { border: none !important; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .bg-gray { background: #f0f0f0; }
+
+        /* Szerokości kolumn głównej tabeli (11 kolumn) */
+        col.c1 { width: 13%; }   /* Etykieta parametru */
+        col.c2 { width: 7%; }    /* Wartość parametru */
+        col.c3 { width: 8%; }    /* Etykieta przejścia (Wylot/Wlot) */
+        col.c4 { width: 9%; }    /* Rodzaj */
+        col.c5 { width: 6%; }    /* Ø */
+        col.c6 { width: 8%; }    /* Spadek kineta */
+        col.c7 { width: 8%; }    /* Spadek mufa */
+        col.c8 { width: 8%; }    /* Kąt stopień */
+        col.c9 { width: 12%; }   /* Uwagi */
+        col.c10 { width: 9%; }   /* Kąt gon */
+        col.c11 { width: 12%; }  /* Kąt wykonania */
+
+        .title-cell { font-size: 14pt; font-weight: bold; text-align: center; }
+        .nr-label { font-size: 9pt; }
+        .nr-value { font-size: 11pt; font-weight: bold; }
+        .field-label { font-size: 9pt; }
+        .field-value { font-size: 9pt; }
+        .snr-cell { font-weight: bold; font-size: 10pt; text-align: center; vertical-align: middle; }
+        .header-th { font-size: 8pt; text-align: center; vertical-align: middle; font-weight: bold; }
+        .sub-th { font-size: 8pt; text-align: center; }
+        .param-label { font-size: 9pt; }
+        .param-value { font-size: 9pt; font-weight: bold; }
+        .qc-header { font-size: 9pt; font-weight: bold; text-align: center; }
+        .qc-cell { height: 28pt; }
+        .footer-cell { border: none !important; font-size: 9pt; padding-top: 8px; }
+        .grafika-cell { font-size: 8pt; text-align: center; vertical-align: middle; }
+
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <table>
+        <colgroup>
+            <col class="c1"><col class="c2"><col class="c3">
+            <col class="c4"><col class="c5"><col class="c6">
+            <col class="c7"><col class="c8"><col class="c9">
+            <col class="c10"><col class="c11">
+        </colgroup>
+
+        <!-- ====== NAGŁÓWEK ====== -->
+        <tr>
+            <td rowspan="2" class="center bold" style="font-size:16pt; vertical-align:middle;">P.V.<br><span style="font-size:7pt; font-weight:normal; color:#555;">PREFABET</span></td>
+            <td colspan="7" rowspan="2" class="title-cell">ZLECENIE PRODUKCYJNE</td>
+            <td class="nr-label" rowspan="2">Nr zlecenia:</td>
+            <td colspan="2" class="nr-value center" rowspan="2">{{NR_ZLECENIA}}</td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td colspan="8"></td>
+            <td class="field-label">Zakład:</td>
+            <td colspan="2" class="field-value">Kluczbork</td>
+        </tr>
+
+        <!-- ====== DANE OBIEKTU ====== -->
+        <tr>
+            <td colspan="2" class="field-label">Obiekt:</td>
+            <td colspan="6" class="field-value">{{OBIEKT}}</td>
+            <td colspan="3" rowspan="5" class="grafika-cell">{{GRAFIKA_KATOW}}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="field-label">Adres:</td>
+            <td colspan="6" class="field-value">{{ADRES}}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="field-label">Wykonawca:</td>
+            <td colspan="6" class="field-value">{{WYKONAWCA}}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="field-label">Fakturowane na:</td>
+            <td colspan="6" class="field-value">{{FAKTUROWANE}}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="field-label">Termin dostawy</td>
+            <td colspan="6" class="field-value">{{DATA_PRODUKCJI}}</td>
+        </tr>
+
+        <!-- ====== NAGŁÓWKI TABELI PRZEJŚĆ ====== -->
+        <tr>
+            <td colspan="3" rowspan="3" class="snr-cell">SNr: {{SNR}}</td>
+            <td colspan="2" rowspan="2" class="header-th">Podłączenia rur</td>
+            <td rowspan="2" class="header-th">Spadek<br>w kinecie</td>
+            <td rowspan="2" class="header-th">Spadek<br>w mufie</td>
+            <td rowspan="2" class="header-th">Kąt<br>stopień</td>
+            <td rowspan="2" class="header-th">Uwagi</td>
+            <td rowspan="2" class="header-th">Kąt<br>gon</td>
+            <td rowspan="2" class="header-th">Kąt<br>wykonania</td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td class="sub-th">Rodzaj</td>
+            <td class="sub-th">Ø</td>
+            <td class="sub-th">mm</td>
+            <td class="sub-th">mm</td>
+            <td class="sub-th"></td>
+            <td class="sub-th"></td>
+            <td class="sub-th"></td>
+            <td class="sub-th"></td>
+        </tr>
+
+        <!-- ====== WIERSZE DANYCH: Średnica + Wylot 0 ====== -->
+        <tr>
+            <td class="field-label">Średnica</td>
+            <td class="bold center">{{SREDNICA}}</td>
+            {{PRZEJSCIA_ROW_0}}
+        </tr>
+
+        <!-- ====== Wysokość + Wlot 1 ====== -->
+        <tr>
+            <td class="field-label">Wysokość</td>
+            <td class="bold center">{{WYSOKOSC}}</td>
+            {{PRZEJSCIA_ROW_1}}
+        </tr>
+
+        <!-- ====== Głębokość + Wlot 2 ====== -->
+        <tr>
+            <td class="field-label">Głębokość</td>
+            <td class="bold center">{{GLEBOKOSC}}</td>
+            {{PRZEJSCIA_ROW_2}}
+        </tr>
+
+        <!-- ====== Dno + Wlot 3 ====== -->
+        <tr>
+            <td class="field-label">Dno</td>
+            <td class="bold center">{{DNO_KINETA}}</td>
+            {{PRZEJSCIA_ROW_3}}
+        </tr>
+
+        <!-- ====== Wlot 4 - Wlot 10 (generowane dynamicznie) ====== -->
+        {{PRZEJSCIA_ROWS_REST}}
+
+        <!-- ====== UWAGI + DATA/NAZWISKO ====== -->
+        <tr>
+            <td colspan="2" rowspan="2" class="bold" style="vertical-align:top;">Uwagi</td>
+            <td colspan="6" rowspan="2" style="vertical-align:top; font-size:8pt;">{{UWAGI}}</td>
+            <td>Data – czas:</td>
+            <td colspan="2" class="param-value">{{DATA}}</td>
+        </tr>
+        <tr>
+            <td>Nazwisko:</td>
+            <td colspan="2" class="param-value">{{NAZWISKO}}</td>
+        </tr>
+
+        <!-- ====== PARAMETRY DODATKOWE ====== -->
+        <tr>
+            <td colspan="3" class="param-label">Redukcja kinety</td>
+            <td colspan="3" class="param-value">{{RED_KINETY}}</td>
+            <td colspan="3" class="param-label">Wysokość spocznika</td>
+            <td colspan="2" class="param-value">{{SPOCZNIK_H}}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="param-label">Studnia wg DIN</td>
+            <td colspan="3" class="param-value">{{DIN}}</td>
+            <td colspan="3" class="param-label">Usytuowanie</td>
+            <td colspan="2" class="param-value">{{USYTUOWANIE}}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="param-label">Powłoka</td>
+            <td colspan="3" class="param-value">{{POWLOKA}}</td>
+            <td colspan="3" class="param-label">Kineta</td>
+            <td colspan="2" class="param-value">{{KINETA}}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="param-label">Rodzaj stopni</td>
+            <td colspan="3" class="param-value">{{RODZAJ_STOPNI}}</td>
+            <td colspan="3" class="param-label">Spocznik</td>
+            <td colspan="2" class="param-value">{{SPOCZNIK}}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="param-label">Ustawienie kąta stopni</td>
+            <td colspan="3" class="param-value">{{KAT_STOPNI}}</td>
+            <td colspan="3" class="param-label">Klasa betonu</td>
+            <td colspan="2" class="param-value">{{KLASA_BETONU}}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="param-label">Wykonanie</td>
+            <td colspan="3" class="param-value">{{WYKONANIE}}</td>
+            <td colspan="3"></td>
+            <td colspan="2"></td>
+        </tr>
+
+        <!-- ====== PRZERWA ====== -->
+        <tr><td colspan="11" class="no-border" style="height:8pt;"></td></tr>
+
+        <!-- ====== KONTROLA JAKOŚCI ====== -->
+        <tr>
+            <td colspan="11" class="qc-header">Kontrola jakości</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="qc-header">Pracownik</td>
+            <td colspan="2" class="qc-header">Kontrola formy</td>
+            <td class="qc-header">O.K.</td>
+            <td colspan="3" class="qc-header">Braki</td>
+            <td class="qc-header">Data</td>
+            <td colspan="2" class="qc-header">Kontrolujący</td>
+        </tr>
+        <tr>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell center">Betonowanie</td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="3" rowspan="2" class="qc-cell"></td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell center">Kineta</td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="3" rowspan="2" class="qc-cell"></td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell center">Kosmetyka</td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="3" rowspan="2" class="qc-cell"></td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell center">Szklanka</td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="3" rowspan="2" class="qc-cell"></td>
+            <td rowspan="2" class="qc-cell"></td>
+            <td colspan="2" rowspan="2" class="qc-cell"></td>
+        </tr>
+        <tr></tr>
+
+        <!-- ====== PRZERWA ====== -->
+        <tr><td colspan="11" class="no-border" style="height:12pt;"></td></tr>
+
+        <!-- ====== STOPKA ====== -->
+        <tr>
+            <td colspan="4" class="footer-cell center">Do wysyłki: ............................................</td>
+            <td colspan="4" class="footer-cell center">Data: ............................................</td>
+            <td colspan="3" class="footer-cell center">Podpis: ............................................</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

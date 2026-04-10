@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Python
+well_configurator_backend/venv/
+well_configurator_backend/__pycache__/
+well_configurator_backend/**/*.pyc
+well_configurator_backend/**/*.pyo
+well_configurator_backend/**/*.pyd
+well_configurator_backend/.Python
+well_configurator_backend/env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Database
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+data/backup/
+data/migration_backup/
+
+# Generated
+/generated/prisma
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+
+# Temp files
+*.tmp
+*.temp
+order_data.json

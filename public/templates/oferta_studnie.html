@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Oferta {{NR_OFERTY}}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0mm 10mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a2e;
+            background: #fff;
+            line-height: 1.4;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 190mm;
+            margin: 0 auto;
+        }
+
+        /* ===== NAGŁÓWEK / STOPKA FIRMOWA ===== */
+        .letterhead-header {
+            width: 100%;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .letterhead-footer {
+            width: 100%;
+            display: block;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }
+
+        /* ===== NAGŁÓWEK OFERTY ===== */
+        .offer-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            margin: 8px 0 4px;
+        }
+
+        .offer-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10pt;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #999;
+        }
+
+        .offer-meta strong {
+            color: #333;
+        }
+
+        /* ===== INFO GRID (klient + inwestycja) ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .info-box {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 9pt;
+        }
+
+        .info-box h3 {
+            font-size: 8pt;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-box div {
+            margin-bottom: 1px;
+        }
+
+        /* ===== TABELE DN ===== */
+        .dn-section {
+            margin-bottom: 14px;
+        }
+
+        .dn-header {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #999;
+            border-bottom: 1.5px solid #999;
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+        }
+
+        table.offer-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin-bottom: 4px;
+        }
+
+        table.offer-table th {
+            background: #999;
+            color: #fff;
+            padding: 4px 6px;
+            text-align: center;
+            font-size: 8pt;
+            font-weight: 700;
+            border: 0.5pt solid #999;
+        }
+
+        table.offer-table tr {
+            padding: 3px 6px;
+            page-break-inside: avoid;
+        }
+
+        table.offer-table td {
+            padding: 3px 6px;
+            border: 0.5pt solid #ccc;
+            vertical-align: middle;
+        }
+
+        table.offer-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: 700;
+        }
+
+        .zwienczenie-cell {
+            white-space: nowrap;
+            font-size: 8.4pt;
+        }
+
+        /* Wiersz sumy DN */
+        .dn-summary-row td {
+            background: #f0f0f0;
+            font-weight: 700;
+            border-top: 1.5px solid #999;
+            font-size: 9pt;
+        }
+
+        /* ===== PODSUMOWANIE OGÓLNE ===== */
+        .summary-section {
+            margin-top: 16px;
+        }
+
+        .summary-section h3 {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #999;
+            border-bottom: 1.5px solid #999;
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+        }
+
+        table.summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            margin-bottom: 8px;
+        }
+
+        table.summary-table td {
+            padding: 4px 8px;
+            border: 0.5pt solid #ccc;
+        }
+
+        table.summary-table tr.grand-total td {
+            background: #999;
+            color: #fff;
+            font-weight: 800;
+            font-size: 11pt;
+            border: none;
+        }
+
+        /* ===== UWAGI / WARUNKI ===== */
+        .notes-section {
+            margin-top: 12px;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        .notes-section .note-box {
+            background: #fffbe6;
+            border-left: 3px solid #f5a623;
+            padding: 6px 10px;
+            border-radius: 3px;
+            margin-bottom: 6px;
+        }
+
+        .conditions {
+            font-size: 9pt;
+            margin-top: 6px;
+        }
+
+        .conditions div {
+            margin-bottom: 2px;
+        }
+
+        /* Styl stopki usunięty zgodnie z żądaniem */
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- ====== FIXED HEADER ====== -->
+        <div style="position: fixed; top: 0; left: 0; right: 0; text-align: center;">
+            <img src="{{BASE_URL}}/templates/naglowek.png" class="letterhead-header" />
+        </div>
+
+        <!-- ====== FIXED FOOTER ====== -->
+        <div style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center;">
+            <img src="{{BASE_URL}}/templates/stopka.png" class="letterhead-footer" style="margin-top: 0;" />
+        </div>
+
+        <table class="report-container" style="width: 100%; border: none;">
+            <thead class="report-header" style="display: table-header-group; border: none;">
+                <tr>
+                    <td style="border: none; padding: 0;">
+                        <!-- SPACER FOR HEADER -->
+                        <div style="height: 40mm;"></div>
+                    </td>
+                </tr>
+            </thead>
+            <tfoot class="report-footer" style="display: table-footer-group; border: none;">
+                <tr>
+                    <td style="border: none; padding: 0;">
+                        <!-- SPACER FOR FOOTER -->
+                        <div style="height: 40mm;"></div>
+                    </td>
+                </tr>
+            </tfoot>
+            <tbody class="report-content" style="border: none;">
+                <tr>
+                    <td style="border: none; padding: 0;">
+                        <!-- ====== TYTUŁ OFERTY ====== -->
+                        <div class="offer-title">OFERTA HANDLOWA {{NR_OFERTY}}</div>
+                        <div class="offer-meta">
+                            <div style="flex-grow: 1;">&nbsp;</div>
+                            <div style="text-align: right;">
+                                <div><strong>Data przygotowania oferty:</strong> {{DATA_OFERTY}}</div>
+                                <div><strong>Data ważności oferty:</strong> {{DATA_WAZNOSCI}}</div>
+                            </div>
+                        </div>
+
+                        <!-- ====== DANE KLIENTA I INWESTYCJI ====== -->
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <h3>Dane klienta</h3>
+                                {{DANE_KLIENTA}}
+                            </div>
+                            <div class="info-box">
+                                <h3>Dane inwestycji</h3>
+                                {{DANE_INWESTYCJI}}
+                            </div>
+                        </div>
+
+                        <!-- ====== TABELE PER ŚREDNICA ====== -->
+                        {{TABELE_DN}}
+
+                        <!-- ====== PODSUMOWANIE OGÓLNE ====== -->
+                        {{PODSUMOWANIE}}
+
+                        <!-- ====== UWAGI / WARUNKI ====== -->
+        {{SEKCJA_UWAGI}}
+
+                        <!-- ====== STANDARDOWE WARUNKI (STATYCZNE) ====== -->
+                        <div class="standard-terms"
+                            style="font-size: 8pt; margin-top: 15px; color: #333; line-height: 1.35; text-align: justify; padding-bottom: 20px;">
+                            <span
+                                style="font-size: 9pt; font-weight: 700; color: #999; margin-bottom: 5px; display: block;">Informacje
+                                dodatkowe i ogólne warunki:</span>
+                            <p>Transport rur w średnicach DN 300 – DN 1600 odbywa się na jednorazowych podkładach
+                                drewnianych jako „Zabezpieczenie transportu”. Koszt podkładów zostanie zafakturowany na
+                                fakturze VAT wg poniższego zestawienia (wartości w tabeli podają cenę Zabezpieczenia
+                                transportu do jednej sztuki rury).</p>
+
+                            <table style="width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 7.5pt;">
+                                <thead>
+                                    <tr style="background: #f0f0f0;">
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Zabezpieczenie transportu wg
+                                            średnicy rur</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Cena netto [PLN]</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Zabezpieczenie transportu wg
+                                            średnicy rur</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Cena netto [PLN]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            300</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">13,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            1200</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">50,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            400</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">13,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            1400</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">90,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            500</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">14,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            1500</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">90,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            600</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">20,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            1600</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">90,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            800</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">20,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            1800</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">230,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            1000</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">40,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu DN
+                                            2000</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">310,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Zabezpieczenie transportu
+                                            WPUST ULICZNY</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">14,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;" colspan="2"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <p style="margin-top:10px;">Rozładunek studni w średnicach DN 1000 – DN 2000 i kręgów DN
+                                1500 - DN 2000 odbywa się za pomocą pętli transportowych zgodnie z instrukcją montażu
+                                PV.</p>
+
+                            <table style="width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 7.5pt;">
+                                <thead>
+                                    <tr style="background: #f0f0f0;">
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Pętle transportowe wg
+                                            średnic studni</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Oznaczenie pętli</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Cena za sztukę [PLN]</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Ilość szt. na koplet</th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px;">Cena kompletu [PLN]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Pętle transportowe dla
+                                            studni DN1000</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">RD16
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">65,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">3</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">195,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Pętle transportowe dla
+                                            studni DN1200</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">RD18
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">70,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">3</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">210,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Pętle transportowe dla
+                                            studni DN1500</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">RD24
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">80,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">4</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">320,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Pętle transportowe dla
+                                            studni DN2000</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">RD36
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">135,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">4</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">540,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Pętle transportowe dla
+                                            kręgów DN1500</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">RD16
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">65,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">3</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">195,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px;">Pętle transportowe dla
+                                            kręgów DN2000</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">RD16
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">65,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">3</td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">195,00
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <p style="margin-top:10px;">Dla rur powyżej średnicy DN1200 oferujemy kotwy montażowe 45
+                                PLN/szt. w rurze są montowane dwie kotwy.<br>
+                                Sprzęgi uniwersalne mogą być przez nas dostarczane za kaucją 2300 PLN/szt., na wyraźne
+                                zamówienie. Po zwrocie w stanie nieuszkodzonym zostanie z kaucji potrącone 40% jako
+                                koszty własne P.V. Prefabet S.A. i amortyzacja.</p>
+
+                            <p style="margin-top:10px;">Do montażu studni i rur P.V. Prefabet Kluczbork S.A. oferuje
+                                środek poślizgowy w wiaderkach 5kg w cenie 225 PLN.<br>
+                                Dedykowany środek poślizgowy ułatwia montaż, nie wpływa negatywnie na uszczelki przez co
+                                gwarantujemy szczelność naszych wyrobów. W celu prawidłowego montażu rur i studni do
+                                każdego transportu studni i co do drugiego transportu rur należy uwzględnić 5kg środka
+                                poślizgowego. Koszt środka poślizgowego stanowi osobną pozycję na fakturze. Zastosowanie
+                                innych środków o nieznanym składzie chemicznym może negatywnie wpłynąć na szczelność
+                                połączeń, a tym samym wyklucza odpowiedzialność gwarancyjną Producenta.</p>
+
+                            <p style="margin-top:10px;"><strong>Termin realizacji zamówienia:</strong> I partia towaru
+                                według indywidualnych ustaleń z doradcą techniczno-handlowym. Zamówienie należy złożyć w
+                                formie pisemnej z wszystkimi istotnymi parametrami potrzebnymi do zrealizowania
+                                zamówienia.</p>
+
+                            <p style="margin-top:5px;">Odstąpienie od złożonego zamówienia powoduje konieczność zapłaty
+                                100% wartości wyprodukowanego towaru oraz pokrycie kosztów przygotowania produkcji.</p>
+
+                            <p style="margin-top:10px;">Technologia produkcji studni P.V. Prefabet Kluczbork S.A.
+                                pozwala na uformowanie przejścia szczelnego w betonie. Zastrzegamy sobie prawo dostawy
+                                studni z tego typu przejściami. Powyższe rozwiązanie gwarantuje pełną funkcjonalność i
+                                szczelność studni.<br>
+                                Na wyraźną mailową prośbę zamawiającego P.V. Prefabet przygotuje ofertę z uwzględnieniem
+                                w wycenie oryginalnych przejść producenta rur lub zamienników tworzywowych w zależności
+                                od zapytania. Oferta wówczas zawiera odpowiedni zapis „przejścia producenta” lub
+                                „zamienniki tworzywowe”.<br>
+                                P.V. Prefabet oferuje przejścia szczelne z betonu dla rur:<br>
+                                K2KAN, Incor, Pragma ID - DN600; DN500; DN400; DN300; DN250; DN200; X-Stream; Magnacor –
+                                DN300; DN250; DN200; PCV – DN600; GRP/GRK - DN600; DN500; DN400; DN300.<br>
+                                Zastrzegamy sobie prawo do produkcji studni z przejściami betonowymi dla innych rodzajów
+                                rur i średnic.</p>
+
+                            <p style="margin-top:10px;">Włączenia kanałów w studniach monolitycznych „Unolith” oraz
+                                studnie z wkładką „PRECO” są wykonywane w linii górnej.</p>
+
+                            <p style="margin-top:10px;">Ceny podane w ofercie uwzględniają rabat obowiązujący przy
+                                terminowym uregulowaniu należności oraz przy zamówieniu całości asortymentu objętego
+                                ofertą.</p>
+
+                            <p style="margin-top:10px;">Po otrzymaniu zamówienia na kwotą wyższą niż 50 tys. PLN netto
+                                P.V. Prefabet Kluczbork S.A. przedstawi umowę określającą warunki dostaw, która zostanie
+                                podpisana przed rozpoczęciem dostaw.<br>
+                                P.V. Prefabet Kluczbork S.A. ubezpiecza wszystkie transakcje z odroczonym terminem
+                                płatności, w związku z tym sprzedaż na przelew może nastąpić po weryfikacji przez firmę
+                                ubezpieczeniową i ubezpieczeniu transakcji. Procedura ubezpieczenia trwa do 10 dni
+                                roboczych, a wszelkie formalności i koszty leżą po stronie P.V. Prefabet Kluczbork S.A.
+                            </p>
+
+                            <p style="margin-top:10px;">Wszelkie spory mogące wyniknąć w związku z realizacją
+                                zamówienia, Strony poddają pod rozstrzygnięcie sądu powszechnego właściwego dla siedziby
+                                Dostawcy.</p>
+
+                            <p style="margin-top:10px;">Niewymienione elementy dodatkowe (elementy do wbudowania,
+                                powłoki itp.) nie są częścią tej oferty.<br>
+                                Wszelkie zmiany ilościowe bądź jakościowe w zamówieniu korygowane będą poprzez
+                                wystawienie kolejnej oferty cenowej lub ustaleniach między stronami.<br>
+                                Cena loco budowa przy zamówieniu na całość zadania i dostawie pełnych transportów
+                                24-tonowych. W przypadku niepełnych dostaw zostanie doliczony dodatkowy koszt
+                                transportu.</p>
+
+                            <p style="margin-top:10px;">Drogi dojazdowe do miejsca budowy muszą być przejezdne dla
+                                pojazdów ciężkich (ładowność 24 tony). Zleceniodawca jest odpowiedzialny za zapewnienie
+                                odpowiedniego dojazdu i miejsca rozładunku na budowie. Rozładunek oraz wynajęcie dźwigu
+                                na miejscu budowy leży po stronie zamawiającego.<br>
+                                Oferta standardowa obejmuje jedno miejsce rozładunku. W przypadku, gdy miejsc rozładunku
+                                jest więcej - za każde dodatkowe miejsce rozładunku klient płaci 500 PLN.<br>
+                                Standardowy czas rozładunku wyrobów wynosi maksymalnie do 1,5 godz. Za każdą następną
+                                rozpoczętą godzinę klient zapłaci 200 PLN netto. Czas liczony jest od momentu zgłoszenia
+                                przez kierowcę osobie upoważnionej gotowości do rozładunku.</p>
+
+                            <p style="margin-top:10px;">W przypadku wzrostu cen materiałów wsadowych (cement, kruszywa,
+                                usługi transportowe itp.) powyżej 3 % zastrzegamy sobie prawo zmiany cen.</p>
+
+                            <p style="margin-top:10px;">Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36
+                                miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze
+                                sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu
+                                wyrobów do pobrania na stronie <a href="http://www.pv-prefabet.com.pl"
+                                    style="color:#000; text-decoration:none;">www.pv-prefabet.com.pl</a>).<br>
+                                W zamówieniach prosimy powoływać się na nr niniejszej oferty.</p>
+
+                            <p style="margin-top:10px;">Parametry techniczne oferowanych wyrobów, według odpowiednich
+                                deklaracji dostępnych na <a href="https://www.pv-prefabet.com.pl"
+                                    style="color:#000; text-decoration:none;">https://www.pv-prefabet.com.pl</a> lub po
+                                przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork S.A.</p>
+
+                            <p style="margin-top:10px;">Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne
+                                Warunki Sprzedaży dostępne na stronie internetowej <a
+                                    href="http://www.pv-prefabet.com.pl"
+                                    style="color:#000; text-decoration:none;">www.pv-prefabet.com.pl</a> oraz Polityka
+                                Prywatności dostępna na stronie internetowej <a
+                                    href="http://www.pv-prefabet.com.pl/rodo-dane"
+                                    style="color:#000; text-decoration:none;">www.pv-prefabet.com.pl/rodo-dane</a></p>
+
+                            <p style="margin-top:15px; font-weight: bold; font-size: 8.5pt;">Dziękujemy Państwu za
+                                zainteresowanie ofertą naszej firmy i mamy nadzieję na dalszą owocną współpracę.</p>
+                        </div>
+
+                        <!-- ====== DANE KONTAKTOWE OPERATORÓW ====== -->
+                        {{DANE_KONTAKTOWE}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
