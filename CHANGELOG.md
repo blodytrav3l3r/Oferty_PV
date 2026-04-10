@@ -7,6 +7,7 @@ Format oparty na [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Dodane
+
 - Health check endpoint (`GET /health`)
 - Compression middleware dla lepszej wydajności
 - Security headers middleware
@@ -24,17 +25,20 @@ Format oparty na [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - HTTPS redirect w production
 
 ### Zmienione
+
 - Ulepszone cookie security (sameSite: 'strict', secure w production)
 - Dodane security headers (X-Content-Type-Options, X-Frame-Options, itp.)
 - Ulepszona struktura projektu
 
 ### Naprawione
+
 - Poprawki w middleware auth
 - Obsługa błędów w endpointach
 
 ## [1.0.0] - 2024-01-01
 
 ### Dodane
+
 - Initial release
 - System autentykacji z rolami (admin, pro, user)
 - Zarządzanie ofertami rur i studni

@@ -9,8 +9,8 @@
  * @param {'success'|'error'|'info'} type - typ powiadomienia
  */
 function showToast(msg, type = 'info') {
-    const container = document.getElementById('toast-container')
-        || document.querySelector('.toast-container');
+    const container =
+        document.getElementById('toast-container') || document.querySelector('.toast-container');
     if (!container) {
         console.warn('showToast: brak #toast-container w HTML');
         return;
@@ -25,7 +25,8 @@ function showToast(msg, type = 'info') {
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
-    closeBtn.style.cssText = 'background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;opacity:.7;';
+    closeBtn.style.cssText =
+        'background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;opacity:.7;';
     closeBtn.addEventListener('click', () => toast.remove());
     toast.appendChild(closeBtn);
 
@@ -46,7 +47,7 @@ function closeModal(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     } else {
-        document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+        document.querySelectorAll('.modal-overlay').forEach((m) => m.remove());
     }
 }
 
@@ -69,10 +70,10 @@ function toggleCard(header) {
  * @param {string} name - nazwa sekcji
  */
 function showSection(name) {
-    document.querySelectorAll('.section').forEach(s => {
-        s.style.display = s.id === ('section-' + name) ? 'block' : 'none';
+    document.querySelectorAll('.section').forEach((s) => {
+        s.style.display = s.id === 'section-' + name ? 'block' : 'none';
     });
-    document.querySelectorAll('.nav-link, .nav-btn').forEach(n => {
+    document.querySelectorAll('.nav-link, .nav-btn').forEach((n) => {
         n.classList.toggle('active', n.getAttribute('data-section') === name);
     });
 }
@@ -86,20 +87,23 @@ function showSection(name) {
 function showUserSelectionPopup(users, defaultUserId) {
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; display:flex; align-items:center; justify-content:center;';
+        overlay.style.cssText =
+            'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; display:flex; align-items:center; justify-content:center;';
 
         const modal = document.createElement('div');
-        modal.style.cssText = 'background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;';
+        modal.style.cssText =
+            'background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;';
 
         let html = `<div style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;">👤 Przypisz do użytkownika (Opiekun)</div>`;
         html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
         html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
 
-        users.forEach(u => {
-            const displayName = (u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}` : u.username;
+        users.forEach((u) => {
+            const displayName =
+                u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
             const isDefault = u.id === defaultUserId;
             const symbol = u.symbol || '??';
-            const roleBadge = u.role === 'admin' ? '🔑' : (u.role === 'pro' ? '⭐' : '👤');
+            const roleBadge = u.role === 'admin' ? '🔑' : u.role === 'pro' ? '⭐' : '👤';
 
             html += `<button class="user-select-btn" data-user-id="${u.id}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
@@ -127,14 +131,15 @@ function showUserSelectionPopup(users, defaultUserId) {
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        modal.querySelectorAll('.user-select-btn').forEach(btn => {
+        modal.querySelectorAll('.user-select-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const userId = btn.getAttribute('data-user-id');
-                const selectedUser = users.find(u => u.id === userId);
+                const selectedUser = users.find((u) => u.id === userId);
                 if (selectedUser) {
-                    selectedUser.displayName = (selectedUser.firstName && selectedUser.lastName) 
-                        ? `${selectedUser.firstName} ${selectedUser.lastName}` 
-                        : selectedUser.username;
+                    selectedUser.displayName =
+                        selectedUser.firstName && selectedUser.lastName
+                            ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                            : selectedUser.username;
                 }
                 document.body.removeChild(overlay);
                 resolve(selectedUser);
@@ -158,14 +163,18 @@ window.globalUsersMap = new Map();
  */
 async function fetchGlobalUsers() {
     try {
-        const headers = typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' };
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
         const response = await fetch('/api/users-for-assignment', { headers });
         if (!response.ok) return;
         const json = await response.json();
         const users = json.data || [];
         window.globalUsersMap.clear();
-        users.forEach(u => {
-            const displayName = (u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}` : u.username;
+        users.forEach((u) => {
+            const displayName =
+                u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
             window.globalUsersMap.set(u.id, displayName);
             window.globalUsersMap.set(u.username, displayName);
         });
@@ -189,26 +198,21 @@ async function fetchGlobalUsers() {
  * @returns {Promise<boolean>}
  */
 function appConfirm(message, opts = {}) {
-    const {
-        title      = 'Potwierdzenie',
-        okText     = 'OK',
-        cancelText = 'Anuluj',
-        type       = 'info'
-    } = opts;
+    const { title = 'Potwierdzenie', okText = 'OK', cancelText = 'Anuluj', type = 'info' } = opts;
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         _ensureConfirmDOM();
 
-        const overlay   = document.getElementById('app-confirm-overlay');
-        const titleEl   = document.getElementById('app-confirm-title');
-        const msgEl     = document.getElementById('app-confirm-message');
-        const okBtn     = document.getElementById('app-confirm-ok');
+        const overlay = document.getElementById('app-confirm-overlay');
+        const titleEl = document.getElementById('app-confirm-title');
+        const msgEl = document.getElementById('app-confirm-message');
+        const okBtn = document.getElementById('app-confirm-ok');
         const cancelBtn = document.getElementById('app-confirm-cancel');
-        const iconEl    = document.getElementById('app-confirm-icon');
+        const iconEl = document.getElementById('app-confirm-icon');
 
-        const iconMap   = { info: 'ℹ️', warning: '⚠️', danger: '🗑️' };
+        const iconMap = { info: 'ℹ️', warning: '⚠️', danger: '🗑️' };
         const accentMap = { info: '#6366f1', warning: '#f59e0b', danger: '#ef4444' };
-        const accent    = accentMap[type] || accentMap.info;
+        const accent = accentMap[type] || accentMap.info;
 
         if (iconEl) iconEl.textContent = iconMap[type] || iconMap.info;
         if (titleEl) titleEl.textContent = title;
@@ -220,23 +224,27 @@ function appConfirm(message, opts = {}) {
 
         overlay.style.display = 'flex';
         overlay.style.opacity = '0';
-        requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+        });
         setTimeout(() => okBtn.focus(), 50);
 
         const cleanup = (result) => {
             overlay.style.opacity = '0';
-            setTimeout(() => { overlay.style.display = 'none'; }, 150);
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 150);
             okBtn.removeEventListener('click', onOk);
             cancelBtn.removeEventListener('click', onCancel);
             overlay.removeEventListener('keydown', onKey);
             resolve(result);
         };
 
-        const onOk     = () => cleanup(true);
+        const onOk = () => cleanup(true);
         const onCancel = () => cleanup(false);
-        const onKey    = (e) => {
+        const onKey = (e) => {
             if (e.key === 'Escape') onCancel();
-            if (e.key === 'Enter')  onOk();
+            if (e.key === 'Enter') onOk();
         };
 
         okBtn.addEventListener('click', onOk);

@@ -12,7 +12,11 @@ async function loadOrdersStudnie() {
 
 async function saveOrdersDataStudnie(data) {
     try {
-        await fetch('/api/orders-studnie', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
+        await fetch('/api/orders-studnie', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ data })
+        });
     } catch (err) {
         console.error('Błąd zapisu zamówień studni:', err);
     }
@@ -23,7 +27,7 @@ async function createOrderFromOffer() {
     if (isSavingOffer) {
         showToast('Trwa zapisywanie...', 'info');
         while (isSavingOffer) {
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise((r) => setTimeout(r, 200));
         }
     } else {
         // Auto-save the offer to ensure latest state is pushed to SQLite and state is refreshed
@@ -32,36 +36,68 @@ async function createOrderFromOffer() {
     }
 
     const number = document.getElementById('offer-number').value.trim();
-    if (!number) { showToast('Błąd: Brak numeru oferty', 'error'); return; }
+    if (!number) {
+        showToast('Błąd: Brak numeru oferty', 'error');
+        return;
+    }
     if (!editingOfferIdStudnie) {
         showToast('Błąd krytyczny: Brak ID oferty po zapisie', 'error');
         return;
     }
 
     // Ostrzeżenie że oferta zostanie zablokowana
-    if (!await appConfirm('Po utworzeniu zamówienia oferta zostanie zablokowana do edycji.\nDalsze zmiany będą możliwe tylko w zamówieniu.\n\nKontynuować?', { title: 'Tworzenie zamówienia', type: 'warning' })) return;
+    if (
+        !(await appConfirm(
+            'Po utworzeniu zamówienia oferta zostanie zablokowana do edycji.\nDalsze zmiany będą możliwe tylko w zamówieniu.\n\nKontynuować?',
+            { title: 'Tworzenie zamówienia', type: 'warning' }
+        ))
+    )
+        return;
 
     console.log('[createOrderFromOffer] editingOfferIdStudnie =', editingOfferIdStudnie);
     console.log('[createOrderFromOffer] offersStudnie count =', offersStudnie.length);
-    const offer = offersStudnie.find(o => o.id === editingOfferIdStudnie);
+    const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
     console.log('[createOrderFromOffer] offer found =', !!offer);
-    
-    if (!offer) { 
-        showToast('Nie znaleziono oferty (ID: ' + editingOfferIdStudnie + ', total: ' + offersStudnie.length + ')', 'error'); 
-        return; 
+
+    if (!offer) {
+        showToast(
+            'Nie znaleziono oferty (ID: ' +
+                editingOfferIdStudnie +
+                ', total: ' +
+                offersStudnie.length +
+                ')',
+            'error'
+        );
+        return;
     }
 
     const oId = normalizeId(offer.id);
     // Check if order already exists
-    const existingOrder = ordersStudnie ? ordersStudnie.find(o => normalizeId(o.offerId) === oId) : null;
+    const existingOrder = ordersStudnie
+        ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
+        : null;
     if (existingOrder) {
-        if (!await appConfirm('Zamówienie dla tej oferty już istnieje. Czy chcesz utworzyć nowe (nadpisze poprzednie)?', { title: 'Nadpisanie zamówienia', type: 'warning' })) return;
-        ordersStudnie = ordersStudnie ? ordersStudnie.filter(o => normalizeId(o.offerId) !== oId) : [];
+        if (
+            !(await appConfirm(
+                'Zamówienie dla tej oferty już istnieje. Czy chcesz utworzyć nowe (nadpisze poprzednie)?',
+                { title: 'Nadpisanie zamówienia', type: 'warning' }
+            ))
+        )
+            return;
+        ordersStudnie = ordersStudnie
+            ? ordersStudnie.filter((o) => normalizeId(o.offerId) !== oId)
+            : [];
     }
 
     // Determine assigned user for order numbering — default to offer's opiekun
     let assignedUserId = offer.userId || (currentUser ? currentUser.id : null);
-    let assignedUserName = offer.userName || (currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : '');
+    let assignedUserName =
+        offer.userName ||
+        (currentUser
+            ? currentUser.firstName && currentUser.lastName
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.username
+            : '');
 
     // If pro or admin — ask which user to assign the order to
     if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
@@ -77,9 +113,10 @@ async function createOrderFromOffer() {
                     return;
                 }
                 assignedUserId = selectedUser.id;
-                assignedUserName = (selectedUser.firstName && selectedUser.lastName)
-                    ? `${selectedUser.firstName} ${selectedUser.lastName}`
-                    : (selectedUser.displayName || selectedUser.username);
+                assignedUserName =
+                    selectedUser.firstName && selectedUser.lastName
+                        ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                        : selectedUser.displayName || selectedUser.username;
             }
         } catch (e) {
             console.error('Błąd pobierania użytkowników:', e);
@@ -155,13 +192,12 @@ async function createOrderFromOffer() {
     window.location.href = '/studnie?order=' + order.id;
 }
 
-
 function saveOrderStudnie() {
     if (!editingOfferIdStudnie) return;
-    const offer = offersStudnie.find(o => o.id === editingOfferIdStudnie);
+    const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
     if (!offer) return;
     const oId = normalizeId(offer.id);
-    const order = ordersStudnie ? ordersStudnie.find(o => normalizeId(o.offerId) === oId) : null;
+    const order = ordersStudnie ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId) : null;
     if (!order) return;
 
     // Freeze prices on all elements before saving
@@ -173,8 +209,9 @@ function saveOrderStudnie() {
     order.updatedAt = new Date().toISOString();
 
     // Recalculate totals
-    let totalNetto = 0, totalWeight = 0;
-    wells.forEach(well => {
+    let totalNetto = 0,
+        totalWeight = 0;
+    wells.forEach((well) => {
         const stats = calcWellStats(well);
         totalNetto += stats.price;
         totalWeight += stats.weight;
@@ -189,10 +226,10 @@ function saveOrderStudnie() {
 
 /** Freeze current prices on all config items and przejscia in every well */
 function freezeWellPrices(wellsArr) {
-    (wellsArr || []).forEach(well => {
+    (wellsArr || []).forEach((well) => {
         // Freeze config items (kręgi, dennicy, konusy, etc.)
-        (well.config || []).forEach(item => {
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+        (well.config || []).forEach((item) => {
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
             item.frozenPrice = getItemAssessedPrice(well, p, true);
             item.frozenPriceBase = getItemAssessedPrice(well, p, false);
@@ -204,10 +241,10 @@ function freezeWellPrices(wellsArr) {
         if (well.dn && wellDiscounts[well.dn]) {
             discNadbudowa = wellDiscounts[well.dn].nadbudowa || 0;
         }
-        const mult = 1 - (discNadbudowa / 100);
+        const mult = 1 - discNadbudowa / 100;
 
-        (well.przejscia || []).forEach(item => {
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+        (well.przejscia || []).forEach((item) => {
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
             const bP = p.price || 0;
             item.frozenPrice = bP * mult;
@@ -219,22 +256,34 @@ function freezeWellPrices(wellsArr) {
 
 async function deleteOrderStudnie(orderId) {
     // Sprawdź, czy zamówienie ma zaakceptowane zlecenia produkcyjne
-    const order = ordersStudnie ? ordersStudnie.find(o => o.id === orderId) : null;
+    const order = ordersStudnie ? ordersStudnie.find((o) => o.id === orderId) : null;
     if (order) {
-        const acceptedPOs = (productionOrders || []).filter(po =>
-            po.offerId === order.offerId && po.status === 'accepted'
+        const acceptedPOs = (productionOrders || []).filter(
+            (po) => po.offerId === order.offerId && po.status === 'accepted'
         );
         if (acceptedPOs.length > 0) {
-            showToast('❌ Nie można usunąć zamówienia — zawiera zaakceptowane zlecenia produkcyjne. Najpierw cofnij ich akceptację.', 'error');
+            showToast(
+                '❌ Nie można usunąć zamówienia — zawiera zaakceptowane zlecenia produkcyjne. Najpierw cofnij ich akceptację.',
+                'error'
+            );
             return;
         }
     }
 
-    if (!await appConfirm('Czy na pewno usunąć to zamówienie?', { title: 'Usuwanie zamówienia', type: 'danger' })) return;
-    
+    if (
+        !(await appConfirm('Czy na pewno usunąć to zamówienie?', {
+            title: 'Usuwanie zamówienia',
+            type: 'danger'
+        }))
+    )
+        return;
+
     // API Call to delete order physically
     try {
-        const res = await fetch(`/api/orders-studnie/${orderId}`, { method: 'DELETE', headers: typeof authHeaders === 'function' ? authHeaders() : {} });
+        const res = await fetch(`/api/orders-studnie/${orderId}`, {
+            method: 'DELETE',
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+        });
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             showToast(errData.error || 'Błąd usuwania zamówienia', 'error');
@@ -250,7 +299,7 @@ async function deleteOrderStudnie(orderId) {
     if (order) {
         affectedOfferId = normalizeId(order.offerId);
         // Remove hasOrder flag from offer
-        const offer = offersStudnie.find(o => normalizeId(o.id) === affectedOfferId);
+        const offer = offersStudnie.find((o) => normalizeId(o.id) === affectedOfferId);
         if (offer) {
             offer.hasOrder = false;
             delete offer.orderId;
@@ -258,7 +307,7 @@ async function deleteOrderStudnie(orderId) {
         }
     }
     if (ordersStudnie) {
-        ordersStudnie = ordersStudnie.filter(o => o.id !== orderId);
+        ordersStudnie = ordersStudnie.filter((o) => o.id !== orderId);
         saveOrdersDataStudnie(ordersStudnie);
     }
     renderSavedOffersStudnie();
@@ -295,13 +344,14 @@ function getOrderChanges(order) {
             changes[i] = { type: 'removed', name: orig[i].name };
             continue;
         }
-        const o = orig[i], c = curr[i];
+        const o = orig[i],
+            c = curr[i];
         const diffs = [];
 
         // Compare config (components) - order doesn't matter, only productId and total quantity
         const getConfigCounts = (conf) => {
             const counts = {};
-            (conf || []).forEach(item => {
+            (conf || []).forEach((item) => {
                 if (!item.productId) return;
                 counts[item.productId] = (counts[item.productId] || 0) + (item.quantity || 1);
             });
@@ -309,11 +359,11 @@ function getOrderChanges(order) {
         };
         const oCounts = getConfigCounts(o.config);
         const cCounts = getConfigCounts(c.config);
-        
+
         // Compare objects by keys and values
         const oKeys = Object.keys(oCounts).sort();
         const cKeys = Object.keys(cCounts).sort();
-        
+
         let configDiff = oKeys.length !== cKeys.length;
         if (!configDiff) {
             for (let k of oKeys) {
@@ -326,26 +376,49 @@ function getOrderChanges(order) {
         if (configDiff) diffs.push('config');
 
         // Compare przejscia (ignoring angle, angleExecution, angleGony)
-        const cleanPrzejscia = (arr) => (arr || []).map(p => ({
-            productId: p.productId,
-            rzednaWlaczenia: p.rzednaWlaczenia,
-            notes: p.notes
-        }));
-        if (JSON.stringify(cleanPrzejscia(o.przejscia)) !== JSON.stringify(cleanPrzejscia(c.przejscia))) {
+        const cleanPrzejscia = (arr) =>
+            (arr || []).map((p) => ({
+                productId: p.productId,
+                rzednaWlaczenia: p.rzednaWlaczenia,
+                notes: p.notes
+            }));
+        if (
+            JSON.stringify(cleanPrzejscia(o.przejscia)) !==
+            JSON.stringify(cleanPrzejscia(c.przejscia))
+        ) {
             diffs.push('przejscia');
         }
 
         // Compare params
-        const paramKeys = ['nadbudowa', 'dennicaMaterial', 'wkladka', 'klasaBetonu', 'agresjaChemiczna', 'agresjaMrozowa', 'malowanieW', 'malowanieZ', 'kineta', 'redukcjaKinety', 'stopnie', 'spocznikH', 'usytuowanie'];
-        paramKeys.forEach(key => {
+        const paramKeys = [
+            'nadbudowa',
+            'dennicaMaterial',
+            'wkladka',
+            'klasaBetonu',
+            'agresjaChemiczna',
+            'agresjaMrozowa',
+            'malowanieW',
+            'malowanieZ',
+            'kineta',
+            'redukcjaKinety',
+            'stopnie',
+            'spocznikH',
+            'usytuowanie'
+        ];
+        paramKeys.forEach((key) => {
             if ((o[key] || '') !== (c[key] || '')) diffs.push(key);
         });
 
         // Compare basic fields & elevations
         if ((o.dn || 0) !== (c.dn || 0)) diffs.push('dn');
         if ((o.name || '') !== (c.name || '')) diffs.push('name');
-        if ((o.rzednaWlazu == null ? '' : o.rzednaWlazu) !== (c.rzednaWlazu == null ? '' : c.rzednaWlazu)) diffs.push('rzednaWlazu');
-        if ((o.rzednaDna == null ? '' : o.rzednaDna) !== (c.rzednaDna == null ? '' : c.rzednaDna)) diffs.push('rzednaDna');
+        if (
+            (o.rzednaWlazu == null ? '' : o.rzednaWlazu) !==
+            (c.rzednaWlazu == null ? '' : c.rzednaWlazu)
+        )
+            diffs.push('rzednaWlazu');
+        if ((o.rzednaDna == null ? '' : o.rzednaDna) !== (c.rzednaDna == null ? '' : c.rzednaDna))
+            diffs.push('rzednaDna');
 
         if (diffs.length > 0) {
             changes[i] = { type: 'modified', fields: diffs };
@@ -358,7 +431,9 @@ function getOrderChanges(order) {
 function getCurrentOfferOrder() {
     if (orderEditMode) return orderEditMode.order;
     if (!editingOfferIdStudnie) return null;
-    return ordersStudnie ? ordersStudnie.find(o => o.offerId === editingOfferIdStudnie) || null : null;
+    return ordersStudnie
+        ? ordersStudnie.find((o) => o.offerId === editingOfferIdStudnie) || null
+        : null;
 }
 
 /** Enter order editing mode — loads order into main editor */
@@ -366,12 +441,21 @@ async function enterOrderEditMode(orderId) {
     try {
         console.log('[enterOrderEditMode] START orderId=', orderId);
         const res = await fetch(`/api/orders-studnie/${orderId}`, { headers: authHeaders() });
-        if (!res.ok) { showToast('Zamówienie nie znalezione', 'error'); return; }
+        if (!res.ok) {
+            showToast('Zamówienie nie znalezione', 'error');
+            return;
+        }
         const json = await res.json();
         const order = json.data;
-        if (!order) { showToast('Zamówienie nie znalezione', 'error'); return; }
+        if (!order) {
+            showToast('Zamówienie nie znalezione', 'error');
+            return;
+        }
 
-        console.log('[enterOrderEditMode] order loaded, wells count:', order.wells ? order.wells.length : 'NO WELLS');
+        console.log(
+            '[enterOrderEditMode] order loaded, wells count:',
+            order.wells ? order.wells.length : 'NO WELLS'
+        );
 
         orderEditMode = { orderId: order.id, order: order };
         editingOfferIdStudnie = order.offerId || null;
@@ -383,7 +467,7 @@ async function enterOrderEditMode(orderId) {
         migrateWellData(wells);
 
         // Double-ensure every well has config and przejscia arrays
-        wells.forEach(w => {
+        wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
         });
@@ -391,10 +475,10 @@ async function enterOrderEditMode(orderId) {
         console.log('[enterOrderEditMode] wells migrated, count:', wells.length);
 
         // Automatyczne odblokowanie widoku kategorii dla użytych przejść
-        wells.forEach(w => {
+        wells.forEach((w) => {
             if (w.przejscia) {
-                w.przejscia.forEach(pr => {
-                    const prod = studnieProducts.find(p => p.id === pr.productId);
+                w.przejscia.forEach((pr) => {
+                    const prod = studnieProducts.find((p) => p.id === pr.productId);
                     if (prod && prod.category) {
                         visiblePrzejsciaTypes.add(prod.category);
                     }
@@ -407,7 +491,8 @@ async function enterOrderEditMode(orderId) {
 
         // Fill client/offer fields
         document.getElementById('offer-number').value = order.number || '';
-        document.getElementById('offer-date').value = order.date || new Date().toISOString().slice(0, 10);
+        document.getElementById('offer-date').value =
+            order.date || new Date().toISOString().slice(0, 10);
         document.getElementById('client-name').value = order.clientName || '';
         document.getElementById('client-nip').value = order.clientNip || '';
         document.getElementById('client-address').value = order.clientAddress || '';
@@ -444,7 +529,7 @@ async function enterOrderEditMode(orderId) {
 
 window.isPreviewMode = false;
 
-window.applyPreviewLockUI = function() {
+window.applyPreviewLockUI = function () {
     let banner = document.getElementById('preview-lock-banner');
     if (!banner) {
         banner = document.createElement('div');
@@ -457,29 +542,34 @@ window.applyPreviewLockUI = function() {
         `;
         document.body.appendChild(banner);
     }
-    
+
     // Zablokuj edycje elementow drag & drop formularza studni
-    document.querySelectorAll('.drop-zone, #svg-trash, #studnie-product-list, .actions-bar').forEach(el => {
-        el.style.pointerEvents = 'none';
-        el.style.opacity = '0.7';
-    });
+    document
+        .querySelectorAll('.drop-zone, #svg-trash, #studnie-product-list, .actions-bar')
+        .forEach((el) => {
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0.7';
+        });
 
     // Podmień funkcje zapisu by zablokować i pokazać toast
     const originalSaveOrder = window.saveCurrentOrder;
     window.saveCurrentOrder = async () => {
-        if(window.isPreviewMode) showToast('Zapisywanie w trybie podglądu jest zablokowane', 'error');
+        if (window.isPreviewMode)
+            showToast('Zapisywanie w trybie podglądu jest zablokowane', 'error');
         else if (originalSaveOrder) await originalSaveOrder();
     };
     const originalSaveOffer = window.saveOfferStudnie;
     window.saveOfferStudnie = async () => {
-        if(window.isPreviewMode) { showToast('Zapisywanie w trybie podglądu jest zablokowane', 'error'); return false; }
-        else if (originalSaveOffer) return await originalSaveOffer();
+        if (window.isPreviewMode) {
+            showToast('Zapisywanie w trybie podglądu jest zablokowane', 'error');
+            return false;
+        } else if (originalSaveOffer) return await originalSaveOffer();
     };
 
     window.isPreviewMode = true;
 };
 
-window.exitPreviewMode = function() {
+window.exitPreviewMode = function () {
     window.location.reload(); // Najszybszy i najbezpieczniejszy powrót po przeglądaniu JSONów z historii
 };
 
@@ -493,13 +583,16 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
 
         wells = Array.isArray(order.wells) ? JSON.parse(JSON.stringify(order.wells)) : [];
         if (typeof migrateWellData === 'function') migrateWellData(wells);
-        wells.forEach(w => {
+        wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
-            
+
             if (w.przejscia) {
-                w.przejscia.forEach(pr => {
-                    const prod = typeof studnieProducts !== 'undefined' ? studnieProducts.find(p => p.id === pr.productId) : null;
+                w.przejscia.forEach((pr) => {
+                    const prod =
+                        typeof studnieProducts !== 'undefined'
+                            ? studnieProducts.find((p) => p.id === pr.productId)
+                            : null;
                     if (prod && prod.category) visiblePrzejsciaTypes.add(prod.category);
                 });
             }
@@ -509,7 +602,8 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         currentWellIndex = 0;
 
         document.getElementById('offer-number').value = order.number || '';
-        document.getElementById('offer-date').value = order.date || new Date().toISOString().slice(0, 10);
+        document.getElementById('offer-date').value =
+            order.date || new Date().toISOString().slice(0, 10);
         document.getElementById('client-name').value = order.clientName || '';
         document.getElementById('client-nip').value = order.clientNip || '';
         document.getElementById('client-address').value = order.clientAddress || '';
@@ -518,15 +612,14 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         document.getElementById('invest-address').value = order.investAddress || '';
         document.getElementById('invest-contractor').value = order.investContractor || '';
 
-        if(typeof skipWizardToStep3 === 'function') skipWizardToStep3();
-        if(typeof showSection === 'function') showSection('builder');
-        if(typeof refreshAll === 'function') refreshAll();
+        if (typeof skipWizardToStep3 === 'function') skipWizardToStep3();
+        if (typeof showSection === 'function') showSection('builder');
+        if (typeof refreshAll === 'function') refreshAll();
 
         renderOrderModeBanner();
         document.title = `👁️ PODGLĄD Zamówienia: ${order.number || orderId}`;
-        
-        window.applyPreviewLockUI();
 
+        window.applyPreviewLockUI();
     } catch (err) {
         window.isPreviewMode = false;
         console.error('Błąd ładowania podglądu zamówienia:', err);
@@ -587,7 +680,10 @@ function renderOrderModeBanner() {
 }
 
 async function saveCurrentOrder() {
-    if (!orderEditMode) { showToast('Brak trybu zamówienia', 'error'); return; }
+    if (!orderEditMode) {
+        showToast('Brak trybu zamówienia', 'error');
+        return;
+    }
 
     const order = orderEditMode.order;
 
@@ -600,8 +696,9 @@ async function saveCurrentOrder() {
     order.updatedAt = new Date().toISOString();
 
     // Recalculate totals
-    let totalNetto = 0, totalWeight = 0;
-    wells.forEach(well => {
+    let totalNetto = 0,
+        totalWeight = 0;
+    wells.forEach((well) => {
         const stats = calcWellStats(well);
         totalNetto += stats.price;
         totalWeight += stats.weight;
@@ -657,7 +754,6 @@ async function syncSourceData() {
 }
 window.syncSourceData = syncSourceData;
 
-
 /* ===== ZLECENIA PRODUKCYJNE (Production Orders) ===== */
 let productionOrders = [];
 let zleceniaElementsList = []; // [{wellIndex, elementIndex, well, product, configItem}]
@@ -667,7 +763,7 @@ let zleceniaActiveFilter = 'all'; // 'all' | 'saved' | 'accepted'
 /** Returns element status: 'accepted', 'saved', or 'open' */
 function getElementStatus(el) {
     const savedOrder = (productionOrders || []).find(
-        po => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+        (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
     );
     if (savedOrder && savedOrder.status === 'accepted') return 'accepted';
     if (savedOrder) return 'saved';
@@ -677,7 +773,7 @@ function getElementStatus(el) {
 /** Set active filter for zlecenia elements list */
 function setZleceniaFilter(filter) {
     zleceniaActiveFilter = filter;
-    document.querySelectorAll('.zlecenia-filter-btn').forEach(btn => {
+    document.querySelectorAll('.zlecenia-filter-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.filter === filter);
     });
     renderZleceniaList();
@@ -690,7 +786,9 @@ async function loadProductionOrders() {
             const json = await resp.json();
             productionOrders = json.data || [];
         }
-    } catch (e) { console.error('loadProductionOrders error:', e); }
+    } catch (e) {
+        console.error('loadProductionOrders error:', e);
+    }
 }
 
 async function saveProductionOrdersData(data) {
@@ -705,8 +803,8 @@ async function saveProductionOrdersData(data) {
             const resData = await res.json();
             if (!res.ok) throw new Error(resData.error || 'Server error');
             results.push(resData);
-        } catch (e) { 
-            console.error('saveProductionOrdersData error:', e); 
+        } catch (e) {
+            console.error('saveProductionOrdersData error:', e);
             throw e; // Rethrow to handle in caller
         }
     }
@@ -728,7 +826,7 @@ function getStudniaDIN(dn) {
 
 function calcStopnieExecution(angle) {
     const a = parseFloat(angle) || 0;
-    return a > 0 ? (360 - a) : 0;
+    return a > 0 ? 360 - a : 0;
 }
 
 /**
@@ -737,10 +835,11 @@ function calcStopnieExecution(angle) {
  */
 function buildEtykietaElementsSnapshot(well) {
     const config = well.config || [];
-    const findProduct = (id) => (typeof studnieProducts !== 'undefined') ? studnieProducts.find(p => p.id === id) : null;
+    const findProduct = (id) =>
+        typeof studnieProducts !== 'undefined' ? studnieProducts.find((p) => p.id === id) : null;
     const countMap = new Map();
 
-    config.forEach(item => {
+    config.forEach((item) => {
         const productId = item.productId || item.id;
         const product = findProduct(productId);
         if (!product) return;
@@ -749,15 +848,22 @@ function buildEtykietaElementsSnapshot(well) {
         if (countMap.has(product.id)) {
             countMap.get(product.id).count++;
         } else {
-            countMap.set(product.id, { count: 1, indeks: product.id || '', nazwa: product.name || '' });
+            countMap.set(product.id, {
+                count: 1,
+                indeks: product.id || '',
+                nazwa: product.name || ''
+            });
         }
     });
 
     // Add uszczelka if applicable
     if (typeof studnieProducts !== 'undefined') {
-        const uszczelka = studnieProducts.find(p =>
-            p.category === 'uszczelka' &&
-            (String(p.dn) === String(well.dn) || p.name?.includes('DN ' + well.dn) || p.name?.includes('DN' + well.dn))
+        const uszczelka = studnieProducts.find(
+            (p) =>
+                p.category === 'uszczelka' &&
+                (String(p.dn) === String(well.dn) ||
+                    p.name?.includes('DN ' + well.dn) ||
+                    p.name?.includes('DN' + well.dn))
         );
         if (uszczelka && config.length > 1) {
             countMap.set('_seal_' + uszczelka.id, {
@@ -769,13 +875,20 @@ function buildEtykietaElementsSnapshot(well) {
     }
 
     const items = [];
-    countMap.forEach(val => items.push({ ilosc: val.count + ' szt.', indeks: val.indeks, nazwa: val.nazwa }));
+    countMap.forEach((val) =>
+        items.push({ ilosc: val.count + ' szt.', indeks: val.indeks, nazwa: val.nazwa })
+    );
     return items;
 }
 
 function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null) {
-    console.log('[openZleceniaProdukcyjne] Initializing modal...', { targetWellId, targetElementIndex, wellsCount: wells.length, productsCount: studnieProducts.length });
-    
+    console.log('[openZleceniaProdukcyjne] Initializing modal...', {
+        targetWellId,
+        targetElementIndex,
+        wellsCount: wells.length,
+        productsCount: studnieProducts.length
+    });
+
     if (wells.length === 0) {
         showToast('Najpierw dodaj studnie lub wczytaj ofertę/zamówienie!', 'error');
         return;
@@ -796,25 +909,33 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
     }
 
     buildZleceniaWellList();
-    
+
     // Auto select target element if provided, otherwise first element
     if (zleceniaElementsList.length > 0) {
         let idxToSelect = 0;
         let foundIdx = -1;
 
         if (targetWellId) {
-            foundIdx = zleceniaElementsList.findIndex(el => String(el.well.id) === String(targetWellId) && String(el.elementIndex) === String(targetElementIndex));
+            foundIdx = zleceniaElementsList.findIndex(
+                (el) =>
+                    String(el.well.id) === String(targetWellId) &&
+                    String(el.elementIndex) === String(targetElementIndex)
+            );
             if (foundIdx === -1) {
-                foundIdx = zleceniaElementsList.findIndex(el => String(el.well.id) === String(targetWellId));
+                foundIdx = zleceniaElementsList.findIndex(
+                    (el) => String(el.well.id) === String(targetWellId)
+                );
             }
         } else if (targetElementIndex !== null) {
-            foundIdx = zleceniaElementsList.findIndex(el => String(el.elementIndex) === String(targetElementIndex));
+            foundIdx = zleceniaElementsList.findIndex(
+                (el) => String(el.elementIndex) === String(targetElementIndex)
+            );
         }
-        
+
         if (foundIdx !== -1) {
             idxToSelect = foundIdx;
         }
-        
+
         selectZleceniaElement(idxToSelect);
     }
 }
@@ -855,22 +976,33 @@ function buildZleceniaWellList() {
         if (!well.config) return;
         for (let eIdx = well.config.length - 1; eIdx >= 0; eIdx--) {
             const item = well.config[eIdx];
-            let p = studnieProducts.find(pr => pr.id === item.productId);
-            
+            let p = studnieProducts.find((pr) => pr.id === item.productId);
+
             // Fallback for missing products on different servers
             if (!p && item.productId) {
-                console.warn(`[buildZleceniaWellList] Produkt o ID ${item.productId} nie został znaleziony w bazie! Próbuję dopasować po nazwie...`);
+                console.warn(
+                    `[buildZleceniaWellList] Produkt o ID ${item.productId} nie został znaleziony w bazie! Próbuję dopasować po nazwie...`
+                );
                 // If it's saved in order mode, maybe we have temporary product stored?
                 // For now, let's create a dummy product object so the UI doesn't break
-                p = { id: item.productId, name: 'Produkt nieznany (ID: ' + item.productId + ')', componentType: 'dennica', height: 0 };
+                p = {
+                    id: item.productId,
+                    name: 'Produkt nieznany (ID: ' + item.productId + ')',
+                    componentType: 'dennica',
+                    height: 0
+                };
             }
 
             if (!p) continue;
 
             const realBaseIdx = findRealBaseIndex(well);
             const isBaseOfTangential = well.dn === 'styczna' && eIdx === realBaseIdx;
-            
-            if (p.componentType === 'dennica' || p.componentType === 'krag_ot' || isBaseOfTangential) {
+
+            if (
+                p.componentType === 'dennica' ||
+                p.componentType === 'krag_ot' ||
+                isBaseOfTangential
+            ) {
                 zleceniaElementsList.push({
                     wellIndex: wIdx,
                     elementIndex: eIdx,
@@ -891,7 +1023,7 @@ function findRealBaseIndex(well) {
     if (!well || !well.config) return -1;
     for (let i = well.config.length - 1; i >= 0; i--) {
         const item = well.config[i];
-        const tmpP = studnieProducts.find(pr => pr.id === item.productId);
+        const tmpP = studnieProducts.find((pr) => pr.id === item.productId);
         if (tmpP && tmpP.componentType !== 'uszczelka') {
             return i;
         }
@@ -912,17 +1044,25 @@ function renderZleceniaList() {
     // Build filtered + sorted items list
     const statusPriority = { accepted: 0, saved: 1, open: 2 };
     const itemsWithStatus = zleceniaElementsList.map((el, i) => ({
-        el, index: i, status: getElementStatus(el)
+        el,
+        index: i,
+        status: getElementStatus(el)
     }));
 
     // Sort by status priority (accepted first, then saved, then open)
     itemsWithStatus.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
 
-    itemsWithStatus.forEach(item => {
+    itemsWithStatus.forEach((item) => {
         const el = item.el;
-        const savedPO = (productionOrders || []).find(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
-        const poNum = savedPO && savedPO.productionOrderNumber ? savedPO.productionOrderNumber.toLowerCase() : '';
-        const matchesSearch = !search ||
+        const savedPO = (productionOrders || []).find(
+            (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+        );
+        const poNum =
+            savedPO && savedPO.productionOrderNumber
+                ? savedPO.productionOrderNumber.toLowerCase()
+                : '';
+        const matchesSearch =
+            !search ||
             el.product.name.toLowerCase().includes(search) ||
             el.well.name.toLowerCase().includes(search) ||
             ('dn' + el.well.dn).toLowerCase().includes(search) ||
@@ -946,7 +1086,7 @@ function renderZleceniaList() {
 
     let html = '';
 
-    Object.keys(groupedElements).forEach(wIdx => {
+    Object.keys(groupedElements).forEach((wIdx) => {
         const group = groupedElements[wIdx];
 
         // Well Header
@@ -956,16 +1096,25 @@ function renderZleceniaList() {
         </div>
         <div style="padding: 0.4rem;">`; // wrapper for elements in this well
 
-        group.elements.forEach(item => {
+        group.elements.forEach((item) => {
             const el = item.el;
             const i = item.index;
-            const isSaved = (productionOrders || []).some(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
-            const savedOrder = (productionOrders || []).find(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
+            const isSaved = (productionOrders || []).some(
+                (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+            );
+            const savedOrder = (productionOrders || []).find(
+                (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+            );
             const isAccepted = savedOrder && savedOrder.status === 'accepted';
             const isActive = i === zleceniaSelectedIdx;
 
-            const savedProdOrder = (productionOrders || []).find(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
-            const prodOrderNum = savedProdOrder && savedProdOrder.productionOrderNumber ? savedProdOrder.productionOrderNumber : '';
+            const savedProdOrder = (productionOrders || []).find(
+                (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+            );
+            const prodOrderNum =
+                savedProdOrder && savedProdOrder.productionOrderNumber
+                    ? savedProdOrder.productionOrderNumber
+                    : '';
 
             html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" onclick="selectZleceniaElement(${i})" style="margin-bottom:0.3rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -978,7 +1127,7 @@ function renderZleceniaList() {
                 <div style="display:flex; gap:0.6rem; margin-top:0.15rem; font-size:0.62rem; color:var(--text-muted);">
                     ${el.product.height ? '<span>📐 Wyskokość: ' + el.product.height + 'mm</span>' : ''}
                 </div>
-                ${isAccepted ? '<div style="font-size:0.55rem; color:#34d399; margin-top:0.2rem; font-weight:700;">🔒 Zaakceptowane — studnia zablokowana</div>' : (isSaved ? '<div style="font-size:0.55rem; color:#fbbf24; margin-top:0.2rem; font-weight:700;">⏳ Wersja robocza</div>' : '')}
+                ${isAccepted ? '<div style="font-size:0.55rem; color:#34d399; margin-top:0.2rem; font-weight:700;">🔒 Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:#fbbf24; margin-top:0.2rem; font-weight:700;">⏳ Wersja robocza</div>' : ''}
             </div>`;
         });
 
@@ -990,7 +1139,8 @@ function renderZleceniaList() {
         if (wells.length === 0) {
             msg = 'Najpierw dodaj studnię lub wczytaj zamówienie.';
         } else if (zleceniaElementsList.length === 0) {
-            msg = 'Brak elementów produkcyjnych (wymagana dennica lub krąg z otworem). Sprawdź czy produkty są w cenniku.';
+            msg =
+                'Brak elementów produkcyjnych (wymagana dennica lub krąg z otworem). Sprawdź czy produkty są w cenniku.';
         } else {
             msg = 'Brak elementów spełniających kryteria filtra.';
         }
@@ -1032,7 +1182,8 @@ function renderZleceniaWellConfig() {
     const well = getCurrentWell();
 
     if (!well || !well.config || well.config.length === 0) {
-        tbody.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.7rem;">Brak elementów</div>';
+        tbody.innerHTML =
+            '<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.7rem;">Brak elementów</div>';
         return;
     }
 
@@ -1053,24 +1204,25 @@ function renderZleceniaWellConfig() {
 
     let html = '';
     well.config.forEach((item, index) => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const badge = typeBadge[p.componentType] || { bg: '#333', label: '?' };
         const isLocked = isWellLocked();
 
         // Highlight if this is the element currently selected in Zlecenia list
-        const isCurrentlyEdited = zleceniaSelectedIdx !== -1 && 
-                                  zleceniaElementsList[zleceniaSelectedIdx] && 
-                                  zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
+        const isCurrentlyEdited =
+            zleceniaSelectedIdx !== -1 &&
+            zleceniaElementsList[zleceniaSelectedIdx] &&
+            zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
 
         html += `<div data-zl-idx="${index}" class="config-tile" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)" 
                       style="background:rgba(30,41,59,0.7); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}; border-left:4px solid ${badge.bg}; border-radius:6px; padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(99,102,241,0.2); border-color:#818cf8;' : ''}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
                 <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.1rem; border-radius:3px;">
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); font-size:0.5rem; cursor:pointer; display:${isLocked || index===0 ? 'none' : 'block'};">▲</button>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); font-size:0.5rem; cursor:pointer; display:${isLocked || index === 0 ? 'none' : 'block'};">▲</button>
                   <span style="font-size:0.55rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); font-size:0.5rem; cursor:pointer; display:${isLocked || index===well.config.length-1 ? 'none' : 'block'};">▼</button>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); font-size:0.5rem; cursor:pointer; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};">▼</button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
                   <div style="font-weight:700; color:var(--text-primary); font-size:0.68rem; line-height:1.1;">${p.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
@@ -1085,14 +1237,15 @@ function renderZleceniaWellConfig() {
     tbody.innerHTML = html;
 }
 
-window.moveZleceniaComponent = function(index, dir) {
+window.moveZleceniaComponent = function (index, dir) {
     if (isWellLocked()) return;
     const well = getCurrentWell();
     const newIdx = index + dir;
     if (newIdx < 0 || newIdx >= well.config.length) return;
 
     // Snapshot currently edited element to restore focus after reorder
-    const currentElObj = zleceniaSelectedIdx !== -1 ? zleceniaElementsList[zleceniaSelectedIdx].configItem : null;
+    const currentElObj =
+        zleceniaSelectedIdx !== -1 ? zleceniaElementsList[zleceniaSelectedIdx].configItem : null;
 
     const temp = well.config[index];
     well.config[index] = well.config[newIdx];
@@ -1104,15 +1257,15 @@ window.moveZleceniaComponent = function(index, dir) {
     // After reorder, if we were editing an element, we must find where it moved
     rebuildZleceniaListAndFocus(currentElObj);
     refreshZleceniaModal();
-}
+};
 
 function rebuildZleceniaListAndFocus(targetObj) {
     // Regenerate the big list because indices changed
-    initializeZleceniaModal(); 
+    initializeZleceniaModal();
 
     if (targetObj) {
         // Find which index in the NEW zleceniaElementsList points to the same object
-        const newIdx = zleceniaElementsList.findIndex(el => el.configItem === targetObj);
+        const newIdx = zleceniaElementsList.findIndex((el) => el.configItem === targetObj);
         if (newIdx !== -1) {
             zleceniaSelectedIdx = newIdx;
         }
@@ -1132,19 +1285,22 @@ function refreshZleceniaModal() {
 /* Modal Drag & Drop */
 let draggedZlIdx = null;
 
-window.handleZlCfgDragStart = function(e) {
-    if (isWellLocked()) { e.preventDefault(); return; }
+window.handleZlCfgDragStart = function (e) {
+    if (isWellLocked()) {
+        e.preventDefault();
+        return;
+    }
     draggedZlIdx = parseInt(e.currentTarget.getAttribute('data-zl-idx'));
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.4';
 };
 
-window.handleZlCfgDragOver = function(e) {
+window.handleZlCfgDragOver = function (e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
 };
 
-window.handleZlCfgDrop = function(e) {
+window.handleZlCfgDrop = function (e) {
     e.preventDefault();
     const tile = e.target.closest('[data-zl-idx]');
     if (tile && draggedZlIdx !== null) {
@@ -1152,11 +1308,14 @@ window.handleZlCfgDrop = function(e) {
         if (draggedZlIdx === dropIdx) return;
 
         const well = getCurrentWell();
-        const currentElObj = zleceniaSelectedIdx !== -1 ? zleceniaElementsList[zleceniaSelectedIdx].configItem : null;
+        const currentElObj =
+            zleceniaSelectedIdx !== -1
+                ? zleceniaElementsList[zleceniaSelectedIdx].configItem
+                : null;
 
         const item = well.config.splice(draggedZlIdx, 1)[0];
         well.config.splice(dropIdx, 0, item);
-        
+
         well.configSource = 'MANUAL';
         well.autoLocked = true;
 
@@ -1165,7 +1324,7 @@ window.handleZlCfgDrop = function(e) {
     }
 };
 
-window.handleZlCfgDragEnd = function(e) {
+window.handleZlCfgDragEnd = function (e) {
     e.currentTarget.style.opacity = '1';
     draggedZlIdx = null;
 };
@@ -1191,29 +1350,35 @@ function populateZleceniaForm(el) {
     if (!container) return;
 
     const parsed = parseWysokoscGlebokosc(product.name);
-    
+
     // Custom calculations for tangential wells
-    let displayDN = (well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn);
+    let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';
-    let displayWysokosc = parsed.wysokosc || (product.height || 0);
+    let displayWysokosc = parsed.wysokosc || product.height || 0;
     let dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
     let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
 
     if (well.dn === 'styczna') {
         const dnMatch = (product.name || '').match(/DN\s*(\d+)/i);
         if (dnMatch) displayDN = `Styczna DN${dnMatch[1]}`;
-        
+
         displayGlebokosc = product.height || '—';
         displayWysokosc = parsed.wysokosc || displayWysokosc;
-        displayDnoKineta = (parsed.wysokosc > 0 && parsed.glebokosc > 0) ? (parsed.wysokosc - parsed.glebokosc) : '—';
+        displayDnoKineta =
+            parsed.wysokosc > 0 && parsed.glebokosc > 0 ? parsed.wysokosc - parsed.glebokosc : '—';
     }
 
     const din = getStudniaDIN(well.dn);
     const todayStr = new Date().toISOString().split('T')[0];
-    const orderNumber = orderEditMode ? orderEditMode.order.number : (document.getElementById('offer-number')?.value || '');
+    const orderNumber = orderEditMode
+        ? orderEditMode.order.number
+        : document.getElementById('offer-number')?.value || '';
 
     // Get user name
-    const userName = currentUser ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() || currentUser.username : '';
+    const userName = currentUser
+        ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() ||
+          currentUser.username
+        : '';
     // Get firma from offer client
     const clientName = document.getElementById('client-name')?.value || '';
     const investName = document.getElementById('invest-name')?.value || '';
@@ -1221,7 +1386,9 @@ function populateZleceniaForm(el) {
     const investContractor = document.getElementById('invest-contractor')?.value || '';
 
     // Check for existing saved production order
-    const existing = productionOrders.find(po => po.wellId === well.id && po.elementIndex === elementIndex);
+    const existing = productionOrders.find(
+        (po) => po.wellId === well.id && po.elementIndex === elementIndex
+    );
     const isAccepted = existing && existing.status === 'accepted';
 
     // Update buttons in header
@@ -1237,11 +1404,11 @@ function populateZleceniaForm(el) {
 
     // Compute which element gets which transition to filter for this `elementIndex`
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const findProductFn = (id) => studnieProducts.find(pr => pr.id === id);
+    const findProductFn = (id) => studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProductFn, true);
 
     // Filter transitions assigned to this element
-    const assignedPrzejscia = (well.przejscia || []).filter(item => {
+    const assignedPrzejscia = (well.przejscia || []).filter((item) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mmFromBottom = (pel - rzDna) * 1000;
@@ -1266,7 +1433,8 @@ function populateZleceniaForm(el) {
 
     // Values for tiles — kręgi wiercone domyślnie bez kinety/spocznika
     const isKragOt = product && product.componentType === 'krag_ot';
-    const redKinetyVal = existing?.redukcjaKinety ?? (isKragOt ? 'nie' : (well.redukcjaKinety ?? ''));
+    const redKinetyVal =
+        existing?.redukcjaKinety ?? (isKragOt ? 'nie' : (well.redukcjaKinety ?? ''));
     const spocznikHVal = existing?.spocznikH ?? (isKragOt ? 'brak' : (well.spocznikH ?? ''));
     const usytuowanieVal = existing?.usytuowanie ?? well.usytuowanie ?? '';
     const kinetaVal = existing?.kineta ?? (isKragOt ? 'brak' : (well.kineta ?? ''));
@@ -1275,15 +1443,21 @@ function populateZleceniaForm(el) {
     // Quick tiles for kat stopni
     const katOptions = ['90', '135', '180', '270'];
 
-
     const spocznikMatOptions = [
-        ['brak', 'Brak'], ['beton', 'Beton'], ['beton_gfk', 'Beton z GFK'], ['klinkier', 'Klinkier'],
-        ['preco', 'Preco'], ['precotop', 'Preco Top'], ['unolith', 'UnoLith'],
-        ['predl', 'Predl'], ['kamionka', 'Kamionka']
+        ['brak', 'Brak'],
+        ['beton', 'Beton'],
+        ['beton_gfk', 'Beton z GFK'],
+        ['klinkier', 'Klinkier'],
+        ['preco', 'Preco'],
+        ['precotop', 'Preco Top'],
+        ['unolith', 'UnoLith'],
+        ['predl', 'Predl'],
+        ['kamionka', 'Kamionka']
     ];
 
     const rodzajStudniOptions = [
-        ['beton', 'Beton'], ['zelbet', 'Żelbet']
+        ['beton', 'Beton'],
+        ['zelbet', 'Żelbet']
     ];
 
     const dinVal = existing?.din ?? din;
@@ -1291,31 +1465,46 @@ function populateZleceniaForm(el) {
 
     let domyslnyRodzajStudni = '';
     if (product && product.componentType === 'dennica') {
-        domyslnyRodzajStudni = (well.dennicaMaterial === 'zelbetowa') ? 'zelbet' : 'beton';
+        domyslnyRodzajStudni = well.dennicaMaterial === 'zelbetowa' ? 'zelbet' : 'beton';
     } else {
-        domyslnyRodzajStudni = (well.nadbudowa === 'zelbetowa') ? 'zelbet' : 'beton';
+        domyslnyRodzajStudni = well.nadbudowa === 'zelbetowa' ? 'zelbet' : 'beton';
     }
     const rodzajStudniVal = existing?.rodzajStudni || domyslnyRodzajStudni;
 
     // Map well params to display labels
     const kinetaOptions = [
-        ['brak', 'Brak'], ['beton', 'Beton'], ['beton_gfk', 'Beton z GFK'],
-        ['klinkier', 'Klinkier'], ['preco', 'Preco'], ['precotop', 'PrecoTop'], ['unolith', 'UnoLith']
+        ['brak', 'Brak'],
+        ['beton', 'Beton'],
+        ['beton_gfk', 'Beton z GFK'],
+        ['klinkier', 'Klinkier'],
+        ['preco', 'Preco'],
+        ['precotop', 'PrecoTop'],
+        ['unolith', 'UnoLith']
     ];
     const spocznikOptions = [
-        ['1/2', '1/2'], ['2/3', '2/3'], ['3/4', '3/4'], ['1/1', '1/1'], ['brak', 'Brak']
+        ['1/2', '1/2'],
+        ['2/3', '2/3'],
+        ['3/4', '3/4'],
+        ['1/1', '1/1'],
+        ['brak', 'Brak']
     ];
     const usytOptions = [
-        ['linia_dolna', 'Linia dolna'], ['linia_gorna', 'Linia górna'],
-        ['w_osi', 'W osi'], ['patrz_uwagi', 'Patrz uwagi']
+        ['linia_dolna', 'Linia dolna'],
+        ['linia_gorna', 'Linia górna'],
+        ['w_osi', 'W osi'],
+        ['patrz_uwagi', 'Patrz uwagi']
     ];
     const redKinetyOptions = [
-        ['tak', 'Tak'], ['nie', 'Nie']
+        ['tak', 'Tak'],
+        ['nie', 'Nie']
     ];
     const klasaBetonuOptions = [
-        ['C40/50', 'C40/50'], ['C40/50(HSR!!!!)', 'C40/50 HSR'],
-        ['C45/55', 'C45/55'], ['C45/55(HSR!!!!)', 'C45/55 HSR'],
-        ['C70/85', 'C70/85'], ['C70/80(HSR!!!!)', 'C70/80 HSR']
+        ['C40/50', 'C40/50'],
+        ['C40/50(HSR!!!!)', 'C40/50 HSR'],
+        ['C45/55', 'C45/55'],
+        ['C45/55(HSR!!!!)', 'C45/55 HSR'],
+        ['C70/85', 'C70/85'],
+        ['C70/80(HSR!!!!)', 'C70/80 HSR']
     ];
 
     // GENEROWANIE DOMYŚLNYCH UWAG NA PODSTAWIE PARAMETRÓW STUDNI (tylko dla nowych zleceń)
@@ -1324,13 +1513,16 @@ function populateZleceniaForm(el) {
     // 1. Klasa betonu (usunięto z automatycznych uwag na życzenie)
 
     // 2. Agresja chemiczna
-    if (well.agresjaChemiczna === 'XA2' || well.agresjaChemiczna === 'XA3') autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
+    if (well.agresjaChemiczna === 'XA2' || well.agresjaChemiczna === 'XA3')
+        autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
 
     // 3. Agresja mrozowa
-    if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3') autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
+    if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
+        autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
 
     // 4. Wkładka PEHD
-    if (well.wkladka === '3mm' || well.wkladka === '4mm') autoUwagi.push('Wkładka PEHD ' + well.wkladka);
+    if (well.wkladka === '3mm' || well.wkladka === '4mm')
+        autoUwagi.push('Wkładka PEHD ' + well.wkladka);
 
     // 5. Malowanie wewnętrzne
     if (well.malowanieW && well.malowanieW !== 'brak') {
@@ -1339,13 +1531,17 @@ function populateZleceniaForm(el) {
         else if (well.malowanieW === 'kineta_dennica') malWDesc = 'Kineta+denn.';
         else if (well.malowanieW === 'cale') malWDesc = 'Całość';
         if (malWDesc) {
-            autoUwagi.push('Malowanie wew. ' + malWDesc + (well.powlokaNameW ? ' ' + well.powlokaNameW : ''));
+            autoUwagi.push(
+                'Malowanie wew. ' + malWDesc + (well.powlokaNameW ? ' ' + well.powlokaNameW : '')
+            );
         }
     }
 
     // 6. Malowanie zewnętrzne
     if (well.malowanieZ === 'zewnatrz') {
-        autoUwagi.push('Malowanie zew. Zewnątrz' + (well.powlokaNameZ ? ' ' + well.powlokaNameZ : ''));
+        autoUwagi.push(
+            'Malowanie zew. Zewnątrz' + (well.powlokaNameZ ? ' ' + well.powlokaNameZ : '')
+        );
     }
 
     // 7. Studnia styczna
@@ -1466,9 +1662,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm" style="margin-top:0.3rem;">
                     <label class="form-label-sm" class="ui-text-sec">Rodzaj studni</label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;" class="zl-param-group">
-                        ${rodzajStudniOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
-    ).join('')}
+                        ${rodzajStudniOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-rodzaj-studni" value="${rodzajStudniVal}">
                 </div>
@@ -1518,9 +1717,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Redukcja kinety</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${redKinetyOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-red-kinety', '${v}')">${l}</button>`
-    ).join('')}
+                        ${redKinetyOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-red-kinety', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-red-kinety" value="${redKinetyVal}">
                 </div>
@@ -1535,9 +1737,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Rodzaj stopni</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${stopnieOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === stopnieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-rodzaj-stopni', '${v}')">${l}</button>`
-    ).join('')}
+                        ${stopnieOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === stopnieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-rodzaj-stopni', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-rodzaj-stopni" value="${stopnieVal}">
                 </div>
@@ -1555,9 +1760,12 @@ function populateZleceniaForm(el) {
                         <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" onfocus="this.value=''" oninput="onZleceniaKatChange()" style="width:70px;">
                         <span style="font-size:1.2rem; color:var(--text-muted); margin: 0 4px;">→</span>
                         <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:#818cf8; font-weight:700; margin-right:5px; pointer-events:none;">
-                        ${katOptions.map(v =>
-        `<button type="button" class="param-tile ui-badge" onclick="document.getElementById('zl-kat-stopni').value='${v}'; onZleceniaKatChange();">${v}°</button>`
-    ).join('')}
+                        ${katOptions
+                            .map(
+                                (v) =>
+                                    `<button type="button" class="param-tile ui-badge" onclick="document.getElementById('zl-kat-stopni').value='${v}'; onZleceniaKatChange();">${v}°</button>`
+                            )
+                            .join('')}
                     </div>
                 </div>
             </div>
@@ -1567,9 +1775,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Wysokość spocznika</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${spocznikOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === spocznikHVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik-h', '${v}')">${l}</button>`
-    ).join('')}
+                        ${spocznikOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === spocznikHVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik-h', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-spocznik-h" value="${spocznikHVal}">
                 </div>
@@ -1577,9 +1788,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Usytuowanie</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${usytOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === usytuowanieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-usytuowanie', '${v}')">${l}</button>`
-    ).join('')}
+                        ${usytOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === usytuowanieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-usytuowanie', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-usytuowanie" value="${usytuowanieVal}">
                 </div>
@@ -1587,9 +1801,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Kineta</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${kinetaOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === kinetaVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-kineta', '${v}')">${l}</button>`
-    ).join('')}
+                        ${kinetaOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === kinetaVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-kineta', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-kineta" value="${kinetaVal}">
                 </div>
@@ -1597,9 +1814,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Spocznik</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${spocznikMatOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === spocznikMatVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik', '${v}')">${l}</button>`
-    ).join('')}
+                        ${spocznikMatOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === spocznikMatVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-spocznik" value="${spocznikMatVal}">
                 </div>
@@ -1607,9 +1827,12 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Klasa betonu</label>
                     <div class="ui-row-gap zl-param-group">
-                        ${klasaBetonuOptions.map(([v, l]) =>
-        `<button type="button" class="param-tile ui-badge ${v === klasaBetonuVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-klasa-betonu', '${v}')">${l}</button>`
-    ).join('')}
+                        ${klasaBetonuOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === klasaBetonuVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-klasa-betonu', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
                     <input type="hidden" id="zl-klasa-betonu" value="${klasaBetonuVal}">
                 </div>
@@ -1621,7 +1844,7 @@ function populateZleceniaForm(el) {
     // Disable all inputs/buttons if accepted
     if (isAccepted) {
         setTimeout(() => {
-            container.querySelectorAll('input, textarea, button').forEach(el => {
+            container.querySelectorAll('input, textarea, button').forEach((el) => {
                 el.disabled = true;
                 if (el.tagName === 'BUTTON' && el.classList.contains('param-tile')) {
                     el.style.opacity = '0.7';
@@ -1648,7 +1871,7 @@ function populateZleceniaForm(el) {
 async function selectZleceniaTile(btn, targetId, val) {
     const group = btn.closest('.zl-param-group');
     if (group) {
-        group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
+        group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
     }
     btn.classList.add('active');
 
@@ -1659,15 +1882,29 @@ async function selectZleceniaTile(btn, targetId, val) {
 
     if (targetId === 'zl-rodzaj-stopni') {
         onZleceniaStopnieChange();
-    } else if (['zl-rodzaj-studni', 'zl-red-kinety', 'zl-spocznik-h', 'zl-usytuowanie', 'zl-kineta', 'zl-spocznik', 'zl-klasa-betonu'].includes(targetId)) {
+    } else if (
+        [
+            'zl-rodzaj-studni',
+            'zl-red-kinety',
+            'zl-spocznik-h',
+            'zl-usytuowanie',
+            'zl-kineta',
+            'zl-spocznik',
+            'zl-klasa-betonu'
+        ].includes(targetId)
+    ) {
         if (typeof zleceniaSelectedIdx === 'number' && zleceniaElementsList) {
             const el = zleceniaElementsList[zleceniaSelectedIdx];
             if (el && el.well && el.product) {
                 // Zachowaj tymczasowe uwagi z okienka przed jego przeładowaniem
-                const tempUwagi = document.getElementById('zl-uwagi') ? document.getElementById('zl-uwagi').value : '';
+                const tempUwagi = document.getElementById('zl-uwagi')
+                    ? document.getElementById('zl-uwagi').value
+                    : '';
 
                 // Pobierz ewentualne zapisane zlecenie, aby również je zaktualizować na żywo
-                const existing = productionOrders.find(po => po.wellId === el.well.id && po.elementIndex === el.elementIndex);
+                const existing = productionOrders.find(
+                    (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+                );
 
                 if (targetId === 'zl-rodzaj-studni') {
                     // Ustaw odpowiednią globalną cechę studni w zależności od edytowanego elementu
@@ -1677,12 +1914,25 @@ async function selectZleceniaTile(btn, targetId, val) {
                         el.well.nadbudowa = val === 'zelbet' ? 'zelbetowa' : 'betonowa';
                     }
                     if (existing) existing.rodzajStudni = val;
-                } else if (targetId === 'zl-red-kinety') { el.well.redukcjaKinety = val; if (existing) existing.redukcjaKinety = val; }
-                else if (targetId === 'zl-spocznik-h') { el.well.spocznikH = val; if (existing) existing.spocznikH = val; }
-                else if (targetId === 'zl-usytuowanie') { el.well.usytuowanie = val; if (existing) existing.usytuowanie = val; }
-                else if (targetId === 'zl-kineta') { el.well.kineta = val; if (existing) existing.kineta = val; }
-                else if (targetId === 'zl-spocznik') { el.well.spocznik = val; if (existing) existing.spocznik = val; }
-                else if (targetId === 'zl-klasa-betonu') { el.well.klasaBetonu = val; if (existing) existing.klasaBetonu = val; }
+                } else if (targetId === 'zl-red-kinety') {
+                    el.well.redukcjaKinety = val;
+                    if (existing) existing.redukcjaKinety = val;
+                } else if (targetId === 'zl-spocznik-h') {
+                    el.well.spocznikH = val;
+                    if (existing) existing.spocznikH = val;
+                } else if (targetId === 'zl-usytuowanie') {
+                    el.well.usytuowanie = val;
+                    if (existing) existing.usytuowanie = val;
+                } else if (targetId === 'zl-kineta') {
+                    el.well.kineta = val;
+                    if (existing) existing.kineta = val;
+                } else if (targetId === 'zl-spocznik') {
+                    el.well.spocznik = val;
+                    if (existing) existing.spocznik = val;
+                } else if (targetId === 'zl-klasa-betonu') {
+                    el.well.klasaBetonu = val;
+                    if (existing) existing.klasaBetonu = val;
+                }
 
                 // Sync the main screen params tiles
                 if (typeof window.updateParamTilesUI === 'function') window.updateParamTilesUI();
@@ -1715,9 +1965,13 @@ async function selectZleceniaTile(btn, targetId, val) {
                 }
 
                 // 4. Spróbujmy znaleźć przeliczony index elementu i go wybrać powtórnie
-                let newTargetIdx = zleceniaElementsList.findIndex(e => e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat);
+                let newTargetIdx = zleceniaElementsList.findIndex(
+                    (e) => e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat
+                );
                 if (newTargetIdx === -1) {
-                    newTargetIdx = zleceniaElementsList.findIndex(e => e.wellIndex === oldWellIdx);
+                    newTargetIdx = zleceniaElementsList.findIndex(
+                        (e) => e.wellIndex === oldWellIdx
+                    );
                 }
 
                 if (newTargetIdx >= 0 && typeof window.selectZleceniaElement === 'function') {
@@ -1759,27 +2013,39 @@ async function saveProductionOrder() {
     const el = zleceniaElementsList[zleceniaSelectedIdx];
     const { well, product, elementIndex, wellIndex } = el;
 
-    const existingIdx = productionOrders.findIndex(po => po.wellId === well.id && po.elementIndex === elementIndex);
+    const existingIdx = productionOrders.findIndex(
+        (po) => po.wellId === well.id && po.elementIndex === elementIndex
+    );
     if (existingIdx >= 0 && productionOrders[existingIdx].status === 'accepted') {
-        showToast('Nie można zapisać zaakceptowanego zlecenia. Najpierw cofnij akceptację.', 'error');
+        showToast(
+            'Nie można zapisać zaakceptowanego zlecenia. Najpierw cofnij akceptację.',
+            'error'
+        );
         return;
     }
 
-    let currentOrderNumber = existingIdx >= 0 ? (productionOrders[existingIdx].productionOrderNumber || '') : '';
-    
+    let currentOrderNumber =
+        existingIdx >= 0 ? productionOrders[existingIdx].productionOrderNumber || '' : '';
+
     // Claim production order number immediately so the draft has it
     if (!currentOrderNumber) {
         try {
             // Use assigned user (owner) for numbering if exists, otherwise current user
-            const targetUserId = (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) 
-                ? editingOfferAssignedUserId 
-                : (currentUser ? currentUser.id : null);
-                
+            const targetUserId =
+                typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId
+                    ? editingOfferAssignedUserId
+                    : currentUser
+                      ? currentUser.id
+                      : null;
+
             if (targetUserId) {
-                const claimResp = await fetch('/api/claim-production-order-number/' + targetUserId, {
-                    method: 'POST',
-                    headers: authHeaders()
-                });
+                const claimResp = await fetch(
+                    '/api/claim-production-order-number/' + targetUserId,
+                    {
+                        method: 'POST',
+                        headers: authHeaders()
+                    }
+                );
                 if (claimResp.ok) {
                     const claimData = await claimResp.json();
                     if (claimData.number) {
@@ -1795,11 +2061,22 @@ async function saveProductionOrder() {
     const order = {
         id: existingIdx >= 0 ? productionOrders[existingIdx].id : 'prodorder_' + Date.now(),
         productionOrderNumber: currentOrderNumber,
-        userId: (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ? editingOfferAssignedUserId : (currentUser ? currentUser.id : null),
+        userId:
+            typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId
+                ? editingOfferAssignedUserId
+                : currentUser
+                  ? currentUser.id
+                  : null,
         wellId: well.id,
         wellName: well.name,
         offerId: typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '',
-        salesOrderNumber: (typeof orderEditMode !== 'undefined' && orderEditMode && typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder.number : '',
+        salesOrderNumber:
+            typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            typeof currentOrder !== 'undefined' &&
+            currentOrder
+                ? currentOrder.number
+                : '',
         elementIndex: elementIndex,
         productName: product.name,
         productId: product.id,
@@ -1826,22 +2103,29 @@ async function saveProductionOrder() {
         przejscia: (() => {
             const allPrzejscia = well.przejscia || [];
             const rzDna = parseFloat(well.rzednaDna) || 0;
-            const findProductFn = (id) => (typeof studnieProducts !== 'undefined') ? studnieProducts.find(pr => pr.id === id) : null;
-            const configMap = (typeof buildConfigMap !== 'undefined') ? buildConfigMap(well, findProductFn, true) : [];
+            const findProductFn = (id) =>
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === id)
+                    : null;
+            const configMap =
+                typeof buildConfigMap !== 'undefined'
+                    ? buildConfigMap(well, findProductFn, true)
+                    : [];
 
             // Filter transitions to only those assigned to this element
-            const assigned = configMap.length > 0
-                ? allPrzejscia.filter(p => {
-                    let pel = parseFloat(p.rzednaWlaczenia);
-                    if (isNaN(pel)) pel = rzDna;
-                    const mmFromBottom = (pel - rzDna) * 1000;
-                    const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
-                    return assignedIndex === elementIndex;
-                })
-                : allPrzejscia;
+            const assigned =
+                configMap.length > 0
+                    ? allPrzejscia.filter((p) => {
+                          let pel = parseFloat(p.rzednaWlaczenia);
+                          if (isNaN(pel)) pel = rzDna;
+                          const mmFromBottom = (pel - rzDna) * 1000;
+                          const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
+                          return assignedIndex === elementIndex;
+                      })
+                    : allPrzejscia;
 
             // Enrich with product category/DN
-            return assigned.map(p => {
+            return assigned.map((p) => {
                 const clone = JSON.parse(JSON.stringify(p));
                 const prod = findProductFn(p.productId);
                 if (prod) {
@@ -1870,9 +2154,10 @@ async function saveProductionOrder() {
         spocznik: document.getElementById('zl-spocznik')?.value || '',
         klasaBetonu: document.getElementById('zl-klasa-betonu')?.value || '',
 
-        createdAt: existingIdx >= 0 ? productionOrders[existingIdx].createdAt : new Date().toISOString(),
+        createdAt:
+            existingIdx >= 0 ? productionOrders[existingIdx].createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        status: existingIdx >= 0 ? (productionOrders[existingIdx].status || 'draft') : 'draft'
+        status: existingIdx >= 0 ? productionOrders[existingIdx].status || 'draft' : 'draft'
     };
 
     if (existingIdx >= 0) {
@@ -1902,24 +2187,30 @@ async function saveProductionOrder() {
 }
 
 async function deleteProductionOrder(id) {
-    const po = productionOrders.find(p => p.id === id);
+    const po = productionOrders.find((p) => p.id === id);
     if (po && po.status === 'accepted') {
         showToast('Nie można usunąć zatwierdzonego zlecenia. Najpierw je cofnij.', 'error');
         return;
     }
-    if (!await appConfirm('Usunąć to zlecenie produkcyjne?', { title: 'Usuwanie zlecenia', type: 'danger' })) return;
+    if (
+        !(await appConfirm('Usunąć to zlecenie produkcyjne?', {
+            title: 'Usuwanie zlecenia',
+            type: 'danger'
+        }))
+    )
+        return;
     try {
         const res = await fetch('/api/orders-studnie/production/' + id, {
             method: 'DELETE',
             headers: authHeaders()
         });
-        
+
         if (!res.ok) {
             const errData = await res.json();
             throw new Error(errData.error || 'Błąd serwera podczas usuwania');
         }
 
-        productionOrders = productionOrders.filter(po => po.id !== id);
+        productionOrders = productionOrders.filter((po) => po.id !== id);
         renderZleceniaList();
         renderZleceniaWellConfig();
         if (zleceniaSelectedIdx >= 0 && zleceniaElementsList[zleceniaSelectedIdx]) {
@@ -1929,8 +2220,8 @@ async function deleteProductionOrder(id) {
         refreshAll(); // odblokuj studnię wizualnie po usunięciu zlecenia
         await syncSourceData();
         showToast('Zlecenie usunięte', 'info');
-    } catch (e) { 
-        console.error('deleteProductionOrder error:', e); 
+    } catch (e) {
+        console.error('deleteProductionOrder error:', e);
         showToast(e.message, 'error');
     }
 }
@@ -1945,19 +2236,40 @@ async function acceptProductionOrder() {
     await saveProductionOrder();
 
     const el = zleceniaElementsList[zleceniaSelectedIdx];
-    const po = productionOrders.find(p => p.wellId === el.well.id && p.elementIndex === el.elementIndex);
-    if (!po) { showToast('Najpierw zapisz zlecenie produkcyjne', 'error'); return; }
-    if (po.status === 'accepted') { showToast('Zlecenie już zaakceptowane', 'info'); return; }
-    if (!await appConfirm('Zaakceptować zlecenie? Studnia zostanie zablokowana od edycji.', { title: 'Akceptacja zlecenia', type: 'warning', okText: 'Zaakceptuj' })) return;
-    
+    const po = productionOrders.find(
+        (p) => p.wellId === el.well.id && p.elementIndex === el.elementIndex
+    );
+    if (!po) {
+        showToast('Najpierw zapisz zlecenie produkcyjne', 'error');
+        return;
+    }
+    if (po.status === 'accepted') {
+        showToast('Zlecenie już zaakceptowane', 'info');
+        return;
+    }
+    if (
+        !(await appConfirm('Zaakceptować zlecenie? Studnia zostanie zablokowana od edycji.', {
+            title: 'Akceptacja zlecenia',
+            type: 'warning',
+            okText: 'Zaakceptuj'
+        }))
+    )
+        return;
+
     // Claim production order number if not claimed yet
     if (!po.productionOrderNumber) {
         try {
-            const targetUserId = (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) 
-                ? editingOfferAssignedUserId 
-                : (currentUser ? currentUser.id : null);
-                
-            if (!targetUserId) { showToast('Brak przypisanego użytkownika', 'error'); return; }
+            const targetUserId =
+                typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId
+                    ? editingOfferAssignedUserId
+                    : currentUser
+                      ? currentUser.id
+                      : null;
+
+            if (!targetUserId) {
+                showToast('Brak przypisanego użytkownika', 'error');
+                return;
+            }
             const claimResp = await fetch('/api/claim-production-order-number/' + targetUserId, {
                 method: 'POST',
                 headers: authHeaders()
@@ -1978,7 +2290,7 @@ async function acceptProductionOrder() {
     po.status = 'accepted';
     po.acceptedAt = new Date().toISOString();
     po.acceptedBy = currentUser ? currentUser.username : '';
-    
+
     try {
         await saveProductionOrdersData(productionOrders);
 
@@ -2008,10 +2320,25 @@ async function revokeProductionOrder() {
     await saveProductionOrder();
 
     const el = zleceniaElementsList[zleceniaSelectedIdx];
-    const po = productionOrders.find(p => p.wellId === el.well.id && p.elementIndex === el.elementIndex);
-    if (!po) { showToast('Brak zlecenia do cofnięcia', 'error'); return; }
-    if (po.status !== 'accepted') { showToast('Zlecenie nie jest zaakceptowane', 'info'); return; }
-    if (!await appConfirm('Cofnąć akceptację? Studnia zostanie odblokowana.', { title: 'Cofanie akceptacji', type: 'warning', okText: 'Cofnij' })) return;
+    const po = productionOrders.find(
+        (p) => p.wellId === el.well.id && p.elementIndex === el.elementIndex
+    );
+    if (!po) {
+        showToast('Brak zlecenia do cofnięcia', 'error');
+        return;
+    }
+    if (po.status !== 'accepted') {
+        showToast('Zlecenie nie jest zaakceptowane', 'info');
+        return;
+    }
+    if (
+        !(await appConfirm('Cofnąć akceptację? Studnia zostanie odblokowana.', {
+            title: 'Cofanie akceptacji',
+            type: 'warning',
+            okText: 'Cofnij'
+        }))
+    )
+        return;
     po.status = 'draft';
     delete po.acceptedAt;
     delete po.acceptedBy;
@@ -2043,10 +2370,10 @@ async function deleteSelectedProductionOrder() {
         return;
     }
 
-
-
     const el = zleceniaElementsList[zleceniaSelectedIdx];
-    const po = (productionOrders || []).find(p => p.wellId === el.well.id && p.elementIndex === el.elementIndex);
+    const po = (productionOrders || []).find(
+        (p) => p.wellId === el.well.id && p.elementIndex === el.elementIndex
+    );
     if (!po) {
         showToast('To zlecenie nie zostało jeszcze zapisane', 'info');
         return;
@@ -2061,10 +2388,22 @@ function refreshGlobalMetrics() {
         if (window.parent && typeof window.parent.loadRecycledNumbers === 'function') {
             window.parent.loadRecycledNumbers();
         }
-        if (window.parent && window.parent.SpaRouter && typeof window.parent.SpaRouter.refreshModule === 'function') {
+        if (
+            window.parent &&
+            window.parent.SpaRouter &&
+            typeof window.parent.SpaRouter.refreshModule === 'function'
+        ) {
             window.parent.SpaRouter.refreshModule('zlecenia');
         }
-    } catch (e) { /* ignore cross-origin or missing parent */ }
+    } catch (e) {
+        /* ignore cross-origin or missing parent */
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => { setTimeout(() => { setupParamTiles(); updateParamTilesUI(); loadProductionOrders(); }, 500); });
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        setupParamTiles();
+        updateParamTilesUI();
+        loadProductionOrders();
+    }, 500);
+});

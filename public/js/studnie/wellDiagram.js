@@ -1,6 +1,6 @@
 /* ===== SVG HIGHLIGHTING ===== */
 window.highlightSvg = function (type, index) {
-    document.querySelectorAll('.svg-' + type + '-' + index).forEach(el => {
+    document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
         el.style.filter = 'drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9)) brightness(1.3)';
     });
 
@@ -14,7 +14,7 @@ window.highlightSvg = function (type, index) {
     }
 };
 window.unhighlightSvg = function (type, index) {
-    document.querySelectorAll('.svg-' + type + '-' + index).forEach(el => {
+    document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
         el.style.filter = '';
     });
 
@@ -64,13 +64,13 @@ function enforceOtRings() {
     // Zbuduj segmenty z config (bottom-up)
     const segments = [];
     let cy = 0;
-    
+
     let mutated = false;
 
     // Config jest od góry (właz) do dołu (dennica) — iteruj od końca
     const configReversed = [...well.config].reverse();
     for (const item of configReversed) {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || !p.height) continue;
         const qty = item.quantity || 1;
         for (let i = 0; i < qty; i++) {
@@ -79,20 +79,20 @@ function enforceOtRings() {
                 start: cy,
                 end: cy + (p.height || 0),
                 configItem: item,
-                product: p,
+                product: p
             });
-            cy += (p.height || 0);
+            cy += p.height || 0;
         }
     }
 
     // Iterujemy po segmentach by sprawdzić czy mają otwór
     for (const seg of segments) {
         if (seg.type !== 'krag' && seg.type !== 'krag_ot') continue;
-        
+
         let hasHole = false;
         const currentProd = seg.product;
         const currentId = seg.configItem.productId;
-        
+
         // Sprawdzamy czy któreś przejście przypada na ten krąg
         if (well.przejscia && well.przejscia.length > 0) {
             for (const pr of well.przejscia) {
@@ -100,7 +100,7 @@ function enforceOtRings() {
                 if (isNaN(pel)) continue;
 
                 const mmFromBottom = (pel - rzDna) * 1000;
-                const pprod = studnieProducts.find(x => x.id === pr.productId);
+                const pprod = studnieProducts.find((x) => x.id === pr.productId);
                 if (!pprod) continue;
 
                 let prDN = 160;
@@ -110,7 +110,7 @@ function enforceOtRings() {
                     prDN = parseFloat(pprod.dn) || 160;
                 }
 
-                const holeCenter = mmFromBottom + (prDN / 2);
+                const holeCenter = mmFromBottom + prDN / 2;
 
                 if (holeCenter >= seg.start && holeCenter < seg.end) {
                     hasHole = true;
@@ -118,29 +118,35 @@ function enforceOtRings() {
                 }
             }
         }
-        
-        const isCurrentlyOt = currentProd.componentType === 'krag_ot' || currentId.endsWith('_OT') || currentId.toLowerCase().includes('-ot');
-        
+
+        const isCurrentlyOt =
+            currentProd.componentType === 'krag_ot' ||
+            currentId.endsWith('_OT') ||
+            currentId.toLowerCase().includes('-ot');
+
         if (hasHole) {
             // TEN KRĄG MA PRZEJŚCIE → ZAMIEŃ NA WIERCONY
             if (!isCurrentlyOt) {
                 // Szukaj wariantu OT w katalogu
-                const otProd = studnieProducts.find(p =>
-                    p.componentType === 'krag_ot' &&
-                    p.dn === currentProd.dn &&
-                    p.height === currentProd.height
+                const otProd = studnieProducts.find(
+                    (p) =>
+                        p.componentType === 'krag_ot' &&
+                        p.dn === currentProd.dn &&
+                        p.height === currentProd.height
                 );
 
                 if (otProd) {
                     if (seg.configItem.productId !== otProd.id) {
                         seg.configItem.productId = otProd.id;
                         mutated = true;
-                        console.log(`[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`);
+                        console.log(
+                            `[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`
+                        );
                     }
                 } else {
                     // Dynamiczny OT
                     const dynamicOtId = currentId + '_OT';
-                    if (!studnieProducts.find(p => p.id === dynamicOtId)) {
+                    if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
                         const dynamicProd = JSON.parse(JSON.stringify(currentProd));
                         dynamicProd.id = dynamicOtId;
                         dynamicProd.componentType = 'krag_ot';
@@ -152,7 +158,9 @@ function enforceOtRings() {
                     if (seg.configItem.productId !== dynamicOtId) {
                         seg.configItem.productId = dynamicOtId;
                         mutated = true;
-                        console.log(`[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`);
+                        console.log(
+                            `[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`
+                        );
                     }
                 }
             }
@@ -160,24 +168,33 @@ function enforceOtRings() {
             // NIE MA OTWORU → DEGRADACJA JEŚLI BYŁ OT
             if (isCurrentlyOt) {
                 // Najbezpieczniejsza degradacja: znajdź zwykły krąg o tym samym wymiarze w konfiguracji
-                const stdProd = studnieProducts.find(p => p.componentType === 'krag' && p.dn === currentProd.dn && p.height === currentProd.height);
-                
+                const stdProd = studnieProducts.find(
+                    (p) =>
+                        p.componentType === 'krag' &&
+                        p.dn === currentProd.dn &&
+                        p.height === currentProd.height
+                );
+
                 if (stdProd) {
                     if (seg.configItem.productId !== stdProd.id) {
                         seg.configItem.productId = stdProd.id;
                         mutated = true;
-                        console.log(`[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`);
+                        console.log(
+                            `[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`
+                        );
                     }
                 } else {
                     // Fallback jeśli krąg nie jest standardowy, spróbujmy odciąć _OT
                     const baseStripped = currentId.replace(/[_-]OT$/i, '');
-                    const baseProduct = studnieProducts.find(p => p.id === baseStripped);
+                    const baseProduct = studnieProducts.find((p) => p.id === baseStripped);
                     if (baseProduct) {
-                         if (seg.configItem.productId !== baseProduct.id) {
-                             seg.configItem.productId = baseProduct.id;
-                             mutated = true;
-                             console.log(`[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`);
-                         }
+                        if (seg.configItem.productId !== baseProduct.id) {
+                            seg.configItem.productId = baseProduct.id;
+                            mutated = true;
+                            console.log(
+                                `[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`
+                            );
+                        }
                     }
                     // BARDZO WAŻNE: Jeśli nie znaleziono bazy, NIE nadpisujemy na nieistniejące ID,
                     // by zapobiec ucięciu z renderowania ('nie usuwa ich')
@@ -208,30 +225,30 @@ function renderWellDiagram(targetSvg, targetWell) {
     }
 
     const typeOrder = {
-        wlaz: 1,         // Właz na samej górze
-        avr: 2,          // Pierścienie poniżej włazu
-        plyta_din: 3,    // Zwieńczenie
+        wlaz: 1, // Właz na samej górze
+        avr: 2, // Pierścienie poniżej włazu
+        plyta_din: 3, // Zwieńczenie
         plyta_najazdowa: 3,
         plyta_zamykajaca: 3, // Płyta odciążająca wyżej niż kręgi
-        konus: 3,        // Konus zamiennie z płytami na tej samej wysokości domyślnej
+        konus: 3, // Konus zamiennie z płytami na tej samej wysokości domyślnej
         pierscien_odciazajacy: 4, // Pierścień poniżej płyty
-        krag: 5,         // Kręgi pod spodem
+        krag: 5, // Kręgi pod spodem
         krag_ot: 5,
-        osadnik: 5.5,    // Osadnik pod krągami
-        dennica: 6,      // Dno na dole
+        osadnik: 5.5, // Osadnik pod krągami
+        dennica: 6, // Dno na dole
         plyta_redukcyjna: 7
     };
 
     let totalDennice = 0;
-    well.config.forEach(item => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+    well.config.forEach((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (p && p.componentType === 'dennica') totalDennice += item.quantity;
     });
 
     const components = [];
     let currentDennica = 0;
     well.config.forEach((item, index) => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         for (let i = 0; i < item.quantity; i++) {
             let effH = p.height || 0;
@@ -242,17 +259,25 @@ function renderWellDiagram(targetSvg, targetWell) {
                     effH = Math.max(0, effH - 100);
                 }
             }
-            components.push({ ...p, height: effH, _originalHeight: p.height, _cfgIdx: index, _isFirst: i === 0, _isLast: i === item.quantity - 1, isPlaceholder: !!item.isPlaceholder });
+            components.push({
+                ...p,
+                height: effH,
+                _originalHeight: p.height,
+                _cfgIdx: index,
+                _isFirst: i === 0,
+                _isLast: i === item.quantity - 1,
+                isPlaceholder: !!item.isPlaceholder
+            });
         }
     });
 
-    const visible = components.filter(c =>
-        c.componentType !== 'uszczelka' && (
-            (c.height || 0) > 0 ||
-            c.componentType === 'wlaz' ||
-            c.componentType === 'plyta_zamykajaca' ||
-            c.componentType === 'plyta_najazdowa'
-        )
+    const visible = components.filter(
+        (c) =>
+            c.componentType !== 'uszczelka' &&
+            ((c.height || 0) > 0 ||
+                c.componentType === 'wlaz' ||
+                c.componentType === 'plyta_zamykajaca' ||
+                c.componentType === 'plyta_najazdowa')
     );
 
     // Sortowanie wyłączone - wizualizacja pokazuje elementy W DOKŁADNEJ KOLEJNOŚCI jak w tablicy config,
@@ -272,14 +297,17 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     // Canvas
     const svgW = 340;
-    const mL = 75, mR = 25, mT = 15, mB = 22; // mL=75 dla szerszego pasa wymiarowego po lewej
+    const mL = 75,
+        mR = 25,
+        mT = 15,
+        mB = 22; // mL=75 dla szerszego pasa wymiarowego po lewej
     const drawW = svgW - mL - mR;
 
     // ── Real physical outer diameters for each element type ──
     // Konus: bottom = well DN, top = 625mm standard opening
-    // Płyta DIN: outer = well DN, 625mm opening hole  
+    // Płyta DIN: outer = well DN, 625mm opening hole
     // Płyta redukcyjna: outer = well DN (e.g. 1200), transitions to 1000 below
-    // Płyta zamykająca / pierścień odciążający: outer rim = well DN + ~200mm 
+    // Płyta zamykająca / pierścień odciążający: outer rim = well DN + ~200mm
     // Płyta najazdowa: square plate = well DN + ~200mm
     // Właz: standard 600mm manhole cover
     // AVR: standard 625mm adjustment ring
@@ -288,25 +316,25 @@ function renderWellDiagram(targetSvg, targetWell) {
     // Get the visual outer width (in mm) for diagram rendering
     function getElementOuterDn(comp) {
         const ct = comp.componentType;
-        let prodDn = (comp.dn && typeof comp.dn === 'number') ? comp.dn : bodyDN;
+        let prodDn = comp.dn && typeof comp.dn === 'number' ? comp.dn : bodyDN;
         if (typeof prodDn !== 'number') prodDn = 1000;
 
         switch (ct) {
             case 'wlaz':
-                return 600;  // standard manhole cover diameter
+                return 600; // standard manhole cover diameter
             case 'avr':
-                return 625;  // standard adjustment ring
+                return 625; // standard adjustment ring
             case 'konus':
-                return prodDn;  // bottom width = well DN (top is 625, handled in rendering)
+                return prodDn; // bottom width = well DN (top is 625, handled in rendering)
             case 'plyta_din':
-                return prodDn;  // coincides with well DN
+                return prodDn; // coincides with well DN
             case 'plyta_redukcyjna':
-                return prodDn;  // outer = well DN
+                return prodDn; // outer = well DN
             case 'plyta_zamykajaca':
             case 'pierscien_odciazajacy':
-                return prodDn + 200;  // outer rim extends beyond well shaft
+                return prodDn + 200; // outer rim extends beyond well shaft
             case 'plyta_najazdowa':
-                return prodDn + 200;  // square plate extends beyond well shaft
+                return prodDn + 200; // square plate extends beyond well shaft
             case 'dennica':
             case 'krag':
             case 'krag_ot':
@@ -318,9 +346,13 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     // Przewidzenie najszerszego elementu — bazujemy na DN studni (kręgi nadbudowy)
     let maxElemWidth = typeof bodyDN === 'number' ? bodyDN : 1000;
-    visible.forEach(c => {
+    visible.forEach((c) => {
         let d = typeof c.dn === 'number' ? c.dn : 0;
-        if (c.componentType === 'plyta_zamykajaca' || c.componentType === 'pierscien_odciazajacy' || c.componentType === 'plyta_najazdowa') {
+        if (
+            c.componentType === 'plyta_zamykajaca' ||
+            c.componentType === 'pierscien_odciazajacy' ||
+            c.componentType === 'plyta_najazdowa'
+        ) {
             d += 200;
         }
         if (d > maxElemWidth) maxElemWidth = d;
@@ -351,7 +383,7 @@ function renderWellDiagram(targetSvg, targetWell) {
         osadnik: { fill: '#a16207', stroke: '#fbbf24', label: 'Osadnik' },
         dennica: { fill: '#047857', stroke: '#34d399', label: 'Dennica' },
         styczna: { fill: '#059669', stroke: '#34d399', label: 'Styczna' },
-        plyta_redukcyjna: { fill: '#6d28d9', stroke: '#a78bfa', label: 'Płyta red.' },
+        plyta_redukcyjna: { fill: '#6d28d9', stroke: '#a78bfa', label: 'Płyta red.' }
     };
 
     let svg_out = '';
@@ -359,7 +391,7 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     let dimLinesY = [];
 
-    visible.forEach(comp => {
+    visible.forEach((comp) => {
         let h = (comp.height || 0) * pxMm;
 
         // Syntetyczna grubość rysowania dla elementów bez fizycznej wysokości "height"
@@ -379,10 +411,13 @@ function renderWellDiagram(targetSvg, targetWell) {
 
         const isPlaceholder = comp.isPlaceholder;
         const pointerEvents = isPlaceholder ? 'pointer-events="none"' : '';
-        const plStyle = isPlaceholder ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9));' : '';
+        const plStyle = isPlaceholder
+            ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9));'
+            : '';
 
         if (comp._cfgIdx !== undefined) {
-            svg_out += `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
+            svg_out +=
+                `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
                 `data-cfg-idx="${comp._cfgIdx}" draggable="true" ` +
                 `ondragstart="window.handleCfgDragStart(event)" ` +
                 `ondragend="window.handleCfgDragEnd(event)" ` +
@@ -406,7 +441,10 @@ function renderWellDiagram(targetSvg, targetWell) {
         } else if (localCompType === 'plyta_redukcyjna') {
             // Płyta redukcyjna: prostokąt o szerokości DN studni
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        } else if (localCompType === 'plyta_zamykajaca' || localCompType === 'pierscien_odciazajacy') {
+        } else if (
+            localCompType === 'plyta_zamykajaca' ||
+            localCompType === 'pierscien_odciazajacy'
+        ) {
             // Wider plate/ring with outer rim
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (localCompType === 'plyta_najazdowa') {
@@ -475,8 +513,11 @@ function renderWellDiagram(targetSvg, targetWell) {
             let pel = parseFloat(pr.rzednaWlaczenia);
             if (isNaN(pel)) pel = 0;
 
-            const pprod = studnieProducts.find(x => x.id === pr.productId);
-            let prW = 160, prH = 160, isEgg = false, isRect = false;
+            const pprod = studnieProducts.find((x) => x.id === pr.productId);
+            let prW = 160,
+                prH = 160,
+                isEgg = false,
+                isRect = false;
 
             if (pprod && pprod.category === 'Otwór KPED') {
                 prW = 1020;
@@ -498,13 +539,18 @@ function renderWellDiagram(targetSvg, targetWell) {
             if (mmFromBottom > -5000 && mmFromBottom < totalMm + 5000) {
                 const radiusW = Math.max((prW / 2) * pxMm, 3);
                 const radiusH = Math.max((prH / 2) * pxMm, 3);
-                const prY = (mT + drawH) - (mmFromBottom * pxMm) - radiusH;
+                const prY = mT + drawH - mmFromBottom * pxMm - radiusH;
 
                 dimLinesY.push(prY - radiusH);
                 dimLinesY.push(prY + radiusH);
 
                 let px = cx;
-                const numericBodyDN = typeof bodyDN === 'number' ? bodyDN : (visible.find(c => c.componentType === 'styczna' || c.componentType === 'dennica')?.dn || 1000);
+                const numericBodyDN =
+                    typeof bodyDN === 'number'
+                        ? bodyDN
+                        : visible.find(
+                              (c) => c.componentType === 'styczna' || c.componentType === 'dennica'
+                          )?.dn || 1000;
                 const bw = mmToPx(numericBodyDN);
                 const offset = Math.sin((a * Math.PI) / 180) * (bw / 2 - radiusW);
                 px += offset;
@@ -539,21 +585,24 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     // --- POJEDYNCZA LINIA WYMIAROWA PO LEWEJ STRONIE ---
     if (dimLinesY.length > 0) {
-        dimLinesY = [...new Set(dimLinesY.map(v => Math.round(v * 10) / 10))].sort((a, b) => b - a);
+        dimLinesY = [...new Set(dimLinesY.map((v) => Math.round(v * 10) / 10))].sort(
+            (a, b) => b - a
+        );
         const dX = 52;
         const dimColor = '#94a3b8'; // neutral grey
 
-        dimLinesY.forEach(pY => {
+        dimLinesY.forEach((pY) => {
             svg_out += `<line x1="${dX - 4}" y1="${pY}" x2="${dX + 4}" y2="${pY}" stroke="${dimColor}" stroke-width="1.2"/>`;
         });
 
         for (let i = 0; i < dimLinesY.length - 1; i++) {
-            const yB = dimLinesY[i];     // dolny punkt elementu/przejścia (wartość Y rośnie w dół)
-            const yT = dimLinesY[i + 1];   // górny punkt elementu/przejścia
+            const yB = dimLinesY[i]; // dolny punkt elementu/przejścia (wartość Y rośnie w dół)
+            const yT = dimLinesY[i + 1]; // górny punkt elementu/przejścia
             const distY = yB - yT;
             const distMm = Math.round(distY / pxMm);
 
-            if (distMm > 1) { // Rysuj jeżeli dystans jest zauważalny
+            if (distMm > 1) {
+                // Rysuj jeżeli dystans jest zauważalny
                 svg_out += `<line x1="${dX}" y1="${yB}" x2="${dX}" y2="${yT}" stroke="${dimColor}" stroke-width="1.2"/>`;
 
                 let labelText = `${distMm}`;
@@ -561,13 +610,17 @@ function renderWellDiagram(targetSvg, targetWell) {
 
                 // Sprawdzamy czy ten segment to idealnie rura/przejście
                 if (well.przejscia && well.przejscia.length > 0) {
-                    well.przejscia.forEach(pr => {
+                    well.przejscia.forEach((pr) => {
                         let pel = parseFloat(pr.rzednaWlaczenia) || 0;
-                        const pprod = studnieProducts.find(x => x.id === pr.productId);
+                        const pprod = studnieProducts.find((x) => x.id === pr.productId);
                         let prH = 160;
                         if (pprod && pprod.category === 'Otwór KPED') {
                             prH = 500;
-                        } else if (pprod && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
+                        } else if (
+                            pprod &&
+                            typeof pprod.dn === 'string' &&
+                            pprod.dn.includes('/')
+                        ) {
                             prH = parseFloat(pprod.dn.split('/')[1]) || 160;
                         } else if (pprod) {
                             prH = parseFloat(pprod.dn) || 160;
@@ -575,7 +628,7 @@ function renderWellDiagram(targetSvg, targetWell) {
 
                         const mmFromBottom = (pel - (parseFloat(well.rzednaDna) || 0)) * 1000;
                         const radiusH = Math.max((prH / 2) * pxMm, 3);
-                        const prY = (mT + drawH) - (mmFromBottom * pxMm) - radiusH;
+                        const prY = mT + drawH - mmFromBottom * pxMm - radiusH;
 
                         const pyB = Math.round((prY + radiusH) * 10) / 10;
                         const pyT = Math.round((prY - radiusH) * 10) / 10;
@@ -612,4 +665,3 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     svg.innerHTML = svg_out;
 }
-

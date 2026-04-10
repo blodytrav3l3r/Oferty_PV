@@ -8,15 +8,18 @@ const AppZlecenia = (() => {
     let selectedIds = new Set(); // multi-select for batch print
 
     const statusMap = {
-        'draft': { label: 'Oczekujące', class: 'status-draft', icon: '⏳' },
-        'accepted': { label: 'Zatwierdzone', class: 'status-accepted', icon: '✅' }
+        draft: { label: 'Oczekujące', class: 'status-draft', icon: '⏳' },
+        accepted: { label: 'Zatwierdzone', class: 'status-accepted', icon: '✅' }
     };
 
     /* ===== INIT ===== */
 
     async function init() {
         const token = getAuthToken();
-        if (!token) { window.location.href = 'index.html'; return; }
+        if (!token) {
+            window.location.href = 'index.html';
+            return;
+        }
 
         setupSearch();
         await loadOrders();
@@ -28,26 +31,41 @@ const AppZlecenia = (() => {
         if (!isoString) return '—';
         const d = new Date(isoString);
         return d.toLocaleDateString('pl-PL', {
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit'
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     }
 
     function paramLabel(val) {
         const map = {
-            'tak': 'Tak', 'nie': 'Nie',
-            'linia_dolna': 'Linia dolna', 'linia_gorna': 'Linia górna',
-            'w_osi': 'W osi', 'patrz_uwagi': 'Patrz uwagi',
-            'brak': 'Brak', 'beton': 'Beton', 'beton_gfk': 'Beton z GFK',
-            'klinkier': 'Klinkier', 'preco': 'Preco', 'precotop': 'PrecoTop',
-            'unolith': 'UnoLith', 'predl': 'Predl', 'kamionka': 'Kamionka',
-            'zelbet': 'Żelbet',
-            'drabinka_a_stalowa': 'Drabinka Typ A/stalowa',
-            'drabinka_a_szlachetna': 'Drabinka Typ A/stal szlachetna',
-            'drabinka_b_stalowa': 'Drabinka Typ B/stalowa',
-            'drabinka_b_szlachetna': 'Drabinka Typ B/stal szlachetna',
-            'inne': 'Inne',
-            '1/2': '1/2', '2/3': '2/3', '3/4': '3/4', '1/1': '1/1'
+            tak: 'Tak',
+            nie: 'Nie',
+            linia_dolna: 'Linia dolna',
+            linia_gorna: 'Linia górna',
+            w_osi: 'W osi',
+            patrz_uwagi: 'Patrz uwagi',
+            brak: 'Brak',
+            beton: 'Beton',
+            beton_gfk: 'Beton z GFK',
+            klinkier: 'Klinkier',
+            preco: 'Preco',
+            precotop: 'PrecoTop',
+            unolith: 'UnoLith',
+            predl: 'Predl',
+            kamionka: 'Kamionka',
+            zelbet: 'Żelbet',
+            drabinka_a_stalowa: 'Drabinka Typ A/stalowa',
+            drabinka_a_szlachetna: 'Drabinka Typ A/stal szlachetna',
+            drabinka_b_stalowa: 'Drabinka Typ B/stalowa',
+            drabinka_b_szlachetna: 'Drabinka Typ B/stal szlachetna',
+            inne: 'Inne',
+            '1/2': '1/2',
+            '2/3': '2/3',
+            '3/4': '3/4',
+            '1/1': '1/1'
         };
         return map[val] || val || '';
     }
@@ -74,7 +92,8 @@ const AppZlecenia = (() => {
     /** Print HTML silently using a hidden iframe */
     function silentPrint(htmlString) {
         const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:1200px;height:1200px;border:0;opacity:0;z-index:-9999;';
+        iframe.style.cssText =
+            'position:fixed;right:0;bottom:0;width:1200px;height:1200px;border:0;opacity:0;z-index:-9999;';
         document.body.appendChild(iframe);
 
         const doc = iframe.contentWindow.document;
@@ -104,7 +123,7 @@ const AppZlecenia = (() => {
 
     function setFilter(filter) {
         activeFilter = filter;
-        document.querySelectorAll('.zlecenia-filter-tab').forEach(btn => {
+        document.querySelectorAll('.zlecenia-filter-tab').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === filter);
         });
         const searchInput = document.getElementById('zlecenia-search-input');
@@ -116,11 +135,14 @@ const AppZlecenia = (() => {
     async function loadOrders() {
         const tbody = document.getElementById('zlecenia-table-body');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">Ładowanie danych z serwera...</td></tr>';
+            tbody.innerHTML =
+                '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">Ładowanie danych z serwera...</td></tr>';
         }
 
         try {
-            const res = await fetch('/api/orders-studnie/production/registry', { headers: authHeaders() });
+            const res = await fetch('/api/orders-studnie/production/registry', {
+                headers: authHeaders()
+            });
             if (!res.ok) throw new Error('Nie udało się pobrać zleceń: ' + res.status);
 
             const data = await res.json();
@@ -146,10 +168,12 @@ const AppZlecenia = (() => {
         if (!container) return;
 
         const total = ordersCache.length;
-        const accepted = ordersCache.filter(o => o.status === 'accepted').length;
-        const draft = ordersCache.filter(o => o.status !== 'accepted').length;
+        const accepted = ordersCache.filter((o) => o.status === 'accepted').length;
+        const draft = ordersCache.filter((o) => o.status !== 'accepted').length;
         const today = new Date().toISOString().slice(0, 10);
-        const todayCount = ordersCache.filter(o => o.createdAt && o.createdAt.slice(0, 10) === today).length;
+        const todayCount = ordersCache.filter(
+            (o) => o.createdAt && o.createdAt.slice(0, 10) === today
+        ).length;
 
         container.innerHTML = `
             <div class="zlecenia-stat-card">
@@ -196,7 +220,7 @@ const AppZlecenia = (() => {
 
     function toggleSelectAll(masterCheckbox) {
         const checkboxes = document.querySelectorAll('.zlecenia-row-cb');
-        checkboxes.forEach(cb => {
+        checkboxes.forEach((cb) => {
             cb.checked = masterCheckbox.checked;
             const id = cb.dataset.id;
             if (masterCheckbox.checked) {
@@ -226,20 +250,26 @@ const AppZlecenia = (() => {
         let filtered = ordersCache;
 
         if (activeFilter === 'draft') {
-            filtered = filtered.filter(o => o.status !== 'accepted');
+            filtered = filtered.filter((o) => o.status !== 'accepted');
         } else if (activeFilter === 'accepted') {
-            filtered = filtered.filter(o => o.status === 'accepted');
+            filtered = filtered.filter((o) => o.status === 'accepted');
         }
 
         if (searchTerm) {
-            filtered = filtered.filter(o => {
+            filtered = filtered.filter((o) => {
                 const fields = [
-                    o.productionOrderNumber, o.handlerName, o.creatorName,
-                    o.wellName, o.projectName, o.obiekt,
-                    o.salesOrderNumber, o.dbSalesOrderNumber,
-                    o.elementName, o.productName
-                ].map(f => (f || '').toLowerCase());
-                return fields.some(f => f.includes(searchTerm));
+                    o.productionOrderNumber,
+                    o.handlerName,
+                    o.creatorName,
+                    o.wellName,
+                    o.projectName,
+                    o.obiekt,
+                    o.salesOrderNumber,
+                    o.dbSalesOrderNumber,
+                    o.elementName,
+                    o.productName
+                ].map((f) => (f || '').toLowerCase());
+                return fields.some((f) => f.includes(searchTerm));
             });
         }
 
@@ -258,37 +288,46 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const html = filtered.map(o => {
-            const statusConfig = statusMap[o.status] || { label: o.status || 'Nieznany', class: '', icon: '❓' };
+        const html = filtered
+            .map((o) => {
+                const statusConfig = statusMap[o.status] || {
+                    label: o.status || 'Nieznany',
+                    class: '',
+                    icon: '❓'
+                };
 
-            const orderNum = o.productionOrderNumber
-                ? `<span class="order-num">${o.productionOrderNumber}</span>`
-                : `<span class="order-num-missing">— brak —</span>`;
+                const orderNum = o.productionOrderNumber
+                    ? `<span class="order-num">${o.productionOrderNumber}</span>`
+                    : `<span class="order-num-missing">— brak —</span>`;
 
-            const salesOrderLabel = (o.dbSalesOrderNumber || o.salesOrderNumber)
-                ? `<span class="sales-order-badge">${o.dbSalesOrderNumber || o.salesOrderNumber}</span>`
-                : '<span style="color:var(--text-muted); font-size:0.75rem;">—</span>';
+                const salesOrderLabel =
+                    o.dbSalesOrderNumber || o.salesOrderNumber
+                        ? `<span class="sales-order-badge">${o.dbSalesOrderNumber || o.salesOrderNumber}</span>`
+                        : '<span style="color:var(--text-muted); font-size:0.75rem;">—</span>';
 
-            const wellName = o.wellName || '—';
-            const projectName = o.projectName || o.obiekt || '';
-            const elementInfo = o.elementName || o.productName || (o.elementIndex !== undefined ? `Element #${o.elementIndex}` : '—');
+                const wellName = o.wellName || '—';
+                const projectName = o.projectName || o.obiekt || '';
+                const elementInfo =
+                    o.elementName ||
+                    o.productName ||
+                    (o.elementIndex !== undefined ? `Element #${o.elementIndex}` : '—');
 
-            const isAccepted = o.status === 'accepted';
-            const isDraft = !isAccepted && o.id;
-            const isChecked = selectedIds.has(o.id);
+                const isAccepted = o.status === 'accepted';
+                const isDraft = !isAccepted && o.id;
+                const isChecked = selectedIds.has(o.id);
 
-            // Action buttons
-            let actions = '';
-            if (o.offerId) {
-                actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${o.offerId}', '${o.wellId || ''}', '${o.elementIndex !== undefined ? o.elementIndex : ''}', '${o.dbSalesOrderId || ''}')" title="Edytuj">✏️</button>`;
-            }
-            actions += `<button class="action-btn" onclick="AppZlecenia.printSingleZlecenie('${o.id}')" title="Drukuj zlecenie">🖨️</button>`;
-            actions += `<button class="action-btn" onclick="AppZlecenia.printSingleEtykieta('${o.id}')" title="Drukuj etykietę">🏷️</button>`;
-            if (isDraft) {
-                actions += `<button class="action-btn action-btn-delete" onclick="AppZlecenia.deleteOrder('${o.id}')" title="Usuń zlecenie">🗑️</button>`;
-            }
+                // Action buttons
+                let actions = '';
+                if (o.offerId) {
+                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${o.offerId}', '${o.wellId || ''}', '${o.elementIndex !== undefined ? o.elementIndex : ''}', '${o.dbSalesOrderId || ''}')" title="Edytuj">✏️</button>`;
+                }
+                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleZlecenie('${o.id}')" title="Drukuj zlecenie">🖨️</button>`;
+                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleEtykieta('${o.id}')" title="Drukuj etykietę">🏷️</button>`;
+                if (isDraft) {
+                    actions += `<button class="action-btn action-btn-delete" onclick="AppZlecenia.deleteOrder('${o.id}')" title="Usuń zlecenie">🗑️</button>`;
+                }
 
-            return `
+                return `
                 <tr>
                     <td style="width:40px; text-align:center;">
                         <input type="checkbox" class="zlecenia-row-cb" data-id="${o.id}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${o.id}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:#818cf8;">
@@ -311,7 +350,8 @@ const AppZlecenia = (() => {
                     </td>
                 </tr>
             `;
-        }).join('');
+            })
+            .join('');
 
         tbody.innerHTML = html;
         updateBatchBar();
@@ -328,8 +368,8 @@ const AppZlecenia = (() => {
         const rzDna = parseFloat(po.rzednaDna) || 0;
 
         const rows = [];
-        const wylot = przejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
-        const wloty = przejscia.filter(p => p !== wylot);
+        const wylot = przejscia.find((p) => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
+        const wloty = przejscia.filter((p) => p !== wylot);
 
         function formatRow(label, p) {
             const spadekK = p.spadekKineta || '';
@@ -340,8 +380,8 @@ const AppZlecenia = (() => {
             if (isNaN(pel)) pel = rzDna || 0;
             const wysokoscMm = Math.round((pel - (rzDna || 0)) * 1000);
 
-            const katGon = p.angleGony || (angle * 400 / 360).toFixed(2);
-            const katWyk = p.angleExecution !== undefined ? p.angleExecution : (360 - angle);
+            const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
+            const katWyk = p.angleExecution !== undefined ? p.angleExecution : 360 - angle;
 
             return {
                 label,
@@ -362,7 +402,17 @@ const AppZlecenia = (() => {
         while (rows.length < 11) {
             const idx = rows.length === 0 ? 0 : rows.length;
             const label = idx === 0 ? 'Wylot 0' : `Wlot ${idx}`;
-            rows.push({ label, rodzaj: '', srednica: '', spadekKineta: '', spadekMufa: '', katStopien: '', uwagi: '', katGon: '', katWykonania: '' });
+            rows.push({
+                label,
+                rodzaj: '',
+                srednica: '',
+                spadekKineta: '',
+                spadekMufa: '',
+                katStopien: '',
+                uwagi: '',
+                katGon: '',
+                katWykonania: ''
+            });
         }
         return rows;
     }
@@ -387,7 +437,7 @@ const AppZlecenia = (() => {
             const rad = (angle * Math.PI) / 180;
             const x = center - radius * Math.sin(rad);
             const y = center + radius * Math.cos(rad);
-            const isWylot = (p.flowType === 'wylot' || angle === 0);
+            const isWylot = p.flowType === 'wylot' || angle === 0;
 
             svg += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`;
 
@@ -461,7 +511,9 @@ const AppZlecenia = (() => {
             DIN: po.din || 'Brak',
             KINETA: paramLabel(po.kineta) || 'Brak',
             SPOCZNIK: paramLabel(po.spocznik) || 'Brak',
-            RODZAJ_STOPNI: paramLabel(po.rodzajStopni) + (po.stopnieInne ? ' — ' + po.stopnieInne : '') || 'Brak',
+            RODZAJ_STOPNI:
+                paramLabel(po.rodzajStopni) + (po.stopnieInne ? ' — ' + po.stopnieInne : '') ||
+                'Brak',
             KLASA_BETONU: po.klasaBetonu || 'Brak',
             KAT_STOPNI: po.katStopni ? po.katStopni + '°' : 'Brak',
             WYKONANIE: po.wykonanie || 'Brak',
@@ -489,7 +541,10 @@ const AppZlecenia = (() => {
         }
 
         // Remaining rows (match configurator: render ALL rows including empty)
-        payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows.slice(4).map(r => `
+        payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
+            .slice(4)
+            .map(
+                (r) => `
             <tr>
                 <td colspan="2"></td>
                 <td>${r.label}</td>
@@ -502,7 +557,9 @@ const AppZlecenia = (() => {
                 <td class="center">${r.katGon}</td>
                 <td class="center">${r.katWykonania}</td>
             </tr>
-        `).join('');
+        `
+            )
+            .join('');
 
         return renderTemplate(template, payload);
     }
@@ -516,20 +573,28 @@ const AppZlecenia = (() => {
             if ([1000, 1200].includes(numDn)) {
                 return { img: 'templates/ce_mark.png', alt: 'CE', text: 'AT/2009-03-1733' };
             }
-            return { img: 'templates/b_mark.png', alt: 'B', text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023' };
+            return {
+                img: 'templates/b_mark.png',
+                alt: 'B',
+                text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023'
+            };
         }
 
         const cert = getCertData(po.srednica || po.dn);
 
         // Build element rows from stored snapshot
         const elementy = po.etykietaElementy || [];
-        const elementRows = elementy.map(e => `
+        const elementRows = elementy
+            .map(
+                (e) => `
             <tr>
                 <td class="el-qty">${e.ilosc}</td>
                 <td class="el-idx">${e.indeks}</td>
                 <td class="el-name">${e.nazwa}</td>
             </tr>
-        `).join('');
+        `
+            )
+            .join('');
 
         // Use unique SVG ids per page for batch printing
         const snrSvgId = 'snr-svg-' + pageIndex;
@@ -558,8 +623,11 @@ const AppZlecenia = (() => {
     /* ===== PRINT ACTIONS ===== */
 
     async function printSingleZlecenie(orderId) {
-        const po = ordersCache.find(o => o.id === orderId);
-        if (!po) { showToast('Nie znaleziono zlecenia', 'error'); return; }
+        const po = ordersCache.find((o) => o.id === orderId);
+        if (!po) {
+            showToast('Nie znaleziono zlecenia', 'error');
+            return;
+        }
 
         showToast('Generowanie zlecenia...', 'info');
 
@@ -571,8 +639,11 @@ const AppZlecenia = (() => {
     }
 
     async function printSingleEtykieta(orderId) {
-        const po = ordersCache.find(o => o.id === orderId);
-        if (!po) { showToast('Nie znaleziono zlecenia', 'error'); return; }
+        const po = ordersCache.find((o) => o.id === orderId);
+        if (!po) {
+            showToast('Nie znaleziono zlecenia', 'error');
+            return;
+        }
 
         showToast('Generowanie etykiety...', 'info');
 
@@ -584,10 +655,16 @@ const AppZlecenia = (() => {
     }
 
     async function printBatchZlecenia() {
-        if (selectedIds.size === 0) { showToast('Zaznacz zlecenia do wydruku', 'error'); return; }
+        if (selectedIds.size === 0) {
+            showToast('Zaznacz zlecenia do wydruku', 'error');
+            return;
+        }
 
-        const orders = ordersCache.filter(o => selectedIds.has(o.id));
-        if (orders.length === 0) { showToast('Brak zleceń do wydruku', 'error'); return; }
+        const orders = ordersCache.filter((o) => selectedIds.has(o.id));
+        if (orders.length === 0) {
+            showToast('Brak zleceń do wydruku', 'error');
+            return;
+        }
 
         showToast(`Generowanie ${orders.length} zleceń...`, 'info');
 
@@ -604,15 +681,17 @@ const AppZlecenia = (() => {
 
         const headSection = template.substring(0, template.indexOf('</head>'));
         const pageTemplate = template.substring(pageStartIdx, bodyEndIdx).trim();
-        const batchPageStyle = '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
+        const batchPageStyle =
+            '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
 
         // Populate the page template for each order
         let allPages = '';
-        orders.forEach(po => {
+        orders.forEach((po) => {
             allPages += buildZlecenieFromPageBlock(pageTemplate, po) + '\n';
         });
 
-        const finalHTML = headSection + batchPageStyle + '</head>\n<body>\n' + allPages + '</body></html>';
+        const finalHTML =
+            headSection + batchPageStyle + '</head>\n<body>\n' + allPages + '</body></html>';
         silentPrint(finalHTML);
     }
 
@@ -662,7 +741,9 @@ const AppZlecenia = (() => {
             DIN: po.din || 'Brak',
             KINETA: paramLabel(po.kineta) || 'Brak',
             SPOCZNIK: paramLabel(po.spocznik) || 'Brak',
-            RODZAJ_STOPNI: paramLabel(po.rodzajStopni) + (po.stopnieInne ? ' — ' + po.stopnieInne : '') || 'Brak',
+            RODZAJ_STOPNI:
+                paramLabel(po.rodzajStopni) + (po.stopnieInne ? ' — ' + po.stopnieInne : '') ||
+                'Brak',
             KLASA_BETONU: po.klasaBetonu || 'Brak',
             KAT_STOPNI: po.katStopni ? po.katStopni + '°' : 'Brak',
             WYKONANIE: po.wykonanie || 'Brak',
@@ -688,7 +769,10 @@ const AppZlecenia = (() => {
             }
         }
 
-        payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows.slice(4).map(r => `
+        payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
+            .slice(4)
+            .map(
+                (r) => `
             <tr>
                 <td colspan="2"></td>
                 <td>${r.label}</td>
@@ -701,16 +785,24 @@ const AppZlecenia = (() => {
                 <td class="center">${r.katGon}</td>
                 <td class="center">${r.katWykonania}</td>
             </tr>
-        `).join('');
+        `
+            )
+            .join('');
 
         return renderTemplate(pageTemplate, payload);
     }
 
     async function printBatchEtykiety() {
-        if (selectedIds.size === 0) { showToast('Zaznacz zlecenia do wydruku', 'error'); return; }
+        if (selectedIds.size === 0) {
+            showToast('Zaznacz zlecenia do wydruku', 'error');
+            return;
+        }
 
-        const orders = ordersCache.filter(o => selectedIds.has(o.id));
-        if (orders.length === 0) { showToast('Brak zleceń do wydruku', 'error'); return; }
+        const orders = ordersCache.filter((o) => selectedIds.has(o.id));
+        if (orders.length === 0) {
+            showToast('Brak zleceń do wydruku', 'error');
+            return;
+        }
 
         showToast(`Generowanie ${orders.length} etykiet...`, 'info');
 
@@ -726,8 +818,11 @@ const AppZlecenia = (() => {
         }
 
         const headSection = template.substring(0, template.indexOf('</head>'));
-        const pageTemplate = template.substring(pageStartIdx, pageEndComment + '<!-- KONIEC BLOKU "page" -->'.length).trim();
-        const batchPageStyle = '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
+        const pageTemplate = template
+            .substring(pageStartIdx, pageEndComment + '<!-- KONIEC BLOKU "page" -->'.length)
+            .trim();
+        const batchPageStyle =
+            '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
 
         // Build each page with unique SVG IDs
         let allPages = '';
@@ -753,7 +848,13 @@ if (document.fonts && document.fonts.ready) {
 setTimeout(runAllFit, 400);
 </script>`;
 
-        const finalHTML = headSection + batchPageStyle + '</head>\n<body>\n' + allPages + fitScript + '\n</body></html>';
+        const finalHTML =
+            headSection +
+            batchPageStyle +
+            '</head>\n<body>\n' +
+            allPages +
+            fitScript +
+            '\n</body></html>';
         silentPrint(finalHTML);
     }
 
@@ -766,18 +867,26 @@ setTimeout(runAllFit, 400);
             if ([1000, 1200].includes(numDn)) {
                 return { img: 'templates/ce_mark.png', alt: 'CE', text: 'AT/2009-03-1733' };
             }
-            return { img: 'templates/b_mark.png', alt: 'B', text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023' };
+            return {
+                img: 'templates/b_mark.png',
+                alt: 'B',
+                text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023'
+            };
         }
 
         const cert = getCertData(po.srednica || po.dn);
         const elementy = po.etykietaElementy || [];
-        const elementRows = elementy.map(e => `
+        const elementRows = elementy
+            .map(
+                (e) => `
             <tr>
                 <td class="el-qty">${e.ilosc}</td>
                 <td class="el-idx">${e.indeks}</td>
                 <td class="el-name">${e.nazwa}</td>
             </tr>
-        `).join('');
+        `
+            )
+            .join('');
 
         const payload = {
             SNR: po.snr || po.wellName || '',
@@ -801,7 +910,7 @@ setTimeout(runAllFit, 400);
     /* ===== DELETE ===== */
 
     async function deleteOrder(id) {
-        const order = ordersCache.find(o => o.id === id);
+        const order = ordersCache.find((o) => o.id === id);
         if (!order) return;
 
         if (order.status === 'accepted') {
@@ -809,7 +918,13 @@ setTimeout(runAllFit, 400);
             return;
         }
 
-        if (!await appConfirm('Usunąć zlecenie ' + (order.productionOrderNumber || '') + '?', { title: 'Usuwanie zlecenia', type: 'danger' })) return;
+        if (
+            !(await appConfirm('Usunąć zlecenie ' + (order.productionOrderNumber || '') + '?', {
+                title: 'Usuwanie zlecenia',
+                type: 'danger'
+            }))
+        )
+            return;
 
         try {
             const res = await fetch('/api/orders-studnie/production/' + id, {
@@ -821,7 +936,7 @@ setTimeout(runAllFit, 400);
                 throw new Error(errData.error || 'Błąd serwera');
             }
 
-            ordersCache = ordersCache.filter(o => o.id !== id);
+            ordersCache = ordersCache.filter((o) => o.id !== id);
             selectedIds.delete(id);
             renderStats();
             const searchInput = document.getElementById('zlecenia-search-input');
@@ -829,10 +944,16 @@ setTimeout(runAllFit, 400);
             showToast('Zlecenie usunięte', 'info');
 
             try {
-                if (window.parent && window.parent.SpaRouter && typeof window.parent.SpaRouter.refreshModule === 'function') {
+                if (
+                    window.parent &&
+                    window.parent.SpaRouter &&
+                    typeof window.parent.SpaRouter.refreshModule === 'function'
+                ) {
                     window.parent.SpaRouter.refreshModule('zlecenia');
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+                /* ignore */
+            }
         } catch (e) {
             console.error('deleteOrder error:', e);
             showToast(e.message, 'error');
@@ -848,7 +969,11 @@ setTimeout(runAllFit, 400);
         if (wellId) extraParams += `&wellId=${wellId}`;
         if (elementIndex !== '') extraParams += `&elementIndex=${elementIndex}`;
 
-        const useOrderMode = salesOrderId && salesOrderId !== '' && salesOrderId !== 'null' && salesOrderId !== 'undefined';
+        const useOrderMode =
+            salesOrderId &&
+            salesOrderId !== '' &&
+            salesOrderId !== 'null' &&
+            salesOrderId !== 'undefined';
         const mainParam = useOrderMode ? `order=${salesOrderId}` : `edit=${offerId}`;
 
         if (window.parent && window.parent.SpaRouter) {

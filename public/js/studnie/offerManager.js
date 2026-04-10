@@ -8,7 +8,8 @@ function renderOfferSummary() {
     const orderChanges = order ? getOrderChanges({ ...order, wells: wells }) : {};
     const hasChanges = Object.keys(orderChanges).length > 0;
 
-    let totalPrice = 0, totalWeight = 0;
+    let totalPrice = 0,
+        totalWeight = 0;
 
     let html = '';
 
@@ -26,7 +27,7 @@ function renderOfferSummary() {
 
     // Pre-calculate global transport cost
     let globalWeight = 0;
-    wells.forEach(w => globalWeight += calcWellStats(w).weight);
+    wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
 
     const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
@@ -62,7 +63,8 @@ function renderOfferSummary() {
         totalWeight += stats.weight;
 
         // Koszt transportu przypisany do tej studni proporcjonalnie do jej wagi
-        const wellTransportCost = globalWeight > 0 ? totalTransportCost * (stats.weight / globalWeight) : 0;
+        const wellTransportCost =
+            globalWeight > 0 ? totalTransportCost * (stats.weight / globalWeight) : 0;
 
         // Zwiększamy statystykę ceny o koszt transportu (aby kwota brutto na pasku zamówienia i rubryki się zgadzały)
         stats.price += wellTransportCost;
@@ -71,12 +73,14 @@ function renderOfferSummary() {
         const wc = orderChanges[i];
         const isChanged = !!wc;
         const rowStyle = isChanged
-            ? (wc.type === 'added' ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);' : 'border-left:3px solid #ef4444; background:rgba(239,68,68,0.05);')
+            ? wc.type === 'added'
+                ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);'
+                : 'border-left:3px solid #ef4444; background:rgba(239,68,68,0.05);'
             : '';
         const changeBadge = isChanged
-            ? (wc.type === 'added'
+            ? wc.type === 'added'
                 ? '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;">🟢 NOWE</span>'
-                : '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;">🔴 ZMIENIONO</span>')
+                : '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;">🔴 ZMIENIONO</span>'
             : '';
 
         html += `<tr style="cursor:pointer; ${rowStyle}" onclick="showSection('builder'); selectWell(${i})">
@@ -97,7 +101,7 @@ function renderOfferSummary() {
         let dennicaProcessedCount = 0;
         for (let j = well.config.length - 1; j >= 0; j--) {
             const item = well.config[j];
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) continue;
 
             let h = 0;
@@ -116,7 +120,7 @@ function renderOfferSummary() {
 
         const assignedPrzejscia = {};
         if (well.przejscia) {
-            well.przejscia.forEach(pr => {
+            well.przejscia.forEach((pr) => {
                 let pel = parseFloat(pr.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
                 const mmFromBottom = (pel - rzDna) * 1000;
@@ -128,7 +132,8 @@ function renderOfferSummary() {
                         break;
                     }
                 }
-                if (assignedIndex === -1 && well.config.length > 0) assignedIndex = well.config.length - 1;
+                if (assignedIndex === -1 && well.config.length > 0)
+                    assignedIndex = well.config.length - 1;
 
                 if (!assignedPrzejscia[assignedIndex]) assignedPrzejscia[assignedIndex] = [];
                 assignedPrzejscia[assignedIndex].push(pr);
@@ -136,31 +141,37 @@ function renderOfferSummary() {
         }
 
         const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
-        const nadbudowaMult = 1 - ((disc.nadbudowa || 0) / 100);
+        const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
 
         // Component details
         well.config.forEach((item, index) => {
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
             if (p.componentType === 'kineta') return; // Wyświetlana jako podpunkt pod dennicą
 
             let discStr = '';
-            if (p.componentType === 'dennica' || p.componentType === 'kineta' || p.componentType === 'styczna') {
-                if (disc.dennica > 0) discStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.dennica}%)</span>`;
+            if (
+                p.componentType === 'dennica' ||
+                p.componentType === 'kineta' ||
+                p.componentType === 'styczna'
+            ) {
+                if (disc.dennica > 0)
+                    discStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.dennica}%)</span>`;
             } else {
-                if (disc.nadbudowa > 0) discStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
+                if (disc.nadbudowa > 0)
+                    discStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
             }
 
             const itemPrice = getItemAssessedPrice(well, p, true);
             let totalLinePrice = itemPrice * item.quantity;
 
             if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                const kinetaItem = well.config.find(c => {
-                    const pr = studnieProducts.find(x => x.id === c.productId);
+                const kinetaItem = well.config.find((c) => {
+                    const pr = studnieProducts.find((x) => x.id === c.productId);
                     return pr && pr.componentType === 'kineta';
                 });
                 if (kinetaItem) {
-                    const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
+                    const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                     if (kinetaProd) {
                         const rawKinetaPrice = getItemAssessedPrice(well, kinetaProd, true);
                         totalLinePrice += rawKinetaPrice * (kinetaItem.quantity || 1);
@@ -172,15 +183,16 @@ function renderOfferSummary() {
             let totalLineWeight = (p.weight || 0) * item.quantity;
 
             const itemPrzejscia = assignedPrzejscia[index] || [];
-            itemPrzejscia.forEach(pr => {
-                const prProd = studnieProducts.find(x => x.id === pr.productId);
+            itemPrzejscia.forEach((pr) => {
+                const prProd = studnieProducts.find((x) => x.id === pr.productId);
                 if (prProd) {
                     totalLinePrice += (prProd.price || 0) * nadbudowaMult;
-                    totalLineWeight += (prProd.weight || 0);
+                    totalLineWeight += prProd.weight || 0;
                 }
             });
 
-            const isDennicaOrStyczna = (p.componentType === 'dennica' || p.componentType === 'styczna');
+            const isDennicaOrStyczna =
+                p.componentType === 'dennica' || p.componentType === 'styczna';
             if (isDennicaOrStyczna && well.doplata) {
                 totalLinePrice += well.doplata;
             }
@@ -210,12 +222,13 @@ function renderOfferSummary() {
                 </tr>`;
             }
 
-            itemPrzejscia.forEach(pr => {
-                const prProd = studnieProducts.find(x => x.id === pr.productId);
+            itemPrzejscia.forEach((pr) => {
+                const prProd = studnieProducts.find((x) => x.id === pr.productId);
                 if (!prProd) return;
 
                 let pDiscStr = '';
-                if (disc.nadbudowa > 0) pDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
+                if (disc.nadbudowa > 0)
+                    pDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
 
                 const prPriceDoliczane = (prProd.price || 0) * nadbudowaMult;
 
@@ -233,17 +246,20 @@ function renderOfferSummary() {
 
             // Podpunkt dla kinety, jeśli renderujemy dennicę / bazę styczną
             if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                const kinetaItem = well.config.find(c => {
-                    const pr = studnieProducts.find(x => x.id === c.productId);
+                const kinetaItem = well.config.find((c) => {
+                    const pr = studnieProducts.find((x) => x.id === c.productId);
                     return pr && pr.componentType === 'kineta';
                 });
                 if (kinetaItem) {
-                    const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
+                    const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                     if (kinetaProd) {
                         let kDiscStr = '';
-                        if (disc.dennica > 0) kDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.dennica}%)</span>`;
+                        if (disc.dennica > 0)
+                            kDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.dennica}%)</span>`;
 
-                        const kPriceDoliczane = getItemAssessedPrice(well, kinetaProd, true) * (kinetaItem.quantity || 1);
+                        const kPriceDoliczane =
+                            getItemAssessedPrice(well, kinetaProd, true) *
+                            (kinetaItem.quantity || 1);
                         const kWeight = (kinetaProd.weight || 0) * kinetaItem.quantity;
 
                         html += `<tr style="opacity:0.6; ${isChanged && wc.type === 'modified' && wc.fields?.includes('config') ? 'color:#f87171;' : 'color:#f472b6;'}">
@@ -274,7 +290,6 @@ function renderOfferSummary() {
                 }
             }
         });
-
     });
 
     html += `</tbody>
@@ -321,8 +336,6 @@ function renderOfferSummary() {
     if (weightEl) weightEl.textContent = fmtInt(totalWeight) + ' kg';
 }
 
-
-
 /* ===== OFFERS STUDNIE (SERVER API) ===== */
 
 /**
@@ -334,23 +347,51 @@ function normalizeOfferData(doc) {
     if (!doc) return doc;
     if (doc.data && typeof doc.data === 'object' && !Array.isArray(doc.data)) {
         const fields = [
-            'items', 'wells', 'totalNetto', 'totalBrutto', 'number', 'clientName',
-            'clientNip', 'clientAddress', 'clientContact', 'clientPhone',
-            'investName', 'investAddress', 'investContractor', 'notes', 'paymentTerms', 'validity',
-            'transportKm', 'transportRate', 'wellDiscounts', 'visiblePrzejsciaTypes',
-            'date', 'history', 'userName', 'lastEditedBy', 'createdByUserId', 'createdByUserName', 'userId'
+            'items',
+            'wells',
+            'totalNetto',
+            'totalBrutto',
+            'number',
+            'clientName',
+            'clientNip',
+            'clientAddress',
+            'clientContact',
+            'clientPhone',
+            'investName',
+            'investAddress',
+            'investContractor',
+            'notes',
+            'paymentTerms',
+            'validity',
+            'transportKm',
+            'transportRate',
+            'wellDiscounts',
+            'visiblePrzejsciaTypes',
+            'date',
+            'history',
+            'userName',
+            'lastEditedBy',
+            'createdByUserId',
+            'createdByUserName',
+            'userId'
         ];
         for (const key of fields) {
             const val = doc.data[key];
-            if (val !== undefined && val !== null && (doc[key] === undefined || doc[key] === null)) {
+            if (
+                val !== undefined &&
+                val !== null &&
+                (doc[key] === undefined || doc[key] === null)
+            ) {
                 doc[key] = val;
             }
         }
         // Fallback mappings for alternative field names
         if (!doc.number && doc.data.offerNumber) doc.number = doc.data.offerNumber;
         if (!doc.date && doc.data.offerDate) doc.date = doc.data.offerDate;
-        if (!doc.totalNetto && doc.data.summary && doc.data.summary.totalValue) doc.totalNetto = doc.data.summary.totalValue;
-        if (!doc.totalBrutto && doc.data.summary && doc.data.summary.totalBrutto) doc.totalBrutto = doc.data.summary.totalBrutto;
+        if (!doc.totalNetto && doc.data.summary && doc.data.summary.totalValue)
+            doc.totalNetto = doc.data.summary.totalValue;
+        if (!doc.totalBrutto && doc.data.summary && doc.data.summary.totalBrutto)
+            doc.totalBrutto = doc.data.summary.totalBrutto;
     }
     return doc;
 }
@@ -361,7 +402,7 @@ async function loadOffersStudnie() {
         const json = await res.json();
         const rawOffers = json.data || [];
         // Normalize each offer to flatten .data properties (number, date, wells, etc.)
-        return rawOffers.map(o => normalizeOfferData(o));
+        return rawOffers.map((o) => normalizeOfferData(o));
     } catch (e) {
         console.error('Błąd ładowania ofert:', e);
         return [];
@@ -372,8 +413,6 @@ async function saveOffersDataStudnie(data) {
     // This function is no longer used as offers are saved individually via saveOfferStudnie
     // and fetched via loadOffersStudnie which now directly uses the REST API.
 }
-
-
 
 /* ===== OFFER SUMMARY (Studnie) ===== */
 let editingOfferAssignedUserId = null;
@@ -396,28 +435,37 @@ async function changeOfferUser() {
             const selectedUser = await showUserSelectionPopup(allUsers, currentId);
             if (selectedUser !== null) {
                 editingOfferAssignedUserId = selectedUser.id;
-                editingOfferAssignedUserName = (selectedUser.firstName && selectedUser.lastName)
-                    ? `${selectedUser.firstName} ${selectedUser.lastName}`
-                    : (selectedUser.displayName || selectedUser.username);
+                editingOfferAssignedUserName =
+                    selectedUser.firstName && selectedUser.lastName
+                        ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                        : selectedUser.displayName || selectedUser.username;
                 showToast(`Opiekun zmieniony na: ${editingOfferAssignedUserName}`, 'success');
-                
+
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
-                if (btnChangeUser) btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+                if (btnChangeUser)
+                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
 
                 if (editingOfferIdStudnie) {
                     saveOfferStudnie();
 
                     // Propagate opiekun change to associated order
                     const oId = normalizeId(editingOfferIdStudnie);
-                    const linkedOrder = ordersStudnie ? ordersStudnie.find(o => normalizeId(o.offerId) === oId) : null;
+                    const linkedOrder = ordersStudnie
+                        ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
+                        : null;
                     if (linkedOrder) {
                         linkedOrder.userId = editingOfferAssignedUserId;
                         linkedOrder.userName = editingOfferAssignedUserName;
                         fetch(`/api/orders-studnie/${linkedOrder.id}`, {
                             method: 'PATCH',
                             headers: authHeaders(),
-                            body: JSON.stringify({ userId: linkedOrder.userId, userName: linkedOrder.userName })
-                        }).catch(e => console.error('Błąd aktualizacji opiekuna w zamówieniu:', e));
+                            body: JSON.stringify({
+                                userId: linkedOrder.userId,
+                                userName: linkedOrder.userName
+                            })
+                        }).catch((e) =>
+                            console.error('Błąd aktualizacji opiekuna w zamówieniu:', e)
+                        );
                     }
                 }
             }
@@ -433,12 +481,12 @@ async function changeOfferUserFromListStudnie(offerId) {
         showToast('Brak uprawnień do zmiany opiekuna', 'error');
         return;
     }
-    const offer = offersStudnie.find(o => o.id === offerId);
+    const offer = offersStudnie.find((o) => o.id === offerId);
     if (!offer) {
         showToast('Nie znaleziono oferty', 'error');
         return;
     }
-    
+
     try {
         const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
         const usersData = await usersResp.json();
@@ -449,29 +497,35 @@ async function changeOfferUserFromListStudnie(offerId) {
             const selectedUser = await showUserSelectionPopup(allUsers, currentId);
             if (selectedUser !== null) {
                 offer.userId = selectedUser.id;
-                offer.userName = (selectedUser.firstName && selectedUser.lastName)
-                    ? `${selectedUser.firstName} ${selectedUser.lastName}`
-                    : (selectedUser.displayName || selectedUser.username);
-                
+                offer.userName =
+                    selectedUser.firstName && selectedUser.lastName
+                        ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                        : selectedUser.displayName || selectedUser.username;
+
                 const { storageService } = await import('../shared/StorageService.js');
                 await storageService.saveOffer(offer);
-                
+
                 // Propagate opiekun change to associated order
                 const oId = normalizeId(offerId);
-                const linkedOrder = ordersStudnie ? ordersStudnie.find(o => normalizeId(o.offerId) === oId) : null;
+                const linkedOrder = ordersStudnie
+                    ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
+                    : null;
                 if (linkedOrder) {
                     linkedOrder.userId = offer.userId;
                     linkedOrder.userName = offer.userName;
                     fetch(`/api/orders-studnie/${linkedOrder.id}`, {
                         method: 'PATCH',
                         headers: authHeaders(),
-                        body: JSON.stringify({ userId: linkedOrder.userId, userName: linkedOrder.userName })
-                    }).catch(e => console.error('Błąd aktualizacji opiekuna w zamówieniu:', e));
+                        body: JSON.stringify({
+                            userId: linkedOrder.userId,
+                            userName: linkedOrder.userName
+                        })
+                    }).catch((e) => console.error('Błąd aktualizacji opiekuna w zamówieniu:', e));
                 }
 
                 showToast(`Opiekun zmieniony na: ${offer.userName}`, 'success');
                 renderSavedOffersStudnie();
-                
+
                 if (editingOfferIdStudnie === offerId) {
                     editingOfferAssignedUserId = offer.userId;
                     editingOfferAssignedUserName = offer.userName;
@@ -488,10 +542,16 @@ async function changeOfferUserFromListStudnie(offerId) {
 
 async function saveOfferStudnie() {
     if (isSavingOffer) return false;
-    
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return false; }
+
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return false;
+    }
     const number = document.getElementById('offer-number').value.trim();
-    if (!number) { showToast('Wprowadź numer oferty', 'error'); return false; }
+    if (!number) {
+        showToast('Wprowadź numer oferty', 'error');
+        return false;
+    }
 
     const date = document.getElementById('offer-date').value;
     const clientName = document.getElementById('client-name').value.trim();
@@ -502,14 +562,16 @@ async function saveOfferStudnie() {
     const investAddress = document.getElementById('invest-address').value.trim();
     const investContractor = document.getElementById('invest-contractor').value.trim();
     const notes = document.getElementById('offer-notes').value.trim();
-    const paymentTerms = document.getElementById('offer-payment-terms')?.value.trim() || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    const paymentTerms =
+        document.getElementById('offer-payment-terms')?.value.trim() ||
+        'Do uzgodnienia lub według indywidualnych warunków handlowych.';
     const validity = document.getElementById('offer-validity')?.value.trim() || '7 dni';
     const transportKm = parseFloat(document.getElementById('transport-km').value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate').value) || 0;
 
     let totalNetto = 0;
     let totalWeight = 0;
-    wells.forEach(well => {
+    wells.forEach((well) => {
         const stats = calcWellStats(well);
         totalNetto += stats.price;
         totalWeight += stats.weight;
@@ -517,8 +579,10 @@ async function saveOfferStudnie() {
 
     // --- TELEMETRIA: Pętla Sprzężenia Zwrotnego ---
     // Znajdź pierwszą studnię która została zmieniona z AUTO_AI na MANUAL i nie ma zapisanego powodu
-    const unjustifiedWell = wells.find(w => w.configSource === 'MANUAL' && w.originalAutoConfig && !w.overrideReason);
-    
+    const unjustifiedWell = wells.find(
+        (w) => w.configSource === 'MANUAL' && w.originalAutoConfig && !w.overrideReason
+    );
+
     if (unjustifiedWell) {
         // Pokaż popup i ZATRZYMAJ proces zapisu
         return showTelemetryPopup(unjustifiedWell, async (reason) => {
@@ -535,7 +599,9 @@ async function saveOfferStudnie() {
                         overrideReason: reason
                     })
                 });
-            } catch (e) { console.error('Błąd wysyłki telemetrii:', e); }
+            } catch (e) {
+                console.error('Błąd wysyłki telemetrii:', e);
+            }
 
             // Wznów zapis
             saveOfferStudnie();
@@ -546,7 +612,12 @@ async function saveOfferStudnie() {
     isSavingOffer = true;
 
     // Automatyczny wybór opiekuna dla nowych ofert (tylko admin / pro)
-    if (!editingOfferIdStudnie && currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') && !editingOfferAssignedUserId) {
+    if (
+        !editingOfferIdStudnie &&
+        currentUser &&
+        (currentUser.role === 'admin' || currentUser.role === 'pro') &&
+        !editingOfferAssignedUserId
+    ) {
         try {
             const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
             const usersData = await usersResp.json();
@@ -562,9 +633,10 @@ async function saveOfferStudnie() {
                 }
                 editingOfferAssignedUserId = selectedUser.id;
                 editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
-                
+
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
-                if (btnChangeUser) btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+                if (btnChangeUser)
+                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
             }
         } catch (e) {
             console.error('Błąd wyboru opiekuna:', e);
@@ -577,14 +649,14 @@ async function saveOfferStudnie() {
     if (editingOfferIdStudnie) {
         try {
             existingDoc = await storageService.getOfferById(editingOfferIdStudnie);
-        } catch (e) { }
+        } catch (e) {}
     }
 
-    const simpleId = editingOfferIdStudnie || ('offer_studnie_' + Date.now());
+    const simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
 
     // Oblicz koszty transportu per studnia
     let globalWeightForTransport = 0;
-    wells.forEach(w => globalWeightForTransport += calcWellStats(w).weight);
+    wells.forEach((w) => (globalWeightForTransport += calcWellStats(w).weight));
     const transportKmVal = parseFloat(document.getElementById('transport-km').value) || 0;
     const transportRateVal = parseFloat(document.getElementById('transport-rate').value) || 0;
     let totalTransportCostForOffer = 0;
@@ -595,10 +667,14 @@ async function saveOfferStudnie() {
     }
 
     // Przygotuj wells z obliczonymi cenami dla backendu (PDF/Word export)
-    const wellsForExport = wells.map(well => {
+    const wellsForExport = wells.map((well) => {
         const stats = calcWellStats(well);
-        const wellTransportCost = globalWeightForTransport > 0 ? totalTransportCostForOffer * (stats.weight / globalWeightForTransport) : 0;
-        const zwienczenie = (typeof getWellZwienczenieName === 'function') ? getWellZwienczenieName(well) : '—';
+        const wellTransportCost =
+            globalWeightForTransport > 0
+                ? totalTransportCostForOffer * (stats.weight / globalWeightForTransport)
+                : 0;
+        const zwienczenie =
+            typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return {
             name: well.name,
             dn: well.dn,
@@ -616,22 +692,60 @@ async function saveOfferStudnie() {
     const offerDoc = {
         id: simpleId,
         type: 'studnia_oferta',
-        userId: editingOfferAssignedUserId || existingDoc?.userId || (currentUser ? currentUser.id : null),
-        userName: editingOfferAssignedUserName || existingDoc?.userName || (currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : ''),
-        createdByUserId: editingOfferCreatedByUserId || existingDoc?.createdByUserId || (currentUser ? currentUser.id : null),
-        createdByUserName: editingOfferCreatedByUserName || existingDoc?.createdByUserName || (currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : ''),
-        number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, investContractor, notes, paymentTerms, validity,
+        userId:
+            editingOfferAssignedUserId ||
+            existingDoc?.userId ||
+            (currentUser ? currentUser.id : null),
+        userName:
+            editingOfferAssignedUserName ||
+            existingDoc?.userName ||
+            (currentUser
+                ? currentUser.firstName && currentUser.lastName
+                    ? `${currentUser.firstName} ${currentUser.lastName}`
+                    : currentUser.username
+                : ''),
+        createdByUserId:
+            editingOfferCreatedByUserId ||
+            existingDoc?.createdByUserId ||
+            (currentUser ? currentUser.id : null),
+        createdByUserName:
+            editingOfferCreatedByUserName ||
+            existingDoc?.createdByUserName ||
+            (currentUser
+                ? currentUser.firstName && currentUser.lastName
+                    ? `${currentUser.firstName} ${currentUser.lastName}`
+                    : currentUser.username
+                : ''),
+        number,
+        date,
+        clientName,
+        clientNip,
+        clientAddress,
+        clientContact,
+        investName,
+        investAddress,
+        investContractor,
+        notes,
+        paymentTerms,
+        validity,
         wells: JSON.parse(JSON.stringify(wells)),
         wellsExport: wellsForExport,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         transportKm,
         transportRate,
-        wellDiscounts: typeof wellDiscounts !== 'undefined' ? JSON.parse(JSON.stringify(wellDiscounts || {})) : {},
+        wellDiscounts:
+            typeof wellDiscounts !== 'undefined'
+                ? JSON.parse(JSON.stringify(wellDiscounts || {}))
+                : {},
         totalWeight,
         totalNetto,
         totalBrutto: totalNetto * 1.23,
         createdAt: existingDoc?.createdAt || new Date().toISOString(),
-        lastEditedBy: currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : ''
+        lastEditedBy: currentUser
+            ? currentUser.firstName && currentUser.lastName
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.username
+            : ''
     };
 
     try {
@@ -645,9 +759,9 @@ async function saveOfferStudnie() {
         editingOfferIdStudnie = savedId;
 
         // Update local array for immediate rendering using the confirmed ID
-        const idx = offersStudnie.findIndex(o => o.id === editingOfferIdStudnie);
+        const idx = offersStudnie.findIndex((o) => o.id === editingOfferIdStudnie);
         let updatedOffer = { ...offerDoc, id: editingOfferIdStudnie };
-        
+
         if (idx >= 0) offersStudnie[idx] = updatedOffer;
         else offersStudnie.push(updatedOffer);
 
@@ -712,8 +826,11 @@ function clearOfferForm() {
     document.getElementById('invest-address').value = '';
     document.getElementById('invest-contractor').value = '';
     document.getElementById('offer-notes').value = '';
-    if (document.getElementById('offer-payment-terms')) document.getElementById('offer-payment-terms').value = 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    if (document.getElementById('offer-validity')) document.getElementById('offer-validity').value = '7 dni';
+    if (document.getElementById('offer-payment-terms'))
+        document.getElementById('offer-payment-terms').value =
+            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    if (document.getElementById('offer-validity'))
+        document.getElementById('offer-validity').value = '7 dni';
     document.getElementById('transport-km').value = '100';
     document.getElementById('transport-rate').value = '10';
     wells = [];
@@ -725,7 +842,7 @@ function clearOfferForm() {
     offerDefaultRedukcja = false;
     offerDefaultRedukcjaMinH = 2500;
     offerDefaultRedukcjaZak = null;
-    
+
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title-studnie');
     if (titleEl) titleEl.innerHTML = `📋 Dane klienta i oferty (Nowa)`;
@@ -734,7 +851,10 @@ function clearOfferForm() {
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
-        btnChangeUser.style.display = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) ? 'inline-block' : 'none';
+        btnChangeUser.style.display =
+            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
+                ? 'inline-block'
+                : 'none';
         btnChangeUser.textContent = `👤 Zmień opiekuna`;
     }
 
@@ -757,17 +877,23 @@ function renderSavedOffersStudnie() {
         return;
     }
 
-    container.innerHTML = offersStudnie.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(o => {
-        const oId = normalizeId(o.id);
-        const hasOrder = o.hasOrder || (ordersStudnie && ordersStudnie.some(ord => normalizeId(ord.offerId) === oId));
-        const order = ordersStudnie ? ordersStudnie.find(ord => normalizeId(ord.offerId) === oId) : null;
-        const orderBadge = hasOrder
-            ? `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:rgba(16,185,129,0.15); border:2px solid rgba(16,185,129,0.4); border-radius:6px; margin-top:0.3rem;">
+    container.innerHTML = offersStudnie
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .map((o) => {
+            const oId = normalizeId(o.id);
+            const hasOrder =
+                o.hasOrder ||
+                (ordersStudnie && ordersStudnie.some((ord) => normalizeId(ord.offerId) === oId));
+            const order = ordersStudnie
+                ? ordersStudnie.find((ord) => normalizeId(ord.offerId) === oId)
+                : null;
+            const orderBadge = hasOrder
+                ? `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:rgba(16,185,129,0.15); border:2px solid rgba(16,185,129,0.4); border-radius:6px; margin-top:0.3rem;">
                 <span style="font-size:0.85rem;">📦</span>
                 <span style="font-size:0.68rem; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">Zamówienie ${order ? order.number : ''}</span>
                </div>`
-            : '';
-        return `
+                : '';
+            return `
         <div class="offer-list-item" ${hasOrder ? 'style="border-left:3px solid #34d399;"' : ''}>
             <div class="offer-info" style="min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
@@ -785,19 +911,27 @@ function renderSavedOffersStudnie() {
                     ${(() => {
                         const resolveName = (rawName) => {
                             if (!rawName) return '';
-                            if (window.globalUsersMap && window.globalUsersMap.has(rawName)) return window.globalUsersMap.get(rawName);
-                            if (typeof currentUser !== 'undefined' && currentUser && (rawName === currentUser.username || rawName === currentUser.id)) return currentUser.displayName || currentUser.username || rawName;
+                            if (window.globalUsersMap && window.globalUsersMap.has(rawName))
+                                return window.globalUsersMap.get(rawName);
+                            if (
+                                typeof currentUser !== 'undefined' &&
+                                currentUser &&
+                                (rawName === currentUser.username || rawName === currentUser.id)
+                            )
+                                return currentUser.displayName || currentUser.username || rawName;
                             return rawName;
                         };
                         const creatorName = resolveName(o.createdByUserName || o.userName);
                         const assignedName = resolveName(o.userName);
-                        
+
                         let html = '';
                         if (creatorName === assignedName && creatorName) {
                             html += `<span style="color:var(--accent-hover)">👤 Autor i Opiekun: <strong>${creatorName}</strong></span>`;
                         } else {
-                            if (creatorName) html += `<span style="display:inline-block; margin-right:10px; color:#888;">✍️ Autor: <strong>${creatorName}</strong></span>`;
-                            if (assignedName) html += `<span style="color:var(--accent-hover)">👤 Opiekun: <strong>${assignedName}</strong></span>`;
+                            if (creatorName)
+                                html += `<span style="display:inline-block; margin-right:10px; color:#888;">✍️ Autor: <strong>${creatorName}</strong></span>`;
+                            if (assignedName)
+                                html += `<span style="color:var(--accent-hover)">👤 Opiekun: <strong>${assignedName}</strong></span>`;
                         }
                         return html;
                     })()}
@@ -806,31 +940,41 @@ function renderSavedOffersStudnie() {
                         <span style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3);">💾 Zapisano</span>
                     </div>
                 </div>
-                ${o.clientName || o.investName || o.clientContact ? `
+                ${
+                    o.clientName || o.investName || o.clientContact
+                        ? `
                 <div class="offer-client-badges">
                     ${o.clientName ? `<div class="badge-client">🏢 <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
                     ${o.investName ? `<div class="badge-invest">🏗️ <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
-                </div>` : ''}
+                </div>`
+                        : ''
+                }
             </div>
             <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
                 <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj">Wczytaj</button>
                 <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON">💾 JSON</button>
-                ${(currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna">👤 Zmień opiekuna</button>` : ''}
-                ${(o.history && o.history.length > 0) ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian">⏳ Historia</button>` : ''}
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna">👤 Zmień opiekuna</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian">⏳ Historia</button>` : ''}
                 <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń">🗑️ Usuń</button>
-                ${hasOrder && order ? `
+                ${
+                    hasOrder && order
+                        ? `
                     <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.75rem; font-weight:800; padding:0.4rem 0.8rem;" onclick="window.location.href='/studnie?order=${order.id}'" title="Otwórz zamówienie">📦 Otwórz zamówienie</button>
                     <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie">🗑️ Zamówienie</button>
-                ` : ''}
+                `
+                        : ''
+                }
             </div>
         </div>
-        `}).join('');
+        `;
+        })
+        .join('');
 }
 
 /** Migrate old well data (material -> nadbudowa/dennicaMaterial) */
 function migrateWellData(wellsArr) {
     if (!wellsArr) return wellsArr;
-    wellsArr.forEach(w => {
+    wellsArr.forEach((w) => {
         // Migrate old 'material' field to new 'nadbudowa' + 'dennicaMaterial'
         if (w.material && !w.nadbudowa) {
             w.nadbudowa = w.material;
@@ -857,7 +1001,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
         offer = id_or_doc;
         if (optionalId && !offer.id) offer.id = optionalId;
     } else {
-        offer = offersStudnie.find(o => o.id === id_or_doc);
+        offer = offersStudnie.find((o) => o.id === id_or_doc);
         if (!offer) {
             try {
                 const { storageService } = await import('../shared/StorageService.js');
@@ -881,7 +1025,8 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
     editingOfferCreatedByUserId = normalized.createdByUserId || null;
     editingOfferCreatedByUserName = normalized.createdByUserName || '';
     document.getElementById('offer-number').value = normalized.number || '';
-    document.getElementById('offer-date').value = normalized.date || new Date().toISOString().slice(0, 10);
+    document.getElementById('offer-date').value =
+        normalized.date || new Date().toISOString().slice(0, 10);
     document.getElementById('client-name').value = normalized.clientName || '';
     document.getElementById('client-nip').value = normalized.clientNip || '';
     document.getElementById('client-address').value = normalized.clientAddress || '';
@@ -890,12 +1035,18 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
     document.getElementById('invest-address').value = normalized.investAddress || '';
     document.getElementById('invest-contractor').value = normalized.investContractor || '';
     document.getElementById('offer-notes').value = normalized.notes || '';
-    if (document.getElementById('offer-payment-terms')) document.getElementById('offer-payment-terms').value = normalized.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    if (document.getElementById('offer-validity')) document.getElementById('offer-validity').value = normalized.validity || '7 dni';
+    if (document.getElementById('offer-payment-terms'))
+        document.getElementById('offer-payment-terms').value =
+            normalized.paymentTerms ||
+            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    if (document.getElementById('offer-validity'))
+        document.getElementById('offer-validity').value = normalized.validity || '7 dni';
     document.getElementById('transport-km').value = normalized.transportKm || 100;
     document.getElementById('transport-rate').value = normalized.transportRate || 10;
 
-    wellDiscounts = normalized.wellDiscounts ? JSON.parse(JSON.stringify(normalized.wellDiscounts)) : {};
+    wellDiscounts = normalized.wellDiscounts
+        ? JSON.parse(JSON.stringify(normalized.wellDiscounts))
+        : {};
     visiblePrzejsciaTypes = new Set(normalized.visiblePrzejsciaTypes || []);
 
     wells = JSON.parse(JSON.stringify(normalized.wells || []));
@@ -903,10 +1054,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
 
     // Zawsze sprawdzaj, czy jakieś przejścia już są fizycznie dodane w studniach
     // i automatycznie włącz kategorię do widoku (aby nie trzeba było ich "wczytywać")
-    wells.forEach(w => {
+    wells.forEach((w) => {
         if (w.przejscia) {
-            w.przejscia.forEach(pr => {
-                const prod = studnieProducts.find(p => p.id === pr.productId);
+            w.przejscia.forEach((pr) => {
+                const prod = studnieProducts.find((p) => p.id === pr.productId);
                 if (prod && prod.category) {
                     visiblePrzejsciaTypes.add(prod.category);
                 }
@@ -938,13 +1089,17 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
 
     // Aktualizacja UI (nagłówki i przyciski)
     const titleEl = document.getElementById('offer-form-title-studnie');
-    if (titleEl) titleEl.innerHTML = `✏️ Edycja Oferty: <span style="font-weight:700">${normalized.number || offer.id}</span>`;
+    if (titleEl)
+        titleEl.innerHTML = `✏️ Edycja Oferty: <span style="font-weight:700">${normalized.number || offer.id}</span>`;
     const btnEl2 = document.getElementById('btn-save-studnie-offer');
     if (btnEl2) btnEl2.innerHTML = `💾 Zapisz zmiany`;
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
-        btnChangeUser.style.display = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) ? 'inline-block' : 'none';
+        btnChangeUser.style.display =
+            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
+                ? 'inline-block'
+                : 'none';
         if (editingOfferAssignedUserName) {
             btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
         } else {
@@ -960,15 +1115,24 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
 window.loadSavedOfferStudnie = loadSavedOfferStudnie;
 
 async function deleteOfferStudnie(id) {
-    if (!await appConfirm('Czy na pewno usunąć tę ofertę?', { title: 'Usuwanie oferty', type: 'danger' })) return;
+    if (
+        !(await appConfirm('Czy na pewno usunąć tę ofertę?', {
+            title: 'Usuwanie oferty',
+            type: 'danger'
+        }))
+    )
+        return;
     try {
-        const res = await fetch(`/api/offers-studnie/${id}`, { method: 'DELETE', headers: authHeaders() });
+        const res = await fetch(`/api/offers-studnie/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
         if (!res.ok) {
             const err = await res.json();
             showToast(err.error || 'Błąd usuwania', 'error');
             return;
         }
-        offersStudnie = offersStudnie.filter(o => o.id !== id);
+        offersStudnie = offersStudnie.filter((o) => o.id !== id);
         renderSavedOffersStudnie();
         showToast('Oferta usunięta', 'info');
     } catch (err) {
@@ -978,7 +1142,7 @@ async function deleteOfferStudnie(id) {
 }
 
 function exportJSONStudnie(id) {
-    const offer = offersStudnie.find(o => o.id === id);
+    const offer = offersStudnie.find((o) => o.id === id);
     if (!offer) return;
     const jsonStr = JSON.stringify(offer, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -994,11 +1158,11 @@ function importOfferFromFileStudnie() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/json';
-    input.onchange = e => {
+    input.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = event => {
+        reader.onload = (event) => {
             try {
                 const imported = JSON.parse(event.target.result);
                 if (imported && imported.wells) {
@@ -1020,11 +1184,7 @@ function importOfferFromFileStudnie() {
     input.click();
 }
 
-
-
-
 /* ===== CLIENT DATABASE — CRUD przeniesione do shared/clientManager.js ===== */
-
 
 /* --- SVG Diagram Logic Helper --- */
 window.decDiagramWellQty = function (idx) {
@@ -1032,7 +1192,7 @@ window.decDiagramWellQty = function (idx) {
     if (well && well.config[idx]) {
         updateWellQuantity(idx, well.config[idx].quantity - 1);
     }
-}
+};
 
 window.svgDragStartIndex = -1;
 
@@ -1044,7 +1204,9 @@ window.svgPointerDown = function (ev, idx) {
     // If Zlecenia modal is open, select element instead of dragging
     const zlModal = document.getElementById('zlecenia-modal');
     if (zlModal && zlModal.classList.contains('active')) {
-        const targetIdx = zleceniaElementsList.findIndex(el => el.wellIndex === currentWellIndex && el.elementIndex === idx);
+        const targetIdx = zleceniaElementsList.findIndex(
+            (el) => el.wellIndex === currentWellIndex && el.elementIndex === idx
+        );
         if (targetIdx >= 0) {
             selectZleceniaElement(targetIdx);
         }
@@ -1074,7 +1236,9 @@ function handleLiveSvgDrag(clientY) {
 
         let targetIdx = well.config.length;
         let found = false;
-        const grps = Array.from(dz.querySelectorAll('g.diag-comp-grp:not([pointer-events="none"])'));
+        const grps = Array.from(
+            dz.querySelectorAll('g.diag-comp-grp:not([pointer-events="none"])')
+        );
 
         for (let g of grps) {
             const rect = g.getBoundingClientRect();
@@ -1108,11 +1272,15 @@ document.addEventListener('mousemove', (ev) => {
     }
 });
 
-document.addEventListener('touchmove', (ev) => {
-    if (window.svgDragStartIndex >= 0 && ev.touches.length > 0) {
-        handleLiveSvgDrag(ev.touches[0].clientY);
-    }
-}, { passive: false });
+document.addEventListener(
+    'touchmove',
+    (ev) => {
+        if (window.svgDragStartIndex >= 0 && ev.touches.length > 0) {
+            handleLiveSvgDrag(ev.touches[0].clientY);
+        }
+    },
+    { passive: false }
+);
 
 document.addEventListener('mouseup', (ev) => {
     if (window.svgDragStartIndex >= 0) {
@@ -1135,7 +1303,7 @@ document.addEventListener('mouseup', (ev) => {
 
         const well = getCurrentWell();
         if (well) {
-            well.config.forEach(c => c.isPlaceholder = false);
+            well.config.forEach((c) => (c.isPlaceholder = false));
             well.autoLocked = true;
             if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
             well.configSource = 'MANUAL';
@@ -1173,7 +1341,6 @@ let dragOverCount = 0; // for drag & drop visual
 
 let isBackendOnline = false;
 
-
 // Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
 window.addEventListener('pv-sync-status-changed', () => {
     // Jeśli widżet zapisu ofert jest widoczny, odświeżamy go
@@ -1204,19 +1371,28 @@ function renderAuditLogEntry(log) {
         actionBadge = `<span style="background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">✨ UTWORZONO</span>`;
         const price = data.totalBrutto || 0;
         contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 ${fmt(price)} PLN</div>`;
-        if (data.wells) contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">📦 ${data.wells.length} studni</div>`;
+        if (data.wells)
+            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">📦 ${data.wells.length} studni</div>`;
     } else if (isDiff) {
         cardClass = 'action-diff';
         actionBadge = `<span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">📝 EDYCJA (DIFF)</span>`;
-        const changedKeys = Object.keys(data).filter(k => k !== '_diffMode');
-        const changesHtml = changedKeys.map(k => {
-            const oldVal = log.oldData && log.oldData[k] !== undefined ? log.oldData[k] : '(brak)';
-            const newVal = data[k] !== undefined ? data[k] : '(brak)';
-            if (k === 'totalBrutto' || k === 'totalNetto' || k.toLowerCase().includes('price') || k.toLowerCase().includes('cena')) {
-                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${fmt(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${fmt(Number(newVal))} PLN</span></div>`;
-            }
-            return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
-        }).join('');
+        const changedKeys = Object.keys(data).filter((k) => k !== '_diffMode');
+        const changesHtml = changedKeys
+            .map((k) => {
+                const oldVal =
+                    log.oldData && log.oldData[k] !== undefined ? log.oldData[k] : '(brak)';
+                const newVal = data[k] !== undefined ? data[k] : '(brak)';
+                if (
+                    k === 'totalBrutto' ||
+                    k === 'totalNetto' ||
+                    k.toLowerCase().includes('price') ||
+                    k.toLowerCase().includes('cena')
+                ) {
+                    return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${fmt(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${fmt(Number(newVal))} PLN</span></div>`;
+                }
+                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
+            })
+            .join('');
         contentHtml = `<div class="diff-container">${changesHtml}</div>`;
     } else {
         cardClass = 'action-update';
@@ -1228,12 +1404,16 @@ function renderAuditLogEntry(log) {
         } else {
             contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 ${fmt(price)} PLN</div>`;
         }
-        if (data.wells) contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">📦 ${data.wells.length} studni</div>`;
+        if (data.wells)
+            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">📦 ${data.wells.length} studni</div>`;
     }
 
-    const restoreBtnHtml = (!isDelete && !isDiff) ? `
+    const restoreBtnHtml =
+        !isDelete && !isDiff
+            ? `
         <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')">🔄 Przywróć</button>
-    ` : '';
+    `
+            : '';
 
     const buttonsHtml = `
         <div style="display:flex; gap:0.4rem;">
@@ -1263,7 +1443,9 @@ function renderAuditLogEntry(log) {
 
 async function showOfferHistoryStudnie(id) {
     try {
-        const res = await fetch(`/api/audit/studnia_oferta/${id}?limit=20&offset=0`, { headers: authHeaders() });
+        const res = await fetch(`/api/audit/studnia_oferta/${id}?limit=20&offset=0`, {
+            headers: authHeaders()
+        });
         const json = await res.json();
         const logs = json.data || [];
         const total = json.total || 0;
@@ -1278,11 +1460,12 @@ async function showOfferHistoryStudnie(id) {
         overlay.id = 'offer-history-modal';
 
         const historyHtml = logs.map(renderAuditLogEntry).join('');
-        const loadMoreHtml = logs.length < total
-            ? `<div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
+        const loadMoreHtml =
+            logs.length < total
+                ? `<div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
                    <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${id}', 20)">📜 Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
-            : '';
+                : '';
 
         overlay.innerHTML = `
             <style>
@@ -1363,7 +1546,9 @@ async function showOfferHistoryStudnie(id) {
         `;
         document.body.appendChild(overlay);
         overlay.classList.add('active');
-        overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
 
         window.currentAuditLogs = logs;
         window.currentAuditOffset = logs.length;
@@ -1376,7 +1561,10 @@ async function showOfferHistoryStudnie(id) {
 async function loadMoreAuditLogs(entityType, entityId, limit) {
     try {
         const offset = window.currentAuditOffset || 0;
-        const res = await fetch(`/api/audit/${entityType}/${entityId}?limit=${limit}&offset=${offset}`, { headers: authHeaders() });
+        const res = await fetch(
+            `/api/audit/${entityType}/${entityId}?limit=${limit}&offset=${offset}`,
+            { headers: authHeaders() }
+        );
         const json = await res.json();
         const newLogs = json.data || [];
         const total = json.total || 0;
@@ -1394,11 +1582,14 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
 
         if (window.currentAuditOffset < total) {
             const remaining = total - window.currentAuditOffset;
-            container.insertAdjacentHTML('beforeend', `
+            container.insertAdjacentHTML(
+                'beforeend',
+                `
                 <div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
                     <button class="load-more-btn" onclick="loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})">📜 Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
-            `);
+            `
+            );
         }
     } catch (e) {
         console.error('Błąd ładowania kolejnych logów:', e);
@@ -1406,14 +1597,16 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
 }
 
 async function viewHistorySnapshot(logId) {
-    const log = window.currentAuditLogs?.find(l => l.id === logId);
+    const log = window.currentAuditLogs?.find((l) => l.id === logId);
     if (!log) return;
 
     try {
         const entityType = log.entityType;
         const entityId = log.entityId;
 
-        const res = await fetch(`/api/audit/rebuild/${entityType}/${entityId}/${logId}`, { headers: authHeaders() });
+        const res = await fetch(`/api/audit/rebuild/${entityType}/${entityId}/${logId}`, {
+            headers: authHeaders()
+        });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.error || 'Błąd odtwarzania z serwera.');
@@ -1439,10 +1632,16 @@ async function viewHistorySnapshot(logId) {
 }
 
 async function restoreHistorySnapshot(logId) {
-    const log = window.currentAuditLogs?.find(l => l.id === logId);
+    const log = window.currentAuditLogs?.find((l) => l.id === logId);
     if (!log || !log.newData) return;
 
-    if (!await appConfirm('Czy na pewno chcesz przywrócić tę wersję? Aktualne zmiany zostaną nadpisane przy następnym zapisie.', { title: 'Przywrócenie wersji', type: 'warning', okText: 'Przywróć' })) return;
+    if (
+        !(await appConfirm(
+            'Czy na pewno chcesz przywrócić tę wersję? Aktualne zmiany zostaną nadpisane przy następnym zapisie.',
+            { title: 'Przywrócenie wersji', type: 'warning', okText: 'Przywróć' }
+        ))
+    )
+        return;
 
     if (log.entityType === 'order' && typeof window.loadOrderSnapshot === 'function') {
         window.loadOrderSnapshot(log.newData, log.entityId);
@@ -1450,11 +1649,16 @@ async function restoreHistorySnapshot(logId) {
         window.isPreviewMode = false;
         const banner = document.getElementById('preview-lock-banner');
         if (banner) banner.remove();
-        document.querySelectorAll('.drop-zone, #svg-trash, #studnie-product-list, .actions-bar').forEach(el => {
-            el.style.pointerEvents = '';
-            el.style.opacity = '1';
-        });
-        showToast('🔄 Przywrócono ZAMÓWIENIE z historii. Zapisz pomyślnie używając guzika "Zapisz zamówienie".', 'success');
+        document
+            .querySelectorAll('.drop-zone, #svg-trash, #studnie-product-list, .actions-bar')
+            .forEach((el) => {
+                el.style.pointerEvents = '';
+                el.style.opacity = '1';
+            });
+        showToast(
+            '🔄 Przywrócono ZAMÓWIENIE z historii. Zapisz pomyślnie używając guzika "Zapisz zamówienie".',
+            'success'
+        );
     } else {
         loadSavedOfferStudnie(log.newData);
         showToast('🔄 Przywrócono wersję historyczną. Zapisz ofertę, aby zatwierdzić.', 'success');
@@ -1462,6 +1666,3 @@ async function restoreHistorySnapshot(logId) {
 
     closeModal();
 }
-
-
-

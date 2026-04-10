@@ -1,140 +1,165 @@
 /* ===== INITIALIZATION ===== */
 /* ===== PRODUCT LENGTH (from ID pattern) ===== */
 function getProductLength(id) {
-  // ID format: XXX-X-DD-LL-XXX where LL = length in hundreds of mm
-  // e.g. RTB-0-03-25-K00 → 25 → 2500mm, RGZ-2-14-30-BU → 30 → 3000mm
-  const parts = id.split('-');
-  if (parts.length >= 4) {
-    const code = parseInt(parts[3]);
-    if (!isNaN(code) && code >= 10) return code * 100; // mm
-  }
-  return null;
+    // ID format: XXX-X-DD-LL-XXX where LL = length in hundreds of mm
+    // e.g. RTB-0-03-25-K00 → 25 → 2500mm, RGZ-2-14-30-BU → 30 → 3000mm
+    const parts = id.split('-');
+    if (parts.length >= 4) {
+        const code = parseInt(parts[3]);
+        if (!isNaN(code) && code >= 10) return code * 100; // mm
+    }
+    return null;
 }
 
 /* ===== PRODUCT DIAMETER (from ID pattern) ===== */
 function getProductDiameter(id) {
-  // ID format: XXX-X-DD-LL-XXX where DD = diameter code
-  // e.g. RTB-0-03-25-K00 → 03 → DN 300, RTZ-2-12-25-K00 → 12 → DN 1200
-  const parts = id.split('-');
-  if (parts.length >= 3) {
-    const code = parseInt(parts[2]);
-    if (!isNaN(code) && code > 0) return code * 100; // mm
-  }
-  return null;
+    // ID format: XXX-X-DD-LL-XXX where DD = diameter code
+    // e.g. RTB-0-03-25-K00 → 03 → DN 300, RTZ-2-12-25-K00 → 12 → DN 1200
+    const parts = id.split('-');
+    if (parts.length >= 3) {
+        const code = parseInt(parts[2]);
+        if (!isNaN(code) && code > 0) return code * 100; // mm
+    }
+    return null;
 }
 
 /* ===== PIPE INNER AREA AREA ===== */
 function getPipeInnerArea(id) {
-  const product = products.find(p => p.id === id);
-  if (product && product.area != null) {
-    return product.area;
-  }
+    const product = products.find((p) => p.id === id);
+    if (product && product.area != null) {
+        return product.area;
+    }
 
-  const d = getProductDiameter(id);
-  const l = getProductLength(id);
-  if (!d || !l) return 0;
+    const d = getProductDiameter(id);
+    const l = getProductLength(id);
+    if (!d || !l) return 0;
 
-  if (id.startsWith('RJB') || id.startsWith('RJZ')) {
-    // Jajowa - przybliżony obwód
-    const h = d * 1.5;
-    const perimeter = Math.PI * ((d + h) / 2) / 1000;
-    return perimeter * (l / 1000);
-  }
-  return Math.PI * (d / 1000) * (l / 1000);
+    if (id.startsWith('RJB') || id.startsWith('RJZ')) {
+        // Jajowa - przybliżony obwód
+        const h = d * 1.5;
+        const perimeter = (Math.PI * ((d + h) / 2)) / 1000;
+        return perimeter * (l / 1000);
+    }
+    return Math.PI * (d / 1000) * (l / 1000);
 }
 
 function isOneMetrePipe(id) {
-  const len = getProductLength(id);
-  return len === 1000;
+    const len = getProductLength(id);
+    return len === 1000;
 }
 
 /* ===== STORAGE HELPERS (REST API → server.js) ===== */
 async function loadProducts() {
-  try {
-    const res = await fetch('/api/products');
-    const json = await res.json();
-    let saved = json.data;
+    try {
+        const res = await fetch('/api/products');
+        const json = await res.json();
+        let saved = json.data;
 
-    if (!saved || saved.length === 0) {
-      // First run: seed server with defaults
-      const data = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-      await fetch('/api/products', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
-      return data;
+        if (!saved || saved.length === 0) {
+            // First run: seed server with defaults
+            const data = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+            await fetch('/api/products', {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ data })
+            });
+            return data;
+        }
+
+        let modified = false;
+        const savedIds = new Set(saved.map((p) => p.id));
+
+        DEFAULT_PRODUCTS.forEach((dp) => {
+            if (!savedIds.has(dp.id)) {
+                saved.push(JSON.parse(JSON.stringify(dp)));
+                modified = true;
+            }
+        });
+
+        saved.forEach((sp) => {
+            const dp = DEFAULT_PRODUCTS.find((p) => p.id === sp.id);
+            if (dp) {
+                if (sp.area === undefined || (sp.area === null && dp.area !== null)) {
+                    sp.area = dp.area;
+                    modified = true;
+                }
+                // Fix corrupted category if it was set to 'studnie' by the previous backend bug
+                if (sp.category === undefined || sp.category === 'studnie') {
+                    sp.category = dp.category;
+                    modified = true;
+                }
+                if (sp.transport === undefined) {
+                    sp.transport = dp.transport;
+                    modified = true;
+                }
+                if (sp.weight === undefined) {
+                    sp.weight = dp.weight;
+                    modified = true;
+                }
+            }
+        });
+
+        if (modified) {
+            await fetch('/api/products', {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ data: saved })
+            });
+        }
+
+        return saved;
+    } catch (err) {
+        console.error('loadProducts error:', err);
+        return JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
     }
-
-    let modified = false;
-    const savedIds = new Set(saved.map(p => p.id));
-
-    DEFAULT_PRODUCTS.forEach(dp => {
-      if (!savedIds.has(dp.id)) {
-        saved.push(JSON.parse(JSON.stringify(dp)));
-        modified = true;
-      }
-    });
-
-    saved.forEach(sp => {
-      const dp = DEFAULT_PRODUCTS.find(p => p.id === sp.id);
-      if (dp) {
-        if (sp.area === undefined || (sp.area === null && dp.area !== null)) { sp.area = dp.area; modified = true; }
-        // Fix corrupted category if it was set to 'studnie' by the previous backend bug
-        if (sp.category === undefined || sp.category === 'studnie') { sp.category = dp.category; modified = true; }
-        if (sp.transport === undefined) { sp.transport = dp.transport; modified = true; }
-        if (sp.weight === undefined) { sp.weight = dp.weight; modified = true; }
-      }
-    });
-
-    if (modified) {
-      await fetch('/api/products', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data: saved }) });
-    }
-
-    return saved;
-  } catch (err) {
-    console.error('loadProducts error:', err);
-    return JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-  }
 }
 
 async function saveProducts(data) {
-  try {
-    const res = await fetch('/api/products', {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify({ data })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error('saveProducts: serwer zwrócił błąd', res.status, err);
-      showToast('Błąd zapisu cennika: ' + (err.error || res.status), 'error');
-      return false;
+    try {
+        const res = await fetch('/api/products', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ data })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('saveProducts: serwer zwrócił błąd', res.status, err);
+            showToast('Błąd zapisu cennika: ' + (err.error || res.status), 'error');
+            return false;
+        }
+        return true;
+    } catch (err) {
+        console.error('saveProducts: błąd sieci', err);
+        showToast('Błąd sieci przy zapisie cennika', 'error');
+        return false;
     }
-    return true;
-  } catch (err) {
-    console.error('saveProducts: błąd sieci', err);
-    showToast('Błąd sieci przy zapisie cennika', 'error');
-    return false;
-  }
 }
 
 async function loadOffers() {
-  try {
-    const res = await fetch('/api/offers-rury', { headers: authHeaders() });
-    if (res.status === 401) { window.location.href = 'index.html'; return []; }
-    const json = await res.json();
-    return json.data || [];
-  } catch (err) { 
-    console.error('loadOffers REST API error:', err); 
-    return []; 
-  }
+    try {
+        const res = await fetch('/api/offers-rury', { headers: authHeaders() });
+        if (res.status === 401) {
+            window.location.href = 'index.html';
+            return [];
+        }
+        const json = await res.json();
+        return json.data || [];
+    } catch (err) {
+        console.error('loadOffers REST API error:', err);
+        return [];
+    }
 }
 
 async function saveOffersData(data) {
-  try {
-    const { storageService } = await import('./shared/StorageService.js');
-    for(const offer of data) {
-        const doc = { ...offer, id: offer.id, type: 'offer' };
-        await storageService.saveOffer(doc);
+    try {
+        const { storageService } = await import('./shared/StorageService.js');
+        for (const offer of data) {
+            const doc = { ...offer, id: offer.id, type: 'offer' };
+            await storageService.saveOffer(doc);
+        }
+    } catch (err) {
+        console.error('saveOffersData error:', err);
     }
-  } catch (err) { console.error('saveOffersData error:', err); }
 }
 
 /* loadClientsDb / saveClientsDbData — przeniesione do shared/clientManager.js */
@@ -154,153 +179,170 @@ let editingOfferAssignedUserName = '';
 let isTransportBreakdownExpanded = false;
 
 async function changeOfferUser() {
-  if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'pro')) {
-    showToast('Brak uprawnień do zmiany opiekuna', 'error');
-    return;
-  }
-  try {
-    const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
-    const usersData = await usersResp.json();
-    const allUsers = usersData.data || [];
-
-    if (allUsers.length > 0) {
-      const currentId = editingOfferAssignedUserId || currentUser.id;
-      const selectedUser = await showUserSelectionPopup(allUsers, currentId);
-      if (selectedUser !== null) {
-        editingOfferAssignedUserId = selectedUser.id;
-        editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
-        showToast(`Opiekun zmieniony na: ${editingOfferAssignedUserName}`, 'success');
-        
-        const btnChangeUser = document.getElementById('btn-change-offer-user');
-        if (btnChangeUser) btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
-
-        if (editingOfferId) {
-          saveOffer();
-        }
-      }
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'pro')) {
+        showToast('Brak uprawnień do zmiany opiekuna', 'error');
+        return;
     }
-  } catch (e) {
-    console.error('Błąd pobierania użytkowników:', e);
-    showToast('Błąd pobierania listy użytkowników', 'error');
-  }
+    try {
+        const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
+        const usersData = await usersResp.json();
+        const allUsers = usersData.data || [];
+
+        if (allUsers.length > 0) {
+            const currentId = editingOfferAssignedUserId || currentUser.id;
+            const selectedUser = await showUserSelectionPopup(allUsers, currentId);
+            if (selectedUser !== null) {
+                editingOfferAssignedUserId = selectedUser.id;
+                editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
+                showToast(`Opiekun zmieniony na: ${editingOfferAssignedUserName}`, 'success');
+
+                const btnChangeUser = document.getElementById('btn-change-offer-user');
+                if (btnChangeUser)
+                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+
+                if (editingOfferId) {
+                    saveOffer();
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Błąd pobierania użytkowników:', e);
+        showToast('Błąd pobierania listy użytkowników', 'error');
+    }
 }
 
-
 window.toggleTransportBreakdown = function () {
-  isTransportBreakdownExpanded = !isTransportBreakdownExpanded;
-  const content = document.getElementById('transport-breakdown-content');
-  const icon = document.getElementById('transport-toggle-icon');
-  if (content) {
-    content.style.display = isTransportBreakdownExpanded ? 'block' : 'none';
-    icon.textContent = isTransportBreakdownExpanded ? '🔼' : '🔽';
-  }
+    isTransportBreakdownExpanded = !isTransportBreakdownExpanded;
+    const content = document.getElementById('transport-breakdown-content');
+    const icon = document.getElementById('transport-toggle-icon');
+    if (content) {
+        content.style.display = isTransportBreakdownExpanded ? 'block' : 'none';
+        icon.textContent = isTransportBreakdownExpanded ? '🔼' : '🔽';
+    }
 };
 
 window.toggleCard = function (contentId, iconId) {
-  const content = document.getElementById(contentId);
-  const icon = document.getElementById(iconId);
-  if (content && icon) {
-    content.classList.toggle('hidden');
-    const isHidden = content.classList.contains('hidden');
-    icon.textContent = isHidden ? '🔼' : '🔽';
+    const content = document.getElementById(contentId);
+    const icon = document.getElementById(iconId);
+    if (content && icon) {
+        content.classList.toggle('hidden');
+        const isHidden = content.classList.contains('hidden');
+        icon.textContent = isHidden ? '🔼' : '🔽';
 
-    // Explicitly hide sticky elements inside that might escape overflow bounds
-    const stickyEls = content.querySelectorAll('.offer-search-row, .catalog-tabs');
-    stickyEls.forEach(el => {
-      if (isHidden) el.classList.add('hidden');
-      else el.classList.remove('hidden');
-    });
-  }
+        // Explicitly hide sticky elements inside that might escape overflow bounds
+        const stickyEls = content.querySelectorAll('.offer-search-row, .catalog-tabs');
+        stickyEls.forEach((el) => {
+            if (isHidden) el.classList.add('hidden');
+            else el.classList.remove('hidden');
+        });
+    }
 };
 
 /* ===== INIT ===== */
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check authentication
-  const token = getAuthToken();
-  if (!token) { window.location.href = 'index.html'; return; }
-  try {
-    const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
-    const authData = await authRes.json();
-    if (!authData.user) { window.location.href = 'index.html'; return; }
-    currentUser = authData.user;
-    // Generate displayName for UI
-    currentUser.displayName = (currentUser.firstName && currentUser.lastName) 
-      ? `${currentUser.firstName} ${currentUser.lastName}` 
-      : currentUser.username;
-    sessionStorage.setItem('user', JSON.stringify(currentUser));
-    
-    // Pobierz mapę wszystkich użytkowników dla list
-    await fetchGlobalUsers();
-  } catch (e) { window.location.href = 'index.html'; return; }
+    // Check authentication
+    const token = getAuthToken();
+    if (!token) {
+        window.location.href = 'index.html';
+        return;
+    }
+    try {
+        const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
+        const authData = await authRes.json();
+        if (!authData.user) {
+            window.location.href = 'index.html';
+            return;
+        }
+        currentUser = authData.user;
+        // Generate displayName for UI
+        currentUser.displayName =
+            currentUser.firstName && currentUser.lastName
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.username;
+        sessionStorage.setItem('user', JSON.stringify(currentUser));
 
-  // Display user info in header
-  const userEl = document.getElementById('header-username');
-  if (userEl) userEl.textContent = '👤 ' + (currentUser.displayName || currentUser.username);
-  
-  const roleEl = document.getElementById('header-role-badge');
-  if (roleEl) {
-    roleEl.textContent = currentUser.role === 'admin' ? 'ADMIN' : 'USER';
-    roleEl.style.background = currentUser.role === 'admin' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)';
-    roleEl.style.color = currentUser.role === 'admin' ? '#f59e0b' : '#60a5fa';
-    roleEl.style.border = currentUser.role === 'admin' ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(59,130,246,0.3)';
-  }
+        // Pobierz mapę wszystkich użytkowników dla list
+        await fetchGlobalUsers();
+    } catch (e) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-  // Pokaż przycisk „Zmień opiekuna" dla admin/pro
-  const btnChangeUser = document.getElementById('btn-change-offer-user');
-  if (btnChangeUser && currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
-    btnChangeUser.style.display = 'inline-block';
-  }
+    // Display user info in header
+    const userEl = document.getElementById('header-username');
+    if (userEl) userEl.textContent = '👤 ' + (currentUser.displayName || currentUser.username);
 
+    const roleEl = document.getElementById('header-role-badge');
+    if (roleEl) {
+        roleEl.textContent = currentUser.role === 'admin' ? 'ADMIN' : 'USER';
+        roleEl.style.background =
+            currentUser.role === 'admin' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)';
+        roleEl.style.color = currentUser.role === 'admin' ? '#f59e0b' : '#60a5fa';
+        roleEl.style.border =
+            currentUser.role === 'admin'
+                ? '1px solid rgba(245,158,11,0.3)'
+                : '1px solid rgba(59,130,246,0.3)';
+    }
 
-  products = await loadProducts();
-  offers = await loadOffers();
-  clientsDb = await loadClientsDb();
+    // Pokaż przycisk „Zmień opiekuna" dla admin/pro
+    const btnChangeUser = document.getElementById('btn-change-offer-user');
+    if (
+        btnChangeUser &&
+        currentUser &&
+        (currentUser.role === 'admin' || currentUser.role === 'pro')
+    ) {
+        btnChangeUser.style.display = 'inline-block';
+    }
 
-  setupNavigation();
-  renderPriceList();
-  renderSavedOffers();
-  setupOfferForm();
+    products = await loadProducts();
+    offers = await loadOffers();
+    clientsDb = await loadClientsDb();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const tab = urlParams.get('tab');
-  const editId = urlParams.get('edit');
-  const orderId = urlParams.get('order');
+    setupNavigation();
+    renderPriceList();
+    renderSavedOffers();
+    setupOfferForm();
 
-  if (editId) {
-    showSection('offer');
-    loadOffer(editId);
-  } else if (orderId) {
-    showSection('offer'); // Or handle order specifically if Rury has an order view
-  } else if (tab) {
-    showSection(tab);
-  } else {
-    showSection('offer');
-  }
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    const editId = urlParams.get('edit');
+    const orderId = urlParams.get('order');
+
+    if (editId) {
+        showSection('offer');
+        loadOffer(editId);
+    } else if (orderId) {
+        showSection('offer'); // Or handle order specifically if Rury has an order view
+    } else if (tab) {
+        showSection(tab);
+    } else {
+        showSection('offer');
+    }
 });
 
 /* ===== NAVIGATION ===== */
 function setupNavigation() {
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => showSection(btn.dataset.section));
-  });
+    document.querySelectorAll('.nav-btn').forEach((btn) => {
+        btn.addEventListener('click', () => showSection(btn.dataset.section));
+    });
 }
 
 function showSection(id) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  
-  const targetSection = document.getElementById('section-' + id);
-  if(targetSection) targetSection.classList.add('active');
-  
-  const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
-  if(targetBtn) targetBtn.classList.add('active');
+    document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
 
-  if (id === 'pricelist') renderPriceList();
-  
-  // Update URL so reload doesn't lose state
-  const urlParams = new URLSearchParams(window.location.search);
-  urlParams.set('tab', id);
-  window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+    const targetSection = document.getElementById('section-' + id);
+    if (targetSection) targetSection.classList.add('active');
+
+    const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    if (id === 'pricelist') renderPriceList();
+
+    // Update URL so reload doesn't lose state
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('tab', id);
+    window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 }
 
 /* ===== TOAST ===== */
@@ -311,10 +353,10 @@ function showSection(id) {
 
 /* ===== PRICE LIST ===== */
 function renderPriceList() {
-  const container = document.getElementById('pricelist-body');
-  const searchVal = document.getElementById('pricelist-search')?.value?.toLowerCase() || '';
+    const container = document.getElementById('pricelist-body');
+    const searchVal = document.getElementById('pricelist-search')?.value?.toLowerCase() || '';
 
-  let html = `<div class="table-wrap">
+    let html = `<div class="table-wrap">
     <table style="table-layout: fixed; width: 100%;">
       <thead>
         <tr>
@@ -328,18 +370,22 @@ function renderPriceList() {
         </tr>
       </thead>`;
 
-  let hasAnyItems = false;
+    let hasAnyItems = false;
 
-  CATEGORIES.forEach(cat => {
-    const items = products.filter(p => p.category === cat && (
-      !searchVal || p.id.toLowerCase().includes(searchVal) || p.name.toLowerCase().includes(searchVal)
-    ));
-    if (items.length === 0 && searchVal) return;
-    if (items.length === 0 && !searchVal) return; // Skip empty categories completely for cleaner layout
+    CATEGORIES.forEach((cat) => {
+        const items = products.filter(
+            (p) =>
+                p.category === cat &&
+                (!searchVal ||
+                    p.id.toLowerCase().includes(searchVal) ||
+                    p.name.toLowerCase().includes(searchVal))
+        );
+        if (items.length === 0 && searchVal) return;
+        if (items.length === 0 && !searchVal) return; // Skip empty categories completely for cleaner layout
 
-    hasAnyItems = true;
+        hasAnyItems = true;
 
-    html += `<tbody>
+        html += `<tbody>
       <tr>
         <td colspan="7" style="padding: 0; border: none;">
           <div class="cat-header" style="margin: 1rem 0 0.4rem 0;">
@@ -348,8 +394,8 @@ function renderPriceList() {
         </td>
       </tr>`;
 
-    items.forEach(p => {
-      html += `<tr data-id="${p.id}">
+        items.forEach((p) => {
+            html += `<tr data-id="${p.id}">
         <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${p.id}')">${p.id}</code></td>
         <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${p.id}')">${p.name}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'price','${p.id}')">${fmt(p.price)}</span></td>
@@ -361,291 +407,349 @@ function renderPriceList() {
           <button class="btn-icon" title="Usuń" onclick="deleteProduct('${p.id}')">✕</button>
         </td>
       </tr>`;
+        });
+
+        html += `</tbody>`;
     });
 
-    html += `</tbody>`;
-  });
+    html += `</table></div>`;
 
-  html += `</table></div>`;
+    if (!hasAnyItems) {
+        html = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Brak wyników do wyświetlenia...</div>`;
+    }
 
-  if (!hasAnyItems) {
-    html = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Brak wyników do wyświetlenia...</div>`;
-  }
-
-  container.innerHTML = html;
+    container.innerHTML = html;
 }
 
 function editCell(el, field, id) {
-  if (el.querySelector('input')) return;
-  const product = products.find(p => p.id === id);
-  const oldVal = product[field] ?? '';
-  const input = document.createElement('input');
-  input.type = (field === 'name' || field === 'id') ? 'text' : 'number';
-  input.className = 'edit-input';
-  input.value = oldVal;
-  input.style.width = field === 'name' ? '100%' : (field === 'id' ? '120px' : '80px');
-  el.textContent = '';
-  el.appendChild(input);
-  input.focus();
-  input.select();
+    if (el.querySelector('input')) return;
+    const product = products.find((p) => p.id === id);
+    const oldVal = product[field] ?? '';
+    const input = document.createElement('input');
+    input.type = field === 'name' || field === 'id' ? 'text' : 'number';
+    input.className = 'edit-input';
+    input.value = oldVal;
+    input.style.width = field === 'name' ? '100%' : field === 'id' ? '120px' : '80px';
+    el.textContent = '';
+    el.appendChild(input);
+    input.focus();
+    input.select();
 
-  let isSaving = false;
-  const save = async () => {
-    if (isSaving) return;
-    isSaving = true;
+    let isSaving = false;
+    const save = async () => {
+        if (isSaving) return;
+        isSaving = true;
 
-    const val = (field === 'name' || field === 'id') ? input.value.trim() : (input.value === '' ? null : Number(input.value));
+        const val =
+            field === 'name' || field === 'id'
+                ? input.value.trim()
+                : input.value === ''
+                  ? null
+                  : Number(input.value);
 
-    if (field === 'id') {
-      if (!val) {
-        showToast('Indeks nie może być pusty', 'error');
-        renderPriceList();
-        return;
-      }
-      if (val !== id && products.some(p => p.id === val)) {
-        showToast('Taki indeks już istnieje', 'error');
-        renderPriceList();
-        return;
-      }
-    }
+        if (field === 'id') {
+            if (!val) {
+                showToast('Indeks nie może być pusty', 'error');
+                renderPriceList();
+                return;
+            }
+            if (val !== id && products.some((p) => p.id === val)) {
+                showToast('Taki indeks już istnieje', 'error');
+                renderPriceList();
+                return;
+            }
+        }
 
-    product[field] = val;
-    const ok = await saveProducts(products);
-    if (ok) {
-      renderPriceList();
-      renderOfferItems(); // Recalculate transport in case weight or capacity was changed
-      showToast('Zaktualizowano cennik', 'success');
-    } else {
-      // saveProducts już pokazał błąd, odświeżamy widok do stanu z pamięci
-      renderPriceList();
-    }
-  };
-  input.addEventListener('blur', save);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderPriceList(); });
+        product[field] = val;
+        const ok = await saveProducts(products);
+        if (ok) {
+            renderPriceList();
+            renderOfferItems(); // Recalculate transport in case weight or capacity was changed
+            showToast('Zaktualizowano cennik', 'success');
+        } else {
+            // saveProducts już pokazał błąd, odświeżamy widok do stanu z pamięci
+            renderPriceList();
+        }
+    };
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') save();
+        if (e.key === 'Escape') renderPriceList();
+    });
 }
 
 function copyProduct(id) {
-  const original = products.find(p => p.id === id);
-  if (!original) return;
+    const original = products.find((p) => p.id === id);
+    if (!original) return;
 
-  const newId = original.id + '-KOP';
-  let counter = 1;
-  let finalId = newId;
+    const newId = original.id + '-KOP';
+    let counter = 1;
+    let finalId = newId;
 
-  while (products.some(p => p.id === finalId)) {
-    finalId = `${newId}${counter}`;
-    counter++;
-  }
+    while (products.some((p) => p.id === finalId)) {
+        finalId = `${newId}${counter}`;
+        counter++;
+    }
 
-  const copied = JSON.parse(JSON.stringify(original));
-  copied.id = finalId;
-  copied.name = copied.name + ' (Kopia)';
+    const copied = JSON.parse(JSON.stringify(original));
+    copied.id = finalId;
+    copied.name = copied.name + ' (Kopia)';
 
-  const index = products.findIndex(p => p.id === id);
-  products.splice(index + 1, 0, copied);
+    const index = products.findIndex((p) => p.id === id);
+    products.splice(index + 1, 0, copied);
 
-  saveProducts(products);
-  renderPriceList();
-  showToast('Produkt skopiowany', 'success');
+    saveProducts(products);
+    renderPriceList();
+    showToast('Produkt skopiowany', 'success');
 }
 
 async function deleteProduct(id) {
-  if (!await appConfirm('Czy na pewno usunąć ten produkt z cennika?', { title: 'Usuwanie produktu', type: 'danger' })) return;
-  products = products.filter(p => p.id !== id);
-  saveProducts(products);
-  renderPriceList();
-  showToast('Produkt usunięty', 'info');
+    if (
+        !(await appConfirm('Czy na pewno usunąć ten produkt z cennika?', {
+            title: 'Usuwanie produktu',
+            type: 'danger'
+        }))
+    )
+        return;
+    products = products.filter((p) => p.id !== id);
+    saveProducts(products);
+    renderPriceList();
+    showToast('Produkt usunięty', 'info');
 }
 
 async function resetPriceList() {
-  try {
-    const res = await fetch('/api/products/default');
-    const json = await res.json();
-    const customDefault = json.data;
-    if (customDefault && customDefault.length > 0) {
-      if (!await appConfirm('Przywrócić cennik do Twojego zapisanego cennika domyślnego? Utracisz niezapisane i najnowsze zmiany.', { title: 'Reset cennika', type: 'warning' })) return;
-      products = JSON.parse(JSON.stringify(customDefault));
-    } else {
-      if (!await appConfirm('Brak zapisanego własnego cennika. Przywrócić do wartości fabrycznych producenta? Utracisz wszystkie zmiany.', { title: 'Reset cennika', type: 'warning' })) return;
-      products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    try {
+        const res = await fetch('/api/products/default');
+        const json = await res.json();
+        const customDefault = json.data;
+        if (customDefault && customDefault.length > 0) {
+            if (
+                !(await appConfirm(
+                    'Przywrócić cennik do Twojego zapisanego cennika domyślnego? Utracisz niezapisane i najnowsze zmiany.',
+                    { title: 'Reset cennika', type: 'warning' }
+                ))
+            )
+                return;
+            products = JSON.parse(JSON.stringify(customDefault));
+        } else {
+            if (
+                !(await appConfirm(
+                    'Brak zapisanego własnego cennika. Przywrócić do wartości fabrycznych producenta? Utracisz wszystkie zmiany.',
+                    { title: 'Reset cennika', type: 'warning' }
+                ))
+            )
+                return;
+            products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+        }
+    } catch {
+        if (
+            !(await appConfirm(
+                'Przywrócić cennik do wartości fabrycznych? Utracisz wszystkie zmiany.',
+                { title: 'Reset cennika', type: 'warning' }
+            ))
+        )
+            return;
+        products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
     }
-  } catch {
-    if (!await appConfirm('Przywrócić cennik do wartości fabrycznych? Utracisz wszystkie zmiany.', { title: 'Reset cennika', type: 'warning' })) return;
-    products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-  }
-  await saveProducts(products);
-  renderPriceList();
-  showToast('Cennik przywrócony', 'info');
+    await saveProducts(products);
+    renderPriceList();
+    showToast('Cennik przywrócony', 'info');
 }
 
 async function manuallySaveProductsDB() {
-  if (!await appConfirm('Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?', { title: 'Zapis fabr.', type: 'warning' })) return;
-  try {
-    // 1. Zapis bieżącego cennika
-    const saveOk = await saveProducts(products);
-    if (!saveOk) return; // saveProducts już pokazał toast z błędem
+    if (
+        !(await appConfirm(
+            'Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?',
+            { title: 'Zapis fabr.', type: 'warning' }
+        ))
+    )
+        return;
+    try {
+        // 1. Zapis bieżącego cennika
+        const saveOk = await saveProducts(products);
+        if (!saveOk) return; // saveProducts już pokazał toast z błędem
 
-    // 2. Zapis jako wartości fabryczne
-    const res = await fetch('/api/products/default', {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify({ data: products })
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      console.error('manuallySaveProductsDB: błąd zapisu default', res.status, errData);
-      showToast('Błąd zapisu wartości fabrycznych: ' + (errData.error || res.status), 'error');
-      return;
+        // 2. Zapis jako wartości fabryczne
+        const res = await fetch('/api/products/default', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ data: products })
+        });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error('manuallySaveProductsDB: błąd zapisu default', res.status, errData);
+            showToast(
+                'Błąd zapisu wartości fabrycznych: ' + (errData.error || res.status),
+                'error'
+            );
+            return;
+        }
+
+        renderPriceList();
+        if (typeof renderTiles === 'function') renderTiles();
+        showToast('Zapisano produkty jako wartości fabryczne', 'success');
+    } catch (err) {
+        console.error('manuallySaveProductsDB: wyjątek', err);
+        showToast('Błąd zapisu: ' + err.message, 'error');
     }
-
-    renderPriceList();
-    if (typeof renderTiles === 'function') renderTiles();
-    showToast('Zapisano produkty jako wartości fabryczne', 'success');
-  } catch (err) {
-    console.error('manuallySaveProductsDB: wyjątek', err);
-    showToast('Błąd zapisu: ' + err.message, 'error');
-  }
 }
 
 /* ===== EXCEL IMPORT / EXPORT ===== */
 const RURY_EXPORT_COLUMNS = [
-  { header: 'Indeks', key: 'id' },
-  { header: 'Nazwa produktu', key: 'name' },
-  { header: 'Cena PLN (netto)', key: 'price' },
-  { header: 'Kategoria', key: 'category' },
-  { header: 'Waga (kg)', key: 'weight' },
-  { header: 'Szt./transport', key: 'transport' },
-  { header: 'Powierzchnia (m2)', key: 'area' }
+    { header: 'Indeks', key: 'id' },
+    { header: 'Nazwa produktu', key: 'name' },
+    { header: 'Cena PLN (netto)', key: 'price' },
+    { header: 'Kategoria', key: 'category' },
+    { header: 'Waga (kg)', key: 'weight' },
+    { header: 'Szt./transport', key: 'transport' },
+    { header: 'Powierzchnia (m2)', key: 'area' }
 ];
 
 const RURY_HEADER_TO_KEY = {};
-RURY_EXPORT_COLUMNS.forEach(col => { RURY_HEADER_TO_KEY[col.header] = col.key; });
+RURY_EXPORT_COLUMNS.forEach((col) => {
+    RURY_HEADER_TO_KEY[col.header] = col.key;
+});
 
 function exportRuryToExcel() {
-  if (!products || products.length === 0) {
-    showToast('Brak danych do eksportu', 'error');
-    return;
-  }
-  try {
-    const wb = XLSX.utils.book_new();
+    if (!products || products.length === 0) {
+        showToast('Brak danych do eksportu', 'error');
+        return;
+    }
+    try {
+        const wb = XLSX.utils.book_new();
 
-    const rows = products.map(p => {
-      const row = {};
-      RURY_EXPORT_COLUMNS.forEach(col => {
-        row[col.header] = p[col.key] ?? '';
-      });
-      return row;
-    });
+        const rows = products.map((p) => {
+            const row = {};
+            RURY_EXPORT_COLUMNS.forEach((col) => {
+                row[col.header] = p[col.key] ?? '';
+            });
+            return row;
+        });
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = RURY_EXPORT_COLUMNS.map(col => ({ wch: Math.max(col.header.length + 2, 15) }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws['!cols'] = RURY_EXPORT_COLUMNS.map((col) => ({
+            wch: Math.max(col.header.length + 2, 15)
+        }));
 
-    XLSX.utils.book_append_sheet(wb, ws, "Cennik Rury");
-    XLSX.writeFile(wb, "Cennik_Rury_Export.xlsx");
-    showToast('Wyeksportowano cennik rur do Excela (' + products.length + ' pozycji)', 'success');
-  } catch (err) {
-    console.error('Export error:', err);
-    showToast('Błąd podczas eksportu do Excela', 'error');
-  }
+        XLSX.utils.book_append_sheet(wb, ws, 'Cennik Rury');
+        XLSX.writeFile(wb, 'Cennik_Rury_Export.xlsx');
+        showToast(
+            'Wyeksportowano cennik rur do Excela (' + products.length + ' pozycji)',
+            'success'
+        );
+    } catch (err) {
+        console.error('Export error:', err);
+        showToast('Błąd podczas eksportu do Excela', 'error');
+    }
 }
 
 function importRuryFromExcel(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = async function (e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
-      if (!json || json.length === 0) {
-        showToast('Skoroszyt jest pusty lub ma zły format', 'error');
-        return;
-      }
+            if (!json || json.length === 0) {
+                showToast('Skoroszyt jest pusty lub ma zły format', 'error');
+                return;
+            }
 
-      const numericFields = ['price', 'weight', 'transport', 'area'];
-      const seenIds = new Set();
-      const normalized = json.map((raw, index) => {
-        const product = {};
+            const numericFields = ['price', 'weight', 'transport', 'area'];
+            const seenIds = new Set();
+            const normalized = json
+                .map((raw, index) => {
+                    const product = {};
 
-        // Map columns - support both Polish headers and raw keys
-        Object.keys(raw).forEach(col => {
-          const key = RURY_HEADER_TO_KEY[col] || col;
-          product[key] = raw[col];
-        });
+                    // Map columns - support both Polish headers and raw keys
+                    Object.keys(raw).forEach((col) => {
+                        const key = RURY_HEADER_TO_KEY[col] || col;
+                        product[key] = raw[col];
+                    });
 
-        // Basic normalization
-        product.id = String(product.id || '').trim();
-        product.name = String(product.name || '').trim();
-        product.category = String(product.category || '').trim() || 'Inne';
+                    // Basic normalization
+                    product.id = String(product.id || '').trim();
+                    product.name = String(product.name || '').trim();
+                    product.category = String(product.category || '').trim() || 'Inne';
 
-        // Check required fields
-        if (!product.id || !product.name) {
-          console.warn(`[Import] Row ${index + 2} skipped: missing ID or Name`);
-          return null;
+                    // Check required fields
+                    if (!product.id || !product.name) {
+                        console.warn(`[Import] Row ${index + 2} skipped: missing ID or Name`);
+                        return null;
+                    }
+
+                    // Check duplicates in the import file
+                    if (seenIds.has(product.id)) {
+                        console.warn(
+                            `[Import] Row ${index + 2} skipped: duplicate ID ${product.id}`
+                        );
+                        return null;
+                    }
+                    seenIds.add(product.id);
+
+                    // Parsing numbers robustly
+                    numericFields.forEach((f) => {
+                        let val = product[f];
+                        if (val === '' || val === undefined || val === null || val === '-') {
+                            product[f] = null;
+                        } else if (typeof val === 'string') {
+                            // Remove spaces and replace comma with dot
+                            val = val.replace(/\s/g, '').replace(',', '.');
+                            const num = parseFloat(val);
+                            product[f] = isNaN(num) ? null : num;
+                        } else {
+                            const num = parseFloat(val);
+                            product[f] = isNaN(num) ? null : num;
+                        }
+                    });
+
+                    return product;
+                })
+                .filter((p) => p !== null);
+
+            if (normalized.length === 0) {
+                showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');
+                return;
+            }
+
+            const confirmImport = await appConfirm(
+                `Zaimportować ${normalized.length} pozycji? Aktualny cennik zostanie zastąpiony.`,
+                { title: 'Import cennika', type: 'warning' }
+            );
+            if (!confirmImport) return;
+
+            products = normalized;
+            saveProducts(products);
+            renderPriceList();
+            showToast(
+                'Pomyślnie zaimportowano ' + normalized.length + ' pozycji z Excela',
+                'success'
+            );
+        } catch (err) {
+            console.error('Import error:', err);
+            showToast('Błąd podczas importu pliku Excel', 'error');
         }
-
-        // Check duplicates in the import file
-        if (seenIds.has(product.id)) {
-          console.warn(`[Import] Row ${index + 2} skipped: duplicate ID ${product.id}`);
-          return null;
-        }
-        seenIds.add(product.id);
-
-        // Parsing numbers robustly
-        numericFields.forEach(f => {
-          let val = product[f];
-          if (val === '' || val === undefined || val === null || val === '-') {
-            product[f] = null;
-          } else if (typeof val === 'string') {
-            // Remove spaces and replace comma with dot
-            val = val.replace(/\s/g, '').replace(',', '.');
-            const num = parseFloat(val);
-            product[f] = isNaN(num) ? null : num;
-          } else {
-            const num = parseFloat(val);
-            product[f] = isNaN(num) ? null : num;
-          }
-        });
-
-        return product;
-      }).filter(p => p !== null);
-
-      if (normalized.length === 0) {
-        showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');
-        return;
-      }
-
-      const confirmImport = await appConfirm(`Zaimportować ${normalized.length} pozycji? Aktualny cennik zostanie zastąpiony.`, { title: 'Import cennika', type: 'warning' });
-      if (!confirmImport) return;
-
-      products = normalized;
-      saveProducts(products);
-      renderPriceList();
-      showToast('Pomyślnie zaimportowano ' + normalized.length + ' pozycji z Excela', 'success');
-    } catch (err) {
-      console.error('Import error:', err);
-      showToast('Błąd podczas importu pliku Excel', 'error');
-    }
-    event.target.value = ''; // Reset input
-  };
-  reader.onerror = () => showToast('Błąd odczytu pliku', 'error');
-  reader.readAsArrayBuffer(file);
+        event.target.value = ''; // Reset input
+    };
+    reader.onerror = () => showToast('Błąd odczytu pliku', 'error');
+    reader.readAsArrayBuffer(file);
 }
 
 function showAddProductModal() {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'add-product-modal';
-  overlay.innerHTML = `
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-product-modal';
+    overlay.innerHTML = `
     <div class="modal">
       <div class="modal-header"><h3>➕ Dodaj nowy produkt</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
-        <select class="form-select" id="np-category">${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+        <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="np. RTB-0-10-25-K00"></div>
       <div class="form-group"><label class="form-label">Nazwa produktu</label><input class="form-input" id="np-name" placeholder="np. RURA WITROS..."></div>
       <div class="form-row form-row-4">
@@ -659,66 +763,94 @@ function showAddProductModal() {
         <button class="btn btn-primary" onclick="addProduct()">Dodaj produkt</button>
       </div>
     </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
 }
 
 function addProduct() {
-  const id = document.getElementById('np-id').value.trim();
-  const name = document.getElementById('np-name').value.trim();
-  const price = parseFloat(document.getElementById('np-price').value);
-  const area = document.getElementById('np-area').value ? parseFloat(document.getElementById('np-area').value) : null;
-  const transport = document.getElementById('np-transport').value ? parseInt(document.getElementById('np-transport').value) : null;
-  const weight = document.getElementById('np-weight').value ? parseInt(document.getElementById('np-weight').value) : null;
-  const category = document.getElementById('np-category').value;
+    const id = document.getElementById('np-id').value.trim();
+    const name = document.getElementById('np-name').value.trim();
+    const price = parseFloat(document.getElementById('np-price').value);
+    const area = document.getElementById('np-area').value
+        ? parseFloat(document.getElementById('np-area').value)
+        : null;
+    const transport = document.getElementById('np-transport').value
+        ? parseInt(document.getElementById('np-transport').value)
+        : null;
+    const weight = document.getElementById('np-weight').value
+        ? parseInt(document.getElementById('np-weight').value)
+        : null;
+    const category = document.getElementById('np-category').value;
 
-  if (!id || !name || isNaN(price)) { showToast('Wypełnij wymagane pola (indeks, nazwa, cena)', 'error'); return; }
-  if (products.some(p => p.id === id)) { showToast('Produkt o takim indeksie już istnieje', 'error'); return; }
+    if (!id || !name || isNaN(price)) {
+        showToast('Wypełnij wymagane pola (indeks, nazwa, cena)', 'error');
+        return;
+    }
+    if (products.some((p) => p.id === id)) {
+        showToast('Produkt o takim indeksie już istnieje', 'error');
+        return;
+    }
 
-  products.push({ id, name, price, area, transport, weight, category });
-  saveProducts(products);
-  closeModal();
-  renderPriceList();
-  showToast('Dodano nowy produkt', 'success');
+    products.push({ id, name, price, area, transport, weight, category });
+    saveProducts(products);
+    closeModal();
+    renderPriceList();
+    showToast('Dodano nowy produkt', 'success');
 }
 
 /* closeModal — przeniesione do shared/ui.js */
 
 /* ===== OFFER FORM ===== */
 function setupOfferForm() {
-  const searchInput = document.getElementById('product-search');
-  const dropdown = document.getElementById('product-dropdown');
+    const searchInput = document.getElementById('product-search');
+    const dropdown = document.getElementById('product-dropdown');
 
-  searchInput.addEventListener('input', () => {
-    const val = searchInput.value.toLowerCase().trim();
-    if (val.length < 2) { dropdown.classList.remove('show'); return; }
-    const matches = products.filter(p =>
-      p.category !== 'Akcesoria PEHD' &&
-      (p.id.toLowerCase().includes(val) || p.name.toLowerCase().includes(val))
-    ).slice(0, 15);
+    searchInput.addEventListener('input', () => {
+        const val = searchInput.value.toLowerCase().trim();
+        if (val.length < 2) {
+            dropdown.classList.remove('show');
+            return;
+        }
+        const matches = products
+            .filter(
+                (p) =>
+                    p.category !== 'Akcesoria PEHD' &&
+                    (p.id.toLowerCase().includes(val) || p.name.toLowerCase().includes(val))
+            )
+            .slice(0, 15);
 
-    if (matches.length === 0) { dropdown.classList.remove('show'); return; }
-    dropdown.innerHTML = matches.map(p =>
-      `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
+        if (matches.length === 0) {
+            dropdown.classList.remove('show');
+            return;
+        }
+        dropdown.innerHTML = matches
+            .map(
+                (p) =>
+                    `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
         <span>${p.name}</span>
         <span class="price">${fmt(p.price)} PLN</span>
       </div>`
-    ).join('');
-    dropdown.classList.add('show');
-  });
+            )
+            .join('');
+        dropdown.classList.add('show');
+    });
 
-  searchInput.addEventListener('blur', () => setTimeout(() => dropdown.classList.remove('show'), 200));
-  document.getElementById('pricelist-search')?.addEventListener('input', renderPriceList);
+    searchInput.addEventListener('blur', () =>
+        setTimeout(() => dropdown.classList.remove('show'), 200)
+    );
+    document.getElementById('pricelist-search')?.addEventListener('input', renderPriceList);
 
-  // Set today's date and auto-generate offer number
-  document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('offer-number').value = generateOfferNumber();
+    // Set today's date and auto-generate offer number
+    document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('offer-number').value = generateOfferNumber();
 
-  if (!activeCatalogCategory || activeCatalogCategory === "Akcesoria PEHD") {
-    activeCatalogCategory = CATEGORIES.filter(c => c !== "Akcesoria PEHD")[0];
-  }
-  renderCatalogTabs();
-  renderCatalogProducts();
+    if (!activeCatalogCategory || activeCatalogCategory === 'Akcesoria PEHD') {
+        activeCatalogCategory = CATEGORIES.filter((c) => c !== 'Akcesoria PEHD')[0];
+    }
+    renderCatalogTabs();
+    renderCatalogProducts();
 }
 
 /* ===== PRODUCT CATALOG ===== */
@@ -726,66 +858,70 @@ let catalogVisible = true;
 let activeCatalogCategory = null;
 
 function toggleCatalog() {
-  catalogVisible = !catalogVisible;
-  const catalog = document.getElementById('product-catalog');
-  const btn = document.getElementById('toggle-catalog-btn');
-  if (catalogVisible) {
-    catalog.style.display = 'block';
-    btn.innerHTML = '📂 Ukryj katalog produktów';
-    if (!activeCatalogCategory || activeCatalogCategory === "Akcesoria PEHD") activeCatalogCategory = CATEGORIES.filter(c => c !== "Akcesoria PEHD")[0];
-    renderCatalogTabs();
-    renderCatalogProducts();
-  } else {
-    catalog.style.display = 'none';
-    btn.innerHTML = '📂 Pokaż katalog produktów';
-  }
+    catalogVisible = !catalogVisible;
+    const catalog = document.getElementById('product-catalog');
+    const btn = document.getElementById('toggle-catalog-btn');
+    if (catalogVisible) {
+        catalog.style.display = 'block';
+        btn.innerHTML = '📂 Ukryj katalog produktów';
+        if (!activeCatalogCategory || activeCatalogCategory === 'Akcesoria PEHD')
+            activeCatalogCategory = CATEGORIES.filter((c) => c !== 'Akcesoria PEHD')[0];
+        renderCatalogTabs();
+        renderCatalogProducts();
+    } else {
+        catalog.style.display = 'none';
+        btn.innerHTML = '📂 Pokaż katalog produktów';
+    }
 }
 
 function renderCatalogTabs() {
-  const container = document.getElementById('catalog-tabs');
-  container.innerHTML = CATEGORIES.filter(cat => cat !== 'Akcesoria PEHD').map(cat => {
-    const count = products.filter(p => p.category === cat).length;
-    return `<button class="catalog-tab${cat === activeCatalogCategory ? ' active' : ''}" onclick="selectCatalogCategory('${cat}')">${cat} <span style="opacity:.6">(${count})</span></button>`;
-  }).join('');
+    const container = document.getElementById('catalog-tabs');
+    container.innerHTML = CATEGORIES.filter((cat) => cat !== 'Akcesoria PEHD')
+        .map((cat) => {
+            const count = products.filter((p) => p.category === cat).length;
+            return `<button class="catalog-tab${cat === activeCatalogCategory ? ' active' : ''}" onclick="selectCatalogCategory('${cat}')">${cat} <span style="opacity:.6">(${count})</span></button>`;
+        })
+        .join('');
 }
 
 function selectCatalogCategory(cat) {
-  activeCatalogCategory = cat;
-  renderCatalogTabs();
-  renderCatalogProducts();
+    activeCatalogCategory = cat;
+    renderCatalogTabs();
+    renderCatalogProducts();
 }
 
 function renderCatalogProducts() {
-  const container = document.getElementById('catalog-products');
-  const items = products.filter(p => p.category === activeCatalogCategory);
-  if (items.length === 0) {
-    container.innerHTML = '<div style="padding:1rem;color:var(--text-muted);font-size:.85rem">Brak produktów w tej kategorii</div>';
-    return;
-  }
+    const container = document.getElementById('catalog-products');
+    const items = products.filter((p) => p.category === activeCatalogCategory);
+    if (items.length === 0) {
+        container.innerHTML =
+            '<div style="padding:1rem;color:var(--text-muted);font-size:.85rem">Brak produktów w tej kategorii</div>';
+        return;
+    }
 
-  // Group items by diameter
-  const grouped = {};
-  items.forEach(p => {
-    const diameter = getProductDiameter(p.id);
-    const diamKey = diameter ? `DN ${diameter}` : 'Inne';
-    if (!grouped[diamKey]) grouped[diamKey] = [];
-    grouped[diamKey].push(p);
-  });
+    // Group items by diameter
+    const grouped = {};
+    items.forEach((p) => {
+        const diameter = getProductDiameter(p.id);
+        const diamKey = diameter ? `DN ${diameter}` : 'Inne';
+        if (!grouped[diamKey]) grouped[diamKey] = [];
+        grouped[diamKey].push(p);
+    });
 
-  // Sort diameters numerically
-  const diamKeys = Object.keys(grouped).sort((a, b) => {
-    const da = parseInt(a.replace('DN ', '')) || 99999;
-    const db = parseInt(b.replace('DN ', '')) || 99999;
-    return da - db;
-  });
+    // Sort diameters numerically
+    const diamKeys = Object.keys(grouped).sort((a, b) => {
+        const da = parseInt(a.replace('DN ', '')) || 99999;
+        const db = parseInt(b.replace('DN ', '')) || 99999;
+        return da - db;
+    });
 
-  let html = '<div class="catalog-list">';
+    let html = '<div class="catalog-list">';
 
-  diamKeys.forEach(diamKey => {
-    html += `<div class="catalog-diam-header">⌀ ${diamKey}</div>`;
-    grouped[diamKey].forEach(p => {
-      const is1m = isOneMetrePipe(p.id);
-      html += `
+    diamKeys.forEach((diamKey) => {
+        html += `<div class="catalog-diam-header">⌀ ${diamKey}</div>`;
+        grouped[diamKey].forEach((p) => {
+            const is1m = isOneMetrePipe(p.id);
+            html += `
       <div class="catalog-item-row${is1m ? ' catalog-item-1m' : ''}" onclick="addOfferItem('${p.id}')">
         <div class="catalog-item-row-name">${p.name}</div>
         <div class="catalog-item-row-meta">
@@ -795,61 +931,64 @@ function renderCatalogProducts() {
         <div class="catalog-item-row-price">${fmt(p.price)} PLN</div>
         <button class="catalog-item-add" onclick="event.stopPropagation();addOfferItem('${p.id}')">+ Dodaj</button>
       </div>`;
+        });
     });
-  });
 
-  html += '</div>';
-  container.innerHTML = html;
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function generateOfferNumber() {
-  const d = new Date();
-  const year = d.getFullYear();
-  let symbol = "XX";
-  if (typeof currentUser !== 'undefined' && currentUser) {
-    if (currentUser.symbol) {
-      symbol = currentUser.symbol;
-    } else if (currentUser.firstName && currentUser.lastName) {
-      symbol = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
-    } else if (currentUser.username) {
-      symbol = currentUser.username.substring(0, 2).toUpperCase();
+    const d = new Date();
+    const year = d.getFullYear();
+    let symbol = 'XX';
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        if (currentUser.symbol) {
+            symbol = currentUser.symbol;
+        } else if (currentUser.firstName && currentUser.lastName) {
+            symbol = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
+        } else if (currentUser.username) {
+            symbol = currentUser.username.substring(0, 2).toUpperCase();
+        }
     }
-  }
 
-  const count = typeof offers !== 'undefined' ? offers.length + 1 : 1;
-  return `OF/${String(count).padStart(6, '0')}/${symbol}/${year}`;
+    const count = typeof offers !== 'undefined' ? offers.length + 1 : 1;
+    return `OF/${String(count).padStart(6, '0')}/${symbol}/${year}`;
 }
 
 function addOfferItem(productId) {
-  const product = products.find(p => p.id === productId);
-  if (!product) return;
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
 
-  const isEditableLength = product.category === 'Rury Jajowe Betonowe' || product.category === 'Rury Jajowe Żelbetowe' || product.category === 'Duże Żelbetowe II';
+    const isEditableLength =
+        product.category === 'Rury Jajowe Betonowe' ||
+        product.category === 'Rury Jajowe Żelbetowe' ||
+        product.category === 'Duże Żelbetowe II';
 
-  if (isEditableLength) {
-    showPipeLengthModal(productId);
-  } else {
-    doAddOfferItem(productId, null);
-  }
+    if (isEditableLength) {
+        showPipeLengthModal(productId);
+    } else {
+        doAddOfferItem(productId, null);
+    }
 }
 
 function showPipeLengthModal(productId, editIndex = null) {
-  const product = products.find(p => p.id === productId);
-  if (!product) return;
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
 
-  const diam = getProductDiameter(product.id);
-  const maxL = (diam === 2200) ? 2.5 : 3;
+    const diam = getProductDiameter(product.id);
+    const maxL = diam === 2200 ? 2.5 : 3;
 
-  let currentVal = getProductLength(product.id) / 1000 || 3;
-  if (editIndex !== null) {
-    const item = currentOfferItems[editIndex];
-    currentVal = item.customLengthM || item.lengthM || currentVal;
-  }
+    let currentVal = getProductLength(product.id) / 1000 || 3;
+    if (editIndex !== null) {
+        const item = currentOfferItems[editIndex];
+        currentVal = item.customLengthM || item.lengthM || currentVal;
+    }
 
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'add-pipe-length-modal';
-  overlay.innerHTML = `
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-pipe-length-modal';
+    overlay.innerHTML = `
     <div class="modal" style="max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);">📏 ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
@@ -876,356 +1015,395 @@ function showPipeLengthModal(productId, editIndex = null) {
         <button class="btn btn-primary" onclick="confirmPipeLength('${productId}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź ➔</button>
       </div>
     </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
 
-  setTimeout(() => {
-    const input = document.getElementById('pipe-custom-length');
-    if (input) { input.focus(); input.select(); }
-  }, 50);
+    setTimeout(() => {
+        const input = document.getElementById('pipe-custom-length');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }, 50);
 }
 
 function confirmPipeLength(productId, editIndex) {
-  const input = document.getElementById('pipe-custom-length');
-  if (!input) return;
-  const lengthM = Number(input.value);
-  closeModal();
+    const input = document.getElementById('pipe-custom-length');
+    if (!input) return;
+    const lengthM = Number(input.value);
+    closeModal();
 
-  if (editIndex !== null && typeof editIndex === 'number') {
-    updatePipeLength(editIndex, lengthM);
-  } else {
-    doAddOfferItem(productId, lengthM);
-  }
+    if (editIndex !== null && typeof editIndex === 'number') {
+        updatePipeLength(editIndex, lengthM);
+    } else {
+        doAddOfferItem(productId, lengthM);
+    }
 }
 
 function doAddOfferItem(productId, customLengthM) {
-  const product = products.find(p => p.id === productId);
-  if (!product) return;
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
 
-  // Check if exactly same item (product + length) already added
-  const existingItemIndex = currentOfferItems.findIndex(i => i.productId === productId && (i.customLengthM || null) === (customLengthM || null));
-  if (existingItemIndex !== -1) {
-    updateItem(existingItemIndex, 'quantity', currentOfferItems[existingItemIndex].quantity + 1);
-    showToast(`Zwiększono ilość: ${product.name}`, 'info');
-    document.getElementById('product-search').value = '';
-    document.getElementById('product-dropdown').classList.remove('show');
-    return;
-  }
+    // Check if exactly same item (product + length) already added
+    const existingItemIndex = currentOfferItems.findIndex(
+        (i) => i.productId === productId && (i.customLengthM || null) === (customLengthM || null)
+    );
+    if (existingItemIndex !== -1) {
+        updateItem(
+            existingItemIndex,
+            'quantity',
+            currentOfferItems[existingItemIndex].quantity + 1
+        );
+        showToast(`Zwiększono ilość: ${product.name}`, 'info');
+        document.getElementById('product-search').value = '';
+        document.getElementById('product-dropdown').classList.remove('show');
+        return;
+    }
 
-  const lengthMm = getProductLength(product.id);
-  const lengthM = lengthMm ? lengthMm / 1000 : null;
+    const lengthMm = getProductLength(product.id);
+    const lengthM = lengthMm ? lengthMm / 1000 : null;
 
-  const item = {
-    productId: product.id,
-    name: product.name,
-    unitPrice: product.price,
-    quantity: 1,
-    meters: lengthM || 0,
-    lengthM: lengthM,
-    discount: 0,
-    surcharge: 0,
-    commercialVersion: '',
-    weight: product.weight,
-    transport: product.transport,
-    pehdType: null,
-    pehdCostPerUnit: 0,
-    customLengthM: null
-  };
+    const item = {
+        productId: product.id,
+        name: product.name,
+        unitPrice: product.price,
+        quantity: 1,
+        meters: lengthM || 0,
+        lengthM: lengthM,
+        discount: 0,
+        surcharge: 0,
+        commercialVersion: '',
+        weight: product.weight,
+        transport: product.transport,
+        pehdType: null,
+        pehdCostPerUnit: 0,
+        customLengthM: null
+    };
 
-  currentOfferItems.push(item);
+    currentOfferItems.push(item);
 
-  if (customLengthM && customLengthM !== lengthM) {
-    const newIndex = currentOfferItems.length - 1;
-    updatePipeLength(newIndex, customLengthM, true);
-  } else {
-    syncGaskets();
-    document.getElementById('product-search').value = '';
-    document.getElementById('product-dropdown').classList.remove('show');
-    renderOfferItems();
-    showToast('Dodano: ' + product.name.substring(0, 40) + '...', 'success');
-  }
+    if (customLengthM && customLengthM !== lengthM) {
+        const newIndex = currentOfferItems.length - 1;
+        updatePipeLength(newIndex, customLengthM, true);
+    } else {
+        syncGaskets();
+        document.getElementById('product-search').value = '';
+        document.getElementById('product-dropdown').classList.remove('show');
+        renderOfferItems();
+        showToast('Dodano: ' + product.name.substring(0, 40) + '...', 'success');
+    }
 }
 
 function syncGaskets() {
-  const req = {};
+    const req = {};
 
-  currentOfferItems.forEach(item => {
-    if (!item.autoAdded && item.quantity > 0) {
-      const product = products.find(p => p.id === item.productId);
-      if (product && product.category === 'Duże Żelbetowe II') {
-        const diam = getProductDiameter(item.productId);
-        if (diam) {
-          const kw = diam.toString();
-          const gasket = products.find(p => p.category === 'Uszczelki' && (p.name.includes(kw) || p.id.includes(kw)));
-          if (gasket) {
-            const isBosy = product.name.toLowerCase().includes('bosy-bosy');
-            const qtyPerPipe = isBosy ? 2 : 1;
-            if (!req[gasket.id]) req[gasket.id] = { product: gasket, qty: 0 };
-            req[gasket.id].qty += (item.quantity * qtyPerPipe);
-          }
+    currentOfferItems.forEach((item) => {
+        if (!item.autoAdded && item.quantity > 0) {
+            const product = products.find((p) => p.id === item.productId);
+            if (product && product.category === 'Duże Żelbetowe II') {
+                const diam = getProductDiameter(item.productId);
+                if (diam) {
+                    const kw = diam.toString();
+                    const gasket = products.find(
+                        (p) =>
+                            p.category === 'Uszczelki' && (p.name.includes(kw) || p.id.includes(kw))
+                    );
+                    if (gasket) {
+                        const isBosy = product.name.toLowerCase().includes('bosy-bosy');
+                        const qtyPerPipe = isBosy ? 2 : 1;
+                        if (!req[gasket.id]) req[gasket.id] = { product: gasket, qty: 0 };
+                        req[gasket.id].qty += item.quantity * qtyPerPipe;
+                    }
+                }
+            }
         }
-      }
-    }
-  });
+    });
 
-  for (let i = currentOfferItems.length - 1; i >= 0; i--) {
-    const item = currentOfferItems[i];
-    if (item.autoAdded) {
-      if (req[item.productId] && req[item.productId].qty > 0) {
-        item.quantity = req[item.productId].qty;
-        req[item.productId].qty = 0; // handled
-      } else {
-        currentOfferItems.splice(i, 1);
-      }
+    for (let i = currentOfferItems.length - 1; i >= 0; i--) {
+        const item = currentOfferItems[i];
+        if (item.autoAdded) {
+            if (req[item.productId] && req[item.productId].qty > 0) {
+                item.quantity = req[item.productId].qty;
+                req[item.productId].qty = 0; // handled
+            } else {
+                currentOfferItems.splice(i, 1);
+            }
+        }
     }
-  }
 
-  Object.values(req).forEach(r => {
-    if (r.qty > 0) {
-      currentOfferItems.push({
-        productId: r.product.id,
-        name: r.product.name,
-        unitPrice: r.product.price,
-        quantity: r.qty,
-        meters: 0,
-        lengthM: null,
-        discount: 0,
-        weight: r.product.weight,
-        transport: r.product.transport,
-        autoAdded: true,
-        linkedTo: null
-      });
-      showToast(`Automatycznie zaktualizowano uszczelki: ${r.product.name}`, 'info');
-    }
-  });
+    Object.values(req).forEach((r) => {
+        if (r.qty > 0) {
+            currentOfferItems.push({
+                productId: r.product.id,
+                name: r.product.name,
+                unitPrice: r.product.price,
+                quantity: r.qty,
+                meters: 0,
+                lengthM: null,
+                discount: 0,
+                weight: r.product.weight,
+                transport: r.product.transport,
+                autoAdded: true,
+                linkedTo: null
+            });
+            showToast(`Automatycznie zaktualizowano uszczelki: ${r.product.name}`, 'info');
+        }
+    });
 }
 
 function addPehdToPipe(pipeIndex, pehdId) {
-  const pipe = currentOfferItems[pipeIndex];
-  const area = getPipeInnerArea(pipe.productId);
-  if (area <= 0) return;
+    const pipe = currentOfferItems[pipeIndex];
+    const area = getPipeInnerArea(pipe.productId);
+    if (area <= 0) return;
 
-  const pehdProd = products.find(p => p.id === pehdId);
-  if (!pehdProd) return;
+    const pehdProd = products.find((p) => p.id === pehdId);
+    if (!pehdProd) return;
 
-  if (pipe.pehdType === pehdId) {
-    pipe.pehdType = null;
-    pipe.pehdCostPerUnit = 0;
-    showToast('Wkładka usunięta', 'info');
-  } else {
-    pipe.pehdType = pehdId;
-    let ratio = 1;
-    if (pipe.customLengthM) {
-      const origL = getProductLength(pipe.productId) / 1000;
-      if (origL > 0) ratio = pipe.customLengthM / origL;
+    if (pipe.pehdType === pehdId) {
+        pipe.pehdType = null;
+        pipe.pehdCostPerUnit = 0;
+        showToast('Wkładka usunięta', 'info');
+    } else {
+        pipe.pehdType = pehdId;
+        let ratio = 1;
+        if (pipe.customLengthM) {
+            const origL = getProductLength(pipe.productId) / 1000;
+            if (origL > 0) ratio = pipe.customLengthM / origL;
+        }
+        pipe.pehdCostPerUnit = area * ratio * pehdProd.price;
+        showToast('Wkładka została przypisana do rury', 'success');
     }
-    pipe.pehdCostPerUnit = area * ratio * pehdProd.price;
-    showToast('Wkładka została przypisana do rury', 'success');
-  }
 
-  renderOfferItems();
+    renderOfferItems();
 }
 
 /* ===== TRANSPORT PER UNIT HELPERS ===== */
 function getCostPerTrip() {
-  const km = Number(document.getElementById('transport-km')?.value) || 0;
-  const rate = Number(document.getElementById('transport-rate')?.value) || 0;
-  return km * rate;
+    const km = Number(document.getElementById('transport-km')?.value) || 0;
+    const rate = Number(document.getElementById('transport-rate')?.value) || 0;
+    return km * rate;
 }
 
 /**
  * Calculates transport cost distribution across all items.
- * 
+ *
  * Uses POST-OPTIMIZATION transport count (after consolidation)
  * and distributes cost proportionally by WEIGHT:
  *   Total transport cost = totalTransports (after optimization) × costPerTrip
  *   Each product's weight share = (weightPerPiece × quantity) / totalWeight
  *   Transport per unit = (weightShare × totalTransportCost) / quantity
- * 
+ *
  * This ensures heavier items pay more, lighter items pay less,
  * and the sum of all charges = actual total transport cost.
- * 
+ *
  * Returns an object: productId → transportPerUnit
  */
 function calculateTransportDistribution(items, costPerTripOverride) {
-  const costPerTrip = costPerTripOverride != null ? costPerTripOverride : getCostPerTrip();
-  const distribution = {};
-  if (costPerTrip <= 0) return distribution;
+    const costPerTrip = costPerTripOverride != null ? costPerTripOverride : getCostPerTrip();
+    const distribution = {};
+    if (costPerTrip <= 0) return distribution;
 
-  const transportResult = calculateTransports(items);
-  if (transportResult.totalTransports <= 0 || transportResult.lines.length === 0) return distribution;
+    const transportResult = calculateTransports(items);
+    if (transportResult.totalTransports <= 0 || transportResult.lines.length === 0)
+        return distribution;
 
-  // Use POST-optimization transport count
-  const totalTransportCost = transportResult.totalTransports * costPerTrip;
+    // Use POST-optimization transport count
+    const totalTransportCost = transportResult.totalTransports * costPerTrip;
 
-  // Calculate total weight of all transported items
-  const totalWeight = transportResult.lines.reduce((s, l) => s + l.totalWeight, 0);
-  if (totalWeight <= 0) return distribution;
+    // Calculate total weight of all transported items
+    const totalWeight = transportResult.lines.reduce((s, l) => s + l.totalWeight, 0);
+    if (totalWeight <= 0) return distribution;
 
-  // Distribute proportionally by weight
-  transportResult.lines.forEach(line => {
-    const weightShare = line.totalWeight / totalWeight;
-    const itemTransportCost = weightShare * totalTransportCost;
-    distribution[line.productId] = itemTransportCost / line.quantity;
-  });
+    // Distribute proportionally by weight
+    transportResult.lines.forEach((line) => {
+        const weightShare = line.totalWeight / totalWeight;
+        const itemTransportCost = weightShare * totalTransportCost;
+        distribution[line.productId] = itemTransportCost / line.quantity;
+    });
 
-  return distribution;
+    return distribution;
 }
 
 /** Standalone helper for save/export contexts (no DOM) */
 function calculateTransportDistributionStandalone(items, costPerTrip) {
-  return calculateTransportDistribution(items, costPerTrip);
+    return calculateTransportDistribution(items, costPerTrip);
 }
 
 function renderOfferItems() {
-  const tbody = document.getElementById('offer-items-body');
-  if (currentOfferItems.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="13" class="text-center" style="padding:2rem;color:var(--text-muted)">
+    const tbody = document.getElementById('offer-items-body');
+    if (currentOfferItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13" class="text-center" style="padding:2rem;color:var(--text-muted)">
       Wyszukaj i dodaj produkty z cennika powyżej</td></tr>`;
-    updateOfferSummary();
-    return;
-  }
-
-  // Filter out any leftover standalone PEHD items from previous versions
-  currentOfferItems = currentOfferItems.filter(i => !i.isPehd);
-
-  // Sync weights from the price list (so changes in pricelist apply immediately)
-  currentOfferItems.forEach(item => {
-    const product = products.find(p => p.id === item.productId);
-    if (product !== undefined) {
-      if (!item.name) item.name = product.name;
-      if (item.unitPrice === undefined) item.unitPrice = product.price;
-
-      if (!item.customLengthM) {
-        item.weight = product.weight;
-        item.transport = product.transport;
-        item.lengthM = getProductLength(item.productId) / 1000;
-      }
-    } else {
-      // Fallback if product is no longer in catalog
-      if (!item.name) item.name = 'Nieznany produkt (' + item.productId + ')';
+        updateOfferSummary();
+        return;
     }
 
-    // Fix for old saved offers: calculate meters if missing but quantity>0
-    if (!item.meters && item.quantity > 0 && item.lengthM > 0) {
-      item.meters = item.quantity * item.lengthM;
-    }
+    // Filter out any leftover standalone PEHD items from previous versions
+    currentOfferItems = currentOfferItems.filter((i) => !i.isPehd);
 
-    // Also sync PEHD price if PEHD was added
-    if (item.pehdType) {
-      const pehdProd = products.find(p => p.id === item.pehdType);
-      if (pehdProd) {
-        const area = getPipeInnerArea(item.productId);
-        let ratio = 1;
-        if (item.customLengthM) {
-          const origL = getProductLength(item.productId) / 1000;
-          if (origL > 0) ratio = item.customLengthM / origL;
+    // Sync weights from the price list (so changes in pricelist apply immediately)
+    currentOfferItems.forEach((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        if (product !== undefined) {
+            if (!item.name) item.name = product.name;
+            if (item.unitPrice === undefined) item.unitPrice = product.price;
+
+            if (!item.customLengthM) {
+                item.weight = product.weight;
+                item.transport = product.transport;
+                item.lengthM = getProductLength(item.productId) / 1000;
+            }
+        } else {
+            // Fallback if product is no longer in catalog
+            if (!item.name) item.name = 'Nieznany produkt (' + item.productId + ')';
         }
-        item.pehdCostPerUnit = area * ratio * pehdProd.price;
-      }
-    }
-  });
 
-  // Pre-calculate transport distribution for all items
-  const transportDist = calculateTransportDistribution(currentOfferItems);
+        // Fix for old saved offers: calculate meters if missing but quantity>0
+        if (!item.meters && item.quantity > 0 && item.lengthM > 0) {
+            item.meters = item.quantity * item.lengthM;
+        }
 
-  // Group items by category, then by diameter
-  const grouped = {};
-  currentOfferItems.forEach((item, i) => {
-    const product = products.find(p => p.id === item.productId);
-    const category = product ? product.category : 'Inne';
-    if (!grouped[category]) grouped[category] = {};
-    let diameter = getProductDiameter(item.productId);
-    // Gasket IDs like Y-U-GZ-U-14-BU have diameter at parts[4]
-    if (!diameter && item.productId) {
-      const parts = item.productId.split('-');
-      if (parts.length >= 5) {
-        const code = parseInt(parts[4]);
-        if (!isNaN(code) && code > 0) diameter = code * 100;
-      }
-    }
-    const diamKey = diameter ? `DN ${diameter}` : 'Inne';
-    if (!grouped[category][diamKey]) grouped[category][diamKey] = [];
-    grouped[category][diamKey].push({ item, originalIndex: i, diameter });
-  });
-
-  // Sort the categories by their order in CATEGORIES
-  const sortedCategories = Object.keys(grouped).sort((a, b) => {
-    const ia = CATEGORIES.indexOf(a);
-    const ib = CATEGORIES.indexOf(b);
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-  });
-
-  let html = '';
-  let lp = 1;
-
-  sortedCategories.forEach(cat => {
-    // Category header row
-    html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
-
-    // Sort diameters numerically
-    const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
-      const da = parseInt(a.replace('DN ', '')) || 99999;
-      const db = parseInt(b.replace('DN ', '')) || 99999;
-      return da - db;
+        // Also sync PEHD price if PEHD was added
+        if (item.pehdType) {
+            const pehdProd = products.find((p) => p.id === item.pehdType);
+            if (pehdProd) {
+                const area = getPipeInnerArea(item.productId);
+                let ratio = 1;
+                if (item.customLengthM) {
+                    const origL = getProductLength(item.productId) / 1000;
+                    if (origL > 0) ratio = item.customLengthM / origL;
+                }
+                item.pehdCostPerUnit = area * ratio * pehdProd.price;
+            }
+        }
     });
 
-    diamKeys.forEach(diamKey => {
-      // Diameter sub-header row
-      html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${diamKey}</td></tr>`;
+    // Pre-calculate transport distribution for all items
+    const transportDist = calculateTransportDistribution(currentOfferItems);
 
-      grouped[cat][diamKey].sort((a, b) => {
-        // Bosy-Bosy always first
-        const aBB = a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
-        const bBB = b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
-        if (aBB !== bBB) return aBB ? -1 : 1;
-        // Then by length ascending
-        return (a.item.lengthM || 0) - (b.item.lengthM || 0);
-      });
-
-      grouped[cat][diamKey].forEach(({ item, originalIndex: i }) => {
-        const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-        const pehdCost = item.pehdCostPerUnit || 0;
-        const surcharge = item.surcharge || 0;
-        const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
-
-        const transportPerUnit = transportDist[item.productId] || 0;
-        const unitTotal = priceAfterDiscount + transportPerUnit;
-        const netto = unitTotal * item.quantity;
-        const vat = netto * 0.23;
-        const brutto = netto + vat;
-        const hasLength = item.lengthM && item.lengthM > 0;
-        const metersVal = hasLength ? (item.meters || 0) : '';
-        const autoTag = item.autoAdded ? ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(auto)</span>' : '';
-        const is1m = isOneMetrePipe(item.productId);
-
-        let pName = item.name;
-        if (item.pehdType === 'PEHD-3MM') pName += ' <span style="color:var(--primary);font-weight:bold">+ PEHD 3mm</span>';
-        if (item.pehdType === 'PEHD-4MM') pName += ' <span style="color:var(--primary);font-weight:bold">+ PEHD 4mm</span>';
-
-        let rowClass = '';
-        let rowStyle = '';
-        if (item.autoAdded) {
-          rowStyle = 'background:rgba(245,158,11,0.04)';
-        } else if (is1m) {
-          rowClass = 'row-1m';
+    // Group items by category, then by diameter
+    const grouped = {};
+    currentOfferItems.forEach((item, i) => {
+        const product = products.find((p) => p.id === item.productId);
+        const category = product ? product.category : 'Inne';
+        if (!grouped[category]) grouped[category] = {};
+        let diameter = getProductDiameter(item.productId);
+        // Gasket IDs like Y-U-GZ-U-14-BU have diameter at parts[4]
+        if (!diameter && item.productId) {
+            const parts = item.productId.split('-');
+            if (parts.length >= 5) {
+                const code = parseInt(parts[4]);
+                if (!isNaN(code) && code > 0) diameter = code * 100;
+            }
         }
-        const activePehdStyle = 'font-size:0.65rem; padding: 0.2rem 0.5rem; margin-top:2px; background:#10b981; color:white; border:none; box-shadow:0 0 10px rgba(16,185,129,0.3); font-weight:700; border-radius:4px;';
-        const inactivePehdStyle = 'font-size:0.6rem; padding: 0.2rem 0.4rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease;';
+        const diamKey = diameter ? `DN ${diameter}` : 'Inne';
+        if (!grouped[category][diamKey]) grouped[category][diamKey] = [];
+        grouped[category][diamKey].push({ item, originalIndex: i, diameter });
+    });
 
-        const active3mm = item.pehdType === 'PEHD-3MM' ? `style="${activePehdStyle}"` : `style="${inactivePehdStyle}"`;
-        const active4mm = item.pehdType === 'PEHD-4MM' ? `style="${activePehdStyle}"` : `style="${inactivePehdStyle}"`;
+    // Sort the categories by their order in CATEGORIES
+    const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        const ia = CATEGORIES.indexOf(a);
+        const ib = CATEGORIES.indexOf(b);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
 
-        const isEditableLength = cat === 'Rury Jajowe Betonowe' || cat === 'Rury Jajowe Żelbetowe' || cat === 'Duże Żelbetowe II';
-        const lengthEditor = isEditableLength && hasLength ? `<br><div style="margin-top:6px;"><button class="btn-icon" style="font-size:0.75rem; padding:0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text);" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">📏 Dł. rury: <strong style="color:var(--primary)">${fmt(item.customLengthM || item.lengthM)}m</strong> ✎</button></div>` : '';
+    let html = '';
+    let lp = 1;
 
-        html += `<tr class="${rowClass}" ${rowStyle ? `style="${rowStyle}"` : ''}>
+    sortedCategories.forEach((cat) => {
+        // Category header row
+        html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
+
+        // Sort diameters numerically
+        const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
+            const da = parseInt(a.replace('DN ', '')) || 99999;
+            const db = parseInt(b.replace('DN ', '')) || 99999;
+            return da - db;
+        });
+
+        diamKeys.forEach((diamKey) => {
+            // Diameter sub-header row
+            html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${diamKey}</td></tr>`;
+
+            grouped[cat][diamKey].sort((a, b) => {
+                // Bosy-Bosy always first
+                const aBB =
+                    a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
+                const bBB =
+                    b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
+                if (aBB !== bBB) return aBB ? -1 : 1;
+                // Then by length ascending
+                return (a.item.lengthM || 0) - (b.item.lengthM || 0);
+            });
+
+            grouped[cat][diamKey].forEach(({ item, originalIndex: i }) => {
+                const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+                const pehdCost = item.pehdCostPerUnit || 0;
+                const surcharge = item.surcharge || 0;
+                const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
+
+                const transportPerUnit = transportDist[item.productId] || 0;
+                const unitTotal = priceAfterDiscount + transportPerUnit;
+                const netto = unitTotal * item.quantity;
+                const vat = netto * 0.23;
+                const brutto = netto + vat;
+                const hasLength = item.lengthM && item.lengthM > 0;
+                const metersVal = hasLength ? item.meters || 0 : '';
+                const autoTag = item.autoAdded
+                    ? ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(auto)</span>'
+                    : '';
+                const is1m = isOneMetrePipe(item.productId);
+
+                let pName = item.name;
+                if (item.pehdType === 'PEHD-3MM')
+                    pName +=
+                        ' <span style="color:var(--primary);font-weight:bold">+ PEHD 3mm</span>';
+                if (item.pehdType === 'PEHD-4MM')
+                    pName +=
+                        ' <span style="color:var(--primary);font-weight:bold">+ PEHD 4mm</span>';
+
+                let rowClass = '';
+                let rowStyle = '';
+                if (item.autoAdded) {
+                    rowStyle = 'background:rgba(245,158,11,0.04)';
+                } else if (is1m) {
+                    rowClass = 'row-1m';
+                }
+                const activePehdStyle =
+                    'font-size:0.65rem; padding: 0.2rem 0.5rem; margin-top:2px; background:#10b981; color:white; border:none; box-shadow:0 0 10px rgba(16,185,129,0.3); font-weight:700; border-radius:4px;';
+                const inactivePehdStyle =
+                    'font-size:0.6rem; padding: 0.2rem 0.4rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease;';
+
+                const active3mm =
+                    item.pehdType === 'PEHD-3MM'
+                        ? `style="${activePehdStyle}"`
+                        : `style="${inactivePehdStyle}"`;
+                const active4mm =
+                    item.pehdType === 'PEHD-4MM'
+                        ? `style="${activePehdStyle}"`
+                        : `style="${inactivePehdStyle}"`;
+
+                const isEditableLength =
+                    cat === 'Rury Jajowe Betonowe' ||
+                    cat === 'Rury Jajowe Żelbetowe' ||
+                    cat === 'Duże Żelbetowe II';
+                const lengthEditor =
+                    isEditableLength && hasLength
+                        ? `<br><div style="margin-top:6px;"><button class="btn-icon" style="font-size:0.75rem; padding:0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text);" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">📏 Dł. rury: <strong style="color:var(--primary)">${fmt(item.customLengthM || item.lengthM)}m</strong> ✎</button></div>`
+                        : '';
+
+                html += `<tr class="${rowClass}" ${rowStyle ? `style="${rowStyle}"` : ''}>
           <td>${lp++}</td>
           <td style="max-width:280px">${pName}${autoTag}${lengthEditor}</td>
           <td class="text-right">${fmt(item.unitPrice)}</td>
-          <td class="text-center">${hasLength
-            ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onfocus="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"> m`
-            : '—'}</td>
+          <td class="text-center">${
+              hasLength
+                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onfocus="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"> m`
+                  : '—'
+          }</td>
           <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onfocus="this.select()" onchange="updateItem(${i},'quantity',this.value)"> szt.</td>
           <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onfocus="this.select()" onchange="updateItem(${i},'discount',this.value)">%</td>
           <td class="text-right">${fmt(unitTotal)}</td>
@@ -1236,533 +1414,601 @@ function renderOfferItems() {
           <td class="text-center"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"></td>
           <td class="text-center" style="white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
-              ${getPipeInnerArea(item.productId) > 0 && !item.autoAdded ? `
+              ${
+                  getPipeInnerArea(item.productId) > 0 && !item.autoAdded
+                      ? `
                 <div style="display: flex; flex-direction: column; gap: 2px;">
                   <button class="btn btn-sm btn-secondary" ${active3mm} onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
                   <button class="btn btn-sm btn-secondary" ${active4mm} onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
                 </div>
-              ` : ''}
+              `
+                      : ''
+              }
               <button class="btn-icon" title="Usuń" onclick="removeOfferItem(${i})">✕</button>
             </div>
           </td>
         </tr>`;
-      });
+            });
+        });
     });
-  });
 
-  tbody.innerHTML = html;
-  updateOfferSummary();
+    tbody.innerHTML = html;
+    updateOfferSummary();
 }
 
 function updatePipeLength(index, newLengthM, skipRender = false) {
-  const item = currentOfferItems[index];
-  let newL = Number(newLengthM);
+    const item = currentOfferItems[index];
+    let newL = Number(newLengthM);
 
-  const diameter = getProductDiameter(item.productId);
-  const maxLength = (diameter === 2200) ? 2.5 : 3;
+    const diameter = getProductDiameter(item.productId);
+    const maxLength = diameter === 2200 ? 2.5 : 3;
 
-  if (newL < 1) {
-    newL = 1;
-    showToast('Minimalna długość rury to 1m', 'error');
-  } else if (newL > maxLength) {
-    newL = maxLength;
-    showToast(`Maksymalna długość tej rury to ${maxLength}m`, 'error');
-  }
-
-  const product = products.find(p => p.id === item.productId);
-  if (!product) return;
-
-  const originalLengthM = getProductLength(product.id) / 1000;
-  if (!originalLengthM || originalLengthM <= 0) return;
-
-  if (newL === originalLengthM) {
-    item.customLengthM = null;
-    item.lengthM = originalLengthM;
-    item.weight = product.weight;
-    item.transport = product.transport;
-    item.name = product.name; // reset name
-  } else {
-    item.customLengthM = newL;
-    item.lengthM = newL;
-
-    if (product.weight) {
-      const weightPerMeter = product.weight / originalLengthM;
-      item.weight = Math.round(weightPerMeter * newL);
-
-      const truckCapacity = (product.weight * product.transport) || 24000;
-      item.transport = Math.max(1, Math.floor(truckCapacity / item.weight));
+    if (newL < 1) {
+        newL = 1;
+        showToast('Minimalna długość rury to 1m', 'error');
+    } else if (newL > maxLength) {
+        newL = maxLength;
+        showToast(`Maksymalna długość tej rury to ${maxLength}m`, 'error');
     }
 
-    // Update name dynamically
-    const lOriginalMm = Math.round(originalLengthM * 1000);
-    const lNewMm = Math.round(newL * 1000);
-    if (product.name.includes(` / ${lOriginalMm}`)) {
-      item.name = product.name.replace(` / ${lOriginalMm}`, ` / ${lNewMm}`);
+    const product = products.find((p) => p.id === item.productId);
+    if (!product) return;
+
+    const originalLengthM = getProductLength(product.id) / 1000;
+    if (!originalLengthM || originalLengthM <= 0) return;
+
+    if (newL === originalLengthM) {
+        item.customLengthM = null;
+        item.lengthM = originalLengthM;
+        item.weight = product.weight;
+        item.transport = product.transport;
+        item.name = product.name; // reset name
     } else {
-      item.name = `${product.name} (L=${newL}m)`;
+        item.customLengthM = newL;
+        item.lengthM = newL;
+
+        if (product.weight) {
+            const weightPerMeter = product.weight / originalLengthM;
+            item.weight = Math.round(weightPerMeter * newL);
+
+            const truckCapacity = product.weight * product.transport || 24000;
+            item.transport = Math.max(1, Math.floor(truckCapacity / item.weight));
+        }
+
+        // Update name dynamically
+        const lOriginalMm = Math.round(originalLengthM * 1000);
+        const lNewMm = Math.round(newL * 1000);
+        if (product.name.includes(` / ${lOriginalMm}`)) {
+            item.name = product.name.replace(` / ${lOriginalMm}`, ` / ${lNewMm}`);
+        } else {
+            item.name = `${product.name} (L=${newL}m)`;
+        }
     }
-  }
 
-  item.meters = item.quantity * item.lengthM;
+    item.meters = item.quantity * item.lengthM;
 
-  if (!skipRender) {
-    syncGaskets();
-    renderOfferItems();
-    updateOfferSummary();
-    showToast('Przeliczono uciętą rurę (waga, transport, nazwa)', 'info');
-  } else {
-    syncGaskets();
-    document.getElementById('product-search').value = '';
-    document.getElementById('product-dropdown').classList.remove('show');
-    renderOfferItems();
-    showToast('Dodano: ' + item.name.substring(0, 40) + '...', 'success');
-  }
+    if (!skipRender) {
+        syncGaskets();
+        renderOfferItems();
+        updateOfferSummary();
+        showToast('Przeliczono uciętą rurę (waga, transport, nazwa)', 'info');
+    } else {
+        syncGaskets();
+        document.getElementById('product-search').value = '';
+        document.getElementById('product-dropdown').classList.remove('show');
+        renderOfferItems();
+        showToast('Dodano: ' + item.name.substring(0, 40) + '...', 'success');
+    }
 }
 
 function updateItemText(index, field, value) {
-  if (currentOfferItems[index]) {
-    currentOfferItems[index][field] = value;
-  }
+    if (currentOfferItems[index]) {
+        currentOfferItems[index][field] = value;
+    }
 }
 
 function updateItem(index, field, value) {
-  const item = currentOfferItems[index];
-  const numVal = Number(value);
+    const item = currentOfferItems[index];
+    const numVal = Number(value);
 
-  // Gasket discount warning
-  if (field === 'discount' && numVal > 0) {
-    const isGasket = item.autoAdded || item.name.toLowerCase().includes('uszczelk') || (item.productId && item.productId.includes('Y-U-GZ-U'));
-    if (isGasket) {
-      showToast('UWAGA! Wpisujesz rabat na uszczelki!', 'warning');
+    // Gasket discount warning
+    if (field === 'discount' && numVal > 0) {
+        const isGasket =
+            item.autoAdded ||
+            item.name.toLowerCase().includes('uszczelk') ||
+            (item.productId && item.productId.includes('Y-U-GZ-U'));
+        if (isGasket) {
+            showToast('UWAGA! Wpisujesz rabat na uszczelki!', 'warning');
+        }
     }
-  }
 
-  item[field] = numVal;
-  // If quantity changed and has length, recalculate meters
-  if (field === 'quantity' && item.lengthM) {
-    item.meters = numVal * item.lengthM;
-  }
+    item[field] = numVal;
+    // If quantity changed and has length, recalculate meters
+    if (field === 'quantity' && item.lengthM) {
+        item.meters = numVal * item.lengthM;
+    }
 
-  syncGaskets();
-  renderOfferItems();
+    syncGaskets();
+    renderOfferItems();
 }
 
 function updateItemMeters(index, metersValue) {
-  const item = currentOfferItems[index];
-  const meters = Number(metersValue);
-  item.meters = meters;
-  if (item.lengthM && item.lengthM > 0) {
-    item.quantity = Math.ceil(meters / item.lengthM);
-    if (item.quantity < 1 && meters > 0) item.quantity = 1;
-    if (meters === 0) item.quantity = 0;
-  }
+    const item = currentOfferItems[index];
+    const meters = Number(metersValue);
+    item.meters = meters;
+    if (item.lengthM && item.lengthM > 0) {
+        item.quantity = Math.ceil(meters / item.lengthM);
+        if (item.quantity < 1 && meters > 0) item.quantity = 1;
+        if (meters === 0) item.quantity = 0;
+    }
 
-  syncGaskets();
-  renderOfferItems();
+    syncGaskets();
+    renderOfferItems();
 }
 
 function removeOfferItem(index) {
-  currentOfferItems.splice(index, 1);
-  syncGaskets();
-  renderOfferItems();
+    currentOfferItems.splice(index, 1);
+    syncGaskets();
+    renderOfferItems();
 }
 
 function updateOfferSummary() {
-  let totalProductsNetto = 0;
-  const costPerTrip = getCostPerTrip();
+    let totalProductsNetto = 0;
+    const costPerTrip = getCostPerTrip();
 
-  // Pre-calculate transport distribution
-  const transportDist = calculateTransportDistribution(currentOfferItems);
+    // Pre-calculate transport distribution
+    const transportDist = calculateTransportDistribution(currentOfferItems);
 
-  currentOfferItems.forEach(item => {
-    const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+    currentOfferItems.forEach((item) => {
+        const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
         const surcharge = item.surcharge || 0;
         const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
-    totalProductsNetto += priceAfterDiscount * item.quantity;
-  });
+        totalProductsNetto += priceAfterDiscount * item.quantity;
+    });
 
-  // Calculate transports for breakdown
-  const transportResult = calculateTransports(currentOfferItems);
+    // Calculate transports for breakdown
+    const transportResult = calculateTransports(currentOfferItems);
 
-  const totalTransportCostCalc = transportResult.totalTransports * costPerTrip;
-  const finalTotalNetto = totalProductsNetto + totalTransportCostCalc;
-  const totalVat = finalTotalNetto * 0.23;
-  const totalBrutto = finalTotalNetto + totalVat;
+    const totalTransportCostCalc = transportResult.totalTransports * costPerTrip;
+    const finalTotalNetto = totalProductsNetto + totalTransportCostCalc;
+    const totalVat = finalTotalNetto * 0.23;
+    const totalBrutto = finalTotalNetto + totalVat;
 
-  const elProducts = document.getElementById('sum-netto-products');
-  if (elProducts) elProducts.textContent = fmt(totalProductsNetto) + ' PLN';
+    const elProducts = document.getElementById('sum-netto-products');
+    if (elProducts) elProducts.textContent = fmt(totalProductsNetto) + ' PLN';
 
-  const elTransport = document.getElementById('sum-transport-cost');
-  if (elTransport) elTransport.textContent = fmt(totalTransportCostCalc) + ' PLN';
+    const elTransport = document.getElementById('sum-transport-cost');
+    if (elTransport) elTransport.textContent = fmt(totalTransportCostCalc) + ' PLN';
 
-  const elTransportDetails = document.getElementById('sum-transport-details');
-  if (elTransportDetails) elTransportDetails.textContent = costPerTrip > 0
-    ? `Ilość transportów: ${transportResult.totalTransports}. Koszt: ${fmt(costPerTrip)} PLN/kurs`
-    : 'Brak transportów / 0.00 PLN za kurs';
+    const elTransportDetails = document.getElementById('sum-transport-details');
+    if (elTransportDetails)
+        elTransportDetails.textContent =
+            costPerTrip > 0
+                ? `Ilość transportów: ${transportResult.totalTransports}. Koszt: ${fmt(costPerTrip)} PLN/kurs`
+                : 'Brak transportów / 0.00 PLN za kurs';
 
-  const elTotalNetto = document.getElementById('sum-total-netto');
-  if (elTotalNetto) elTotalNetto.textContent = fmt(finalTotalNetto) + ' PLN';
+    const elTotalNetto = document.getElementById('sum-total-netto');
+    if (elTotalNetto) elTotalNetto.textContent = fmt(finalTotalNetto) + ' PLN';
 
-  const elBrutto = document.getElementById('sum-brutto-details');
-  if (elBrutto) elBrutto.innerHTML = `Brutto z VAT: <strong>${fmt(totalBrutto)} PLN</strong>`;
+    const elBrutto = document.getElementById('sum-brutto-details');
+    if (elBrutto) elBrutto.innerHTML = `Brutto z VAT: <strong>${fmt(totalBrutto)} PLN</strong>`;
 
-  // Render transport breakdown
-  renderTransportBreakdown(transportResult, costPerTrip);
+    // Render transport breakdown
+    renderTransportBreakdown(transportResult, costPerTrip);
 }
 
 /* ===== TRANSPORT CALCULATION ===== */
 const MAX_TRANSPORT_WEIGHT = 24000; // kg
 
 function calculateTransports(items) {
-  // Map items to calculate with latest pricelist data
-  const mappedItems = items.map(i => {
-    let baseId = i.productId;
-    if (i.isPehd) {
-      if (i.productId.startsWith('PEHD-3MM')) baseId = 'PEHD-3MM';
-      if (i.productId.startsWith('PEHD-4MM')) baseId = 'PEHD-4MM';
-    }
-    const product = products.find(p => p.id === baseId);
-    return {
-      ...i,
-      currentWeight: i.customLengthM ? i.weight : (product ? product.weight : (i.weight || 0)),
-      currentTransport: i.customLengthM ? i.transport : (product ? product.transport : (i.transport || 0))
-    };
-  });
-
-  // Filter items that need transport (pipes with current weight > 0, not gaskets)
-  const transportItems = mappedItems.filter(i => i.currentWeight && i.currentWeight > 0 && i.quantity > 0 && !i.autoAdded);
-  if (transportItems.length === 0) return { lines: [], totalTransports: 0, consolidated: [] };
-
-  const lines = [];
-  const partials = []; // leftover from last transport of each product
-
-  transportItems.forEach(item => {
-    const maxByWeight = Math.floor(MAX_TRANSPORT_WEIGHT / item.currentWeight);
-    const maxByCount = item.currentTransport || maxByWeight;
-    const maxPerTransport = Math.min(maxByWeight, maxByCount);
-    if (maxPerTransport <= 0) return;
-
-    const fullTransports = Math.floor(item.quantity / maxPerTransport);
-    const remainder = item.quantity % maxPerTransport;
-    const totalForItem = fullTransports + (remainder > 0 ? 1 : 0);
-
-    const line = {
-      productId: item.productId,
-      name: item.name,
-      quantity: item.quantity,
-      weightPerPiece: item.currentWeight,
-      totalWeight: item.currentWeight * item.quantity,
-      maxPerTransport,
-      fullTransports,
-      remainder,
-      dedicatedTransports: totalForItem
-    };
-    lines.push(line);
-
-    // Track partials for consolidation
-    if (remainder > 0) {
-      partials.push({
-        productId: item.productId,
-        name: item.name,
-        pieces: remainder,
-        weight: remainder * item.currentWeight,
-        maxPerTransport
-      });
-    }
-  });
-
-  // Try to consolidate partial transports
-  let totalDedicated = lines.reduce((s, l) => s + l.dedicatedTransports, 0);
-  let saved = 0;
-  const consolidated = [];
-
-  if (partials.length > 1) {
-    // Sort partials by weight descending for better bin-packing
-    partials.sort((a, b) => b.weight - a.weight);
-    const used = new Set();
-
-    for (let i = 0; i < partials.length; i++) {
-      if (used.has(i)) continue;
-      const group = [partials[i]];
-      let groupWeight = partials[i].weight;
-      used.add(i);
-
-      for (let j = i + 1; j < partials.length; j++) {
-        if (used.has(j)) continue;
-        if (groupWeight + partials[j].weight <= MAX_TRANSPORT_WEIGHT) {
-          group.push(partials[j]);
-          groupWeight += partials[j].weight;
-          used.add(j);
+    // Map items to calculate with latest pricelist data
+    const mappedItems = items.map((i) => {
+        let baseId = i.productId;
+        if (i.isPehd) {
+            if (i.productId.startsWith('PEHD-3MM')) baseId = 'PEHD-3MM';
+            if (i.productId.startsWith('PEHD-4MM')) baseId = 'PEHD-4MM';
         }
-      }
+        const product = products.find((p) => p.id === baseId);
+        return {
+            ...i,
+            currentWeight: i.customLengthM ? i.weight : product ? product.weight : i.weight || 0,
+            currentTransport: i.customLengthM
+                ? i.transport
+                : product
+                  ? product.transport
+                  : i.transport || 0
+        };
+    });
 
-      if (group.length > 1) {
-        consolidated.push({ items: group, totalWeight: groupWeight });
-        saved += group.length - 1; // save (n-1) transports
-      }
+    // Filter items that need transport (pipes with current weight > 0, not gaskets)
+    const transportItems = mappedItems.filter(
+        (i) => i.currentWeight && i.currentWeight > 0 && i.quantity > 0 && !i.autoAdded
+    );
+    if (transportItems.length === 0) return { lines: [], totalTransports: 0, consolidated: [] };
+
+    const lines = [];
+    const partials = []; // leftover from last transport of each product
+
+    transportItems.forEach((item) => {
+        const maxByWeight = Math.floor(MAX_TRANSPORT_WEIGHT / item.currentWeight);
+        const maxByCount = item.currentTransport || maxByWeight;
+        const maxPerTransport = Math.min(maxByWeight, maxByCount);
+        if (maxPerTransport <= 0) return;
+
+        const fullTransports = Math.floor(item.quantity / maxPerTransport);
+        const remainder = item.quantity % maxPerTransport;
+        const totalForItem = fullTransports + (remainder > 0 ? 1 : 0);
+
+        const line = {
+            productId: item.productId,
+            name: item.name,
+            quantity: item.quantity,
+            weightPerPiece: item.currentWeight,
+            totalWeight: item.currentWeight * item.quantity,
+            maxPerTransport,
+            fullTransports,
+            remainder,
+            dedicatedTransports: totalForItem
+        };
+        lines.push(line);
+
+        // Track partials for consolidation
+        if (remainder > 0) {
+            partials.push({
+                productId: item.productId,
+                name: item.name,
+                pieces: remainder,
+                weight: remainder * item.currentWeight,
+                maxPerTransport
+            });
+        }
+    });
+
+    // Try to consolidate partial transports
+    let totalDedicated = lines.reduce((s, l) => s + l.dedicatedTransports, 0);
+    let saved = 0;
+    const consolidated = [];
+
+    if (partials.length > 1) {
+        // Sort partials by weight descending for better bin-packing
+        partials.sort((a, b) => b.weight - a.weight);
+        const used = new Set();
+
+        for (let i = 0; i < partials.length; i++) {
+            if (used.has(i)) continue;
+            const group = [partials[i]];
+            let groupWeight = partials[i].weight;
+            used.add(i);
+
+            for (let j = i + 1; j < partials.length; j++) {
+                if (used.has(j)) continue;
+                if (groupWeight + partials[j].weight <= MAX_TRANSPORT_WEIGHT) {
+                    group.push(partials[j]);
+                    groupWeight += partials[j].weight;
+                    used.add(j);
+                }
+            }
+
+            if (group.length > 1) {
+                consolidated.push({ items: group, totalWeight: groupWeight });
+                saved += group.length - 1; // save (n-1) transports
+            }
+        }
     }
-  }
 
-  return {
-    lines,
-    totalTransports: totalDedicated - saved,
-    saved,
-    consolidated
-  };
+    return {
+        lines,
+        totalTransports: totalDedicated - saved,
+        saved,
+        consolidated
+    };
 }
 
 function renderTransportBreakdown(result, costPerTrip) {
-  const container = document.getElementById('transport-breakdown');
-  if (result.lines.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
+    const container = document.getElementById('transport-breakdown');
+    if (result.lines.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
 
-  const totalDedicated = result.lines.reduce((s, l) => s + l.dedicatedTransports, 0);
-  const totalTransportCost = result.totalTransports * costPerTrip;
-  const totalWeight = result.lines.reduce((s, l) => s + l.totalWeight, 0);
+    const totalDedicated = result.lines.reduce((s, l) => s + l.dedicatedTransports, 0);
+    const totalTransportCost = result.totalTransports * costPerTrip;
+    const totalWeight = result.lines.reduce((s, l) => s + l.totalWeight, 0);
 
-  let html = `<div class="cat-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" onclick="toggleTransportBreakdown()">
+    let html = `<div class="cat-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" onclick="toggleTransportBreakdown()">
     <div>🚚 Kalkulacja transportu <span class="cat-count">(max ${fmtInt(MAX_TRANSPORT_WEIGHT)} kg / transport)</span></div>
     <span id="transport-toggle-icon">${isTransportBreakdownExpanded ? '🔼' : '🔽'}</span>
   </div>`;
-  html += `<div id="transport-breakdown-content" style="display:${isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
-  html += `<div class="table-wrap"><table>
+    html += `<div id="transport-breakdown-content" style="display:${isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
+    html += `<div class="table-wrap"><table>
     <thead><tr>
       <th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th>
       <th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th>
       <th class="text-right">Transporty</th>
       ${costPerTrip > 0 ? '<th class="text-right">Udział wagi</th><th class="text-right">Transport/szt.</th>' : ''}
     </tr></thead><tbody>`;
-  // Sort lines: by diameter (smallest to largest), egg-shaped ("jajowe") always last
-  const sortedLines = [...result.lines].sort((a, b) => {
-    const aJaj = a.name.toUpperCase().includes('JAJOW');
-    const bJaj = b.name.toUpperCase().includes('JAJOW');
-    if (aJaj !== bJaj) return aJaj ? 1 : -1;
-    const dA = getProductDiameter(a.productId) || 99999;
-    const dB = getProductDiameter(b.productId) || 99999;
-    return dA - dB;
-  });
+    // Sort lines: by diameter (smallest to largest), egg-shaped ("jajowe") always last
+    const sortedLines = [...result.lines].sort((a, b) => {
+        const aJaj = a.name.toUpperCase().includes('JAJOW');
+        const bJaj = b.name.toUpperCase().includes('JAJOW');
+        if (aJaj !== bJaj) return aJaj ? 1 : -1;
+        const dA = getProductDiameter(a.productId) || 99999;
+        const dB = getProductDiameter(b.productId) || 99999;
+        return dA - dB;
+    });
 
-  sortedLines.forEach(l => {
-    const weightShare = totalWeight > 0 ? l.totalWeight / totalWeight : 0;
-    const itemTransportCost = weightShare * totalTransportCost;
-    const perUnit = l.quantity > 0 ? itemTransportCost / l.quantity : 0;
-    html += `<tr>
+    sortedLines.forEach((l) => {
+        const weightShare = totalWeight > 0 ? l.totalWeight / totalWeight : 0;
+        const itemTransportCost = weightShare * totalTransportCost;
+        const perUnit = l.quantity > 0 ? itemTransportCost / l.quantity : 0;
+        html += `<tr>
       <td style="max-width:250px">${l.name}</td>
       <td class="text-right">${l.quantity} szt.</td>
       <td class="text-right">${fmtInt(l.weightPerPiece)} kg</td>
       <td class="text-right">${fmtInt(l.totalWeight)} kg</td>
       <td class="text-right">${l.maxPerTransport} szt.</td>
       <td class="text-right" style="font-weight:600">${l.dedicatedTransports}</td>
-      ${costPerTrip > 0 ? `<td class="text-right" style="color:var(--text-secondary)">${(weightShare * 100).toFixed(1)}%</td>
-      <td class="text-right" style="color:var(--warn);font-weight:600">${fmt(perUnit)} PLN</td>` : ''}
+      ${
+          costPerTrip > 0
+              ? `<td class="text-right" style="color:var(--text-secondary)">${(weightShare * 100).toFixed(1)}%</td>
+      <td class="text-right" style="color:var(--warn);font-weight:600">${fmt(perUnit)} PLN</td>`
+              : ''
+      }
     </tr>`;
-  });
+    });
 
-  html += '</tbody></table></div>';
+    html += '</tbody></table></div>';
 
-  if (result.saved > 0) {
-    html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(16,185,129,0.08);border-radius:8px;font-size:.82rem;color:var(--success)">
+    if (result.saved > 0) {
+        html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(16,185,129,0.08);border-radius:8px;font-size:.82rem;color:var(--success)">
       ✅ Optymalizacja: połączono niepełne transporty, zaoszczędzono <strong>${result.saved}</strong> transportów
       (${totalDedicated} → ${result.totalTransports})</div>`;
-  }
+    }
 
-  if (costPerTrip > 0) {
-    const km = Number(document.getElementById('transport-km')?.value) || 0;
-    const rate = Number(document.getElementById('transport-rate')?.value) || 0;
-    html += `<div style="margin-top:.5rem;font-size:.82rem;color:var(--text-secondary)">
+    if (costPerTrip > 0) {
+        const km = Number(document.getElementById('transport-km')?.value) || 0;
+        const rate = Number(document.getElementById('transport-rate')?.value) || 0;
+        html += `<div style="margin-top:.5rem;font-size:.82rem;color:var(--text-secondary)">
       ${km} km × ${fmt(rate)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${result.totalTransports} kursów = <strong style="color:var(--warn)">${fmt(totalTransportCost)} PLN</strong> (rozdzielone proporcjonalnie na pozycje)</div>`;
-  }
+    }
 
-  html += `</div>`; // Close transport-breakdown-content
+    html += `</div>`; // Close transport-breakdown-content
 
-  container.innerHTML = html;
+    container.innerHTML = html;
 }
 
 /* ===== FILE DOWNLOAD HELPER ===== */
 function downloadOfferFile(offer) {
-  const json = JSON.stringify(offer, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
-  a.href = url;
-  a.download = `Oferta_${safeNumber}_${offer.date}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    const json = JSON.stringify(offer, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
+    a.href = url;
+    a.download = `Oferta_${safeNumber}_${offer.date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 /* ===== SAVE OFFER ===== */
 async function saveOffer() {
-  const number = document.getElementById('offer-number').value.trim();
-  const date = document.getElementById('offer-date').value;
-  const clientName = document.getElementById('client-name').value.trim();
-  const clientNip = document.getElementById('client-nip').value.trim();
-  const clientAddress = document.getElementById('client-address').value.trim();
-  const clientContact = document.getElementById('client-contact').value.trim();
-  const investName = document.getElementById('invest-name').value.trim();
-  const investAddress = document.getElementById('invest-address').value.trim();
-  const investContractor = document.getElementById('invest-contractor').value.trim();
-  const notes = document.getElementById('offer-notes').value.trim();
-  const paymentTermsEl = document.getElementById('offer-payment-terms');
-  const paymentTerms = paymentTermsEl ? paymentTermsEl.value.trim() : 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-  const validityEl = document.getElementById('offer-validity');
-  const validity = validityEl ? validityEl.value.trim() : '7 dni';
-  const transportKm = Number(document.getElementById('transport-km').value) || 0;
-  const transportRate = Number(document.getElementById('transport-rate').value) || 0;
-  const transportCostPerTrip = transportKm * transportRate;
+    const number = document.getElementById('offer-number').value.trim();
+    const date = document.getElementById('offer-date').value;
+    const clientName = document.getElementById('client-name').value.trim();
+    const clientNip = document.getElementById('client-nip').value.trim();
+    const clientAddress = document.getElementById('client-address').value.trim();
+    const clientContact = document.getElementById('client-contact').value.trim();
+    const investName = document.getElementById('invest-name').value.trim();
+    const investAddress = document.getElementById('invest-address').value.trim();
+    const investContractor = document.getElementById('invest-contractor').value.trim();
+    const notes = document.getElementById('offer-notes').value.trim();
+    const paymentTermsEl = document.getElementById('offer-payment-terms');
+    const paymentTerms = paymentTermsEl
+        ? paymentTermsEl.value.trim()
+        : 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    const validityEl = document.getElementById('offer-validity');
+    const validity = validityEl ? validityEl.value.trim() : '7 dni';
+    const transportKm = Number(document.getElementById('transport-km').value) || 0;
+    const transportRate = Number(document.getElementById('transport-rate').value) || 0;
+    const transportCostPerTrip = transportKm * transportRate;
 
-  if (!number) { showToast('Podaj numer oferty', 'error'); return; }
-  if (currentOfferItems.length === 0) { showToast('Dodaj przynajmniej jeden produkt', 'error'); return; }
-
-  const transportResult = calculateTransports(currentOfferItems);
-  const transportCost = transportResult.totalTransports * transportCostPerTrip;
-  const transportDist = calculateTransportDistributionStandalone(currentOfferItems, transportCostPerTrip);
-
-  let totalNetto = 0;
-  currentOfferItems.forEach(item => {
-    const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-    const transportPerUnit = transportDist[item.productId] || 0;
-    totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
-  });
-
-  // Automatyczny wybór opiekuna dla nowych ofert (tylko admin / pro)
-  if (!editingOfferId && currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') && !editingOfferAssignedUserId) {
-    try {
-      const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
-      const usersData = await usersResp.json();
-      const allUsers = usersData.data || [];
-
-      if (allUsers.length > 0) {
-        const currentId = currentUser.id;
-        const selectedUser = await showUserSelectionPopup(allUsers, currentId);
-        if (selectedUser === null) {
-          showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
-          return;
-        }
-        editingOfferAssignedUserId = selectedUser.id;
-        editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
-        
-        const btnChangeUser = document.getElementById('btn-change-offer-user');
-        if (btnChangeUser) btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
-      }
-    } catch (e) {
-      console.error('Błąd wyboru opiekuna:', e);
+    if (!number) {
+        showToast('Podaj numer oferty', 'error');
+        return;
     }
-  }
+    if (currentOfferItems.length === 0) {
+        showToast('Dodaj przynajmniej jeden produkt', 'error');
+        return;
+    }
 
-  const { storageService } = await import('./shared/StorageService.js');
-  
-  let existingDoc = null;
-  if (editingOfferId) {
-      try {
-          existingDoc = await storageService.getOfferById(editingOfferId);
-      } catch (e) {}
-  }
+    const transportResult = calculateTransports(currentOfferItems);
+    const transportCost = transportResult.totalTransports * transportCostPerTrip;
+    const transportDist = calculateTransportDistributionStandalone(
+        currentOfferItems,
+        transportCostPerTrip
+    );
 
-  const offerDoc = {
-    id: editingOfferId || 'offer_' + Date.now(),
-    type: 'offer',
-    userId: editingOfferAssignedUserId || existingDoc?.userId || (currentUser ? currentUser.id : null),
-    userName: editingOfferAssignedUserName || existingDoc?.userName || (currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : ''),
-    number, date, clientName, clientNip, clientAddress, clientContact, investName, investAddress, investContractor, notes, paymentTerms, validity,
-    items: JSON.parse(JSON.stringify(currentOfferItems)),
-    transportKm,
-    transportRate,
-    transportCostPerTrip,
-    transportCount: transportResult.totalTransports,
-    transportCost,
-    totalNetto,
-    totalBrutto: totalNetto * 1.23,
-    createdAt: existingDoc?.createdAt || new Date().toISOString(),
-    lastEditedBy: currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : ''
-  };
+    let totalNetto = 0;
+    currentOfferItems.forEach((item) => {
+        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+        const transportPerUnit = transportDist[item.productId] || 0;
+        totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
+    });
 
-  try {
-      if (offerDoc.items.length === 0) {
-          showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
-          return;
-      }
-      const result = await storageService.saveOffer(offerDoc);
-      showToast('Oferta zapisana ✔', 'success');
-      editingOfferId = result.id || offerDoc.id;
+    // Automatyczny wybór opiekuna dla nowych ofert (tylko admin / pro)
+    if (
+        !editingOfferId &&
+        currentUser &&
+        (currentUser.role === 'admin' || currentUser.role === 'pro') &&
+        !editingOfferAssignedUserId
+    ) {
+        try {
+            const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
+            const usersData = await usersResp.json();
+            const allUsers = usersData.data || [];
 
-      // Update local array for immediate render
-      const idx = offers.findIndex(o => o.id === offerDoc.id);
-      if (idx >= 0) offers[idx] = { ...offerDoc, id: offerDoc.id };
-      else offers.push({ ...offerDoc, id: offerDoc.id });
-      
-      renderSavedOffers();
-  } catch (err) {
-      console.error('[App] Save error:', err);
-      showToast('Błąd zapisu oferty', 'error');
-  }
+            if (allUsers.length > 0) {
+                const currentId = currentUser.id;
+                const selectedUser = await showUserSelectionPopup(allUsers, currentId);
+                if (selectedUser === null) {
+                    showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
+                    return;
+                }
+                editingOfferAssignedUserId = selectedUser.id;
+                editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
+
+                const btnChangeUser = document.getElementById('btn-change-offer-user');
+                if (btnChangeUser)
+                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+            }
+        } catch (e) {
+            console.error('Błąd wyboru opiekuna:', e);
+        }
+    }
+
+    const { storageService } = await import('./shared/StorageService.js');
+
+    let existingDoc = null;
+    if (editingOfferId) {
+        try {
+            existingDoc = await storageService.getOfferById(editingOfferId);
+        } catch (e) {}
+    }
+
+    const offerDoc = {
+        id: editingOfferId || 'offer_' + Date.now(),
+        type: 'offer',
+        userId:
+            editingOfferAssignedUserId ||
+            existingDoc?.userId ||
+            (currentUser ? currentUser.id : null),
+        userName:
+            editingOfferAssignedUserName ||
+            existingDoc?.userName ||
+            (currentUser
+                ? currentUser.firstName && currentUser.lastName
+                    ? `${currentUser.firstName} ${currentUser.lastName}`
+                    : currentUser.username
+                : ''),
+        number,
+        date,
+        clientName,
+        clientNip,
+        clientAddress,
+        clientContact,
+        investName,
+        investAddress,
+        investContractor,
+        notes,
+        paymentTerms,
+        validity,
+        items: JSON.parse(JSON.stringify(currentOfferItems)),
+        transportKm,
+        transportRate,
+        transportCostPerTrip,
+        transportCount: transportResult.totalTransports,
+        transportCost,
+        totalNetto,
+        totalBrutto: totalNetto * 1.23,
+        createdAt: existingDoc?.createdAt || new Date().toISOString(),
+        lastEditedBy: currentUser
+            ? currentUser.firstName && currentUser.lastName
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.username
+            : ''
+    };
+
+    try {
+        if (offerDoc.items.length === 0) {
+            showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
+            return;
+        }
+        const result = await storageService.saveOffer(offerDoc);
+        showToast('Oferta zapisana ✔', 'success');
+        editingOfferId = result.id || offerDoc.id;
+
+        // Update local array for immediate render
+        const idx = offers.findIndex((o) => o.id === offerDoc.id);
+        if (idx >= 0) offers[idx] = { ...offerDoc, id: offerDoc.id };
+        else offers.push({ ...offerDoc, id: offerDoc.id });
+
+        renderSavedOffers();
+    } catch (err) {
+        console.error('[App] Save error:', err);
+        showToast('Błąd zapisu oferty', 'error');
+    }
 }
 
 function clearOfferForm() {
-  editingOfferId = null;
-  editingOfferAssignedUserId = null;
-  editingOfferAssignedUserName = '';
-  document.getElementById('offer-number').value = generateOfferNumber();
-  document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('client-name').value = '';
-  document.getElementById('client-nip').value = '';
-  document.getElementById('client-address').value = '';
-  document.getElementById('client-contact').value = '';
-  document.getElementById('invest-name').value = '';
-  document.getElementById('invest-address').value = '';
-  document.getElementById('invest-contractor').value = '';
-  document.getElementById('offer-notes').value = '';
-  if (document.getElementById('offer-payment-terms')) document.getElementById('offer-payment-terms').value = 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-  if (document.getElementById('offer-validity')) document.getElementById('offer-validity').value = '7 dni';
-  document.getElementById('transport-km').value = '100';
-  document.getElementById('transport-rate').value = '10';
-  currentOfferItems = [];
-  
-  // Aktualizacja UI
-  const titleEl = document.getElementById('offer-form-title');
-  if (titleEl) titleEl.innerHTML = `📋 Dane klienta i oferty (Nowa)`;
-  const btnEl = document.getElementById('btn-save-offer');
-  if (btnEl) btnEl.innerHTML = `💾 Zapisz ofertę`;
+    editingOfferId = null;
+    editingOfferAssignedUserId = null;
+    editingOfferAssignedUserName = '';
+    document.getElementById('offer-number').value = generateOfferNumber();
+    document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('client-name').value = '';
+    document.getElementById('client-nip').value = '';
+    document.getElementById('client-address').value = '';
+    document.getElementById('client-contact').value = '';
+    document.getElementById('invest-name').value = '';
+    document.getElementById('invest-address').value = '';
+    document.getElementById('invest-contractor').value = '';
+    document.getElementById('offer-notes').value = '';
+    if (document.getElementById('offer-payment-terms'))
+        document.getElementById('offer-payment-terms').value =
+            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    if (document.getElementById('offer-validity'))
+        document.getElementById('offer-validity').value = '7 dni';
+    document.getElementById('transport-km').value = '100';
+    document.getElementById('transport-rate').value = '10';
+    currentOfferItems = [];
 
-  const btnChangeUser = document.getElementById('btn-change-offer-user');
-  if (btnChangeUser) {
-    btnChangeUser.style.display = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) ? 'inline-block' : 'none';
-    btnChangeUser.textContent = `👤 Zmień opiekuna`;
-  }
+    // Aktualizacja UI
+    const titleEl = document.getElementById('offer-form-title');
+    if (titleEl) titleEl.innerHTML = `📋 Dane klienta i oferty (Nowa)`;
+    const btnEl = document.getElementById('btn-save-offer');
+    if (btnEl) btnEl.innerHTML = `💾 Zapisz ofertę`;
 
+    const btnChangeUser = document.getElementById('btn-change-offer-user');
+    if (btnChangeUser) {
+        btnChangeUser.style.display =
+            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
+                ? 'inline-block'
+                : 'none';
+        btnChangeUser.textContent = `👤 Zmień opiekuna`;
+    }
 
-  renderOfferItems();
+    renderOfferItems();
 }
 
 /* ===== SAVED OFFERS ===== */
 function renderSavedOffers() {
-  const container = document.getElementById('saved-offers-list');
-  if (!container) {
-    if (window.pvSalesUI) window.pvSalesUI.loadLocalOffers();
-    return;
-  }
-  if (offers.length === 0) {
-    container.innerHTML = `<div class="empty-state">
+    const container = document.getElementById('saved-offers-list');
+    if (!container) {
+        if (window.pvSalesUI) window.pvSalesUI.loadLocalOffers();
+        return;
+    }
+    if (offers.length === 0) {
+        container.innerHTML = `<div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
       <h3>Brak zapisanych ofert</h3><p>Utwórz nową ofertę w zakładce "Nowa Oferta"</p></div>`;
-    return;
-  }
+        return;
+    }
 
-  const isAdmin = currentUser && currentUser.role === 'admin';
-  const isPro = currentUser && currentUser.role === 'pro';
-  const subUsers = (currentUser && currentUser.subUsers) || [];
+    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isPro = currentUser && currentUser.role === 'pro';
+    const subUsers = (currentUser && currentUser.subUsers) || [];
 
-  container.innerHTML = offers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(o => {
-    const isOwner = currentUser && o.userId === currentUser.id;
-    const isSubUserOffer = isPro && subUsers.includes(o.userId);
-    const canEdit = isAdmin || isOwner || isSubUserOffer;
+    container.innerHTML = offers
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .map((o) => {
+            const isOwner = currentUser && o.userId === currentUser.id;
+            const isSubUserOffer = isPro && subUsers.includes(o.userId);
+            const canEdit = isAdmin || isOwner || isSubUserOffer;
 
-    return `
+            return `
     <div class="offer-list-item">
       <div class="offer-info" style="min-width:0;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
@@ -1774,194 +2020,237 @@ function renderSavedOffers() {
         <div class="meta" style="margin-top:0.3rem;">
           <span>📅 <strong>${o.date}</strong></span>
           <span>📦 <strong>${o.items.length}</strong> poz.</span>
-          ${isAdmin && o.userName ? (() => {
-            const rawUN = o.userName || '';
-            let displayUN = rawUN;
-            // 1. Sprawdź mapę globalną
-            if (window.globalUsersMap && window.globalUsersMap.has(rawUN)) {
-              displayUN = window.globalUsersMap.get(rawUN);
-            }
-            // 2. Fallback dla aktualnie zalogowanego
-            else if (typeof currentUser !== 'undefined' && currentUser && (rawUN === currentUser.username || rawUN === currentUser.id)) {
-              displayUN = currentUser.displayName || currentUser.username || rawUN;
-            }
-            return `<span style="color:var(--accent-hover)">👤 <strong>${displayUN}</strong></span>`;
-          })() : ''}
+          ${
+              isAdmin && o.userName
+                  ? (() => {
+                        const rawUN = o.userName || '';
+                        let displayUN = rawUN;
+                        // 1. Sprawdź mapę globalną
+                        if (window.globalUsersMap && window.globalUsersMap.has(rawUN)) {
+                            displayUN = window.globalUsersMap.get(rawUN);
+                        }
+                        // 2. Fallback dla aktualnie zalogowanego
+                        else if (
+                            typeof currentUser !== 'undefined' &&
+                            currentUser &&
+                            (rawUN === currentUser.username || rawUN === currentUser.id)
+                        ) {
+                            displayUN = currentUser.displayName || currentUser.username || rawUN;
+                        }
+                        return `<span style="color:var(--accent-hover)">👤 <strong>${displayUN}</strong></span>`;
+                    })()
+                  : ''
+          }
         </div>
-        ${o.clientName || o.investName || o.clientContact ? `
+        ${
+            o.clientName || o.investName || o.clientContact
+                ? `
         <div class="offer-client-badges">
           ${o.clientName ? `<div class="badge-client">🏢 <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
           ${o.investName ? `<div class="badge-invest">🏗️ <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
           ${o.clientContact ? `<div class="badge-contact">📞 <strong>Kontakt:</strong> <span style="font-weight:500">${o.clientContact}</span></div>` : ''}
-        </div>` : ''}
+        </div>`
+                : ''
+        }
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
         <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}>✏️ Edytuj</button>
         <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj">📋 Duplikuj</button>
-        ${(o.history && o.history.length > 0) ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian">⏳ Historia</button>` : ''}
+        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian">⏳ Historia</button>` : ''}
         <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON">💾 JSON</button>
         <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX">📊 XLSX</button>
         <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF">📄 PDF</button>
         <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}>🗑️ Usuń</button>
       </div>
     </div>
-  `}).join('');
+  `;
+        })
+        .join('');
 }
 
 async function loadOffer(id) {
-  let offer = offers.find(o => o.id === id);
-  let srv = null;
-  try {
-      const { storageService } = await import('./shared/StorageService.js');
-      srv = storageService;
-  } catch (e) {
-      console.warn('Could not import storageService', e);
-  }
-
-  if (!offer) {
-      try {
-          if (srv) offer = await srv.getOfferById(id);
-      } catch (e) {
-          showToast('Błąd: Nie znaleziono oferty w bazie.', 'error');
-          return;
-      }
-  }
-  if (!offer) return;
-  
-  // Normalize if it's legacy data not yet normalized by StorageService
-  const normalized = (srv && srv.normalizeOffer) ? srv.normalizeOffer(offer) : offer;
-
-  editingOfferId = id;
-  editingOfferAssignedUserId = normalized.userId || null;
-  editingOfferAssignedUserName = normalized.userName || '';
-  const finalNumber = normalized.number || normalized.offerNumber || normalized.title || normalized.offerName || '';
-  document.getElementById('offer-number').value = finalNumber;
-  document.getElementById('offer-date').value = normalized.date || new Date().toISOString().slice(0, 10);
-  document.getElementById('client-name').value = normalized.clientName || '';
-  document.getElementById('client-nip').value = normalized.clientNip || '';
-  document.getElementById('client-address').value = normalized.clientAddress || '';
-  document.getElementById('client-contact').value = normalized.clientContact || '';
-  document.getElementById('invest-name').value = normalized.investName || '';
-  document.getElementById('invest-address').value = normalized.investAddress || '';
-  document.getElementById('invest-contractor').value = normalized.investContractor || '';
-  document.getElementById('offer-notes').value = normalized.notes || '';
-  if (document.getElementById('offer-payment-terms')) document.getElementById('offer-payment-terms').value = normalized.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-  if (document.getElementById('offer-validity')) document.getElementById('offer-validity').value = normalized.validity || '7 dni';
-  document.getElementById('transport-km').value = normalized.transportKm || 100;
-  document.getElementById('transport-rate').value = normalized.transportRate || 10;
-  currentOfferItems = JSON.parse(JSON.stringify(normalized.items || []));
-  
-  // Uprawnienia
-  const isAdmin = currentUser && currentUser.role === 'admin';
-  const isOwner = currentUser && (normalized.userId === currentUser.id || normalized.creatorId === currentUser.id);
-  const subUsers = (currentUser && currentUser.subUsers) || [];
-  const isPro = currentUser && currentUser.role === 'pro';
-  const isSubUserOffer = isPro && subUsers.includes(normalized.userId);
-  const canEdit = isAdmin || isOwner || isSubUserOffer;
-
-  // Aktualizacja UI
-  const titleEl = document.getElementById('offer-form-title');
-  if (titleEl) titleEl.innerHTML = `✏️ Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
-  const btnEl = document.getElementById('btn-save-offer');
-  if (btnEl) {
-    btnEl.innerHTML = `💾 Zapisz zmiany`;
-    btnEl.disabled = !canEdit;
-    btnEl.title = canEdit ? '' : 'Brak uprawnień do edycji tej oferty';
-  }
-
-  const btnChangeUser = document.getElementById('btn-change-offer-user');
-  if (btnChangeUser) {
-    btnChangeUser.style.display = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) ? 'inline-block' : 'none';
-    if (editingOfferAssignedUserName) {
-      btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
-    } else {
-      btnChangeUser.textContent = `👤 Zmień opiekuna`;
+    let offer = offers.find((o) => o.id === id);
+    let srv = null;
+    try {
+        const { storageService } = await import('./shared/StorageService.js');
+        srv = storageService;
+    } catch (e) {
+        console.warn('Could not import storageService', e);
     }
-  }
 
+    if (!offer) {
+        try {
+            if (srv) offer = await srv.getOfferById(id);
+        } catch (e) {
+            showToast('Błąd: Nie znaleziono oferty w bazie.', 'error');
+            return;
+        }
+    }
+    if (!offer) return;
 
-  renderOfferItems();
-  showSection('offer');
-  showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
+    // Normalize if it's legacy data not yet normalized by StorageService
+    const normalized = srv && srv.normalizeOffer ? srv.normalizeOffer(offer) : offer;
+
+    editingOfferId = id;
+    editingOfferAssignedUserId = normalized.userId || null;
+    editingOfferAssignedUserName = normalized.userName || '';
+    const finalNumber =
+        normalized.number ||
+        normalized.offerNumber ||
+        normalized.title ||
+        normalized.offerName ||
+        '';
+    document.getElementById('offer-number').value = finalNumber;
+    document.getElementById('offer-date').value =
+        normalized.date || new Date().toISOString().slice(0, 10);
+    document.getElementById('client-name').value = normalized.clientName || '';
+    document.getElementById('client-nip').value = normalized.clientNip || '';
+    document.getElementById('client-address').value = normalized.clientAddress || '';
+    document.getElementById('client-contact').value = normalized.clientContact || '';
+    document.getElementById('invest-name').value = normalized.investName || '';
+    document.getElementById('invest-address').value = normalized.investAddress || '';
+    document.getElementById('invest-contractor').value = normalized.investContractor || '';
+    document.getElementById('offer-notes').value = normalized.notes || '';
+    if (document.getElementById('offer-payment-terms'))
+        document.getElementById('offer-payment-terms').value =
+            normalized.paymentTerms ||
+            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    if (document.getElementById('offer-validity'))
+        document.getElementById('offer-validity').value = normalized.validity || '7 dni';
+    document.getElementById('transport-km').value = normalized.transportKm || 100;
+    document.getElementById('transport-rate').value = normalized.transportRate || 10;
+    currentOfferItems = JSON.parse(JSON.stringify(normalized.items || []));
+
+    // Uprawnienia
+    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isOwner =
+        currentUser &&
+        (normalized.userId === currentUser.id || normalized.creatorId === currentUser.id);
+    const subUsers = (currentUser && currentUser.subUsers) || [];
+    const isPro = currentUser && currentUser.role === 'pro';
+    const isSubUserOffer = isPro && subUsers.includes(normalized.userId);
+    const canEdit = isAdmin || isOwner || isSubUserOffer;
+
+    // Aktualizacja UI
+    const titleEl = document.getElementById('offer-form-title');
+    if (titleEl)
+        titleEl.innerHTML = `✏️ Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
+    const btnEl = document.getElementById('btn-save-offer');
+    if (btnEl) {
+        btnEl.innerHTML = `💾 Zapisz zmiany`;
+        btnEl.disabled = !canEdit;
+        btnEl.title = canEdit ? '' : 'Brak uprawnień do edycji tej oferty';
+    }
+
+    const btnChangeUser = document.getElementById('btn-change-offer-user');
+    if (btnChangeUser) {
+        btnChangeUser.style.display =
+            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
+                ? 'inline-block'
+                : 'none';
+        if (editingOfferAssignedUserName) {
+            btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+        } else {
+            btnChangeUser.textContent = `👤 Zmień opiekuna`;
+        }
+    }
+
+    renderOfferItems();
+    showSection('offer');
+    showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
 }
 
 // Ensure compatibility with PVSalesUI calls
-window.loadSavedOfferData = function(doc, id) {
-    offers = offers.filter(o => o.id !== id);
+window.loadSavedOfferData = function (doc, id) {
+    offers = offers.filter((o) => o.id !== id);
     offers.push({ ...doc, id: id });
     loadOffer(id);
 };
 
 function duplicateOffer(id) {
-  const offer = offers.find(o => o.id === id);
-  if (!offer) return;
-  const newOffer = JSON.parse(JSON.stringify(offer));
-  newOffer.id = 'offer_' + Date.now();
-  newOffer.number = offer.number + ' (kopia)';
-  newOffer.userId = currentUser ? currentUser.id : null;
-  newOffer.userName = currentUser ? (currentUser.firstName && currentUser.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : currentUser.username) : '';
-  newOffer.createdAt = new Date().toISOString();
-  newOffer.updatedAt = new Date().toISOString();
-  offers.push(newOffer);
-  saveOffersData(offers);
-  renderSavedOffers();
-  showToast('Zduplikowano ofertę', 'success');
+    const offer = offers.find((o) => o.id === id);
+    if (!offer) return;
+    const newOffer = JSON.parse(JSON.stringify(offer));
+    newOffer.id = 'offer_' + Date.now();
+    newOffer.number = offer.number + ' (kopia)';
+    newOffer.userId = currentUser ? currentUser.id : null;
+    newOffer.userName = currentUser
+        ? currentUser.firstName && currentUser.lastName
+            ? `${currentUser.firstName} ${currentUser.lastName}`
+            : currentUser.username
+        : '';
+    newOffer.createdAt = new Date().toISOString();
+    newOffer.updatedAt = new Date().toISOString();
+    offers.push(newOffer);
+    saveOffersData(offers);
+    renderSavedOffers();
+    showToast('Zduplikowano ofertę', 'success');
 }
 
 async function deleteOffer(id) {
-  if (!await appConfirm('Czy na pewno usunąć tę ofertę?', { title: 'Usuwanie oferty', type: 'danger' })) return;
-  try {
-    const res = await fetch(`/api/offers-rury/${id}`, { method: 'DELETE', headers: authHeaders() });
-    if (!res.ok) {
-      const err = await res.json();
-      showToast(err.error || 'Błąd usuwania', 'error');
-      return;
+    if (
+        !(await appConfirm('Czy na pewno usunąć tę ofertę?', {
+            title: 'Usuwanie oferty',
+            type: 'danger'
+        }))
+    )
+        return;
+    try {
+        const res = await fetch(`/api/offers-rury/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.error || 'Błąd usuwania', 'error');
+            return;
+        }
+        offers = offers.filter((o) => o.id !== id);
+        renderSavedOffers();
+        showToast('Oferta usunięta', 'info');
+    } catch (err) {
+        console.error('deleteOffer error:', err);
+        showToast('Błąd połączenia z serwerem', 'error');
     }
-    offers = offers.filter(o => o.id !== id);
-    renderSavedOffers();
-    showToast('Oferta usunięta', 'info');
-  } catch (err) {
-    console.error('deleteOffer error:', err);
-    showToast('Błąd połączenia z serwerem', 'error');
-  }
 }
 
 function downloadExistingOffer(id) {
-  const offer = offers.find(o => o.id === id);
-  if (!offer) return;
-  downloadOfferFile(offer);
-  showToast('Pobrano plik oferty', 'success');
+    const offer = offers.find((o) => o.id === id);
+    if (!offer) return;
+    downloadOfferFile(offer);
+    showToast('Pobrano plik oferty', 'success');
 }
 
 /* ===== OFFER HISTORY ===== */
 function showOfferHistory(id) {
-  const offer = offers.find(o => o.id === id);
-  if (!offer || !offer.history || offer.history.length === 0) {
-    showToast('Brak historii dla tej oferty', 'info');
-    return;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'offer-history-modal';
-
-  let historyHtml = offer.history.map((h, i) => {
-    // Find next state (either next history item or current offer)
-    const nextState = i === offer.history.length - 1 ? offer : offer.history[i + 1];
-    const priceDiff = nextState.totalBrutto - h.totalBrutto;
-
-    let diffHtml = '';
-    if (Math.abs(priceDiff) > 0.01) {
-      if (priceDiff > 0) {
-        diffHtml = `<span style="color:var(--danger); font-size:0.8rem; font-weight:700;">+${fmt(priceDiff)} PLN</span>`;
-      } else {
-        diffHtml = `<span style="color:var(--success); font-size:0.8rem; font-weight:700;">${fmt(priceDiff)} PLN</span>`;
-      }
-    } else {
-      diffHtml = `<span style="color:var(--text-muted); font-size:0.8rem;">Bez zmian</span>`;
+    const offer = offers.find((o) => o.id === id);
+    if (!offer || !offer.history || offer.history.length === 0) {
+        showToast('Brak historii dla tej oferty', 'info');
+        return;
     }
 
-    return `
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'offer-history-modal';
+
+    let historyHtml = offer.history
+        .map((h, i) => {
+            // Find next state (either next history item or current offer)
+            const nextState = i === offer.history.length - 1 ? offer : offer.history[i + 1];
+            const priceDiff = nextState.totalBrutto - h.totalBrutto;
+
+            let diffHtml = '';
+            if (Math.abs(priceDiff) > 0.01) {
+                if (priceDiff > 0) {
+                    diffHtml = `<span style="color:var(--danger); font-size:0.8rem; font-weight:700;">+${fmt(priceDiff)} PLN</span>`;
+                } else {
+                    diffHtml = `<span style="color:var(--success); font-size:0.8rem; font-weight:700;">${fmt(priceDiff)} PLN</span>`;
+                }
+            } else {
+                diffHtml = `<span style="color:var(--text-muted); font-size:0.8rem;">Bez zmian</span>`;
+            }
+
+            return `
       <div style="background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:8px; padding:1rem; margin-bottom:0.8rem;">
         <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; border-bottom:1px dashed var(--border-glass); padding-bottom:0.4rem;">
           <strong style="color:var(--text-primary);">${new Date(h.updatedAt).toLocaleString()}</strong>
@@ -1986,9 +2275,11 @@ function showOfferHistory(id) {
         </div>
       </div>
     `;
-  }).reverse().join('');
+        })
+        .reverse()
+        .join('');
 
-  overlay.innerHTML = `
+    overlay.innerHTML = `
     <div class="modal" style="max-width:800px; width:95%; border-radius:12px; max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
         <h3 style="font-weight:700;">⏳ Historia zmian oferty: ${offer.number}</h3>
@@ -1999,127 +2290,141 @@ function showOfferHistory(id) {
       </div>
     </div>`;
 
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
 }
 
 function restoreOfferVersion(offerId, historyIndex) {
-  const offer = offers.find(o => o.id === offerId);
-  if (!offer || !offer.history || !offer.history[historyIndex]) return;
+    const offer = offers.find((o) => o.id === offerId);
+    if (!offer || !offer.history || !offer.history[historyIndex]) return;
 
-  const snapshot = offer.history[historyIndex];
+    const snapshot = offer.history[historyIndex];
 
-  // Load snapshot as new offer with current editing id
-  editingOfferId = offer.id;
-  document.getElementById('offer-number').value = snapshot.number || offer.number;
-  document.getElementById('offer-date').value = snapshot.date || offer.date;
-  document.getElementById('client-name').value = snapshot.clientName || '';
-  document.getElementById('client-nip').value = snapshot.clientNip || '';
-  document.getElementById('client-address').value = snapshot.clientAddress || '';
-  document.getElementById('client-contact').value = snapshot.clientContact || '';
-  document.getElementById('invest-name').value = snapshot.investName || '';
-  document.getElementById('invest-address').value = snapshot.investAddress || '';
-  document.getElementById('invest-contractor').value = snapshot.investContractor || '';
-  document.getElementById('offer-notes').value = snapshot.notes || '';
-  if (document.getElementById('offer-payment-terms')) document.getElementById('offer-payment-terms').value = snapshot.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-  if (document.getElementById('offer-validity')) document.getElementById('offer-validity').value = snapshot.validity || '7 dni';
-  document.getElementById('transport-km').value = snapshot.transportKm || 100;
-  document.getElementById('transport-rate').value = snapshot.transportRate || 10;
+    // Load snapshot as new offer with current editing id
+    editingOfferId = offer.id;
+    document.getElementById('offer-number').value = snapshot.number || offer.number;
+    document.getElementById('offer-date').value = snapshot.date || offer.date;
+    document.getElementById('client-name').value = snapshot.clientName || '';
+    document.getElementById('client-nip').value = snapshot.clientNip || '';
+    document.getElementById('client-address').value = snapshot.clientAddress || '';
+    document.getElementById('client-contact').value = snapshot.clientContact || '';
+    document.getElementById('invest-name').value = snapshot.investName || '';
+    document.getElementById('invest-address').value = snapshot.investAddress || '';
+    document.getElementById('invest-contractor').value = snapshot.investContractor || '';
+    document.getElementById('offer-notes').value = snapshot.notes || '';
+    if (document.getElementById('offer-payment-terms'))
+        document.getElementById('offer-payment-terms').value =
+            snapshot.paymentTerms ||
+            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    if (document.getElementById('offer-validity'))
+        document.getElementById('offer-validity').value = snapshot.validity || '7 dni';
+    document.getElementById('transport-km').value = snapshot.transportKm || 100;
+    document.getElementById('transport-rate').value = snapshot.transportRate || 10;
 
-  currentOfferItems = JSON.parse(JSON.stringify(snapshot.items || []));
-  renderOfferItems();
-  
-  // Switch to the form view
-  const navOffer = document.getElementById('nav-offer');
-  if (navOffer) navOffer.click();
+    currentOfferItems = JSON.parse(JSON.stringify(snapshot.items || []));
+    renderOfferItems();
 
-  if (typeof closeModal === 'function') closeModal();
-  if (typeof window.showToast === 'function') window.showToast('Wersja z historii wczytana', 'success');
+    // Switch to the form view
+    const navOffer = document.getElementById('nav-offer');
+    if (navOffer) navOffer.click();
+
+    if (typeof closeModal === 'function') closeModal();
+    if (typeof window.showToast === 'function')
+        window.showToast('Wersja z historii wczytana', 'success');
 }
 
 /* ===== IMPORT OFFER FROM FILE ===== */
 function importOfferFromFile() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.multiple = true;
-  input.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    let imported = 0;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        try {
-          const offer = JSON.parse(ev.target.result);
-          if (!offer.number || !offer.items || !Array.isArray(offer.items)) {
-            showToast(`Plik ${file.name} nie zawiera poprawnej oferty`, 'error');
-            return;
-          }
-          // Check if offer with same id already exists
-          const existingIdx = offers.findIndex(o => o.id === offer.id);
-          if (existingIdx >= 0) {
-            if (await appConfirm(`Oferta "${offer.number}" już istnieje. Nadpisać?`, { title: 'Nadpisanie oferty', type: 'warning' })) {
-              offers[existingIdx] = offer;
-            } else {
-              return;
-            }
-          } else {
-            offers.push(offer);
-          }
-          imported++;
-          saveOffersData(offers);
-          renderSavedOffers();
-          showToast(`Zaimportowano: ${offer.number}`, 'success');
-        } catch (err) {
-          showToast(`Błąd odczytu pliku ${file.name}`, 'error');
-        }
-      };
-      reader.readAsText(file);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.multiple = true;
+    input.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        let imported = 0;
+        files.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const offer = JSON.parse(ev.target.result);
+                    if (!offer.number || !offer.items || !Array.isArray(offer.items)) {
+                        showToast(`Plik ${file.name} nie zawiera poprawnej oferty`, 'error');
+                        return;
+                    }
+                    // Check if offer with same id already exists
+                    const existingIdx = offers.findIndex((o) => o.id === offer.id);
+                    if (existingIdx >= 0) {
+                        if (
+                            await appConfirm(`Oferta "${offer.number}" już istnieje. Nadpisać?`, {
+                                title: 'Nadpisanie oferty',
+                                type: 'warning'
+                            })
+                        ) {
+                            offers[existingIdx] = offer;
+                        } else {
+                            return;
+                        }
+                    } else {
+                        offers.push(offer);
+                    }
+                    imported++;
+                    saveOffersData(offers);
+                    renderSavedOffers();
+                    showToast(`Zaimportowano: ${offer.number}`, 'success');
+                } catch (err) {
+                    showToast(`Błąd odczytu pliku ${file.name}`, 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
     });
-  });
-  input.click();
+    input.click();
 }
 
 /* ===== PDF EXPORT ===== */
 function exportOfferPDF(id) {
-  const offer = offers.find(o => o.id === id);
-  if (!offer) return;
+    const offer = offers.find((o) => o.id === id);
+    if (!offer) return;
 
-  let totalNetto = 0, totalWeight = 0;
-  const costPerTrip = offer.transportCostPerTrip || 0;
+    let totalNetto = 0,
+        totalWeight = 0;
+    const costPerTrip = offer.transportCostPerTrip || 0;
 
-  // Recalculate transport for PDF
-  const transportResult = calculateTransports(offer.items);
-  const transportCost = transportResult.totalTransports * costPerTrip;
-  const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
+    // Recalculate transport for PDF
+    const transportResult = calculateTransports(offer.items);
+    const transportCost = transportResult.totalTransports * costPerTrip;
+    const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
 
-  offer.items.forEach(item => {
-    const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-    const transportPerUnit = transportDist[item.productId] || 0;
-    totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
-    totalWeight += (item.weight || 0) * item.quantity;
-  });
-
-  const totalVat = totalNetto * 0.23;
-  const totalBrutto = totalNetto + totalVat;
-
-  // Transport table HTML
-  let transportHtml = '';
-  if (transportResult.lines.length > 0) {
-    transportHtml = `<h3 style="font-size:13px;color:#2d3561;margin-top:18px;margin-bottom:6px">🚚 Transport (max 24 000 kg / kurs)</h3>
-    <table><thead><tr><th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th><th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th><th class="text-right">Transporty</th></tr></thead><tbody>`;
-    transportResult.lines.forEach(l => {
-      transportHtml += `<tr><td>${l.name}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
+    offer.items.forEach((item) => {
+        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+        const transportPerUnit = transportDist[item.productId] || 0;
+        totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
+        totalWeight += (item.weight || 0) * item.quantity;
     });
-    transportHtml += `</tbody></table>`;
-    if (transportResult.saved > 0) {
-      transportHtml += `<div style="font-size:11px;color:#059669;margin-top:4px">Optymalizacja: połączono niepełne transporty (${transportResult.lines.reduce((s, l) => s + l.dedicatedTransports, 0)} → ${transportResult.totalTransports})</div>`;
-    }
-  }
 
-  const printWin = window.open('', '_blank');
-  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${offer.number}</title>
+    const totalVat = totalNetto * 0.23;
+    const totalBrutto = totalNetto + totalVat;
+
+    // Transport table HTML
+    let transportHtml = '';
+    if (transportResult.lines.length > 0) {
+        transportHtml = `<h3 style="font-size:13px;color:#2d3561;margin-top:18px;margin-bottom:6px">🚚 Transport (max 24 000 kg / kurs)</h3>
+    <table><thead><tr><th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th><th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th><th class="text-right">Transporty</th></tr></thead><tbody>`;
+        transportResult.lines.forEach((l) => {
+            transportHtml += `<tr><td>${l.name}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
+        });
+        transportHtml += `</tbody></table>`;
+        if (transportResult.saved > 0) {
+            transportHtml += `<div style="font-size:11px;color:#059669;margin-top:4px">Optymalizacja: połączono niepełne transporty (${transportResult.lines.reduce((s, l) => s + l.dedicatedTransports, 0)} → ${transportResult.totalTransports})</div>`;
+        }
+    }
+
+    const printWin = window.open('', '_blank');
+    printWin.document
+        .write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${offer.number}</title>
   <style>
     body{font-family:Arial,sans-serif;color:#1a1a2e;padding:30px;font-size:13px;line-height:1.5}
     h1{font-size:20px;color:#2d3561;margin-bottom:5px}
@@ -2166,18 +2471,20 @@ function exportOfferPDF(id) {
   </div>
   <table>
     <thead><tr><th>Lp.</th><th>Indeks</th><th>Nazwa</th><th class="text-right">Cena jedn.</th><th class="text-right">Rabat</th><th class="text-right">Po rabacie</th><th class="text-right">Transport/szt.</th><th class="text-right">Ilość</th><th class="text-right">Netto</th><th class="text-right">Brutto</th></tr></thead>
-    <tbody>${offer.items.map((item, i) => {
-    const pad = item.unitPrice * (1 - item.discount / 100) + (item.pehdCostPerUnit || 0);
-    const tpu = transportDist[item.productId] || 0;
-    const unitTotal = pad + tpu;
-    const n = unitTotal * item.quantity;
+    <tbody>${offer.items
+        .map((item, i) => {
+            const pad = item.unitPrice * (1 - item.discount / 100) + (item.pehdCostPerUnit || 0);
+            const tpu = transportDist[item.productId] || 0;
+            const unitTotal = pad + tpu;
+            const n = unitTotal * item.quantity;
 
-    let pName = item.name;
-    if (item.pehdType === 'PEHD-3MM') pName += ' + PEHD 3mm';
-    if (item.pehdType === 'PEHD-4MM') pName += ' + PEHD 4mm';
+            let pName = item.name;
+            if (item.pehdType === 'PEHD-3MM') pName += ' + PEHD 3mm';
+            if (item.pehdType === 'PEHD-4MM') pName += ' + PEHD 4mm';
 
-    return `<tr><td>${i + 1}</td><td>${item.productId}</td><td>${pName}${item.autoAdded ? ' (uszczelka)' : ''}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
-  }).join('')}</tbody>
+            return `<tr><td>${i + 1}</td><td>${item.productId}</td><td>${pName}${item.autoAdded ? ' (uszczelka)' : ''}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
+        })
+        .join('')}</tbody>
   </table>
   ${transportHtml}
   <div class="summary">
@@ -2195,34 +2502,34 @@ function exportOfferPDF(id) {
   <img src="${window.location.origin}/templates/stopka.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
   <div class="footer">Oferta wygenerowana automatycznie • WITROS</div>
   </body></html>`);
-  printWin.document.close();
-  let rounds = 0;
-  const checkInterval = setInterval(() => {
-    rounds++;
-    if ((printWin._hLoaded && printWin._fLoaded) || rounds > 15) {
-      clearInterval(checkInterval);
-      printWin.print();
-    }
-  }, 100);
+    printWin.document.close();
+    let rounds = 0;
+    const checkInterval = setInterval(() => {
+        rounds++;
+        if ((printWin._hLoaded && printWin._fLoaded) || rounds > 15) {
+            clearInterval(checkInterval);
+            printWin.print();
+        }
+    }, 100);
 }
 
 /* ===== ITEM-LEVEL DISCOUNT MODAL ===== */
 let tempDiscounts = [];
 
 function showItemDiscountModal() {
-  if (currentOfferItems.length === 0) {
-    showToast('Brak produktów w ofercie.', 'error');
-    return;
-  }
+    if (currentOfferItems.length === 0) {
+        showToast('Brak produktów w ofercie.', 'error');
+        return;
+    }
 
-  // Create shallow copy of current discounts
-  tempDiscounts = currentOfferItems.map(item => item.discount || 0);
+    // Create shallow copy of current discounts
+    tempDiscounts = currentOfferItems.map((item) => item.discount || 0);
 
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'item-discount-modal';
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'item-discount-modal';
 
-  overlay.innerHTML = `
+    overlay.innerHTML = `
     <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
         <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
@@ -2244,17 +2551,19 @@ function showItemDiscountModal() {
         </div>
       </div>
     </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
 
-  renderDiscountModalItems();
+    renderDiscountModalItems();
 }
 
 function renderDiscountModalItems() {
-  const container = document.getElementById('discount-modal-list');
-  if (!container) return;
+    const container = document.getElementById('discount-modal-list');
+    if (!container) return;
 
-  let html = `<table style="width:100%; text-align:left; border-collapse:collapse;">
+    let html = `<table style="width:100%; text-align:left; border-collapse:collapse;">
     <thead>
       <tr style="border-bottom:1px solid var(--border); font-size:0.75rem; color:var(--text-muted);">
         <th style="padding:0.4rem; width:50%;">Produkt</th>
@@ -2265,41 +2574,61 @@ function renderDiscountModalItems() {
     </thead>
     <tbody>`;
 
-  let totalNetto = 0;
+    let totalNetto = 0;
 
-  // Build sorted list matching the offer table order
-  const sortedItems = currentOfferItems.map((item, index) => {
-    const product = products.find(p => p.id === item.productId);
-    const category = product ? product.category : 'Inne';
-    const catOrder = CATEGORIES.indexOf(category);
-    const diameter = getProductDiameter(item.productId) || 99999;
-    const isBB = item.name.toLowerCase().includes('bosy') || item.productId.endsWith('-B00');
-    return { item, index, catOrder: catOrder === -1 ? 999 : catOrder, diameter, isBB, lengthM: item.lengthM || 0 };
-  }).sort((a, b) => {
-    if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
-    if (a.diameter !== b.diameter) return a.diameter - b.diameter;
-    if (a.isBB !== b.isBB) return a.isBB ? -1 : 1;
-    return a.lengthM - b.lengthM;
-  });
+    // Build sorted list matching the offer table order
+    const sortedItems = currentOfferItems
+        .map((item, index) => {
+            const product = products.find((p) => p.id === item.productId);
+            const category = product ? product.category : 'Inne';
+            const catOrder = CATEGORIES.indexOf(category);
+            const diameter = getProductDiameter(item.productId) || 99999;
+            const isBB =
+                item.name.toLowerCase().includes('bosy') || item.productId.endsWith('-B00');
+            return {
+                item,
+                index,
+                catOrder: catOrder === -1 ? 999 : catOrder,
+                diameter,
+                isBB,
+                lengthM: item.lengthM || 0
+            };
+        })
+        .sort((a, b) => {
+            if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
+            if (a.diameter !== b.diameter) return a.diameter - b.diameter;
+            if (a.isBB !== b.isBB) return a.isBB ? -1 : 1;
+            return a.lengthM - b.lengthM;
+        });
 
-  sortedItems.forEach(({ item, index }) => {
-    const d = tempDiscounts[index];
-    const basePriceAfterDiscount = item.unitPrice * (1 - d / 100);
-    const pehdCost = item.pehdCostPerUnit || 0;
-    const priceAfterDiscount = basePriceAfterDiscount + pehdCost;
-    const netto = priceAfterDiscount * item.quantity;
+    sortedItems.forEach(({ item, index }) => {
+        const d = tempDiscounts[index];
+        const basePriceAfterDiscount = item.unitPrice * (1 - d / 100);
+        const pehdCost = item.pehdCostPerUnit || 0;
+        const priceAfterDiscount = basePriceAfterDiscount + pehdCost;
+        const netto = priceAfterDiscount * item.quantity;
 
-    totalNetto += netto;
+        totalNetto += netto;
 
-    let pName = item.name;
-    if (item.pehdType === 'PEHD-3MM') pName += ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 3mm</span>';
-    if (item.pehdType === 'PEHD-4MM') pName += ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 4mm</span>';
-    if (item.autoAdded) pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(auto)</span>';
+        let pName = item.name;
+        if (item.pehdType === 'PEHD-3MM')
+            pName +=
+                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 3mm</span>';
+        if (item.pehdType === 'PEHD-4MM')
+            pName +=
+                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 4mm</span>';
+        if (item.autoAdded)
+            pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(auto)</span>';
 
-    const isGasket = item.autoAdded || item.name.toLowerCase().includes('uszczelk') || (item.productId && item.productId.includes('Y-U-GZ-U'));
-    const warningText = isGasket ? '<div style="font-size:0.65rem; color:var(--danger); font-weight:700; margin-top:4px; line-height:1.2;">Uwaga rabat<br>na uszczelki !</div>' : '';
+        const isGasket =
+            item.autoAdded ||
+            item.name.toLowerCase().includes('uszczelk') ||
+            (item.productId && item.productId.includes('Y-U-GZ-U'));
+        const warningText = isGasket
+            ? '<div style="font-size:0.65rem; color:var(--danger); font-weight:700; margin-top:4px; line-height:1.2;">Uwaga rabat<br>na uszczelki !</div>'
+            : '';
 
-    html += `
+        html += `
       <tr style="border-bottom:1px solid var(--border-glass);">
         <td style="padding:0.4rem; font-size:0.8rem; font-weight:500;">
           ${pName} <br>
@@ -2317,420 +2646,459 @@ function renderDiscountModalItems() {
         <td id="modal-netto-${index}" style="padding:0.4rem; text-align:right; font-weight:700; color:var(--text-primary); font-size:0.9rem;">${fmt(netto)} PLN</td>
       </tr>
     `;
-  });
+    });
 
-  html += `</tbody></table>`;
-  container.innerHTML = html;
+    html += `</tbody></table>`;
+    container.innerHTML = html;
 
-  const totalEl = document.getElementById('discount-modal-total');
-  if (totalEl) totalEl.textContent = `${fmt(totalNetto)} PLN`;
+    const totalEl = document.getElementById('discount-modal-total');
+    if (totalEl) totalEl.textContent = `${fmt(totalNetto)} PLN`;
 }
 
 function updateTempDiscount(index, inputEl) {
-  let val = inputEl.value;
-  let v = parseFloat(val);
-  if (isNaN(v)) v = 0;
-  if (v < 0) v = 0;
-  if (v > 100) {
-    v = 100;
-    inputEl.value = 100;
-  }
-  tempDiscounts[index] = v;
+    let val = inputEl.value;
+    let v = parseFloat(val);
+    if (isNaN(v)) v = 0;
+    if (v < 0) v = 0;
+    if (v > 100) {
+        v = 100;
+        inputEl.value = 100;
+    }
+    tempDiscounts[index] = v;
 
-  // Live DOM update for this particular row
-  const item = currentOfferItems[index];
+    // Live DOM update for this particular row
+    const item = currentOfferItems[index];
 
-  // Gasket warning moved to onchange via checkGasketDiscount()
-  const basePriceAfterDiscount = item.unitPrice * (1 - v / 100);
-  const pehdCost = item.pehdCostPerUnit || 0;
-  const priceAfterDiscount = basePriceAfterDiscount + pehdCost;
-  const netto = priceAfterDiscount * item.quantity;
+    // Gasket warning moved to onchange via checkGasketDiscount()
+    const basePriceAfterDiscount = item.unitPrice * (1 - v / 100);
+    const pehdCost = item.pehdCostPerUnit || 0;
+    const priceAfterDiscount = basePriceAfterDiscount + pehdCost;
+    const netto = priceAfterDiscount * item.quantity;
 
-  const priceTd = document.getElementById(`modal-price-${index}`);
-  const nettoTd = document.getElementById(`modal-netto-${index}`);
-  if (priceTd) priceTd.textContent = `${fmt(priceAfterDiscount)} PLN`;
-  if (nettoTd) nettoTd.textContent = `${fmt(netto)} PLN`;
+    const priceTd = document.getElementById(`modal-price-${index}`);
+    const nettoTd = document.getElementById(`modal-netto-${index}`);
+    if (priceTd) priceTd.textContent = `${fmt(priceAfterDiscount)} PLN`;
+    if (nettoTd) nettoTd.textContent = `${fmt(netto)} PLN`;
 
-  // Recalculate and update the grand total
-  let totalNetto = 0;
-  currentOfferItems.forEach((it, idx) => {
-    const d = tempDiscounts[idx];
-    const bpad = it.unitPrice * (1 - d / 100);
-    const pCost = it.pehdCostPerUnit || 0;
-    totalNetto += (bpad + pCost) * it.quantity;
-  });
+    // Recalculate and update the grand total
+    let totalNetto = 0;
+    currentOfferItems.forEach((it, idx) => {
+        const d = tempDiscounts[idx];
+        const bpad = it.unitPrice * (1 - d / 100);
+        const pCost = it.pehdCostPerUnit || 0;
+        totalNetto += (bpad + pCost) * it.quantity;
+    });
 
-  const totalEl = document.getElementById('discount-modal-total');
-  if (totalEl) totalEl.textContent = `${fmt(totalNetto)} PLN`;
+    const totalEl = document.getElementById('discount-modal-total');
+    if (totalEl) totalEl.textContent = `${fmt(totalNetto)} PLN`;
 }
 
 function checkGasketDiscount(index, inputEl) {
-  const item = currentOfferItems[index];
-  const v = parseFloat(inputEl.value) || 0;
-  const isGasket = item.autoAdded || item.name.toLowerCase().includes('uszczelk') || (item.productId && item.productId.includes('Y-U-GZ-U'));
-  if (isGasket && v > 0) {
-    showToast('UWAGA! Wpisujesz rabat na uszczelki!', 'warning');
-  }
+    const item = currentOfferItems[index];
+    const v = parseFloat(inputEl.value) || 0;
+    const isGasket =
+        item.autoAdded ||
+        item.name.toLowerCase().includes('uszczelk') ||
+        (item.productId && item.productId.includes('Y-U-GZ-U'));
+    if (isGasket && v > 0) {
+        showToast('UWAGA! Wpisujesz rabat na uszczelki!', 'warning');
+    }
 }
 
 function applyItemDiscounts() {
-  currentOfferItems.forEach((item, index) => {
-    item.discount = tempDiscounts[index];
-  });
+    currentOfferItems.forEach((item, index) => {
+        item.discount = tempDiscounts[index];
+    });
 
-  closeModal();
-  syncGaskets();
-  renderOfferItems();
-  updateOfferSummary();
-  showToast('Zaktualizowano rabaty dla wybranych pozycji', 'success');
+    closeModal();
+    syncGaskets();
+    renderOfferItems();
+    updateOfferSummary();
+    showToast('Zaktualizowano rabaty dla wybranych pozycji', 'success');
 }
 
 /* ===== XLSX EXPORT ===== */
 function exportOfferXlsx(id) {
-  const offer = offers.find(o => o.id === id);
-  if (!offer) return;
+    const offer = offers.find((o) => o.id === id);
+    if (!offer) return;
 
-  const costPerTrip = offer.transportCostPerTrip || 0;
-  const transportResult = calculateTransports(offer.items);
-  const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
-  const transportCost = transportResult.totalTransports * costPerTrip;
+    const costPerTrip = offer.transportCostPerTrip || 0;
+    const transportResult = calculateTransports(offer.items);
+    const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
+    const transportCost = transportResult.totalTransports * costPerTrip;
 
-  // ─── Sheet 1: OFERTA ───
-  const rows = [];
+    // ─── Sheet 1: OFERTA ───
+    const rows = [];
 
-  // Header section
-  rows.push(['OFERTA HANDLOWA']);
-  rows.push([]);
-  rows.push(['Nr oferty:', offer.number, '', 'Data:', offer.date]);
-  rows.push([]);
-  rows.push(['DANE KLIENTA']);
-  rows.push(['Firma:', offer.clientName || '']);
-  rows.push(['NIP:', offer.clientNip || '']);
-  rows.push(['Adres:', offer.clientAddress || '']);
-  rows.push(['Kontakt:', offer.clientContact || '']);
-  rows.push([]);
-  rows.push(['INWESTYCJA']);
-  rows.push(['Nazwa:', offer.investName || '']);
-  rows.push(['Adres:', offer.investAddress || '']);
-  rows.push([]);
-  rows.push(['TRANSPORT']);
-  rows.push(['Kilometry:', offer.transportKm || 0, 'PLN/km:', offer.transportRate || 0]);
-  rows.push(['Koszt/kurs:', costPerTrip, 'Ilość kursów:', transportResult.totalTransports]);
-  rows.push([]);
-
-  // Items table header
-  const headerRow = 18; // 0-indexed row where item table header starts
-  rows.push(['Lp.', 'Indeks', 'Nazwa produktu', 'PEHD', 'Cena jedn.', 'Ilość ✏️', 'Metry', 'Rabat % ✏️', 'Po rabacie', 'Transport/szt', 'Netto', 'Brutto', 'Waga/szt']);
-
-  let totalNetto = 0;
-  let totalWeight = 0;
-
-  offer.items.forEach((item, i) => {
-    const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-    const pehdCost = item.pehdCostPerUnit || 0;
-    const unitAfterDiscount = priceAfterDiscount + pehdCost;
-    const tpu = transportDist[item.productId] || 0;
-    const unitTotal = unitAfterDiscount + tpu;
-    const netto = unitTotal * item.quantity;
-    const brutto = netto * 1.23;
-
-    totalNetto += netto;
-    totalWeight += (item.weight || 0) * item.quantity;
-
-    let pName = item.name;
-    let pehdLabel = '';
-    if (item.pehdType === 'PEHD-3MM') pehdLabel = 'PEHD 3mm';
-    if (item.pehdType === 'PEHD-4MM') pehdLabel = 'PEHD 4mm';
-    if (item.autoAdded) pName += ' (uszczelka)';
-
-    rows.push([
-      i + 1,
-      item.productId,
-      pName,
-      pehdLabel,
-      item.unitPrice,
-      item.quantity,         // ✏️ editable
-      item.meters || 0,
-      item.discount,         // ✏️ editable
-      unitAfterDiscount,
-      tpu > 0 ? tpu : '',
-      netto,
-      brutto,
-      item.weight || ''
-    ]);
-  });
-
-  // Summary rows
-  const totalVat = totalNetto * 0.23;
-  const totalBrutto = totalNetto + totalVat;
-
-  rows.push([]);
-  rows.push(['', '', '', '', '', '', '', '', 'RAZEM Netto:', '', totalNetto]);
-  rows.push(['', '', '', '', '', '', '', '', 'Transport:', '', transportCost]);
-  rows.push(['', '', '', '', '', '', '', '', 'VAT (23%):', '', totalVat]);
-  rows.push(['', '', '', '', '', '', '', '', 'SUMA BRUTTO:', '', totalBrutto]);
-  rows.push([]);
-  rows.push(['Łączna waga:', totalWeight, 'kg']);
-
-  if (offer.notes) {
+    // Header section
+    rows.push(['OFERTA HANDLOWA']);
     rows.push([]);
-    rows.push(['Uwagi:', offer.notes]);
-  }
+    rows.push(['Nr oferty:', offer.number, '', 'Data:', offer.date]);
+    rows.push([]);
+    rows.push(['DANE KLIENTA']);
+    rows.push(['Firma:', offer.clientName || '']);
+    rows.push(['NIP:', offer.clientNip || '']);
+    rows.push(['Adres:', offer.clientAddress || '']);
+    rows.push(['Kontakt:', offer.clientContact || '']);
+    rows.push([]);
+    rows.push(['INWESTYCJA']);
+    rows.push(['Nazwa:', offer.investName || '']);
+    rows.push(['Adres:', offer.investAddress || '']);
+    rows.push([]);
+    rows.push(['TRANSPORT']);
+    rows.push(['Kilometry:', offer.transportKm || 0, 'PLN/km:', offer.transportRate || 0]);
+    rows.push(['Koszt/kurs:', costPerTrip, 'Ilość kursów:', transportResult.totalTransports]);
+    rows.push([]);
 
-  // Create worksheet
-  const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Items table header
+    const headerRow = 18; // 0-indexed row where item table header starts
+    rows.push([
+        'Lp.',
+        'Indeks',
+        'Nazwa produktu',
+        'PEHD',
+        'Cena jedn.',
+        'Ilość ✏️',
+        'Metry',
+        'Rabat % ✏️',
+        'Po rabacie',
+        'Transport/szt',
+        'Netto',
+        'Brutto',
+        'Waga/szt'
+    ]);
 
-  // Column widths
-  ws['!cols'] = [
-    { wch: 5 },   // Lp
-    { wch: 20 },  // Indeks
-    { wch: 55 },  // Nazwa
-    { wch: 12 },  // PEHD
-    { wch: 12 },  // Cena
-    { wch: 10 },  // Ilość
-    { wch: 10 },  // Metry
-    { wch: 10 },  // Rabat
-    { wch: 14 },  // Po rabacie
-    { wch: 14 },  // Transport
-    { wch: 14 },  // Netto
-    { wch: 14 },  // Brutto
-    { wch: 10 },  // Waga
-  ];
+    let totalNetto = 0;
+    let totalWeight = 0;
 
-  // Number formatting for currency columns
-  const itemStartRow = headerRow + 1;
-  const itemEndRow = itemStartRow + offer.items.length;
-  for (let r = itemStartRow; r < itemEndRow; r++) {
-    ['E', 'I', 'J', 'K', 'L'].forEach(col => {
-      const ref = col + (r + 1);
-      if (ws[ref] && typeof ws[ref].v === 'number') {
-        ws[ref].z = '#,##0.00';
-      }
+    offer.items.forEach((item, i) => {
+        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+        const pehdCost = item.pehdCostPerUnit || 0;
+        const unitAfterDiscount = priceAfterDiscount + pehdCost;
+        const tpu = transportDist[item.productId] || 0;
+        const unitTotal = unitAfterDiscount + tpu;
+        const netto = unitTotal * item.quantity;
+        const brutto = netto * 1.23;
+
+        totalNetto += netto;
+        totalWeight += (item.weight || 0) * item.quantity;
+
+        let pName = item.name;
+        let pehdLabel = '';
+        if (item.pehdType === 'PEHD-3MM') pehdLabel = 'PEHD 3mm';
+        if (item.pehdType === 'PEHD-4MM') pehdLabel = 'PEHD 4mm';
+        if (item.autoAdded) pName += ' (uszczelka)';
+
+        rows.push([
+            i + 1,
+            item.productId,
+            pName,
+            pehdLabel,
+            item.unitPrice,
+            item.quantity, // ✏️ editable
+            item.meters || 0,
+            item.discount, // ✏️ editable
+            unitAfterDiscount,
+            tpu > 0 ? tpu : '',
+            netto,
+            brutto,
+            item.weight || ''
+        ]);
     });
-  }
 
-  // Format summary numbers
-  for (let r = itemEndRow + 1; r < rows.length; r++) {
-    const ref = 'K' + (r + 1);
-    if (ws[ref] && typeof ws[ref].v === 'number') {
-      ws[ref].z = '#,##0.00';
+    // Summary rows
+    const totalVat = totalNetto * 0.23;
+    const totalBrutto = totalNetto + totalVat;
+
+    rows.push([]);
+    rows.push(['', '', '', '', '', '', '', '', 'RAZEM Netto:', '', totalNetto]);
+    rows.push(['', '', '', '', '', '', '', '', 'Transport:', '', transportCost]);
+    rows.push(['', '', '', '', '', '', '', '', 'VAT (23%):', '', totalVat]);
+    rows.push(['', '', '', '', '', '', '', '', 'SUMA BRUTTO:', '', totalBrutto]);
+    rows.push([]);
+    rows.push(['Łączna waga:', totalWeight, 'kg']);
+
+    if (offer.notes) {
+        rows.push([]);
+        rows.push(['Uwagi:', offer.notes]);
     }
-  }
 
-  // ─── Sheet 2: METADATA (hidden data for re-import) ───
-  const metaRows = [['KEY', 'VALUE']];
-  metaRows.push(['offerId', offer.id]);
-  metaRows.push(['number', offer.number]);
-  metaRows.push(['date', offer.date]);
-  metaRows.push(['clientName', offer.clientName || '']);
-  metaRows.push(['clientNip', offer.clientNip || '']);
-  metaRows.push(['clientAddress', offer.clientAddress || '']);
-  metaRows.push(['clientContact', offer.clientContact || '']);
-  metaRows.push(['investName', offer.investName || '']);
-  metaRows.push(['investAddress', offer.investAddress || '']);
-  metaRows.push(['notes', offer.notes || '']);
-  metaRows.push(['paymentTerms', offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.']);
-  metaRows.push(['validity', offer.validity || '7 dni']);
-  metaRows.push(['transportKm', offer.transportKm || 0]);
-  metaRows.push(['transportRate', offer.transportRate || 0]);
-  metaRows.push(['itemCount', offer.items.length]);
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(rows);
 
-  // Store full item data as JSON for lossless re-import
-  offer.items.forEach((item, i) => {
-    metaRows.push([`item_${i}`, JSON.stringify(item)]);
-  });
+    // Column widths
+    ws['!cols'] = [
+        { wch: 5 }, // Lp
+        { wch: 20 }, // Indeks
+        { wch: 55 }, // Nazwa
+        { wch: 12 }, // PEHD
+        { wch: 12 }, // Cena
+        { wch: 10 }, // Ilość
+        { wch: 10 }, // Metry
+        { wch: 10 }, // Rabat
+        { wch: 14 }, // Po rabacie
+        { wch: 14 }, // Transport
+        { wch: 14 }, // Netto
+        { wch: 14 }, // Brutto
+        { wch: 10 } // Waga
+    ];
 
-  const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
-  wsMeta['!cols'] = [{ wch: 15 }, { wch: 120 }];
+    // Number formatting for currency columns
+    const itemStartRow = headerRow + 1;
+    const itemEndRow = itemStartRow + offer.items.length;
+    for (let r = itemStartRow; r < itemEndRow; r++) {
+        ['E', 'I', 'J', 'K', 'L'].forEach((col) => {
+            const ref = col + (r + 1);
+            if (ws[ref] && typeof ws[ref].v === 'number') {
+                ws[ref].z = '#,##0.00';
+            }
+        });
+    }
 
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Oferta');
-  XLSX.utils.book_append_sheet(wb, wsMeta, 'Dane');
+    // Format summary numbers
+    for (let r = itemEndRow + 1; r < rows.length; r++) {
+        const ref = 'K' + (r + 1);
+        if (ws[ref] && typeof ws[ref].v === 'number') {
+            ws[ref].z = '#,##0.00';
+        }
+    }
 
-  // Download
-  const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
-  XLSX.writeFile(wb, `Oferta_${safeNumber}_${offer.date}.xlsx`);
-  showToast('Pobrano plik XLSX', 'success');
+    // ─── Sheet 2: METADATA (hidden data for re-import) ───
+    const metaRows = [['KEY', 'VALUE']];
+    metaRows.push(['offerId', offer.id]);
+    metaRows.push(['number', offer.number]);
+    metaRows.push(['date', offer.date]);
+    metaRows.push(['clientName', offer.clientName || '']);
+    metaRows.push(['clientNip', offer.clientNip || '']);
+    metaRows.push(['clientAddress', offer.clientAddress || '']);
+    metaRows.push(['clientContact', offer.clientContact || '']);
+    metaRows.push(['investName', offer.investName || '']);
+    metaRows.push(['investAddress', offer.investAddress || '']);
+    metaRows.push(['notes', offer.notes || '']);
+    metaRows.push([
+        'paymentTerms',
+        offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.'
+    ]);
+    metaRows.push(['validity', offer.validity || '7 dni']);
+    metaRows.push(['transportKm', offer.transportKm || 0]);
+    metaRows.push(['transportRate', offer.transportRate || 0]);
+    metaRows.push(['itemCount', offer.items.length]);
+
+    // Store full item data as JSON for lossless re-import
+    offer.items.forEach((item, i) => {
+        metaRows.push([`item_${i}`, JSON.stringify(item)]);
+    });
+
+    const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
+    wsMeta['!cols'] = [{ wch: 15 }, { wch: 120 }];
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Oferta');
+    XLSX.utils.book_append_sheet(wb, wsMeta, 'Dane');
+
+    // Download
+    const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
+    XLSX.writeFile(wb, `Oferta_${safeNumber}_${offer.date}.xlsx`);
+    showToast('Pobrano plik XLSX', 'success');
 }
 
 /* ===== XLSX IMPORT ===== */
 function importOfferFromXlsx() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.xlsx,.xls';
-  input.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls';
+    input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      try {
-        const data = new Uint8Array(ev.target.result);
-        const wb = XLSX.read(data, { type: 'array' });
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, { type: 'array' });
 
-        // Try to find metadata sheet first (lossless import)
-        const metaSheet = wb.Sheets['Dane'];
-        if (metaSheet) {
-          const metaData = XLSX.utils.sheet_to_json(metaSheet, { header: 1 });
-          const meta = {};
-          metaData.forEach(row => {
-            if (row[0] && row[0] !== 'KEY') meta[row[0]] = row[1];
-          });
+                // Try to find metadata sheet first (lossless import)
+                const metaSheet = wb.Sheets['Dane'];
+                if (metaSheet) {
+                    const metaData = XLSX.utils.sheet_to_json(metaSheet, { header: 1 });
+                    const meta = {};
+                    metaData.forEach((row) => {
+                        if (row[0] && row[0] !== 'KEY') meta[row[0]] = row[1];
+                    });
 
-          // Read items from metadata (full JSON roundtrip)
-          const items = [];
-          const itemCount = parseInt(meta.itemCount) || 0;
-          for (let i = 0; i < itemCount; i++) {
-            const key = `item_${i}`;
-            if (meta[key]) {
-              try {
-                items.push(JSON.parse(meta[key]));
-              } catch (e) { /* skip broken items */ }
-            }
-          }
+                    // Read items from metadata (full JSON roundtrip)
+                    const items = [];
+                    const itemCount = parseInt(meta.itemCount) || 0;
+                    for (let i = 0; i < itemCount; i++) {
+                        const key = `item_${i}`;
+                        if (meta[key]) {
+                            try {
+                                items.push(JSON.parse(meta[key]));
+                            } catch (e) {
+                                /* skip broken items */
+                            }
+                        }
+                    }
 
-          // Now check the Oferta sheet for user edits to quantity and discount
-          const ofertaSheet = wb.Sheets['Oferta'];
-          if (ofertaSheet) {
-            const ofertaData = XLSX.utils.sheet_to_json(ofertaSheet, { header: 1 });
+                    // Now check the Oferta sheet for user edits to quantity and discount
+                    const ofertaSheet = wb.Sheets['Oferta'];
+                    if (ofertaSheet) {
+                        const ofertaData = XLSX.utils.sheet_to_json(ofertaSheet, { header: 1 });
 
-            // Find header row
-            let headerRowIdx = -1;
-            for (let r = 0; r < ofertaData.length; r++) {
-              if (ofertaData[r] && ofertaData[r][0] === 'Lp.' && String(ofertaData[r][5]).includes('Ilość')) {
-                headerRowIdx = r;
-                break;
-              }
-            }
+                        // Find header row
+                        let headerRowIdx = -1;
+                        for (let r = 0; r < ofertaData.length; r++) {
+                            if (
+                                ofertaData[r] &&
+                                ofertaData[r][0] === 'Lp.' &&
+                                String(ofertaData[r][5]).includes('Ilość')
+                            ) {
+                                headerRowIdx = r;
+                                break;
+                            }
+                        }
 
-            if (headerRowIdx >= 0 && items.length > 0) {
-              // Read edited values from the spreadsheet
-              for (let i = 0; i < items.length; i++) {
-                const row = ofertaData[headerRowIdx + 1 + i];
-                if (!row) continue;
+                        if (headerRowIdx >= 0 && items.length > 0) {
+                            // Read edited values from the spreadsheet
+                            for (let i = 0; i < items.length; i++) {
+                                const row = ofertaData[headerRowIdx + 1 + i];
+                                if (!row) continue;
 
-                const newQty = parseFloat(row[5]);
-                const newDiscount = parseFloat(row[7]);
+                                const newQty = parseFloat(row[5]);
+                                const newDiscount = parseFloat(row[7]);
 
-                if (!isNaN(newQty) && newQty >= 0) {
-                  items[i].quantity = newQty;
-                  if (items[i].lengthM) {
-                    items[i].meters = newQty * items[i].lengthM;
-                  }
+                                if (!isNaN(newQty) && newQty >= 0) {
+                                    items[i].quantity = newQty;
+                                    if (items[i].lengthM) {
+                                        items[i].meters = newQty * items[i].lengthM;
+                                    }
+                                }
+                                if (!isNaN(newDiscount) && newDiscount >= 0 && newDiscount <= 100) {
+                                    items[i].discount = newDiscount;
+                                }
+                            }
+                        }
+                    }
+
+                    if (items.length === 0) {
+                        showToast('Plik nie zawiera pozycji oferty', 'error');
+                        return;
+                    }
+
+                    const transportKm = parseFloat(meta.transportKm) || 0;
+                    const transportRate = parseFloat(meta.transportRate) || 0;
+                    const transportCostPerTrip = transportKm * transportRate;
+                    const transportResult = calculateTransports(items);
+                    const transportDist = calculateTransportDistributionStandalone(
+                        items,
+                        transportCostPerTrip
+                    );
+
+                    let totalNetto = 0;
+                    items.forEach((item) => {
+                        const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+                        const tpu = transportDist[item.productId] || 0;
+                        totalNetto += (priceAfterDiscount + tpu) * item.quantity;
+                    });
+
+                    const offer = {
+                        id: meta.offerId || 'offer_' + Date.now(),
+                        number: meta.number || 'XLSX-Import',
+                        date: meta.date || new Date().toISOString().slice(0, 10),
+                        clientName: meta.clientName || '',
+                        clientNip: meta.clientNip || '',
+                        clientAddress: meta.clientAddress || '',
+                        clientContact: meta.clientContact || '',
+                        investName: meta.investName || '',
+                        investAddress: meta.investAddress || '',
+                        notes: meta.notes || '',
+                        paymentTerms:
+                            meta.paymentTerms ||
+                            'Do uzgodnienia lub według indywidualnych warunków handlowych.',
+                        validity: meta.validity || '7 dni',
+                        items,
+                        transportKm,
+                        transportRate,
+                        transportCostPerTrip,
+                        transportCount: transportResult.totalTransports,
+                        transportCost: transportResult.totalTransports * transportCostPerTrip,
+                        totalNetto,
+                        totalBrutto: totalNetto * 1.23,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    // Check for duplicate
+                    const existingIdx = offers.findIndex((o) => o.id === offer.id);
+                    if (existingIdx >= 0) {
+                        if (
+                            await appConfirm(`Oferta "${offer.number}" już istnieje. Nadpisać?`, {
+                                title: 'Nadpisanie oferty',
+                                type: 'warning'
+                            })
+                        ) {
+                            offers[existingIdx] = offer;
+                        } else {
+                            return;
+                        }
+                    } else {
+                        offers.push(offer);
+                    }
+
+                    saveOffersData(offers);
+                    renderSavedOffers();
+                    showToast(`Zaimportowano z XLSX: ${offer.number}`, 'success');
+                } else {
+                    showToast(
+                        'Plik XLSX nie zawiera arkusza "Dane" — nie można zaimportować',
+                        'error'
+                    );
                 }
-                if (!isNaN(newDiscount) && newDiscount >= 0 && newDiscount <= 100) {
-                  items[i].discount = newDiscount;
-                }
-              }
+            } catch (err) {
+                console.error(err);
+                showToast('Błąd odczytu pliku XLSX: ' + err.message, 'error');
             }
-          }
-
-          if (items.length === 0) {
-            showToast('Plik nie zawiera pozycji oferty', 'error');
-            return;
-          }
-
-          const transportKm = parseFloat(meta.transportKm) || 0;
-          const transportRate = parseFloat(meta.transportRate) || 0;
-          const transportCostPerTrip = transportKm * transportRate;
-          const transportResult = calculateTransports(items);
-          const transportDist = calculateTransportDistributionStandalone(items, transportCostPerTrip);
-
-          let totalNetto = 0;
-          items.forEach(item => {
-            const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-            const tpu = transportDist[item.productId] || 0;
-            totalNetto += (priceAfterDiscount + tpu) * item.quantity;
-          });
-
-          const offer = {
-            id: meta.offerId || 'offer_' + Date.now(),
-            number: meta.number || 'XLSX-Import',
-            date: meta.date || new Date().toISOString().slice(0, 10),
-            clientName: meta.clientName || '',
-            clientNip: meta.clientNip || '',
-            clientAddress: meta.clientAddress || '',
-            clientContact: meta.clientContact || '',
-            investName: meta.investName || '',
-            investAddress: meta.investAddress || '',
-            notes: meta.notes || '',
-            paymentTerms: meta.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.',
-            validity: meta.validity || '7 dni',
-            items,
-            transportKm,
-            transportRate,
-            transportCostPerTrip,
-            transportCount: transportResult.totalTransports,
-            transportCost: transportResult.totalTransports * transportCostPerTrip,
-            totalNetto,
-            totalBrutto: totalNetto * 1.23,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-
-          // Check for duplicate
-          const existingIdx = offers.findIndex(o => o.id === offer.id);
-          if (existingIdx >= 0) {
-            if (await appConfirm(`Oferta "${offer.number}" już istnieje. Nadpisać?`, { title: 'Nadpisanie oferty', type: 'warning' })) {
-              offers[existingIdx] = offer;
-            } else {
-              return;
-            }
-          } else {
-            offers.push(offer);
-          }
-
-          saveOffersData(offers);
-          renderSavedOffers();
-          showToast(`Zaimportowano z XLSX: ${offer.number}`, 'success');
-        } else {
-          showToast('Plik XLSX nie zawiera arkusza "Dane" — nie można zaimportować', 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Błąd odczytu pliku XLSX: ' + err.message, 'error');
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  });
-  input.click();
+        };
+        reader.readAsArrayBuffer(file);
+    });
+    input.click();
 }
 
 // Automatically switch tab based on URL query parameter
 document.addEventListener('DOMContentLoaded', async () => {
-  const params = new URLSearchParams(window.location.search);
-  const tab = params.get('tab');
-  const editId = params.get('edit');
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const editId = params.get('edit');
 
-  if (tab) {
-    const tabBtn = document.querySelector(`.nav-btn[data-section="${tab}"]`);
-    if (tabBtn) {
-      setTimeout(() => tabBtn.click(), 100);
-    }
-  }
-
-  if (editId) {
-    // Wait for pvSalesUI to be initialized
-    const checkInit = setInterval(async () => {
-      if (window.pvSalesUI && window.pvSalesUI.marketplaceManager) {
-        clearInterval(checkInit);
-        try {
-          const doc = await window.pvSalesUI.marketplaceManager.localOffers.get(editId);
-          const restoreIdx = params.get('restore');
-
-          if (restoreIdx !== null && doc.history && doc.history[restoreIdx]) {
-            console.log('[App] Przywracanie wersji historycznej:', restoreIdx);
-            window.loadSavedOfferData(doc.history[restoreIdx], editId);
-            showToast('Wersja historyczna oferty załadowana', 'success');
-          } else if (typeof window.loadSavedOfferData === 'function') {
-            window.loadSavedOfferData(doc, editId);
-            showToast('Oferta załadowana do edycji', 'success');
-          }
-        } catch (err) {
-          console.error('[App] Błąd auto-ładowania oferty:', err);
+    if (tab) {
+        const tabBtn = document.querySelector(`.nav-btn[data-section="${tab}"]`);
+        if (tabBtn) {
+            setTimeout(() => tabBtn.click(), 100);
         }
-      }
-    }, 100);
-  }
+    }
+
+    if (editId) {
+        // Wait for pvSalesUI to be initialized
+        const checkInit = setInterval(async () => {
+            if (window.pvSalesUI && window.pvSalesUI.marketplaceManager) {
+                clearInterval(checkInit);
+                try {
+                    const doc = await window.pvSalesUI.marketplaceManager.localOffers.get(editId);
+                    const restoreIdx = params.get('restore');
+
+                    if (restoreIdx !== null && doc.history && doc.history[restoreIdx]) {
+                        console.log('[App] Przywracanie wersji historycznej:', restoreIdx);
+                        window.loadSavedOfferData(doc.history[restoreIdx], editId);
+                        showToast('Wersja historyczna oferty załadowana', 'success');
+                    } else if (typeof window.loadSavedOfferData === 'function') {
+                        window.loadSavedOfferData(doc, editId);
+                        showToast('Oferta załadowana do edycji', 'success');
+                    }
+                } catch (err) {
+                    console.error('[App] Błąd auto-ładowania oferty:', err);
+                }
+            }
+        }, 100);
+    }
 });

@@ -14,7 +14,7 @@ async function getTemplate(path) {
     // if (templateCache.has(path)) {
     //    return templateCache.get(path);
     // }
-    
+
     try {
         const res = await fetch(path + '?v=' + Date.now()); // dla deweloperki można utrzymać ?v=, w prod ew. zdjąć
         if (!res.ok) throw new Error(`Nie znaleziono szablonu: ${path}`);
@@ -39,7 +39,7 @@ function renderTemplate(template, dataObj) {
 }
 
 /**
- * Wydrukuj ciąg HTML używając ukrytego iframe, aby całkowicie 
+ * Wydrukuj ciąg HTML używając ukrytego iframe, aby całkowicie
  * ominąć blokadę pop-upów w przeglądarkach.
  */
 function silentPrint(htmlString) {
@@ -52,26 +52,26 @@ function silentPrint(htmlString) {
     iframe.style.border = '0';
     iframe.style.opacity = '0';
     iframe.style.zIndex = '-9999';
-    
+
     document.body.appendChild(iframe);
-    
+
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(htmlString);
     doc.close();
-    
+
     // Auto-drukowanie po załadowaniu makiety
     iframe.onload = () => {
         setTimeout(() => {
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
-            
+
             // Posprzątanie ukrytego elementu DOM (np. po minucie gdy użytkownik już kliknie w oknie druku)
             setTimeout(() => {
                 if (document.body.contains(iframe)) {
                     document.body.removeChild(iframe);
                 }
-            }, 60000); 
+            }, 60000);
         }, 500); // 500ms dla bezpiecznego wczytania czcionek/obrazków webowych przed wydrukiem
     };
 }
@@ -88,12 +88,15 @@ function collectPrintData() {
 
     const el = zleceniaElementsList[zleceniaSelectedIdx];
     const { well, product, elementIndex, wellIndex } = el;
-    const existing = productionOrders.find(po => po.wellId === well.id && po.elementIndex === elementIndex);
+    const existing = productionOrders.find(
+        (po) => po.wellId === well.id && po.elementIndex === elementIndex
+    );
 
     const getValue = (id, fallback = '') => document.getElementById(id)?.value || fallback;
 
     return {
-        productionOrderNumber: existing?.productionOrderNumber || getValue('zl-nr-zlecenia', '— brak —'),
+        productionOrderNumber:
+            existing?.productionOrderNumber || getValue('zl-nr-zlecenia', '— brak —'),
         obiekt: getValue('zl-obiekt'),
         adres: getValue('zl-adres'),
         wykonawca: getValue('zl-wykonawca'),
@@ -133,19 +136,31 @@ function collectPrintData() {
 /** Map internal param value to human-readable label */
 function paramLabel(val) {
     const map = {
-        'tak': 'Tak', 'nie': 'Nie',
-        'linia_dolna': 'Linia dolna', 'linia_gorna': 'Linia górna',
-        'w_osi': 'W osi', 'patrz_uwagi': 'Patrz uwagi',
-        'brak': 'Brak', 'beton': 'Beton', 'beton_gfk': 'Beton z GFK',
-        'klinkier': 'Klinkier', 'preco': 'Preco', 'precotop': 'PrecoTop',
-        'unolith': 'UnoLith', 'predl': 'Predl', 'kamionka': 'Kamionka',
-        'zelbet': 'Żelbet',
-        'drabinka_a_stalowa': 'Drabinka Typ A/stalowa',
-        'drabinka_a_szlachetna': 'Drabinka Typ A/stal szlachetna',
-        'drabinka_b_stalowa': 'Drabinka Typ B/stalowa',
-        'drabinka_b_szlachetna': 'Drabinka Typ B/stal szlachetna',
-        'inne': 'Inne',
-        '1/2': '1/2', '2/3': '2/3', '3/4': '3/4', '1/1': '1/1'
+        tak: 'Tak',
+        nie: 'Nie',
+        linia_dolna: 'Linia dolna',
+        linia_gorna: 'Linia górna',
+        w_osi: 'W osi',
+        patrz_uwagi: 'Patrz uwagi',
+        brak: 'Brak',
+        beton: 'Beton',
+        beton_gfk: 'Beton z GFK',
+        klinkier: 'Klinkier',
+        preco: 'Preco',
+        precotop: 'PrecoTop',
+        unolith: 'UnoLith',
+        predl: 'Predl',
+        kamionka: 'Kamionka',
+        zelbet: 'Żelbet',
+        drabinka_a_stalowa: 'Drabinka Typ A/stalowa',
+        drabinka_a_szlachetna: 'Drabinka Typ A/stal szlachetna',
+        drabinka_b_stalowa: 'Drabinka Typ B/stalowa',
+        drabinka_b_szlachetna: 'Drabinka Typ B/stal szlachetna',
+        inne: 'Inne',
+        '1/2': '1/2',
+        '2/3': '2/3',
+        '3/4': '3/4',
+        '1/1': '1/1'
     };
     return map[val] || val || '';
 }
@@ -158,10 +173,10 @@ function buildPrzejsciaRows(data) {
     const well = data.well;
     const przejscia = well.przejscia || [];
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const findProductFn = (id) => studnieProducts.find(pr => pr.id === id);
+    const findProductFn = (id) => studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProductFn, true);
 
-    const assignedPrzejscia = przejscia.filter(item => {
+    const assignedPrzejscia = przejscia.filter((item) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mmFromBottom = (pel - rzDna) * 1000;
@@ -170,17 +185,31 @@ function buildPrzejsciaRows(data) {
     });
 
     const rows = [];
-    const wylot = assignedPrzejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
-    const wloty = assignedPrzejscia.filter(p => p !== wylot);
+    const wylot = assignedPrzejscia.find(
+        (p) => p.flowType === 'wylot' || parseFloat(p.angle) === 0
+    );
+    const wloty = assignedPrzejscia.filter((p) => p !== wylot);
 
     if (wylot) rows.push(formatPrzejscieRow('Wylot 0', wylot, findProductFn, rzDna));
-    wloty.forEach((p, i) => rows.push(formatPrzejscieRow(`Wlot ${i + 1}`, p, findProductFn, rzDna)));
+    wloty.forEach((p, i) =>
+        rows.push(formatPrzejscieRow(`Wlot ${i + 1}`, p, findProductFn, rzDna))
+    );
 
     // Pad to 11 rows
     while (rows.length < 11) {
         const idx = rows.length === 0 ? 0 : rows.length;
         const label = idx === 0 ? 'Wylot 0' : `Wlot ${idx}`;
-        rows.push({ label, rodzaj: '', srednica: '', spadekKineta: '', spadekMufa: '', katStopien: '', uwagi: '', katGon: '', katWykonania: '' });
+        rows.push({
+            label,
+            rodzaj: '',
+            srednica: '',
+            spadekKineta: '',
+            spadekMufa: '',
+            katStopien: '',
+            uwagi: '',
+            katGon: '',
+            katWykonania: ''
+        });
     }
     return rows;
 }
@@ -200,8 +229,8 @@ function formatPrzejscieRow(label, p, findProductFn, rzDna) {
     const wysokoscMm = Math.round((pel - (rzDna || 0)) * 1000);
     const uwagi = '+ ' + wysokoscMm + ' mm';
 
-    const katGon = p.angleGony || (angle * 400 / 360).toFixed(2);
-    const katWyk = p.angleExecution !== undefined ? p.angleExecution : (360 - angle);
+    const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
+    const katWyk = p.angleExecution !== undefined ? p.angleExecution : 360 - angle;
 
     return {
         label,
@@ -216,7 +245,6 @@ function formatPrzejscieRow(label, p, findProductFn, rzDna) {
     };
 }
 
-
 // ===== ZLECENIE PRINT =====
 
 async function printZlecenie() {
@@ -227,7 +255,7 @@ async function printZlecenie() {
     if (!data) return;
 
     showToast('Generowanie zlecenia...', 'info');
-    
+
     const template = await getTemplate('templates/zlecenie.html');
     if (!template) return;
 
@@ -257,7 +285,7 @@ function getPowlokaString(well) {
     return parts.length > 0 ? parts.join('<br>') : 'Brak';
 }
 
-/** 
+/**
  * Generuje grafikę SVG przedstawiającą kąty przejść w studni.
  * Wylot (0°) znajduje się na dole (na godz. 6), inne kąty rosną zgodnie z ruchem wskazówek zegara.
  */
@@ -268,11 +296,18 @@ function generateWellSvg(data) {
     const rzDna = parseFloat(well.rzednaDna) || 0;
 
     // Filter transitions by assigned element if elementIndex is provided
-    if (data.elementIndex !== undefined && typeof buildConfigMap !== 'undefined' && typeof findAssignedElement !== 'undefined') {
-        const findProductFn = (id) => (typeof studnieProducts !== 'undefined') ? studnieProducts.find(pr => pr.id === id) : null;
+    if (
+        data.elementIndex !== undefined &&
+        typeof buildConfigMap !== 'undefined' &&
+        typeof findAssignedElement !== 'undefined'
+    ) {
+        const findProductFn = (id) =>
+            typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find((pr) => pr.id === id)
+                : null;
         const configMap = buildConfigMap(well, findProductFn, true);
         if (configMap.length > 0) {
-            przejscia = przejscia.filter(p => {
+            przejscia = przejscia.filter((p) => {
                 let pel = parseFloat(p.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
                 const mmFromBottom = (pel - rzDna) * 1000;
@@ -283,46 +318,54 @@ function generateWellSvg(data) {
     }
 
     if (przejscia.length === 0) return '';
-    
+
     // Zoptymalizowany obszar roboczy (viewBox), by powiększyć studnię
-    const size = 240; 
+    const size = 240;
     const center = size / 2;
     const radius = 60; // Znacznie większa studnia dla lepszej widoczności
-    
+
     let svg = `<svg viewBox="0 0 ${size} ${size}" width="180" height="180" style="background: transparent; overflow: visible;">`;
-    
+
     // Główny okrąg studni
     svg += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`;
-    
+
     // Krzyż pomocniczy
-    svg += `<line x1="${center}" y1="${center-5}" x2="${center}" y2="${center+5}" stroke="#999" stroke-width="0.8" />`;
-    svg += `<line x1="${center-5}" y1="${center}" x2="${center+5}" y2="${center}" stroke="#999" stroke-width="0.8" />`;
+    svg += `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`;
+    svg += `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`;
 
     przejscia.forEach((p, i) => {
         const angleDeg = parseFloat(p.angle) || 0;
-        const katWyk = p.angleExecution !== undefined ? parseFloat(p.angleExecution) : (angleDeg === 0 ? 0 : 360 - angleDeg);
+        const katWyk =
+            p.angleExecution !== undefined
+                ? parseFloat(p.angleExecution)
+                : angleDeg === 0
+                  ? 0
+                  : 360 - angleDeg;
         const rad = (katWyk * Math.PI) / 180;
-        
+
         // Współrzędne końca linii (na okręgu)
         const x = center - radius * Math.sin(rad);
         const y = center + radius * Math.cos(rad);
-        
+
         // Linia podłączenia
-        const isWylot = (p.flowType === 'wylot' || angleDeg === 0);
+        const isWylot = p.flowType === 'wylot' || angleDeg === 0;
         svg += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`;
-        
+
         // Dane do etykiety
-        const product = (typeof studnieProducts !== 'undefined') ? studnieProducts.find(pr => pr.id === p.productId) : null;
+        const product =
+            typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find((pr) => pr.id === p.productId)
+                : null;
         const rodzaj = product ? product.category : '';
         const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
         const hMm = Math.round((pel - rzDna) * 1000);
         const uwagiText = hMm > 0 ? `+${hMm}mm` : '';
 
         // Pozycja etykiety - blisko okręgu
-        const labelRadius = radius + 11; 
+        const labelRadius = radius + 11;
         const lx = center - labelRadius * Math.sin(rad);
         const ly = center + labelRadius * Math.cos(rad);
-        
+
         // Ustalenie text-anchor
         let anchor = 'middle';
         if (lx < center - 8) anchor = 'end';
@@ -330,25 +373,25 @@ function generateWellSvg(data) {
 
         // Estetyka etykiety
         svg += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#000">`;
-        
+
         // Linia 1: Indeks i Rodzaj
         svg += `<tspan x="${lx}" dy="0" fill="#000">${i}. ${rodzaj.toUpperCase()}</tspan>`;
-        
+
         // Linia 2: Kąt i Wysokość (jeśli jest)
         let line2 = `${katWyk}°`;
         if (uwagiText) line2 += ` (${uwagiText})`;
         svg += `<tspan x="${lx}" dy="1.15em" font-size="10" font-weight="normal" fill="#444">${line2}</tspan>`;
-        
+
         svg += `</text>`;
     });
-    
+
     svg += `</svg>`;
     return svg;
 }
 
 function buildZlecenieHtml(template, data) {
     const przejsciaRows = buildPrzejsciaRows(data);
-    
+
     // Zbudowanie dużego płaskiego obiektu z wartościami dla {{ZMIENNYCH}}
     const payload = {
         NR_ZLECENIA: data.productionOrderNumber || '',
@@ -371,7 +414,9 @@ function buildZlecenieHtml(template, data) {
         DIN: data.din || 'Brak',
         KINETA: paramLabel(data.kineta) || 'Brak',
         SPOCZNIK: paramLabel(data.spocznik) || 'Brak',
-        RODZAJ_STOPNI: paramLabel(data.rodzajStopni) + (data.stopnieInne ? ' — ' + data.stopnieInne : '') || 'Brak',
+        RODZAJ_STOPNI:
+            paramLabel(data.rodzajStopni) + (data.stopnieInne ? ' — ' + data.stopnieInne : '') ||
+            'Brak',
         KLASA_BETONU: data.klasaBetonu || 'Brak',
         KAT_STOPNI: data.katStopni ? data.katStopni + '°' : 'Brak',
         WYKONANIE: data.wykonanie || 'Brak',
@@ -380,7 +425,7 @@ function buildZlecenieHtml(template, data) {
     };
 
     // Pre-kalkulacja specjalnych wierszy przejść [0..3] — 9 komórek: etykieta + 8 danych
-    for(let i = 0; i < 4; i++) {
+    for (let i = 0; i < 4; i++) {
         if (przejsciaRows[i]) {
             payload[`PRZEJSCIA_ROW_${i}`] = `
                 <td>${przejsciaRows[i].label}</td>
@@ -399,7 +444,10 @@ function buildZlecenieHtml(template, data) {
     }
 
     // Pre-kalkulacja reszty wierszy (Wlot 4 - 10) — 11 kolumn: puste(cs2) + etykieta + 8 danych
-    payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows.slice(4).map(r => `
+    payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
+        .slice(4)
+        .map(
+            (r) => `
         <tr>
             <td colspan="2"></td>
             <td>${r.label}</td>
@@ -412,11 +460,12 @@ function buildZlecenieHtml(template, data) {
             <td class="center">${r.katGon}</td>
             <td class="center">${r.katWykonania}</td>
         </tr>
-    `).join('');
+    `
+        )
+        .join('');
 
     return renderTemplate(template, payload);
 }
-
 
 // ===== ETYKIETA PRINT =====
 
@@ -427,9 +476,9 @@ function buildEtykietaElements(data) {
     const items = [];
     const countMap = new Map();
 
-    config.forEach(item => {
+    config.forEach((item) => {
         const productId = item.productId || item.id;
-        const product = studnieProducts.find(p => p.id === productId);
+        const product = studnieProducts.find((p) => p.id === productId);
         if (!product) return;
 
         // Pomijaj kinetę i właz na etykiecie
@@ -443,11 +492,14 @@ function buildEtykietaElements(data) {
         }
     });
 
-    const uszczelkaProduct = studnieProducts.find(p =>
-        p.category === 'uszczelka' &&
-        (String(p.dn) === String(well.dn) || p.name?.includes('DN ' + well.dn) || p.name?.includes('DN' + well.dn))
+    const uszczelkaProduct = studnieProducts.find(
+        (p) =>
+            p.category === 'uszczelka' &&
+            (String(p.dn) === String(well.dn) ||
+                p.name?.includes('DN ' + well.dn) ||
+                p.name?.includes('DN' + well.dn))
     );
-    
+
     if (uszczelkaProduct && config.length > 1) {
         countMap.set('_seal_' + uszczelkaProduct.id, {
             count: config.length,
@@ -456,7 +508,9 @@ function buildEtykietaElements(data) {
         });
     }
 
-    countMap.forEach(val => items.push({ ilosc: val.count + ' szt.', indeks: val.indeks, nazwa: val.nazwa }));
+    countMap.forEach((val) =>
+        items.push({ ilosc: val.count + ' szt.', indeks: val.indeks, nazwa: val.nazwa })
+    );
     return items;
 }
 
@@ -489,14 +543,18 @@ function getCertificationData(dn) {
 function buildEtykietaHtml(template, data) {
     const elementy = buildEtykietaElements(data);
     const mainElement = data.product?.name || '';
-    
-    const elementRows = elementy.map(e => `
+
+    const elementRows = elementy
+        .map(
+            (e) => `
         <tr>
             <td class="el-qty">${e.ilosc}</td>
             <td class="el-idx">${e.indeks}</td>
             <td class="el-name">${e.nazwa}</td>
         </tr>
-    `).join('');
+    `
+        )
+        .join('');
 
     const cert = getCertificationData(data.srednica);
 
@@ -519,7 +577,7 @@ async function printEtykieta() {
 
     const data = collectPrintData();
     if (!data) return;
-    
+
     showToast('Generowanie etykiety...', 'info');
 
     const template = await getTemplate('templates/etykieta.html');
@@ -541,16 +599,18 @@ async function printEtykietaAll() {
     if (!template) return;
 
     // Szukamy bloku ze strukturalną zawartością widoku do duplikacji
-    const pageMatch = template.match(/<div class="page">([\s\S]*?)<\/div>\s*<!-- KONIEC BLOKU "page" -->/);
+    const pageMatch = template.match(
+        /<div class="page">([\s\S]*?)<\/div>\s*<!-- KONIEC BLOKU "page" -->/
+    );
     if (!pageMatch) {
         showToast('Błąd szablonu etykiety - brak bloku div.page', 'error');
         return;
     }
-    
+
     const pageTemplate = pageMatch[0];
     const htmlBefore = template.substring(0, pageMatch.index);
     const htmlAfter = template.substring(pageMatch.index + pageTemplate.length);
-    
+
     let allPagesHTML = '';
     const savedIdx = zleceniaSelectedIdx;
 
@@ -558,16 +618,16 @@ async function printEtykietaAll() {
         zleceniaSelectedIdx = i;
         const pageData = collectPrintData();
         if (!pageData) continue;
-        
+
         let populatedPage = buildEtykietaHtml(pageTemplate, pageData);
-        
+
         if (i < zleceniaElementsList.length - 1) {
             populatedPage += '\n<div class="page-break"></div>\n';
         }
-        
+
         allPagesHTML += populatedPage;
     }
-    
+
     zleceniaSelectedIdx = savedIdx;
 
     if (!allPagesHTML) {

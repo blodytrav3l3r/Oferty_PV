@@ -19,17 +19,20 @@ npx prisma generate
 ## 🏃 Uruchomienie
 
 ### Development (z hot reload)
+
 ```bash
 npm run dev
 ```
 
 ### Production
+
 ```bash
 npm run build
 npm start
 ```
 
 ### Windows (batch)
+
 ```bash
 start_node.bat          # Tylko Node.js
 start_all.bat           # Node.js + Python AI Backend
@@ -45,21 +48,21 @@ npm run test -- --coverage  # Testy z coverage
 
 ## 📚 Skrypty
 
-| Komenda | Opis |
-|---------|------|
-| `npm run dev` | Development server z hot reload |
-| `npm run build` | Kompilacja TypeScript |
-| `npm run build:watch` | Kompilacja w trybie watch |
-| `npm start` | Uruchomienie serwera produkcyjnego |
-| `npm test` | Uruchomienie testów |
-| `npm run test:watch` | Testy w trybie watch |
-| `npm run lint` | Linting kodu |
-| `npm run lint:fix` | Automatyczne naprawianie błędów ESLint |
-| `npm run format` | Formatowanie kodu Prettier |
-| `npm run backup` | Backup bazy danych |
-| `npm run prisma:generate` | Generowanie Prisma Client |
-| `npm run prisma:migrate` | Migracja bazy danych |
-| `npm run prisma:studio` | GUI do przeglądania bazy danych |
+| Komenda                   | Opis                                   |
+| ------------------------- | -------------------------------------- |
+| `npm run dev`             | Development server z hot reload        |
+| `npm run build`           | Kompilacja TypeScript                  |
+| `npm run build:watch`     | Kompilacja w trybie watch              |
+| `npm start`               | Uruchomienie serwera produkcyjnego     |
+| `npm test`                | Uruchomienie testów                    |
+| `npm run test:watch`      | Testy w trybie watch                   |
+| `npm run lint`            | Linting kodu                           |
+| `npm run lint:fix`        | Automatyczne naprawianie błędów ESLint |
+| `npm run format`          | Formatowanie kodu Prettier             |
+| `npm run backup`          | Backup bazy danych                     |
+| `npm run prisma:generate` | Generowanie Prisma Client              |
+| `npm run prisma:migrate`  | Migracja bazy danych                   |
+| `npm run prisma:studio`   | GUI do przeglądania bazy danych        |
 
 ## 📁 Struktura projektu
 
@@ -176,11 +179,13 @@ API wymaga autoryzacji przez sesje. Endpoint `/api/auth/login` służy do logowa
 ## 🤖 Python AI Backend
 
 Projekt zawiera również backend AI (`well_configurator_backend/`) napisany w Pythonie, który obsługuje:
+
 - Konfigurację studni
 - Optymalizację parametrów
 - Generowanie konfiguracji produktów
 
 ### Uruchomienie AI Backend:
+
 ```bash
 cd well_configurator_backend
 pip install -r requirements.txt
@@ -192,6 +197,7 @@ Lub użyj `start_all.bat` aby uruchomić oba serwery jednocześnie.
 ## 🗄️ Baza danych
 
 Modele w Prisma:
+
 - `users` - Użytkownicy systemu
 - `sessions` - Sesje użytkowników
 - `settings` - Ustawienia systemu (litera roku obrotowego)
@@ -213,6 +219,7 @@ Modele w Prisma:
 ## 📝 CHANGELOG
 
 ### v2.1.0 (2026-04-06)
+
 - ✅ Eksport ofert do PDF (puppeteer)
 - ✅ Eksport ofert do Word (.docx)
 - ✅ Rozbudowane style do druku (@media print)
@@ -220,6 +227,7 @@ Modele w Prisma:
 - ✅ Naprawa Python AI Backend (requests)
 
 ### v2.0.0 (2026-04-06)
+
 - ✅ Migracja na TypeScript
 - ✅ Prisma ORM zamiast better-sqlite3
 - ✅ Nowa struktura projektu
@@ -227,4 +235,5 @@ Modele w Prisma:
 - ✅ Hot reload z ts-node-dev
 
 ### v1.0.0
+
 - Pierwsza wersja z JavaScript i SQLite

@@ -1,7 +1,7 @@
 /**
  * Shared Auth Module — wspólna logika autoryzacji.
  * Eliminuje duplikat getAuthToken/authHeaders/appLogout z app.js i app_studnie.js.
- * 
+ *
  * WAŻNE: Unifikacja — app.js używał localStorage, app_studnie.js cookies.
  * Ten moduł sprawdza OBA źródła (cookies priorytet, potem localStorage).
  */
@@ -35,7 +35,9 @@ function authHeaders() {
 async function appLogout() {
     try {
         await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
-    } catch (e) { /* ignore network errors on logout */ }
+    } catch (e) {
+        /* ignore network errors on logout */
+    }
     localStorage.removeItem('authToken');
     document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.location.href = '/';

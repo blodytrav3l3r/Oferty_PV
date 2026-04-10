@@ -1,6 +1,6 @@
 /**
  * SPA Router — Iframe-based router for WITROS.
- * 
+ *
  * Each module (rury, studnie) runs inside its own iframe,
  * providing COMPLETE isolation of JS, CSS, and DOM state.
  * The original HTML files work without ANY modification.
@@ -24,7 +24,13 @@ const SpaRouter = (() => {
             logo: 'Oferty rury',
             logoColors: ['#6366f1', '#8b5cf6'],
             sections: [
-                { id: 'offer', icon: '📝', label: 'Nowa Oferta', accent: '#10b981', glow: '#0d2a20' },
+                {
+                    id: 'offer',
+                    icon: '📝',
+                    label: 'Nowa Oferta',
+                    accent: '#10b981',
+                    glow: '#0d2a20'
+                },
                 { id: 'pricelist', icon: '📋', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
             ]
         },
@@ -33,7 +39,13 @@ const SpaRouter = (() => {
             logo: 'Kalkulator Studni',
             logoColors: ['#10b981', '#34d399'],
             sections: [
-                { id: 'builder', icon: '🏗️', label: 'Konfiguracja', accent: '#10b981', glow: '#0d2b22' },
+                {
+                    id: 'builder',
+                    icon: '🏗️',
+                    label: 'Konfiguracja',
+                    accent: '#10b981',
+                    glow: '#0d2b22'
+                },
                 { id: 'offer', icon: '📊', label: 'Oferta', accent: '#3b82f6', glow: '#152040' },
                 { id: 'pricelist', icon: '📋', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
             ]
@@ -60,16 +72,24 @@ const SpaRouter = (() => {
         const module = path || 'rury';
         const params = {};
         if (queryString) {
-            new URLSearchParams(queryString).forEach((v, k) => { params[k] = v; });
+            new URLSearchParams(queryString).forEach((v, k) => {
+                params[k] = v;
+            });
         }
         return { module, params };
     }
 
     function updateAppNav(module) {
         document.getElementById('spa-app-rury')?.classList.toggle('active', module === 'rury');
-        document.getElementById('spa-app-studnie')?.classList.toggle('active', module === 'studnie');
-        document.getElementById('spa-app-kartoteka')?.classList.toggle('active', module === 'kartoteka');
-        document.getElementById('spa-app-zlecenia')?.classList.toggle('active', module === 'zlecenia');
+        document
+            .getElementById('spa-app-studnie')
+            ?.classList.toggle('active', module === 'studnie');
+        document
+            .getElementById('spa-app-kartoteka')
+            ?.classList.toggle('active', module === 'kartoteka');
+        document
+            .getElementById('spa-app-zlecenia')
+            ?.classList.toggle('active', module === 'zlecenia');
 
         const config = MODULES[module];
         if (!config) return;
@@ -91,7 +111,9 @@ const SpaRouter = (() => {
         const nav = document.getElementById('spa-section-nav');
         if (!nav) return;
         const sections = MODULES[module]?.sections || [];
-        nav.innerHTML = sections.map((s, i) => `
+        nav.innerHTML = sections
+            .map(
+                (s, i) => `
             <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
                 style="--nav-accent:${s.accent}; --nav-glow:${s.glow}"
@@ -99,7 +121,9 @@ const SpaRouter = (() => {
                 <span class="nav-tile-icon">${s.icon}</span>
                 <span class="nav-tile-text">${s.label}</span>
             </button>
-        `).join('');
+        `
+            )
+            .join('');
     }
 
     function toggleBackendIndicator(module) {
@@ -125,8 +149,6 @@ const SpaRouter = (() => {
         // Force cache-busting on the module itself
         src += (src.includes('?') ? '&' : '?') + 'v=2.0';
 
-
-
         iframe.src = src;
         iframe.style.display = 'none';
 
@@ -137,7 +159,7 @@ const SpaRouter = (() => {
                 // Hide the header in the iframe
                 const header = iframeDoc.querySelector('.header, header.header');
                 if (header) header.style.display = 'none';
-                
+
                 // Adjust main content to not have the header offset
                 const main = iframeDoc.querySelector('main.main');
                 if (main) {
@@ -148,7 +170,6 @@ const SpaRouter = (() => {
                 // Make the body background transparent so the parent background shows through
                 iframeDoc.body.style.background = 'transparent';
                 iframeDoc.documentElement.style.background = 'transparent';
-
             } catch (e) {
                 // Cross-origin restriction — should not happen since same domain
                 console.warn('[SpaRouter] Could not modify iframe content:', e);
@@ -175,7 +196,7 @@ const SpaRouter = (() => {
         }
 
         // Update nav button active states in parent
-        document.querySelectorAll('#spa-section-nav .nav-btn').forEach(btn => {
+        document.querySelectorAll('#spa-section-nav .nav-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.section === sectionId);
         });
     }
@@ -198,11 +219,13 @@ const SpaRouter = (() => {
         }
 
         // Hide all iframes
-        Object.values(iframes).forEach(f => { f.style.display = 'none'; });
+        Object.values(iframes).forEach((f) => {
+            f.style.display = 'none';
+        });
 
         // Show or create the target iframe
         const iframe = getOrCreateIframe(module);
-        
+
         // Force reload if editing or opening an order, to guarantee clean state
         if (params.edit || params.order) {
             let newSrc = MODULES[module].src;
@@ -238,9 +261,13 @@ const SpaRouter = (() => {
             if (iframe.contentDocument?.readyState === 'complete') {
                 showSection(tabToShow);
             } else {
-                iframe.addEventListener('load', () => {
-                    setTimeout(() => showSection(tabToShow), 200);
-                }, { once: true });
+                iframe.addEventListener(
+                    'load',
+                    () => {
+                        setTimeout(() => showSection(tabToShow), 200);
+                    },
+                    { once: true }
+                );
             }
         }
     }
@@ -248,27 +275,46 @@ const SpaRouter = (() => {
     async function init() {
         // Auth check
         const token = getAuthToken();
-        if (!token) { window.location.href = 'index.html'; return; }
+        if (!token) {
+            window.location.href = 'index.html';
+            return;
+        }
 
         try {
             const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
             const authData = await authRes.json();
-            if (!authData.user) { window.location.href = 'index.html'; return; }
+            if (!authData.user) {
+                window.location.href = 'index.html';
+                return;
+            }
 
             // Display user in header
             const userEl = document.getElementById('header-username');
             const roleEl = document.getElementById('header-role-badge');
-            const displayName = (authData.user.firstName && authData.user.lastName) 
-                ? `${authData.user.firstName} ${authData.user.lastName}` 
-                : authData.user.username;
+            const displayName =
+                authData.user.firstName && authData.user.lastName
+                    ? `${authData.user.firstName} ${authData.user.lastName}`
+                    : authData.user.username;
             if (userEl) userEl.textContent = '👤 ' + displayName;
             if (roleEl) {
                 const role = authData.user.role;
-                roleEl.textContent = role === 'admin' ? 'ADMIN' : (role === 'pro' ? 'PRO' : 'USER');
+                roleEl.textContent = role === 'admin' ? 'ADMIN' : role === 'pro' ? 'PRO' : 'USER';
                 const colorMap = {
-                    admin: { bg: 'rgba(245,158,11,0.15)', fg: '#f59e0b', border: 'rgba(245,158,11,0.3)' },
-                    pro: { bg: 'rgba(16,185,129,0.15)', fg: '#10b981', border: 'rgba(16,185,129,0.3)' },
-                    user: { bg: 'rgba(59,130,246,0.15)', fg: '#60a5fa', border: 'rgba(59,130,246,0.3)' }
+                    admin: {
+                        bg: 'rgba(245,158,11,0.15)',
+                        fg: '#f59e0b',
+                        border: 'rgba(245,158,11,0.3)'
+                    },
+                    pro: {
+                        bg: 'rgba(16,185,129,0.15)',
+                        fg: '#10b981',
+                        border: 'rgba(16,185,129,0.3)'
+                    },
+                    user: {
+                        bg: 'rgba(59,130,246,0.15)',
+                        fg: '#60a5fa',
+                        border: 'rgba(59,130,246,0.3)'
+                    }
                 };
                 const c = colorMap[role] || colorMap.user;
                 roleEl.style.background = c.bg;
@@ -281,14 +327,18 @@ const SpaRouter = (() => {
         }
 
         // Default hash
-        if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
+        if (
+            !window.location.hash ||
+            window.location.hash === '#' ||
+            window.location.hash === '#/'
+        ) {
             window.location.hash = '#/rury';
         }
 
         window.addEventListener('hashchange', navigate);
 
         // Allow clicking the current active module icon to reset its state
-        document.querySelectorAll('.nav-apps a.nav-tile').forEach(link => {
+        document.querySelectorAll('.nav-apps a.nav-tile').forEach((link) => {
             link.addEventListener('click', (e) => {
                 const href = link.getAttribute('href');
                 if (href && href.startsWith('#/') && window.location.hash === href) {
@@ -321,7 +371,11 @@ const SpaRouter = (() => {
         if (!iframe) return;
         try {
             const win = iframe.contentWindow;
-            if (module === 'zlecenia' && win.AppZlecenia && typeof win.AppZlecenia.loadOrders === 'function') {
+            if (
+                module === 'zlecenia' &&
+                win.AppZlecenia &&
+                typeof win.AppZlecenia.loadOrders === 'function'
+            ) {
                 win.AppZlecenia.loadOrders();
             } else if (module === 'kartoteka') {
                 if (win.AppKartoteka && typeof win.AppKartoteka.loadOffers === 'function') {

@@ -17,10 +17,10 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 /* ===== SECURITY ===== */
 app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false
+    })
 );
 app.use(securityHeaders);
 app.use(httpsRedirect);
@@ -32,46 +32,39 @@ app.use(cookieParser());
 
 // Cachowanie: wyłączone w dev, włączone w produkcji
 if (NODE_ENV === 'production') {
-  app.use(
-    express.static(path.join(__dirname, 'public'), {
-      index: 'index.html',
-      extensions: ['html'],
-      maxAge: '1h',
-    })
-  );
+    app.use(
+        express.static(path.join(__dirname, 'public'), {
+            index: 'index.html',
+            extensions: ['html'],
+            maxAge: '1h'
+        })
+    );
 } else {
-  app.use((req, res, next) => {
-    if (
-      req.path.endsWith('.js') ||
-      req.path.endsWith('.css') ||
-      req.path.endsWith('.html')
-    ) {
-      res.setHeader(
-        'Cache-Control',
-        'no-store, no-cache, must-revalidate, proxy-revalidate'
-      );
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
-    next();
-  });
-  app.use(
-    express.static(path.join(__dirname, 'public'), {
-      index: 'index.html',
-      extensions: ['html'],
-    })
-  );
+    app.use((req, res, next) => {
+        if (req.path.endsWith('.js') || req.path.endsWith('.css') || req.path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+        next();
+    });
+    app.use(
+        express.static(path.join(__dirname, 'public'), {
+            index: 'index.html',
+            extensions: ['html']
+        })
+    );
 }
 
 /* ===== HEALTH CHECK ===== */
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    version: process.version,
-  });
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        version: process.version
+    });
 });
 
 /* ===== ROUTES ===== */
@@ -91,8 +84,8 @@ import telemetryRoutes from './src/routes/telemetry';
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/users-for-assignment', (req, res, next) => {
-  req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
-  userRoutes(req, res, next);
+    req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
+    userRoutes(req, res, next);
 });
 
 app.use('/api/products', productRoutes);
@@ -104,8 +97,8 @@ app.use('/api/offers-rury', offerRoutes);
 
 // Oferty Studnie (Alias: /api/offers-studnie -> offers.js router with /studnie prefix)
 app.use('/api/offers-studnie', (req, res, next) => {
-  req.url = '/studnie' + (req.url === '/' ? '' : req.url);
-  offerRoutes(req, res, next);
+    req.url = '/studnie' + (req.url === '/' ? '' : req.url);
+    offerRoutes(req, res, next);
 });
 
 app.use('/api/orders-studnie', orderRoutes);
@@ -122,18 +115,18 @@ app.use('/api/telemetry', telemetryRoutes);
 
 /* ===== GLOBAL ERROR HANDLER ===== */
 app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[ERROR]', err.stack || err.message);
-  res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    console.error('[ERROR]', err.stack || err.message);
+    res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
 });
 
 /* ===== INIT ===== */
 ensureAdminExists().then(() => {
-  app.listen(PORT, HOST, () => {
-    console.log(`\n  🚀 WITROS Oferty — serwer działa na:`);
-    console.log(`     http://localhost:${PORT}`);
-    console.log(`     Tryb: ${NODE_ENV === 'production' ? '🔒 PRODUKCJA' : '🔧 DEVELOPMENT'}`);
-    console.log(`     Baza: SQLite (lokalna)\n`);
-  });
+    app.listen(PORT, HOST, () => {
+        console.log(`\n  🚀 WITROS Oferty — serwer działa na:`);
+        console.log(`     http://localhost:${PORT}`);
+        console.log(`     Tryb: ${NODE_ENV === 'production' ? '🔒 PRODUKCJA' : '🔧 DEVELOPMENT'}`);
+        console.log(`     Baza: SQLite (lokalna)\n`);
+    });
 });
 
 export default app;

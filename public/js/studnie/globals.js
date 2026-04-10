@@ -1,4 +1,3 @@
-
 /* ===== GLOBALS ===== */
 let studnieProducts = [];
 let currentUser = null;
@@ -11,10 +10,10 @@ let wellCounter = 1;
 let wellDiscounts = {}; // Discounts per DN: { 1000: { dennica: 0, nadbudowa: 0 }, ... }
 
 // Global offer-level defaults (persist until manually changed)
-let offerDefaultZakonczenie = null;   // product ID or null (=konus)
-let offerDefaultRedukcja = false;     // true = reduction to DN1000
-let offerDefaultRedukcjaMinH = 2500;  // minimum bottom section height in mm
-let offerDefaultRedukcjaZak = null;   // product ID for reduction top closure (DN1000)
+let offerDefaultZakonczenie = null; // product ID or null (=konus)
+let offerDefaultRedukcja = false; // true = reduction to DN1000
+let offerDefaultRedukcjaMinH = 2500; // minimum bottom section height in mm
+let offerDefaultRedukcjaZak = null; // product ID for reduction top closure (DN1000)
 
 // Multi-offer system
 let offersStudnie = [];
@@ -27,7 +26,25 @@ let clientsDb = [];
 // Wizard state
 let currentWizardStep = 1;
 let wizardConfirmedParams = new Set();
-const WIZARD_REQUIRED_PARAMS = ['nadbudowa', 'dennicaMaterial', 'wkladka', 'klasaBetonu', 'agresjaChemiczna', 'agresjaMrozowa', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie', 'malowanieW', 'malowanieZ', 'kineta', 'spocznik', 'redukcjaKinety', 'stopnie', 'spocznikH', 'usytuowanie', 'magazyn'];
+const WIZARD_REQUIRED_PARAMS = [
+    'nadbudowa',
+    'dennicaMaterial',
+    'wkladka',
+    'klasaBetonu',
+    'agresjaChemiczna',
+    'agresjaMrozowa',
+    'klasaNosnosci_korpus',
+    'klasaNosnosci_zwienczenie',
+    'malowanieW',
+    'malowanieZ',
+    'kineta',
+    'spocznik',
+    'redukcjaKinety',
+    'stopnie',
+    'spocznikH',
+    'usytuowanie',
+    'magazyn'
+];
 
 /* ===== FORMATTING ===== */
 // fmt() i fmtInt() — dostępne z shared/formatters.js
@@ -50,8 +67,8 @@ function toggleCard(contentId, iconId) {
 
 /* ===== NAVIGATION ===== */
 function showSection(id) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
     document.getElementById('section-' + id)?.classList.add('active');
     document.querySelector(`.nav-btn[data-section="${id}"]`)?.classList.add('active');
 
@@ -63,8 +80,11 @@ function showSection(id) {
 }
 
 function syncOfferClientSummary() {
-    const v = id => document.getElementById(id)?.value || '—';
-    const s = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const v = (id) => document.getElementById(id)?.value || '—';
+    const s = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
     s('offer-disp-name', v('client-name'));
     s('offer-disp-nip', v('client-nip'));
     s('offer-disp-number', v('offer-number'));
@@ -79,7 +99,7 @@ function syncOfferClientSummary() {
 function generateOfferNumberStudnie() {
     const d = new Date();
     const year = d.getFullYear();
-    let symbol = "XX";
+    let symbol = 'XX';
     if (typeof currentUser !== 'undefined' && currentUser) {
         if (currentUser.symbol) {
             symbol = currentUser.symbol;
@@ -100,4 +120,3 @@ function normalizeId(id) {
     if (id.includes(':')) return id.split(':').pop();
     return id;
 }
-

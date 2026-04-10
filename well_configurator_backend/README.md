@@ -3,6 +3,7 @@
 Modularny, produkcyjny system konfiguratora studni kanalizacyjnych, zbudowany pod architekturę offline-first. API zrealizowano w FastAPI, obliczenia poprzez Google OR-Tools CP-SAT, a zasady biznesowe (formy standardowe, redukcje, zapasy) we własnym Rule Engine. Do predykcyjnego układania skonstruowanych wariantów użyty jest stelaż pod model Machine Learning (LightGBM).
 
 ## Technologie
+
 - **Wymagania**: Python 3.10+
 - **API**: FastAPI, Pydantic
 - **Modelowanie / Baza danych**: SQLAlchemy (SQLite wbudowany jako tryb lokalny - offline-first, przygotowane w `tables.py` obiekty na synchronizację do centralnej bazy)
@@ -11,6 +12,7 @@ Modularny, produkcyjny system konfiguratora studni kanalizacyjnych, zbudowany po
 - **Testy**: `pytest`
 
 ## Architektura i Pakiety
+
 - `api/`: Definicja FastAPI Endpointów (`endpoints.py`), modeli Pydantic oraz definicja samej aplikacji.
 - `database/`: Konfiguracja SQLAlchemy, pliki CRUD i modele encji `tables.py`.
 - `rule_engine/`: Zestaw szukanych/najlepszych reguł dla wyciągania płyt i dennic.
@@ -26,23 +28,26 @@ Modularny, produkcyjny system konfiguratora studni kanalizacyjnych, zbudowany po
 Dla użytkowników systemu Windows przygotowano skrypty ułatwiające uruchomienie aplikacji:
 
 1. **Instalacja (pierwsze uruchomienie)**:
-Uruchom plik `install.bat` (dwukrotne kliknięcie). Skrypt automatycznie:
+   Uruchom plik `install.bat` (dwukrotne kliknięcie). Skrypt automatycznie:
+
 - Zweryfikuje obecność języka Python.
 - Utworzy wirtualne środowisko `venv`.
 - Zainstaluje wszystkie wymagane pakiety z pliku `requirements.txt`.
 
 2. **Uruchomienie Serwera API**:
-Uruchom plik `start.bat`. Skrypt ten samoistnie aktywuje środowisko wirtualne i podniesie serwer korzystając z `run.py`.
- 
+   Uruchom plik `start.bat`. Skrypt ten samoistnie aktywuje środowisko wirtualne i podniesie serwer korzystając z `run.py`.
+
 > Podczas pierwszego uruchomienia API (port `:8000`) dokona migracji bazy danych SQLite i zasilenia tabel testowymi elementami z użyciem modułu `seed.py`.
 
 3. **Dokumentacja API**:
-Świetne interaktywne API ukaże się po otwarciu przeglądarki pod adresem:
-http://localhost:8000/docs
-*(Tam możliwa jest interakcja z endpointem `/api/v1/configure` wyliczającym wymaganą wysokość studni DN1500 / DN2000).*
+   Świetne interaktywne API ukaże się po otwarciu przeglądarki pod adresem:
+   http://localhost:8000/docs
+   _(Tam możliwa jest interakcja z endpointem `/api/v1/configure` wyliczającym wymaganą wysokość studni DN1500 / DN2000)._
 
 ## Model Redukcji w Przykładowej Studni
+
 Jeśli konfigurujesz DN1500 na wysokość 3500mm, algorytm:
+
 1.  Znajdzie optymalną Dennicę DN1500 H=600.
 2.  Spróbuje zoptymalizować pozostałe miejsce z głównych kręgów DN1500 używając CP-SAT.
 3.  Zaaplikuje płytę redukcyjną z uwzględnieniem tolerancji zapasów - DN1500/DN1000 H=200.

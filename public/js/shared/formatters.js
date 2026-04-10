@@ -9,7 +9,10 @@
  * @returns {string}
  */
 function fmt(n) {
-    return Number(n || 0).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return Number(n || 0).toLocaleString('pl-PL', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
 /**

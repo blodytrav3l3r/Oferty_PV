@@ -6,19 +6,24 @@
 /**
  * Oblicza optymalną kombinację kręgów dla zadanej wysokości, priorityzując
  * najwyższe kręgi (mniejsza ilość = łatwiejszy montaż).
- * 
+ *
  * Port z: Logika/cp_optimizer.py → optimize_rings_for_distance()
- * 
+ *
  * Cel optymalizacji: max Σ(count × height²) — identyczny jak w CP-SAT
  * Gwarantuje: target - toleranceBelow ≤ totalHeight ≤ target + toleranceAbove
- * 
+ *
  * @param {number} targetDistance - docelowa wysokość w mm
  * @param {Array} availableRings - dostępne kręgi z polami: id, height, ...
  * @param {number} toleranceBelow - dozwolone odchylenie w dół (domyślnie 50mm)
  * @param {number} toleranceAbove - dozwolone odchylenie w górę (domyślnie 0mm)
  * @returns {{ success: boolean, selectedRings: Array }}
  */
-function optimizeRingsForDistance(targetDistance, availableRings, toleranceBelow = 50, toleranceAbove = 20) {
+function optimizeRingsForDistance(
+    targetDistance,
+    availableRings,
+    toleranceBelow = 50,
+    toleranceAbove = 20
+) {
     if (targetDistance <= 0) {
         return { success: true, selectedRings: [] };
     }
@@ -49,13 +54,13 @@ function optimizeRingsForDistance(targetDistance, availableRings, toleranceBelow
 
 /**
  * Solver Dynamic Programming — szuka najlepszej kombinacji kręgów.
- * 
+ *
  * Algorytm:
  * 1. Buduj DP od 0 do maxAllowed (capacity)
  * 2. Dla każdej wysokości h, rozważ dodanie kręgu
  * 3. Score = Σ(count × h²) — preferuje duże kręgi
  * 4. Z dopuszczalnych rozwiązań [minAllowed, maxAllowed] wybierz najlepsze (max score)
- * 
+ *
  * @param {number[]} heights - unikalne wysokości kręgów, posortowane malejąco
  * @param {number} minAllowed - minimalna dopuszczalna wysokość
  * @param {number} maxAllowed - maksymalna dopuszczalna wysokość
@@ -126,7 +131,7 @@ function solveDPRings(heights, minAllowed, maxAllowed, availableRings) {
 /**
  * Mapuje listę wysokości na konkretne produkty kręgów.
  * Preferuje kręgi typu 'krag' (nie 'krag_ot') i formy standardowe.
- * 
+ *
  * @param {number[]} selectedHeights - lista wybranych wysokości
  * @param {Array} availableRings - dostępne kręgi (posortowane wg preferencji)
  * @returns {Array} lista wybranych produktów
@@ -143,11 +148,9 @@ function mapHeightsToProducts(selectedHeights, availableRings) {
     });
 
     for (const h of selectedHeights) {
-        const ring = regularFirst.find(r =>
-            parseFloat(r.height) === h && r.componentType === 'krag'
-        ) || regularFirst.find(r =>
-            parseFloat(r.height) === h
-        );
+        const ring =
+            regularFirst.find((r) => parseFloat(r.height) === h && r.componentType === 'krag') ||
+            regularFirst.find((r) => parseFloat(r.height) === h);
 
         if (ring) {
             result.push(ring);

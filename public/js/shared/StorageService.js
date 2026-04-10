@@ -28,11 +28,15 @@ class StorageService {
 
         if (!offerData.type) throw new Error('Offer type is required (offer/studnia_oferta).');
 
-        const endpoint = offerData.type === 'studnia_oferta' ? '/api/offers-rury/studnie' : '/api/offers-rury';
+        const endpoint =
+            offerData.type === 'studnia_oferta' ? '/api/offers-rury/studnie' : '/api/offers-rury';
 
         try {
             const headers = { 'Content-Type': 'application/json' };
-            let token = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('authToken='));
+            let token = document.cookie
+                .split(';')
+                .map((c) => c.trim())
+                .find((c) => c.startsWith('authToken='));
             if (token) {
                 token = token.split('=')[1];
             } else if (typeof localStorage !== 'undefined') {
@@ -50,7 +54,7 @@ class StorageService {
             if (!resp.ok) throw new Error(data.error || 'Błąd zapisu oferty');
 
             console.log(`[StorageService] Offer ${offerData.id} saved successfully.`);
-            
+
             // Re-fetch to get any server-side generated fields if needed, or simply return updated
             return offerData;
         } catch (error) {
@@ -80,7 +84,6 @@ class StorageService {
             if (types.includes('studnia_oferta')) {
                 const res = await fetch(`/api/offers-rury/studnie?t=${timestamp}`);
                 if (res.ok) {
-
                     const json = await res.json();
                     results = results.concat(json.data || []);
                 }
@@ -100,9 +103,12 @@ class StorageService {
      */
     async deleteOffer(id) {
         if (!this.initialized) throw new Error('StorageService not initialized.');
-        
+
         const headers = {};
-        let token = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('authToken='));
+        let token = document.cookie
+            .split(';')
+            .map((c) => c.trim())
+            .find((c) => c.startsWith('authToken='));
         if (token) {
             token = token.split('=')[1];
         } else if (typeof localStorage !== 'undefined') {
@@ -112,22 +118,25 @@ class StorageService {
         headers['Content-Type'] = 'application/json';
 
         console.log(`[StorageService] Deleting offer ${id}...`);
-        
-        try {
-             const res1 = await fetch(`/api/offers-rury/${id}`, { method: 'DELETE', headers });
-             if (res1.ok) {
-                 console.log(`[StorageService] Offer ${id} deleted from rury.`);
-                 return true;
-             }
-             
-             // If not found in rury, try studnie
-             const res2 = await fetch(`/api/offers-rury/studnie/${id}`, { method: 'DELETE', headers });
-             if (res2.ok) {
-                 console.log(`[StorageService] Offer ${id} deleted from studnie.`);
-                 return true;
-             }
 
-             throw new Error('Nie udało się usunąć oferty z żadnego endpointu');
+        try {
+            const res1 = await fetch(`/api/offers-rury/${id}`, { method: 'DELETE', headers });
+            if (res1.ok) {
+                console.log(`[StorageService] Offer ${id} deleted from rury.`);
+                return true;
+            }
+
+            // If not found in rury, try studnie
+            const res2 = await fetch(`/api/offers-rury/studnie/${id}`, {
+                method: 'DELETE',
+                headers
+            });
+            if (res2.ok) {
+                console.log(`[StorageService] Offer ${id} deleted from studnie.`);
+                return true;
+            }
+
+            throw new Error('Nie udało się usunąć oferty z żadnego endpointu');
         } catch (error) {
             console.error(`[StorageService] Error deleting offer ${id}:`, error);
             throw error;
@@ -142,14 +151,16 @@ class StorageService {
      */
     async getOfferById(id) {
         // Fallback: fetch all and find, or assume the app already handles this
-        console.warn('[StorageService] getOfferById invoked. Doing a full fetch as a fallback. Implement /api/offers-rury/:id for best performance.');
+        console.warn(
+            '[StorageService] getOfferById invoked. Doing a full fetch as a fallback. Implement /api/offers-rury/:id for best performance.'
+        );
         const allOffers = await this.getOffers();
-        const doc = allOffers.find(o => String(o.id) === String(id));
+        const doc = allOffers.find((o) => String(o.id) === String(id));
         return this.normalizeOffer(doc);
     }
 
     /**
-     * Normalizes offer data 
+     * Normalizes offer data
      * @param {Object} doc - The raw document from API.
      * @returns {Object} Normalized flat offer object.
      */
@@ -160,15 +171,22 @@ class StorageService {
             const legacyMapping = {
                 items: doc.data.items,
                 wells: doc.data.wells,
-                totalNetto: doc.data.totalNetto || (doc.data.summary ? doc.data.summary.totalValue : null),
-                totalBrutto: doc.data.totalBrutto || (doc.data.summary ? doc.data.summary.totalBrutto : null),
+                totalNetto:
+                    doc.data.totalNetto || (doc.data.summary ? doc.data.summary.totalValue : null),
+                totalBrutto:
+                    doc.data.totalBrutto ||
+                    (doc.data.summary ? doc.data.summary.totalBrutto : null),
                 number: doc.data.number || doc.data.offerNumber,
                 clientName: doc.data.clientName,
                 date: doc.data.date || doc.data.offerDate
             };
 
             for (const [key, value] of Object.entries(legacyMapping)) {
-                if (value !== undefined && value !== null && (doc[key] === undefined || doc[key] === null)) {
+                if (
+                    value !== undefined &&
+                    value !== null &&
+                    (doc[key] === undefined || doc[key] === null)
+                ) {
                     doc[key] = value;
                 }
             }

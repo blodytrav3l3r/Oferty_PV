@@ -1,15 +1,27 @@
 /* ===== ZAKOŃCZENIE (TOP CLOSURE SELECTION) ===== */
 function openZakonczeniePopup() {
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
 
     const dn = well.dn;
     const effectiveDn = dn === 'styczna' ? 1000 : dn;
-    const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
+    const topClosureTypes = [
+        'konus',
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'pierscien_odciazajacy'
+    ];
 
     // Find all top closure products for this DN (or universal ones with dn=null)
-    const candidates = studnieProducts.filter(p =>
-        topClosureTypes.includes(p.componentType) && (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null) && filterByWellParams(p, well)
+    const candidates = studnieProducts.filter(
+        (p) =>
+            topClosureTypes.includes(p.componentType) &&
+            (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null) &&
+            filterByWellParams(p, well)
     );
 
     // Group by componentType for nicer display
@@ -34,7 +46,10 @@ function openZakonczeniePopup() {
     let tilesHtml = '';
     if (candidates.length === 0) {
         const errorDn = dn === 'styczna' ? 'styczna (1000)' : dn;
-        tilesHtml = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' + errorDn + '</div>';
+        tilesHtml =
+            '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' +
+            errorDn +
+            '</div>';
     } else {
         // "Auto (Konus)" default tile
         const isAutoActive = !currentZak;
@@ -49,7 +64,7 @@ function openZakonczeniePopup() {
             <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Domyślny konus dla DN ${effectiveDn}</div>
         </div>`;
 
-        candidates.forEach(p => {
+        candidates.forEach((p) => {
             const isActive = currentZak === p.id;
             const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
             const typeLabel = typeLabels[p.componentType] || p.componentType;
@@ -90,7 +105,9 @@ function openZakonczeniePopup() {
       </div>
     </div>`;
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
 }
 
 async function selectZakonczenie(productId) {
@@ -107,7 +124,7 @@ async function selectZakonczenie(productId) {
     updateZakonczenieButton();
 
     if (productId) {
-        const p = studnieProducts.find(pr => pr.id === productId);
+        const p = studnieProducts.find((pr) => pr.id === productId);
         showToast(`Zakończenie: ${p ? p.name : productId}`, 'success');
     } else {
         showToast('Zakończenie: Auto (Konus)', 'success');
@@ -127,8 +144,12 @@ function updateZakonczenieButton() {
     const well = getCurrentWell();
     if (!well) return;
     if (well.zakonczenie) {
-        const p = studnieProducts.find(pr => pr.id === well.zakonczenie);
-        const shortName = p ? (p.name.length > 12 ? p.name.substring(0, 12) + '…' : p.name) : well.zakonczenie;
+        const p = studnieProducts.find((pr) => pr.id === well.zakonczenie);
+        const shortName = p
+            ? p.name.length > 12
+                ? p.name.substring(0, 12) + '…'
+                : p.name
+            : well.zakonczenie;
         btn.innerHTML = '🔽 ' + shortName;
         btn.style.borderColor = 'rgba(99,102,241,0.4)';
         btn.style.color = '#a78bfa';
@@ -142,7 +163,10 @@ function updateZakonczenieButton() {
 /* ===== REDUKCJA DN1000 ===== */
 async function toggleRedukcja() {
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
 
     if (![1200, 1500, 2000, 2500].includes(well.dn)) {
         showToast('Redukcja DN1000 dostępna tylko dla studni DN ≥ 1200', 'error');
@@ -150,7 +174,7 @@ async function toggleRedukcja() {
     }
 
     well.redukcjaDN1000 = !well.redukcjaDN1000;
-    offerDefaultRedukcja = well.redukcjaDN1000;  // save as offer-level default
+    offerDefaultRedukcja = well.redukcjaDN1000; // save as offer-level default
     updateRedukcjaButton();
 
     if (well.redukcjaDN1000) {
@@ -227,13 +251,22 @@ function onRedukcjaMinChange(val) {
 
 function openRedukcjaZakonczeniePopup() {
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
 
     const availProducts = getAvailableProducts(well);
-    const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
-    const dn1000Candidates = availProducts.filter(p =>
-        topClosureTypes.includes(p.componentType) && p.dn === 1000
-    ).filter(p => filterByWellParams(p, well));
+    const topClosureTypes = [
+        'konus',
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'pierscien_odciazajacy'
+    ];
+    const dn1000Candidates = availProducts
+        .filter((p) => topClosureTypes.includes(p.componentType) && p.dn === 1000)
+        .filter((p) => filterByWellParams(p, well));
 
     const typeLabels = {
         konus: '🔶 Konus',
@@ -294,24 +327,26 @@ function openRedukcjaZakonczeniePopup() {
     </div>`;
 
     // Group items
-    const konuses = dn1000Candidates.filter(p => p.componentType === 'konus');
-    const dinPlates = dn1000Candidates.filter(p => p.componentType === 'plyta_din');
-    const odcPlates = dn1000Candidates.filter(p => p.componentType === 'plyta_najazdowa' || p.componentType === 'plyta_zamykajaca');
-    const rings = dn1000Candidates.filter(p => p.componentType === 'pierscien_odciazajacy');
+    const konuses = dn1000Candidates.filter((p) => p.componentType === 'konus');
+    const dinPlates = dn1000Candidates.filter((p) => p.componentType === 'plyta_din');
+    const odcPlates = dn1000Candidates.filter(
+        (p) => p.componentType === 'plyta_najazdowa' || p.componentType === 'plyta_zamykajaca'
+    );
+    const rings = dn1000Candidates.filter((p) => p.componentType === 'pierscien_odciazajacy');
 
     // Row 1: Konusy
-    konuses.forEach(p => tilesHtml += renderTile(p));
+    konuses.forEach((p) => (tilesHtml += renderTile(p)));
     // If odd number, add invisible empty div to keep grid aligned (unlikely needed with grid-auto-rows but safe)
     if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
 
     // Row 2: DIN plates
-    dinPlates.forEach(p => tilesHtml += renderTile(p));
+    dinPlates.forEach((p) => (tilesHtml += renderTile(p)));
     if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
 
     // Row 3: Płyty odciążające and Pierścienie
     // Usually there's a plate and a ring, let's put them together
-    odcPlates.forEach(p => tilesHtml += renderTile(p));
-    rings.forEach(p => tilesHtml += renderTile(p));
+    odcPlates.forEach((p) => (tilesHtml += renderTile(p)));
+    rings.forEach((p) => (tilesHtml += renderTile(p)));
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -328,7 +363,9 @@ function openRedukcjaZakonczeniePopup() {
         <button class="btn btn-secondary btn-sm" onclick="closeModal()" style="font-size:0.8rem;">Zamknij</button>
       </div>
     </div>`;
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
     document.body.appendChild(overlay);
 }
 
@@ -344,8 +381,12 @@ async function selectRedukcjaZakonczenie(productId) {
     const btn = document.getElementById('btn-redukcja-zak');
     if (btn) {
         if (productId) {
-            const p = studnieProducts.find(pr => pr.id === productId);
-            btn.innerHTML = '🔽 ' + (p ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18) : 'Zak. DN1000');
+            const p = studnieProducts.find((pr) => pr.id === productId);
+            btn.innerHTML =
+                '🔽 ' +
+                (p
+                    ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)
+                    : 'Zak. DN1000');
             btn.style.borderColor = 'rgba(99,102,241,0.5)';
             btn.style.color = '#a78bfa';
         } else {
@@ -356,7 +397,7 @@ async function selectRedukcjaZakonczenie(productId) {
     }
 
     if (productId) {
-        const p = studnieProducts.find(pr => pr.id === productId);
+        const p = studnieProducts.find((pr) => pr.id === productId);
         showToast(`Zakończenie redukcji: ${p ? p.name : productId}`, 'success');
     } else {
         showToast('Zakończenie redukcji: Auto (Konus DN1000)', 'success');
@@ -372,10 +413,19 @@ async function selectRedukcjaZakonczenie(productId) {
 
 /* ===== ELEVATIONS (RZĘDNE) ===== */
 function updateElevations() {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
     const wlazInput = document.getElementById('input-rzedna-wlazu');
     const dnaInput = document.getElementById('input-rzedna-dna');
 
@@ -388,9 +438,15 @@ function updateElevations() {
 }
 
 function updateDoplata() {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
     const domEl = document.getElementById('input-doplata');
     const dVal = domEl.value !== '' ? parseFloat(domEl.value) : 0;
     well.doplata = dVal;
@@ -413,7 +469,10 @@ function updateDoplata() {
 }
 
 function updateWellNumer() {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well) return;
     const numerInput = document.getElementById('input-well-numer');
@@ -423,7 +482,7 @@ function updateWellNumer() {
     checkWellNumerDuplicate(newNumer, numerInput);
 
     well.numer = newNumer;
-    well.name = well.numer || ('Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')');
+    well.name = well.numer || 'Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')';
     renderWellsList();
     updateSummary();
 }
@@ -431,12 +490,20 @@ function updateWellNumer() {
 function checkWellNumerDuplicate(newNumer, inputEl) {
     if (!inputEl) return false;
     if (newNumer !== '') {
-        const isDuplicate = wells.some((w, idx) => idx !== currentWellIndex && w.numer && w.numer.toLowerCase() === newNumer.toLowerCase());
+        const isDuplicate = wells.some(
+            (w, idx) =>
+                idx !== currentWellIndex &&
+                w.numer &&
+                w.numer.toLowerCase() === newNumer.toLowerCase()
+        );
         if (isDuplicate) {
             inputEl.style.borderColor = '#ef4444';
             inputEl.style.color = '#ef4444';
             inputEl.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.2)';
-            showToast(`⚠️ Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`, 'error');
+            showToast(
+                `⚠️ Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
+                'error'
+            );
             return true; // is duplicate
         }
     }
@@ -469,7 +536,7 @@ function syncElevationInputs() {
     if (doplataInput) {
         const dVal = well.doplata != null ? well.doplata : 0;
         doplataInput.value = dVal;
-        
+
         // Positive -> Green, Negative -> Red, Zero -> Default
         if (dVal > 0) {
             doplataInput.style.color = '#10b981';
@@ -519,7 +586,7 @@ function updateHeightIndicator() {
             let cy = 0;
             const configReversed = [...well.config].reverse();
             for (const item of configReversed) {
-                const p = studnieProducts.find(pr => pr.id === item.productId);
+                const p = studnieProducts.find((pr) => pr.id === item.productId);
                 if (!p || !p.height) continue;
                 const qty = item.quantity || 1;
                 for (let i = 0; i < qty; i++) {
@@ -530,7 +597,7 @@ function updateHeightIndicator() {
                         product: p,
                         name: p.name
                     });
-                    cy += (p.height || 0);
+                    cy += p.height || 0;
                 }
             }
 
@@ -552,7 +619,7 @@ function updateHeightIndicator() {
                 const pel = parseFloat(pr.rzednaWlaczenia);
                 if (isNaN(pel)) continue;
 
-                const pprod = studnieProducts.find(x => x.id === pr.productId);
+                const pprod = studnieProducts.find((x) => x.id === pr.productId);
                 if (!pprod) continue;
 
                 let dn_val = 160;
@@ -598,7 +665,9 @@ function updateHeightIndicator() {
 
     if (errContainer) {
         if (liveErrors.length > 0) {
-            errContainer.innerHTML = '⚠️ Błędy w konfiguracji studni:<br>' + liveErrors.map(e => `• ${e}`).join('<br>');
+            errContainer.innerHTML =
+                '⚠️ Błędy w konfiguracji studni:<br>' +
+                liveErrors.map((e) => `• ${e}`).join('<br>');
             errContainer.style.display = 'block';
         } else {
             errContainer.style.display = 'none';
@@ -608,7 +677,8 @@ function updateHeightIndicator() {
     // Update well's error state so the list tile highlights red
     const prevErrors = well.configErrors ? well.configErrors.length : 0;
     well.configErrors = liveErrors;
-    well.configStatus = liveErrors.length > 0 ? 'ERROR' : (well.configSource ? 'OK' : well.configStatus || '');
+    well.configStatus =
+        liveErrors.length > 0 ? 'ERROR' : well.configSource ? 'OK' : well.configStatus || '';
     if (prevErrors !== liveErrors.length) renderWellsList();
 
     const stats = calcWellStats(well);
@@ -650,7 +720,8 @@ function getAvailableProducts(well) {
     const isWl = mag.includes('oc') || mag.includes('Włoc');
     const magField = isWl ? 'magazynWL' : 'magazynKLB';
     const formaField = isWl ? 'formaStandardowa' : 'formaStandardowaKLB';
-    return studnieProducts.filter(p => p[magField] === 1)
+    return studnieProducts
+        .filter((p) => p[magField] === 1)
         .sort((a, b) => {
             // 1. Priorytet dla formy standardowej (malejąco: 1 -> 0)
             const fA = b[formaField] || 0;
@@ -679,40 +750,46 @@ function selectRingVariants(kregiList, well) {
 
     // Group by height
     const byHeight = {};
-    kregiList.forEach(k => {
+    kregiList.forEach((k) => {
         const h = k.height;
         if (!byHeight[h]) byHeight[h] = [];
         byHeight[h].push(k);
     });
 
     const result = [];
-    Object.keys(byHeight).sort((a, b) => Number(b) - Number(a)).forEach(h => {
-        const candidates = byHeight[h];
-        // Score each candidate
-        let best = null, bestScore = -Infinity;
-        for (const c of candidates) {
-            let score = 0;
-            const id = (c.id || '').toUpperCase();
-            // Material match
-            if (isZelbet && id.startsWith('KDZ')) score += 10;
-            else if (!isZelbet && id.startsWith('KDB')) score += 10;
-            // Suffix match
-            if (id.includes(suffix)) score += 5;
-            // Forma standardowa
-            const mag = well.magazyn || 'Kluczbork';
-            const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
-            if (c[ff] === 1) score += 3000;
-            if (score > bestScore) { bestScore = score; best = c; }
-        }
-        if (best) result.push(best);
-    });
+    Object.keys(byHeight)
+        .sort((a, b) => Number(b) - Number(a))
+        .forEach((h) => {
+            const candidates = byHeight[h];
+            // Score each candidate
+            let best = null,
+                bestScore = -Infinity;
+            for (const c of candidates) {
+                let score = 0;
+                const id = (c.id || '').toUpperCase();
+                // Material match
+                if (isZelbet && id.startsWith('KDZ')) score += 10;
+                else if (!isZelbet && id.startsWith('KDB')) score += 10;
+                // Suffix match
+                if (id.includes(suffix)) score += 5;
+                // Forma standardowa
+                const mag = well.magazyn || 'Kluczbork';
+                const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
+                if (c[ff] === 1) score += 3000;
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = c;
+                }
+            }
+            if (best) result.push(best);
+        });
     return result.sort((a, b) => b.height - a.height);
 }
 
 /**
  * Po zbudowaniu segmentów, sprawdza czy przejście (otwór) jest WEWNĄTRZ kręgu
  * i zamienia zwykły krag na krag_ot (wiercony) w odpowiednim segmencie.
- * 
+ *
  * ZASADY:
  * 1. Otwór OT tylko gdy przejście faktycznie jest WEWNĄTRZ tego kręgu (cały otwór mieści się w segmencie)
  * 2. Zamiana na OT musi zachować tę samą wysokość kręgu (nie zmienia totalnej wysokości)
@@ -731,17 +808,18 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
         let pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const mmFromBottom = (pel - rzDna) * 1000;
-        const pprod = studnieProducts.find(x => x.id === pr.productId);
+        const pprod = studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
-        let prDN = typeof pprod.dn === 'string' && pprod.dn.includes('/')
-            ? parseFloat(pprod.dn.split('/')[1]) || 160
-            : parseFloat(pprod.dn) || 160;
+        let prDN =
+            typeof pprod.dn === 'string' && pprod.dn.includes('/')
+                ? parseFloat(pprod.dn.split('/')[1]) || 160
+                : parseFloat(pprod.dn) || 160;
 
-        const holeCenter = mmFromBottom + (prDN / 2);
+        const holeCenter = mmFromBottom + prDN / 2;
 
         // Check if hole spans dennica-ring junction (physical pipe overlap)
-        const dennicaSeg = segments.find(s => s.type === 'dennica');
-        if (dennicaSeg && mmFromBottom < dennicaSeg.end && (mmFromBottom + prDN) > dennicaSeg.end) {
+        const dennicaSeg = segments.find((s) => s.type === 'dennica');
+        if (dennicaSeg && mmFromBottom < dennicaSeg.end && mmFromBottom + prDN > dennicaSeg.end) {
             // Hole crosses dennica top edge → need taller dennica
             result.needsTallerDennica = true;
         }
@@ -760,42 +838,58 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
                 // Find corresponding kregItem
                 let segCount = 0;
                 for (let ki = 0; ki < newItems.length; ki++) {
-                    const kp = studnieProducts.find(p => p.id === newItems[ki].productId);
-                    if (!kp || (kp.componentType !== 'krag' && kp.componentType !== 'krag_ot')) continue;
+                    const kp = studnieProducts.find((p) => p.id === newItems[ki].productId);
+                    if (!kp || (kp.componentType !== 'krag' && kp.componentType !== 'krag_ot'))
+                        continue;
                     for (let q = 0; q < newItems[ki].quantity; q++) {
                         segCount++;
                         if (segCount === si) {
-                            const otProd = availProducts.find(p => {
-                                const isOt = p.componentType === 'krag_ot' || 
-                                             (p.id && String(p.id).toLowerCase().endsWith('ot')) || 
-                                             (p.name && String(p.name).toLowerCase().includes('wiercony')) ||
-                                             (p.name && String(p.name).toLowerCase().includes('z otworem'));
-                                return isOt && p.dn === kp.dn && p.height === kp.height && (p.componentType === 'krag' || p.componentType === 'krag_ot');
+                            const otProd = availProducts.find((p) => {
+                                const isOt =
+                                    p.componentType === 'krag_ot' ||
+                                    (p.id && String(p.id).toLowerCase().endsWith('ot')) ||
+                                    (p.name && String(p.name).toLowerCase().includes('wiercony')) ||
+                                    (p.name && String(p.name).toLowerCase().includes('z otworem'));
+                                return (
+                                    isOt &&
+                                    p.dn === kp.dn &&
+                                    p.height === kp.height &&
+                                    (p.componentType === 'krag' || p.componentType === 'krag_ot')
+                                );
                             });
                             if (otProd) {
                                 if (newItems[ki].quantity === 1) {
                                     newItems[ki].productId = otProd.id;
                                 } else {
                                     newItems[ki].quantity--;
-                                    newItems.splice(ki + 1, 0, { productId: otProd.id, quantity: 1 });
+                                    newItems.splice(ki + 1, 0, {
+                                        productId: otProd.id,
+                                        quantity: 1
+                                    });
                                 }
                             } else {
                                 const dynamicOtId = kp.id + '_OT';
-                                if (!studnieProducts.find(p => p.id === dynamicOtId)) {
+                                if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
                                     const dynamicProd = JSON.parse(JSON.stringify(kp));
                                     dynamicProd.id = dynamicOtId;
                                     dynamicProd.componentType = 'krag_ot';
                                     if (!dynamicProd.name.includes(' wiercony')) {
-                                        dynamicProd.name = dynamicProd.name.replace('Krąg', 'Krąg wiercony');
+                                        dynamicProd.name = dynamicProd.name.replace(
+                                            'Krąg',
+                                            'Krąg wiercony'
+                                        );
                                     }
                                     studnieProducts.push(dynamicProd);
                                 }
-                                
+
                                 if (newItems[ki].quantity === 1) {
                                     newItems[ki].productId = dynamicOtId;
                                 } else {
                                     newItems[ki].quantity--;
-                                    newItems.splice(ki + 1, 0, { productId: dynamicOtId, quantity: 1 });
+                                    newItems.splice(ki + 1, 0, {
+                                        productId: dynamicOtId,
+                                        quantity: 1
+                                    });
                                 }
                             }
                             break;
@@ -810,7 +904,6 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     result.items = newItems;
     return result;
 }
-
 
 /* ===== AUTO-SELECT COMPONENTS ===== */
 /*
@@ -837,25 +930,34 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
             warehouse: well.magazyn === 'Włocławek' ? 'WL' : 'KLB',
             transitions: (well.przejscia || []).map((p, idx) => {
                 let prDN = 160;
-                let prod = availProducts.find(x => x.id === p.productId);
-                if (prod && typeof prod.dn === 'string' && prod.dn.includes('/')) prDN = parseFloat(prod.dn.split('/')[1]) || 160;
+                let prod = availProducts.find((x) => x.id === p.productId);
+                if (prod && typeof prod.dn === 'string' && prod.dn.includes('/'))
+                    prDN = parseFloat(prod.dn.split('/')[1]) || 160;
                 else if (prod && prod.dn != null) prDN = parseFloat(prod.dn) || 160;
-                let bottomEdge = Math.round((parseFloat(p.rzednaWlaczenia) - (well.rzednaDna || 0)) * 1000);
-                let center = isNaN(bottomEdge) ? 0 : bottomEdge + (prDN / 2);
+                let bottomEdge = Math.round(
+                    (parseFloat(p.rzednaWlaczenia) - (well.rzednaDna || 0)) * 1000
+                );
+                let center = isNaN(bottomEdge) ? 0 : bottomEdge + prDN / 2;
                 return {
                     id: p.productId || `T${idx + 1}`,
                     height_from_bottom_mm: isNaN(bottomEdge) ? 0 : bottomEdge
                 };
             }),
-            forced_top_closure_id: well.redukcjaDN1000 ? (well.redukcjaZakonczenie || null) : (well.zakonczenie || null),
-            available_products: availProducts.map(p => ({
+            forced_top_closure_id: well.redukcjaDN1000
+                ? well.redukcjaZakonczenie || null
+                : well.zakonczenie || null,
+            available_products: availProducts.map((p) => ({
                 id: p.id || '',
                 name: p.name || '',
                 componentType: p.componentType || '',
-                dn: (typeof p.dn === 'string' && p.dn.includes('/')) ? (parseFloat(p.dn.split('/')[0]) || p.dn) : (parseFloat(p.dn) || null),
+                dn:
+                    typeof p.dn === 'string' && p.dn.includes('/')
+                        ? parseFloat(p.dn.split('/')[0]) || p.dn
+                        : parseFloat(p.dn) || null,
                 height: parseFloat(p.height) || 0,
                 formaStandardowaKLB: parseInt(p.formaStandardowaKLB) || 0,
-                formaStandardowaWL: parseInt(p.formaStandardowa) || parseInt(p.formaStandardowaWL) || 0,
+                formaStandardowaWL:
+                    parseInt(p.formaStandardowa) || parseInt(p.formaStandardowaWL) || 0,
                 zapasDol: parseFloat(p.zapasDol) || 0,
                 zapasGora: parseFloat(p.zapasGora) || 0,
                 zapasDolMin: parseFloat(p.zapasDolMin) || 0,
@@ -893,7 +995,11 @@ async function autoSelectComponents(autoTriggered = false) {
     const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
 
     if (well.rzednaWlazu == null || well.rzednaWlazu <= rzDna) {
-        if (!autoTriggered) showToast('Ustaw rzędną włazu, aby auto-dobrać elementy (Rzędna Dna przyjęta jako 0)', 'error');
+        if (!autoTriggered)
+            showToast(
+                'Ustaw rzędną włazu, aby auto-dobrać elementy (Rzędna Dna przyjęta jako 0)',
+                'error'
+            );
         return;
     }
 
@@ -904,13 +1010,13 @@ async function autoSelectComponents(autoTriggered = false) {
     }
 
     // --- Filter products by warehouse availability and well params ---
-    const availProducts = getAvailableProducts(well).filter(p => filterByWellParams(p, well));
+    const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
     // --- INTEGRACJA Z NOWYM BACKENDEM ---
-    console.log("Próba integracji z backendem OR-Tools...");
+    console.log('Próba integracji z backendem OR-Tools...');
     const backendResult = await fetchConfigFromBackend(well, requiredMm, availProducts);
     if (backendResult && backendResult.is_valid && backendResult.items.length > 0) {
-        console.log("Otrzymano pomyślny model z API:", backendResult);
+        console.log('Otrzymano pomyślny model z API:', backendResult);
         // Zastąp format backendowego na UI config format ('productId' jako główny klucz)
         // Backend grupuje każdą płytę osobno: { product_id, quantity ... }
         // Więc można albo skondensować duplikaty, albo po prostu wpisać 1 sztukowa połączone kręgi (tak samo zadziała)
@@ -919,11 +1025,14 @@ async function autoSelectComponents(autoTriggered = false) {
         // Our JS UI renders top-to-bottom, and sortWellConfigByOrder maintains relative grouping order.
         // Reversing it here ensures rings retain correct physical order top-to-bottom.
         const reversedItems = [...backendResult.items].reverse();
-        
+
         for (const bItem of reversedItems) {
-            if (!studnieProducts.find(p => p.id === bItem.product_id) && bItem.product_id.endsWith('_OT')) {
+            if (
+                !studnieProducts.find((p) => p.id === bItem.product_id) &&
+                bItem.product_id.endsWith('_OT')
+            ) {
                 const baseId = bItem.product_id.replace('_OT', '');
-                const baseProd = studnieProducts.find(p => p.id === baseId);
+                const baseProd = studnieProducts.find((p) => p.id === baseId);
                 if (baseProd) {
                     const dynamicProd = JSON.parse(JSON.stringify(baseProd));
                     dynamicProd.id = bItem.product_id;
@@ -932,7 +1041,7 @@ async function autoSelectComponents(autoTriggered = false) {
                     studnieProducts.push(dynamicProd);
                 }
             }
-            
+
             const qty = bItem.quantity || 1;
             for (let i = 0; i < qty; i++) {
                 newConfig.push({ productId: bItem.product_id, quantity: 1 });
@@ -940,9 +1049,11 @@ async function autoSelectComponents(autoTriggered = false) {
         }
 
         // Ensure well has a manhole (Wlaz) - backend might not always return it if not constrained
-        const hasWlaz = newConfig.some(item => studnieProducts.find(p => p.id === item.productId)?.componentType === 'wlaz');
+        const hasWlaz = newConfig.some(
+            (item) => studnieProducts.find((p) => p.id === item.productId)?.componentType === 'wlaz'
+        );
         if (!hasWlaz) {
-            const defaultWlaz = studnieProducts.find(p => p.id === 'WLAZ-150');
+            const defaultWlaz = studnieProducts.find((p) => p.id === 'WLAZ-150');
             if (defaultWlaz) newConfig.unshift({ productId: defaultWlaz.id, quantity: 1 });
         }
 
@@ -953,7 +1064,7 @@ async function autoSelectComponents(autoTriggered = false) {
         well.overrideReason = null; // reset uzasadnienia przy nowym autodoborze
 
         if (backendResult.errors && backendResult.errors.length > 0) {
-            backendResult.errors.forEach(e => showToast(e, 'error'));
+            backendResult.errors.forEach((e) => showToast(e, 'error'));
         } else if (!autoTriggered) {
             showToast('Zoptymalizowano matematycznie (serwer OR-Tools) pomyślnie!', 'success');
         }
@@ -973,14 +1084,17 @@ async function autoSelectComponents(autoTriggered = false) {
 
     // Jeżeli API odpowiedziało, ale uznało że budowa z żądanymi restrykcjami (np max +20mm) jest NIEMOŻLIWA:
     if (backendResult && !backendResult.is_valid) {
-        console.warn("Backend OR-Tools odrzucił układ bez ułożenia:", backendResult.errors);
+        console.warn('Backend OR-Tools odrzucił układ bez ułożenia:', backendResult.errors);
 
-        const apiErrors = (backendResult.errors && backendResult.errors.length > 0)
-            ? backendResult.errors
-            : ["Algorytm AI nie odnalazł ułożenia spełniającego wymogi rygorów wysokości lub kolizji."];
+        const apiErrors =
+            backendResult.errors && backendResult.errors.length > 0
+                ? backendResult.errors
+                : [
+                      'Algorytm AI nie odnalazł ułożenia spełniającego wymogi rygorów wysokości lub kolizji.'
+                  ];
 
         if (!autoTriggered) {
-            apiErrors.forEach(e => showToast(e, 'error'));
+            apiErrors.forEach((e) => showToast(e, 'error'));
         }
 
         well.configSource = 'AUTO_AI';
@@ -993,11 +1107,13 @@ async function autoSelectComponents(autoTriggered = false) {
     }
 
     // FALLBACK tylko wtedy, gdy API nie ma w ogóle łączności (wyłączony port 8000, brak serwera Pyt):
-    console.warn("Backend niedostępny lub środowisko Python nie działa. Spadek do lokalnego kodu awaryjnego JS.");
+    console.warn(
+        'Backend niedostępny lub środowisko Python nie działa. Spadek do lokalnego kodu awaryjnego JS.'
+    );
     const result = runJsAutoSelection(well, requiredMm, availProducts);
     if (result.error) {
-        if (!autoTriggered) showToast(result.error, "error");
-        well.configStatus = "ERROR";
+        if (!autoTriggered) showToast(result.error, 'error');
+        well.configStatus = 'ERROR';
         well.configErrors = [result.error];
         refreshAll();
         return;
@@ -1005,26 +1121,34 @@ async function autoSelectComponents(autoTriggered = false) {
     well.config = result.config;
 
     const errors = result.errors || [];
-    if (result.fallback) errors.push(result.fallbackReason ? `Zastosowana rozszerzona tolerancja - ${result.fallbackReason}` : "Zastosowana rozszerzona tolerancja");
+    if (result.fallback)
+        errors.push(
+            result.fallbackReason
+                ? `Zastosowana rozszerzona tolerancja - ${result.fallbackReason}`
+                : 'Zastosowana rozszerzona tolerancja'
+        );
     if (errors.length > 0 && result.isMinimal) {
-        well.configStatus = "WARNING";
+        well.configStatus = 'WARNING';
     } else if (errors.length > 0) {
-        well.configStatus = "WARNING";
+        well.configStatus = 'WARNING';
     } else {
-        well.configStatus = "OK";
+        well.configStatus = 'OK';
     }
     well.configErrors = errors;
-    well.configSource = "AUTO_JS";
+    well.configSource = 'AUTO_JS';
 
     refreshAll();
     const diffStr = result.diff >= 0 ? `+${result.diff}mm` : `${result.diff}mm`;
-    const redLabel = result.reductionUsed ? " + Redukcja DN1000" : "";
-    const fallbackLabel = result.fallback ? " ⚠️ (rozszerzona tolerancja)" : "";
-    let statusIcon = "✅";
-    if (well.configStatus === "WARNING") statusIcon = "⚠️";
-    if (well.configStatus === "ERROR") statusIcon = "❗";
+    const redLabel = result.reductionUsed ? ' + Redukcja DN1000' : '';
+    const fallbackLabel = result.fallback ? ' ⚠️ (rozszerzona tolerancja)' : '';
+    let statusIcon = '✅';
+    if (well.configStatus === 'WARNING') statusIcon = '⚠️';
+    if (well.configStatus === 'ERROR') statusIcon = '❗';
     if (!autoTriggered) {
-        showToast(`${statusIcon} Auto-dobór: ${fmtInt(result.totalHeight)} mm (${diffStr}) | ${result.topLabel}${redLabel}${fallbackLabel}`, well.configStatus === "OK" ? "success" : "warning");
+        showToast(
+            `${statusIcon} Auto-dobór: ${fmtInt(result.totalHeight)} mm (${diffStr}) | ${result.topLabel}${redLabel}${fallbackLabel}`,
+            well.configStatus === 'OK' ? 'success' : 'warning'
+        );
     }
 }
 
@@ -1035,14 +1159,14 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
 
     // --- Filtrowanie produktów wg parametrów studni ---
-    const dnProducts = availProducts.filter(p => parseInt(p.dn) === parseInt(effectiveDn));
+    const dnProducts = availProducts.filter((p) => parseInt(p.dn) === parseInt(effectiveDn));
     const allProducts = availProducts;
 
     // =============================================================
     // KROK 1: Dennica (port z Logika/rules.py → get_lowest_dennica)
     // =============================================================
     const dennica = getLowestDennica(
-        availProducts.filter(p => filterByWellParams(p, well)),
+        availProducts.filter((p) => filterByWellParams(p, well)),
         dn,
         mag
     );
@@ -1053,7 +1177,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // =============================================================
     const forcedZak = well.zakonczenie || null;
     let topProd = getTopClosure(
-        availProducts.filter(p => filterByWellParams(p, well)),
+        availProducts.filter((p) => filterByWellParams(p, well)),
         effectiveDn,
         forcedZak,
         false, // fallbackToDin — będzie ustawiony jeśli kolizja
@@ -1062,7 +1186,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
     // Rozszerzenie: obsługa płyty zamykającej/odciążającej + pierścień
     if (!topProd && forcedZak) {
-        topProd = studnieProducts.find(p => p.id === forcedZak && (parseInt(p.dn) === dn || p.dn === null));
+        topProd = studnieProducts.find(
+            (p) => p.id === forcedZak && (parseInt(p.dn) === dn || p.dn === null)
+        );
     }
     if (!topProd) return { error: 'Nie znaleziono domyślnego zakończenia studni.' };
 
@@ -1072,14 +1198,26 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         let items = [];
         let h = 0;
         let lbl = '';
-        if (['plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'].includes(topP.componentType)) {
-            const sameDn = studnieProducts.filter(p => parseInt(p.dn) === parseInt(topP.dn));
-            const ring = sameDn.find(p => p.componentType === 'pierscien_odciazajacy');
-            const plate = (topP.componentType === 'pierscien_odciazajacy')
-                ? sameDn.find(p => p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa')
-                : topP;
+        if (
+            ['plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'].includes(
+                topP.componentType
+            )
+        ) {
+            const sameDn = studnieProducts.filter((p) => parseInt(p.dn) === parseInt(topP.dn));
+            const ring = sameDn.find((p) => p.componentType === 'pierscien_odciazajacy');
+            const plate =
+                topP.componentType === 'pierscien_odciazajacy'
+                    ? sameDn.find(
+                          (p) =>
+                              p.componentType === 'plyta_zamykajaca' ||
+                              p.componentType === 'plyta_najazdowa'
+                      )
+                    : topP;
             if (ring && plate) {
-                items.push({ productId: plate.id, quantity: 1 }, { productId: ring.id, quantity: 1 });
+                items.push(
+                    { productId: plate.id, quantity: 1 },
+                    { productId: ring.id, quantity: 1 }
+                );
                 h += plate.height + ring.height;
                 lbl = plate.name + ' + Pierścień';
             } else {
@@ -1094,13 +1232,15 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         }
 
         // Wlaz
-        let wlazItem = well.config.find(c => studnieProducts.find(p => p.id === c.productId)?.componentType === 'wlaz');
+        let wlazItem = well.config.find(
+            (c) => studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
+        );
         if (!wlazItem) {
-            const wlaz150 = studnieProducts.find(p => p.id === 'WLAZ-150');
+            const wlaz150 = studnieProducts.find((p) => p.id === 'WLAZ-150');
             if (wlaz150) wlazItem = { productId: wlaz150.id, quantity: 1 };
         }
         if (wlazItem) {
-            const wlazProd = studnieProducts.find(p => p.id === wlazItem.productId);
+            const wlazProd = studnieProducts.find((p) => p.id === wlazItem.productId);
             if (wlazProd) {
                 items.unshift(wlazItem);
                 h += wlazProd.height * wlazItem.quantity;
@@ -1113,10 +1253,12 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     topConfigs.push(buildTopConfig(topProd));
 
     // Fallback DIN (port z Logika/rules.py: fallback_to_din)
-    const isRelief = ['plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'].includes(topProd.componentType);
+    const isRelief = ['plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'].includes(
+        topProd.componentType
+    );
     if (isRelief || topProd.componentType === 'konus') {
         const dinProd = getTopClosure(
-            availProducts.filter(p => filterByWellParams(p, well)),
+            availProducts.filter((p) => filterByWellParams(p, well)),
             dn,
             null,
             true, // fallbackToDin = true
@@ -1132,18 +1274,19 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // =============================================================
     // KROK 3: Przejścia — oblicz minimalne wymagania
     // =============================================================
-    let holes = (well.przejscia || []).map(p => {
+    let holes = (well.przejscia || []).map((p) => {
         let pel = parseFloat(p.rzednaWlaczenia);
         let prDN = 160;
-        let prod = availProducts.find(x => x.id === p.productId);
-        if (prod && typeof prod.dn === 'string' && prod.dn.includes('/')) prDN = parseFloat(prod.dn.split('/')[1]) || 160;
+        let prod = availProducts.find((x) => x.id === p.productId);
+        if (prod && typeof prod.dn === 'string' && prod.dn.includes('/'))
+            prDN = parseFloat(prod.dn.split('/')[1]) || 160;
         else if (prod && prod.dn != null) prDN = parseFloat(prod.dn) || 160;
-        
+
         let bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
-        let center = bottomEdge + (prDN / 2);
+        let center = bottomEdge + prDN / 2;
 
         return {
-            z: center - (prDN / 2),
+            z: center - prDN / 2,
             ruraDz: prDN,
             zdD: prod ? parseFloat(prod.zapasDol) || 0 : 0,
             zdDM: prod ? parseFloat(prod.zapasDolMin) || 0 : 0,
@@ -1154,7 +1297,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
     let maxReqH = 0;
     let maxReqHMin = 0;
-    holes.forEach(h => {
+    holes.forEach((h) => {
         const reqH = h.z + h.ruraDz + h.zdG;
         if (reqH > maxReqH) maxReqH = reqH;
         const reqHMin = h.z + h.ruraDz + h.zdGM;
@@ -1164,47 +1307,77 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // =============================================================
     // KROK 4: Listy kręgów i redukcja (port z Logika/rules.py)
     // =============================================================
-    const dennicy = availProducts.filter(p => {
-        if (dn === 'styczna') {
-            return (p.componentType === 'styczna' || p.category === 'Studnie styczne') && filterByWellParams(p, well);
-        }
-        return p.componentType === 'dennica' && parseInt(p.dn) === dn && filterByWellParams(p, well);
-    }).sort((a, b) => {
-        const aForm = a[ff] === 1 ? 1 : 0;
-        const bForm = b[ff] === 1 ? 1 : 0;
-        if (aForm !== bForm) return bForm - aForm;
-        return a.height - b.height;
-    });
+    const dennicy = availProducts
+        .filter((p) => {
+            if (dn === 'styczna') {
+                return (
+                    (p.componentType === 'styczna' || p.category === 'Studnie styczne') &&
+                    filterByWellParams(p, well)
+                );
+            }
+            return (
+                p.componentType === 'dennica' &&
+                parseInt(p.dn) === dn &&
+                filterByWellParams(p, well)
+            );
+        })
+        .sort((a, b) => {
+            const aForm = a[ff] === 1 ? 1 : 0;
+            const bForm = b[ff] === 1 ? 1 : 0;
+            if (aForm !== bForm) return bForm - aForm;
+            return a.height - b.height;
+        });
     if (dennicy.length === 0) return { error: 'Brak dennic w magazynie.' };
 
-    const avrRings = allProducts.filter(p => p.componentType === 'avr').sort((a, b) => b.height - a.height);
+    const avrRings = allProducts
+        .filter((p) => p.componentType === 'avr')
+        .sort((a, b) => b.height - a.height);
 
-    const isDrilledRing = (p) => p.componentType === 'krag_ot' || (p.id && String(p.id).toLowerCase().endsWith('ot')) || (p.name && String(p.name).toLowerCase().includes('z otworem'));
+    const isDrilledRing = (p) =>
+        p.componentType === 'krag_ot' ||
+        (p.id && String(p.id).toLowerCase().endsWith('ot')) ||
+        (p.name && String(p.name).toLowerCase().includes('z otworem'));
 
     // Kręgi z ruleEngine — posortowane wg formy standardowej
     const kregiFromEngine = getKregiList(
-        availProducts.filter(p => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)),
+        availProducts.filter(
+            (p) => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)
+        ),
         dn,
         mag
     );
     // Fallback do surowej listy jeśli engine nie znalazł standardowych
-    const kregi = kregiFromEngine.length > 0
-        ? kregiFromEngine
-        : availProducts.filter(p => p.componentType === 'krag' && parseInt(p.dn) === dn && !isDrilledRing(p)).sort((a, b) => b.height - a.height);
+    const kregi =
+        kregiFromEngine.length > 0
+            ? kregiFromEngine
+            : availProducts
+                  .filter(
+                      (p) =>
+                          p.componentType === 'krag' && parseInt(p.dn) === dn && !isDrilledRing(p)
+                  )
+                  .sort((a, b) => b.height - a.height);
 
-    const dn1000Products = availProducts.filter(p => parseInt(p.dn) === 1000);
+    const dn1000Products = availProducts.filter((p) => parseInt(p.dn) === 1000);
     const dn1000KregiEngine = getKregiList(
-        availProducts.filter(p => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)),
+        availProducts.filter(
+            (p) => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)
+        ),
         1000,
         mag
     );
-    const dn1000Kregi = dn1000KregiEngine.length > 0
-        ? dn1000KregiEngine
-        : dn1000Products.filter(p => p.componentType === 'krag' && !isDrilledRing(p)).sort((a, b) => b.height - a.height);
+    const dn1000Kregi =
+        dn1000KregiEngine.length > 0
+            ? dn1000KregiEngine
+            : dn1000Products
+                  .filter((p) => p.componentType === 'krag' && !isDrilledRing(p))
+                  .sort((a, b) => b.height - a.height);
 
     // Płyta redukcyjna (port z Logika/rules.py → get_reduction_plate)
     let reductionPlate = getReductionPlate(availProducts, dn, well.redukcjaDN1000);
-    if (!reductionPlate) reductionPlate = studnieProducts.find(p => p.componentType === 'plyta_redukcyjna' && parseInt(p.dn) === dn);
+    if (!reductionPlate)
+        reductionPlate = studnieProducts.find(
+            (p) => p.componentType === 'plyta_redukcyjna' && parseInt(p.dn) === dn
+        );
     let canReduce = well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
 
     // =============================================================
@@ -1215,7 +1388,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
         const dpResult = optimizeRingsForDistance(target, kList, tolBelow, tolAbove);
         if (dpResult.success && dpResult.selectedRings.length > 0) {
-            const kItems = dpResult.selectedRings.map(ring => ({
+            const kItems = dpResult.selectedRings.map((ring) => ({
                 productId: ring.id,
                 quantity: 1,
                 _h: parseFloat(ring.height)
@@ -1266,7 +1439,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             }
         }
         for (let t of [...topItems].reverse()) {
-            const tp = studnieProducts.find(p => p.id === t.productId);
+            const tp = studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
                 segs.push({ type: tp.componentType, h: tp.height, start: y, end: y + tp.height });
                 y += tp.height;
@@ -1296,16 +1469,23 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     if (s.end >= resBotMin && s.end <= resTopMin) minValid = false;
                 }
 
-                const isForbidden = ['konus', 'plyta_din', 'plyta_redukcyjna', 'pierscien_odciazajacy'].includes(s.type);
+                const isForbidden = [
+                    'konus',
+                    'plyta_din',
+                    'plyta_redukcyjna',
+                    'pierscien_odciazajacy'
+                ].includes(s.type);
                 if (isForbidden) {
-                    if ((hTop > s.start && hBot < s.end)) {
-                        strictValid = false; minValid = false;
+                    if (hTop > s.start && hBot < s.end) {
+                        strictValid = false;
+                        minValid = false;
                         errors.push(`Kolizja otworu z elementem ${s.type}`);
                     }
                 }
                 if (s.type === 'plyta_redukcyjna') {
                     if (hBot >= s.start) {
-                        strictValid = false; minValid = false;
+                        strictValid = false;
+                        minValid = false;
                         errors.push(`Przejście nie może być powyżej płyty redukcyjnej`);
                     }
                 }
@@ -1348,13 +1528,19 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
                 let avrItems = [];
                 let avrH = 0;
-                
+
                 let bestAvrCombo = [];
                 let bestAvrDiff = deficit;
                 function bcktrAvr(combo, sum, idx) {
                     let d = Math.abs(deficit - sum);
-                    if (d < bestAvrDiff) { bestAvrDiff = d; bestAvrCombo = [...combo]; avrH = sum; }
-                    else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) { bestAvrCombo = [...combo]; avrH = sum; }
+                    if (d < bestAvrDiff) {
+                        bestAvrDiff = d;
+                        bestAvrCombo = [...combo];
+                        avrH = sum;
+                    } else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) {
+                        bestAvrCombo = [...combo];
+                        avrH = sum;
+                    }
                     for (let i = idx; i < avrRings.length; i++) {
                         if (sum + avrRings[i].height <= maxAvr) {
                             combo.push(avrRings[i]);
@@ -1368,7 +1554,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 let cMap = {};
                 for (let a of bestAvrCombo) cMap[a.id] = (cMap[a.id] || 0) + 1;
                 for (let id in cMap) avrItems.push({ productId: id, quantity: cMap[id] });
-                const diff = (dennicaItem.height + topCfg.height + filled + avrH) - requiredMm;
+                const diff = dennicaItem.height + topCfg.height + filled + avrH - requiredMm;
                 const isOutOfBounds = diff < -50 || diff > 20;
 
                 const conf = checkConflicts(kItems, dennicaItem.height, 0, topCfg.items);
@@ -1384,10 +1570,16 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 if (score < bestScore) {
                     bestScore = score;
                     let runErrors = [...conf.errors];
-                    if (isOutOfBounds) runErrors.push(`Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`);
+                    if (isOutOfBounds)
+                        runErrors.push(
+                            `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
+                        );
                     best = {
                         topItems: [...topCfg.items],
-                        kregItems: kItems.map(ki => ({ productId: ki.productId, quantity: ki.quantity })),
+                        kregItems: kItems.map((ki) => ({
+                            productId: ki.productId,
+                            quantity: ki.quantity
+                        })),
                         dennica: { productId: dennicaItem.id, quantity: 1 },
                         avrItems: avrItems,
                         totalHeight: dennicaItem.height + topCfg.height + filled + avrH,
@@ -1404,15 +1596,26 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         if (canReduce) {
             let topRedItems = [];
             let topRedH = 0;
-            const redTopProducts = dn1000Products.filter(p => ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType));
+            const redTopProducts = dn1000Products.filter((p) =>
+                [
+                    'konus',
+                    'plyta_din',
+                    'plyta_najazdowa',
+                    'plyta_zamykajaca',
+                    'pierscien_odciazajacy'
+                ].includes(p.componentType)
+            );
 
             // Zakończenie redukcji z ruleEngine
             const rZak = well.redukcjaZakonczenie
-                ? redTopProducts.find(p => p.id === well.redukcjaZakonczenie)
+                ? redTopProducts.find((p) => p.id === well.redukcjaZakonczenie)
                 : getTopClosure(
-                    dn1000Products.filter(p => filterByWellParams(p, well)),
-                    1000, null, false, mag
-                );
+                      dn1000Products.filter((p) => filterByWellParams(p, well)),
+                      1000,
+                      null,
+                      false,
+                      mag
+                  );
             if (rZak) {
                 topRedItems.push({ productId: rZak.id, quantity: 1 });
                 topRedH += rZak.height;
@@ -1425,11 +1628,18 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     let pel = parseFloat(pr.rzednaWlaczenia);
                     if (!isNaN(pel)) {
                         const holeCenter = (pel - rzDna) * 1000;
-                        const pprod = studnieProducts.find(x => x.id === pr.productId);
+                        const pprod = studnieProducts.find((x) => x.id === pr.productId);
                         if (pprod) {
-                            let prDN = typeof pprod.dn === 'string' && pprod.dn.includes('/') ? parseFloat(pprod.dn.split('/')[1]) || 160 : parseFloat(pprod.dn) || 160;
-                            const zapasGora = parseFloat(pprod.zapasGora !== undefined ? pprod.zapasGora : pprod.zapasGoraMin || 0);
-                            const holeTop = holeCenter + (prDN / 2) + zapasGora;
+                            let prDN =
+                                typeof pprod.dn === 'string' && pprod.dn.includes('/')
+                                    ? parseFloat(pprod.dn.split('/')[1]) || 160
+                                    : parseFloat(pprod.dn) || 160;
+                            const zapasGora = parseFloat(
+                                pprod.zapasGora !== undefined
+                                    ? pprod.zapasGora
+                                    : pprod.zapasGoraMin || 0
+                            );
+                            const holeTop = holeCenter + prDN / 2 + zapasGora;
                             if (holeTop > maxHoleTop) maxHoleTop = holeTop;
                         }
                     }
@@ -1465,8 +1675,14 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     let bestAvrDiff = deficit;
                     function bcktrAvr(combo, sum, idx) {
                         let d = Math.abs(deficit - sum);
-                        if (d < bestAvrDiff) { bestAvrDiff = d; bestAvrCombo = [...combo]; avrH = sum; }
-                        else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) { bestAvrCombo = [...combo]; avrH = sum; }
+                        if (d < bestAvrDiff) {
+                            bestAvrDiff = d;
+                            bestAvrCombo = [...combo];
+                            avrH = sum;
+                        } else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) {
+                            bestAvrCombo = [...combo];
+                            avrH = sum;
+                        }
                         for (let i = idx; i < avrRings.length; i++) {
                             if (sum + avrRings[i].height <= maxAvr) {
                                 combo.push(avrRings[i]);
@@ -1485,20 +1701,30 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     const isOutOfBounds = diff < -50 || diff > 20;
 
                     let redKItems = [];
-                    bKregi.kItems.forEach(k => redKItems.push(k));
-                    redKItems.push({ productId: reductionPlate.id, quantity: 1, _h: reductionPlate.height });
-                    t1000.kItems.forEach(k => redKItems.push(k));
+                    bKregi.kItems.forEach((k) => redKItems.push(k));
+                    redKItems.push({
+                        productId: reductionPlate.id,
+                        quantity: 1,
+                        _h: reductionPlate.height
+                    });
+                    t1000.kItems.forEach((k) => redKItems.push(k));
 
                     const conf = checkConflicts(redKItems, dennicaItem.height, bSec, topRedItems);
 
                     if (!conf.valid && !skipHolesValid) {
-                        if (conf.errors.some(e => e.includes('redukcyjnej') || e.includes('konus'))) {
+                        if (
+                            conf.errors.some(
+                                (e) => e.includes('redukcyjnej') || e.includes('konus')
+                            )
+                        ) {
                             break;
                         }
                         continue;
                     }
 
-                    let score = dennicaItem.height * 1000 + (bKregi.kItems.length + t1000.kItems.length) * 10;
+                    let score =
+                        dennicaItem.height * 1000 +
+                        (bKregi.kItems.length + t1000.kItems.length) * 10;
 
                     const oversizedBottom = bSec - dynamicMinBottom;
                     if (oversizedBottom > 0) {
@@ -1512,14 +1738,27 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     if (score < bestScore) {
                         bestScore = score;
                         let runErrors = [...conf.errors];
-                        if (isOutOfBounds) runErrors.push(`Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`);
+                        if (isOutOfBounds)
+                            runErrors.push(
+                                `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
+                            );
                         best = {
                             reductionUsed: true,
                             topItems: [...topRedItems],
                             kregItems: [
-                                ...t1000.kItems.map(ki => ({ productId: ki.productId, quantity: ki.quantity })).reverse(),
+                                ...t1000.kItems
+                                    .map((ki) => ({
+                                        productId: ki.productId,
+                                        quantity: ki.quantity
+                                    }))
+                                    .reverse(),
                                 { productId: reductionPlate.id, quantity: 1 },
-                                ...bKregi.kItems.map(ki => ({ productId: ki.productId, quantity: ki.quantity })).reverse()
+                                ...bKregi.kItems
+                                    .map((ki) => ({
+                                        productId: ki.productId,
+                                        quantity: ki.quantity
+                                    }))
+                                    .reverse()
                             ],
                             dennica: { productId: dennicaItem.id, quantity: 1 },
                             avrItems: avrItems,
@@ -1527,7 +1766,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                             diff: diff,
                             topLabel: 'Redukcja',
                             errors: runErrors,
-                            isMinimal: conf.isMinimal || (dennicaItem.height < maxReqH)
+                            isMinimal: conf.isMinimal || dennicaItem.height < maxReqH
                         };
                     }
                 }
@@ -1541,46 +1780,72 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
     let solution = solve(280, 20, 280, false);
     let fallback = false;
-    let fallbackReason = "";
-    if (!solution) { solution = solve(280, 20, 280, true); if (solution) { fallback = true; fallbackReason = "kolizje przejść ominięte awaryjnie"; } }
+    let fallbackReason = '';
+    if (!solution) {
+        solution = solve(280, 20, 280, true);
+        if (solution) {
+            fallback = true;
+            fallbackReason = 'kolizje przejść ominięte awaryjnie';
+        }
+    }
 
-    if (!solution) { return { error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 28cm).` }; }
+    if (!solution) {
+        return {
+            error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 28cm).`
+        };
+    }
 
-    const wlazItems = solution.topItems.filter(item => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+    const wlazItems = solution.topItems.filter((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType === 'wlaz';
     });
-    const otherTopItems = solution.topItems.filter(item => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+    const otherTopItems = solution.topItems.filter((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType !== 'wlaz';
     });
 
-    const kregItemsOrdered = solution.reductionUsed ? solution.kregItems : [...solution.kregItems].reverse();
+    const kregItemsOrdered = solution.reductionUsed
+        ? solution.kregItems
+        : [...solution.kregItems].reverse();
 
-    let newConfig = [...wlazItems, ...solution.avrItems, ...otherTopItems, ...kregItemsOrdered, solution.dennica];
+    let newConfig = [
+        ...wlazItems,
+        ...solution.avrItems,
+        ...otherTopItems,
+        ...kregItemsOrdered,
+        solution.dennica
+    ];
 
     for (let i = 0; i < newConfig.length - 1; i++) {
         const itemKonus = newConfig[i];
-        const prodKonus = studnieProducts.find(p => p.id === itemKonus.productId);
+        const prodKonus = studnieProducts.find((p) => p.id === itemKonus.productId);
 
         if (prodKonus && prodKonus.componentType === 'konus' && !prodKonus.name.includes('+')) {
             let nextKragIdx = -1;
             for (let j = i + 1; j < newConfig.length; j++) {
-                const pj = studnieProducts.find(p => p.id === newConfig[j].productId);
+                const pj = studnieProducts.find((p) => p.id === newConfig[j].productId);
                 if (pj && (pj.componentType === 'krag' || pj.componentType === 'krag_ot')) {
                     nextKragIdx = j;
                     break;
-                } else if (pj && (pj.componentType === 'dennica' || pj.componentType === 'plyta_redukcyjna')) {
+                } else if (
+                    pj &&
+                    (pj.componentType === 'dennica' || pj.componentType === 'plyta_redukcyjna')
+                ) {
                     break;
                 }
             }
 
             if (nextKragIdx >= 0) {
                 const itemKrag = newConfig[nextKragIdx];
-                const prodKrag = studnieProducts.find(p => p.id === itemKrag.productId);
+                const prodKrag = studnieProducts.find((p) => p.id === itemKrag.productId);
 
                 if (prodKrag && prodKrag.height === 250 && prodKrag.componentType === 'krag') {
-                    const konusPlus = availProducts.find(p => p.componentType === 'konus' && p.dn === prodKonus.dn && p.name.includes('Konus+'));
+                    const konusPlus = availProducts.find(
+                        (p) =>
+                            p.componentType === 'konus' &&
+                            p.dn === prodKonus.dn &&
+                            p.name.includes('Konus+')
+                    );
                     if (konusPlus) {
                         itemKonus.productId = konusPlus.id;
                         if (itemKrag.quantity > 1) {
@@ -1596,10 +1861,15 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
     // --- ZABIEG APLIKUJĄCY KRĘGI Z OTWOREM (DRILLED RINGS) DLA CAŁEJ STUDNI ---
     let revY = 0;
-    const segmentsReverse = [...newConfig].reverse().map(item => {
-        const prod = studnieProducts.find(p => p.id === item.productId);
+    const segmentsReverse = [...newConfig].reverse().map((item) => {
+        const prod = studnieProducts.find((p) => p.id === item.productId);
         const h = prod ? parseFloat(prod.height) || 0 : 0;
-        const seg = { itemBase: item, start: revY, end: revY + h, type: prod ? prod.componentType : '' };
+        const seg = {
+            itemBase: item,
+            start: revY,
+            end: revY + h,
+            type: prod ? prod.componentType : ''
+        };
         revY += h;
         return seg;
     });
@@ -1608,30 +1878,49 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         let pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const holeCenter = (pel - (well.rzednaDna || 0)) * 1000;
-        const pprod = studnieProducts.find(x => x.id === pr.productId);
+        const pprod = studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
-        let prDN = typeof pprod.dn === 'string' && pprod.dn.includes('/') ? parseFloat(pprod.dn.split('/')[1]) || 160 : parseFloat(pprod.dn) || 160;
-        const zapasGora = parseFloat(pprod.zapasGora !== undefined ? pprod.zapasGora : pprod.zapasGoraMin || 0);
-        const zapasDol = parseFloat(pprod.zapasDol !== undefined ? pprod.zapasDol : pprod.zapasDolMin || 0);
-        const holeBottom = holeCenter - (prDN / 2) - zapasDol;
-        const holeTop = holeCenter + (prDN / 2) + zapasGora;
+        let prDN =
+            typeof pprod.dn === 'string' && pprod.dn.includes('/')
+                ? parseFloat(pprod.dn.split('/')[1]) || 160
+                : parseFloat(pprod.dn) || 160;
+        const zapasGora = parseFloat(
+            pprod.zapasGora !== undefined ? pprod.zapasGora : pprod.zapasGoraMin || 0
+        );
+        const zapasDol = parseFloat(
+            pprod.zapasDol !== undefined ? pprod.zapasDol : pprod.zapasDolMin || 0
+        );
+        const holeBottom = holeCenter - prDN / 2 - zapasDol;
+        const holeTop = holeCenter + prDN / 2 + zapasGora;
 
         for (const seg of segmentsReverse) {
-            if ((seg.type === 'krag' || seg.type === 'krag_ot') && Math.max(seg.start, holeBottom) < Math.min(seg.end, holeTop)) {
-                const itemProd = studnieProducts.find(p => p.id === seg.itemBase.productId);
+            if (
+                (seg.type === 'krag' || seg.type === 'krag_ot') &&
+                Math.max(seg.start, holeBottom) < Math.min(seg.end, holeTop)
+            ) {
+                const itemProd = studnieProducts.find((p) => p.id === seg.itemBase.productId);
                 if (itemProd && itemProd.componentType !== 'krag_ot') {
-                    const isDrilledRingObj = (p) => p.componentType === 'krag_ot' || (p.id && String(p.id).toLowerCase().endsWith('ot')) || (p.name && String(p.name).toLowerCase().includes('z otworem'));
-                    const otProd = availProducts.find(p => isDrilledRingObj(p) && p.dn === itemProd.dn && p.height === itemProd.height);
+                    const isDrilledRingObj = (p) =>
+                        p.componentType === 'krag_ot' ||
+                        (p.id && String(p.id).toLowerCase().endsWith('ot')) ||
+                        (p.name && String(p.name).toLowerCase().includes('z otworem'));
+                    const otProd = availProducts.find(
+                        (p) =>
+                            isDrilledRingObj(p) &&
+                            p.dn === itemProd.dn &&
+                            p.height === itemProd.height
+                    );
                     if (otProd) {
                         seg.itemBase.productId = otProd.id;
                         seg.type = 'krag_ot';
                     } else {
                         const dynamicOtId = itemProd.id + '_OT';
-                        if (!studnieProducts.find(p => p.id === dynamicOtId)) {
+                        if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
                             const dynamicProd = JSON.parse(JSON.stringify(itemProd));
                             dynamicProd.id = dynamicOtId;
                             dynamicProd.componentType = 'krag_ot';
-                            if (!dynamicProd.name.endsWith(' z otworem')) dynamicProd.name += ' z otworem';
+                            if (!dynamicProd.name.endsWith(' z otworem'))
+                                dynamicProd.name += ' z otworem';
                             studnieProducts.push(dynamicProd);
                         }
                         seg.itemBase.productId = dynamicOtId;
@@ -1655,13 +1944,14 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     };
 }
 
-
 /* ===== WELLS LIST RENDERING ===== */
 function renderWellsList() {
     const container = document.getElementById('wells-list');
     if (!container) return;
 
-    const searchTerm = (document.getElementById('wells-search-input')?.value || '').toLowerCase().trim();
+    const searchTerm = (document.getElementById('wells-search-input')?.value || '')
+        .toLowerCase()
+        .trim();
 
     let html = '';
     const dktCap = [1000, 1200, 1500, 2000, 2500, 'styczna'];
@@ -1672,12 +1962,14 @@ function renderWellsList() {
         orderChanges = getOrderChanges({ ...orderEditMode.order, wells: wells });
     }
 
-    dktCap.forEach(dnGroup => {
-        const groupWells = wells.map((w, i) => ({ w, i })).filter(item => {
-            const matchesDN = item.w.dn === dnGroup;
-            const matchesSearch = !searchTerm || item.w.name.toLowerCase().includes(searchTerm);
-            return matchesDN && matchesSearch;
-        });
+    dktCap.forEach((dnGroup) => {
+        const groupWells = wells
+            .map((w, i) => ({ w, i }))
+            .filter((item) => {
+                const matchesDN = item.w.dn === dnGroup;
+                const matchesSearch = !searchTerm || item.w.name.toLowerCase().includes(searchTerm);
+                return matchesDN && matchesSearch;
+            });
         if (groupWells.length === 0) return;
 
         const groupTitle = dnGroup === 'styczna' ? 'Studnie Styczne' : `Studnie DN${dnGroup}`;
@@ -1687,33 +1979,49 @@ function renderWellsList() {
             const isActive = i === currentWellIndex;
             const stats = calcWellStats(w);
             const hasElevations = w.rzednaWlazu != null && w.rzednaDna != null;
-            const requiredH = hasElevations ? Math.round((w.rzednaWlazu - w.rzednaDna) * 1000) : null;
+            const requiredH = hasElevations
+                ? Math.round((w.rzednaWlazu - w.rzednaDna) * 1000)
+                : null;
 
             let changeStyling = '';
             let changeBadge = '';
             if (orderEditMode && orderChanges[i]) {
                 const changeType = orderChanges[i].type;
                 if (changeType === 'added') {
-                    changeStyling = 'border-left: 3px solid #10b981; background: rgba(16,185,129,0.05);';
-                    changeBadge = '<span style="font-size:0.6rem; color:#10b981; font-weight:700; margin-left:0.3rem;">[NOWA]</span>';
+                    changeStyling =
+                        'border-left: 3px solid #10b981; background: rgba(16,185,129,0.05);';
+                    changeBadge =
+                        '<span style="font-size:0.6rem; color:#10b981; font-weight:700; margin-left:0.3rem;">[NOWA]</span>';
                 } else if (changeType === 'modified') {
-                    changeStyling = 'border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);';
-                    changeBadge = '<span style="font-size:0.6rem; color:#ef4444; font-weight:700; margin-left:0.3rem;">[ZMIENIONA]</span>';
+                    changeStyling =
+                        'border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);';
+                    changeBadge =
+                        '<span style="font-size:0.6rem; color:#ef4444; font-weight:700; margin-left:0.3rem;">[ZMIENIONA]</span>';
                 }
             }
 
-            const statusBadge = w.configStatus === 'ERROR' ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;">❌</span>'
-                : w.configStatus === 'WARNING' ? '<span title="' + (w.configErrors || []).join('; ') + '" style="margin-left:0.3rem;">⚠️</span>'
-                    : w.configStatus === 'OK' ? '<span style="margin-left:0.3rem;">✅</span>' : '';
+            const statusBadge =
+                w.configStatus === 'ERROR'
+                    ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;">❌</span>'
+                    : w.configStatus === 'WARNING'
+                      ? '<span title="' +
+                        (w.configErrors || []).join('; ') +
+                        '" style="margin-left:0.3rem;">⚠️</span>'
+                      : w.configStatus === 'OK'
+                        ? '<span style="margin-left:0.3rem;">✅</span>'
+                        : '';
 
             // Icon for configuration source
             let sourceBadge = '';
             if (w.configSource === 'AUTO_AI') {
-                sourceBadge = '<span title="Dobór Automatyczny (Serwer AI / OR-Tools)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(190deg) saturate(500%);">🧠</span>';
+                sourceBadge =
+                    '<span title="Dobór Automatyczny (Serwer AI / OR-Tools)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(190deg) saturate(500%);">🧠</span>';
             } else if (w.configSource === 'AUTO_JS') {
-                sourceBadge = '<span title="Dobór Automatyczny (Skrypt JS)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);">⚙️</span>';
+                sourceBadge =
+                    '<span title="Dobór Automatyczny (Skrypt JS)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);">⚙️</span>';
             } else {
-                sourceBadge = '<span title="Dobór Ręczny" style="font-size:0.75rem; margin-left:0.3rem; filter: grayscale(1);">🖐️</span>';
+                sourceBadge =
+                    '<span title="Dobór Ręczny" style="font-size:0.75rem; margin-left:0.3rem; filter: grayscale(1);">🖐️</span>';
             }
 
             let errorsHtml = '';
@@ -1722,8 +2030,10 @@ function renderWellsList() {
                 errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.join('<br>')}</div>`;
             }
 
-            const wellLockBadge = isWellLocked(i) ? '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;">🔒</span>' : '';
-            
+            const wellLockBadge = isWellLocked(i)
+                ? '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;">🔒</span>'
+                : '';
+
             let doplataBadge = '';
             if (w.doplata && w.doplata !== 0) {
                 const isNeg = w.doplata < 0;
@@ -1734,8 +2044,12 @@ function renderWellsList() {
                 doplataBadge = `<span title="${badgeLabel}: ${fmtInt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
             }
 
-            const hasErrors = w.configStatus === 'ERROR' || (w.configErrors && w.configErrors.length > 0 && w.configStatus !== 'OK');
-            const errorStyling = hasErrors ? ' border:2px solid #ef4444; background:rgba(239,68,68,0.12);' : '';
+            const hasErrors =
+                w.configStatus === 'ERROR' ||
+                (w.configErrors && w.configErrors.length > 0 && w.configStatus !== 'OK');
+            const errorStyling = hasErrors
+                ? ' border:2px solid #ef4444; background:rgba(239,68,68,0.12);'
+                : '';
             const errorNameStyle = hasErrors ? 'color:#ef4444; font-weight:700;' : '';
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem;">
@@ -1750,16 +2064,20 @@ function renderWellsList() {
               </div>
               <div class="well-list-meta">
                 <div style="display:flex; gap:0.6rem;">
-                  <span>Elementy: <strong>${ (w.config || []).length }</strong></span>
-                  <span>Przejścia: <strong>${ w.przejscia ? w.przejscia.length : 0 }</strong></span>
+                  <span>Elementy: <strong>${(w.config || []).length}</strong></span>
+                  <span>Przejścia: <strong>${w.przejscia ? w.przejscia.length : 0}</strong></span>
                 </div>
                 <span class="well-list-price">${fmtInt(stats.price)} PLN</span>
               </div>
-              ${hasElevations ? `<div class="well-list-elevations">
+              ${
+                  hasElevations
+                      ? `<div class="well-list-elevations">
                 <span>↑ <strong>${w.rzednaWlazu.toFixed(2)}</strong></span>
                 <span>↓ <strong>${w.rzednaDna.toFixed(2)}</strong></span>
                 <span style="margin-left:auto;">H=<strong>${requiredH}</strong>mm</span>
-              </div>` : ''}
+              </div>`
+                      : ''
+              }
             </div>`;
         });
     });
@@ -1776,8 +2094,6 @@ function renderWellsList() {
     renderDiscountPanel();
 }
 
-
-
 /* ===== POPUP WARIANTU STUDNI STYCZNEJ ===== */
 
 /**
@@ -1788,10 +2104,10 @@ function renderWellsList() {
  */
 function showStycznaPopup(mode = 'select') {
     const standardProducts = studnieProducts
-        .filter(p => p.componentType === 'styczna' && !p.id.includes('KOREK'))
+        .filter((p) => p.componentType === 'styczna' && !p.id.includes('KOREK'))
         .sort((a, b) => (a.dn || 0) - (b.dn || 0));
     const korekProducts = studnieProducts
-        .filter(p => p.componentType === 'styczna' && p.id.includes('KOREK'))
+        .filter((p) => p.componentType === 'styczna' && p.id.includes('KOREK'))
         .sort((a, b) => (a.dn || 0) - (b.dn || 0));
 
     const renderProductRow = (p) => `
@@ -1824,7 +2140,8 @@ function showStycznaPopup(mode = 'select') {
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
-    overlay.style.cssText = 'position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease;';
+    overlay.style.cssText =
+        'position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease;';
 
     overlay.innerHTML = `
       <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(249,115,22,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
@@ -1837,7 +2154,9 @@ function showStycznaPopup(mode = 'select') {
       </div>
     `;
 
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
     document.body.appendChild(overlay);
 }
 
@@ -1848,8 +2167,11 @@ function showStycznaPopup(mode = 'select') {
  */
 function handleStycznaProductChoice(productId, mode) {
     closeModal();
-    const product = studnieProducts.find(p => p.id === productId);
-    if (!product) { showToast('Nie znaleziono produktu', 'error'); return; }
+    const product = studnieProducts.find((p) => p.id === productId);
+    if (!product) {
+        showToast('Nie znaleziono produktu', 'error');
+        return;
+    }
 
     const isKorek = productId.includes('KOREK');
     const variant = isKorek ? 'korek' : 'standard';
@@ -1875,8 +2197,8 @@ function handleStycznaProductChoice(productId, mode) {
         well.stycznaVariant = variant;
         well.dn = 'styczna';
         // Zamień istniejący element stycznej (jeśli jest) lub dodaj nowy
-        const existingIdx = well.config.findIndex(c => {
-            const p = studnieProducts.find(pr => pr.id === c.productId);
+        const existingIdx = well.config.findIndex((c) => {
+            const p = studnieProducts.find((pr) => pr.id === c.productId);
             return p && p.componentType === 'styczna';
         });
         if (existingIdx >= 0) {
@@ -1895,7 +2217,10 @@ function handleStycznaProductChoice(productId, mode) {
 function selectDN(dn) {
     if (dn === 'styczna') {
         const well = getCurrentWell();
-        if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+        if (!well) {
+            showToast('Najpierw dodaj studnię', 'error');
+            return;
+        }
         showStycznaPopup('select');
         return;
     }
@@ -1909,21 +2234,32 @@ function selectDN(dn) {
  */
 function doSelectDN(dn) {
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
 
     if (well.dn !== dn) {
         well.dn = dn;
         // Update name if it uses the default format
-        if (!well.numer || well.name.startsWith('Studnia DN') || well.name.startsWith('Studnia Styczna')) {
-            well.name = well.numer || (dn === 'styczna' ? ('Studnia Styczna (#' + (currentWellIndex + 1) + ')') : ('Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')'));
+        if (
+            !well.numer ||
+            well.name.startsWith('Studnia DN') ||
+            well.name.startsWith('Studnia Styczna')
+        ) {
+            well.name =
+                well.numer ||
+                (dn === 'styczna'
+                    ? 'Studnia Styczna (#' + (currentWellIndex + 1) + ')'
+                    : 'Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')');
         }
 
         // Update zakończenie to match new DN (if it's a standard one)
         if (well.zakonczenie && dn !== 'styczna') {
-            const oldProd = studnieProducts.find(p => p.id === well.zakonczenie);
+            const oldProd = studnieProducts.find((p) => p.id === well.zakonczenie);
             if (oldProd) {
-                const newProd = studnieProducts.find(p =>
-                    p.componentType === oldProd.componentType && p.dn === dn
+                const newProd = studnieProducts.find(
+                    (p) => p.componentType === oldProd.componentType && p.dn === dn
                 );
                 well.zakonczenie = newProd ? newProd.id : null;
             } else {
@@ -1944,15 +2280,15 @@ function doSelectDN(dn) {
 
 function updateDNButtons() {
     const well = getCurrentWell();
-    document.querySelectorAll('.dn-btn').forEach(b => {
+    document.querySelectorAll('.dn-btn').forEach((b) => {
         if (!well) {
             b.classList.remove('active');
             return;
         }
-        
+
         let btnText = b.textContent.trim().toLowerCase();
         let wellDnStr = String(well.dn).toLowerCase();
-        
+
         if (btnText === wellDnStr) {
             b.classList.add('active');
         } else {
@@ -1972,7 +2308,11 @@ function filterByWellParams(p, well) {
     const id = (p.id || '').toUpperCase();
 
     // 1. Kręgi (KDZ/KDB), Konus (JZW) i stopnie (-B, -D, -N)
-    if (p.componentType === 'krag' || p.componentType === 'krag_ot' || p.componentType === 'konus') {
+    if (
+        p.componentType === 'krag' ||
+        p.componentType === 'krag_ot' ||
+        p.componentType === 'konus'
+    ) {
         const isZelbet = well.nadbudowa === 'zelbetowa';
         if (isZelbet && id.startsWith('KDB') && p.dn !== 2000 && p.dn !== 2500) return false;
         if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
@@ -2000,40 +2340,66 @@ function filterByWellParams(p, well) {
     // 2. Dennice (DUZ/DU)
     if (p.componentType === 'dennica') {
         const isZelbet = well.dennicaMaterial === 'zelbetowa';
-        if (isZelbet && id.startsWith('DU') && !id.startsWith('DUZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+        if (
+            isZelbet &&
+            id.startsWith('DU') &&
+            !id.startsWith('DUZ') &&
+            p.dn !== 2000 &&
+            p.dn !== 2500
+        )
+            return false;
         if (!isZelbet && id.startsWith('DUZ') && p.dn !== 2000 && p.dn !== 2500) return false;
     }
 
     // 3. Płyty (PDZ/PD itp)
-    if (['plyta_najazdowa', 'plyta_zamykajaca', 'plyta_din', 'plyta_redukcyjna'].includes(p.componentType)) {
+    if (
+        ['plyta_najazdowa', 'plyta_zamykajaca', 'plyta_din', 'plyta_redukcyjna'].includes(
+            p.componentType
+        )
+    ) {
         const isZelbet = well.nadbudowa === 'zelbetowa';
-        if (isZelbet && id.startsWith('PD') && !id.startsWith('PDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+        if (
+            isZelbet &&
+            id.startsWith('PD') &&
+            !id.startsWith('PDZ') &&
+            p.dn !== 2000 &&
+            p.dn !== 2500
+        )
+            return false;
         if (!isZelbet && id.startsWith('PDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
-        if (isZelbet && id.startsWith('PZ') && !id.startsWith('PZZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+        if (
+            isZelbet &&
+            id.startsWith('PZ') &&
+            !id.startsWith('PZZ') &&
+            p.dn !== 2000 &&
+            p.dn !== 2500
+        )
+            return false;
         if (!isZelbet && id.startsWith('PZZ') && p.dn !== 2000 && p.dn !== 2500) return false;
     }
 
     return true;
 }
 
-window.updateConfigToMatchParams = function(well) {
+window.updateConfigToMatchParams = function (well) {
     if (!well || !well.config || well.config.length === 0) return;
-    const availProducts = getAvailableProducts(well).filter(p => filterByWellParams(p, well));
+    const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
     let anyChanged = false;
 
-    well.config.forEach(item => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+    well.config.forEach((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
         // Ensure we handle dynamically generated drilled rings correctly by finding their base generic product temporarily
         const isDrilled = p.componentType === 'krag_ot' || p.id.endsWith('_OT');
-        
+
         if (!filterByWellParams(p, well)) {
             // Find substitute
-            const substitute = availProducts.find(cand => 
-                cand.componentType === p.componentType &&
-                cand.dn === p.dn &&
-                parseFloat(cand.height) === parseFloat(p.height)
+            const substitute = availProducts.find(
+                (cand) =>
+                    cand.componentType === p.componentType &&
+                    cand.dn === p.dn &&
+                    parseFloat(cand.height) === parseFloat(p.height)
             );
             if (substitute) {
                 item.productId = substitute.id;
@@ -2041,20 +2407,22 @@ window.updateConfigToMatchParams = function(well) {
             } else if (isDrilled) {
                 // For dynamic drilled rings, we find the substitute for the base ring, then append _OT
                 const baseId = p.id.replace('_OT', '');
-                const baseProd = studnieProducts.find(pr => pr.id === baseId);
+                const baseProd = studnieProducts.find((pr) => pr.id === baseId);
                 if (baseProd) {
-                    const baseSub = availProducts.find(cand => 
-                        cand.componentType === 'krag' &&
-                        cand.dn === baseProd.dn &&
-                        parseFloat(cand.height) === parseFloat(baseProd.height)
+                    const baseSub = availProducts.find(
+                        (cand) =>
+                            cand.componentType === 'krag' &&
+                            cand.dn === baseProd.dn &&
+                            parseFloat(cand.height) === parseFloat(baseProd.height)
                     );
                     if (baseSub) {
                         const dynamicOtId = baseSub.id + '_OT';
-                        if (!studnieProducts.find(pr => pr.id === dynamicOtId)) {
+                        if (!studnieProducts.find((pr) => pr.id === dynamicOtId)) {
                             const dynamicProd = JSON.parse(JSON.stringify(baseSub));
                             dynamicProd.id = dynamicOtId;
                             dynamicProd.componentType = 'krag_ot';
-                            if (!dynamicProd.name.endsWith(' z otworem')) dynamicProd.name += ' z otworem';
+                            if (!dynamicProd.name.endsWith(' z otworem'))
+                                dynamicProd.name += ' z otworem';
                             studnieProducts.push(dynamicProd);
                         }
                         item.productId = dynamicOtId;
@@ -2064,7 +2432,7 @@ window.updateConfigToMatchParams = function(well) {
             }
         }
     });
-    
+
     if (anyChanged) {
         showToast('Zaktualizowano rodzaje elementów w konfiguracji', 'info');
     }
@@ -2081,15 +2449,22 @@ function filterSealsByWellType(sealItems, well) {
         return [];
     }
     const keyword = well.uszczelka.replace('Uszczelka ', '').toUpperCase();
-    return sealItems.filter(p => {
+    return sealItems.filter((p) => {
         const nameUpper = p.name.toUpperCase();
         const idUpper = p.id.toUpperCase();
 
         if (keyword === 'SDV') {
-            return nameUpper.includes('SDV') && !nameUpper.includes('PIERŚCIENIEM') && !nameUpper.includes('PO');
+            return (
+                nameUpper.includes('SDV') &&
+                !nameUpper.includes('PIERŚCIENIEM') &&
+                !nameUpper.includes('PO')
+            );
         }
         if (keyword === 'SDV PO') {
-            return nameUpper.includes('SDV') && (nameUpper.includes('PIERŚCIENIEM') || nameUpper.includes('PO'));
+            return (
+                nameUpper.includes('SDV') &&
+                (nameUpper.includes('PIERŚCIENIEM') || nameUpper.includes('PO'))
+            );
         }
         if (keyword === 'GSG') {
             return nameUpper.includes('GSG') && !nameUpper.includes('NBR');
@@ -2105,7 +2480,9 @@ function renderTiles() {
     const container = document.getElementById('tiles-container');
     const well = getCurrentWell();
     if (!well) {
-        if (container) container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
+        if (container)
+            container.innerHTML =
+                '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
         return;
     }
     const dn = well.dn;
@@ -2114,27 +2491,47 @@ function renderTiles() {
         { title: '🔘 Włazy', icon: '', types: ['wlaz'] },
         { title: '⚙️ AVR / Pierścienie', icon: '', types: ['avr'] },
         { title: '🔶 Konus / Stożek', icon: '', types: ['konus'] },
-        { title: '🔽 Płyty nakrywające', icon: '', types: ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'] },
+        {
+            title: '🔽 Płyty nakrywające',
+            icon: '',
+            types: ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy']
+        },
         { title: '⬛ Płyty redukcyjne', icon: '', types: ['plyta_redukcyjna'] },
         { title: '🟦 Kręgi', icon: '', types: ['krag'] },
         { title: '🟪 Kręgi z otworami (OT)', icon: '', types: ['krag_ot'] },
         { title: '🟩 Dennica', icon: '', types: ['dennica'] },
         { title: '🪣 Osadniki', icon: '', types: ['osadnik'] },
         // Studnie styczne widoczne tylko gdy wybrana typu studni Styczna
-        ...(dn === 'styczna' ? (() => {
-            const variant = well.stycznaVariant || 'standard';
-            if (variant === 'korek') {
-                return [{ title: '🔌 Studnie Styczne z korkiem', icon: '', types: ['styczna'], filterFn: p => p.id.includes('KOREK') }];
-            }
-            return [{ title: '🛢️ Studnie Styczne', icon: '', types: ['styczna'], filterFn: p => !p.id.includes('KOREK') }];
-        })() : []),
+        ...(dn === 'styczna'
+            ? (() => {
+                  const variant = well.stycznaVariant || 'standard';
+                  if (variant === 'korek') {
+                      return [
+                          {
+                              title: '🔌 Studnie Styczne z korkiem',
+                              icon: '',
+                              types: ['styczna'],
+                              filterFn: (p) => p.id.includes('KOREK')
+                          }
+                      ];
+                  }
+                  return [
+                      {
+                          title: '🛢️ Studnie Styczne',
+                          icon: '',
+                          types: ['styczna'],
+                          filterFn: (p) => !p.id.includes('KOREK')
+                      }
+                  ];
+              })()
+            : []),
         { title: '🟢 Uszczelki', icon: '', types: ['uszczelka'] }
     ];
 
     let html = '';
 
     const renderGroup = (group, prods) => {
-        let items = prods.filter(p => group.types.includes(p.componentType));
+        let items = prods.filter((p) => group.types.includes(p.componentType));
         if (group.filterFn) {
             items = items.filter(group.filterFn);
         }
@@ -2144,7 +2541,7 @@ function renderTiles() {
         if (group.types.includes('styczna')) {
             items.sort((a, b) => (a.dn || 0) - (b.dn || 0));
         }
-        
+
         // Custom sorting for dennica: sort by height from lowest to highest
         if (group.types.includes('dennica')) {
             items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
@@ -2154,12 +2551,20 @@ function renderTiles() {
       <div class="tiles-section-title">${group.title}</div>
       <div class="tiles-grid">`;
 
-        items.forEach(p => {
-            const isTopClosure = ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'].includes(p.componentType);
-            const isInConfig = (well.config || []).some(c => c.productId === p.id);
-            const activeClass = (isTopClosure && isInConfig) ? 'active-top-closure' : '';
+        items.forEach((p) => {
+            const isTopClosure = [
+                'plyta_din',
+                'plyta_najazdowa',
+                'plyta_zamykajaca',
+                'konus',
+                'pierscien_odciazajacy'
+            ].includes(p.componentType);
+            const isInConfig = (well.config || []).some((c) => c.productId === p.id);
+            const activeClass = isTopClosure && isInConfig ? 'active-top-closure' : '';
             const isLocked = isWellLocked();
-            const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : '';
+            const lockedStyle = isLocked
+                ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
+                : '';
 
             // Calculate price with surcharge if stainless ladder is selected
             let displayPrice = p.price || 0;
@@ -2180,7 +2585,7 @@ function renderTiles() {
 
     const availProducts = getAvailableProducts(well);
     const primaryProducts = availProducts
-        .filter(p => {
+        .filter((p) => {
             if (dn === 'styczna') {
                 // For styczna wells, use well.dn for superstructure but allow 'styczna' for dennica
                 if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -2192,20 +2597,22 @@ function renderTiles() {
 
             return p.dn === dn || p.dn === null;
         })
-        .filter(p => filterByWellParams(p, well));
+        .filter((p) => filterByWellParams(p, well));
 
-    groups.forEach(g => {
+    groups.forEach((g) => {
         // Special logic for tangential wells to show the correct seal parameter in the seals category
         if (g.types.includes('uszczelka')) {
-            let items = primaryProducts.filter(p => g.types.includes(p.componentType));
+            let items = primaryProducts.filter((p) => g.types.includes(p.componentType));
             items = filterSealsByWellType(items, well);
 
             if (items.length > 0) {
                 html += `<div class="tiles-section"><div class="tiles-section-title">${g.title}</div><div class="tiles-grid">`;
-                items.forEach(p => {
+                items.forEach((p) => {
                     const isLocked = isWellLocked();
-                    const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : '';
-                    
+                    const lockedStyle = isLocked
+                        ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
+                        : '';
+
                     html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
                         <div class="tile-name">${p.name}</div>
                         <div class="tile-meta">
@@ -2221,28 +2628,37 @@ function renderTiles() {
         }
     });
 
-    const hasReduction = well.redukcjaDN1000 || (well.config || []).some(c => {
-        const p = studnieProducts.find(pr => pr.id === c.productId);
-        return p && p.componentType === 'plyta_redukcyjna';
-    });
+    const hasReduction =
+        well.redukcjaDN1000 ||
+        (well.config || []).some((c) => {
+            const p = studnieProducts.find((pr) => pr.id === c.productId);
+            return p && p.componentType === 'plyta_redukcyjna';
+        });
 
     if ([1200, 1500, 2000, 2500].includes(dn) && hasReduction) {
         const redProducts = availProducts
-            .filter(p => p.dn === 1000 && p.componentType !== 'plyta_redukcyjna' && p.componentType !== 'dennica')
-            .filter(p => filterByWellParams(p, well));
+            .filter(
+                (p) =>
+                    p.dn === 1000 &&
+                    p.componentType !== 'plyta_redukcyjna' &&
+                    p.componentType !== 'dennica'
+            )
+            .filter((p) => filterByWellParams(p, well));
         if (redProducts.length > 0) {
             html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
             html += `<h3 style="color:#f59e0b; margin-bottom:1rem; font-size:1.1rem;">⏬ Redukcja (DN1000)</h3>`;
-            groups.forEach(g => {
+            groups.forEach((g) => {
                 if (g.types.includes('uszczelka')) {
                     // Apply the same seal type filtering for the reduction section
-                    let items = redProducts.filter(p => g.types.includes(p.componentType));
+                    let items = redProducts.filter((p) => g.types.includes(p.componentType));
                     items = filterSealsByWellType(items, well);
                     if (items.length > 0) {
                         html += `<div class="tiles-section"><div class="tiles-section-title">${g.title}</div><div class="tiles-grid">`;
-                        items.forEach(p => {
+                        items.forEach((p) => {
                             const isLocked = isWellLocked();
-                            const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : '';
+                            const lockedStyle = isLocked
+                                ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
+                                : '';
                             html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
                                 <div class="tile-name">${p.name}</div>
                                 <div class="tile-meta">
@@ -2270,8 +2686,8 @@ function renderTiles() {
 window.currentDraggedPlaceholderId = null;
 
 function dragWellComponent(ev, productId) {
-    ev.dataTransfer.setData("text/plain", productId);
-    ev.dataTransfer.effectAllowed = "copy";
+    ev.dataTransfer.setData('text/plain', productId);
+    ev.dataTransfer.effectAllowed = 'copy';
     window.currentDraggedPlaceholderId = productId;
 }
 
@@ -2281,7 +2697,7 @@ function dragEndWellComponent(ev) {
 
     const well = getCurrentWell();
     if (well && window.currentDraggedPlaceholderId) {
-        well.config = well.config.filter(c => !c.isPlaceholder);
+        well.config = well.config.filter((c) => !c.isPlaceholder);
         window.requestAnimationFrame(() => {
             renderWellConfig();
             renderWellDiagram();
@@ -2292,7 +2708,7 @@ function dragEndWellComponent(ev) {
 
 function allowDropWellComponent(ev) {
     ev.preventDefault();
-    ev.dataTransfer.dropEffect = (draggedCfgIndex !== null) ? "move" : "copy";
+    ev.dataTransfer.dropEffect = draggedCfgIndex !== null ? 'move' : 'copy';
     const dz = document.getElementById('drop-zone-diagram');
     if (dz) dz.classList.add('drag-over');
 
@@ -2316,14 +2732,14 @@ function allowDropWellComponent(ev) {
     }
 
     if (window.currentDraggedPlaceholderId) {
-        const plIdx = well.config.findIndex(c => c.isPlaceholder);
+        const plIdx = well.config.findIndex((c) => c.isPlaceholder);
         // Avoid flickering by not rendering if position mapped is practically same
         let currentEffIdx = plIdx;
         let newEffIdx = targetIdx;
         if (plIdx > -1 && plIdx < targetIdx) newEffIdx -= 1;
 
         if (plIdx === -1 || plIdx !== newEffIdx) {
-            const p = studnieProducts.find(x => x.id === window.currentDraggedPlaceholderId);
+            const p = studnieProducts.find((x) => x.id === window.currentDraggedPlaceholderId);
             if (p) {
                 if (plIdx > -1) well.config.splice(plIdx, 1);
 
@@ -2364,45 +2780,73 @@ function dragLeaveWellComponent(ev) {
     if (dz) dz.classList.remove('drag-over');
 }
 
-window.injectPairIfReliefComponent = function(well, productId, baseIndex) {
-    const prod = studnieProducts.find(x => x.id === productId);
+window.injectPairIfReliefComponent = function (well, productId, baseIndex) {
+    const prod = studnieProducts.find((x) => x.id === productId);
     if (!prod) return;
-    
+
     if (prod.componentType === 'pierscien_odciazajacy') {
-        const pair = getAvailableProducts(well).find(x => (x.componentType === 'plyta_najazdowa' || x.componentType === 'plyta_zamykajaca') && parseInt(x.dn) === parseInt(prod.dn) && filterByWellParams(x, well));
+        const pair = getAvailableProducts(well).find(
+            (x) =>
+                (x.componentType === 'plyta_najazdowa' || x.componentType === 'plyta_zamykajaca') &&
+                parseInt(x.dn) === parseInt(prod.dn) &&
+                filterByWellParams(x, well)
+        );
         if (pair) {
-            well.config.splice(baseIndex, 0, { productId: pair.id, quantity: 1, _addedAt: Date.now() });
+            well.config.splice(baseIndex, 0, {
+                productId: pair.id,
+                quantity: 1,
+                _addedAt: Date.now()
+            });
             showToast('Dodano komplet: Płyta + Pierścień odciążający', 'info');
         }
-    } else if (prod.componentType === 'plyta_najazdowa' || prod.componentType === 'plyta_zamykajaca' || (prod.name && prod.name.toLowerCase().includes('odciążając'))) {
-        const pair = getAvailableProducts(well).find(x => x.componentType === 'pierscien_odciazajacy' && parseInt(x.dn) === parseInt(prod.dn) && filterByWellParams(x, well));
+    } else if (
+        prod.componentType === 'plyta_najazdowa' ||
+        prod.componentType === 'plyta_zamykajaca' ||
+        (prod.name && prod.name.toLowerCase().includes('odciążając'))
+    ) {
+        const pair = getAvailableProducts(well).find(
+            (x) =>
+                x.componentType === 'pierscien_odciazajacy' &&
+                parseInt(x.dn) === parseInt(prod.dn) &&
+                filterByWellParams(x, well)
+        );
         if (pair) {
-            well.config.splice(baseIndex + 1, 0, { productId: pair.id, quantity: 1, _addedAt: Date.now() });
+            well.config.splice(baseIndex + 1, 0, {
+                productId: pair.id,
+                quantity: 1,
+                _addedAt: Date.now()
+            });
             showToast('Dodano komplet: Płyta + Pierścień odciążający', 'info');
         }
     }
 };
 
 function enforceSingularTopClosures(well, productId) {
-    const product = studnieProducts.find(p => p.id === productId);
+    const product = studnieProducts.find((p) => p.id === productId);
     if (!product) return;
 
-    const topClosureTypes = ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
-    
+    const topClosureTypes = [
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'konus',
+        'pierscien_odciazajacy'
+    ];
+
     // ZASADA 1: Tylko jedno zakończenie studni
     if (topClosureTypes.includes(product.componentType)) {
-        well.config = well.config.filter(item => {
+        well.config = well.config.filter((item) => {
             if (item.isPlaceholder) return true;
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             return p && !topClosureTypes.includes(p.componentType);
         });
     }
 
     // ZASADA 2: Właz - tylko 1 naraz
     if (product.componentType === 'wlaz') {
-        well.config = well.config.filter(item => {
+        well.config = well.config.filter((item) => {
             if (item.isPlaceholder) return true;
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             return p && p.componentType !== 'wlaz';
         });
     }
@@ -2414,18 +2858,21 @@ function dropWellComponent(ev) {
     if (dz) dz.classList.remove('drag-over');
 
     const well = getCurrentWell();
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); window.currentDraggedPlaceholderId = null; return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        window.currentDraggedPlaceholderId = null;
+        return;
+    }
     if (isWellLocked()) {
         showToast(WELL_LOCKED_MSG, 'error');
         window.currentDraggedPlaceholderId = null;
         return;
     }
     if (well && window.currentDraggedPlaceholderId) {
-        
         enforceSingularTopClosures(well, window.currentDraggedPlaceholderId);
-        
+
         // Zamiast kasować na bezczelnego, szukamy gdzie jest nasz placeholder
-        const plIdx = well.config.findIndex(c => c.isPlaceholder);
+        const plIdx = well.config.findIndex((c) => c.isPlaceholder);
         let actualIndex = -1;
         if (plIdx > -1) {
             well.config[plIdx].isPlaceholder = false;
@@ -2440,7 +2887,11 @@ function dropWellComponent(ev) {
         }
 
         if (typeof window.injectPairIfReliefComponent === 'function') {
-            window.injectPairIfReliefComponent(well, window.currentDraggedPlaceholderId, actualIndex);
+            window.injectPairIfReliefComponent(
+                well,
+                window.currentDraggedPlaceholderId,
+                actualIndex
+            );
         }
 
         window.currentDraggedPlaceholderId = null;
@@ -2458,7 +2909,7 @@ function dropWellComponent(ev) {
         updateSummary();
     } else if (well && draggedCfgIndex !== null) {
         // Zostało puszczone na puste pole SVG, resetujemy flagi i zapisujemy
-        well.config.forEach(c => c.isPlaceholder = false);
+        well.config.forEach((c) => (c.isPlaceholder = false));
         well.autoLocked = true;
         updateAutoLockUI();
         well.configSource = 'MANUAL';
@@ -2472,13 +2923,22 @@ function dropWellComponent(ev) {
 }
 
 function addWellComponent(productId) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
-    const product = studnieProducts.find(p => p.id === productId);
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
+    const product = studnieProducts.find((p) => p.id === productId);
     if (!product) return;
 
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
 
     // Włączenie trybu ręcznego jeśli dodano jakikolwiek element z palety
     if (!well.autoLocked) {
@@ -2489,26 +2949,39 @@ function addWellComponent(productId) {
     well.configSource = 'MANUAL';
 
     // ZASADA 1: Tylko jedno zakończenie studni
-    const topClosureTypes = ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
+    const topClosureTypes = [
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'konus',
+        'pierscien_odciazajacy'
+    ];
     if (topClosureTypes.includes(product.componentType)) {
         // Usuń poprzednie elementy zakończenia
-        well.config = well.config.filter(item => {
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+        well.config = well.config.filter((item) => {
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             return p && !topClosureTypes.includes(p.componentType);
         });
     }
 
     // ZASADA 2: Właz - tylko 1 naraz
     if (product.componentType === 'wlaz') {
-        well.config = well.config.filter(item => {
-            const p = studnieProducts.find(pr => pr.id === item.productId);
+        well.config = well.config.filter((item) => {
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
             return p && p.componentType !== 'wlaz';
         });
     }
 
     // Helper to add a single product to well config at the correct position
     const addSingle = (prod) => {
-        const topClosureTypes = ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy', 'wlaz'];
+        const topClosureTypes = [
+            'plyta_din',
+            'plyta_najazdowa',
+            'plyta_zamykajaca',
+            'konus',
+            'pierscien_odciazajacy',
+            'wlaz'
+        ];
         const isTop = topClosureTypes.includes(prod.componentType);
         const isBottom = ['dennica', 'kineta', 'styczna'].includes(prod.componentType);
 
@@ -2528,13 +3001,13 @@ function addWellComponent(productId) {
         }
 
         // Dla rur (krag, krag_ot) szukamy odpowiedniego miejsca
-        const plateIdx = well.config.findIndex(c => {
-            const p = studnieProducts.find(pr => pr.id === c.productId);
+        const plateIdx = well.config.findIndex((c) => {
+            const p = studnieProducts.find((pr) => pr.id === c.productId);
             return p && p.componentType === 'plyta_redukcyjna';
         });
 
         if (plateIdx >= 0) {
-            const plate = studnieProducts.find(p => p.id === well.config[plateIdx].productId);
+            const plate = studnieProducts.find((p) => p.id === well.config[plateIdx].productId);
             // Wykrywamy czy krąg jest DN główny (np. 1500) czy redukcyjny (1000)
             const mainDn = well.dn;
             const isRedDn = prod.dn === 1000;
@@ -2544,28 +3017,40 @@ function addWellComponent(productId) {
                 // Ale za włazem/konusem
                 let insertIdx = 0;
                 for (let i = 0; i < plateIdx; i++) {
-                    const p = studnieProducts.find(pr => pr.id === well.config[i].productId);
+                    const p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
                     if (!topClosureTypes.includes(p.componentType)) {
                         insertIdx = i;
                         break;
                     }
                     insertIdx = i + 1;
                 }
-                well.config.splice(insertIdx, 0, { productId: prod.id, quantity: 1, _addedAt: Date.now() });
+                well.config.splice(insertIdx, 0, {
+                    productId: prod.id,
+                    quantity: 1,
+                    _addedAt: Date.now()
+                });
             } else {
-                well.config.splice(plateIdx + 1, 0, { productId: prod.id, quantity: 1, _addedAt: Date.now() });
+                well.config.splice(plateIdx + 1, 0, {
+                    productId: prod.id,
+                    quantity: 1,
+                    _addedAt: Date.now()
+                });
             }
         } else {
             let insertIdx = 0;
             for (let i = 0; i < well.config.length; i++) {
-                const p = studnieProducts.find(pr => pr.id === well.config[i].productId);
+                const p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
                 if (!topClosureTypes.includes(p.componentType)) {
                     insertIdx = i;
                     break;
                 }
                 insertIdx = i + 1;
             }
-            well.config.splice(insertIdx, 0, { productId: prod.id, quantity: 1, _addedAt: Date.now() });
+            well.config.splice(insertIdx, 0, {
+                productId: prod.id,
+                quantity: 1,
+                _addedAt: Date.now()
+            });
         }
     };
 
@@ -2584,7 +3069,7 @@ function addWellComponent(productId) {
         if (well.rzednaWlazu > rzDna) {
             showToast(`Wybrano zakończenie: ${product.name}`, 'success');
 
-            // Auto-dobór (gdy dodajemy płyte starym "klikiem", 
+            // Auto-dobór (gdy dodajemy płyte starym "klikiem",
             // ale teraz tryb ręczny blokuje autodobór, wiec nigdy to nie zajdzie, chyba ze go odblokujemy)
             if (!well.autoLocked) {
                 autoSelectComponents(true);
@@ -2599,15 +3084,21 @@ function addWellComponent(productId) {
 }
 
 function removeWellComponent(index) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
 
     const removedItem = well.config.splice(index, 1)[0];
 
     if (removedItem) {
-        const p = studnieProducts.find(pr => pr.id === removedItem.productId);
+        const p = studnieProducts.find((pr) => pr.id === removedItem.productId);
         if (p && p.componentType === 'redukcja') {
             well.redukcjaDN1000 = false;
 
@@ -2630,8 +3121,14 @@ function removeWellComponent(index) {
 }
 
 function updateWellQuantity(index, value) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const qty = parseInt(value);
     if (qty <= 0) {
         removeWellComponent(index);
@@ -2648,8 +3145,14 @@ function updateWellQuantity(index, value) {
 }
 
 function clearWellConfig() {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well) return;
     well.configSource = 'MANUAL';
@@ -2663,7 +3166,8 @@ function renderWellConfig() {
     const well = getCurrentWell();
 
     if (!well || !well.config || well.config.length === 0) {
-        tbody.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</div>';
+        tbody.innerHTML =
+            '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</div>';
         return;
     }
 
@@ -2704,18 +3208,18 @@ function renderWellConfig() {
 
     let html = '';
     well.config.forEach((item, index) => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const itemAssessedPrice = getItemAssessedPrice(well, p);
         let totalPrice = itemAssessedPrice * item.quantity;
 
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-            const kinetaItem = well.config.find(c => {
-                const pr = studnieProducts.find(x => x.id === c.productId);
+            const kinetaItem = well.config.find((c) => {
+                const pr = studnieProducts.find((x) => x.id === c.productId);
                 return pr && pr.componentType === 'kineta';
             });
             if (kinetaItem) {
-                const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
+                const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                 if (kinetaProd) {
                     const rawKinetaPrice = getItemAssessedPrice(well, kinetaProd);
                     totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
@@ -2735,7 +3239,9 @@ function renderWellConfig() {
         const canMoveDown = index < well.config.length - 1;
 
         const isPlaceholder = item.isPlaceholder;
-        const plStyle = isPlaceholder ? 'opacity:0.7; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); pointer-events: none;' : '';
+        const plStyle = isPlaceholder
+            ? 'opacity:0.7; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); pointer-events: none;'
+            : '';
 
         html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.45rem 0.5rem; position:relative; transition:all 0.2s ease; margin-bottom:0.3rem; cursor:grab; ${plStyle}"
                       onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(255,255,255,0.3)'; this.style.boxShadow='0 0 12px rgba(99,102,241,0.4)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(255,255,255,0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
@@ -2751,7 +3257,7 @@ function renderWellConfig() {
                 <div style="display:flex; flex-direction:column; gap:0.15rem; min-width:0;">
                   <div style="display:flex; align-items:center; gap:0.5rem;">
                     <span style="background:${badge.bg}; color:white; font-size:0.55rem; padding:2px 6px; border-radius:4px; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">${badge.label.split(' ')[1] || badge.label}</span>
-                    <div style="font-weight:700; color:var(--text-primary); font-size:0.9rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : (p.componentType === 'uszczelka' ? ` (1 szt.)` : '')}</div>
+                    <div style="font-weight:700; color:var(--text-primary); font-size:0.9rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                   </div>
                   <div style="font-size:0.65rem; color:var(--text-muted); opacity:0.6; padding-left:2px;">${p.id}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
                 </div>
@@ -2760,7 +3266,7 @@ function renderWellConfig() {
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:baseline;">
                 <span style="font-size:0.52rem; color:rgba(255,255,255,0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
-                <span style="color:rgba(255,255,255,0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${(p.weight || totalWeight > 0) ? fmtInt(totalWeight) + ' kg' : '—'}</span>
+                <span style="color:rgba(255,255,255,0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
                 
                 <div style="width:60px;"></div>
                 
@@ -2783,8 +3289,14 @@ function renderWellConfig() {
 function moveWellComponent(index, direction) {
     const well = getCurrentWell();
     if (!well) return;
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= well.config.length) return;
 
@@ -2843,10 +3355,12 @@ window.handleCfgDragOver = function (e) {
             const well = getCurrentWell();
             if (well) {
                 // Find existing placeholder index
-                const plIdx = well.config.findIndex(c => c.isPlaceholder);
+                const plIdx = well.config.findIndex((c) => c.isPlaceholder);
 
                 if (plIdx !== dropIndex) {
-                    const p = studnieProducts.find(x => x.id === window.currentDraggedPlaceholderId);
+                    const p = studnieProducts.find(
+                        (x) => x.id === window.currentDraggedPlaceholderId
+                    );
                     if (p) {
                         // Remove old placeholder
                         if (plIdx > -1) well.config.splice(plIdx, 1);
@@ -2883,8 +3397,14 @@ window.handleCfgDragLeave = function (e) {
 window.handleCfgDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const tile = e.target.closest('.config-tile');
 
     if (tile) {
@@ -2895,7 +3415,7 @@ window.handleCfgDrop = function (e) {
         if (draggedCfgIndex !== null) {
             tile.style.borderTop = '';
 
-            well.config.forEach(c => c.isPlaceholder = false);
+            well.config.forEach((c) => (c.isPlaceholder = false));
 
             well.autoLocked = true;
             updateAutoLockUI();
@@ -2906,18 +3426,18 @@ window.handleCfgDrop = function (e) {
             updateSummary();
         } else if (window.currentDraggedPlaceholderId) {
             tile.style.borderTop = '';
-            
+
             enforceSingularTopClosures(well, window.currentDraggedPlaceholderId);
-            
-            well.config = well.config.filter(c => !c.isPlaceholder);
+
+            well.config = well.config.filter((c) => !c.isPlaceholder);
 
             const addedProductId = window.currentDraggedPlaceholderId;
             well.config.splice(dropIndex, 0, { productId: addedProductId, quantity: 1 });
-            
+
             if (typeof window.injectPairIfReliefComponent === 'function') {
                 window.injectPairIfReliefComponent(well, addedProductId, dropIndex);
             }
-            
+
             window.currentDraggedPlaceholderId = null;
 
             well.autoLocked = true;
@@ -2936,20 +3456,18 @@ window.handleCfgDrop = function (e) {
 
 window.handleCfgDragEnd = function (e) {
     e.currentTarget.style.opacity = '1';
-    document.querySelectorAll('.config-tile').forEach(t => t.style.borderTop = '');
+    document.querySelectorAll('.config-tile').forEach((t) => (t.style.borderTop = ''));
     draggedCfgIndex = null;
 
     const well = getCurrentWell();
     if (well) {
-        well.config.forEach(c => c.isPlaceholder = false);
+        well.config.forEach((c) => (c.isPlaceholder = false));
         window.requestAnimationFrame(() => {
             renderWellConfig();
             renderWellDiagram();
         });
     }
 };
-
-
 
 /* ===== SORT WELL CONFIG by well-physical order (top → bottom) ===== */
 function sortWellConfigByOrder() {
@@ -2958,34 +3476,43 @@ function sortWellConfigByOrder() {
     const typeOrder = {
         wlaz: 0,
         avr: 1,
-        plyta_din: 2, plyta_najazdowa: 2, plyta_zamykajaca: 2,
+        plyta_din: 2,
+        plyta_najazdowa: 2,
+        plyta_zamykajaca: 2,
         konus: 2,
         pierscien_odciazajacy: 3,
         plyta_redukcyjna: 5,
-        krag: 5, krag_ot: 5,
+        krag: 5,
+        krag_ot: 5,
         dennica: 6,
         kineta: 7
     };
     well.config.sort((a, b) => {
-        const pa = studnieProducts.find(p => p.id === a.productId);
-        const pb = studnieProducts.find(p => p.id === b.productId);
+        const pa = studnieProducts.find((p) => p.id === a.productId);
+        const pb = studnieProducts.find((p) => p.id === b.productId);
         const oa = pa ? (typeOrder[pa.componentType] ?? 99) : 99;
         const ob = pb ? (typeOrder[pb.componentType] ?? 99) : 99;
         if (oa !== ob) return oa - ob;
 
-        // Items of the same type keep their relative structural order. 
+        // Items of the same type keep their relative structural order.
         // Previously kręgi were forced sorted by height, which scrambled krag_ot positions.
         return 0;
     });
 }
 
-window.refreshZleceniaModalIfActive = function() {
+window.refreshZleceniaModalIfActive = function () {
     const zlModal = document.getElementById('zlecenia-modal');
-    if (zlModal && zlModal.classList.contains('active') && typeof zleceniaElementsList !== 'undefined' && typeof zleceniaSelectedIdx !== 'undefined' && zleceniaSelectedIdx >= 0) {
+    if (
+        zlModal &&
+        zlModal.classList.contains('active') &&
+        typeof zleceniaElementsList !== 'undefined' &&
+        typeof zleceniaSelectedIdx !== 'undefined' &&
+        zleceniaSelectedIdx >= 0
+    ) {
         if (typeof populateZleceniaForm === 'function') {
             const el = zleceniaElementsList[zleceniaSelectedIdx];
             if (el) {
-                // To keep the modal context fully consistent, we update it via the main list object 
+                // To keep the modal context fully consistent, we update it via the main list object
                 populateZleceniaForm(el);
             }
         }
@@ -3002,30 +3529,41 @@ function renderWellPrzejscia(opts) {
     if (!window.activateQuickEdit) {
         window.activateQuickEdit = function (element, index, field) {
             if (element.querySelector('input')) return; // Aboard if already in edit mode
-            if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
-            if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-            
+            if (isWellLocked()) {
+                showToast(WELL_LOCKED_MSG, 'error');
+                return;
+            }
+            if (isOfferLocked()) {
+                showToast(OFFER_LOCKED_MSG, 'error');
+                return;
+            }
+
             // Cancel any pending refresh from another field's blur
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
                 window.__pendingPrzejsciaRefresh = null;
-                
+
                 // Flush pending save immediately!
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
                     window.__pendingPrzejsciaApply();
                     window.__pendingPrzejsciaApply = null;
                 }
-                
+
                 // Which container does this element belong to?
-                const containerId = element.closest('#zl-przejscia-list') ? 'zl-przejscia-list' : 'well-przejscia-tiles';
-                
+                const containerId = element.closest('#zl-przejscia-list')
+                    ? 'zl-przejscia-list'
+                    : 'well-przejscia-tiles';
+
                 renderWellPrzejscia();
-                if (typeof window.refreshZleceniaModalIfActive === 'function') window.refreshZleceniaModalIfActive();
-                
+                if (typeof window.refreshZleceniaModalIfActive === 'function')
+                    window.refreshZleceniaModalIfActive();
+
                 const newList = document.getElementById(containerId);
                 if (newList) {
                     const stableId = element.getAttribute('data-qe-id');
-                    const newEl = newList.querySelector(`[data-qe-id="${stableId}"][data-qe-field="${field}"]`);
+                    const newEl = newList.querySelector(
+                        `[data-qe-id="${stableId}"][data-qe-field="${field}"]`
+                    );
                     if (newEl) element = newEl;
                 }
             }
@@ -3034,11 +3572,22 @@ function renderWellPrzejscia(opts) {
             if (!well || !well.przejscia || !well.przejscia[index]) return;
 
             let val, step;
-            if (field === 'angle') { val = well.przejscia[index].angle; step = '1'; }
-            else if (field === 'spadekKineta') { val = well.przejscia[index].spadekKineta || ''; step = '1'; }
-            else if (field === 'spadekMufa') { val = well.przejscia[index].spadekMufa || ''; step = '1'; }
-            else if (field === 'heightMm') { val = ''; step = '1'; }
-            else { val = well.przejscia[index].rzednaWlaczenia || ''; step = '0.01'; }
+            if (field === 'angle') {
+                val = well.przejscia[index].angle;
+                step = '1';
+            } else if (field === 'spadekKineta') {
+                val = well.przejscia[index].spadekKineta || '';
+                step = '1';
+            } else if (field === 'spadekMufa') {
+                val = well.przejscia[index].spadekMufa || '';
+                step = '1';
+            } else if (field === 'heightMm') {
+                val = '';
+                step = '1';
+            } else {
+                val = well.przejscia[index].rzednaWlaczenia || '';
+                step = '0.01';
+            }
             const w = element.offsetWidth;
 
             element.innerHTML = `<input type="number" step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
@@ -3048,8 +3597,14 @@ function renderWellPrzejscia(opts) {
 
         window.__pendingPrzejsciaRefresh = null;
         window.saveQuickEdit = function (index, field, value) {
-            if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
-            if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
+            if (isWellLocked()) {
+                showToast(WELL_LOCKED_MSG, 'error');
+                return;
+            }
+            if (isOfferLocked()) {
+                showToast(OFFER_LOCKED_MSG, 'error');
+                return;
+            }
             const well = getCurrentWell();
             if (!well || !well.przejscia || !well.przejscia[index]) return;
 
@@ -3059,7 +3614,7 @@ function renderWellPrzejscia(opts) {
                     if (typeof window.refreshZleceniaModalIfActive === 'function') {
                         window.refreshZleceniaModalIfActive();
                     }
-                    return; 
+                    return;
                 }
 
                 let numVal = parseFloat(value);
@@ -3068,8 +3623,9 @@ function renderWellPrzejscia(opts) {
                     if (numVal < 0) numVal = 0;
                     if (numVal > 360) numVal = 360;
                     well.przejscia[index].angle = numVal;
-                    well.przejscia[index].angleExecution = (numVal === 0 || numVal === 360) ? 0 : (360 - numVal);
-                    well.przejscia[index].angleGony = (numVal * 400 / 360).toFixed(2);
+                    well.przejscia[index].angleExecution =
+                        numVal === 0 || numVal === 360 ? 0 : 360 - numVal;
+                    well.przejscia[index].angleGony = ((numVal * 400) / 360).toFixed(2);
                 } else if (field === 'rzednaWlaczenia') {
                     if (isNaN(numVal)) {
                         well.przejscia[index].rzednaWlaczenia = '';
@@ -3092,7 +3648,9 @@ function renderWellPrzejscia(opts) {
                     well.przejscia[index].spadekMufa = isNaN(numVal) ? null : Math.round(numVal);
                 } else if (field === 'heightMm') {
                     const rzDnaQ = parseFloat(well.rzednaDna) || 0;
-                    const cfgMap = buildConfigMap(well, (id) => studnieProducts.find(p => p.id === id));
+                    const cfgMap = buildConfigMap(well, (id) =>
+                        studnieProducts.find((p) => p.id === id)
+                    );
                     let curRz = parseFloat(well.przejscia[index].rzednaWlaczenia);
                     if (isNaN(curRz)) curRz = rzDnaQ;
                     const curMm = (curRz - rzDnaQ) * 1000;
@@ -3131,7 +3689,8 @@ function renderWellPrzejscia(opts) {
     if (!container) return;
 
     if (!well || !well.przejscia || well.przejscia.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
+        container.innerHTML =
+            '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
         if (countEl) countEl.textContent = '';
         return;
     }
@@ -3139,9 +3698,9 @@ function renderWellPrzejscia(opts) {
     // If filterElementIndex is set, check if ANY transition belongs to the element
     if (filterElementIndex != null) {
         const rzDnaCheck = parseFloat(well.rzednaDna) || 0;
-        const findProdCheck = (id) => studnieProducts.find(pr => pr.id === id);
+        const findProdCheck = (id) => studnieProducts.find((pr) => pr.id === id);
         const cfgMapCheck = buildConfigMap(well, findProdCheck);
-        const hasAny = well.przejscia.some(item => {
+        const hasAny = well.przejscia.some((item) => {
             let pel = parseFloat(item.rzednaWlaczenia);
             if (isNaN(pel)) pel = rzDnaCheck;
             const mm = (pel - rzDnaCheck) * 1000;
@@ -3149,32 +3708,35 @@ function renderWellPrzejscia(opts) {
             return assignedIndex === filterElementIndex;
         });
         if (!hasAny) {
-            container.innerHTML = '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przejść szczelnych<br>w tym elemencie.</div>';
+            container.innerHTML =
+                '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przejść szczelnych<br>w tym elemencie.</div>';
             if (countEl) countEl.textContent = '(0)';
             return;
         }
     }
 
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const findProduct = (id) => studnieProducts.find(pr => pr.id === id);
+    const findProduct = (id) => studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProduct, true);
 
     // Auto-sort by element level (assignedIndex) and then by angle
-    const sorted = well.przejscia.map((item) => {
-        let pel = parseFloat(item.rzednaWlaczenia);
-        if (isNaN(pel)) pel = rzDna;
-        const mmFromBottom = (pel - rzDna) * 1000;
-        const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
-        return { item, assignedIndex };
-    }).sort((a, b) => {
-        if (a.assignedIndex !== b.assignedIndex) {
-            return b.assignedIndex - a.assignedIndex;
-        }
-        return (a.item.angle || 0) - (b.item.angle || 0);
-    });
+    const sorted = well.przejscia
+        .map((item) => {
+            let pel = parseFloat(item.rzednaWlaczenia);
+            if (isNaN(pel)) pel = rzDna;
+            const mmFromBottom = (pel - rzDna) * 1000;
+            const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
+            return { item, assignedIndex };
+        })
+        .sort((a, b) => {
+            if (a.assignedIndex !== b.assignedIndex) {
+                return b.assignedIndex - a.assignedIndex;
+            }
+            return (a.item.angle || 0) - (b.item.angle || 0);
+        });
 
     // Rebuild przejscia array in sorted order
-    well.przejscia = sorted.map(s => s.item);
+    well.przejscia = sorted.map((s) => s.item);
 
     let totalPrice = 0;
     let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem;">';
@@ -3187,14 +3749,21 @@ function renderWellPrzejscia(opts) {
         if (isNaN(pel)) pel = rzDna;
         const mmFromBottom = (pel - rzDna) * 1000;
 
-        const { assignedIndex, entry: assignedEntry } = findAssignedElement(mmFromBottom, configMap);
+        const { assignedIndex, entry: assignedEntry } = findAssignedElement(
+            mmFromBottom,
+            configMap
+        );
 
         // Skip transitions not assigned to this element when filtering
         if (filterElementIndex != null && assignedIndex !== filterElementIndex) return;
         filteredCount++;
 
-        const assignedName = assignedEntry ? (assignedEntry.name || 'Brak dopasowania') : 'Brak dopasowania';
-        const assignedBg = assignedEntry ? (assignedEntry.bg || 'rgba(0,0,0,0.25)') : 'rgba(0,0,0,0.25)';
+        const assignedName = assignedEntry
+            ? assignedEntry.name || 'Brak dopasowania'
+            : 'Brak dopasowania';
+        const assignedBg = assignedEntry
+            ? assignedEntry.bg || 'rgba(0,0,0,0.25)'
+            : 'rgba(0,0,0,0.25)';
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
             const rawRGB = assignedBg.length > 7 ? assignedBg.substring(0, 7) : assignedBg;
@@ -3216,8 +3785,10 @@ function renderWellPrzejscia(opts) {
         // Edit mode for this tile
         if (editPrzejscieIdx === index) {
             const typeName = p ? p.category : 'Nieznane';
-            const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie');
-            const allTypes = [...new Set(przejsciaProducts.map(pr => pr.category))].sort();
+            const przejsciaProducts = studnieProducts.filter(
+                (pr) => pr.componentType === 'przejscie'
+            );
+            const allTypes = [...new Set(przejsciaProducts.map((pr) => pr.category))].sort();
 
             // Sync fallback to what was currently rendering if state is empty
             if (!editPrzejscieState.type) {
@@ -3230,9 +3801,14 @@ function renderWellPrzejscia(opts) {
                 editPrzejscieState.spadekMufa = item.spadekMufa || '';
             }
 
-            const currentTypeDNs = przejsciaProducts.filter(pr => pr.category === editPrzejscieState.type).sort((a, b) => a.dn - b.dn);
-            const execAngle = (editPrzejscieState.angle === 0 || editPrzejscieState.angle === 360) ? 0 : (360 - editPrzejscieState.angle);
-            const gons = (editPrzejscieState.angle * 400 / 360).toFixed(2);
+            const currentTypeDNs = przejsciaProducts
+                .filter((pr) => pr.category === editPrzejscieState.type)
+                .sort((a, b) => a.dn - b.dn);
+            const execAngle =
+                editPrzejscieState.angle === 0 || editPrzejscieState.angle === 360
+                    ? 0
+                    : 360 - editPrzejscieState.angle;
+            const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
             html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.8) 0%, rgba(30,41,59,0.95) 100%); border:1px solid rgba(96,165,250,0.5); border-left:4px solid #3b82f6; border-radius:8px; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(96,165,250,0.15); margin-bottom:0.3rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
@@ -3247,19 +3823,24 @@ function renderWellPrzejscia(opts) {
               
               <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Kategoria przejścia</div>
               <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem; max-height:80px; overflow-y:auto; scrollbar-width:thin;">
-                ${allTypes.map(t => {
-                const isActive = t === editPrzejscieState.type;
-                return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#93c5fd' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
-            }).join('')}
+                ${allTypes
+                    .map((t) => {
+                        const isActive = t === editPrzejscieState.type;
+                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#93c5fd' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                    })
+                    .join('')}
               </div>
 
               <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Średnica (DN)</div>
               <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.6rem;">
-                ${currentTypeDNs.map(pr => {
-                const isActive = pr.id === editPrzejscieState.dnId;
-                const dnLbl = (typeof pr.dn === 'string' && pr.dn.includes('/')) ? pr.dn : 'DN' + pr.dn;
-                return `<div onclick="window.editInlineSetDN('${pr.id}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(34,197,94,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#4ade80' : 'var(--text-primary)'}; transition:all 0.15s;">${dnLbl}</div>`;
-            }).join('')}
+                ${currentTypeDNs
+                    .map((pr) => {
+                        const isActive = pr.id === editPrzejscieState.dnId;
+                        const dnLbl =
+                            typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
+                        return `<div onclick="window.editInlineSetDN('${pr.id}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(34,197,94,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#4ade80' : 'var(--text-primary)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                    })
+                    .join('')}
               </div>
 
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
@@ -3311,19 +3892,29 @@ function renderWellPrzejscia(opts) {
     html += '</div>';
 
     // Summary bar
-    const countLabel = filterElementIndex != null ? `Przejścia tego elementu (${filteredCount} szt.)` : `Suma wszystkich przejść (${well.przejscia.length} szt.)`;
+    const countLabel =
+        filterElementIndex != null
+            ? `Przejścia tego elementu (${filteredCount} szt.)`
+            : `Suma wszystkich przejść (${well.przejscia.length} szt.)`;
     html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(99,102,241,0.08); border-radius:6px; border:1px solid rgba(99,102,241,0.2);">
       <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${countLabel}</span>
       <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span>
     </div>`;
 
     container.innerHTML = html;
-    if (countEl) countEl.textContent = `(${filterElementIndex != null ? filteredCount : well.przejscia.length})`;
+    if (countEl)
+        countEl.textContent = `(${filterElementIndex != null ? filteredCount : well.przejscia.length})`;
 }
 
 function movePrzejscie(index, direction) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well || !well.przejscia) return;
     const newIndex = index + direction;
@@ -3357,8 +3948,14 @@ window.handlePrzDragOver = function (e) {
 window.handlePrzDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const tile = e.target.closest('[data-prz-idx]');
     if (tile && draggedPrzIndex !== null) {
         tile.style.borderTop = '';
@@ -3381,9 +3978,9 @@ window.handlePrzDrop = function (e) {
 
 window.handlePrzDragEnd = function (e) {
     e.currentTarget.style.opacity = '1';
-    document.querySelectorAll('[data-prz-idx]').forEach(t => t.style.borderTop = '');
+    document.querySelectorAll('[data-prz-idx]').forEach((t) => (t.style.borderTop = ''));
     draggedPrzIndex = null;
-}
+};
 
 function syncEditState() {
     if (editPrzejscieIdx < 0) return;
@@ -3400,8 +3997,8 @@ function syncEditState() {
 window.editInlineSetType = function (type) {
     syncEditState();
     editPrzejscieState.type = type;
-    const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie');
-    const dns = przejsciaProducts.filter(p => p.category === type).sort((a, b) => a.dn - b.dn);
+    const przejsciaProducts = studnieProducts.filter((pr) => pr.componentType === 'przejscie');
+    const dns = przejsciaProducts.filter((p) => p.category === type).sort((a, b) => a.dn - b.dn);
     if (dns.length > 0) editPrzejscieState.dnId = dns[0].id;
     else editPrzejscieState.dnId = null;
     renderWellPrzejscia();
@@ -3417,7 +4014,7 @@ function editPrzejscie(index) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
     const item = well.przejscia[index];
-    const p = studnieProducts.find(pr => pr.id === item.productId);
+    const p = studnieProducts.find((pr) => pr.id === item.productId);
 
     editPrzejscieIdx = index;
     editPrzejscieState = {
@@ -3433,11 +4030,24 @@ function editPrzejscie(index) {
 }
 
 let editPrzejscieIdx = -1;
-let editPrzejscieState = { type: null, dnId: null, rzedna: '', angle: 0, spadekKineta: '', spadekMufa: '' };
+let editPrzejscieState = {
+    type: null,
+    dnId: null,
+    rzedna: '',
+    angle: 0,
+    spadekKineta: '',
+    spadekMufa: ''
+};
 
 function savePrzejscieEdit(index) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
@@ -3455,8 +4065,8 @@ function savePrzejscieEdit(index) {
     const spadekKineta = editPrzejscieState.spadekKineta;
     const spadekMufa = editPrzejscieState.spadekMufa;
 
-    const exec = (angle === 0 || angle === 360) ? 0 : (360 - angle);
-    const gons = (angle * 400 / 360).toFixed(2);
+    const exec = angle === 0 || angle === 360 ? 0 : 360 - angle;
+    const gons = ((angle * 400) / 360).toFixed(2);
 
     well.przejscia[index] = {
         productId: newProductId,
@@ -3487,8 +4097,8 @@ function editUpdateAngles(index) {
     const el = document.getElementById('edit-angle-' + index);
     if (!el) return;
     const angle = parseFloat(el.value) || 0;
-    const exec = (angle === 0 || angle === 360) ? 0 : (360 - angle);
-    const gons = (angle * 400 / 360).toFixed(2);
+    const exec = angle === 0 || angle === 360 ? 0 : 360 - angle;
+    const gons = ((angle * 400) / 360).toFixed(2);
     const execEl = document.getElementById('edit-exec-' + index);
     const gonyEl = document.getElementById('edit-gony-' + index);
     if (execEl) execEl.textContent = exec + '°';
@@ -3500,11 +4110,15 @@ function editChangePrzejscieType(index) {
     const dnSelect = document.getElementById('edit-dn-' + index);
     if (!typeSelect || !dnSelect) return;
     const newType = typeSelect.value;
-    const przejsciaProducts = studnieProducts.filter(pr => pr.componentType === 'przejscie' && pr.category === newType);
-    dnSelect.innerHTML = przejsciaProducts.map(pr => {
-        const dnLbl = (typeof pr.dn === 'string' && pr.dn.includes('/')) ? pr.dn : 'DN' + pr.dn;
-        return `<option value="${pr.id}">${dnLbl} — ${fmtInt(pr.price)} PLN</option>`;
-    }).join('');
+    const przejsciaProducts = studnieProducts.filter(
+        (pr) => pr.componentType === 'przejscie' && pr.category === newType
+    );
+    dnSelect.innerHTML = przejsciaProducts
+        .map((pr) => {
+            const dnLbl = typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
+            return `<option value="${pr.id}">${dnLbl} — ${fmtInt(pr.price)} PLN</option>`;
+        })
+        .join('');
 }
 
 window.editPrzejscie = editPrzejscie;
@@ -3529,8 +4143,10 @@ function toggleCard(contentId, iconId) {
 function switchBuilderTab(tab) {
     document.getElementById('btab-concrete').classList.toggle('active', tab === 'concrete');
     document.getElementById('btab-transitions').classList.toggle('active', tab === 'transitions');
-    document.getElementById('bcontent-concrete').style.display = tab === 'concrete' ? 'block' : 'none';
-    document.getElementById('bcontent-transitions').style.display = tab === 'transitions' ? 'block' : 'none';
+    document.getElementById('bcontent-concrete').style.display =
+        tab === 'concrete' ? 'block' : 'none';
+    document.getElementById('bcontent-transitions').style.display =
+        tab === 'transitions' ? 'block' : 'none';
 
     if (tab === 'transitions') {
         renderInlinePrzejsciaApp();
@@ -3543,8 +4159,8 @@ let visiblePrzejsciaTypes = new Set(); // By default, all types are hidden
 
 /* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
 function openPrzejsciaVisibilityPopup(containerId) {
-    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+    const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
 
     // Create overlay
     let overlay = document.getElementById('przejscia-visibility-overlay');
@@ -3558,19 +4174,23 @@ function openPrzejsciaVisibilityPopup(containerId) {
         display:flex; align-items:center; justify-content:center;
         animation: fadeInOverlay 0.2s ease;
     `;
-    overlay.onclick = (e) => { if (e.target === overlay) closePrzejsciaVisibilityPopup(containerId); };
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closePrzejsciaVisibilityPopup(containerId);
+    };
 
-    const visibleCount = allTypes.filter(t => visiblePrzejsciaTypes.has(t)).length;
+    const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
-    let tilesHtml = allTypes.map(t => {
-        const isVisible = visiblePrzejsciaTypes.has(t);
-        return `
+    let tilesHtml = allTypes
+        .map((t) => {
+            const isVisible = visiblePrzejsciaTypes.has(t);
+            return `
             <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}" 
                  onclick="togglePrzejsciaTypeVisibility('${t.replace(/'/g, "\\\\'")}')"
                  title="${t}">
                 <div class="przejscia-vis-tile-name">${t}</div>
             </div>`;
-    }).join('');
+        })
+        .join('');
 
     overlay.innerHTML = `
         <div class="przejscia-vis-popup">
@@ -3597,7 +4217,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     ctx.font = '700 0.85rem Inter, sans-serif';
-    const maxTextWidth = Math.max(...allTypes.map(n => ctx.measureText(n).width));
+    const maxTextWidth = Math.max(...allTypes.map((n) => ctx.measureText(n).width));
     const tileMinW = Math.ceil(maxTextWidth + 24); // +24 for padding
     const gridEl = overlay.querySelector('.przejscia-vis-grid');
     if (gridEl) gridEl.style.setProperty('--tile-min-w', tileMinW + 'px');
@@ -3619,10 +4239,10 @@ function togglePrzejsciaTypeVisibility(type) {
 }
 
 function setPrzejsciaVisibilityAll(visible) {
-    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))];
+    const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))];
     if (visible) {
-        allTypes.forEach(t => visiblePrzejsciaTypes.add(t));
+        allTypes.forEach((t) => visiblePrzejsciaTypes.add(t));
     } else {
         visiblePrzejsciaTypes.clear();
     }
@@ -3633,20 +4253,21 @@ function refreshPrzejsciaVisibilityTiles() {
     const overlay = document.getElementById('przejscia-visibility-overlay');
     if (!overlay) return;
 
-    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
-    const visibleCount = allTypes.filter(t => visiblePrzejsciaTypes.has(t)).length;
+    const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
+    const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
     // Update counter text
     const counterEl = overlay.querySelector('.przejscia-vis-counter');
-    if (counterEl) counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
+    if (counterEl)
+        counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
 
     // Status server ping
     checkBackendStatus();
 
     // Update each tile in-place
     const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
-    tiles.forEach(tile => {
+    tiles.forEach((tile) => {
         const type = tile.getAttribute('title');
         const isVisible = visiblePrzejsciaTypes.has(type);
         tile.classList.toggle('visible', isVisible);
@@ -3660,10 +4281,10 @@ window.togglePrzejsciaTypeVisibility = togglePrzejsciaTypeVisibility;
 window.setPrzejsciaVisibilityAll = setPrzejsciaVisibilityAll;
 
 function renderInlinePrzejsciaApp(containerId) {
-    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+    const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
     // Filter to only visible types
-    const types = allTypes.filter(t => visiblePrzejsciaTypes.has(t));
+    const types = allTypes.filter((t) => visiblePrzejsciaTypes.has(t));
 
     const container = document.getElementById(containerId || 'inline-przejscia-app');
     if (!container) return;
@@ -3678,7 +4299,8 @@ function renderInlinePrzejsciaApp(containerId) {
     }
 
     const hiddenCount = allTypes.length - types.length;
-    const visibilityBtnLabel = hiddenCount > 0 ? `👁️ Pokaż/Ukryj (${hiddenCount} ukrytych)` : '👁️ Pokaż/Ukryj';
+    const visibilityBtnLabel =
+        hiddenCount > 0 ? `👁️ Pokaż/Ukryj (${hiddenCount} ukrytych)` : '👁️ Pokaż/Ukryj';
 
     // If no types visible, show empty state
     if (types.length === 0) {
@@ -3695,8 +4317,14 @@ function renderInlinePrzejsciaApp(containerId) {
         return;
     }
 
-    const dnList = inlinePrzejsciaState.type ? przejsciaProducts.filter(p => p.category === inlinePrzejsciaState.type).sort((a, b) => a.dn - b.dn) : [];
-    const selectedProduct = inlinePrzejsciaState.dnId ? studnieProducts.find(p => p.id === inlinePrzejsciaState.dnId) : null;
+    const dnList = inlinePrzejsciaState.type
+        ? przejsciaProducts
+              .filter((p) => p.category === inlinePrzejsciaState.type)
+              .sort((a, b) => a.dn - b.dn)
+        : [];
+    const selectedProduct = inlinePrzejsciaState.dnId
+        ? studnieProducts.find((p) => p.id === inlinePrzejsciaState.dnId)
+        : null;
 
     container.innerHTML = `
         <!-- Rodzaj tiles - scrollable grid -->
@@ -3707,9 +4335,10 @@ function renderInlinePrzejsciaApp(containerId) {
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(99,102,241,0.4) transparent;">
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
-                    ${types.map(t => {
-        const isActive = t === inlinePrzejsciaState.type;
-        return `
+                    ${types
+                        .map((t) => {
+                            const isActive = t === inlinePrzejsciaState.type;
+                            return `
                         <div onclick="window.inlineSetType('${t}', '${containerId || ''}')" 
                              style="padding:0.2rem 0.4rem; border-radius:6px; cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
                                     background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'};
@@ -3718,9 +4347,10 @@ function renderInlinePrzejsciaApp(containerId) {
                              onmouseenter="if(!${isActive})this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.3)'"
                              onmouseleave="if(!${isActive})this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)'"
                              title="${t}">
-                            <div style="font-size:${t.length > 20 ? '9px' : (t.length > 14 ? '11px' : '14px')}; font-weight:700; color:${isActive ? '#a78bfa' : 'var(--text-primary)'}; text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
+                            <div style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight:700; color:${isActive ? '#a78bfa' : 'var(--text-primary)'}; text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
                         </div>`;
-    }).join('')}
+                        })
+                        .join('')}
                 </div>
             </div>
         </div>
@@ -3729,10 +4359,12 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.3rem 0;">
             <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight:700;">Średnica (DN) — ${inlinePrzejsciaState.type || ''}</div>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
-                ${dnList.map(p => {
-        const isActive = p.id === inlinePrzejsciaState.dnId;
-        const dnLabel = (typeof p.dn === 'string' && p.dn.includes('/')) ? p.dn : ('DN ' + p.dn);
-        return `
+                ${dnList
+                    .map((p) => {
+                        const isActive = p.id === inlinePrzejsciaState.dnId;
+                        const dnLabel =
+                            typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
+                        return `
                     <div class="fs-dn-tile ${isActive ? 'active' : ''}" 
                          style="padding:0.2rem 0.4rem; text-align:center; cursor:pointer; border-radius:6px; height:44px; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;
                                 background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'};
@@ -3741,14 +4373,17 @@ function renderInlinePrzejsciaApp(containerId) {
                          onmouseenter="if(!${isActive}){this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.3)'}"
                          onmouseleave="if(!${isActive}){this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)'}"
                          onclick="window.inlineSetDN('${p.id}', '${containerId || ''}')">
-                        <div style="font-size:${dnLabel.length > 18 ? '9px' : (dnLabel.length > 13 ? '11px' : '15px')}; font-weight:800; color:${isActive ? '#a78bfa' : 'var(--text-primary)'}; text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
+                        <div style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight:800; color:${isActive ? '#a78bfa' : 'var(--text-primary)'}; text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
                     </div>
                 `;
-    }).join('')}
+                    })
+                    .join('')}
             </div>
         </div>
 
-        ${selectedProduct ? `
+        ${
+            selectedProduct
+                ? `
         <div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid rgba(59,130,246,0.6); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <span style="font-size:1.0rem; font-weight:800; color:#fff;">🔗 ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
@@ -3785,25 +4420,34 @@ function renderInlinePrzejsciaApp(containerId) {
                 </div>
             </div>
         </div>
-        ` : `
+        `
+                : `
         <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.06); border-radius:8px; font-size:0.7rem; margin-top:0.3rem;">
             Wybierz średnicę (DN) aby skonfigurować przejście
         </div>
-        `}
+        `
+        }
     `;
 
     if (inlinePrzejsciaState.dnId) window.inlineUpdateAngles(containerId || 'main');
 }
 
-window.inlineSetType = (t, containerId = '') => { inlinePrzejsciaState.type = t; inlinePrzejsciaState.dnId = null; renderInlinePrzejsciaApp(containerId); };
-window.inlineSetDN = (id, containerId = '') => { inlinePrzejsciaState.dnId = id; renderInlinePrzejsciaApp(containerId); };
+window.inlineSetType = (t, containerId = '') => {
+    inlinePrzejsciaState.type = t;
+    inlinePrzejsciaState.dnId = null;
+    renderInlinePrzejsciaApp(containerId);
+};
+window.inlineSetDN = (id, containerId = '') => {
+    inlinePrzejsciaState.dnId = id;
+    renderInlinePrzejsciaApp(containerId);
+};
 
 window.inlineUpdateAngles = (contextId = 'main') => {
     const el = document.getElementById(`inl-angle-${contextId}`);
     if (!el) return;
     const angle = parseFloat(el.value) || 0;
-    const exec = (angle === 0 || angle === 360) ? 0 : (360 - angle);
-    const gons = (angle * 400 / 360).toFixed(2);
+    const exec = angle === 0 || angle === 360 ? 0 : 360 - angle;
+    const gons = ((angle * 400) / 360).toFixed(2);
 
     const execEl = document.getElementById(`inl-exec-${contextId}`);
     const gonyEl = document.getElementById(`inl-gony-${contextId}`);
@@ -3812,8 +4456,14 @@ window.inlineUpdateAngles = (contextId = 'main') => {
 };
 
 window.inlineFinish = (contextId = 'main', containerId = '') => {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const id = inlinePrzejsciaState.dnId;
     if (!id) return;
 
@@ -3824,20 +4474,23 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     const spadekMufaEl = document.getElementById(`inl-spadek-mufa-${contextId}`);
 
     const rzedna = rzednaEl ? rzednaEl.value : '';
-    const angle = angleEl ? (parseFloat(angleEl.value) || 0) : 0;
+    const angle = angleEl ? parseFloat(angleEl.value) || 0 : 0;
 
     const spadekKineta = spadekKinetaEl ? spadekKinetaEl.value.trim() : '';
     const spadekMufa = spadekMufaEl ? spadekMufaEl.value.trim() : '';
 
-    const exec = (angle === 0 || angle === 360) ? 0 : (360 - angle);
-    const gons = (angle * 400 / 360).toFixed(2);
+    const exec = angle === 0 || angle === 360 ? 0 : 360 - angle;
+    const gons = ((angle * 400) / 360).toFixed(2);
 
     const well = getCurrentWell();
-    if (!well) { showToast('Najpierw dodaj studnię', 'error'); return; }
+    if (!well) {
+        showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
     if (!well.przejscia) well.przejscia = [];
 
     const isFirst = well.przejscia ? well.przejscia.length === 0 : true;
-    const flowType = (isFirst && angle === 0) ? 'wylot' : 'wlot';
+    const flowType = isFirst && angle === 0 ? 'wylot' : 'wlot';
 
     well.przejscia.push({
         id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -3860,8 +4513,14 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
 };
 
 window.openFlowTypePopup = function (index) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
@@ -3905,18 +4564,24 @@ window.openFlowTypePopup = function (index) {
     };
 };
 
-window.openChangePrzejscieTypePopup = function(index) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+window.openChangePrzejscieTypePopup = function (index) {
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
     const currTypeId = well.przejscia[index].productId;
-    const currProduct = studnieProducts.find(p => p.id === currTypeId);
+    const currProduct = studnieProducts.find((p) => p.id === currTypeId);
     if (!currProduct) return;
 
-    const przejsciaProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const allTypes = [...new Set(przejsciaProducts.map(p => p.category))].sort();
+    const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
 
     let modal = document.getElementById('change-prz-type-modal');
     if (!modal) {
@@ -3924,15 +4589,16 @@ window.openChangePrzejscieTypePopup = function(index) {
         modal.id = 'change-prz-type-modal';
         document.body.appendChild(modal);
     }
-    
+
     modal.innerHTML = `
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">
        <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
            <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Zmień rodzaj przejścia</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
-              ${allTypes.map(t => {
-                  const isActive = t === currProduct.category;
-                  return `<button onclick="window.confirmChangePrzejscieType(${index}, '${t}')" 
+              ${allTypes
+                  .map((t) => {
+                      const isActive = t === currProduct.category;
+                      return `<button onclick="window.confirmChangePrzejscieType(${index}, '${t}')" 
                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
                                  background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'};
                                  border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'};
@@ -3941,7 +4607,8 @@ window.openChangePrzejscieTypePopup = function(index) {
                           onmouseleave="this.style.background='${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'}';this.style.borderColor='${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'}'">
                        ${t}
                    </button>`;
-              }).join('')}
+                  })
+                  .join('')}
            </div>
            <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">Anuluj</button>
        </div>
@@ -3950,12 +4617,14 @@ window.openChangePrzejscieTypePopup = function(index) {
     modal.style.display = 'flex';
 };
 
-window.confirmChangePrzejscieType = function(index, newType) {
+window.confirmChangePrzejscieType = function (index, newType) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
-    
-    const available = studnieProducts.filter(p => p.category === newType).sort((a,b) => a.dn - b.dn);
-    if(available.length > 0) {
+
+    const available = studnieProducts
+        .filter((p) => p.category === newType)
+        .sort((a, b) => a.dn - b.dn);
+    if (available.length > 0) {
         well.przejscia[index].productId = available[0].id;
         document.getElementById('change-prz-type-modal').style.display = 'none';
         refreshAll();
@@ -3965,17 +4634,25 @@ window.confirmChangePrzejscieType = function(index, newType) {
     }
 };
 
-window.openChangePrzejscieDnPopup = function(index) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+window.openChangePrzejscieDnPopup = function (index) {
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
     const currId = well.przejscia[index].productId;
-    const currProduct = studnieProducts.find(p => p.id === currId);
+    const currProduct = studnieProducts.find((p) => p.id === currId);
     if (!currProduct) return;
 
-    const available = studnieProducts.filter(p => p.category === currProduct.category).sort((a,b) => a.dn - b.dn);
+    const available = studnieProducts
+        .filter((p) => p.category === currProduct.category)
+        .sort((a, b) => a.dn - b.dn);
 
     let modal = document.getElementById('change-prz-dn-modal');
     if (!modal) {
@@ -3983,16 +4660,18 @@ window.openChangePrzejscieDnPopup = function(index) {
         modal.id = 'change-prz-dn-modal';
         document.body.appendChild(modal);
     }
-    
+
     modal.innerHTML = `
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
        <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
            <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz średnicę (DN): ${currProduct.category}</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
-              ${available.map(p => {
-                  const isActive = p.id === currId;
-                  const dnLabel = (typeof p.dn === 'string' && p.dn.includes('/')) ? p.dn : ('DN ' + p.dn);
-                  return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${p.id}')" 
+              ${available
+                  .map((p) => {
+                      const isActive = p.id === currId;
+                      const dnLabel =
+                          typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
+                      return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${p.id}')" 
                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
                                  background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'};
                                  border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'};
@@ -4001,7 +4680,8 @@ window.openChangePrzejscieDnPopup = function(index) {
                           onmouseleave="this.style.background='${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'}';this.style.borderColor='${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'}'">
                        ${dnLabel}
                    </button>`;
-              }).join('')}
+                  })
+                  .join('')}
            </div>
            <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">Anuluj</button>
        </div>
@@ -4010,10 +4690,10 @@ window.openChangePrzejscieDnPopup = function(index) {
     modal.style.display = 'flex';
 };
 
-window.confirmChangePrzejscieDn = function(index, newProductId) {
+window.confirmChangePrzejscieDn = function (index, newProductId) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
-    
+
     well.przejscia[index].productId = newProductId;
     document.getElementById('change-prz-dn-modal').style.display = 'none';
     refreshAll();
@@ -4023,8 +4703,14 @@ window.confirmChangePrzejscieDn = function(index, newProductId) {
 };
 
 function removePrzejscieFromWell(index) {
-    if (isOfferLocked()) { showToast(OFFER_LOCKED_MSG, 'error'); return; }
-    if (isWellLocked()) { showToast(WELL_LOCKED_MSG, 'error'); return; }
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const well = getCurrentWell();
     if (!well) return;
     if (well.przejscia) {
@@ -4034,7 +4720,6 @@ function removePrzejscieFromWell(index) {
         window.refreshZleceniaModalIfActive();
     }
 }
-
 
 /* ===== SUMMARY ===== */
 function updateSummary() {
@@ -4052,7 +4737,10 @@ function updateSummary() {
         const wsPrice = document.getElementById('ws-price');
         if (wsHeight) wsHeight.textContent = '0 mm';
         if (wsReq) wsReq.textContent = '—';
-        if (wsDiff) { wsDiff.textContent = '—'; wsDiff.style.color = 'var(--text-muted)'; }
+        if (wsDiff) {
+            wsDiff.textContent = '—';
+            wsDiff.style.color = 'var(--text-muted)';
+        }
         if (wsPrice) wsPrice.textContent = '0';
 
         updateHeightIndicator();
@@ -4072,7 +4760,11 @@ function updateSummary() {
     let diffColor = 'var(--text-muted)';
 
     const rzWlazu = parseFloat(well.rzednaWlazu);
-    const rzDna = isNaN(parseFloat(well.rzednaDna)) ? (isNaN(rzWlazu) ? NaN : 0) : parseFloat(well.rzednaDna);
+    const rzDna = isNaN(parseFloat(well.rzednaDna))
+        ? isNaN(rzWlazu)
+            ? NaN
+            : 0
+        : parseFloat(well.rzednaDna);
 
     if (!isNaN(rzWlazu) && !isNaN(rzDna) && rzWlazu > rzDna) {
         const reqMm = Math.round((rzWlazu - rzDna) * 1000);
@@ -4108,8 +4800,6 @@ function updateSummary() {
     updateHeightIndicator();
 }
 
-
-
 /* ===== GLOBAL RECALCULATOR ===== */
 window.openGlobalRecalcModal = function () {
     if (!wells || wells.length === 0) {
@@ -4117,32 +4807,49 @@ window.openGlobalRecalcModal = function () {
         return;
     }
 
-    const uniqueDns = [...new Set(wells.map(w => w.dn))].sort((a, b) => a - b);
+    const uniqueDns = [...new Set(wells.map((w) => w.dn))].sort((a, b) => a - b);
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'global-recalc-modal';
 
     // We will build a UI for each DN
-    let groupsHtml = uniqueDns.map(dn => {
-        const exampleMag = wells[0]?.magazyn || 'Kluczbork';
-        // Get all products that can be used for closures
-        const availForDn = studnieProducts.filter(p => p.dn === dn && ((exampleMag === 'Włocławek' && p.magazynWL === 1) || (exampleMag !== 'Włocławek' && p.magazynKLB === 1)));
+    let groupsHtml = uniqueDns
+        .map((dn) => {
+            const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+            // Get all products that can be used for closures
+            const availForDn = studnieProducts.filter(
+                (p) =>
+                    p.dn === dn &&
+                    ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
+                        (exampleMag !== 'Włocławek' && p.magazynKLB === 1))
+            );
 
-        const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
-        const candidates = availForDn.filter(p => topClosureTypes.includes(p.componentType));
-        const canReduce = [1200, 1500, 2000, 2500].includes(dn);
+            const topClosureTypes = [
+                'konus',
+                'plyta_din',
+                'plyta_najazdowa',
+                'plyta_zamykajaca',
+                'pierscien_odciazajacy'
+            ];
+            const candidates = availForDn.filter((p) => topClosureTypes.includes(p.componentType));
+            const canReduce = [1200, 1500, 2000, 2500].includes(dn);
 
-        let topTiles = candidates.map(p => `
+            let topTiles = candidates
+                .map(
+                    (p) => `
             <div class="fs-dn-tile" id="recalc-top-${dn}-${p.id}"
                  style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                  onclick="window.recalcSelectTop(${dn}, '${p.id}')">
                 <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
             </div>
-        `).join('');
+        `
+                )
+                .join('');
 
-        // Auto Konus as default tile
-        topTiles = `
+            // Auto Konus as default tile
+            topTiles =
+                `
             <div class="fs-dn-tile active" id="recalc-top-${dn}-auto"
                  style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                  onclick="window.recalcSelectTop(${dn}, 'auto')">
@@ -4150,19 +4857,30 @@ window.openGlobalRecalcModal = function () {
             </div>
         ` + topTiles;
 
-        let reductionHtml = '';
-        if (canReduce) {
-            const dn1000Candidates = studnieProducts.filter(p => p.dn === 1000 && topClosureTypes.includes(p.componentType) && ((exampleMag === 'Włocławek' && p.magazynWL === 1) || (exampleMag !== 'Włocławek' && p.magazynKLB === 1)));
+            let reductionHtml = '';
+            if (canReduce) {
+                const dn1000Candidates = studnieProducts.filter(
+                    (p) =>
+                        p.dn === 1000 &&
+                        topClosureTypes.includes(p.componentType) &&
+                        ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
+                            (exampleMag !== 'Włocławek' && p.magazynKLB === 1))
+                );
 
-            let redTiles = dn1000Candidates.map(p => `
+                let redTiles = dn1000Candidates
+                    .map(
+                        (p) => `
                 <div class="fs-dn-tile fs-red-tile-${dn}" id="recalc-redtop-${dn}-${p.id}"
                      style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                      onclick="window.recalcSelectRedTop(${dn}, '${p.id}')">
                     <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
                 </div>
-            `).join('');
+            `
+                    )
+                    .join('');
 
-            redTiles = `
+                redTiles =
+                    `
                 <div class="fs-dn-tile active fs-red-tile-${dn}" id="recalc-redtop-${dn}-auto"
                      style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                      onclick="window.recalcSelectRedTop(${dn}, 'auto')">
@@ -4170,7 +4888,7 @@ window.openGlobalRecalcModal = function () {
                 </div>
             ` + redTiles;
 
-            reductionHtml = `
+                reductionHtml = `
             <div style="margin-top:0.6rem;">
                 <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; cursor:pointer;">
                     <input type="checkbox" id="recalc-use-red-${dn}" onchange="window.recalcToggleRed(${dn})" />
@@ -4187,11 +4905,11 @@ window.openGlobalRecalcModal = function () {
                     </div>
                 </div>
             </div>`;
-        }
+            }
 
-        return `
+            return `
         <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:8px; padding:0.8rem; margin-bottom:0.8rem;" class="recalc-group" data-dn="${dn}">
-            <h4 style="margin-top:0; margin-bottom:0.6rem; color:var(--accent); font-size:0.9rem;">Studnie DN ${dn} <span style="font-size:0.65rem; color:var(--text-muted); font-weight:normal;">(${wells.filter(w => w.dn === dn).length} szt.)</span></h4>
+            <h4 style="margin-top:0; margin-bottom:0.6rem; color:var(--accent); font-size:0.9rem;">Studnie DN ${dn} <span style="font-size:0.65rem; color:var(--text-muted); font-weight:normal;">(${wells.filter((w) => w.dn === dn).length} szt.)</span></h4>
             <div style="font-size:0.65rem; margin-bottom:0.3rem; color:var(--text-muted);">Zakończenie główne:</div>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:0.3rem;" id="recalc-top-tiles-${dn}">
                 ${topTiles}
@@ -4201,7 +4919,8 @@ window.openGlobalRecalcModal = function () {
             <input type="hidden" id="recalc-choice-redtop-${dn}" value="auto" />
         </div>
         `;
-    }).join('');
+        })
+        .join('');
 
     overlay.innerHTML = `
     <div class="modal" style="width:700px; max-width:95vw; background:#111827;">
@@ -4228,7 +4947,7 @@ window.closeGlobalRecalcModal = function () {
 window.recalcSelectTop = function (dn, id) {
     document.getElementById(`recalc-choice-top-${dn}`).value = id;
     const tiles = document.querySelectorAll(`#recalc-top-tiles-${dn} .fs-dn-tile`);
-    tiles.forEach(t => {
+    tiles.forEach((t) => {
         t.classList.remove('active');
         t.style.borderColor = 'var(--border)';
     });
@@ -4240,7 +4959,7 @@ window.recalcSelectTop = function (dn, id) {
 window.recalcSelectRedTop = function (dn, id) {
     document.getElementById(`recalc-choice-redtop-${dn}`).value = id;
     const tiles = document.querySelectorAll(`.fs-red-tile-${dn}`);
-    tiles.forEach(t => {
+    tiles.forEach((t) => {
         t.classList.remove('active');
         t.style.borderColor = 'var(--border)';
     });
@@ -4265,10 +4984,10 @@ window.applyGlobalRecalc = async function () {
     }
 
     try {
-        const uniqueDns = [...new Set(wells.map(w => w.dn))];
+        const uniqueDns = [...new Set(wells.map((w) => w.dn))];
         const prefs = {};
 
-        uniqueDns.forEach(dn => {
+        uniqueDns.forEach((dn) => {
             const topId = document.getElementById(`recalc-choice-top-${dn}`)?.value || 'auto';
             const useRed = document.getElementById(`recalc-use-red-${dn}`)?.checked || false;
             let redTopId = 'auto';
@@ -4319,4 +5038,3 @@ window.applyGlobalRecalc = async function () {
         }
     }
 };
-

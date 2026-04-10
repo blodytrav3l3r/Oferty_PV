@@ -15,70 +15,72 @@ const LEGACY_TABLE = 'products_rury_rel';
  * kopiuje dane ze starej tabeli relacyjnej products_rury_rel.
  */
 async function migrateFromLegacyIfNeeded(): Promise<void> {
-  try {
-    const existing = await prisma.settings.findUnique({
-      where: { key: KEY_CURRENT },
-    });
-    if (existing) return; // już zmigrowane
-
-    // Sprawdź, czy stara tabela istnieje i ma dane
-    let rows: any[] = [];
     try {
-      rows = await (prisma as any)[LEGACY_TABLE].findMany();
-    } catch (_e) {
-      // Tabela nie istnieje — brak danych do migracji
-      return;
-    }
-
-    if (rows.length === 0) return;
-
-    // Spłaszcz kolumnę data JSON do głównego obiektu
-    const products = rows.map((row: any) => {
-      let extra = {};
-      try {
-        if (row.data) extra = JSON.parse(row.data);
-      } catch (_e) {}
-      const { data, ...rest } = row;
-      return { ...rest, ...extra };
-    });
-
-    const json = JSON.stringify(products);
-    try {
-      await prisma.settings.update({
-        where: { key: KEY_CURRENT },
-        data: { value: json },
-      });
-    } catch {
-      await prisma.settings.create({
-        data: { key: KEY_CURRENT, value: json },
-      });
-    }
-    console.log(`[Migracja] Przeniesiono ${products.length} produktów rur do nowego formatu JSON.`);
-  } catch (err: any) {
-    console.error('[Migracja rury] Błąd:', err.message);
-  }
-
-  // Migracja starych wartości fabrycznych (klucz 'default_rury' → KEY_DEFAULT)
-  try {
-    const oldDefault = await prisma.settings.findUnique({
-      where: { key: 'default_rury' },
-    });
-    if (oldDefault && oldDefault.value) {
-      const existingNew = await prisma.settings.findUnique({
-        where: { key: KEY_DEFAULT },
-      });
-      if (!existingNew) {
-        await prisma.settings.upsert({
-          where: { key: KEY_DEFAULT },
-          update: { value: oldDefault.value },
-          create: { key: KEY_DEFAULT, value: oldDefault.value },
+        const existing = await prisma.settings.findUnique({
+            where: { key: KEY_CURRENT }
         });
-        console.log('[Migracja] Przeniesiono wartości fabryczne rur do nowego klucza.');
-      }
+        if (existing) return; // już zmigrowane
+
+        // Sprawdź, czy stara tabela istnieje i ma dane
+        let rows: any[] = [];
+        try {
+            rows = await (prisma as any)[LEGACY_TABLE].findMany();
+        } catch (_e) {
+            // Tabela nie istnieje — brak danych do migracji
+            return;
+        }
+
+        if (rows.length === 0) return;
+
+        // Spłaszcz kolumnę data JSON do głównego obiektu
+        const products = rows.map((row: any) => {
+            let extra = {};
+            try {
+                if (row.data) extra = JSON.parse(row.data);
+            } catch (_e) {}
+            const { data, ...rest } = row;
+            return { ...rest, ...extra };
+        });
+
+        const json = JSON.stringify(products);
+        try {
+            await prisma.settings.update({
+                where: { key: KEY_CURRENT },
+                data: { value: json }
+            });
+        } catch {
+            await prisma.settings.create({
+                data: { key: KEY_CURRENT, value: json }
+            });
+        }
+        console.log(
+            `[Migracja] Przeniesiono ${products.length} produktów rur do nowego formatu JSON.`
+        );
+    } catch (err: any) {
+        console.error('[Migracja rury] Błąd:', err.message);
     }
-  } catch (err: any) {
-    console.error('[Migracja default_rury] Błąd:', err.message);
-  }
+
+    // Migracja starych wartości fabrycznych (klucz 'default_rury' → KEY_DEFAULT)
+    try {
+        const oldDefault = await prisma.settings.findUnique({
+            where: { key: 'default_rury' }
+        });
+        if (oldDefault && oldDefault.value) {
+            const existingNew = await prisma.settings.findUnique({
+                where: { key: KEY_DEFAULT }
+            });
+            if (!existingNew) {
+                await prisma.settings.upsert({
+                    where: { key: KEY_DEFAULT },
+                    update: { value: oldDefault.value },
+                    create: { key: KEY_DEFAULT, value: oldDefault.value }
+                });
+                console.log('[Migracja] Przeniesiono wartości fabryczne rur do nowego klucza.');
+            }
+        }
+    } catch (err: any) {
+        console.error('[Migracja default_rury] Błąd:', err.message);
+    }
 }
 
 // Uruchom migrację przy starcie
@@ -88,86 +90,86 @@ migrateFromLegacyIfNeeded();
 // GET /api/products → Pobiera bieżący cennik rur
 // ──────────────────────────────────────────
 router.get('/', async (_req, res) => {
-  try {
-    const row = await prisma.settings.findUnique({
-      where: { key: KEY_CURRENT },
-    });
-    const data = row ? JSON.parse(row.value || '[]') : [];
-    res.json({ data });
-  } catch (err: any) {
-    console.error('[GET /api/products] Błąd:', err.message);
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const row = await prisma.settings.findUnique({
+            where: { key: KEY_CURRENT }
+        });
+        const data = row ? JSON.parse(row.value || '[]') : [];
+        res.json({ data });
+    } catch (err: any) {
+        console.error('[GET /api/products] Błąd:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ──────────────────────────────────────────
 // PUT /api/products → Zapisuje bieżący cennik rur
 // ──────────────────────────────────────────
 router.put('/', requireAuth as any, async (req, res) => {
-  try {
-    const arr = req.body.data;
-    if (!Array.isArray(arr)) {
-      return res.status(400).json({ error: 'Dane muszą być tablicą' });
-    }
-
-    const json = JSON.stringify(arr);
     try {
-      await prisma.settings.update({
-        where: { key: KEY_CURRENT },
-        data: { value: json },
-      });
-    } catch {
-      await prisma.settings.create({
-        data: { key: KEY_CURRENT, value: json },
-      });
-    }
+        const arr = req.body.data;
+        if (!Array.isArray(arr)) {
+            return res.status(400).json({ error: 'Dane muszą być tablicą' });
+        }
 
-    res.json({ ok: true, count: arr.length });
-  } catch (err: any) {
-    console.error('[PUT /api/products] Błąd:', err.message);
-    res.status(500).json({ error: err.message });
-  }
+        const json = JSON.stringify(arr);
+        try {
+            await prisma.settings.update({
+                where: { key: KEY_CURRENT },
+                data: { value: json }
+            });
+        } catch {
+            await prisma.settings.create({
+                data: { key: KEY_CURRENT, value: json }
+            });
+        }
+
+        res.json({ ok: true, count: arr.length });
+    } catch (err: any) {
+        console.error('[PUT /api/products] Błąd:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ──────────────────────────────────────────
 // GET /api/products/default → Pobiera wartości fabryczne rur
 // ──────────────────────────────────────────
 router.get('/default', async (_req, res) => {
-  try {
-    const row = await prisma.settings.findUnique({
-      where: { key: KEY_DEFAULT },
-    });
-    const data = row ? JSON.parse(row.value || '[]') : [];
-    res.json({ data });
-  } catch (err: any) {
-    console.error('[GET /api/products/default] Błąd:', err.message);
-    res.json({ data: [] });
-  }
+    try {
+        const row = await prisma.settings.findUnique({
+            where: { key: KEY_DEFAULT }
+        });
+        const data = row ? JSON.parse(row.value || '[]') : [];
+        res.json({ data });
+    } catch (err: any) {
+        console.error('[GET /api/products/default] Błąd:', err.message);
+        res.json({ data: [] });
+    }
 });
 
 // ──────────────────────────────────────────
 // PUT /api/products/default → Zapisuje wartości fabryczne rur
 // ──────────────────────────────────────────
 router.put('/default', requireAuth as any, async (req, res) => {
-  try {
-    const arr = req.body.data || [];
-    const json = JSON.stringify(arr);
     try {
-      await prisma.settings.update({
-        where: { key: KEY_DEFAULT },
-        data: { value: json },
-      });
-    } catch {
-      await prisma.settings.create({
-        data: { key: KEY_DEFAULT, value: json },
-      });
-    }
+        const arr = req.body.data || [];
+        const json = JSON.stringify(arr);
+        try {
+            await prisma.settings.update({
+                where: { key: KEY_DEFAULT },
+                data: { value: json }
+            });
+        } catch {
+            await prisma.settings.create({
+                data: { key: KEY_DEFAULT, value: json }
+            });
+        }
 
-    res.json({ ok: true, count: arr.length });
-  } catch (err: any) {
-    console.error('[PUT /api/products/default] Błąd:', err.message);
-    res.status(500).json({ error: err.message });
-  }
+        res.json({ ok: true, count: arr.length });
+    } catch (err: any) {
+        console.error('[PUT /api/products/default] Błąd:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 export default router;

@@ -1,7 +1,7 @@
 /* ===== WIZARD ===== */
 function goToWizardStep(step) {
     currentWizardStep = step;
-    document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
     const target = document.getElementById('wizard-step-' + step);
     if (target) target.classList.add('active');
     updateWizardIndicator();
@@ -41,7 +41,10 @@ function wizardNavStep(targetStep) {
     } else if (targetStep === 3) {
         // Always validate before allowing navigation to step 3
         if (!validateWizardStep2()) {
-            showToast('Wybierz opcję w każdej grupie parametrów przed przejściem do konfiguracji', 'error');
+            showToast(
+                'Wybierz opcję w każdej grupie parametrów przed przejściem do konfiguracji',
+                'error'
+            );
             // If user tried to jump from step 1 directly to 3, take them to step 2 instead
             if (currentWizardStep === 1) goToWizardStep(2);
             return;
@@ -58,7 +61,7 @@ function getActiveTileValue(paramName) {
 }
 
 function validateWizardStep2() {
-    const allConfirmed = WIZARD_REQUIRED_PARAMS.every(p => wizardConfirmedParams.has(p));
+    const allConfirmed = WIZARD_REQUIRED_PARAMS.every((p) => wizardConfirmedParams.has(p));
 
     // Read painting values from DOM tiles (works even without a well)
     const malowanieWVal = getActiveTileValue('malowanieW');
@@ -107,13 +110,14 @@ function validateWizardStep2() {
         if (mcZInput) mcZInput.value = '';
     }
 
-    const isFullyValid = allConfirmed && powlokaWValid && powlokaZValid && malCenaWValid && malCenaZValid;
+    const isFullyValid =
+        allConfirmed && powlokaWValid && powlokaZValid && malCenaWValid && malCenaZValid;
 
     const nextBtn = document.getElementById('wizard-next-step2');
     if (nextBtn) nextBtn.disabled = !isFullyValid;
 
     // Update visual state of each param group wrapper
-    document.querySelectorAll('.wizard-param-group').forEach(wrapper => {
+    document.querySelectorAll('.wizard-param-group').forEach((wrapper) => {
         const param = wrapper.dataset.wizardParam;
         if (!param) return;
         const confirmed = wizardConfirmedParams.has(param);
@@ -131,7 +135,7 @@ function validateWizardStep2() {
 
 function updateWizardIndicator() {
     const dots = document.querySelectorAll('.wizard-step-dot');
-    dots.forEach(dot => {
+    dots.forEach((dot) => {
         const step = parseInt(dot.dataset.step);
         dot.classList.remove('active', 'completed');
         if (step === currentWizardStep) dot.classList.add('active');
@@ -181,13 +185,13 @@ function skipWizardToStep3() {
 /* ===== STORAGE (REST API) ===== */
 async function loadStudnieProducts() {
     function migrateProducts(arr) {
-        arr.forEach(p => {
+        arr.forEach((p) => {
             if (p.formaStandardowa == null) p.formaStandardowa = 1;
             if (p.formaStandardowaKLB == null) p.formaStandardowaKLB = 1;
-            
+
             // Fix corrupted categories from previous backend bug
             if (p.category === 'studnie' || !p.category) {
-                const def = DEFAULT_PRODUCTS_STUDNIE.find(dp => dp.id === p.id);
+                const def = DEFAULT_PRODUCTS_STUDNIE.find((dp) => dp.id === p.id);
                 if (def) p.category = def.category;
             }
 
@@ -207,11 +211,17 @@ async function loadStudnieProducts() {
         if (!saved || saved.length === 0) {
             const data = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS_STUDNIE));
             migrateProducts(data);
-            await fetch('/api/products-studnie', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ data }) });
+            await fetch('/api/products-studnie', {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ data })
+            });
             return data;
         }
         // Detect DN2500 seal bug before migration fixes it in-place
-        const hadDn2500Bug = saved.some(p => p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000);
+        const hadDn2500Bug = saved.some(
+            (p) => p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000
+        );
         const migrated = migrateProducts(saved);
         // Persist migration fixes (e.g. DN2500 seal dn correction) back to API
         if (hadDn2500Bug) {
@@ -226,9 +236,10 @@ async function loadStudnieProducts() {
 
 function renamePłyty(p) {
     if (p && p.name) {
-        p.name = p.name.replace(/Płyta Zamykająca/ig, 'Płyta Odciążająca')
-            .replace(/Płyta Najazdowa/ig, 'Płyta Odciążająca')
-            .replace(/Płyta Odciążająca/ig, 'Płyta + Pierścień odciążający');
+        p.name = p.name
+            .replace(/Płyta Zamykająca/gi, 'Płyta Odciążająca')
+            .replace(/Płyta Najazdowa/gi, 'Płyta Odciążająca')
+            .replace(/Płyta Odciążająca/gi, 'Płyta + Pierścień odciążający');
     }
 }
 
@@ -253,19 +264,21 @@ async function saveStudnieProducts(data) {
     }
 }
 
-
-
 /* ===== BACKEND STATUS CHECKER ===== */
 async function checkBackendStatus() {
     const indicators = [
         document.querySelector('#backend-status-indicator span'),
-        (window.parent !== window && window.parent.document) ? window.parent.document.querySelector('#backend-status-indicator span') : null
+        window.parent !== window && window.parent.document
+            ? window.parent.document.querySelector('#backend-status-indicator span')
+            : null
     ];
     try {
-        const response = await fetch(`http://${window.location.hostname}:8000/api/v1/sync/pull`, { method: 'GET' });
+        const response = await fetch(`http://${window.location.hostname}:8000/api/v1/sync/pull`, {
+            method: 'GET'
+        });
         if (response.ok) {
             isBackendOnline = true;
-            indicators.forEach(indicator => {
+            indicators.forEach((indicator) => {
                 if (indicator) {
                     indicator.style.background = '#4ade80'; // jasny zielony
                     indicator.style.boxShadow = '0 0 8px #4ade80';
@@ -273,11 +286,11 @@ async function checkBackendStatus() {
                 }
             });
         } else {
-            throw new Error("Backend response not ok");
+            throw new Error('Backend response not ok');
         }
     } catch (e) {
         isBackendOnline = false;
-        indicators.forEach(indicator => {
+        indicators.forEach((indicator) => {
             if (indicator) {
                 indicator.style.background = '#f87171'; // czerwony
                 indicator.style.boxShadow = '0 0 8px #f87171';

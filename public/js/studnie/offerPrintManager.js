@@ -11,21 +11,27 @@ function getWellZwienczenieName(well) {
     if (!well || !well.config) return '—';
 
     // Zgodnie z wytycznymi: Zwieńczenie to nie właz, tylko element pod nim (płyta, konus itp.)
-    const topTypes = ['konus', 'plyta_zamykajaca', 'plyta_najazdowa', 'plyta_din', 'pierscien_odciazajacy'];
-    const topItem = well.config.find(item => {
-        const p = studnieProducts.find(pr => pr.id === item.productId);
+    const topTypes = [
+        'konus',
+        'plyta_zamykajaca',
+        'plyta_najazdowa',
+        'plyta_din',
+        'pierscien_odciazajacy'
+    ];
+    const topItem = well.config.find((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
         return p && topTypes.includes(p.componentType);
     });
 
     if (!topItem) return '—';
 
-    const product = studnieProducts.find(p => p.id === topItem.productId);
+    const product = studnieProducts.find((p) => p.id === topItem.productId);
     if (!product) return '—';
 
     let name = product.name;
     // Usunięcie oznaczeń wysokości (np. h=200, H=250, (H=600mm), itp.)
     name = name.replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ').trim();
-    
+
     return name;
 }
 
@@ -37,7 +43,7 @@ function groupWellsByDiameter(wellsList) {
     const groups = new Map();
     const dnOrder = [1000, 1200, 1500, 2000, 2500, 'styczna'];
 
-    wellsList.forEach(well => {
+    wellsList.forEach((well) => {
         const key = well.dn;
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(well);
@@ -45,7 +51,7 @@ function groupWellsByDiameter(wellsList) {
 
     // Sortowanie wg ustalonej kolejności
     const sorted = new Map();
-    dnOrder.forEach(dn => {
+    dnOrder.forEach((dn) => {
         if (groups.has(dn)) sorted.set(dn, groups.get(dn));
     });
     // Nietypowe DN (failsafe)
@@ -82,7 +88,7 @@ function buildDiameterTableHtml(dn, wellsGroup, globalLpOffset, transportCostMap
     let groupTotal = 0;
     let lp = globalLpOffset;
 
-    wellsGroup.forEach(well => {
+    wellsGroup.forEach((well) => {
         const stats = calcWellStats(well);
         const transportCost = transportCostMap.get(well) || 0;
         const wellPrice = stats.price + transportCost;
@@ -122,7 +128,7 @@ function buildOfferSummaryHtml(summaries, totalNettoAll) {
         <h3>Podsumowanie oferty</h3>
         <table class="summary-table">`;
 
-    summaries.forEach(s => {
+    summaries.forEach((s) => {
         html += `<tr>
             <td class="text-center">${s.label}</td>
             <td class="text-center">${s.count} szt.</td>
@@ -169,7 +175,7 @@ function buildOfferNotesHtml(notes, paymentTerms, validity) {
  * Buduje blok danych klienta.
  */
 function buildClientInfoHtml() {
-    const getValue = id => document.getElementById(id)?.value?.trim() || '';
+    const getValue = (id) => document.getElementById(id)?.value?.trim() || '';
 
     const clientName = getValue('client-name');
     const clientNip = getValue('client-nip');
@@ -189,7 +195,7 @@ function buildClientInfoHtml() {
  * Buduje blok danych inwestycji.
  */
 function buildInvestInfoHtml() {
-    const getValue = id => document.getElementById(id)?.value?.trim() || '';
+    const getValue = (id) => document.getElementById(id)?.value?.trim() || '';
 
     const investName = getValue('invest-name');
     const investAddress = getValue('invest-address');
@@ -213,18 +219,20 @@ function calculateWellTransportMap(wellsList) {
 
     const map = new Map();
     if (transportKm <= 0 || transportRate <= 0) {
-        wellsList.forEach(w => map.set(w, 0));
+        wellsList.forEach((w) => map.set(w, 0));
         return { map, totalTransportCost: 0 };
     }
 
     let globalWeight = 0;
-    wellsList.forEach(w => { globalWeight += calcWellStats(w).weight; });
+    wellsList.forEach((w) => {
+        globalWeight += calcWellStats(w).weight;
+    });
 
     const totalTransports = Math.ceil(globalWeight / 24000);
     const costPerTrip = transportKm * transportRate;
     const totalTransportCost = totalTransports * costPerTrip;
 
-    wellsList.forEach(w => {
+    wellsList.forEach((w) => {
         const wWeight = calcWellStats(w).weight;
         const share = globalWeight > 0 ? totalTransportCost * (wWeight / globalWeight) : 0;
         map.set(w, share);
@@ -249,7 +257,8 @@ async function printOfferStudnie() {
 
     // Dane oferty
     const offerNumber = document.getElementById('offer-number')?.value || '—';
-    const offerDate = document.getElementById('offer-date')?.value || new Date().toISOString().slice(0, 10);
+    const offerDate =
+        document.getElementById('offer-date')?.value || new Date().toISOString().slice(0, 10);
     const notes = document.getElementById('offer-notes')?.value?.trim() || '';
     const paymentTerms = document.getElementById('offer-payment-terms')?.value?.trim() || '';
     const validity = document.getElementById('offer-validity')?.value?.trim() || '';
@@ -288,7 +297,9 @@ async function printOfferStudnie() {
     // editingOfferAssignedUserId = aktualny opiekun handlowy
     let usersList = [];
     try {
-        const usersResp = await fetch('/api/users-for-assignment', { headers: typeof authHeaders === 'function' ? authHeaders() : {} });
+        const usersResp = await fetch('/api/users-for-assignment', {
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+        });
         const usersData = await usersResp.json();
         usersList = usersData?.data || usersData?.users || [];
     } catch (e) {
@@ -296,43 +307,55 @@ async function printOfferStudnie() {
     }
 
     // Opiekun handlowy — z editingOfferAssignedUserId
-    const assigneeId = (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId)
-        ? editingOfferAssignedUserId : null;
+    const assigneeId =
+        typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId
+            ? editingOfferAssignedUserId
+            : null;
     let offerAssigneeUser = assigneeId
-        ? usersList.find(u => String(u.id) === String(assigneeId)) || null
+        ? usersList.find((u) => String(u.id) === String(assigneeId)) || null
         : null;
     if (!offerAssigneeUser && typeof currentUser !== 'undefined' && currentUser) {
         offerAssigneeUser = currentUser;
     }
 
     // Autor oferty — z createdByUserName (szukamy po nazwie) lub currentUser
-    const creatorName = (typeof editingOfferCreatedByUserName !== 'undefined' && editingOfferCreatedByUserName)
-        ? editingOfferCreatedByUserName : null;
+    const creatorName =
+        typeof editingOfferCreatedByUserName !== 'undefined' && editingOfferCreatedByUserName
+            ? editingOfferCreatedByUserName
+            : null;
     let offerCreatorUser = null;
     if (creatorName && usersList.length) {
-        offerCreatorUser = usersList.find(u => {
-            const fullName = (u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}` : u.username;
-            return fullName === creatorName || u.username === creatorName;
-        }) || null;
+        offerCreatorUser =
+            usersList.find((u) => {
+                const fullName =
+                    u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
+                return fullName === creatorName || u.username === creatorName;
+            }) || null;
     }
     if (!offerCreatorUser) {
         offerCreatorUser = offerAssigneeUser;
     }
 
     // Sprawdź czy autor i opiekun to ta sama osoba (po rzeczywistym ID)
-    const isSamePerson = offerCreatorUser && offerAssigneeUser
-        && String(offerCreatorUser.id) === String(offerAssigneeUser.id);
+    const isSamePerson =
+        offerCreatorUser &&
+        offerAssigneeUser &&
+        String(offerCreatorUser.id) === String(offerAssigneeUser.id);
 
     let contactHtml = `<div class="offer-contact-footer" style="margin-top:20px; padding-top:10px; border-top:1.5px solid #999; font-size:9pt;">`;
     contactHtml += `<table style="width:100%; border:none;"><tr>`;
 
     const renderUser = (title, u) => {
         if (!u) return '';
-        const name = (u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}` : (u.displayName || u.username || 'Nieznany');
+        const name =
+            u.firstName && u.lastName
+                ? `${u.firstName} ${u.lastName}`
+                : u.displayName || u.username || 'Nieznany';
         let ht = `<td style="vertical-align:top; width:50%;">`;
         ht += `<strong style="color:#999;">${title}:</strong><br>`;
         ht += `<strong>${name}</strong><br>`;
-        if (u.email) ht += `Email: <a href="mailto:${u.email}" style="color:#333;text-decoration:none;">${u.email}</a><br>`;
+        if (u.email)
+            ht += `Email: <a href="mailto:${u.email}" style="color:#333;text-decoration:none;">${u.email}</a><br>`;
         if (u.phone) ht += `Telefon: ${u.phone}`;
         ht += `</td>`;
         return ht;
@@ -344,7 +367,7 @@ async function printOfferStudnie() {
         contactHtml += renderUser('Ofertę przygotował(-a)', offerCreatorUser);
         contactHtml += renderUser('Opiekun handlowy (kontakt)', offerAssigneeUser);
     }
-    
+
     contactHtml += `</tr></table></div>`;
 
     // Payload

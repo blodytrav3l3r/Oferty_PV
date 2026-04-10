@@ -1,9 +1,9 @@
 /**
  * transitionRenderer.js
- * 
+ *
  * Unified renderer for transition (przejścia) tiles.
  * Used by both the configurator (autoSelect.js) and the order modal (orderManager.js).
- * 
+ *
  * This module generates HTML for a single transition row. Both consuming contexts
  * call it with the same data shape (`item`, `globalIndex`, `options`) and get
  * consistent visual output.
@@ -16,24 +16,24 @@
 function getFlowVisuals(flowType) {
     const isWylot = flowType === 'wylot';
     return {
-        label:  isWylot ? 'Wylot' : 'Wlot',
-        bg:     isWylot ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)',
-        color:  isWylot ? '#fca5a5' : '#93c5fd',
+        label: isWylot ? 'Wylot' : 'Wlot',
+        bg: isWylot ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)',
+        color: isWylot ? '#fca5a5' : '#93c5fd',
         border: isWylot ? 'rgba(239,68,68,0.6)' : 'rgba(59,130,246,0.6)',
-        icon:   isWylot ? '📤' : '📥'
+        icon: isWylot ? '📤' : '📥'
     };
 }
 
 function getAngleColor(angle) {
-    return (angle === 0 || angle === '0') ? '#6366f1' : '#818cf8';
+    return angle === 0 || angle === '0' ? '#6366f1' : '#818cf8';
 }
 
 function calcExecutionAngle(angle) {
-    return (angle === 0 || angle === 360) ? 0 : (360 - angle);
+    return angle === 0 || angle === 360 ? 0 : 360 - angle;
 }
 
 function calcGonyAngle(angle) {
-    return ((angle === 0 || angle === 360) ? 0 : ((360 - angle) * 400 / 360)).toFixed(2);
+    return (angle === 0 || angle === 360 ? 0 : ((360 - angle) * 400) / 360).toFixed(2);
 }
 
 // ──────────────────────────────────────
@@ -45,7 +45,7 @@ function calcGonyAngle(angle) {
  *
  * @param {Object}  item         - The transition object from well.przejscia[].
  * @param {number}  globalIndex  - The index of the transition in well.przejscia.
- * @param {Object}  product      - The studnieProducts entry for item.productId. 
+ * @param {Object}  product      - The studnieProducts entry for item.productId.
  * @param {Object}  opts         - Rendering options.
  * @param {number}  opts.heightMm      - Height from element bottom in mm.
  * @param {boolean} opts.showDeleteBtn - Whether to show a delete button (true in configurator).
@@ -63,7 +63,8 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const price = product ? product.price : 0;
 
     if (!item.flowType) {
-        item.flowType = (globalIndex === 0 && (item.angle === 0 || item.angle === '0')) ? 'wylot' : 'wlot';
+        item.flowType =
+            globalIndex === 0 && (item.angle === 0 || item.angle === '0') ? 'wylot' : 'wlot';
     }
 
     const flow = getFlowVisuals(item.flowType);
@@ -84,11 +85,12 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const cursorStyle = enableDrag ? 'cursor:grab;' : '';
 
     const assignedCfgIdx = opts.assignedCfgIndex != null ? opts.assignedCfgIndex : -1;
-    const highlightAttrs = enableDrag && assignedCfgIdx >= 0
-        ? `onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', ${globalIndex}); window.highlightSvg('cfg', ${assignedCfgIdx});" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', ${globalIndex}); window.unhighlightSvg('cfg', ${assignedCfgIdx});"`
-        : '';
+    const highlightAttrs =
+        enableDrag && assignedCfgIdx >= 0
+            ? `onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', ${globalIndex}); window.highlightSvg('cfg', ${assignedCfgIdx});" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', ${globalIndex}); window.unhighlightSvg('cfg', ${assignedCfgIdx});"`
+            : '';
 
-    const dnLabel = (typeof dn === 'string' && dn.includes('/')) ? dn : 'DN ' + dn;
+    const dnLabel = typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn;
 
     // Actions column
     let actionsHTML = '';
@@ -181,10 +183,18 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
  */
 function buildConfigMap(well, findProductFn, includeName = false) {
     const typeBadge = {
-        wlaz: { bg: '#374151' }, plyta_din: { bg: '#1e3a5f' }, plyta_najazdowa: { bg: '#1e3a5f' },
-        plyta_zamykajaca: { bg: '#1e3a5f' }, pierscien_odciazajacy: { bg: '#1e3a5f' },
-        konus: { bg: '#7c3aed30' }, avr: { bg: '#44403c' }, plyta_redukcyjna: { bg: '#6d28d920' },
-        krag: { bg: '#164e63' }, krag_ot: { bg: '#312e81' }, dennica: { bg: '#14532d' }, kineta: { bg: '#9d174d' }
+        wlaz: { bg: '#374151' },
+        plyta_din: { bg: '#1e3a5f' },
+        plyta_najazdowa: { bg: '#1e3a5f' },
+        plyta_zamykajaca: { bg: '#1e3a5f' },
+        pierscien_odciazajacy: { bg: '#1e3a5f' },
+        konus: { bg: '#7c3aed30' },
+        avr: { bg: '#44403c' },
+        plyta_redukcyjna: { bg: '#6d28d920' },
+        krag: { bg: '#164e63' },
+        krag_ot: { bg: '#312e81' },
+        dennica: { bg: '#14532d' },
+        kineta: { bg: '#9d174d' }
     };
 
     const configMap = [];
@@ -231,7 +241,7 @@ function findAssignedElement(mmFromBottom, configMap) {
     }
     // Fallback to first or last
     if (configMap.length > 0) {
-        const tgt = (mmFromBottom < 0) ? configMap[0] : configMap[configMap.length - 1];
+        const tgt = mmFromBottom < 0 ? configMap[0] : configMap[configMap.length - 1];
         return { assignedIndex: tgt.index, entry: tgt };
     }
     return { assignedIndex: -1, entry: null };
@@ -274,29 +284,32 @@ function renderMirrorTransitions(container, items, well, findProductFn, configMa
     if (!container) return;
 
     if (items.length === 0) {
-        container.innerHTML = '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
+        container.innerHTML =
+            '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
         return;
     }
 
-    container.innerHTML = items.map((item) => {
-        const globalIndex = well.przejscia.indexOf(item);
-        const product = findProductFn(item.productId);
+    container.innerHTML = items
+        .map((item) => {
+            const globalIndex = well.przejscia.indexOf(item);
+            const product = findProductFn(item.productId);
 
-        let pel = parseFloat(item.rzednaWlaczenia);
-        if (isNaN(pel)) pel = rzDna;
-        const mmFromBottom = (pel - rzDna) * 1000;
-        const heightMm = computeHeightFromElement(mmFromBottom, configMap);
+            let pel = parseFloat(item.rzednaWlaczenia);
+            if (isNaN(pel)) pel = rzDna;
+            const mmFromBottom = (pel - rzDna) * 1000;
+            const heightMm = computeHeightFromElement(mmFromBottom, configMap);
 
-        return renderTransitionTileHTML(item, globalIndex, product, {
-            heightMm,
-            showEditBtn: false,
-            showDeleteBtn: false,
-            showPrice: false,
-            spadekKinetaLabel: 'Spadek w k.',
-            spadekMufaLabel: 'Spadek w m.',
-            enableDragDrop: false
-        });
-    }).join('');
+            return renderTransitionTileHTML(item, globalIndex, product, {
+                heightMm,
+                showEditBtn: false,
+                showDeleteBtn: false,
+                showPrice: false,
+                spadekKinetaLabel: 'Spadek w k.',
+                spadekMufaLabel: 'Spadek w m.',
+                enableDragDrop: false
+            });
+        })
+        .join('');
 }
 
 // Export to window for non-module usage
