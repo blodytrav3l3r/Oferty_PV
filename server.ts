@@ -15,6 +15,17 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+/* ===== HEALTH CHECK (before security middleware to avoid HTTPS redirect) ===== */
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        version: process.version
+    });
+});
+
 /* ===== SECURITY ===== */
 app.use(
     helmet({
@@ -55,17 +66,6 @@ if (NODE_ENV === 'production') {
         })
     );
 }
-
-/* ===== HEALTH CHECK ===== */
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        version: process.version
-    });
-});
 
 /* ===== ROUTES ===== */
 import authRoutes from './src/routes/auth';
