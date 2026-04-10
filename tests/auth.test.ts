@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import authRoutes from '../src/routes/auth';
 
 describe('Auth Routes', () => {
     let app: express.Application;
@@ -7,6 +8,7 @@ describe('Auth Routes', () => {
     beforeAll(() => {
         app = express();
         app.use(express.json());
+        app.use('/api/auth', authRoutes);
         // Note: In real tests, you'd mock the Prisma client
         // For now, we test basic validation
     });

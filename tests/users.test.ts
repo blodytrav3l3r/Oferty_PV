@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express from 'express';
+import userRoutes from '../src/routes/users';
 
 describe('Users Routes', () => {
     let app: express.Application;
@@ -7,6 +8,7 @@ describe('Users Routes', () => {
     beforeAll(() => {
         app = express();
         app.use(express.json());
+        app.use('/api/users', userRoutes);
         // Note: In real tests, you'd mock the Prisma client
     });
 

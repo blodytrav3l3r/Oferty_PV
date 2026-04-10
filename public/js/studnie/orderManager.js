@@ -126,7 +126,7 @@ async function createOrderFromOffer() {
     // Claim order number from server
     let orderNumber = '';
     try {
-        const claimResp = await fetch('/api/claim-order-number/' + assignedUserId, {
+        const claimResp = await fetch('/api/orders-studnie/claim-number/' + assignedUserId, {
             method: 'POST',
             headers: authHeaders()
         });
@@ -2040,7 +2040,7 @@ async function saveProductionOrder() {
 
             if (targetUserId) {
                 const claimResp = await fetch(
-                    '/api/claim-production-order-number/' + targetUserId,
+                    '/api/orders-studnie/claim-production-number/' + targetUserId,
                     {
                         method: 'POST',
                         headers: authHeaders()
@@ -2270,7 +2270,7 @@ async function acceptProductionOrder() {
                 showToast('Brak przypisanego użytkownika', 'error');
                 return;
             }
-            const claimResp = await fetch('/api/claim-production-order-number/' + targetUserId, {
+            const claimResp = await fetch('/api/orders-studnie/claim-production-number/' + targetUserId, {
                 method: 'POST',
                 headers: authHeaders()
             });

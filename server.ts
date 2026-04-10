@@ -102,11 +102,6 @@ app.use('/api/offers-studnie', (req, res, next) => {
 });
 
 app.use('/api/orders-studnie', orderRoutes);
-app.use('/api/production-orders', orderRoutes);
-app.use('/api/next-order-number', orderRoutes);
-app.use('/api/claim-order-number', orderRoutes);
-app.use('/api/claim-production-order-number', orderRoutes);
-app.use('/api/recycled', orderRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/pv-marketplace', pvMarketplaceRoutes);
 app.use('/api/audit', auditRoutes);
