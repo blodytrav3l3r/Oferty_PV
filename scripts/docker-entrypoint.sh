@@ -27,9 +27,9 @@ if [ ! -f "$DB_FILE" ]; then
     fi
 fi
 
-# Synchronizujemy schemat bazy
+# Synchronizujemy schemat bazy (skip-generate bo klient Prisma jest już wygenerowany w obrazie)
 echo "[INFO] Synchronizing Prisma database schema..."
-npx prisma db push --accept-data-loss
+npx prisma db push --accept-data-loss --skip-generate
 
 echo "[INFO] Starting application server..."
 exec npm start

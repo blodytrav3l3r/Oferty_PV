@@ -18,6 +18,10 @@ RUN npx prisma generate
 # Budujemy projekt
 RUN npm run build
 
+# Symlink: compiled code in dist/src/ imports '../generated/prisma' → dist/generated/prisma
+# Actual Prisma client is at /app/generated/prisma — symlink bridges the path
+RUN ln -sf /app/generated /app/dist/generated
+
 # Usuwamy zależności deweloperskie dla środowiska produkcyjnego
 RUN npm prune --production && \
     npm cache clean --force
