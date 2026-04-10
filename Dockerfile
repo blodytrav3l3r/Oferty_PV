@@ -19,12 +19,23 @@ RUN npm run build
 RUN npm prune --production && \
     npm cache clean --force
 
+# Tworzymy katalog danych i kopiujemy szablon bazy (dla inicjalizacji wolumenu)
 RUN mkdir -p data && \
+    cp data/app_database.sqlite ./app_database.sqlite.template || touch ./app_database.sqlite.template && \
     chmod -R 755 data
+
+# Skrypt startowy
+RUN chmod +x ./scripts/docker-entrypoint.sh
+
+ENV NODE_ENV=production
+ENV DATABASE_URL=file:/app/data/app_database.sqlite
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["npm", "start"]
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
+
