@@ -24,8 +24,9 @@ RUN mkdir -p data && \
     cp data/app_database.sqlite ./app_database.sqlite.template || touch ./app_database.sqlite.template && \
     chmod -R 755 data
 
-# Skrypt startowy
-RUN chmod +x ./scripts/docker-entrypoint.sh
+# Skrypt startowy (naprawa znaków końca linii i uprawnienia)
+RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh && \
+    chmod +x ./scripts/docker-entrypoint.sh
 
 ENV NODE_ENV=production
 ENV DATABASE_URL=file:/app/data/app_database.sqlite
