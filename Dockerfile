@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:18-slim
 
 # Instalacja bibliotek systemowych potrzebnych dla Prisma (OpenSSL)
 RUN apt-get update && apt-get install -y openssl sed && rm -rf /var/lib/apt/lists/*
