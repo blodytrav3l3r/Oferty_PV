@@ -16,8 +16,6 @@ const REDUCTION_OPTIONS: Record<number, number> = {
     2500: 1000
 };
 
-
-
 export interface ManholeConfig {
     targetDn: number;
     targetHeight: number;

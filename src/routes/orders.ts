@@ -55,7 +55,15 @@ router.put('/', requireAuth as any, async (req, res) => {
                 docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
             }
 
-            const { id: _id, type: _type, userId: _userId, offerStudnieId, createdAt, status, ...rest } = o;
+            const {
+                id: _id,
+                type: _type,
+                userId: _userId,
+                offerStudnieId,
+                createdAt,
+                status,
+                ...rest
+            } = o;
             const dataStr = JSON.stringify(rest);
             const old = await prisma.orders_studnie_rel.findUnique({
                 where: { id: docId },
@@ -269,8 +277,17 @@ router.post('/production', requireAuth as any, async (req, res) => {
             docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
         }
 
-        const { id: _id, type: _type, userId, orderId, wellId, elementIndex, createdAt, updatedAt, ...rest } =
-            o;
+        const {
+            id: _id,
+            type: _type,
+            userId,
+            orderId,
+            wellId,
+            elementIndex,
+            createdAt,
+            updatedAt,
+            ...rest
+        } = o;
         const dataStr = JSON.stringify(rest);
 
         const old = await prisma.production_orders_rel.findUnique({

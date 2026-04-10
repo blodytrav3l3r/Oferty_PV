@@ -3,8 +3,6 @@ import prisma from '../prismaClient';
 import fs from 'fs';
 import path from 'path';
 
-
-
 function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
@@ -703,8 +701,6 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     </div>
   `
         : '';
-
-
 
     // Build contact data section — author + guardian
     const daneKontaktowe = buildContactSectionHTML(

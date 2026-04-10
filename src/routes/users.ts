@@ -3,7 +3,6 @@ import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 
-
 const router = express.Router();
 
 /**
