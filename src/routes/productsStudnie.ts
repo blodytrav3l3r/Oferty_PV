@@ -38,7 +38,7 @@ async function migrateFromLegacyIfNeeded(): Promise<void> {
             try {
                 if (row.data) extra = JSON.parse(row.data);
             } catch (_e) {}
-            const { data, ...rest } = row;
+            const { data: _data, ...rest } = row;
             return { ...rest, ...extra };
         });
 

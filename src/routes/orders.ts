@@ -55,7 +55,7 @@ router.put('/', requireAuth as any, async (req, res) => {
                 docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
             }
 
-            const { id, type, userId, offerStudnieId, createdAt, status, ...rest } = o;
+            const { id: _id, type: _type, userId: _userId, offerStudnieId, createdAt, status, ...rest } = o;
             const dataStr = JSON.stringify(rest);
             const old = await prisma.orders_studnie_rel.findUnique({
                 where: { id: docId },
@@ -197,8 +197,8 @@ router.put('/production', requireAuth as any, async (req, res) => {
             }
 
             const {
-                id,
-                type,
+                id: _id,
+                type: _type,
                 userId,
                 orderId,
                 wellId,
@@ -269,7 +269,7 @@ router.post('/production', requireAuth as any, async (req, res) => {
             docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
         }
 
-        const { id, type, userId, orderId, wellId, elementIndex, createdAt, updatedAt, ...rest } =
+        const { id: _id, type: _type, userId, orderId, wellId, elementIndex, createdAt, updatedAt, ...rest } =
             o;
         const dataStr = JSON.stringify(rest);
 
@@ -575,7 +575,7 @@ router.get('/:id', requireAuth as any, async (req, res) => {
                 ...parsedData
             }
         });
-    } catch (e: any) {
+    } catch (_e: any) {
         res.status(404).json({ error: 'Zamówienie nie znalezione' });
     }
 });

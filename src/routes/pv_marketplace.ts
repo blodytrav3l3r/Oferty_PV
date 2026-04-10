@@ -8,7 +8,7 @@ const router = express.Router();
  * SEARCH: Wyszukiwanie ofert
  */
 router.post('/search', async (req, res) => {
-    const { query, category, region, minPrice, maxPrice, limit = 50, skip = 0 } = req.body;
+    const { query, category: _category, region: _region, minPrice: _minPrice, maxPrice: _maxPrice, limit = 50, skip = 0 } = req.body;
 
     try {
         let offers: any[];
@@ -66,7 +66,7 @@ router.post('/moderate/:offerId', requireAuth as any, requireAdmin as any, async
         return res.status(403).json({ error: 'Only admins can moderate offers' });
     }
 
-    const { action, reason } = req.body;
+    const { action, reason: _reason } = req.body;
     const docId = req.params.offerId;
 
     try {

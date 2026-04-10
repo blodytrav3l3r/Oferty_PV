@@ -3,9 +3,7 @@ import prisma from '../prismaClient';
 import fs from 'fs';
 import path from 'path';
 
-function fmt(val: number): string {
-    return val.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+
 
 function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -115,7 +113,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
 
     // Spłaszcz items dla szablonu
     const items: any[] = [];
-    for (const [dn, dnItems] of Object.entries(itemsByDN)) {
+    for (const [_dn, dnItems] of Object.entries(itemsByDN)) {
         items.push(...dnItems);
     }
 
@@ -673,7 +671,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     }
 
     // Build summary - matching frontend buildOfferSummaryHtml format
-    const totalWithTransport = grandTotal + data.transportCost;
+
     let summaryRows = '';
     for (const s of summariesForTotal) {
         summaryRows += `<tr>
@@ -705,13 +703,8 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     </div>
   `
         : '';
-    const payTerms =
-        data.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    const warunkiPlatnosci = `
-    <div class="conditions">
-      <div><strong>Warunki płatności:</strong> ${payTerms}</div>
-    </div>
-  `;
+
+
 
     // Build contact data section — author + guardian
     const daneKontaktowe = buildContactSectionHTML(

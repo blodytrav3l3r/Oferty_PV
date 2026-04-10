@@ -28,7 +28,7 @@ const COLOR_GRAY_HEADER = '999999'; // .dn-header, table th bg, .grand-total bg
 const COLOR_WHITE = 'FFFFFF';
 const COLOR_LABEL = '888888'; // .info-box h3
 const COLOR_BORDER = 'CCCCCC'; // table td border
-const COLOR_BG_INFO = 'F9F9F9'; // .info-box background
+
 const COLOR_BG_SUMMARY = 'F0F0F0'; // .dn-summary-row, transport table headers
 const COLOR_BG_NOTE = 'FFFBE6'; // .note-box
 const COLOR_NOTE_BORDER = 'F5A623'; // .note-box border-left

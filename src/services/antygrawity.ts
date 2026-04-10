@@ -16,11 +16,7 @@ const REDUCTION_OPTIONS: Record<number, number> = {
     2500: 1000
 };
 
-// Component height standards (in mm)
-const STANDARD_HEIGHTS = {
-    krag: [1000, 750, 500], // Priority order: highest first
-    dennica: [500, 1000, 1100] // Priority order: lowest first
-};
+
 
 export interface ManholeConfig {
     targetDn: number;
@@ -288,7 +284,7 @@ async function selectKragByDn(
     dn: number,
     magazynField: string,
     formaStdField: string,
-    targetHeight?: number
+    _targetHeight?: number
 ): Promise<any> {
     const krags = await (prisma as any).products_studnie_rel.findMany({
         where: {
@@ -437,8 +433,8 @@ async function selectKragOt(dn: number, magazynField: string, formaStdField: str
 async function placePrzejscia(
     components: any[],
     przejscia: any[],
-    magazynField: string,
-    formaStdField: string
+    _magazynField: string,
+    _formaStdField: string
 ): Promise<{
     success: boolean;
     errors: string[];
@@ -458,7 +454,7 @@ async function placePrzejscia(
         const {
             dn_przejscia,
             height_from_bottom,
-            angle,
+            angle: _angle,
             zapasDol,
             zapasGora,
             zapasDolMin,
@@ -594,7 +590,7 @@ export async function getAvailableComponents(dn: number, magazyn: string = 'WL')
  */
 export function validateManhole(
     components: any[],
-    config: any
+    _config: any
 ): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
 
