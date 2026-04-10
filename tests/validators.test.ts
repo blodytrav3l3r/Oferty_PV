@@ -1,4 +1,9 @@
-import { loginSchema, changePasswordSchema, registerSchema, validateData } from '../src/validators/authSchema';
+import {
+    loginSchema,
+    changePasswordSchema,
+    registerSchema,
+    validateData
+} from '../src/validators/authSchema';
 import express from 'express';
 import request from 'supertest';
 
@@ -185,9 +190,7 @@ describe('validateData middleware', () => {
     });
 
     it('should return 400 for invalid data', async () => {
-        const res = await request(app)
-            .post('/test')
-            .send({ username: 'a' });
+        const res = await request(app).post('/test').send({ username: 'a' });
 
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toBe('Błąd walidacji danych wejściowych');
@@ -196,9 +199,7 @@ describe('validateData middleware', () => {
     });
 
     it('should return 400 for empty body', async () => {
-        const res = await request(app)
-            .post('/test')
-            .send({});
+        const res = await request(app).post('/test').send({});
 
         expect(res.statusCode).toBe(400);
     });

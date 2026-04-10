@@ -1,12 +1,4 @@
-import {
-    Paragraph,
-    TextRun,
-    Header,
-    Footer,
-    PageNumber,
-    ImageRun,
-    AlignmentType
-} from 'docx';
+import { Paragraph, TextRun, Header, Footer, PageNumber, ImageRun, AlignmentType } from 'docx';
 import { FONT, COLOR_GRAY_HEADER } from './constants';
 import { loadImageData } from './helpers';
 

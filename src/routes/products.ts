@@ -54,7 +54,10 @@ async function migrateFromLegacyIfNeeded(): Promise<void> {
                 data: { key: KEY_CURRENT, value: json }
             });
         }
-        logger.info('Migration', `Przeniesiono ${products.length} produktów rur do nowego formatu JSON.`);
+        logger.info(
+            'Migration',
+            `Przeniesiono ${products.length} produktów rur do nowego formatu JSON.`
+        );
     } catch (err: any) {
         logger.error('Migration', 'Migracja rury error', err.message);
     }

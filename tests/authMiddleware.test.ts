@@ -102,9 +102,7 @@ describe('requireAuth', () => {
         app.use(express.json());
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
 
-        const res = await request(app)
-            .get('/protected')
-            .set('x-auth-token', 'invalid-token');
+        const res = await request(app).get('/protected').set('x-auth-token', 'invalid-token');
 
         expect(res.statusCode).toBe(401);
     });
@@ -132,9 +130,7 @@ describe('requireAuth', () => {
             res.json({ user: req.user });
         });
 
-        const res = await request(app)
-            .get('/protected')
-            .set('x-auth-token', 'valid-token');
+        const res = await request(app).get('/protected').set('x-auth-token', 'valid-token');
 
         expect(res.statusCode).toBe(200);
         expect(res.body.user.username).toBe('testuser');
@@ -153,9 +149,7 @@ describe('requireAuth', () => {
         const app = express();
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
 
-        const res = await request(app)
-            .get('/protected')
-            .set('x-auth-token', 'valid-token');
+        const res = await request(app).get('/protected').set('x-auth-token', 'valid-token');
 
         expect(res.statusCode).toBe(401);
         expect(res.body.error).toContain('Użytkownik nie istnieje');
@@ -167,10 +161,15 @@ describe('requireAuth', () => {
 describe('requireAdmin', () => {
     it('should return 403 when user is not admin', async () => {
         const app = express();
-        app.get('/admin', (req, _res, next) => {
-            req.user = { id: '1', username: 'user', role: 'user', subUsers: [] };
-            next();
-        }, requireAdmin, (_req, res) => res.json({ ok: true }));
+        app.get(
+            '/admin',
+            (req, _res, next) => {
+                req.user = { id: '1', username: 'user', role: 'user', subUsers: [] };
+                next();
+            },
+            requireAdmin,
+            (_req, res) => res.json({ ok: true })
+        );
 
         const res = await request(app).get('/admin');
         expect(res.statusCode).toBe(403);
@@ -178,10 +177,15 @@ describe('requireAdmin', () => {
 
     it('should pass through when user is admin', async () => {
         const app = express();
-        app.get('/admin', (req, _res, next) => {
-            req.user = { id: '1', username: 'admin', role: 'admin', subUsers: [] };
-            next();
-        }, requireAdmin, (_req, res) => res.json({ ok: true }));
+        app.get(
+            '/admin',
+            (req, _res, next) => {
+                req.user = { id: '1', username: 'admin', role: 'admin', subUsers: [] };
+                next();
+            },
+            requireAdmin,
+            (_req, res) => res.json({ ok: true })
+        );
 
         const res = await request(app).get('/admin');
         expect(res.statusCode).toBe(200);

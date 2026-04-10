@@ -124,7 +124,10 @@ export async function cleanupAuditLogs(): Promise<void> {
             }
         });
         if (result.count > 0) {
-            logger.info('AuditLog', `Wyczyszczono ${result.count} logów starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`);
+            logger.info(
+                'AuditLog',
+                `Wyczyszczono ${result.count} logów starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`
+            );
         }
     } catch (e: any) {
         logger.error('AuditLog', 'Błąd czyszczenia logów', e.message);

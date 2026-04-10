@@ -108,8 +108,13 @@ function buildStudnieDocument(
     // 3. Info grid: Klient + Inwestycja
     children.push(
         buildClientInvestTable(
-            clientName, clientNip, clientAddress, clientContact,
-            investName, investAddress, investContractor
+            clientName,
+            clientNip,
+            clientAddress,
+            clientContact,
+            investName,
+            investAddress,
+            investContractor
         )
     );
 
@@ -140,8 +145,12 @@ function buildStudnieDocument(
                 properties: {
                     page: {
                         margin: {
-                            top: 60, bottom: 280, right: 570, left: 570,
-                            header: 60, footer: 280
+                            top: 60,
+                            bottom: 280,
+                            right: 570,
+                            left: 570,
+                            header: 60,
+                            footer: 280
                         }
                     }
                 },
@@ -160,7 +169,10 @@ function buildTitleParagraph(offerNumber: string): Paragraph {
         children: [
             new TextRun({
                 text: `OFERTA HANDLOWA ${offerNumber}`,
-                bold: true, size: SZ_TITLE, font: FONT, color: '000000'
+                bold: true,
+                size: SZ_TITLE,
+                font: FONT,
+                color: '000000'
             })
         ],
         alignment: AlignmentType.CENTER,
@@ -172,7 +184,13 @@ function buildDateParagraphs(offerDate: string, validity: string): Paragraph[] {
     return [
         new Paragraph({
             children: [
-                new TextRun({ text: 'Data przygotowania oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
+                new TextRun({
+                    text: 'Data przygotowania oferty: ',
+                    bold: true,
+                    size: SZ_BODY,
+                    font: FONT,
+                    color: '333333'
+                }),
                 new TextRun({ text: offerDate, size: SZ_BODY, font: FONT })
             ],
             alignment: AlignmentType.RIGHT,
@@ -180,7 +198,13 @@ function buildDateParagraphs(offerDate: string, validity: string): Paragraph[] {
         }),
         new Paragraph({
             children: [
-                new TextRun({ text: 'Data ważności oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
+                new TextRun({
+                    text: 'Data ważności oferty: ',
+                    bold: true,
+                    size: SZ_BODY,
+                    font: FONT,
+                    color: '333333'
+                }),
                 new TextRun({ text: validity, size: SZ_BODY, font: FONT })
             ],
             alignment: AlignmentType.RIGHT,
@@ -205,7 +229,12 @@ function buildNotesParagraph(notes: string): Paragraph {
 function buildPaymentTermsParagraph(paymentTerms: string): Paragraph {
     return new Paragraph({
         children: [
-            new TextRun({ text: 'Warunki płatności: ', bold: true, size: SZ_TABLE_BODY, font: FONT }),
+            new TextRun({
+                text: 'Warunki płatności: ',
+                bold: true,
+                size: SZ_TABLE_BODY,
+                font: FONT
+            }),
             new TextRun({ text: paymentTerms, size: SZ_TABLE_BODY, font: FONT })
         ],
         spacing: { before: 60, after: 20 }
@@ -215,8 +244,13 @@ function buildPaymentTermsParagraph(paymentTerms: string): Paragraph {
 // ─── Klient + Inwestycja ────────────────────────────────────────────
 
 function buildClientInvestTable(
-    name: string, nip: string, address: string, contact: string,
-    investName: string, investAddress: string, investContractor: string
+    name: string,
+    nip: string,
+    address: string,
+    contact: string,
+    investName: string,
+    investAddress: string,
+    investContractor: string
 ): Table {
     const buildCell = (label: string, lines: TextRun[]): TableCell => {
         const runs: TextRun[] = [
@@ -258,32 +292,75 @@ function buildClientRuns(name: string, address: string, nip: string, contact: st
     }
     if (nip) {
         runs.push(new TextRun({ break: 1 } as any));
-        runs.push(new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(
+            new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+        );
     }
     if (contact) {
         runs.push(new TextRun({ break: 1 } as any));
-        runs.push(new TextRun({ text: `Kontakt: ${contact}`, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(
+            new TextRun({
+                text: `Kontakt: ${contact}`,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: '000000'
+            })
+        );
     }
     return runs;
 }
 
-function buildInvestRuns(investName: string, investAddress: string, investContractor: string): TextRun[] {
+function buildInvestRuns(
+    investName: string,
+    investAddress: string,
+    investContractor: string
+): TextRun[] {
     const runs: TextRun[] = [];
     if (investName) {
-        runs.push(new TextRun({ text: 'Budowa: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
-        runs.push(new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(
+            new TextRun({
+                text: 'Budowa: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: '000000'
+            })
+        );
+        runs.push(
+            new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+        );
     } else {
         runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: '000000' }));
     }
     if (investAddress) {
         runs.push(new TextRun({ break: 1 } as any));
-        runs.push(new TextRun({ text: 'Adres: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
-        runs.push(new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(
+            new TextRun({
+                text: 'Adres: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: '000000'
+            })
+        );
+        runs.push(
+            new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+        );
     }
     if (investContractor) {
         runs.push(new TextRun({ break: 1 } as any));
-        runs.push(new TextRun({ text: 'Wykonawca: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
-        runs.push(new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(
+            new TextRun({
+                text: 'Wykonawca: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: '000000'
+            })
+        );
+        runs.push(
+            new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+        );
     }
     return runs;
 }
@@ -324,8 +401,10 @@ function buildWellTables(wells: any[]): {
     let globalLp = 1;
 
     const thStyle = {
-        bold: true, size: SZ_TABLE_HEADER,
-        fill: COLOR_GRAY_HEADER, color: COLOR_WHITE,
+        bold: true,
+        size: SZ_TABLE_HEADER,
+        fill: COLOR_GRAY_HEADER,
+        color: COLOR_WHITE,
         alignment: AlignmentType.CENTER
     };
 
@@ -353,7 +432,13 @@ function buildWellTables(wells: any[]): {
 function buildDnHeaderParagraph(dnLabel: string): Paragraph {
     return new Paragraph({
         children: [
-            new TextRun({ text: dnLabel, bold: true, size: SZ_DN_HEADER, font: FONT, color: COLOR_GRAY_HEADER })
+            new TextRun({
+                text: dnLabel,
+                bold: true,
+                size: SZ_DN_HEADER,
+                font: FONT,
+                color: COLOR_GRAY_HEADER
+            })
         ],
         spacing: { before: 140, after: 60 },
         border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: COLOR_GRAY_HEADER } }
@@ -381,12 +466,38 @@ function buildDnDataRows(dnItems: any[], dn: string, globalLp: number): TableRow
 
         return new TableRow({
             children: [
-                textCell(String(globalLp + idx), { size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER, fill: rowFill }),
-                textCell(item.name, { bold: true, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER, fill: rowFill }),
-                textCell(dnDisplay, { size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER, fill: rowFill }),
-                textCell(fmtInt(item.height), { size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER, fill: rowFill }),
-                textCell(item.zwienczenie, { size: SZ_ZWIENCZENIE, alignment: AlignmentType.CENTER, fill: rowFill }),
-                textCell(fmtCurrency(item.price), { bold: true, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER, fill: rowFill })
+                textCell(String(globalLp + idx), {
+                    size: SZ_TABLE_BODY,
+                    alignment: AlignmentType.CENTER,
+                    fill: rowFill
+                }),
+                textCell(item.name, {
+                    bold: true,
+                    size: SZ_TABLE_BODY,
+                    alignment: AlignmentType.CENTER,
+                    fill: rowFill
+                }),
+                textCell(dnDisplay, {
+                    size: SZ_TABLE_BODY,
+                    alignment: AlignmentType.CENTER,
+                    fill: rowFill
+                }),
+                textCell(fmtInt(item.height), {
+                    size: SZ_TABLE_BODY,
+                    alignment: AlignmentType.CENTER,
+                    fill: rowFill
+                }),
+                textCell(item.zwienczenie, {
+                    size: SZ_ZWIENCZENIE,
+                    alignment: AlignmentType.CENTER,
+                    fill: rowFill
+                }),
+                textCell(fmtCurrency(item.price), {
+                    bold: true,
+                    size: SZ_TABLE_BODY,
+                    alignment: AlignmentType.CENTER,
+                    fill: rowFill
+                })
             ]
         });
     });
@@ -396,8 +507,18 @@ function buildDnSummaryRow(dnLabel: string, count: number, dnTotal: number): Tab
     return new TableRow({
         children: [
             textCell('', { columnSpan: 4, fill: COLOR_BG_SUMMARY, size: SZ_TABLE_BODY }),
-            textCell(`Razem ${dnLabel} (${count} szt.):`, { bold: true, size: SZ_TABLE_BODY, alignment: AlignmentType.RIGHT, fill: COLOR_BG_SUMMARY }),
-            textCell(`${fmtCurrency(dnTotal)} PLN`, { bold: true, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER, fill: COLOR_BG_SUMMARY })
+            textCell(`Razem ${dnLabel} (${count} szt.):`, {
+                bold: true,
+                size: SZ_TABLE_BODY,
+                alignment: AlignmentType.RIGHT,
+                fill: COLOR_BG_SUMMARY
+            }),
+            textCell(`${fmtCurrency(dnTotal)} PLN`, {
+                bold: true,
+                size: SZ_TABLE_BODY,
+                alignment: AlignmentType.CENTER,
+                fill: COLOR_BG_SUMMARY
+            })
         ]
     });
 }
@@ -410,7 +531,13 @@ function buildSummarySection(summaries: DnSummary[], grandTotal: number): (Parag
     result.push(
         new Paragraph({
             children: [
-                new TextRun({ text: 'Podsumowanie oferty', bold: true, size: SZ_DN_HEADER, font: FONT, color: COLOR_GRAY_HEADER })
+                new TextRun({
+                    text: 'Podsumowanie oferty',
+                    bold: true,
+                    size: SZ_DN_HEADER,
+                    font: FONT,
+                    color: COLOR_GRAY_HEADER
+                })
             ],
             spacing: { before: 160, after: 60 },
             border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: COLOR_GRAY_HEADER } }
@@ -422,8 +549,15 @@ function buildSummarySection(summaries: DnSummary[], grandTotal: number): (Parag
             new TableRow({
                 children: [
                     textCell(s.label, { size: SZ_SUMMARY, alignment: AlignmentType.CENTER }),
-                    textCell(`${s.count} szt.`, { size: SZ_SUMMARY, alignment: AlignmentType.CENTER }),
-                    textCell(`${fmtCurrency(s.totalPrice)} PLN`, { bold: true, size: SZ_SUMMARY, alignment: AlignmentType.CENTER })
+                    textCell(`${s.count} szt.`, {
+                        size: SZ_SUMMARY,
+                        alignment: AlignmentType.CENTER
+                    }),
+                    textCell(`${fmtCurrency(s.totalPrice)} PLN`, {
+                        bold: true,
+                        size: SZ_SUMMARY,
+                        alignment: AlignmentType.CENTER
+                    })
                 ]
             })
     );
@@ -432,9 +566,30 @@ function buildSummarySection(summaries: DnSummary[], grandTotal: number): (Parag
     rows.push(
         new TableRow({
             children: [
-                textCell('RAZEM NETTO', { bold: true, size: SZ_GRAND_TOTAL, alignment: AlignmentType.CENTER, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE, borders: NO_BORDERS }),
-                textCell(`${totalCount} szt.`, { bold: true, size: SZ_GRAND_TOTAL, alignment: AlignmentType.CENTER, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE, borders: NO_BORDERS }),
-                textCell(`${fmtCurrency(grandTotal)} PLN`, { bold: true, size: SZ_GRAND_TOTAL, alignment: AlignmentType.CENTER, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE, borders: NO_BORDERS })
+                textCell('RAZEM NETTO', {
+                    bold: true,
+                    size: SZ_GRAND_TOTAL,
+                    alignment: AlignmentType.CENTER,
+                    fill: COLOR_GRAY_HEADER,
+                    color: COLOR_WHITE,
+                    borders: NO_BORDERS
+                }),
+                textCell(`${totalCount} szt.`, {
+                    bold: true,
+                    size: SZ_GRAND_TOTAL,
+                    alignment: AlignmentType.CENTER,
+                    fill: COLOR_GRAY_HEADER,
+                    color: COLOR_WHITE,
+                    borders: NO_BORDERS
+                }),
+                textCell(`${fmtCurrency(grandTotal)} PLN`, {
+                    bold: true,
+                    size: SZ_GRAND_TOTAL,
+                    alignment: AlignmentType.CENTER,
+                    fill: COLOR_GRAY_HEADER,
+                    color: COLOR_WHITE,
+                    borders: NO_BORDERS
+                })
             ]
         })
     );
@@ -464,7 +619,11 @@ function buildContactSection(
         result.push(
             new Paragraph({
                 children: [
-                    new TextRun({ text: 'W razie pytań prosimy o kontakt z opiekunem oferty.', size: SZ_TABLE_BODY, font: FONT })
+                    new TextRun({
+                        text: 'W razie pytań prosimy o kontakt z opiekunem oferty.',
+                        size: SZ_TABLE_BODY,
+                        font: FONT
+                    })
                 ],
                 spacing: { before: 40 }
             })
@@ -474,7 +633,13 @@ function buildContactSection(
 
     const buildUserCell = (title: string, u: UserContactInfo): TableCell => {
         const runs: TextRun[] = [
-            new TextRun({ text: `${title}:`, bold: true, size: SZ_TABLE_BODY, font: FONT, color: COLOR_GRAY_HEADER }),
+            new TextRun({
+                text: `${title}:`,
+                bold: true,
+                size: SZ_TABLE_BODY,
+                font: FONT,
+                color: COLOR_GRAY_HEADER
+            }),
             new TextRun({ break: 1 } as any),
             new TextRun({ text: u.name, bold: true, size: SZ_TABLE_BODY, font: FONT })
         ];
@@ -484,7 +649,9 @@ function buildContactSection(
         }
         if (u.phone) {
             runs.push(new TextRun({ break: 1 } as any));
-            runs.push(new TextRun({ text: `Telefon: ${u.phone}`, size: SZ_TABLE_BODY, font: FONT }));
+            runs.push(
+                new TextRun({ text: `Telefon: ${u.phone}`, size: SZ_TABLE_BODY, font: FONT })
+            );
         }
         return new TableCell({
             children: [new Paragraph({ children: runs, spacing: { before: 40, after: 40 } })],
@@ -506,10 +673,12 @@ function buildContactSection(
         );
     }
 
-    result.push(new Table({
-        rows: [new TableRow({ children: cells })],
-        width: { size: 100, type: WidthType.PERCENTAGE }
-    }));
+    result.push(
+        new Table({
+            rows: [new TableRow({ children: cells })],
+            width: { size: 100, type: WidthType.PERCENTAGE }
+        })
+    );
 
     return result;
 }
@@ -522,7 +691,13 @@ function buildStaticTerms(): (Paragraph | Table)[] {
     result.push(
         new Paragraph({
             children: [
-                new TextRun({ text: 'Informacje dodatkowe i ogólne warunki:', bold: true, size: SZ_TERMS_HEADER, font: FONT, color: COLOR_GRAY_HEADER })
+                new TextRun({
+                    text: 'Informacje dodatkowe i ogólne warunki:',
+                    bold: true,
+                    size: SZ_TERMS_HEADER,
+                    font: FONT,
+                    color: COLOR_GRAY_HEADER
+                })
             ],
             spacing: { before: 150, after: 50 }
         })
@@ -532,7 +707,13 @@ function buildStaticTerms(): (Paragraph | Table)[] {
         result.push(
             new Paragraph({
                 children: [
-                    new TextRun({ text, size: SZ_TERMS, font: FONT, color: '333333', bold: opts?.bold })
+                    new TextRun({
+                        text,
+                        size: SZ_TERMS,
+                        font: FONT,
+                        color: '333333',
+                        bold: opts?.bold
+                    })
                 ],
                 spacing: { before: opts?.marginTop ?? 60, after: 0 },
                 alignment: AlignmentType.JUSTIFIED
@@ -540,30 +721,72 @@ function buildStaticTerms(): (Paragraph | Table)[] {
         );
     };
 
-    addP('Transport rur w średnicach DN 300 – DN 1600 odbywa się na jednorazowych podkładach drewnianych jako „Zabezpieczenie transportu". Koszt podkładów zostanie zafakturowany na fakturze VAT wg poniższego zestawienia (wartości w tabeli podają cenę Zabezpieczenia transportu do jednej sztuki rury).');
+    addP(
+        'Transport rur w średnicach DN 300 – DN 1600 odbywa się na jednorazowych podkładach drewnianych jako „Zabezpieczenie transportu". Koszt podkładów zostanie zafakturowany na fakturze VAT wg poniższego zestawienia (wartości w tabeli podają cenę Zabezpieczenia transportu do jednej sztuki rury).'
+    );
     result.push(buildTransportSecurityTable());
-    addP('Rozładunek studni w średnicach DN 1000 – DN 2000 i kręgów DN 1500 - DN 2000 odbywa się za pomocą pętli transportowych zgodnie z instrukcją montażu PV.');
+    addP(
+        'Rozładunek studni w średnicach DN 1000 – DN 2000 i kręgów DN 1500 - DN 2000 odbywa się za pomocą pętli transportowych zgodnie z instrukcją montażu PV.'
+    );
     result.push(buildTransportLoopsTable());
-    addP('Dla rur powyżej średnicy DN1200 oferujemy kotwy montażowe 45 PLN/szt. w rurze są montowane dwie kotwy. Sprzęgi uniwersalne mogą być przez nas dostarczane za kaucją 2300 PLN/szt., na wyraźne zamówienie. Po zwrocie w stanie nieuszkodzonym zostanie z kaucji potrącone 40% jako koszty własne P.V. Prefabet S.A. i amortyzacja.');
-    addP('Do montażu studni i rur P.V. Prefabet Kluczbork S.A. oferuje środek poślizgowy w wiaderkach 5kg w cenie 225 PLN. Dedykowany środek poślizgowy ułatwia montaż, nie wpływa negatywnie na uszczelki przez co gwarantujemy szczelność naszych wyrobów. W celu prawidłowego montażu rur i studni do każdego transportu studni i co do drugiego transportu rur należy uwzględnić 5kg środka poślizgowego. Koszt środka poślizgowego stanowi osobną pozycję na fakturze. Zastosowanie innych środków o nieznanym składzie chemicznym może negatywnie wpłynąć na szczelność połączeń, a tym samym wyklucza odpowiedzialność gwarancyjną Producenta.');
-    addP('Termin realizacji zamówienia: I partia towaru według indywidualnych ustaleń z doradcą techniczno-handlowym. Zamówienie należy złożyć w formie pisemnej z wszystkimi istotnymi parametrami potrzebnymi do zrealizowania zamówienia.', { bold: true });
-    addP('Odstąpienie od złożonego zamówienia powoduje konieczność zapłaty 100% wartości wyprodukowanego towaru oraz pokrycie kosztów przygotowania produkcji.', { marginTop: 30 });
-    addP('Technologia produkcji studni P.V. Prefabet Kluczbork S.A. pozwala na uformowanie przejścia szczelnego w betonie. Zastrzegamy sobie prawo dostawy studni z tego typu przejściami. Powyższe rozwiązanie gwarantuje pełną funkcjonalność i szczelność studni. Na wyraźną mailową prośbę zamawiającego P.V. Prefabet przygotuje ofertę z uwzględnieniem w wycenie oryginalnych przejść producenta rur lub zamienników tworzywowych w zależności od zapytania. Oferta wówczas zawiera odpowiedni zapis „przejścia producenta" lub „zamienniki tworzywowe". P.V. Prefabet oferuje przejścia szczelne z betonu dla rur: K2KAN, Incor, Pragma ID - DN600; DN500; DN400; DN300; DN250; DN200; X-Stream; Magnacor – DN300; DN250; DN200; PCV – DN600; GRP/GRK - DN600; DN500; DN400; DN300. Zastrzegamy sobie prawo do produkcji studni z przejściami betonowymi dla innych rodzajów rur i średnic.');
-    addP('Włączenia kanałów w studniach monolitycznych „Unolith" oraz studnie z wkładką „PRECO" są wykonywane w linii górnej.');
-    addP('Ceny podane w ofercie uwzględniają rabat obowiązujący przy terminowym uregulowaniu należności oraz przy zamówieniu całości asortymentu objętego ofertą.');
-    addP('Po otrzymaniu zamówienia na kwotą wyższą niż 50 tys. PLN netto P.V. Prefabet Kluczbork S.A. przedstawi umowę określającą warunki dostaw, która zostanie podpisana przed rozpoczęciem dostaw. P.V. Prefabet Kluczbork S.A. ubezpiecza wszystkie transakcje z odroczonym terminem płatności, w związku z tym sprzedaż na przelew może nastąpić po weryfikacji przez firmę ubezpieczeniową i ubezpieczeniu transakcji. Procedura ubezpieczenia trwa do 10 dni roboczych, a wszelkie formalności i koszty leżą po stronie P.V. Prefabet Kluczbork S.A.');
-    addP('Wszelkie spory mogące wyniknąć w związku z realizacją zamówienia, Strony poddają pod rozstrzygnięcie sądu powszechnego właściwego dla siedziby Dostawcy.');
-    addP('Niewymienione elementy dodatkowe (elementy do wbudowania, powłoki itp.) nie są częścią tej oferty. Wszelkie zmiany ilościowe bądź jakościowe w zamówieniu korygowane będą poprzez wystawienie kolejnej oferty cenowej lub ustaleniach między stronami. Cena loco budowa przy zamówieniu na całość zadania i dostawie pełnych transportów 24-tonowych. W przypadku niepełnych dostaw zostanie doliczony dodatkowy koszt transportu.');
-    addP('Drogi dojazdowe do miejsca budowy muszą być przejezdne dla pojazdów ciężkich (ładowność 24 tony). Zleceniodawca jest odpowiedzialny za zapewnienie odpowiedniego dojazdu i miejsca rozładunku na budowie. Rozładunek oraz wynajęcie dźwigu na miejscu budowy leży po stronie zamawiającego. Oferta standardowa obejmuje jedno miejsce rozładunku. W przypadku, gdy miejsc rozładunku jest więcej - za każde dodatkowe miejsce rozładunku klient płaci 500 PLN. Standardowy czas rozładunku wyrobów wynosi maksymalnie do 1,5 godz. Za każdą następną rozpoczętą godzinę klient zapłaci 200 PLN netto. Czas liczony jest od momentu zgłoszenia przez kierowcę osobie upoważnionej gotowości do rozładunku.');
-    addP('W przypadku wzrostu cen materiałów wsadowych (cement, kruszywa, usługi transportowe itp.) powyżej 3 % zastrzegamy sobie prawo zmiany cen.');
-    addP('Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36 miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu wyrobów do pobrania na stronie www.pv-prefabet.com.pl). W zamówieniach prosimy powoływać się na nr niniejszej oferty.');
-    addP('Parametry techniczne oferowanych wyrobów, według odpowiednich deklaracji dostępnych na https://www.pv-prefabet.com.pl lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork S.A.');
-    addP('Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne Warunki Sprzedaży dostępne na stronie internetowej www.pv-prefabet.com.pl oraz Polityka Prywatności dostępna na stronie internetowej www.pv-prefabet.com.pl/rodo-dane');
+    addP(
+        'Dla rur powyżej średnicy DN1200 oferujemy kotwy montażowe 45 PLN/szt. w rurze są montowane dwie kotwy. Sprzęgi uniwersalne mogą być przez nas dostarczane za kaucją 2300 PLN/szt., na wyraźne zamówienie. Po zwrocie w stanie nieuszkodzonym zostanie z kaucji potrącone 40% jako koszty własne P.V. Prefabet S.A. i amortyzacja.'
+    );
+    addP(
+        'Do montażu studni i rur P.V. Prefabet Kluczbork S.A. oferuje środek poślizgowy w wiaderkach 5kg w cenie 225 PLN. Dedykowany środek poślizgowy ułatwia montaż, nie wpływa negatywnie na uszczelki przez co gwarantujemy szczelność naszych wyrobów. W celu prawidłowego montażu rur i studni do każdego transportu studni i co do drugiego transportu rur należy uwzględnić 5kg środka poślizgowego. Koszt środka poślizgowego stanowi osobną pozycję na fakturze. Zastosowanie innych środków o nieznanym składzie chemicznym może negatywnie wpłynąć na szczelność połączeń, a tym samym wyklucza odpowiedzialność gwarancyjną Producenta.'
+    );
+    addP(
+        'Termin realizacji zamówienia: I partia towaru według indywidualnych ustaleń z doradcą techniczno-handlowym. Zamówienie należy złożyć w formie pisemnej z wszystkimi istotnymi parametrami potrzebnymi do zrealizowania zamówienia.',
+        { bold: true }
+    );
+    addP(
+        'Odstąpienie od złożonego zamówienia powoduje konieczność zapłaty 100% wartości wyprodukowanego towaru oraz pokrycie kosztów przygotowania produkcji.',
+        { marginTop: 30 }
+    );
+    addP(
+        'Technologia produkcji studni P.V. Prefabet Kluczbork S.A. pozwala na uformowanie przejścia szczelnego w betonie. Zastrzegamy sobie prawo dostawy studni z tego typu przejściami. Powyższe rozwiązanie gwarantuje pełną funkcjonalność i szczelność studni. Na wyraźną mailową prośbę zamawiającego P.V. Prefabet przygotuje ofertę z uwzględnieniem w wycenie oryginalnych przejść producenta rur lub zamienników tworzywowych w zależności od zapytania. Oferta wówczas zawiera odpowiedni zapis „przejścia producenta" lub „zamienniki tworzywowe". P.V. Prefabet oferuje przejścia szczelne z betonu dla rur: K2KAN, Incor, Pragma ID - DN600; DN500; DN400; DN300; DN250; DN200; X-Stream; Magnacor – DN300; DN250; DN200; PCV – DN600; GRP/GRK - DN600; DN500; DN400; DN300. Zastrzegamy sobie prawo do produkcji studni z przejściami betonowymi dla innych rodzajów rur i średnic.'
+    );
+    addP(
+        'Włączenia kanałów w studniach monolitycznych „Unolith" oraz studnie z wkładką „PRECO" są wykonywane w linii górnej.'
+    );
+    addP(
+        'Ceny podane w ofercie uwzględniają rabat obowiązujący przy terminowym uregulowaniu należności oraz przy zamówieniu całości asortymentu objętego ofertą.'
+    );
+    addP(
+        'Po otrzymaniu zamówienia na kwotą wyższą niż 50 tys. PLN netto P.V. Prefabet Kluczbork S.A. przedstawi umowę określającą warunki dostaw, która zostanie podpisana przed rozpoczęciem dostaw. P.V. Prefabet Kluczbork S.A. ubezpiecza wszystkie transakcje z odroczonym terminem płatności, w związku z tym sprzedaż na przelew może nastąpić po weryfikacji przez firmę ubezpieczeniową i ubezpieczeniu transakcji. Procedura ubezpieczenia trwa do 10 dni roboczych, a wszelkie formalności i koszty leżą po stronie P.V. Prefabet Kluczbork S.A.'
+    );
+    addP(
+        'Wszelkie spory mogące wyniknąć w związku z realizacją zamówienia, Strony poddają pod rozstrzygnięcie sądu powszechnego właściwego dla siedziby Dostawcy.'
+    );
+    addP(
+        'Niewymienione elementy dodatkowe (elementy do wbudowania, powłoki itp.) nie są częścią tej oferty. Wszelkie zmiany ilościowe bądź jakościowe w zamówieniu korygowane będą poprzez wystawienie kolejnej oferty cenowej lub ustaleniach między stronami. Cena loco budowa przy zamówieniu na całość zadania i dostawie pełnych transportów 24-tonowych. W przypadku niepełnych dostaw zostanie doliczony dodatkowy koszt transportu.'
+    );
+    addP(
+        'Drogi dojazdowe do miejsca budowy muszą być przejezdne dla pojazdów ciężkich (ładowność 24 tony). Zleceniodawca jest odpowiedzialny za zapewnienie odpowiedniego dojazdu i miejsca rozładunku na budowie. Rozładunek oraz wynajęcie dźwigu na miejscu budowy leży po stronie zamawiającego. Oferta standardowa obejmuje jedno miejsce rozładunku. W przypadku, gdy miejsc rozładunku jest więcej - za każde dodatkowe miejsce rozładunku klient płaci 500 PLN. Standardowy czas rozładunku wyrobów wynosi maksymalnie do 1,5 godz. Za każdą następną rozpoczętą godzinę klient zapłaci 200 PLN netto. Czas liczony jest od momentu zgłoszenia przez kierowcę osobie upoważnionej gotowości do rozładunku.'
+    );
+    addP(
+        'W przypadku wzrostu cen materiałów wsadowych (cement, kruszywa, usługi transportowe itp.) powyżej 3 % zastrzegamy sobie prawo zmiany cen.'
+    );
+    addP(
+        'Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36 miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu wyrobów do pobrania na stronie www.pv-prefabet.com.pl). W zamówieniach prosimy powoływać się na nr niniejszej oferty.'
+    );
+    addP(
+        'Parametry techniczne oferowanych wyrobów, według odpowiednich deklaracji dostępnych na https://www.pv-prefabet.com.pl lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork S.A.'
+    );
+    addP(
+        'Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne Warunki Sprzedaży dostępne na stronie internetowej www.pv-prefabet.com.pl oraz Polityka Prywatności dostępna na stronie internetowej www.pv-prefabet.com.pl/rodo-dane'
+    );
 
     result.push(
         new Paragraph({
             children: [
-                new TextRun({ text: 'Dziękujemy Państwu za zainteresowanie ofertą naszej firmy i mamy nadzieję na dalszą owocną współpracę.', bold: true, size: SZ_THANKS, font: FONT, color: '333333' })
+                new TextRun({
+                    text: 'Dziękujemy Państwu za zainteresowanie ofertą naszej firmy i mamy nadzieję na dalszą owocną współpracę.',
+                    bold: true,
+                    size: SZ_THANKS,
+                    font: FONT,
+                    color: '333333'
+                })
             ],
             spacing: { before: 100, after: 40 }
         })
@@ -575,15 +798,28 @@ function buildStaticTerms(): (Paragraph | Table)[] {
 // ─── Tabele transportowe ────────────────────────────────────────────
 
 function buildTransportSecurityTable(): Table {
-    const thStyle = { bold: true, size: SZ_TERMS_TABLE, fill: COLOR_BG_SUMMARY, alignment: AlignmentType.CENTER };
+    const thStyle = {
+        bold: true,
+        size: SZ_TERMS_TABLE,
+        fill: COLOR_BG_SUMMARY,
+        alignment: AlignmentType.CENTER
+    };
     const tdStyle = { size: SZ_TERMS_TABLE };
     const tdcStyle = { size: SZ_TERMS_TABLE, alignment: AlignmentType.CENTER };
 
     const data: [string, string][] = [
-        ['DN 300', '13,00'], ['DN 400', '13,00'], ['DN 500', '14,00'],
-        ['DN 600', '20,00'], ['DN 800', '20,00'], ['DN 1000', '40,00'],
-        ['DN 1200', '50,00'], ['DN 1400', '90,00'], ['DN 1500', '90,00'],
-        ['DN 1600', '90,00'], ['DN 1800', '230,00'], ['DN 2000', '310,00']
+        ['DN 300', '13,00'],
+        ['DN 400', '13,00'],
+        ['DN 500', '14,00'],
+        ['DN 600', '20,00'],
+        ['DN 800', '20,00'],
+        ['DN 1000', '40,00'],
+        ['DN 1200', '50,00'],
+        ['DN 1400', '90,00'],
+        ['DN 1500', '90,00'],
+        ['DN 1600', '90,00'],
+        ['DN 1800', '230,00'],
+        ['DN 2000', '310,00']
     ];
 
     const rows: TableRow[] = [
@@ -626,7 +862,12 @@ function buildTransportSecurityTable(): Table {
 }
 
 function buildTransportLoopsTable(): Table {
-    const thStyle = { bold: true, size: SZ_TERMS_TABLE, fill: COLOR_BG_SUMMARY, alignment: AlignmentType.CENTER };
+    const thStyle = {
+        bold: true,
+        size: SZ_TERMS_TABLE,
+        fill: COLOR_BG_SUMMARY,
+        alignment: AlignmentType.CENTER
+    };
     const tdStyle = { size: SZ_TERMS_TABLE };
     const tdcStyle = { size: SZ_TERMS_TABLE, alignment: AlignmentType.CENTER };
 

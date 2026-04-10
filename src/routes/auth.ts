@@ -10,7 +10,12 @@ import {
     AuthenticatedRequest
 } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
-import { loginSchema, registerSchema, changePasswordSchema, validateData } from '../validators/authSchema';
+import {
+    loginSchema,
+    registerSchema,
+    changePasswordSchema,
+    validateData
+} from '../validators/authSchema';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
@@ -71,69 +76,75 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
 });
 
 // POST /api/auth/register (admin only)
-router.post('/register', requireAuth, requireAdmin, validateData(registerSchema), async (req, res) => {
-    const {
-        username,
-        password,
-        role,
-        firstName,
-        lastName,
-        phone,
-        email,
-        symbol,
-        subUsers,
-        orderStartNumber,
-        productionOrderStartNumber
-    } = req.body;
+router.post(
+    '/register',
+    requireAuth,
+    requireAdmin,
+    validateData(registerSchema),
+    async (req, res) => {
+        const {
+            username,
+            password,
+            role,
+            firstName,
+            lastName,
+            phone,
+            email,
+            symbol,
+            subUsers,
+            orderStartNumber,
+            productionOrderStartNumber
+        } = req.body;
 
-    try {
-        const existing = await prisma.users.findUnique({
-            where: { username }
-        });
+        try {
+            const existing = await prisma.users.findUnique({
+                where: { username }
+            });
 
-        if (existing) {
-            return res.status(409).json({ error: 'Użytkownik o takim loginie już istnieje' });
+            if (existing) {
+                return res.status(409).json({ error: 'Użytkownik o takim loginie już istnieje' });
+            }
+
+            const hash = bcrypt.hashSync(password, 10);
+            const userId = 'user_' + Date.now();
+            const subUsersString = Array.isArray(subUsers) ? JSON.stringify(subUsers) : '[]';
+
+            await prisma.users.create({
+                data: {
+                    id: userId,
+                    username,
+                    password: hash,
+                    role: role || 'user',
+                    firstName: firstName || '',
+                    lastName: lastName || '',
+                    phone: phone || '',
+                    email: email || '',
+                    symbol: symbol || '',
+                    subUsers: subUsersString,
+                    orderStartNumber: parseInt(orderStartNumber) || 1,
+                    productionOrderStartNumber: parseInt(productionOrderStartNumber) || 1,
+                    createdAt: new Date().toISOString() as string
+                }
+            });
+
+            res.json({
+                user: {
+                    id: userId,
+                    username,
+                    role: role || 'user',
+                    firstName: firstName || '',
+                    lastName: lastName || '',
+                    phone: phone || '',
+                    email: email || '',
+                    symbol: symbol || '',
+                    subUsers: Array.isArray(subUsers) ? subUsers : []
+                }
+            });
+        } catch (e: any) {
+            res.status(500).json({ error: e.message });
         }
-
-        const hash = bcrypt.hashSync(password, 10);
-        const userId = 'user_' + Date.now();
-        const subUsersString = Array.isArray(subUsers) ? JSON.stringify(subUsers) : '[]';
-
-        await prisma.users.create({
-            data: {
-                id: userId,
-                username,
-                password: hash,
-                role: role || 'user',
-                firstName: firstName || '',
-                lastName: lastName || '',
-                phone: phone || '',
-                email: email || '',
-                symbol: symbol || '',
-                subUsers: subUsersString,
-                orderStartNumber: parseInt(orderStartNumber) || 1,
-                productionOrderStartNumber: parseInt(productionOrderStartNumber) || 1,
-                createdAt: new Date().toISOString() as string
-            }
-        });
-
-        res.json({
-            user: {
-                id: userId,
-                username,
-                role: role || 'user',
-                firstName: firstName || '',
-                lastName: lastName || '',
-                phone: phone || '',
-                email: email || '',
-                symbol: symbol || '',
-                subUsers: Array.isArray(subUsers) ? subUsers : []
-            }
-        });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
     }
-});
+);
 
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
@@ -151,29 +162,34 @@ router.get('/me', requireAuth, (req, res) => {
 });
 
 // POST /api/auth/change-password
-router.post('/change-password', requireAuth, validateData(changePasswordSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    const { oldPassword, newPassword } = req.body;
+router.post(
+    '/change-password',
+    requireAuth,
+    validateData(changePasswordSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        const { oldPassword, newPassword } = req.body;
 
-    try {
-        const user = await prisma.users.findUnique({
-            where: { id: authReq.user!.id }
-        });
+        try {
+            const user = await prisma.users.findUnique({
+                where: { id: authReq.user!.id }
+            });
 
-        if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
-            return res.status(401).json({ error: 'Nieprawidłowe stare hasło' });
+            if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
+                return res.status(401).json({ error: 'Nieprawidłowe stare hasło' });
+            }
+
+            const hash = bcrypt.hashSync(newPassword, 10);
+            await prisma.users.update({
+                where: { id: authReq.user!.id },
+                data: { password: hash }
+            });
+
+            res.json({ ok: true });
+        } catch (e: any) {
+            res.status(500).json({ error: e.message });
         }
-
-        const hash = bcrypt.hashSync(newPassword, 10);
-        await prisma.users.update({
-            where: { id: authReq.user!.id },
-            data: { password: hash }
-        });
-
-        res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
     }
-});
+);
 
 export default router;

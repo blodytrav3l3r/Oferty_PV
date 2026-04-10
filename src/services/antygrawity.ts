@@ -414,7 +414,11 @@ async function selectKragiNadbudowy(
 /**
  * Select drilled ring (OT - otwarty)
  */
-async function selectKragOt(dn: number, magazynField: string, formaStdField: string): Promise<WellComponent | null> {
+async function selectKragOt(
+    dn: number,
+    magazynField: string,
+    formaStdField: string
+): Promise<WellComponent | null> {
     const otRings = await (prisma as any).products_studnie_rel.findMany({
         where: {
             componentType: 'krag_ot',
@@ -552,9 +556,13 @@ async function placePrzejscia(
 /**
  * Insert OT ring at specified position
  */
-function insertOtRing(components: WellComponent[], otRing: WellComponent, position: number | null): WellComponent[] {
+function insertOtRing(
+    components: WellComponent[],
+    otRing: WellComponent,
+    position: number | null
+): WellComponent[] {
     const safePosition = position || 0;
-    
+
     // Tworzenie całkowicie nowych klonów dla zmienionych pozycji
     const newComponents = components.map((comp, idx) => {
         if (idx >= safePosition) {
@@ -578,7 +586,10 @@ function insertOtRing(components: WellComponent[], otRing: WellComponent, positi
 /**
  * Get available components for a given DN and warehouse
  */
-export async function getAvailableComponents(dn: number, magazyn: string = 'WL'): Promise<WellComponent[]> {
+export async function getAvailableComponents(
+    dn: number,
+    magazyn: string = 'WL'
+): Promise<WellComponent[]> {
     const magazynField = `magazyn${magazyn}`;
     const formaStdField = `formaStandardowa${magazyn}`;
 

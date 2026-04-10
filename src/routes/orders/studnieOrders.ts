@@ -144,7 +144,9 @@ router.patch('/:id', requireAuth, async (req, res) => {
         });
         const isOwner = o && o.userId === authReq.user?.id;
         const isProParent =
-            o && authReq.user?.role === 'pro' && (authReq.user?.subUsers || []).includes(o.userId || '');
+            o &&
+            authReq.user?.role === 'pro' &&
+            (authReq.user?.subUsers || []).includes(o.userId || '');
         if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }

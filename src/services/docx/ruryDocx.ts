@@ -235,7 +235,12 @@ async function buildRuryDocument(data: RuryOfferData): Promise<Buffer> {
                 children: [
                     new Paragraph({
                         children: [
-                            new TextRun({ text: 'Dane oferty', bold: true, size: 20, color: '666666' })
+                            new TextRun({
+                                text: 'Dane oferty',
+                                bold: true,
+                                size: 20,
+                                color: '666666'
+                            })
                         ],
                         spacing: { before: 200, after: 100 }
                     }),
@@ -255,7 +260,12 @@ async function buildRuryDocument(data: RuryOfferData): Promise<Buffer> {
                     }),
                     new Paragraph({
                         children: [
-                            new TextRun({ text: 'Dane klienta', bold: true, size: 20, color: '666666' })
+                            new TextRun({
+                                text: 'Dane klienta',
+                                bold: true,
+                                size: 20,
+                                color: '666666'
+                            })
                         ],
                         spacing: { before: 200, after: 100 }
                     }),
@@ -280,7 +290,12 @@ async function buildRuryDocument(data: RuryOfferData): Promise<Buffer> {
                         : new Paragraph({ children: [] }),
                     new Paragraph({
                         children: [
-                            new TextRun({ text: 'Pozycje ofertowe', bold: true, size: 20, color: '666666' })
+                            new TextRun({
+                                text: 'Pozycje ofertowe',
+                                bold: true,
+                                size: 20,
+                                color: '666666'
+                            })
                         ],
                         spacing: { before: 200, after: 100 }
                     }),
@@ -290,7 +305,12 @@ async function buildRuryDocument(data: RuryOfferData): Promise<Buffer> {
                     }),
                     new Paragraph({
                         children: [
-                            new TextRun({ text: 'Podsumowanie', bold: true, size: 20, color: '666666' })
+                            new TextRun({
+                                text: 'Podsumowanie',
+                                bold: true,
+                                size: 20,
+                                color: '666666'
+                            })
                         ],
                         spacing: { before: 300, after: 100 }
                     }),

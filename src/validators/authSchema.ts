@@ -26,7 +26,7 @@ export const registerSchema = z.object({
 });
 
 /**
- * Generyczny middleware aplikujący schematy `zod` 
+ * Generyczny middleware aplikujący schematy `zod`
  * do nadchodzącego body. Zwraca 400 jeśli walidacja oblała.
  */
 export const validateData = (schema: z.ZodType<any, any>) => {

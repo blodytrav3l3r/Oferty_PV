@@ -69,7 +69,7 @@ describe('fmtDate', () => {
     });
 
     it('should return original string for invalid date', () => {
-        // An invalid date constructor returns "Invalid Date", 
+        // An invalid date constructor returns "Invalid Date",
         // but toLocaleDateString might still work — depends on runtime
         const result = fmtDate('not-a-date');
         expect(typeof result).toBe('string');

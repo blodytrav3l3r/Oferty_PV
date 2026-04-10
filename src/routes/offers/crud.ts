@@ -199,7 +199,10 @@ router.post('/', requireAuth, async (req, res) => {
             results.push({ id: docId, ok: true });
         }
 
-        logger.info('Offers', `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`);
+        logger.info(
+            'Offers',
+            `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`
+        );
         res.json({ ok: true, results });
     } catch (e: any) {
         logger.error('Offers', 'POST offers error', e.message);
@@ -277,7 +280,10 @@ router.post('/studnie', requireAuth, async (req, res) => {
             results.push({ id: docId, ok: true });
         }
 
-        logger.info('Offers', `Zapisano ${results.length} ofert studnie przez ${authReq.user?.username}`);
+        logger.info(
+            'Offers',
+            `Zapisano ${results.length} ofert studnie przez ${authReq.user?.username}`
+        );
         res.json({ ok: true, results });
     } catch (e: any) {
         logger.error('Offers', 'POST offers/studnie error', e.message);

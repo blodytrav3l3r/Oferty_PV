@@ -9,16 +9,16 @@ import { User } from '../helpers';
  * - domyślnie ('user') widzi wyłącznie własne wpisy
  */
 export function buildRoleWhereClause(user: User) {
-    // Note: while specifically typed above to avoid "any", most Prisma where inputs 
+    // Note: while specifically typed above to avoid "any", most Prisma where inputs
     // are structurally compatible here for the unified userId check.
     if (user.role === 'admin') {
         return undefined; // No filter = all records
     }
-    
+
     if (user.role === 'pro') {
         const allowedIds = [user.id, ...(user.subUsers || [])];
         return { userId: { in: allowedIds } };
     }
-    
+
     return { userId: user.id };
 }

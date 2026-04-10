@@ -80,11 +80,7 @@ export async function deleteSession(token: string): Promise<void> {
 /**
  * Middleware: wymaga autoryzacji (ważna sesja).
  */
-export async function requireAuth(
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
     const session = await getSession(token);
     if (!session) {
@@ -111,11 +107,7 @@ export async function requireAuth(
 /**
  * Middleware: wymaga roli admin (po requireAuth).
  */
-export async function requireAdmin(
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (!req.user || req.user.role !== 'admin') {
         res.status(403).json({ error: 'Brak uprawnień — wymagany administrator' });
         return;

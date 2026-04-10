@@ -54,7 +54,10 @@ async function migrateFromLegacyIfNeeded(): Promise<void> {
                 data: { key: KEY_CURRENT, value: json }
             });
         }
-        logger.info('Migration', `Przeniesiono ${products.length} produktów studni do nowego formatu JSON.`);
+        logger.info(
+            'Migration',
+            `Przeniesiono ${products.length} produktów studni do nowego formatu JSON.`
+        );
     } catch (err: any) {
         logger.error('Migration', 'Migracja studnie error', err.message);
     }
@@ -74,7 +77,10 @@ async function migrateFromLegacyIfNeeded(): Promise<void> {
                     update: { value: oldDefault.value },
                     create: { key: KEY_DEFAULT, value: oldDefault.value }
                 });
-                logger.info('Migration', 'Przeniesiono wartości fabryczne studni do nowego klucza.');
+                logger.info(
+                    'Migration',
+                    'Przeniesiono wartości fabryczne studni do nowego klucza.'
+                );
             }
         }
     } catch (err: any) {

@@ -1,11 +1,4 @@
-import {
-    Paragraph,
-    TextRun,
-    TableCell,
-    WidthType,
-    AlignmentType,
-    ShadingType
-} from 'docx';
+import { Paragraph, TextRun, TableCell, WidthType, AlignmentType, ShadingType } from 'docx';
 import fs from 'fs';
 import path from 'path';
 import { FONT, COLOR_BODY, SZ_TABLE_BODY, CELL_BORDERS, type CellBorders } from './constants';
