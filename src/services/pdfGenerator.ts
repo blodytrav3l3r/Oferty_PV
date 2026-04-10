@@ -77,9 +77,9 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
 
   console.log(`[PDF Studnie] Generowanie PDF dla oferty ${offerId}`);
   console.log(`[PDF Studnie] Znaleziono ${wells.length} studni w offer.data`);
-  console.log(`[PDF Studnie] Offer data keys:`, Object.keys(offerData));
+  console.log('[PDF Studnie] Offer data keys:', Object.keys(offerData));
   if (wells.length > 0) {
-    console.log(`[PDF Studnie] Przykładowa studnia:`, wells[0]);
+    console.log('[PDF Studnie] Przykładowa studnia:', wells[0]);
   }
 
   // Oblicz transport z offer.data
@@ -476,31 +476,31 @@ export function buildContactSectionHTML(
   guardianUser: UserContactInfo | null
 ): string {
   const renderUser = (title: string, u: UserContactInfo): string => {
-    let ht = `<td style="vertical-align:top; width:50%; padding:4px 8px;">`;
+    let ht = '<td style="vertical-align:top; width:50%; padding:4px 8px;">';
     ht += `<strong style="color:#999;">${title}:</strong><br>`;
     ht += `<strong>${u.name}</strong><br>`;
     if (u.email) ht += `Email: <a href="mailto:${u.email}" style="color:#333;text-decoration:none;">${u.email}</a><br>`;
     if (u.phone) ht += `Telefon: ${u.phone}`;
-    ht += `</td>`;
+    ht += '</td>';
     return ht;
   };
 
-  let html = `<div style="margin-top:20px; padding-top:10px; border-top:1.5px solid #999; font-size:9pt;">`;
+  let html = '<div style="margin-top:20px; padding-top:10px; border-top:1.5px solid #999; font-size:9pt;">';
 
   if (!guardianUser && !authorUser) {
-    html += `<p>W razie pytań prosimy o kontakt z opiekunem oferty.</p>`;
+    html += '<p>W razie pytań prosimy o kontakt z opiekunem oferty.</p>';
   } else {
-    html += `<table style="width:100%; border:none;"><tr>`;
+    html += '<table style="width:100%; border:none;"><tr>';
     if (authorUser) {
       html += renderUser('Ofertę przygotował(-a)', authorUser);
     }
     if (guardianUser) {
       html += renderUser('Opiekun handlowy (kontakt)', guardianUser);
     }
-    html += `</tr></table>`;
+    html += '</tr></table>';
   }
 
-  html += `</div>`;
+  html += '</div>';
   return html;
 }
 
@@ -521,7 +521,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
 
   // Load template
   const templatePath = path.join(process.cwd(), 'public', 'templates', 'oferta_studnie.html');
-  let template = fs.readFileSync(templatePath, 'utf-8');
+  const template = fs.readFileSync(templatePath, 'utf-8');
 
   // Load header and footer images as base64 data URIs
   const naglowekPath = path.join(process.cwd(), '1 Pliki przykładowe', 'naglowek.png');

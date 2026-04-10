@@ -532,7 +532,7 @@ async function placePrzejscia(
       result.requiresOtRing = true;
       result.otPosition = components.indexOf(targetComponent) + 1;
       result.warnings.push(
-        `Przejście podniesione w dennicy - wymagany krąg wiercony OT`
+        'Przejście podniesione w dennicy - wymagany krąg wiercony OT'
       );
     }
 
@@ -682,7 +682,7 @@ export function validateManhole(
         supportingRing.dn !== odciazajacy.dn
       ) {
         issues.push(
-          `Płyta/pierścień odciążający wymaga kręgu podporowego tej samej średnicy`
+          'Płyta/pierścień odciążający wymaga kręgu podporowego tej samej średnicy'
         );
       }
     }

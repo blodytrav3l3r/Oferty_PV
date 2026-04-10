@@ -23,6 +23,7 @@
   "license": "ISC",
   "description": "WITROS Oferty - Generator ofert handlowych (TypeScript + Prisma)",
   "dependencies": {
+    "@eslint-community/eslint-utils": "^4.9.1",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
@@ -39,6 +40,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
@@ -49,6 +51,7 @@
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-node": "^11.1.0",
+    "globals": "^17.4.0",
     "jest": "^30.3.0",
     "prettier": "^3.8.1",
     "prisma": "^6.19.3",
@@ -56,6 +59,7 @@
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.1"
   }
 }
