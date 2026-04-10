@@ -1,10 +1,13 @@
-FROM node:18-alpine
+FROM node:18-slim
+
+# Instalacja bibliotek systemowych potrzebnych dla Prisma (OpenSSL)
+RUN apt-get update && apt-get install -y openssl sed && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package*.json ./
 
-# Instalujemy wszystkie zależności potrzebne do zbudowania projektu (w tym typescript)
+# Instalujemy wszystkie zależności
 RUN npm ci
 
 COPY . .
@@ -35,8 +38,9 @@ ENV HOST=0.0.0.0
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
+
 

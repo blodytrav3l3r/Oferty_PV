@@ -33,7 +33,7 @@ app.use(cookieParser());
 // Cachowanie: wyłączone w dev, włączone w produkcji
 if (NODE_ENV === 'production') {
     app.use(
-        express.static(path.join(__dirname, 'public'), {
+        express.static(path.join(process.cwd(), 'public'), {
             index: 'index.html',
             extensions: ['html'],
             maxAge: '1h'
@@ -49,7 +49,7 @@ if (NODE_ENV === 'production') {
         next();
     });
     app.use(
-        express.static(path.join(__dirname, 'public'), {
+        express.static(path.join(process.cwd(), 'public'), {
             index: 'index.html',
             extensions: ['html']
         })
