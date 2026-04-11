@@ -3,9 +3,13 @@
 ## Architektura i Konwencje
 
 1. **Struktura Katalogów**
-    - `src/routes/` - Główne routery zgrupowane dziedzinowo (np. `offers/`, `products/`). Unikać "God Objects" obsługujących dziesiątki podścieżek. Duże routery dzielimy do podfolderów.
-    - `src/services/` - Logika biznesowa, integracje zewnętrzne i zaawansowane operatory (np. DocxTemplater, Puppeteer).
-    - `src/utils/` - Globalne funkcje narzędziowe, helpery formatujące u uniwersalne moduły.
+    - `src/routes/` - Główne routery zgrupowane dziedzinowo (np. `offers/`, `products/`). Unikać "God Objects" obsługujących dziesiątki podścieżek. Duże routery dzielimy do podfolderów. Routery zajmują się **wyłącznie** obsługą HTTP — logika biznesowa trafia do `services/`.
+    - `src/services/` - Logika biznesowa, integracje zewnętrzne i zaawansowane operatory.
+        - `antygrawity/` - Automatyczny dobór elementów studni (selekcja, przejścia, walidacja).
+        - `docx/studnie/` - Generator DOCX ofert studnianych (sekcje, tabele, treści statyczne).
+        - `auditService.ts` - Centralne logowanie zmian (diff, debounce, retencja).
+        - `pricelistService.ts` - Współdzielona logika CRUD cenników (rury + studnie).
+    - `src/utils/` - Globalne funkcje narzędziowe, helpery formatujące i uniwersalne moduły.
     - `src/validators/` - Schematy walidacji oparte o `zod`.
     - `src/middleware/` - Samowystarczalne warstwy wejścia/wyjścia (auth, security, rate limiting).
     - `tests/` - Szablon testowy na podstawie Jesta, z wydzielonym katalogiem `mocks/` np. dla bazy Prisma.

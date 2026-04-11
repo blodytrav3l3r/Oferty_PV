@@ -5,4 +5,4 @@
  * z istniejącymi importami z `../services/docxGenerator`.
  */
 export { generateOfferRuryDOCX } from './ruryDocx';
-export { generateOfferStudnieDOCX } from './studnieDocx';
+export { generateOfferStudnieDOCX } from './studnie';

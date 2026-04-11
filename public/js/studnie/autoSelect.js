@@ -572,96 +572,8 @@ function updateHeightIndicator() {
         return;
     }
 
-    let liveErrors = [];
-    if (well.configErrors && well.configErrors.length > 0) {
-        liveErrors = [...well.configErrors];
-    }
-
-    // --- LIVE VALIDATION FOR CLEARANCES ---
-    if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
-        const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
-        if (rzDna !== null && !isNaN(rzDna)) {
-            // Build physical segments from bottom to top
-            const segments = [];
-            let cy = 0;
-            const configReversed = [...well.config].reverse();
-            for (const item of configReversed) {
-                const p = studnieProducts.find((pr) => pr.id === item.productId);
-                if (!p || !p.height) continue;
-                const qty = item.quantity || 1;
-                for (let i = 0; i < qty; i++) {
-                    segments.push({
-                        type: p.componentType,
-                        start: cy,
-                        end: cy + (p.height || 0),
-                        product: p,
-                        name: p.name
-                    });
-                    cy += p.height || 0;
-                }
-            }
-
-            // Default clearance logic
-            const getDefaultC = (dn) => {
-                const table = [
-                    { max: 200, z: [100, 100, 50, 50] },
-                    { max: 400, z: [150, 150, 100, 100] },
-                    { max: 600, z: [200, 150, 150, 100] },
-                    { max: 800, z: [200, 200, 150, 100] },
-                    { max: 1000, z: [250, 250, 200, 150] },
-                    { max: 9999, z: [300, 300, 250, 200] }
-                ];
-                for (let r of table) if (dn <= r.max) return r.z;
-                return [300, 300, 250, 200];
-            };
-
-            for (const pr of well.przejscia) {
-                const pel = parseFloat(pr.rzednaWlaczenia);
-                if (isNaN(pel)) continue;
-
-                const pprod = studnieProducts.find((x) => x.id === pr.productId);
-                if (!pprod) continue;
-
-                let dn_val = 160;
-                if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-                    dn_val = parseFloat(pprod.dn.split('/')[1]) || 160;
-                } else if (pprod.dn) {
-                    dn_val = parseFloat(pprod.dn) || 160;
-                }
-
-                const defs = getDefaultC(dn_val);
-                const zg_req = parseFloat(pprod.zapasGora) || defs[1];
-                const zd_req = parseFloat(pprod.zapasDol) || defs[0];
-                const hc_invert = (pel - rzDna) * 1000;
-                const top_pos = hc_invert + dn_val;
-
-                // Find WHICH element contains this pipe's invert/top
-                // We assume the pipe falls inside one element primarily, or we check distance to its bounds
-                for (const seg of segments) {
-                    if (hc_invert >= seg.start && hc_invert < seg.end) {
-                        // The pipe originates in this segment
-                        const distToBottom = hc_invert - seg.start;
-                        const distToTop = seg.end - top_pos;
-
-                        // Check clears
-                        if (distToBottom < zd_req && distToBottom >= 0) {
-                            const errStr = `Błąd zapasu dolnego w "${seg.name}" dla przejścia ${pprod.name} (jest ${Math.round(distToBottom)}mm, wymagane ${zd_req}mm z cennika)`;
-                            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
-                        }
-                        // Jeśli rura wykracza poza ten element i nie jest to dennica... (dennica = check top_pos vs end)
-                        // Actually the exact top clearance check:
-                        if (distToTop < zg_req) {
-                            // wait, what if it completely spans across multiple? Let's just do a basic top bounds check
-                            const errStr = `Błąd zapasu górnego w "${seg.name}" dla przejścia ${pprod.name} (zostało ${Math.round(distToTop)}mm, wymagane ${zg_req}mm z cennika)`;
-                            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // Remove "Zastosowano luzy minimalne w dennicy" backend message if it conflicts or exists, just keep it unique
-    liveErrors = [...new Set(liveErrors)];
+    recalculateWellErrors(well);
+    let liveErrors = well.configErrors || [];
 
     if (errContainer) {
         if (liveErrors.length > 0) {
@@ -674,11 +586,8 @@ function updateHeightIndicator() {
         }
     }
 
-    // Update well's error state so the list tile highlights red
     const prevErrors = well.configErrors ? well.configErrors.length : 0;
-    well.configErrors = liveErrors;
-    well.configStatus =
-        liveErrors.length > 0 ? 'ERROR' : well.configSource ? 'OK' : well.configStatus || '';
+    if (prevErrors !== liveErrors.length) renderWellsList();
     if (prevErrors !== liveErrors.length) renderWellsList();
 
     const stats = calcWellStats(well);
@@ -1944,10 +1853,119 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     };
 }
 
+function recalculateWellErrors(well) {
+    if (!well) return;
+    
+    // Clear out strict clearance errors from before to regenerate them
+    let liveErrors = well.configErrors ? well.configErrors.filter(e => !e.includes('Błąd zapasu')) : [];
+
+    // --- LIVE VALIDATION FOR CLEARANCES ---
+    if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
+        const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
+        if (rzDna !== null && !isNaN(rzDna)) {
+            // Build physical segments from bottom to top
+            const segments = [];
+            let cy = 0;
+            const configReversed = [...well.config].reverse();
+            for (const item of configReversed) {
+                const p = studnieProducts.find((pr) => pr.id === item.productId);
+                if (!p || !p.height) continue;
+                const qty = item.quantity || 1;
+                for (let i = 0; i < qty; i++) {
+                    segments.push({
+                        type: p.componentType,
+                        start: cy,
+                        end: cy + (p.height || 0),
+                        product: p,
+                        name: p.name
+                    });
+                    cy += p.height || 0;
+                }
+            }
+
+            // Default clearance logic
+            const getDefaultC = (dn) => {
+                const table = [
+                    { max: 200, z: [100, 100, 50, 50] },
+                    { max: 400, z: [150, 150, 100, 100] },
+                    { max: 600, z: [200, 150, 150, 100] },
+                    { max: 800, z: [200, 200, 150, 100] },
+                    { max: 1000, z: [250, 250, 200, 150] },
+                    { max: 9999, z: [300, 300, 250, 200] }
+                ];
+                for (let r of table) if (dn <= r.max) return r.z;
+                return [300, 300, 250, 200];
+            };
+
+            for (const pr of well.przejscia) {
+                const pel = parseFloat(pr.rzednaWlaczenia);
+                if (isNaN(pel)) continue;
+
+                const pprod = studnieProducts.find((x) => x.id === pr.productId);
+                if (!pprod) continue;
+
+                let dn_val = 160;
+                if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
+                    dn_val = parseFloat(pprod.dn.split('/')[1]) || 160;
+                } else if (pprod.dn) {
+                    dn_val = parseFloat(pprod.dn) || 160;
+                }
+
+                const defs = getDefaultC(dn_val);
+                const zg_req = parseFloat(pprod.zapasGora) || defs[1];
+                const zd_req = parseFloat(pprod.zapasDol) || defs[0];
+                const hc_invert = (pel - rzDna) * 1000;
+                const top_pos = hc_invert + dn_val;
+
+                for (const seg of segments) {
+                    if (hc_invert >= seg.start && hc_invert < seg.end) {
+                        const distToBottom = hc_invert - seg.start;
+                        const distToTop = seg.end - top_pos;
+
+                        if (distToBottom < zd_req && distToBottom >= 0) {
+                            const errStr = `Błąd zapasu dolnego w "${seg.name}" dla przejścia ${pprod.name} (jest ${Math.round(distToBottom)}mm, wymagane ${zd_req}mm z cennika)`;
+                            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
+                        }
+                        if (distToTop < zg_req) {
+                            const errStr = `Błąd zapasu górnego w "${seg.name}" dla przejścia ${pprod.name} (zostało ${Math.round(distToTop)}mm, wymagane ${zg_req}mm z cennika)`;
+                            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    well.configErrors = [...new Set(liveErrors)];
+    well.configStatus = well.configErrors.length > 0 ? 'ERROR' : (well.configSource ? 'OK' : well.configStatus || '');
+}
+
 /* ===== WELLS LIST RENDERING ===== */
 function renderWellsList() {
     const container = document.getElementById('wells-list');
     if (!container) return;
+
+    // Przelicz bezwzględnie wszystkie studnie z tła, aby uzyskać aktualne błędy grubości rur / luzów
+    wells.forEach(w => recalculateWellErrors(w));
+
+    // Funkcja szybkoskanująca uchybienia studni (luzy, braki wysokości), aktualizując obiekt przed wyrysowaniem
+    const validateAutomatedErrors = (well) => {
+        if (!well) return false;
+        let isError = false;
+        
+        // 1. Sprawdzamy wysokość
+        if (well.rzednaWlazu != null && well.rzednaDna != null) {
+            const req = Math.round((well.rzednaWlazu - well.rzednaDna) * 1000);
+            const stats = calcWellStats(well);
+            if (Math.abs(stats.height - req) > 50) isError = true;
+        }
+
+        // 2. Status 'ERROR' nakazany przez główną funkcję updateHeightIndicator lub backend OR-TOOLS
+        if (well.configStatus === 'ERROR' || (well.configErrors && well.configErrors.length > 0 && well.configStatus !== 'OK')) {
+            isError = true;
+        }
+        
+        return isError;
+    };
 
     const searchTerm = (document.getElementById('wells-search-input')?.value || '')
         .toLowerCase()
@@ -2044,13 +2062,13 @@ function renderWellsList() {
                 doplataBadge = `<span title="${badgeLabel}: ${fmtInt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
             }
 
-            const hasErrors =
-                w.configStatus === 'ERROR' ||
-                (w.configErrors && w.configErrors.length > 0 && w.configStatus !== 'OK');
+            // Automatyczne sprawdzenie w locie dla wszystkich kart
+            const hasErrors = validateAutomatedErrors(w);
+
             const errorStyling = hasErrors
-                ? ' border:2px solid #ef4444; background:rgba(239,68,68,0.12);'
+                ? ' border:2px solid #ef4444 !important; background:rgba(239,68,68,0.15) !important;'
                 : '';
-            const errorNameStyle = hasErrors ? 'color:#ef4444; font-weight:700;' : '';
+            const errorNameStyle = hasErrors ? 'color:#ef4444 !important; font-weight:700 !important;' : '';
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem;">
                 <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}">${w.name}</div>

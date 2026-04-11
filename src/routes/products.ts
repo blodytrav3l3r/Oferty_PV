@@ -1,102 +1,34 @@
 import express from 'express';
-import prisma from '../prismaClient';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import {
+    migrateFromLegacyIfNeeded,
+    readPricelist,
+    writePricelist,
+    PricelistConfig
+} from '../services/pricelistService';
 
 const router = express.Router();
 
 /* ===== CENNIK RURY — zapis/odczyt z tabeli settings (JSON) ===== */
 
-const KEY_CURRENT = 'pricelist_rury';
-const KEY_DEFAULT = 'pricelist_rury_default';
-const LEGACY_TABLE = 'products_rury_rel';
-
-/**
- * Jednorazowa migracja: jeśli klucz pricelist_rury nie istnieje,
- * kopiuje dane ze starej tabeli relacyjnej products_rury_rel.
- */
-async function migrateFromLegacyIfNeeded(): Promise<void> {
-    try {
-        const existing = await prisma.settings.findUnique({
-            where: { key: KEY_CURRENT }
-        });
-        if (existing) return; // już zmigrowane
-
-        // Sprawdź, czy stara tabela istnieje i ma dane
-        let rows: any[] = [];
-        try {
-            rows = await (prisma as any)[LEGACY_TABLE].findMany();
-        } catch (_e) {
-            // Tabela nie istnieje — brak danych do migracji
-            return;
-        }
-
-        if (rows.length === 0) return;
-
-        // Spłaszcz kolumnę data JSON do głównego obiektu
-        const products = rows.map((row: any) => {
-            let extra = {};
-            try {
-                if (row.data) extra = JSON.parse(row.data);
-            } catch (_e) {}
-            const { data: _data, ...rest } = row;
-            return { ...rest, ...extra };
-        });
-
-        const json = JSON.stringify(products);
-        try {
-            await prisma.settings.update({
-                where: { key: KEY_CURRENT },
-                data: { value: json }
-            });
-        } catch {
-            await prisma.settings.create({
-                data: { key: KEY_CURRENT, value: json }
-            });
-        }
-        logger.info(
-            'Migration',
-            `Przeniesiono ${products.length} produktów rur do nowego formatu JSON.`
-        );
-    } catch (err: any) {
-        logger.error('Migration', 'Migracja rury error', err.message);
-    }
-
-    // Migracja starych wartości fabrycznych (klucz 'default_rury' → KEY_DEFAULT)
-    try {
-        const oldDefault = await prisma.settings.findUnique({
-            where: { key: 'default_rury' }
-        });
-        if (oldDefault && oldDefault.value) {
-            const existingNew = await prisma.settings.findUnique({
-                where: { key: KEY_DEFAULT }
-            });
-            if (!existingNew) {
-                await prisma.settings.upsert({
-                    where: { key: KEY_DEFAULT },
-                    update: { value: oldDefault.value },
-                    create: { key: KEY_DEFAULT, value: oldDefault.value }
-                });
-                logger.info('Migration', 'Przeniesiono wartości fabryczne rur do nowego klucza.');
-            }
-        }
-    } catch (err: any) {
-        logger.error('Migration', 'Migracja default_rury error', err.message);
-    }
-}
+const config: PricelistConfig = {
+    keyCurrent: 'pricelist_rury',
+    keyDefault: 'pricelist_rury_default',
+    legacyTable: 'products_rury_rel',
+    legacyDefaultKey: 'default_rury',
+    label: 'rury'
+};
 
 // Uruchom migrację przy starcie
-migrateFromLegacyIfNeeded();
+migrateFromLegacyIfNeeded(config);
 
 // ──────────────────────────────────────────
 // GET /api/products → Pobiera bieżący cennik rur
 // ──────────────────────────────────────────
 router.get('/', async (_req, res) => {
     try {
-        const row = await prisma.settings.findUnique({
-            where: { key: KEY_CURRENT }
-        });
-        const data = row ? JSON.parse(row.value || '[]') : [];
+        const data = await readPricelist(config.keyCurrent);
         res.json({ data });
     } catch (err: any) {
         logger.error('Products', 'GET error', err.message);
@@ -114,19 +46,8 @@ router.put('/', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Dane muszą być tablicą' });
         }
 
-        const json = JSON.stringify(arr);
-        try {
-            await prisma.settings.update({
-                where: { key: KEY_CURRENT },
-                data: { value: json }
-            });
-        } catch {
-            await prisma.settings.create({
-                data: { key: KEY_CURRENT, value: json }
-            });
-        }
-
-        res.json({ ok: true, count: arr.length });
+        const count = await writePricelist(config.keyCurrent, arr);
+        res.json({ ok: true, count });
     } catch (err: any) {
         logger.error('Products', 'PUT error', err.message);
         res.status(500).json({ error: err.message });
@@ -138,10 +59,7 @@ router.put('/', requireAuth, async (req, res) => {
 // ──────────────────────────────────────────
 router.get('/default', async (_req, res) => {
     try {
-        const row = await prisma.settings.findUnique({
-            where: { key: KEY_DEFAULT }
-        });
-        const data = row ? JSON.parse(row.value || '[]') : [];
+        const data = await readPricelist(config.keyDefault);
         res.json({ data });
     } catch (err: any) {
         logger.error('Products', 'GET default error', err.message);
@@ -155,19 +73,8 @@ router.get('/default', async (_req, res) => {
 router.put('/default', requireAuth, async (req, res) => {
     try {
         const arr = req.body.data || [];
-        const json = JSON.stringify(arr);
-        try {
-            await prisma.settings.update({
-                where: { key: KEY_DEFAULT },
-                data: { value: json }
-            });
-        } catch {
-            await prisma.settings.create({
-                data: { key: KEY_DEFAULT, value: json }
-            });
-        }
-
-        res.json({ ok: true, count: arr.length });
+        const count = await writePricelist(config.keyDefault, arr);
+        res.json({ ok: true, count });
     } catch (err: any) {
         logger.error('Products', 'PUT default error', err.message);
         res.status(500).json({ error: err.message });

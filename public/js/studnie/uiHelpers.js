@@ -199,8 +199,7 @@ async function loadStudnieProducts() {
             if (p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000) {
                 p.dn = 2500;
             }
-
-            renamePłyty(p);
+            // Usunięto: renamePłyty(p);
         });
         return arr;
     }
@@ -235,12 +234,7 @@ async function loadStudnieProducts() {
 }
 
 function renamePłyty(p) {
-    if (p && p.name) {
-        p.name = p.name
-            .replace(/Płyta Zamykająca/gi, 'Płyta Odciążająca')
-            .replace(/Płyta Najazdowa/gi, 'Płyta Odciążająca')
-            .replace(/Płyta Odciążająca/gi, 'Płyta + Pierścień odciążający');
-    }
+    // Funkcja wyłączona - pozwala użytkownikowi na swobodne nazywanie Płyt
 }
 
 async function saveStudnieProducts(data) {

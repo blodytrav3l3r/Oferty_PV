@@ -30,7 +30,10 @@ function getWellZwienczenieName(well) {
 
     let name = product.name;
     // Usunięcie oznaczeń wysokości (np. h=200, H=250, (H=600mm), itp.)
-    name = name.replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ').trim();
+    name = name.replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ');
+    // Usunięcie dopisków o stopniach (np. "bez stopni", "z drabinką", "drabinka")
+    name = name.replace(/\s*(bez\s+stopni|z\s+drabinką|drabinka|ze\s+stopniami|-B|-D|-N)/gi, '');
+    name = name.trim().replace(/\s+/g, ' ');
 
     return name;
 }
