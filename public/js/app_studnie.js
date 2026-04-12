@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentUser.firstName && currentUser.lastName
             ? `${currentUser.firstName} ${currentUser.lastName}`
             : currentUser.username;
-    if (userEl) userEl.textContent = '👤 ' + displayName;
+    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + displayName;
     if (roleEl) {
         roleEl.textContent =
             currentUser.role === 'admin' ? 'ADMIN' : currentUser.role === 'pro' ? 'PRO' : 'USER';

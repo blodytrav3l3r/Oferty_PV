@@ -18,10 +18,10 @@ function renderOfferSummary() {
         const changeCount = Object.keys(orderChanges).length;
         html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'}; border:1px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}; border-radius:8px;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
-                <span style="font-size:1.1rem;">📦</span>
+                <span style="font-size:1.1rem;"><i data-lucide="package"></i></span>
                 <span style="font-size:0.75rem; font-weight:700; color:${hasChanges ? '#f87171' : '#34d399'};">ZAMÓWIENIE ${hasChanges ? '— ' + changeCount + ' studni zmienionych' : '— bez zmian'}</span>
             </div>
-            <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()">📦 Zapisz zamówienie</button>
+            <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package"></i> Zapisz zamówienie</button>
         </div>`;
     }
 
@@ -79,8 +79,8 @@ function renderOfferSummary() {
             : '';
         const changeBadge = isChanged
             ? wc.type === 'added'
-                ? '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;">🟢 NOWE</span>'
-                : '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;">🔴 ZMIENIONO</span>'
+                ? '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWE</span>'
+                : '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>'
             : '';
 
         html += `<tr style="cursor:pointer; ${rowStyle}" onclick="showSection('builder'); selectWell(${i})">
@@ -187,6 +187,7 @@ function renderOfferSummary() {
                 const prProd = studnieProducts.find((x) => x.id === pr.productId);
                 if (prProd) {
                     totalLinePrice += (prProd.price || 0) * nadbudowaMult;
+                    if (pr.doplata) totalLinePrice += pr.doplata;
                     totalLineWeight += prProd.weight || 0;
                 }
             });
@@ -230,7 +231,8 @@ function renderOfferSummary() {
                 if (disc.nadbudowa > 0)
                     pDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
 
-                const prPriceDoliczane = (prProd.price || 0) * nadbudowaMult;
+                let prPriceDoliczane = (prProd.price || 0) * nadbudowaMult;
+                if (pr.doplata) prPriceDoliczane += pr.doplata;
 
                 html += `<tr style="opacity:0.6; ${isChanged && wc.type === 'modified' && wc.fields?.includes('przejscia') ? 'color:#f87171;' : 'color:#818cf8;'}">
                     <td></td>
@@ -279,7 +281,7 @@ function renderOfferSummary() {
                 if (wellTransportCost > 0) {
                     html += `<tr style="opacity:0.6; color:#a855f7;">
                         <td></td>
-                        <td colspan="2" style="padding-left:2.5rem; font-size:0.72rem;">↳ 🚚 Koszt transportu</td>
+                        <td colspan="2" style="padding-left:2.5rem; font-size:0.72rem;">↳ <i data-lucide="truck"></i> Koszt transportu</td>
                         <td class="ui-text-sm">1 skmpl.</td>
                         <td class="text-right" class="ui-text-sm">—</td>
                         <td class="text-right" class="ui-text-sm">—</td>
@@ -313,12 +315,12 @@ function renderOfferSummary() {
 
     // Wskaźniki UI transportu
     if (totalTransportCost > 0) {
-        if (transCostEl) transCostEl.textContent = fmtInt(totalTransportCost) + ' PLN';
+        if (transCostEl) transCostEl.innerHTML = fmtInt(totalTransportCost) + ' PLN';
 
         const transDetails = document.getElementById('transport-breakdown');
         if (transDetails) {
             transDetails.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); background:rgba(15,23,42,0.4); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,245,0.05); margin-bottom:1rem;">
-             🛣️ Łączny ciężar to <strong>${fmtInt(totalWeight)} kg</strong> co wymaga ok. <strong>${totalTransports} transportów</strong>. 
+             <i data-lucide="route"></i> Łączny ciężar to <strong>${fmtInt(totalWeight)} kg</strong> co wymaga ok. <strong>${totalTransports} transportów</strong>. 
              Koszt jednego kursu: <strong>${fmtInt(transportCostPerTrip)} PLN</strong>. Łącznie transport: <strong>${fmtInt(totalTransportCost)} PLN</strong> (koszt rozbity na poszczególne studnie w tabeli wyżej).
            </div>`;
         }
@@ -443,7 +445,7 @@ async function changeOfferUser() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
 
                 if (editingOfferIdStudnie) {
                     saveOfferStudnie();
@@ -530,7 +532,7 @@ async function changeOfferUserFromListStudnie(offerId) {
                     editingOfferAssignedUserId = offer.userId;
                     editingOfferAssignedUserName = offer.userName;
                     const btnChangeUser = document.getElementById('btn-change-offer-user');
-                    if (btnChangeUser) btnChangeUser.textContent = `👤 Opiekun: ${offer.userName}`;
+                    if (btnChangeUser) btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${offer.userName}`;
                 }
             }
         }
@@ -636,7 +638,7 @@ async function saveOfferStudnie() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
             }
         } catch (e) {
             console.error('Błąd wyboru opiekuna:', e);
@@ -756,7 +758,7 @@ async function saveOfferStudnie() {
             return;
         }
         const result = await storageService.saveOffer(offerDoc);
-        showToast('Oferta zapisana ✔', 'success');
+        showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         const savedId = result.id || offerDoc.id;
         editingOfferIdStudnie = savedId;
 
@@ -784,7 +786,7 @@ function showTelemetryPopup(well, callback) {
     overlay.style.zIndex = '99999';
     overlay.innerHTML = `
     <div class="modal" style="max-width:500px; padding:1.5rem;">
-        <h3 style="color:#f59e0b; font-weight:700; margin-bottom:0.5rem;">🤖 Pętla Sprzężenia AI</h3>
+        <h3 style="color:#f59e0b; font-weight:700; margin-bottom:0.5rem;"><i data-lucide="bot"></i> Pętla Sprzężenia AI</h3>
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">
             Zauważyliśmy, że w studni <strong>${well.name}</strong> odrzuciłeś autokonfigurację wygenerowaną przez system i ręcznie ułożyłeś własne elementy.
             <br/><br/>
@@ -847,9 +849,9 @@ function clearOfferForm() {
 
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title-studnie');
-    if (titleEl) titleEl.innerHTML = `📋 Dane klienta i oferty (Nowa)`;
+    if (titleEl) titleEl.innerHTML = `<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)`;
     const btnEl2 = document.getElementById('btn-save-studnie-offer');
-    if (btnEl2) btnEl2.innerHTML = `💾 Zapisz ofertę`;
+    if (btnEl2) btnEl2.innerHTML = `<i data-lucide="save"></i> Zapisz ofertę`;
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
@@ -857,7 +859,7 @@ function clearOfferForm() {
             currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
                 ? 'inline-block'
                 : 'none';
-        btnChangeUser.textContent = `👤 Zmień opiekuna`;
+        btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
     }
 
     refreshAll();
@@ -891,7 +893,7 @@ function renderSavedOffersStudnie() {
                 : null;
             const orderBadge = hasOrder
                 ? `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:rgba(16,185,129,0.15); border:2px solid rgba(16,185,129,0.4); border-radius:6px; margin-top:0.3rem;">
-                <span style="font-size:0.85rem;">📦</span>
+                <span style="font-size:0.85rem;"><i data-lucide="package"></i></span>
                 <span style="font-size:0.68rem; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">Zamówienie ${order ? order.number : ''}</span>
                </div>`
                 : '';
@@ -904,12 +906,12 @@ function renderSavedOffersStudnie() {
                         ${orderBadge}
                     </div>
                     <div style="font-weight:700; color:var(--text-primary); font-size: 0.9rem; white-space:nowrap;">
-                        💰 ${fmt(o.totalBrutto)} PLN
+                        <i data-lucide="banknote"></i> ${fmt(o.totalBrutto)} PLN
                     </div>
                 </div>
                 <div class="meta" style="margin-top:0.3rem;">
-                    <span>📅 <strong>${o.date}</strong></span>
-                    <span>🗂️ <strong>${o.wells.length}</strong> studnie</span>
+                    <span><i data-lucide="calendar"></i> <strong>${o.date}</strong></span>
+                    <span><i data-lucide="folder-open"></i> <strong>${o.wells.length}</strong> studnie</span>
                     ${(() => {
                         const resolveName = (rawName) => {
                             if (!rawName) return '';
@@ -928,41 +930,41 @@ function renderSavedOffersStudnie() {
 
                         let html = '';
                         if (creatorName === assignedName && creatorName) {
-                            html += `<span style="color:var(--accent-hover)">👤 Autor i Opiekun: <strong>${creatorName}</strong></span>`;
+                            html += `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
                         } else {
                             if (creatorName)
-                                html += `<span style="display:inline-block; margin-right:10px; color:#888;">✍️ Autor: <strong>${creatorName}</strong></span>`;
+                                html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool"></i>️ Autor: <strong>${creatorName}</strong></span>`;
                             if (assignedName)
-                                html += `<span style="color:var(--accent-hover)">👤 Opiekun: <strong>${assignedName}</strong></span>`;
+                                html += `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> Opiekun: <strong>${assignedName}</strong></span>`;
                         }
                         return html;
                     })()}
                     
                     <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size:0.65rem;">
-                        <span style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3);">💾 Zapisano</span>
+                        <span style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3);"><i data-lucide="save"></i> Zapisano</span>
                     </div>
                 </div>
                 ${
                     o.clientName || o.investName || o.clientContact
                         ? `
                 <div class="offer-client-badges">
-                    ${o.clientName ? `<div class="badge-client">🏢 <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
-                    ${o.investName ? `<div class="badge-invest">🏗️ <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
+                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
+                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
                 </div>`
                         : ''
                 }
             </div>
             <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
                 <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON">💾 JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna">👤 Zmień opiekuna</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian">⏳ Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń">🗑️ Usuń</button>
+                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON"><i data-lucide="save"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna"><i data-lucide="user"></i> Zmień opiekuna</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian"><i data-lucide="hourglass"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń"><i data-lucide="trash-2"></i> Usuń</button>
                 ${
                     hasOrder && order
                         ? `
-                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.75rem; font-weight:800; padding:0.4rem 0.8rem;" onclick="window.location.href='/studnie?order=${order.id}'" title="Otwórz zamówienie">📦 Otwórz zamówienie</button>
-                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie">🗑️ Zamówienie</button>
+                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.75rem; font-weight:800; padding:0.4rem 0.8rem;" onclick="window.location.href='/studnie?order=${order.id}'" title="Otwórz zamówienie"><i data-lucide="package"></i> Otwórz zamówienie</button>
+                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie"><i data-lucide="trash-2"></i> Zamówienie</button>
                 `
                         : ''
                 }
@@ -1121,9 +1123,9 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
     // Aktualizacja UI (nagłówki i przyciski)
     const titleEl = document.getElementById('offer-form-title-studnie');
     if (titleEl)
-        titleEl.innerHTML = `✏️ Edycja Oferty: <span style="font-weight:700">${normalized.number || offer.id}</span>`;
+        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${normalized.number || offer.id}</span>`;
     const btnEl2 = document.getElementById('btn-save-studnie-offer');
-    if (btnEl2) btnEl2.innerHTML = `💾 Zapisz zmiany`;
+    if (btnEl2) btnEl2.innerHTML = `<i data-lucide="save"></i> Zapisz zmiany`;
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
@@ -1132,9 +1134,9 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
                 ? 'inline-block'
                 : 'none';
         if (editingOfferAssignedUserName) {
-            btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
         } else {
-            btnChangeUser.textContent = `👤 Zmień opiekuna`;
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
         }
     }
 
@@ -1394,19 +1396,19 @@ function renderAuditLogEntry(log) {
 
     if (isDelete) {
         cardClass = 'action-delete';
-        actionBadge = `<span style="background:rgba(239,68,68,0.15); color:#f87171; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">🗑️ USUNIĘTO</span>`;
+        actionBadge = `<span style="background:rgba(239,68,68,0.15); color:#f87171; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>`;
         const oldData = log.oldData || {};
         contentHtml = `<div style="font-size:0.9rem; color:#f87171;">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:#fff;">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
     } else if (log.action === 'create') {
         cardClass = 'action-create';
-        actionBadge = `<span style="background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">✨ UTWORZONO</span>`;
+        actionBadge = `<span style="background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>`;
         const price = data.totalBrutto || 0;
-        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 ${fmt(price)} PLN</div>`;
+        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         if (data.wells)
-            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">📦 ${data.wells.length} studni</div>`;
+            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     } else if (isDiff) {
         cardClass = 'action-diff';
-        actionBadge = `<span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">📝 EDYCJA (DIFF)</span>`;
+        actionBadge = `<span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>`;
         const changedKeys = Object.keys(data).filter((k) => k !== '_diffMode');
         const changesHtml = changedKeys
             .map((k) => {
@@ -1419,36 +1421,36 @@ function renderAuditLogEntry(log) {
                     k.toLowerCase().includes('price') ||
                     k.toLowerCase().includes('cena')
                 ) {
-                    return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${fmt(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${fmt(Number(newVal))} PLN</span></div>`;
+                    return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${fmt(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${fmt(Number(newVal))} PLN</span></div>`;
                 }
-                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
+                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
             })
             .join('');
         contentHtml = `<div class="diff-container">${changesHtml}</div>`;
     } else {
         cardClass = 'action-update';
-        actionBadge = `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">💾 ZAPIS / AKTUALIZACJA</span>`;
+        actionBadge = `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>`;
         const price = data.totalBrutto || 0;
         const oldPrice = log.oldData?.totalBrutto || 0;
         if (oldPrice && Math.abs(price - oldPrice) > 0.01) {
-            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;">➔</span> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
         } else {
-            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 ${fmt(price)} PLN</div>`;
+            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         }
         if (data.wells)
-            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">📦 ${data.wells.length} studni</div>`;
+            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     }
 
     const restoreBtnHtml =
         !isDelete && !isDiff
             ? `
-        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')">🔄 Przywróć</button>
+        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')"><i data-lucide="refresh-cw"></i> Przywróć</button>
     `
             : '';
 
     const buttonsHtml = `
         <div style="display:flex; gap:0.4rem;">
-            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${log.id}')">👁️ Podgląd</button>
+            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${log.id}')"><i data-lucide="eye"></i>️ Podgląd</button>
             ${restoreBtnHtml}
         </div>
     `;
@@ -1458,10 +1460,10 @@ function renderAuditLogEntry(log) {
             <div class="audit-card-header">
                 <div style="display:flex; align-items:center; gap:0.6rem;">
                     ${actionBadge}
-                    <span class="audit-date">📅 ${new Date(log.createdAt).toLocaleString()}</span>
+                    <span class="audit-date"><i data-lucide="calendar"></i> ${new Date(log.createdAt).toLocaleString()}</span>
                 </div>
                 <div class="audit-author">
-                    🧑‍💻 <strong style="color:#e2e8f0;">${log.userName || 'System'}</strong>
+                    <i data-lucide="user"></i>‍<i data-lucide="monitor"></i> <strong style="color:#e2e8f0;">${log.userName || 'System'}</strong>
                 </div>
             </div>
             <div class="audit-card-body">
@@ -1494,7 +1496,7 @@ async function showOfferHistoryStudnie(id) {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${id}', 20)">📜 Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
+                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${id}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
                 : '';
 
@@ -1567,7 +1569,7 @@ async function showOfferHistoryStudnie(id) {
                     <h3 style="font-weight:800; color:#fff; margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
-                    <button class="btn-icon" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()">✕</button>
+                    <button class="btn-icon" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x"></i></button>
                 </div>
                 <div id="audit-logs-container" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                     ${historyHtml}
@@ -1617,7 +1619,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})">📜 Załaduj starsze zmiany (${remaining} pozostało)</button>
+                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
             `
             );
@@ -1648,10 +1650,10 @@ async function viewHistorySnapshot(logId) {
 
         if (entityType === 'order' && typeof window.loadOrderSnapshot === 'function') {
             window.loadOrderSnapshot(rebuiltData, entityId);
-            showToast('👁️ Wczytano archiwalną wersję ZAMÓWIENIA w trybie READ-ONLY', 'info');
+            showToast('<i data-lucide="eye"></i>️ Wczytano archiwalną wersję ZAMÓWIENIA w trybie READ-ONLY', 'info');
         } else {
             loadSavedOfferStudnie(rebuiltData);
-            showToast('👁️ Wczytano wersję historyczną do testowego podglądu', 'info');
+            showToast('<i data-lucide="eye"></i>️ Wczytano wersję historyczną do testowego podglądu', 'info');
             if (typeof window.applyPreviewLockUI === 'function') window.applyPreviewLockUI();
         }
 
@@ -1687,12 +1689,12 @@ async function restoreHistorySnapshot(logId) {
                 el.style.opacity = '1';
             });
         showToast(
-            '🔄 Przywrócono ZAMÓWIENIE z historii. Zapisz pomyślnie używając guzika "Zapisz zamówienie".',
+            '<i data-lucide="refresh-cw"></i> Przywrócono ZAMÓWIENIE z historii. Zapisz pomyślnie używając guzika "Zapisz zamówienie".',
             'success'
         );
     } else {
         loadSavedOfferStudnie(log.newData);
-        showToast('🔄 Przywrócono wersję historyczną. Zapisz ofertę, aby zatwierdzić.', 'success');
+        showToast('<i data-lucide="refresh-cw"></i> Przywrócono wersję historyczną. Zapisz ofertę, aby zatwierdzić.', 'success');
     }
 
     closeModal();

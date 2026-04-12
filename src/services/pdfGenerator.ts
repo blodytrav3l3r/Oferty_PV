@@ -213,12 +213,10 @@ function generateOfferHTML(data: OfferData): string {
   <meta charset="UTF-8">
   <title>Oferta ${data.type === 'rury' ? 'Rury' : 'Studnie'} - ${data.offerNumber}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
-      font-family: 'Inter', Arial, sans-serif;
+      font-family: Arial, sans-serif;
       font-size: 10pt;
       color: #000;
       line-height: 1.4;

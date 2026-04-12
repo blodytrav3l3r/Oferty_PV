@@ -26,11 +26,11 @@ function openZakonczeniePopup() {
 
     // Grupuj według componentType dla ładniejszego wyświetlania
     const typeLabels = {
-        konus: '🔶 Konus',
-        plyta_din: '🔽 Płyta DIN',
-        plyta_najazdowa: '🔽 Płyta Odciążająca',
-        plyta_zamykajaca: '🔽 Płyta Odciążająca',
-        pierscien_odciazajacy: '⚙️ Pierścień Odciążający'
+        konus: '<i data-lucide="diamond"></i> Konus',
+        plyta_din: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta DIN',
+        plyta_najazdowa: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
+        plyta_zamykajaca: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
+        pierscien_odciazajacy: '<i data-lucide="settings"></i> Pierścień Odciążający'
     };
 
     const typeColors = {
@@ -60,7 +60,7 @@ function openZakonczeniePopup() {
             ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
         " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
            onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">🔄 Auto (Konus)</div>
+            <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Konus)</div>
             <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Domyślny konus dla DN ${effectiveDn}</div>
         </div>`;
 
@@ -77,7 +77,7 @@ function openZakonczeniePopup() {
                onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
                 <div class="ui-flex-between">
                     <div style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</div>
-                    ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;">✔ AKTYWNE</span>' : ''}
+                    ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check"></i> AKTYWNE</span>' : ''}
                 </div>
                 <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:0.15rem; font-weight:600;">${p.name}</div>
                 <div style="display:flex; gap:0.8rem; margin-top:0.2rem; font-size:0.62rem; color:var(--text-muted);">
@@ -94,7 +94,7 @@ function openZakonczeniePopup() {
     overlay.innerHTML = `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);">🔽 Zakończenie studni <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${well.name} — DN ${dn === 'styczna' ? 'styczna (1000)' : dn})</span></h3>
+        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie studni <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${well.name} — DN ${dn === 'styczna' ? 'styczna (1000)' : dn})</span></h3>
         <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
       </div>
       <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr; gap:0.5rem;">
@@ -150,11 +150,11 @@ function updateZakonczenieButton() {
                 ? p.name.substring(0, 12) + '…'
                 : p.name
             : well.zakonczenie;
-        btn.innerHTML = '🔽 ' + shortName;
+        btn.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> ' + shortName;
         btn.style.borderColor = 'rgba(99,102,241,0.4)';
         btn.style.color = '#a78bfa';
     } else {
-        btn.innerHTML = '🔽 Zakończenie';
+        btn.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
     }
@@ -191,7 +191,7 @@ async function toggleRedukcja() {
 
         const btnZak = document.getElementById('btn-redukcja-zak');
         if (btnZak) {
-            btnZak.innerHTML = '🔽 Zak. DN1000';
+            btnZak.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zak. DN1000';
             btnZak.style.borderColor = 'var(--border-glass)';
             btnZak.style.color = '';
         }
@@ -222,18 +222,21 @@ function updateRedukcjaButton() {
     const minInput = document.getElementById('redukcja-min-h');
 
     if (well.redukcjaDN1000) {
-        btn.innerHTML = '⏬ Redukcja DN1000 ✔';
+        btn.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevrons-down"></i></span> Redukcja DN1000 <span style="font-size:0.75rem;"><i data-lucide="check"></i></span>';
         btn.style.borderColor = 'rgba(109,40,217,0.5)';
         btn.style.color = '#a78bfa';
         btn.style.background = 'rgba(109,40,217,0.15)';
         if (minWrap) minWrap.style.display = 'flex';
         if (minInput) minInput.value = ((well.redukcjaMinH || 2500) / 1000).toFixed(1);
     } else {
-        btn.innerHTML = '⏬ Redukcja DN1000';
+        btn.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevrons-down"></i></span> Redukcja DN1000';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';
         if (minWrap) minWrap.style.display = 'none';
+    }
+    if (window.lucide) {
+        window.lucide.createIcons();
     }
 }
 
@@ -269,11 +272,11 @@ function openRedukcjaZakonczeniePopup() {
         .filter((p) => filterByWellParams(p, well));
 
     const typeLabels = {
-        konus: '🔶 Konus',
-        plyta_din: '🔽 Płyta DIN',
-        plyta_najazdowa: '🔽 Płyta Odciążająca',
-        plyta_zamykajaca: '🔽 Płyta Odciążająca',
-        pierscien_odciazajacy: '⚙️ Pierścień Odciążający'
+        konus: '<i data-lucide="diamond"></i> Konus',
+        plyta_din: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta DIN',
+        plyta_najazdowa: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
+        plyta_zamykajaca: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
+        pierscien_odciazajacy: '<i data-lucide="settings"></i> Pierścień Odciążający'
     };
     const typeColors = {
         konus: 'rgba(124,58,237,0.15)',
@@ -300,7 +303,7 @@ function openRedukcjaZakonczeniePopup() {
            onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
             <div class="ui-flex-between">
                 <div style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</div>
-                ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;">✔ AKTYWNE</span>' : ''}
+                ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check"></i> AKTYWNE</span>' : ''}
             </div>
             <div style="flex-grow:1;"></div>
             <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:0.3rem; font-weight:600;">${p.name}</div>
@@ -322,7 +325,7 @@ function openRedukcjaZakonczeniePopup() {
         ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
     " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
        onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-        <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">🔄 Auto (Konus DN1000)</div>
+        <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Konus DN1000)</div>
         <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Domyślny konus DN1000</div>
     </div>`;
 
@@ -353,7 +356,7 @@ function openRedukcjaZakonczeniePopup() {
     overlay.innerHTML = `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);">🔽 Zakończenie redukcji DN1000</h3>
+        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie redukcji DN1000</h3>
         <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN1000. Wybór elementu odciążającego automatycznie doda pierścień.</p>
       </div>
       <div style="overflow-y:auto; padding:0.8rem; display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem;">
@@ -383,14 +386,14 @@ async function selectRedukcjaZakonczenie(productId) {
         if (productId) {
             const p = studnieProducts.find((pr) => pr.id === productId);
             btn.innerHTML =
-                '🔽 ' +
+                '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> ' +
                 (p
                     ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)
                     : 'Zak. DN1000');
             btn.style.borderColor = 'rgba(99,102,241,0.5)';
             btn.style.color = '#a78bfa';
         } else {
-            btn.innerHTML = '🔽 Zak. DN1000';
+            btn.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zak. DN1000';
             btn.style.borderColor = 'var(--border-glass)';
             btn.style.color = '';
         }
@@ -401,6 +404,10 @@ async function selectRedukcjaZakonczenie(productId) {
         showToast(`Zakończenie redukcji: ${p ? p.name : productId}`, 'success');
     } else {
         showToast('Zakończenie redukcji: Auto (Konus DN1000)', 'success');
+    }
+    
+    if (window.lucide) {
+        window.lucide.createIcons();
     }
 
     if (!well.autoLocked && well.redukcjaDN1000) {
@@ -501,7 +508,7 @@ function checkWellNumerDuplicate(newNumer, inputEl) {
             inputEl.style.color = '#ef4444';
             inputEl.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.2)';
             showToast(
-                `⚠️ Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
+                `<i data-lucide="alert-triangle"></i> Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
                 'error'
             );
             return true; // is duplicate
@@ -565,7 +572,7 @@ function updateHeightIndicator() {
 
     if (!reqEl || !confEl || !diffEl) return;
     if (!well) {
-        confEl.textContent = '0 m';
+        confEl.innerHTML = '0 m';
         reqEl.textContent = '— m';
         diffEl.innerHTML = '';
         if (errContainer) errContainer.style.display = 'none';
@@ -578,7 +585,7 @@ function updateHeightIndicator() {
     if (errContainer) {
         if (liveErrors.length > 0) {
             errContainer.innerHTML =
-                '⚠️ Błędy w konfiguracji studni:<br>' +
+                '<i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>' +
                 liveErrors.map((e) => `• ${e}`).join('<br>');
             errContainer.style.display = 'block';
         } else {
@@ -603,13 +610,13 @@ function updateHeightIndicator() {
 
         const diff = stats.height - requiredMm;
         if (Math.abs(diff) <= 50) {
-            diffEl.innerHTML = '<span style="color:#10b981;">✅ Wysokość OK</span>';
+            diffEl.innerHTML = '<span style="color:#10b981;"><i data-lucide="check-circle-2"></i> Wysokość OK</span>';
         } else if (diff > 0) {
             const diffM = (diff / 1000).toFixed(2).replace('.', ',');
-            diffEl.innerHTML = `<span style="color:#f59e0b;">⚠️ +${diffM} m za dużo</span>`;
+            diffEl.innerHTML = `<span style="color:#f59e0b;"><i data-lucide="alert-triangle"></i> +${diffM} m za dużo</span>`;
         } else {
             const diffM = (Math.abs(diff) / 1000).toFixed(2).replace('.', ',');
-            diffEl.innerHTML = `<span style="color:#f87171;">⚠️ Brakuje ${diffM} m</span>`;
+            diffEl.innerHTML = `<span style="color:#f87171;"><i data-lucide="alert-triangle"></i> Brakuje ${diffM} m</span>`;
         }
     } else {
         reqEl.textContent = '— m';
@@ -1049,10 +1056,10 @@ async function autoSelectComponents(autoTriggered = false) {
     refreshAll();
     const diffStr = result.diff >= 0 ? `+${result.diff}mm` : `${result.diff}mm`;
     const redLabel = result.reductionUsed ? ' + Redukcja DN1000' : '';
-    const fallbackLabel = result.fallback ? ' ⚠️ (rozszerzona tolerancja)' : '';
-    let statusIcon = '✅';
-    if (well.configStatus === 'WARNING') statusIcon = '⚠️';
-    if (well.configStatus === 'ERROR') statusIcon = '❗';
+    const fallbackLabel = result.fallback ? ' <i data-lucide="alert-triangle"></i> (rozszerzona tolerancja)' : '';
+    let statusIcon = '<i data-lucide="check-circle-2"></i>';
+    if (well.configStatus === 'WARNING') statusIcon = '<i data-lucide="alert-triangle"></i>';
+    if (well.configStatus === 'ERROR') statusIcon = '<i data-lucide="alert-circle"></i>';
     if (!autoTriggered) {
         showToast(
             `${statusIcon} Auto-dobór: ${fmtInt(result.totalHeight)} mm (${diffStr}) | ${result.topLabel}${redLabel}${fallbackLabel}`,
@@ -2020,26 +2027,26 @@ function renderWellsList() {
 
             const statusBadge =
                 w.configStatus === 'ERROR'
-                    ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;">❌</span>'
+                    ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
                     : w.configStatus === 'WARNING'
                       ? '<span title="' +
                         (w.configErrors || []).join('; ') +
-                        '" style="margin-left:0.3rem;">⚠️</span>'
+                        '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
                       : w.configStatus === 'OK'
-                        ? '<span style="margin-left:0.3rem;">✅</span>'
+                        ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'
                         : '';
 
             // Ikona źródła konfiguracji
             let sourceBadge = '';
             if (w.configSource === 'AUTO_AI') {
                 sourceBadge =
-                    '<span title="Dobór Automatyczny (Serwer AI / OR-Tools)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(190deg) saturate(500%);">🧠</span>';
+                    '<span title="Dobór Automatyczny (Serwer AI / OR-Tools)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(190deg) saturate(500%);"><i data-lucide="brain"></i></span>';
             } else if (w.configSource === 'AUTO_JS') {
                 sourceBadge =
-                    '<span title="Dobór Automatyczny (Skrypt JS)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);">⚙️</span>';
+                    '<span title="Dobór Automatyczny (Skrypt JS)" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);"><i data-lucide="settings"></i></span>';
             } else {
                 sourceBadge =
-                    '<span title="Dobór Ręczny" style="font-size:0.75rem; margin-left:0.3rem; filter: grayscale(1);">🖐️</span>';
+                    '<span title="Dobór Ręczny" style="font-size:0.75rem; margin-left:0.3rem; filter: grayscale(1);"><i data-lucide="hand"></i></span>';
             }
 
             let errorsHtml = '';
@@ -2049,7 +2056,7 @@ function renderWellsList() {
             }
 
             const wellLockBadge = isWellLocked(i)
-                ? '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;">🔒</span>'
+                ? '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;"><i data-lucide="lock"></i></span>'
                 : '';
 
             let doplataBadge = '';
@@ -2076,8 +2083,8 @@ function renderWellsList() {
                    ${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}${doplataBadge}
                 </div>
                 <div class="well-list-actions">
-                  <button class="well-list-action" title="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})">📋</button>
-                  <button class="well-list-action del" title="Usuń" onclick="event.stopPropagation(); removeWell(${i})">✕</button>
+                  <button class="well-list-action" title="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list"></i></button>
+                  <button class="well-list-action del" title="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x"></i></button>
                 </div>
               </div>
               <div class="well-list-meta">
@@ -2164,11 +2171,11 @@ function showStycznaPopup(mode = 'select') {
     overlay.innerHTML = `
       <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(249,115,22,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-          <div style="font-size:1rem; font-weight:800; color:#f97316;">🛢️ Wybierz studnię styczną</div>
-          <button class="btn-icon" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;">✕</button>
+          <div style="font-size:1rem; font-weight:800; color:#f97316;"><i data-lucide="cylinder"></i> Wybierz studnię styczną</div>
+          <button class="btn-icon" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x"></i></button>
         </div>
-        ${renderSection('Studnie Styczne', '🛢️', standardProducts)}
-        ${renderSection('Studnie Styczne z korkiem', '🔌', korekProducts)}
+        ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
+        ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}
       </div>
     `;
 
@@ -2506,18 +2513,18 @@ function renderTiles() {
     const dn = well.dn;
 
     const groups = [
-        { title: '🔘 Włazy', icon: '', types: ['wlaz'] },
-        { title: '⚙️ AVR / Pierścienie', icon: '', types: ['avr'] },
-        { title: '🔶 Konus / Stożek', icon: '', types: ['konus'] },
+        { title: '<i data-lucide="circle-dot"></i> Włazy', icon: '', types: ['wlaz'] },
+        { title: '<i data-lucide="settings"></i> AVR / Pierścienie', icon: '', types: ['avr'] },
+        { title: '<i data-lucide="diamond"></i> Konus / Stożek', icon: '', types: ['konus'] },
         {
-            title: '🔽 Płyty nakrywające',
+            title: '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyty nakrywające',
             icon: '',
             types: ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy']
         },
         { title: '⬛ Płyty redukcyjne', icon: '', types: ['plyta_redukcyjna'] },
-        { title: '🟦 Kręgi', icon: '', types: ['krag'] },
-        { title: '🟪 Kręgi z otworami (OT)', icon: '', types: ['krag_ot'] },
-        { title: '🟩 Dennica', icon: '', types: ['dennica'] },
+        { title: '<i data-lucide="square"></i> Kręgi', icon: '', types: ['krag'] },
+        { title: '<i data-lucide="square"></i> Kręgi z otworami (OT)', icon: '', types: ['krag_ot'] },
+        { title: '<i data-lucide="square"></i> Dennica', icon: '', types: ['dennica'] },
         { title: '🪣 Osadniki', icon: '', types: ['osadnik'] },
         // Studnie styczne widoczne tylko gdy wybrana typu studni Styczna
         ...(dn === 'styczna'
@@ -2526,7 +2533,7 @@ function renderTiles() {
                   if (variant === 'korek') {
                       return [
                           {
-                              title: '🔌 Studnie Styczne z korkiem',
+                              title: '<i data-lucide="plug"></i> Studnie Styczne z korkiem',
                               icon: '',
                               types: ['styczna'],
                               filterFn: (p) => p.id.includes('KOREK')
@@ -2535,7 +2542,7 @@ function renderTiles() {
                   }
                   return [
                       {
-                          title: '🛢️ Studnie Styczne',
+                          title: '<i data-lucide="cylinder"></i> Studnie Styczne',
                           icon: '',
                           types: ['styczna'],
                           filterFn: (p) => !p.id.includes('KOREK')
@@ -2543,7 +2550,7 @@ function renderTiles() {
                   ];
               })()
             : []),
-        { title: '🟢 Uszczelki', icon: '', types: ['uszczelka'] }
+        { title: '<i data-lucide="circle-check"></i> Uszczelki', icon: '', types: ['uszczelka'] }
     ];
 
     let html = '';
@@ -3267,9 +3274,9 @@ function renderWellConfig() {
             
             <div style="display:flex; align-items:center; gap:0.6rem; flex:1; min-width:0;">
                 <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.25); padding:0.2rem 0.35rem; border-radius:6px; min-width:28px;">
-                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" style="background:none; border:none; color:var(--text-muted); font-size:0.65rem; padding:0; cursor:${canMoveUp ? 'pointer' : 'default'}; display:${item.autoAdded ? 'none' : 'block'};">▲</button>
+                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; cursor:${canMoveUp ? 'pointer' : 'default'}; display:${item.autoAdded ? 'none' : 'block'};"><i data-lucide="chevron-up" style="font-size: 0.75rem;"></i></button>
                   <span style="font-size:0.7rem; color:var(--text-primary); font-weight:800;">${index + 1}</span>
-                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" style="background:none; border:none; color:var(--text-muted); font-size:0.65rem; padding:0; cursor:${canMoveDown ? 'pointer' : 'default'}; display:${item.autoAdded ? 'none' : 'block'};">▼</button>
+                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; cursor:${canMoveDown ? 'pointer' : 'default'}; display:${item.autoAdded ? 'none' : 'block'};"><i data-lucide="chevron-down" style="font-size: 0.75rem;"></i></button>
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.15rem; min-width:0;">
@@ -3292,7 +3299,7 @@ function renderWellConfig() {
                 <span style="font-size:1.0rem; font-weight:800; color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block;">${p.componentType === 'kineta' ? 'wliczone (' + fmtInt(totalPrice) + ' PLN)' : fmtInt(totalPrice) + ' PLN'}</span>
               </div>
               <div style="width:32px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:32px; height:32px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:8px; cursor:pointer; font-size:0.9rem; color:#ef4444; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'; this.style.borderColor='rgba(239,68,68,0.4)';" onmouseleave="this.style.background='rgba(239,68,68,0.06)'; this.style.borderColor='rgba(239,68,68,0.2)';">✕</button>
+                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:32px; height:32px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:8px; cursor:pointer; font-size:0.9rem; color:#ef4444; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'; this.style.borderColor='rgba(239,68,68,0.4)';" onmouseleave="this.style.background='rgba(239,68,68,0.06)'; this.style.borderColor='rgba(239,68,68,0.2)';"><i data-lucide="x"></i></button>
               </div>
             </div>
 
@@ -3602,6 +3609,9 @@ function renderWellPrzejscia(opts) {
             } else if (field === 'heightMm') {
                 val = '';
                 step = '1';
+            } else if (field === 'doplata') {
+                val = well.przejscia[index].doplata || '0';
+                step = '1';
             } else {
                 val = well.przejscia[index].rzednaWlaczenia || '';
                 step = '0.01';
@@ -3644,6 +3654,10 @@ function renderWellPrzejscia(opts) {
                     well.przejscia[index].angleExecution =
                         numVal === 0 || numVal === 360 ? 0 : 360 - numVal;
                     well.przejscia[index].angleGony = ((numVal * 400) / 360).toFixed(2);
+                    
+                    if (!well.przejscia[index].flowTypeManual) {
+                        well.przejscia[index].flowType = (numVal === 0) ? 'wylot' : 'wlot';
+                    }
                 } else if (field === 'rzednaWlaczenia') {
                     if (isNaN(numVal)) {
                         well.przejscia[index].rzednaWlaczenia = '';
@@ -3678,6 +3692,8 @@ function renderWellPrzejscia(opts) {
                     if (numVal < 0) numVal = 0;
                     const newRzedna = rzDnaQ + (elStart + numVal) / 1000;
                     well.przejscia[index].rzednaWlaczenia = parseFloat(newRzedna).toFixed(2);
+                } else if (field === 'doplata') {
+                    well.przejscia[index].doplata = isNaN(numVal) ? 0 : parseFloat(numVal);
                 }
 
                 renderWellPrzejscia();
@@ -3688,7 +3704,7 @@ function renderWellPrzejscia(opts) {
                 }
             };
 
-            // Użyj krótkiego opóźnienia do odświeżenia, aby pozwolić na wcześniejsze wywołanie kliknięcia na następnym elemencie
+            // Ujmij krótkie opóźnienie do odświeżenia, aby pozwolić na wcześniejsze wywołanie kliknięcia na następnym elemencie
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
@@ -3787,7 +3803,7 @@ function renderWellPrzejscia(opts) {
             const rawRGB = assignedBg.length > 7 ? assignedBg.substring(0, 7) : assignedBg;
             if (index > 0) html += `<div style="height:0.5rem;"></div>`;
             html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(30,41,59,0.8) 100%); border-left:3px solid ${rawRGB}; border-radius:6px; color:var(--text-muted); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
-                <span style="font-size:0.9rem; filter:grayscale(0.4);">📍</span> 
+                <span style="font-size:0.9rem; filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
                 <span>Dotyczy:</span> 
                 <span style="color:#e2e8f0; font-size:0.75rem; padding-left:0.2rem;">${assignedName}</span>
             </div>`;
@@ -3836,7 +3852,7 @@ function renderWellPrzejscia(opts) {
                   </div>
                   <span style="font-size:0.75rem; font-weight:700; color:#60a5fa;">Edycja wariantu</span>
                 </div>
-                <button onclick="cancelPrzejscieEdit()" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-muted);">✕</button>
+                <button onclick="cancelPrzejscieEdit()" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-muted);"><i data-lucide="x"></i></button>
               </div>
               
               <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Kategoria przejścia</div>
@@ -3889,7 +3905,7 @@ function renderWellPrzejscia(opts) {
                 </div>
                 <div style="display:flex; gap:0.4rem;">
                   <button onclick="cancelPrzejscieEdit()" style="padding:0.3rem 0.6rem; font-size:0.7rem; border-radius:5px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
-                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.7rem;">💾 Zapisz</button>
+                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.7rem;"><i data-lucide="save"></i> Zapisz</button>
                 </div>
               </div>
             </div>`;
@@ -4151,10 +4167,10 @@ function toggleCard(contentId, iconId) {
     if (!content || !icon) return;
     if (content.style.display === 'none') {
         content.style.display = 'block';
-        icon.textContent = '🔼';
+        icon.innerHTML = '<i data-lucide="chevron-up"></i>';
     } else {
         content.style.display = 'none';
-        icon.textContent = '🔽';
+        icon.innerHTML = '<i data-lucide="chevron-down"></i>';
     }
 }
 
@@ -4217,7 +4233,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
                     <h3 style="margin:0; font-size:0.85rem; font-weight:800; color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
                     <div class="przejscia-vis-counter" style="font-size:0.6rem; color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}</div>
                 </div>
-                <button onclick="closePrzejsciaVisibilityPopup('${containerId || ''}')" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; border-radius:4px; transition:all 0.15s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='var(--text-muted)'">✕</button>
+                <button onclick="closePrzejsciaVisibilityPopup('${containerId || ''}')" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; border-radius:4px; transition:all 0.15s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='var(--text-muted)'"><i data-lucide="x"></i></button>
             </div>
             <div class="przejscia-vis-actions">
                 <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(true)">Pokaż wszystkie</button>
@@ -4318,17 +4334,17 @@ function renderInlinePrzejsciaApp(containerId) {
 
     const hiddenCount = allTypes.length - types.length;
     const visibilityBtnLabel =
-        hiddenCount > 0 ? `👁️ Pokaż/Ukryj (${hiddenCount} ukrytych)` : '👁️ Pokaż/Ukryj';
+        hiddenCount > 0 ? `<i data-lucide="eye"></i>️ Pokaż/Ukryj (${hiddenCount} ukrytych)` : '<i data-lucide="eye"></i>️ Pokaż/Ukryj';
 
     // Jeśli żadne typy nie są widoczne, pokaż stan pusty
     if (types.length === 0) {
         container.innerHTML = `
             <div style="text-align:center; padding:1.5rem; border:1px dashed rgba(99,102,241,0.2); border-radius:10px; background:rgba(15,23,42,0.3); margin:0.4rem 0;">
-                <div style="font-size:1.5rem; margin-bottom:0.5rem;">🚫</div>
+                <div style="font-size:1.5rem; margin-bottom:0.5rem;"><i data-lucide="ban"></i></div>
                 <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
                 <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
                 <button class="btn btn-primary btn-sm" onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="padding:0.35rem 0.8rem; font-size:0.7rem;">
-                    👁️ Pokaż przejścia (${allTypes.length} dostępnych)
+                    <i data-lucide="eye"></i>️ Pokaż przejścia (${allTypes.length} dostępnych)
                 </button>
             </div>
         `;
@@ -4404,7 +4420,7 @@ function renderInlinePrzejsciaApp(containerId) {
                 ? `
         <div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid rgba(59,130,246,0.6); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                <span style="font-size:1.0rem; font-weight:800; color:#fff;">🔗 ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
+                <span style="font-size:1.0rem; font-weight:800; color:#fff;"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
                 <span style="font-size:0.95rem; color:var(--success); font-weight:800; font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size:0.6rem;">PLN</span></span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.4rem; align-items:end;">
@@ -4434,7 +4450,7 @@ function renderInlinePrzejsciaApp(containerId) {
                     <div style="font-size:1.0rem; font-weight:700; color:#2dd4bf; padding:0.15rem 0;" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
                 </div>
                 <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                    <button class="btn btn-primary" onclick="window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; width:100%; justify-content:center; font-size:0.7rem; padding:0;">➕ Dodaj</button>
+                    <button class="btn btn-primary" onclick="window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; width:100%; justify-content:center; font-size:0.7rem; padding:0;"><i data-lucide="plus"></i> Dodaj</button>
                 </div>
             </div>
         </div>
@@ -4552,10 +4568,10 @@ window.openFlowTypePopup = function (index) {
                <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz typ przepływu</h3>
                <div style="display:flex; gap:1rem; justify-content:center;">
                   <button id="flow-wlot-btn" style="flex:1; background:rgba(59,130,246,0.2); color:#93c5fd; border:2px solid rgba(59,130,246,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                     <span style="font-size:2.5rem;">📥</span>WLOT
+                     <span style="font-size:2.5rem;"><i data-lucide="download"></i></span>WLOT
                   </button>
                   <button id="flow-wylot-btn" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:2px solid rgba(239,68,68,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                     <span style="font-size:2.5rem;">📤</span>WYLOT
+                     <span style="font-size:2.5rem;"><i data-lucide="upload"></i></span>WYLOT
                   </button>
                </div>
                <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('flow-type-modal').style.display='none'">Anuluj</button>
@@ -4569,6 +4585,7 @@ window.openFlowTypePopup = function (index) {
 
     document.getElementById('flow-wlot-btn').onclick = () => {
         well.przejscia[index].flowType = 'wlot';
+        well.przejscia[index].flowTypeManual = true;
         document.getElementById('flow-type-modal').style.display = 'none';
         renderWellPrzejscia();
         window.refreshZleceniaModalIfActive();
@@ -4576,6 +4593,7 @@ window.openFlowTypePopup = function (index) {
 
     document.getElementById('flow-wylot-btn').onclick = () => {
         well.przejscia[index].flowType = 'wylot';
+        well.przejscia[index].flowTypeManual = true;
         document.getElementById('flow-type-modal').style.display = 'none';
         renderWellPrzejscia();
         window.refreshZleceniaModalIfActive();
@@ -4871,7 +4889,7 @@ window.openGlobalRecalcModal = function () {
             <div class="fs-dn-tile active" id="recalc-top-${dn}-auto"
                  style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                  onclick="window.recalcSelectTop(${dn}, 'auto')">
-                <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;">🔄 Auto (Domyślny)</div>
+                <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;"><i data-lucide="refresh-cw"></i> Auto (Domyślny)</div>
             </div>
         ` + topTiles;
 
@@ -4902,7 +4920,7 @@ window.openGlobalRecalcModal = function () {
                 <div class="fs-dn-tile active fs-red-tile-${dn}" id="recalc-redtop-${dn}-auto"
                      style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                      onclick="window.recalcSelectRedTop(${dn}, 'auto')">
-                    <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;">🔄 Auto (Konus)</div>
+                    <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;"><i data-lucide="refresh-cw"></i> Auto (Konus)</div>
                 </div>
             ` + redTiles;
 
@@ -4942,14 +4960,14 @@ window.openGlobalRecalcModal = function () {
 
     overlay.innerHTML = `
     <div class="modal" style="width:700px; max-width:95vw; background:#111827;">
-      <div class="modal-header"><h3>⚙️ Automatycznie przelicz ofertę</h3><button class="btn-icon" onclick="window.closeGlobalRecalcModal()">✕</button></div>
+      <div class="modal-header"><h3><i data-lucide="settings"></i> Automatycznie przelicz ofertę</h3><button class="btn-icon" onclick="window.closeGlobalRecalcModal()"><i data-lucide="x"></i></button></div>
       <div style="padding:1rem; max-height:65vh; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(99,102,241,0.4) transparent;">
         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">Ustaw preferencje dla poszczególnych średnic. Program zaktualizuje ustawienia zakończeń i ponownie wygeneruje układ elementów dla <strong>wszystkich studni w ofercie</strong> według reguł automatycznych.</p>
         ${groupsHtml}
       </div>
       <div style="padding:1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:0.5rem; background:rgba(0,0,0,0.2);">
         <button class="btn btn-secondary" onclick="window.closeGlobalRecalcModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="window.applyGlobalRecalc()" style="background:var(--accent); color:#fff; font-weight:600;">🔄 Przelicz wszystkie</button>
+        <button class="btn btn-primary" onclick="window.applyGlobalRecalc()" style="background:var(--accent); color:#fff; font-weight:600;"><i data-lucide="refresh-cw"></i> Przelicz wszystkie</button>
       </div>
     </div>
     `;
@@ -4997,7 +5015,7 @@ window.recalcToggleRed = function (dn) {
 window.applyGlobalRecalc = async function () {
     const btn = document.querySelector('#global-recalc-modal .btn-primary');
     if (btn) {
-        btn.innerHTML = '🔄 Przeliczanie...';
+        btn.innerHTML = '<i data-lucide="refresh-cw"></i> Przeliczanie...';
         btn.disabled = true;
     }
 

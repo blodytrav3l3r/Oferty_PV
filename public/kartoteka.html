@@ -32,15 +32,15 @@
 
                     <div class="nav-apps">
                         <a href="index.html" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon">🏠</span>
+                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
                             <span class="nav-tile-text">Pulpit</span>
                         </a>
                         <a href="app.html#/studnie" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon">🏗️</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="app.html#/rury" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon">🔩</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a
@@ -49,7 +49,7 @@
                             class="nav-tile active"
                             style="--nav-accent: #f59e0b; --nav-glow: #2d2208"
                         >
-                            <span class="nav-tile-icon">🗄️</span>
+                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
                             <span class="nav-tile-text">Kartoteka</span>
                         </a>
                     </div>
@@ -110,14 +110,14 @@
             <!-- ===== KARTOTEKA: Full-width offers view ===== -->
             <div class="section active" id="section-kartoteka">
                 <div class="toolbar">
-                    <h2 style="font-size: 1rem; font-weight: 700">🗄️ Kartoteka Ofert</h2>
+                    <h2 style="font-size: 1rem; font-weight: 700"><i data-lucide="archive"></i> Kartoteka Ofert</h2>
                     <div class="toolbar-spacer"></div>
                     <button
                         class="btn btn-primary btn-sm"
                         onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
                         title="Odśwież bazę ofert"
                     >
-                        🔄 Odśwież
+                        <i data-lucide="refresh-cw"></i> Odśwież
                     </button>
                 </div>
 
@@ -158,7 +158,7 @@
                             onclick="filterByType('offer')"
                             style="border-radius: 20px; padding: 0.3rem 0.8rem"
                         >
-                            🔩 Rury
+                            <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
                         </button>
                         <button
                             class="btn btn-sm btn-secondary pv-type-filter-btn"
@@ -166,7 +166,7 @@
                             onclick="filterByType('studnia_oferta')"
                             style="border-radius: 20px; padding: 0.3rem 0.8rem"
                         >
-                            🏗️ Studnie
+                            <i data-lucide="cylinder"></i> Studnie
                         </button>
                     </div>
 
@@ -226,7 +226,7 @@
                                     "
                                     style="border-radius: 20px; padding: 0.3rem 0.8rem"
                                 >
-                                    📦 Z zamówieniem
+                                    <i data-lucide="package"></i> Z zamówieniem
                                 </button>
                                 <button
                                     class="btn btn-sm btn-secondary pv-filter-btn"
@@ -334,7 +334,7 @@
 
                     const userEl = document.getElementById('header-username');
                     const roleEl = document.getElementById('header-role-badge');
-                    if (userEl) userEl.textContent = '👤 ' + user.username;
+                    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + user.username;
                     if (roleEl) {
                         roleEl.textContent =
                             user.role === 'admin' ? 'ADMIN' : user.role === 'pro' ? 'PRO' : 'USER';
@@ -392,5 +392,6 @@
             // Override the showSection to be a no-op (kartoteka has only one section)
             function showSection() {}
         </script>
-    </body>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
 </html>

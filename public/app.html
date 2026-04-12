@@ -7,20 +7,29 @@
             name="description"
             content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
         />
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="description"
+            content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
+        />
         <title>WITROS — Generator Ofert</title>
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+            href="css/inter.css"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="css/style.css?v=1.5" />
         <link rel="stylesheet" href="css/spa.css?v=1.5" />
         <style>
-            /* ═══ SPA Iframe Layout ═══ */
+            /* ═══ Układ ramek (Iframe) SPA ═══ */
             #spa-main {
                 position: relative;
                 padding: 0;
                 margin: 0;
-                /* Fill all available vertical space below the header */
+                /* Wypełnienie dostępnej przestrzeni pionowej pod nagłówkiem */
                 min-height: calc(100vh - 52px);
             }
 
@@ -39,7 +48,7 @@
     </head>
 
     <body>
-        <!-- ═══════ SHARED HEADER ═══════ -->
+        <!-- ═══════ WSPÓLNY NAGŁÓWEK ═══════ -->
         <header class="header">
             <div class="header-inner">
                 <div class="header-left">
@@ -57,32 +66,32 @@
                         <span id="spa-logo-text">WITROS Oferty</span>
                     </div>
 
-                    <!-- App-level navigation tiles -->
+                    <!-- Kafle nawigacji na poziomie aplikacji -->
                     <div class="nav-apps" id="spa-nav-apps">
                         <a href="index.html" class="nav-tile">
-                            <span class="nav-tile-icon">🏠</span>
+                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
                             <span class="nav-tile-text">Pulpit</span>
                         </a>
                         <a href="#/studnie" class="nav-tile" id="spa-app-studnie">
-                            <span class="nav-tile-icon">🏗️</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="#/rury" class="nav-tile" id="spa-app-rury">
-                            <span class="nav-tile-icon">🔩</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a href="#/kartoteka" class="nav-tile" id="spa-app-kartoteka">
-                            <span class="nav-tile-icon">🗄️</span>
+                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
                             <span class="nav-tile-text">Kartoteka</span>
                         </a>
                         <a href="#/zlecenia" class="nav-tile" id="spa-app-zlecenia">
-                            <span class="nav-tile-icon">🏭</span>
+                            <span class="nav-tile-icon"><i data-lucide="factory"></i></span>
                             <span class="nav-tile-text">Zlecenia</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- Section-level nav (populated dynamically per module) -->
+                <!-- Nawigacja poziomu sekcji (wypełniana dynamicznie przez moduły) -->
                 <div class="header-center">
                     <nav class="nav" id="spa-section-nav"></nav>
                 </div>
@@ -164,13 +173,14 @@
             </div>
         </header>
 
-        <!-- ═══════ MAIN VIEW CONTAINER (iframes injected here) ═══════ -->
+        <!-- ═══════ GŁÓWNY KONTENER WIDOKÓW (iframy wstrzykiwane tutaj) ═══════ -->
         <div id="spa-main"></div>
 
-        <!-- ═══════ SHARED SCRIPTS (only auth needed for router) ═══════ -->
+        <!-- ═══════ WSPÓLNE SKRYPTY (tylko autoryzacja wymagana przez router) ═══════ -->
         <script src="js/shared/auth.js?v=1.6"></script>
 
-        <!-- ═══════ SPA ROUTER ═══════ -->
+        <!-- ═══════ ROUTER SPA ═══════ -->
         <script src="js/spa/router.js?v=1.6"></script>
-    </body>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
 </html>

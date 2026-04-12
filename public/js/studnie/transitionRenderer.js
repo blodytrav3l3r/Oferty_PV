@@ -20,7 +20,7 @@ function getFlowVisuals(flowType) {
         bg: isWylot ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)',
         color: isWylot ? '#fca5a5' : '#93c5fd',
         border: isWylot ? 'rgba(239,68,68,0.6)' : 'rgba(59,130,246,0.6)',
-        icon: isWylot ? '📤' : '📥'
+        icon: isWylot ? '<i data-lucide="upload"></i>' : '<i data-lucide="download"></i>'
     };
 }
 
@@ -62,6 +62,9 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const dn = product ? product.dn : '—';
     const price = product ? product.price : 0;
 
+    if (!item.flowTypeManual) {
+        item.flowType = (item.angle === 0 || item.angle === '0') ? 'wylot' : 'wlot';
+    }
     if (!item.flowType) {
         item.flowType =
             globalIndex === 0 && (item.angle === 0 || item.angle === '0') ? 'wylot' : 'wlot';
@@ -97,26 +100,35 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     if (showEdit || showDelete) {
         actionsHTML = `<div style="display:flex; align-items:center; gap:0.25rem; padding-left:0.5rem; border-left:1px dashed rgba(255,255,255,0.1);">`;
         if (showEdit) {
-            actionsHTML += `<button onclick="editPrzejscie(${globalIndex})" title="Edytuj" style="background:rgba(96,165,250,0.15); border:1px solid rgba(96,165,250,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#60a5fa; transition:all 0.2s;" onmouseenter="this.style.background='rgba(96,165,250,0.3)'" onmouseleave="this.style.background='rgba(96,165,250,0.15)'">✏️</button>`;
+            actionsHTML += `<button onclick="editPrzejscie(${globalIndex})" title="Edytuj" style="background:rgba(96,165,250,0.15); border:1px solid rgba(96,165,250,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#60a5fa; transition:all 0.2s;" onmouseenter="this.style.background='rgba(96,165,250,0.3)'" onmouseleave="this.style.background='rgba(96,165,250,0.15)'"><i data-lucide="pencil"></i></button>`;
         }
         if (showDelete) {
-            actionsHTML += `<button onclick="removePrzejscieFromWell(${globalIndex})" title="Usuń" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#ef4444; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.15)'">✕</button>`;
+            actionsHTML += `<button onclick="removePrzejscieFromWell(${globalIndex})" title="Usuń" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#ef4444; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.15)'"><i data-lucide="x"></i></button>`;
         }
         actionsHTML += `</div>`;
     }
 
     // Kolumna ceny
     const priceHTML = showPrice
-        ? `<div style="text-align:right; min-width:60px;">
-             <div class="ui-text-muted-sm">Cena</div>
-             <div style="font-size:0.95rem; font-weight:800; color:var(--success); font-family:'Inter'">${typeof fmtInt === 'function' ? fmtInt(price) : price} <span style="font-size:0.6rem;">PLN</span></div>
+        ? `<div style="width:90px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end;">
+             <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Cena</div>
+             <div style="font-size:1.0rem; font-weight:800; color:var(--success); font-family:'Inter'; margin-top:2px; padding:0.15rem 0.4rem;">${typeof fmtInt === 'function' ? fmtInt(price) : price} <span style="font-size:0.6rem;">PLN</span></div>
+           </div>`
+        : '';
+
+    // Kolumna dopłata (non-discountable)
+    const doplataVal = item.doplata != null ? item.doplata : 0;
+    const doplataHTML = showPrice
+        ? `<div style="width:90px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
+             <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
+             <div data-qe-id="${item.id}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" style="font-size:1.0rem; font-weight:800; color:#fbbf24; font-family:'Inter'; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; margin-top:2px;" onmouseenter="this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.background='rgba(255,255,255,0.03)';">${typeof fmtInt === 'function' ? fmtInt(doplataVal) : doplataVal} <span style="font-size:0.6rem;">PLN</span></div>
            </div>`
         : '';
 
     // Zapewnij stabilny identyfikator dla QE (Quick Edit)
     if (!item.id) item.id = 'prz-legacy-' + globalIndex + '-' + Math.floor(Math.random() * 1000);
 
-    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; height:49px; padding:0 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
+    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; height:54px; padding:0 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
       <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
         <span style="font-size:1.1rem; margin-bottom:0px;">${flow.icon}</span>
@@ -125,43 +137,44 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
       <!-- SZCZEGÓŁY -->
       <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; white-space:nowrap;">
-        <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:100px; overflow:hidden;">
+        <div style="display:flex; flex-direction:column; gap:0.1rem; width:150px; overflow:hidden; flex-shrink:0;">
            <div style="display:flex; align-items:center; gap:0.6rem; white-space:nowrap;">
              <span onclick="window.openChangePrzejscieTypePopup(${globalIndex})" title="Kliknij, aby zmienić typ przejścia" style="font-size:1.0rem; font-weight:800; color:var(--text-primary); cursor:pointer; transition:color 0.2s;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${przName}</span>
              <span onclick="window.openChangePrzejscieDnPopup(${globalIndex})" title="Kliknij, aby zmienić średnicę" style="font-size:1.0rem; color:#a78bfa; font-weight:800; cursor:pointer; transition:color 0.2s;" onmouseenter="this.style.color='#c084fc'" onmouseleave="this.style.color='#a78bfa'">${dnLabel}</span>
            </div>
         </div>
 
-        <div style="display:flex; align-items:center; gap:0.8rem; margin-right: 0.4rem; white-space:nowrap;">
-          <div class="ui-center-min">
-            <div class="ui-text-muted-sm">${spadekKLabel} [mm]</div>
-            <div data-qe-id="${item.id}" data-qe-field="spadekKineta" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.spadekKineta != null && item.spadekKineta !== '' ? Math.round(parseFloat(item.spadekKineta)) + ' mm' : '—'}</div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-right: 0.2rem; white-space:nowrap; flex:1; justify-content:flex-end;">
+          <div style="width:135px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">${spadekKLabel} [mm]</div>
+            <div data-qe-id="${item.id}" data-qe-field="spadekKineta" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block; margin-top:2px;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.spadekKineta != null && item.spadekKineta !== '' ? Math.round(parseFloat(item.spadekKineta)) + ' mm' : '—'}</div>
           </div>
-          <div class="ui-center-min">
-            <div class="ui-text-muted-sm">${spadekMLabel} [mm]</div>
-            <div data-qe-id="${item.id}" data-qe-field="spadekMufa" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekMufa')" title="Kliknij aby edytować" style="font-size:0.9rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.spadekMufa != null && item.spadekMufa !== '' ? Math.round(parseFloat(item.spadekMufa)) + ' mm' : '—'}</div>
+          <div style="width:135px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">${spadekMLabel} [mm]</div>
+            <div data-qe-id="${item.id}" data-qe-field="spadekMufa" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekMufa')" title="Kliknij aby edytować" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block; margin-top:2px;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.spadekMufa != null && item.spadekMufa !== '' ? Math.round(parseFloat(item.spadekMufa)) + ' mm' : '—'}</div>
           </div>
-          <div style="text-align:center; min-width:60px; position:relative; padding-bottom:0.1rem;">
-            <div class="ui-text-muted-sm">Kąt</div>
-            <div data-qe-id="${item.id}" data-qe-field="angle" onclick="window.activateQuickEdit(this, ${globalIndex}, 'angle')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.5rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block;" onmouseenter="this.style.transform='scale(1.15)'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.03)';">${item.angle}°</div>
+          <div style="width:65px; flex-shrink:0; position:relative; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">Kąt</div>
+            <div data-qe-id="${item.id}" data-qe-field="angle" onclick="window.activateQuickEdit(this, ${globalIndex}, 'angle')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.0rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block; margin-top:2px;" onmouseenter="this.style.transform='scale(1.15)'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.03)';">${item.angle}°</div>
           </div>
-          <div style="text-align:center; min-width:60px;">
-            <div class="ui-text-muted-sm">Wysokość [mm]</div>
-            <div data-qe-id="${item.id}" data-qe-field="heightMm" onclick="window.activateQuickEdit(this, ${globalIndex}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" style="font-size:1.05rem; font-weight:800; color:#f59e0b; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block;" onmouseenter="this.style.color='#fbbf24'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='#f59e0b'; this.style.background='rgba(255,255,255,0.03)';">${heightMm} mm</div>
+          <div style="width:95px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">Wysokość [mm]</div>
+            <div data-qe-id="${item.id}" data-qe-field="heightMm" onclick="window.activateQuickEdit(this, ${globalIndex}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" style="font-size:1.0rem; font-weight:800; color:#f59e0b; text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block; margin-top:2px;" onmouseenter="this.style.color='#fbbf24'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='#f59e0b'; this.style.background='rgba(255,255,255,0.03)';">${heightMm} mm</div>
           </div>
-          <div style="text-align:center; min-width:55px;">
-            <div class="ui-text-muted-sm">Kąt wykonania</div>
-            <div style="font-size:1.0rem; font-weight:700; color:#38bdf8;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
+          <div style="width:90px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">Kąt wykonania</div>
+            <div style="font-size:1.0rem; font-weight:700; color:#38bdf8; display:inline-block; padding:0.15rem 0.4rem; margin-top:2px;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
           </div>
-          <div class="ui-center-min" style="min-width:55px;">
-            <div class="ui-text-muted-sm">Kąt gony</div>
-            <div style="font-size:1.0rem; font-weight:700; color:#2dd4bf;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
+          <div style="width:70px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">Kąt gony</div>
+            <div style="font-size:1.0rem; font-weight:700; color:#2dd4bf; display:inline-block; padding:0.15rem 0.4rem; margin-top:2px;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
           </div>
-          <div style="text-align:center; min-width:65px;">
-            <div class="ui-text-muted-sm">Rzędna</div>
-            <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" onclick="window.activateQuickEdit(this, ${globalIndex}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.5rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.rzednaWlaczenia || '—'}</div>
+          <div style="width:80px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+            <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">Rzędna</div>
+            <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" onclick="window.activateQuickEdit(this, ${globalIndex}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" style="font-size:1.0rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block; margin-top:2px;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.rzednaWlaczenia || '—'}</div>
           </div>
           ${priceHTML}
+          ${doplataHTML}
         </div>
       </div>
 

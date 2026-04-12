@@ -10,19 +10,10 @@
 /*   pricelistUi.js    — cennik CRUD, import/eksport Excel */
 
 /* ===== ZMIENNE GLOBALNE ===== */
-/* Współdzielone przez wszystkie moduły rury (ładowane jako <script>) */
-
-let currentUser = null;
+/* Zarządzane przez AppState singleton (shared/appState.js). */
+/* Dostępne globalnie przez window.products, window.offers itp. */
+/* dzięki Object.defineProperty — pełna kompatybilność wsteczna. */
 // getAuthToken(), authHeaders(), appLogout() — dostępne z shared/auth.js
-
-let products = [];
-let offers = [];
-let clientsDb = [];
-let currentOfferItems = [];
-let editingOfferId = null;
-let editingOfferAssignedUserId = null;
-let editingOfferAssignedUserName = '';
-let isTransportBreakdownExpanded = false;
 
 /* ===== ZMIANA OPIEKUNA ===== */
 
@@ -46,7 +37,7 @@ async function changeOfferUser() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
 
                 if (editingOfferId) {
                     saveOffer();
@@ -67,7 +58,7 @@ window.toggleTransportBreakdown = function () {
     const icon = document.getElementById('transport-toggle-icon');
     if (content) {
         content.style.display = isTransportBreakdownExpanded ? 'block' : 'none';
-        icon.textContent = isTransportBreakdownExpanded ? '🔼' : '🔽';
+        icon.innerHTML = isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>';
     }
 };
 
@@ -77,7 +68,7 @@ window.toggleCard = function (contentId, iconId) {
     if (content && icon) {
         content.classList.toggle('hidden');
         const isHidden = content.classList.contains('hidden');
-        icon.textContent = isHidden ? '🔼' : '🔽';
+        icon.innerHTML = isHidden ? '<i data-lucide="chevron-down"></i>' : '<i data-lucide="chevron-up"></i>';
 
         // Jawnie ukryj elementy sticky wewnątrz, które mogą wychodzić poza granice overflow
         const stickyEls = content.querySelectorAll('.offer-search-row, .catalog-tabs');
@@ -151,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Wyświetl info o użytkowniku w nagłówku
     const userEl = document.getElementById('header-username');
-    if (userEl) userEl.textContent = '👤 ' + (currentUser.displayName || currentUser.username);
+    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + (currentUser.displayName || currentUser.username);
 
     const roleEl = document.getElementById('header-role-badge');
     if (roleEl) {

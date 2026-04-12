@@ -85,7 +85,7 @@ function exportOfferPDF(id) {
     // HTML tabeli transportu
     let transportHtml = '';
     if (transportResult.lines.length > 0) {
-        transportHtml = `<h3 style="font-size:13px;color:#2d3561;margin-top:18px;margin-bottom:6px">🚚 Transport (max 24 000 kg / kurs)</h3>
+        transportHtml = `<h3 style="font-size:13px;color:#2d3561;margin-top:18px;margin-bottom:6px"><i data-lucide="truck"></i> Transport (max 24 000 kg / kurs)</h3>
     <table><thead><tr><th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th><th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th><th class="text-right">Transporty</th></tr></thead><tbody>`;
         transportResult.lines.forEach((l) => {
             transportHtml += `<tr><td>${l.name}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
@@ -207,7 +207,7 @@ function showItemDiscountModal() {
     <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
         <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
-        <button class="btn-icon" onclick="closeModal()">✕</button>
+        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
       </div>
       
       <div style="overflow-y:auto; flex:1; padding-right:0.5rem;" id="discount-modal-list">
@@ -221,7 +221,7 @@ function showItemDiscountModal() {
         </div>
         <div style="display:flex; gap: 1rem;">
           <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-          <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600;">Zastosuj ➔</button>
+          <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600;">Zastosuj <i data-lucide="arrow-right"></i></button>
         </div>
       </div>
     </div>`;
@@ -432,9 +432,9 @@ function exportOfferXlsx(id) {
         'Nazwa produktu',
         'PEHD',
         'Cena jedn.',
-        'Ilość ✏️',
+        'Ilość <i data-lucide="pencil"></i>',
         'Metry',
-        'Rabat % ✏️',
+        'Rabat % <i data-lucide="pencil"></i>',
         'Po rabacie',
         'Transport/szt',
         'Netto',

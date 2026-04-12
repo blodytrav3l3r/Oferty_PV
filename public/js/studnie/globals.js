@@ -62,7 +62,7 @@ function toggleCard(contentId, iconId) {
     if (!content) return;
     const isOpen = content.style.display !== 'none';
     content.style.display = isOpen ? 'none' : 'block';
-    if (icon) icon.textContent = isOpen ? '🔽' : '🔼';
+    if (icon) icon.innerHTML = isOpen ? '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span>' : '<span style="font-size:0.75rem;"><i data-lucide="chevron-up"></i></span>';
 }
 
 /* ===== NAWIGACJA ===== */

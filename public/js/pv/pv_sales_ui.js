@@ -250,7 +250,7 @@ class PVSalesUI {
                     onmouseenter="this.style.background='rgba(16,185,129,0.25)'; this.style.transform='translateY(-1px)';"
                     onmouseleave="this.style.background='rgba(16,185,129,0.15)'; this.style.transform='translateY(0)';"
                     title="Kliknij aby edytować zamówienie${order.orderNumber ? ' ' + order.orderNumber : ''}">
-                    📦 ZAMÓWIENIE${order.orderNumber ? ' ' + order.orderNumber : ''}
+                    <i data-lucide="package"></i> ZAMÓWIENIE${order.orderNumber ? ' ' + order.orderNumber : ''}
                    </a>`
                     : `<span style="background:rgba(100,116,139,0.1); color:#94a3b8; padding:4px 10px; border-radius:6px;
                     border:1px solid rgba(100,116,139,0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
@@ -274,7 +274,7 @@ class PVSalesUI {
                 if (!priceVal && offer.price) priceVal = offer.price;
 
                 const isWell = offer.type === 'studnia_oferta';
-                const icon = isWell ? '🏗️' : '🔩';
+                const icon = isWell ? '<i data-lucide="cylinder"></i>' : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
 
                 let itemCount = 0;
                 if (isWell) {
@@ -345,27 +345,27 @@ class PVSalesUI {
                         <div style="display: flex; align-items: center; gap: 0.8rem; overflow: hidden;">
                             <span style="background: var(--border-glass); width: 1px; height: 16px; flex-shrink: 0;"></span>
                             <div title="Klient" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; font-size: 0.82rem;">
-                                <span style="opacity: 0.7;">🏢</span> <span style="color: var(--text-primary); font-weight: 500;">${clientInfo}</span>
+                                <span style="opacity: 0.7;"><i data-lucide="building-2"></i></span> <span style="color: var(--text-primary); font-weight: 500;">${clientInfo}</span>
                             </div>
                             ${
                                 investInfo
                                     ? `
                             <div title="Budowa" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; font-size: 0.82rem;">
-                                <span style="opacity: 0.7;">🏗️</span> <span style="color: var(--text-primary); font-weight: 500;">${investInfo}</span>
+                                <span style="opacity: 0.7;"><i data-lucide="hard-hat"></i></span> <span style="color: var(--text-primary); font-weight: 500;">${investInfo}</span>
                             </div>`
                                     : ''
                             }
-                            <span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">📅 ${dateStr}</span>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;">📦 ${itemCount} ${isWell ? 'studni' : 'poz.'}</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;"><i data-lucide="calendar"></i> ${dateStr}</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;"><i data-lucide="package"></i> ${itemCount} ${isWell ? 'studni' : 'poz.'}</span>
                             ${(() => {
                                 let html = '';
                                 if (creatorName === userName && creatorName) {
-                                    html = `<span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;" title="Autor i Opiekun oferty">🧑‍💼 Autor/Opiekun: <strong style="color:var(--text-primary)">${creatorName}</strong></span>`;
+                                    html = `<span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;" title="Autor i Opiekun oferty"><i data-lucide="user"></i>‍<i data-lucide="briefcase"></i> Autor/Opiekun: <strong style="color:var(--text-primary)">${creatorName}</strong></span>`;
                                 } else {
                                     if (creatorName)
-                                        html += `<span style="font-size: 0.78rem; color: #888; white-space: nowrap; margin-right: 0.5rem;" title="Autor oferty">✍️ Autor: <strong style="color:var(--text-muted)">${creatorName}</strong></span>`;
+                                        html += `<span style="font-size: 0.78rem; color: #888; white-space: nowrap; margin-right: 0.5rem;" title="Autor oferty"><i data-lucide="pen-tool"></i>️ Autor: <strong style="color:var(--text-muted)">${creatorName}</strong></span>`;
                                     if (userName)
-                                        html += `<span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;" title="Opiekun oferty">🧑‍💼 Opiekun: <strong style="color:var(--text-primary)">${userName}</strong></span>`;
+                                        html += `<span style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;" title="Opiekun oferty"><i data-lucide="user"></i>‍<i data-lucide="briefcase"></i> Opiekun: <strong style="color:var(--text-primary)">${userName}</strong></span>`;
                                 }
                                 return html;
                             })()}
@@ -387,18 +387,18 @@ class PVSalesUI {
                             ${
                                 isLocalList
                                     ? `
-                                <button class="btn btn-sm btn-primary btn-edit-pv-offer" data-id="${offer.id}" data-type="${offer.type}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="${hasOrder ? 'Oferta zablokowana przez zamówienie' : 'Edytuj ofertę'}" ${hasOrder ? 'disabled' : ''}>✏️ Edytuj</button>
-                                <button class="btn btn-sm btn-copy-pv-offer" data-id="${offer.id}" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: #0ea5e9; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Skopiuj ofertę jako nową wersję">📋 Wersja</button>
-                                <button class="btn btn-sm btn-secondary btn-history-pv-offer" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;">⏳ Historia</button>
-                                ${isAdminOrPro ? `<button class="btn btn-sm btn-secondary btn-change-owner" data-id="${offer.id}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Zmień opiekuna oferty">👤 Opiekun</button>` : ''}
-                                <button class="btn btn-sm btn-secondary btn-export-pv-offer" data-id="${offer.id}" data-type="${offer.type}" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Wydruk oferty PDF/Word">🖨️ Wydruk</button>
+                                <button class="btn btn-sm btn-primary btn-edit-pv-offer" data-id="${offer.id}" data-type="${offer.type}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="${hasOrder ? 'Oferta zablokowana przez zamówienie' : 'Edytuj ofertę'}" ${hasOrder ? 'disabled' : ''}><i data-lucide="pencil"></i> Edytuj</button>
+                                <button class="btn btn-sm btn-copy-pv-offer" data-id="${offer.id}" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: #0ea5e9; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Skopiuj ofertę jako nową wersję"><i data-lucide="clipboard-list"></i> Wersja</button>
+                                <button class="btn btn-sm btn-secondary btn-history-pv-offer" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;"><i data-lucide="hourglass"></i> Historia</button>
+                                ${isAdminOrPro ? `<button class="btn btn-sm btn-secondary btn-change-owner" data-id="${offer.id}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Zmień opiekuna oferty"><i data-lucide="user"></i> Opiekun</button>` : ''}
+                                <button class="btn btn-sm btn-secondary btn-export-pv-offer" data-id="${offer.id}" data-type="${offer.type}" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Wydruk oferty PDF/Word"><i data-lucide="printer"></i> Wydruk</button>
                                 <span style="background: var(--border-glass); width: 1px; height: 16px; margin: 0 2px;"></span>
                                 ${
                                     hasOrder
                                         ? `
-                                    <button class="btn btn-sm btn-edit-order" data-order-id="${order.id || ''}" data-offer-type="${offer.type}" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Edytuj zamówienie">📦 Zamówienie</button>
-                                    <button class="btn btn-sm btn-history-order" data-order-id="${order.id || ''}" title="Historia zmian zamówienia" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;">⏳ Hist. Zam.</button>
-                                    <button class="btn btn-sm btn-delete-order" data-order-id="${order.id || ''}" data-offer-type="${offer.type}" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Usuń zamówienie i odblokuj ofertę">🗑️ Usuń Zam.</button>
+                                    <button class="btn btn-sm btn-edit-order" data-order-id="${order.id || ''}" data-offer-type="${offer.type}" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Edytuj zamówienie"><i data-lucide="package"></i> Zamówienie</button>
+                                    <button class="btn btn-sm btn-history-order" data-order-id="${order.id || ''}" title="Historia zmian zamówienia" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;"><i data-lucide="hourglass"></i> Hist. Zam.</button>
+                                    <button class="btn btn-sm btn-delete-order" data-order-id="${order.id || ''}" data-offer-type="${offer.type}" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Usuń zamówienie i odblokuj ofertę"><i data-lucide="trash-2"></i> Usuń Zam.</button>
                                 `
                                         : ''
                                 }
@@ -406,12 +406,12 @@ class PVSalesUI {
                                     offer.clientPhone
                                         ? `
                                     <span style="background: var(--border-glass); width: 1px; height: 16px; margin: 0 2px;"></span>
-                                    <a href="tel:${offer.clientPhone}" class="btn btn-sm" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; text-decoration: none; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Zadzwoń do klienta">📞</a>
+                                    <a href="tel:${offer.clientPhone}" class="btn btn-sm" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; text-decoration: none; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Zadzwoń do klienta"><i data-lucide="phone"></i></a>
                                 `
                                         : ''
                                 }
                                 <span style="background: var(--border-glass); width: 1px; height: 16px; margin: 0 2px;"></span>
-                                <button class="btn btn-sm btn-delete-pv-offer" data-id="${offer.id}" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="${hasOrder ? 'Nie można usunąć oferty z zamówieniem' : 'Trwale usuń ofertę'}" ${hasOrder ? 'disabled' : ''}>🗑️</button>
+                                <button class="btn btn-sm btn-delete-pv-offer" data-id="${offer.id}" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="${hasOrder ? 'Nie można usunąć oferty z zamówieniem' : 'Trwale usuń ofertę'}" ${hasOrder ? 'disabled' : ''}><i data-lucide="trash-2"></i></button>
                             `
                                     : `
                                 <button class="btn btn-sm btn-primary btn-view-pv-offer" data-id="${offer.id}" style="padding: 0.3rem 0.7rem; font-size: 0.75rem;">Szczegóły</button>
@@ -588,11 +588,11 @@ class PVSalesUI {
                 <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:1.5rem;">
                     <!-- PDF -->
                     <button onclick="if(window.pvSalesUI) window.pvSalesUI.handleExportClick('${id}', '${type}', 'pdf')" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:2px solid rgba(239,68,68,0.6); padding:1rem; border-radius:10px; cursor:pointer; font-weight:800; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                        <span style="font-size:2rem;">📄</span> PDF
+                        <span style="font-size:2rem;"><i data-lucide="file-text"></i></span> PDF
                     </button>
                     <!-- Word -->
                     <button onclick="if(window.pvSalesUI) window.pvSalesUI.handleExportClick('${id}', '${type}', 'word')" style="flex:1; background:rgba(59,130,246,0.2); color:#93c5fd; border:2px solid rgba(59,130,246,0.6); padding:1rem; border-radius:10px; cursor:pointer; font-weight:800; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                        <span style="font-size:2rem;">📝</span> Word
+                        <span style="font-size:2rem;"><i data-lucide="edit"></i></span> Word
                     </button>
                 </div>
                 <button style="padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('export-offer-modal').remove()">Anuluj</button>
@@ -826,16 +826,16 @@ class PVSalesUI {
 
                 if (isDelete) {
                     cardClass = 'action-delete';
-                    actionBadge = `<span style="background:rgba(239,68,68,0.15); color:#f87171; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">🗑️ USUNIĘTO</span>`;
+                    actionBadge = `<span style="background:rgba(239,68,68,0.15); color:#f87171; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>`;
                     const old = log.oldData || {};
                     contentHtml = `<div style="color:#f87171; font-size:0.9rem;">Usunięty element${old.totalBrutto ? ` — wcześniej: <strong style="color:#fff;">${formatter(old.totalBrutto)} PLN</strong>` : ''}</div>`;
                 } else if (log.action === 'create') {
                     cardClass = 'action-create';
-                    actionBadge = `<span style="background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">✨ UTWORZONO</span>`;
-                    contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 ${formatter(data.totalBrutto || 0)} PLN</div>`;
+                    actionBadge = `<span style="background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>`;
+                    contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> ${formatter(data.totalBrutto || 0)} PLN</div>`;
                 } else if (isDiff) {
                     cardClass = 'action-diff';
-                    actionBadge = `<span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">📝 EDYCJA (DIFF)</span>`;
+                    actionBadge = `<span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>`;
                     const keys = Object.keys(data).filter((k) => k !== '_diffMode');
                     const changesHtml = keys
                         .map((k) => {
@@ -850,32 +850,32 @@ class PVSalesUI {
                                 k.toLowerCase().includes('price') ||
                                 k.toLowerCase().includes('cena')
                             ) {
-                                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${formatter(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${formatter(Number(newVal))} PLN</span></div>`;
+                                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${formatter(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${formatter(Number(newVal))} PLN</span></div>`;
                             }
-                            return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;">➔</span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
+                            return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
                         })
                         .join('');
                     contentHtml = `<div class="diff-container">${changesHtml}</div>`;
                 } else {
                     cardClass = 'action-update';
-                    actionBadge = `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;">💾 ZAPIS</span>`;
+                    actionBadge = `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS</span>`;
                     const oldPrice =
                         log.oldData && log.oldData.totalBrutto
                             ? formatter(log.oldData.totalBrutto)
                             : null;
                     const newPrice = formatter(data.totalBrutto || 0);
                     if (oldPrice && oldPrice !== newPrice) {
-                        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${oldPrice}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;">➔</span> ${newPrice} PLN</div>`;
+                        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${oldPrice}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${newPrice} PLN</div>`;
                     } else {
-                        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;">💰 ${newPrice} PLN</div>`;
+                        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> ${newPrice} PLN</div>`;
                     }
                 }
 
                 const restoreBtn =
                     !isDelete && !isDiff
-                        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${id}', '${log.id}', '${type}')">🔄 Przywróć</button>`
+                        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${id}', '${log.id}', '${type}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
                         : '';
-                const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.pvSalesUI.viewHistorySnapshotUnified('${id}', '${log.id}', '${type}')">👁️ Podgląd</button>`;
+                const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.pvSalesUI.viewHistorySnapshotUnified('${id}', '${log.id}', '${type}')"><i data-lucide="eye"></i>️ Podgląd</button>`;
 
                 const buttonsHtml = `<div style="display:flex; gap:0.4rem;">${previewBtn}${restoreBtn}</div>`;
 
@@ -884,10 +884,10 @@ class PVSalesUI {
                         <div class="audit-card-header">
                             <div style="display:flex; align-items:center; gap:0.6rem;">
                                 ${actionBadge}
-                                <span class="audit-date">📅 ${new Date(log.createdAt).toLocaleString()}</span>
+                                <span class="audit-date"><i data-lucide="calendar"></i> ${new Date(log.createdAt).toLocaleString()}</span>
                             </div>
                             <div class="audit-author">
-                                🧑‍💻 <strong style="color:#e2e8f0;">${log.userName || 'System'}</strong>
+                                <i data-lucide="user"></i>‍<i data-lucide="monitor"></i> <strong style="color:#e2e8f0;">${log.userName || 'System'}</strong>
                             </div>
                         </div>
                         <div class="audit-card-body">
@@ -902,7 +902,7 @@ class PVSalesUI {
             const loadMoreHtml =
                 logs.length < total
                     ? `<div id="audit-load-more-wrap-kartoteka" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                       <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${type}', '${id}', 20)">📜 Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
+                       <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${type}', '${id}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                    </div>`
                     : '';
 
@@ -974,7 +974,7 @@ class PVSalesUI {
                         <h3 style="font-weight:800; color:#fff; margin:0; display:flex; align-items:center; gap:0.5rem;">
                             <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
                         </h3>
-                        <button class="btn-icon" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('offer-history-modal').remove()">✕</button>
+                        <button class="btn-icon" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x"></i></button>
                     </div>
                     <div id="audit-logs-container-kartoteka" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                         ${historyHtml}
@@ -1031,7 +1031,7 @@ class PVSalesUI {
                     `
                     <div id="audit-load-more-wrap-kartoteka" style="text-align:center; padding:0.8rem;">
                         <button class="btn btn-sm" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); color:#818cf8; font-weight:700; padding:0.4rem 1.2rem;"
-                            onclick="window.pvSalesUI.loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})">📜 Pokaż więcej (${remaining} pozostało)</button>
+                            onclick="window.pvSalesUI.loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż więcej (${remaining} pozostało)</button>
                     </div>
                 `
                 );

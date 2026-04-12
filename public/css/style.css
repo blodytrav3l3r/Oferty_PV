@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('./inter.css');
 
 :root {
     --bg-primary: #0a0e1a;
@@ -481,6 +481,13 @@ body::before {
 
 .form-select {
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.2rem;
 }
 
 .form-select option {
@@ -1475,4 +1482,17 @@ tbody tr:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Utility classes */
+.lucide-rotate-n90 {
+    transform: rotate(-90deg);
+    display: inline-block;
+}
+
+svg.lucide {
+    vertical-align: middle;
+    display: inline-block;
+    position: relative;
+    top: -1px; /* Korekta optycznego środka */
 }

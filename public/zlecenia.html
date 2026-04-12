@@ -24,47 +24,64 @@
             }
             .zlecenia-stat-card {
                 flex: 1;
-                min-width: 160px;
+                min-width: 180px;
                 max-width: 250px;
-                background: var(--bg-card);
-                border: 1px solid var(--border-glass);
-                border-radius: 10px;
-                padding: 0.8rem 1rem;
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 14px;
+                padding: 1rem 1.2rem;
                 display: flex;
                 align-items: center;
-                gap: 0.8rem;
-                transition: all 0.2s;
+                gap: 1rem;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 cursor: default;
+                backdrop-filter: blur(10px);
+                position: relative;
+                overflow: hidden;
+            }
+            .zlecenia-stat-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
             }
             .zlecenia-stat-card:hover {
-                border-color: rgba(129, 140, 248, 0.3);
-                box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+                border-color: rgba(99, 102, 241, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.1);
             }
             .zlecenia-stat-icon {
-                font-size: 1.6rem;
-                width: 42px;
-                height: 42px;
+                font-size: 1.5rem;
+                width: 48px;
+                height: 48px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 10px;
+                border-radius: 12px;
                 flex-shrink: 0;
+                box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
             }
             .zlecenia-stat-info {
                 flex: 1;
             }
             .zlecenia-stat-value {
-                font-size: 1.4rem;
+                font-size: 1.6rem;
                 font-weight: 800;
                 color: var(--text-primary);
-                line-height: 1.2;
+                line-height: 1.1;
+                letter-spacing: -0.5px;
+                font-family: 'Inter', sans-serif;
             }
             .zlecenia-stat-label {
-                font-size: 0.7rem;
-                font-weight: 600;
+                font-size: 0.68rem;
+                font-weight: 700;
                 color: var(--text-muted);
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.8px;
+                margin-top: 2px;
             }
 
             /* Filter tabs */
@@ -96,9 +113,11 @@
             /* Table styling */
             .zlecenia-table-container {
                 overflow-x: auto;
-                border-radius: 12px;
-                border: 1px solid var(--border-glass);
-                background: var(--bg-card);
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                background: rgba(17, 24, 39, 0.4);
+                backdrop-filter: blur(8px);
+                box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
                 scrollbar-width: thin;
             }
             .zlecenia-table {
@@ -122,16 +141,22 @@
                 white-space: nowrap;
             }
             .zlecenia-table td {
-                padding: 0.65rem 1rem;
+                padding: 0.8rem 1rem;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.03);
                 color: var(--text-primary);
                 vertical-align: middle;
+                transition: all 0.2s;
             }
             .zlecenia-table tbody tr {
-                transition: background 0.15s;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
             }
             .zlecenia-table tbody tr:hover {
-                background: rgba(129, 140, 248, 0.04);
+                background: rgba(99, 102, 241, 0.08);
+                box-shadow: inset 4px 0 0 var(--accent);
+            }
+            .zlecenia-table tbody tr:hover td {
+                color: #fff;
             }
             .zlecenia-table tbody tr:last-child td {
                 border-bottom: none;
@@ -152,23 +177,41 @@
 
             /* Status badges */
             .status-badge {
-                padding: 0.25rem 0.65rem;
-                border-radius: 20px;
-                font-size: 0.7rem;
-                font-weight: 700;
+                padding: 0.35rem 0.8rem;
+                border-radius: 10px;
+                font-size: 0.68rem;
+                font-weight: 800;
                 text-transform: uppercase;
-                letter-spacing: 0.3px;
+                letter-spacing: 0.6px;
                 white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                position: relative;
+                overflow: hidden;
+            }
+            .status-badge svg {
+                width: 14px;
+                height: 14px;
             }
             .status-draft {
-                background: rgba(245, 158, 11, 0.12);
+                background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
                 color: #fbbf24;
-                border: 1px solid rgba(245, 158, 11, 0.25);
+                border: 1px solid rgba(245, 158, 11, 0.4);
+                box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+                animation: pulse-draft 3s infinite;
+            }
+            @keyframes pulse-draft {
+                0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
+                50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+                100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
             }
             .status-accepted {
-                background: rgba(16, 185, 129, 0.12);
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
                 color: #34d399;
-                border: 1px solid rgba(16, 185, 129, 0.25);
+                border: 1px solid rgba(16, 185, 129, 0.4);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
             }
 
             /* Sales order badge */
@@ -186,21 +229,25 @@
 
             /* Person badges */
             .person-badge {
-                font-size: 0.78rem;
-                padding: 0.15rem 0.45rem;
-                border-radius: 6px;
+                font-size: 0.72rem;
+                font-weight: 600;
+                padding: 0.3rem 0.6rem;
+                border-radius: 8px;
                 display: inline-flex;
                 align-items: center;
-                gap: 0.3rem;
+                gap: 0.4rem;
                 white-space: nowrap;
+                border: 1px solid transparent;
             }
             .person-handler {
-                background: rgba(6, 182, 212, 0.08);
+                background: rgba(6, 182, 212, 0.1);
                 color: #22d3ee;
+                border-color: rgba(6, 182, 212, 0.2);
             }
             .person-creator {
-                background: rgba(255, 255, 255, 0.04);
-                color: var(--text-secondary);
+                background: rgba(148, 163, 184, 0.08);
+                color: #cbd5e1;
+                border-color: rgba(148, 163, 184, 0.15);
             }
 
             /* Action buttons */
@@ -214,6 +261,7 @@
                 transition: all 0.2s;
                 color: var(--text-secondary);
                 line-height: 1;
+                white-space: nowrap;
             }
             .action-btn:hover {
                 background: rgba(255, 255, 255, 0.06);
@@ -268,17 +316,19 @@
             .zlecenia-batch-bar {
                 display: none;
                 align-items: center;
-                gap: 0.6rem;
-                padding: 0.6rem 1rem;
+                gap: 1rem;
+                padding: 0.8rem 1.2rem;
                 background: linear-gradient(
                     135deg,
-                    rgba(99, 102, 241, 0.15) 0%,
-                    rgba(129, 140, 248, 0.08) 100%
+                    rgba(99, 102, 241, 0.25) 0%,
+                    rgba(129, 140, 248, 0.15) 100%
                 );
-                border: 1px solid rgba(129, 140, 248, 0.3);
-                border-radius: 10px;
-                margin-bottom: 0.8rem;
-                animation: batchBarIn 0.2s ease-out;
+                border: 1px solid rgba(129, 140, 248, 0.4);
+                border-radius: 14px;
+                margin-bottom: 1.2rem;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1);
+                backdrop-filter: blur(12px);
+                animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             }
             @keyframes batchBarIn {
                 from {
@@ -361,7 +411,7 @@
             <div class="section active" id="section-zlecenia">
                 <div class="toolbar">
                     <h2 style="font-size: 1rem; font-weight: 700">
-                        🏭 Kartoteka Zleceń Produkcyjnych
+                        <i data-lucide="factory"></i> Kartoteka Zleceń Produkcyjnych
                     </h2>
                     <div class="toolbar-spacer"></div>
                     <button
@@ -369,7 +419,7 @@
                         onclick="AppZlecenia.loadOrders()"
                         title="Odśwież bazę zleceń"
                     >
-                        🔄 Odśwież
+                        <i data-lucide="refresh-cw"></i> Odśwież
                     </button>
                 </div>
 
@@ -403,20 +453,20 @@
                                     data-filter="draft"
                                     onclick="AppZlecenia.setFilter('draft')"
                                 >
-                                    ⏳ Oczekujące
+                                    <i data-lucide="hourglass-2"></i> Oczekujące
                                 </button>
                                 <button
                                     class="zlecenia-filter-tab"
                                     data-filter="accepted"
                                     onclick="AppZlecenia.setFilter('accepted')"
                                 >
-                                    ✅ Zatwierdzone
+                                    <i data-lucide="check-check"></i> Zatwierdzone
                                 </button>
                             </div>
 
                             <div
                                 class="search-box"
-                                style="margin: 0; width: 380px; position: relative"
+                                style="margin: 0; width: 600px; position: relative"
                             >
                                 <svg
                                     viewBox="0 0 24 24"
@@ -439,7 +489,7 @@
                                     type="text"
                                     id="zlecenia-search-input"
                                     class="form-input form-input-sm"
-                                    placeholder="Szukaj: nr zlecenia, budowa, opiekun..."
+                                    placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
                                     style="
                                         font-weight: normal;
                                         padding-left: 2.4rem !important;
@@ -452,20 +502,20 @@
                         <!-- Batch action bar (visible when items selected) -->
                         <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
                             <div class="batch-info">
-                                ✅ Zaznaczono: <span class="batch-count">0</span>
+                                <i data-lucide="check-check"></i> Zaznaczono: <span class="batch-count">0</span>
                             </div>
                             <div class="batch-actions">
                                 <button
                                     class="batch-btn batch-btn-print"
                                     onclick="AppZlecenia.printBatchZlecenia()"
                                 >
-                                    🖨️ Drukuj zlecenia
+                                    <i data-lucide="printer"></i> Drukuj zlecenia
                                 </button>
                                 <button
                                     class="batch-btn batch-btn-label"
                                     onclick="AppZlecenia.printBatchEtykiety()"
                                 >
-                                    🏷️ Drukuj etykiety
+                                    <i data-lucide="tag"></i> Drukuj etykiety
                                 </button>
                             </div>
                         </div>
@@ -530,5 +580,6 @@
         <script src="js/shared/auth.js?v=2.0"></script>
         <script src="js/shared/ui.js?v=2.0"></script>
         <script src="js/spa/zlecenia.js?v=2.0"></script>
-    </body>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
 </html>

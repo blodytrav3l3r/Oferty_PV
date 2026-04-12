@@ -67,14 +67,14 @@ function toggleCatalog() {
     const btn = document.getElementById('toggle-catalog-btn');
     if (catalogVisible) {
         catalog.style.display = 'block';
-        btn.innerHTML = '📂 Ukryj katalog produktów';
+        btn.innerHTML = '<i data-lucide="folder-open"></i> Ukryj katalog produktów';
         if (!activeCatalogCategory || activeCatalogCategory === 'Akcesoria PEHD')
             activeCatalogCategory = CATEGORIES.filter((c) => c !== 'Akcesoria PEHD')[0];
         renderCatalogTabs();
         renderCatalogProducts();
     } else {
         catalog.style.display = 'none';
-        btn.innerHTML = '📂 Pokaż katalog produktów';
+        btn.innerHTML = '<i data-lucide="folder-open"></i> Pokaż katalog produktów';
     }
 }
 
@@ -197,8 +197,8 @@ function showPipeLengthModal(productId, editIndex = null) {
     overlay.innerHTML = `
     <div class="modal" style="max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
-        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);">📏 ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
-        <button class="btn-icon" onclick="closeModal()">✕</button>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);"><i data-lucide="ruler"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
+        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
       </div>
       <div style="font-size:0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
         Wybrany produkt:<br><strong style="color:var(--text); font-size: 1.05rem;">${product.name}</strong>
@@ -218,7 +218,7 @@ function showPipeLengthModal(productId, editIndex = null) {
       </div>
       <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
         <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-        <button class="btn btn-primary" onclick="confirmPipeLength('${productId}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź ➔</button>
+        <button class="btn btn-primary" onclick="confirmPipeLength('${productId}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź <i data-lucide="arrow-right"></i></button>
       </div>
     </div>`;
     document.body.appendChild(overlay);
@@ -550,7 +550,7 @@ function renderOfferItems() {
                     cat === 'Duże Żelbetowe II';
                 const lengthEditor =
                     isEditableLength && hasLength
-                        ? `<br><div style="margin-top:6px;"><button class="btn-icon" style="font-size:0.75rem; padding:0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text);" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">📏 Dł. rury: <strong style="color:var(--primary)">${fmt(item.customLengthM || item.lengthM)}m</strong> ✎</button></div>`
+                        ? `<br><div style="margin-top:6px;"><button class="btn-icon" style="font-size:0.75rem; padding:0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text);" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport"><i data-lucide="ruler"></i> Dł. rury: <strong style="color:var(--primary)">${fmt(item.customLengthM || item.lengthM)}m</strong> <i data-lucide="pencil"></i></button></div>`
                         : '';
 
                 html += `<tr class="${rowClass}" ${rowStyle ? `style="${rowStyle}"` : ''}>
@@ -582,7 +582,7 @@ function renderOfferItems() {
               `
                       : ''
               }
-              <button class="btn-icon" title="Usuń" onclick="removeOfferItem(${i})">✕</button>
+              <button class="btn-icon" title="Usuń" onclick="removeOfferItem(${i})"><i data-lucide="x"></i></button>
             </div>
           </td>
         </tr>`;

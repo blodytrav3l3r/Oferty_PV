@@ -56,8 +56,8 @@ function renderPriceList() {
         <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${p.id}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'weight','${p.id}')">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" onclick="copyProduct('${p.id}')">📋</button>
-          <button class="btn-icon" title="Usuń" onclick="deleteProduct('${p.id}')">✕</button>
+          <button class="btn-icon" title="Powiel" onclick="copyProduct('${p.id}')"><i data-lucide="clipboard-list"></i></button>
+          <button class="btn-icon" title="Usuń" onclick="deleteProduct('${p.id}')"><i data-lucide="x"></i></button>
         </td>
       </tr>`;
         });
@@ -258,7 +258,7 @@ function showAddProductModal() {
     overlay.id = 'add-product-modal';
     overlay.innerHTML = `
     <div class="modal">
-      <div class="modal-header"><h3>➕ Dodaj nowy produkt</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
+      <div class="modal-header"><h3><i data-lucide="plus"></i> Dodaj nowy produkt</h3><button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="np. RTB-0-10-25-K00"></div>

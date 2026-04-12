@@ -186,7 +186,7 @@ async function createOrderFromOffer() {
     await saveOrdersDataStudnie(ordersStudnie);
     renderSavedOffersStudnie();
 
-    showToast(`📦 Zamówienie ${orderNumber} utworzone z oferty ${offer.number}`, 'success');
+    showToast(`<i data-lucide="package"></i> Zamówienie ${orderNumber} utworzone z oferty ${offer.number}`, 'success');
 
     // Otwórz zamówienie w tym samym oknie (używa głównego edytora studni w trybie zamówienia)
     window.location.href = '/studnie?order=' + order.id;
@@ -221,7 +221,7 @@ function saveOrderStudnie() {
     order.totalBrutto = totalNetto * 1.23;
 
     saveOrdersDataStudnie(ordersStudnie);
-    showToast('📦 Zamówienie zaktualizowane', 'success');
+    showToast('<i data-lucide="package"></i> Zamówienie zaktualizowane', 'success');
 }
 
 /** Zamraża bieżące ceny wszystkich elementów konfiguracji i przejść w każdej studni */
@@ -263,7 +263,7 @@ async function deleteOrderStudnie(orderId) {
         );
         if (acceptedPOs.length > 0) {
             showToast(
-                '❌ Nie można usunąć zamówienia — zawiera zaakceptowane zlecenia produkcyjne. Najpierw cofnij ich akceptację.',
+                '<i data-lucide="x-circle"></i> Nie można usunąć zamówienia — zawiera zaakceptowane zlecenia produkcyjne. Najpierw cofnij ich akceptację.',
                 'error'
             );
             return;
@@ -519,7 +519,7 @@ async function enterOrderEditMode(orderId) {
         document.title = `📦 Zamówienie: ${order.number || orderId}`;
 
         console.log('[enterOrderEditMode] DONE');
-        showToast('📦 Zamówienie wczytane do edycji', 'success');
+        showToast('<i data-lucide="package"></i> Zamówienie wczytane do edycji', 'success');
     } catch (err) {
         console.error('Błąd ładowania zamówienia:', err);
         console.error('Stack:', err.stack);
@@ -536,7 +536,7 @@ window.applyPreviewLockUI = function () {
         banner.id = 'preview-lock-banner';
         banner.innerHTML = `
             <div style="position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(15, 23, 42, 0.95); border:2px solid #fbbf24; color:#fbbf24; padding:0.8rem 2.5rem; border-radius:40px; z-index:99999; box-shadow:0 20px 40px rgba(0,0,0,0.6); font-weight:800; display:flex; align-items:center; gap:1.5rem; backdrop-filter:blur(10px);">
-                <span style="font-size:1.2rem;">👁️ HISTORIA — TYLKO DO ODCZYTU</span>
+                <span style="font-size:1.2rem;"><i data-lucide="eye"></i>️ HISTORIA — TYLKO DO ODCZYTU</span>
                 <button onclick="window.exitPreviewMode()" class="btn btn-sm" style="background:#fbbf24; color:#000; border:none; padding:0.4rem 1rem; border-radius:20px; font-weight:700;">ZAMKNIJ PODGLĄD</button>
             </div>
         `;
@@ -660,20 +660,20 @@ function renderOrderModeBanner() {
 
     banner.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:1.2rem;">📦</span>
+            <span style="font-size:1.2rem;"><i data-lucide="package"></i></span>
             <div>
                 <div style="font-size:0.78rem; font-weight:800; color:${hasChanges ? '#f87171' : '#34d399'};">
                     TRYB ZAMÓWIENIA — ${order.number || ''}
                 </div>
                 <div style="font-size:0.62rem; color:var(--text-muted);">
-                    ${hasChanges ? `⚠️ ${changeCount} studni zmienionych od oryginału` : '✅ Bez zmian od oryginału'}
+                    ${hasChanges ? `<i data-lucide="alert-triangle"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>
             </div>
         </div>
         <div style="display:flex; gap:0.4rem; align-items:center;">
             <button class="btn btn-sm" onclick="saveCurrentOrder()" style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.7rem; font-weight:700; padding:0.3rem 0.7rem;">
-                💾 Zapisz zamówienie
+                <i data-lucide="save"></i> Zapisz zamówienie
             </button>
         </div>
     `;
@@ -720,7 +720,7 @@ async function saveCurrentOrder() {
                 totalBrutto: order.totalBrutto
             })
         });
-        showToast('📦 Zamówienie zapisane', 'success');
+        showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
         renderOrderModeBanner();
     } catch (err) {
         console.error('Błąd zapisu zamówienia:', err);
@@ -947,7 +947,7 @@ async function closeZleceniaModal() {
         const shouldSave = await appConfirm('Czy zapisać zmiany przed zamknięciem?', {
             title: 'Zamknięcie zlecenia',
             type: 'warning',
-            okText: '💾 Zapisz i zamknij',
+            okText: '<i data-lucide="save"></i> Zapisz i zamknij',
             cancelText: 'Zamknij bez zapisu'
         });
         if (shouldSave) {
@@ -1092,7 +1092,7 @@ function renderZleceniaList() {
 
         // Nagłówek studni
         html += `<div style="background:var(--bg-secondary); padding:0.6rem 0.8rem; border-bottom:1px solid var(--border-glass); border-top:1px solid var(--border-glass); position:sticky; top:0; z-index:5; display:flex; justify-content:space-between; align-items:center; margin-top:-1px;">
-            <div style="font-size:0.75rem; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.5px;">🏷️ ${group.wellName}</div>
+            <div style="font-size:0.75rem; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="tag"></i> ${group.wellName}</div>
             <div style="font-size:0.65rem; font-weight:700; color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius:12px; border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + group.wellDn}</div>
         </div>
         <div style="padding: 0.4rem;">`; // wrapper for elements in this well
@@ -1122,13 +1122,10 @@ function renderZleceniaList() {
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${el.product.name}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
                         ${prodOrderNum ? `<div style="font-size:0.6rem; font-weight:800; color:#818cf8; background:rgba(129,140,248,0.1); padding:0.1rem 0.4rem; border-radius:4px; border:1px solid rgba(129,140,248,0.2);">${prodOrderNum}</div>` : ''}
-                        ${isSaved && !isAccepted ? `<button onclick="event.stopPropagation(); deleteProductionOrder('${savedOrder.id}')" title="Usuń zlecenie" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:4px; cursor:pointer; padding:0.1rem 0.3rem; font-size:0.6rem; line-height:1; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'">🗑️</button>` : ''}
+                        ${isSaved && !isAccepted ? `<button onclick="event.stopPropagation(); deleteProductionOrder('${savedOrder.id}')" title="Usuń zlecenie" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:4px; cursor:pointer; padding:0.1rem 0.3rem; font-size:0.6rem; line-height:1; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'"><i data-lucide="trash-2"></i></button>` : ''}
                     </div>
                 </div>
-                <div style="display:flex; gap:0.6rem; margin-top:0.15rem; font-size:0.62rem; color:var(--text-muted);">
-                    ${el.product.height ? '<span>📐 Wyskokość: ' + el.product.height + 'mm</span>' : ''}
-                </div>
-                ${isAccepted ? '<div style="font-size:0.55rem; color:#34d399; margin-top:0.2rem; font-weight:700;">🔒 Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:#fbbf24; margin-top:0.2rem; font-weight:700;">⏳ Wersja robocza</div>' : ''}
+                ${isAccepted ? '<div style="font-size:0.55rem; color:#34d399; margin-top:0.2rem; font-weight:700;">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:#fbbf24; margin-top:0.2rem; font-weight:700;">Wersja robocza</div>' : ''}
             </div>`;
         });
 
@@ -1189,18 +1186,18 @@ function renderZleceniaWellConfig() {
     }
 
     const typeBadge = {
-        wlaz: { bg: '#374151', label: '🔘' },
-        plyta_din: { bg: '#1e3a5f', label: '🔽' },
-        plyta_najazdowa: { bg: '#1e3a5f', label: '🔽' },
-        plyta_zamykajaca: { bg: '#1e3a5f', label: '🔽' },
-        pierscien_odciazajacy: { bg: '#1e3a5f', label: '⚙️' },
-        konus: { bg: '#4c1d95', label: '🔶' },
-        avr: { bg: '#44403c', label: '⚙️' },
+        wlaz: { bg: '#374151', label: '<i data-lucide="circle-dot"></i>' },
+        plyta_din: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" style="font-size:0.75rem;"></i>' },
+        plyta_najazdowa: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" style="font-size:0.75rem;"></i>' },
+        plyta_zamykajaca: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" style="font-size:0.75rem;"></i>' },
+        pierscien_odciazajacy: { bg: '#1e3a5f', label: '<i data-lucide="settings"></i>' },
+        konus: { bg: '#4c1d95', label: '<i data-lucide="diamond"></i>' },
+        avr: { bg: '#44403c', label: '<i data-lucide="settings"></i>' },
         plyta_redukcyjna: { bg: '#4c1d95', label: '⬛' },
-        krag: { bg: '#164e63', label: '🟦' },
-        krag_ot: { bg: '#312e81', label: '🟪' },
-        dennica: { bg: '#14532d', label: '🟩' },
-        kineta: { bg: '#9d174d', label: '🔌' }
+        krag: { bg: '#164e63', label: '<i data-lucide="square"></i>' },
+        krag_ot: { bg: '#312e81', label: '<i data-lucide="square"></i>' },
+        dennica: { bg: '#14532d', label: '<i data-lucide="square"></i>' },
+        kineta: { bg: '#9d174d', label: '<i data-lucide="plug"></i>' }
     };
 
     let html = '';
@@ -1221,16 +1218,16 @@ function renderZleceniaWellConfig() {
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
                 <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.1rem; border-radius:3px;">
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); font-size:0.5rem; cursor:pointer; display:${isLocked || index === 0 ? 'none' : 'block'};">▲</button>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" style="font-size:0.75rem;"></i></button>
                   <span style="font-size:0.55rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); font-size:0.5rem; cursor:pointer; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};">▼</button>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" style="font-size:0.75rem;"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
                   <div style="font-weight:700; color:var(--text-primary); font-size:0.68rem; line-height:1.1;">${p.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
                   <div style="font-size:0.55rem; color:var(--text-muted);">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
                 </div>
             </div>
-            ${isCurrentlyEdited ? '<span style="font-size:0.6rem; color:#818cf8;">✏️</span>' : ''}
+            ${isCurrentlyEdited ? '<span style="font-size:0.6rem; color:#818cf8;"><i data-lucide="pencil"></i></span>' : ''}
           </div>
         </div>`;
     });
@@ -1560,7 +1557,7 @@ function populateZleceniaForm(el) {
     if (isAccepted) {
         bannerHtml = `
             <div style="background:rgba(239,68,68,0.15); border:2px solid rgba(239,68,68,0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
-                <span style="font-size:1.5rem;">🔒</span>
+                <span style="font-size:1.5rem;"><i data-lucide="lock"></i></span>
                 <div style="flex:1;">
                     <div style="font-size:0.85rem; font-weight:800; color:#f87171; text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
                     <div style="font-size:0.7rem; color:var(--text-muted);">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
@@ -1582,13 +1579,19 @@ function populateZleceniaForm(el) {
         daneZleceniaVisible = true;
     }
 
+    let daneElementuVisible = true;
+    const existingDaneElementu = document.getElementById('zl-dane-elementu-content');
+    if (existingDaneElementu) {
+        daneElementuVisible = existingDaneElementu.style.display !== 'none';
+    }
+
     container.innerHTML = `
     ${bannerHtml}
     <!-- Dane zlecenia -->
     <div class="card card-compact" style="margin-bottom:0.5rem;">
-        <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').textContent=b.style.display==='none'?'▶':'▼';" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
-            <span>📋 Dane zlecenia <span style="margin-left:8px; color:#818cf8; font-weight:800;">${existing?.productionOrderNumber || '— nowy —'}</span></span>
-            <span class="zl-toggle" style="font-size:0.6rem; color:var(--text-muted);">${daneZleceniaVisible ? '▼' : '▶'}</span>
+        <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
+            <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:#818cf8; font-weight:800;">${existing?.productionOrderNumber || '— nowy —'}</span></span>
+            <span class="zl-toggle" style="font-size:0.75rem;">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
             <div class="form-group-sm" style="margin:0;">
@@ -1623,12 +1626,19 @@ function populateZleceniaForm(el) {
     </div>
 
     <!-- Dane studni i Przejścia obok siebie -->
-    <div style="display:grid; grid-template-columns:230px 1fr; gap:0.5rem; margin-bottom:0.5rem;">
-        <div class="card card-compact">
-            <div class="card-title-sm" class="ui-flex-between">
-                <span>🏗️ Dane elementu</span>
+    <div id="zl-dane-elementu-grid" style="display:grid; grid-template-columns:${daneElementuVisible ? '230px' : '36px'} 1fr; gap:0.5rem; margin-bottom:0.5rem; transition:grid-template-columns 0.25s ease;">
+        <div class="card card-compact" style="overflow:hidden; min-width:0; transition:all 0.25s ease; position:relative;">
+            <!-- Nagłówek widoczny gdy ROZWINIĘTY -->
+            <div id="zl-dane-elementu-header-full" class="card-title-sm" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
+                <span><i data-lucide="hard-hat"></i> Dane elementu</span>
+                <span style="font-size:0.75rem;"><i data-lucide="chevron-left"></i></span>
             </div>
-            <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
+            <!-- Nagłówek widoczny gdy ZWINIĘTY (pionowy tekst) -->
+            <div id="zl-dane-elementu-header-collapsed" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
+                <span style="font-size:0.75rem;"><i data-lucide="chevron-right"></i></span>
+                <span style="writing-mode:vertical-lr; text-orientation:mixed; font-size:0.7rem; font-weight:700; color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase;">Dane elementu</span>
+            </div>
+            <div id="zl-dane-elementu-content" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
                 <!-- Numer Studni -->
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <span style="color:var(--text-secondary); font-size:0.75rem; text-transform:uppercase; font-weight:600;">Numer studni</span>
@@ -1681,8 +1691,8 @@ function populateZleceniaForm(el) {
                 <div class="card-title-sm"
                     style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
                     onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
-                    <span>➕ Dodaj Przejście Szczelne</span>
-                    <span id="zl-przejscia-app-icon" style="font-size:0.75rem;">${przejsciaAppVisible ? '🔼' : '🔽'}</span>
+                    <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
+                    <span id="zl-przejscia-app-icon" style="font-size:0.75rem;">${przejsciaAppVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
                 </div>
                 <div id="zl-inline-przejscia-app-container" class="card-content" style="margin-top:0.5rem; display:${przejsciaAppVisible ? 'block' : 'none'};">
                     <div id="zl-inline-przejscia-app"></div>
@@ -1691,7 +1701,7 @@ function populateZleceniaForm(el) {
 
             <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto; padding:0.5rem 0.6rem; flex:1;">
                 <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                    <span>🔗 Lista dodanych układów</span>
+                    <span><i data-lucide="link"></i> Lista dodanych układów</span>
                     <span id="zl-przejscia-count" style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
                 </div>
                 <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
@@ -1702,7 +1712,7 @@ function populateZleceniaForm(el) {
 
     <!-- Uwagi (Pełna szerokość pod spodem) -->
     <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
-        <div class="card-title-sm">📝 Uwagi</div>
+        <div class="card-title-sm"><i data-lucide="edit"></i> Uwagi</div>
         <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
             <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${finalUwagi}</textarea>
         </div>
@@ -1710,7 +1720,7 @@ function populateZleceniaForm(el) {
 
     <!-- Parametry studni w dwóch kolumnach -->
     <div class="card card-compact" style="margin-bottom:0.5rem;">
-        <div class="card-title-sm">⚙️ Parametry studni</div>
+        <div class="card-title-sm"><i data-lucide="settings"></i> Parametry studni</div>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
             <!-- Kolumna 1 -->
@@ -1867,6 +1877,11 @@ function populateZleceniaForm(el) {
         countElId: 'zl-przejscia-count',
         filterElementIndex: elementIndex
     });
+
+    // Renderowanie ikon Lucide dla nowo wstrzykniętych elementów HTML
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
 }
 
 async function selectZleceniaTile(btn, targetId, val) {
@@ -1986,6 +2001,35 @@ async function selectZleceniaTile(btn, targetId, val) {
         }
     }
 }
+
+/**
+ * Przełącza widoczność panelu "Dane elementu" w trybie zwijania w lewo.
+ * Zwija kolumnę grida z 230px do 36px, pokazując pionowy napis.
+ */
+window.toggleDaneElementu = function () {
+    const grid = document.getElementById('zl-dane-elementu-grid');
+    const content = document.getElementById('zl-dane-elementu-content');
+    const headerFull = document.getElementById('zl-dane-elementu-header-full');
+    const headerCollapsed = document.getElementById('zl-dane-elementu-header-collapsed');
+
+    if (!grid || !content) return;
+
+    const isVisible = content.style.display !== 'none';
+
+    if (isVisible) {
+        // Zwijanie w lewo
+        content.style.display = 'none';
+        if (headerFull) headerFull.style.display = 'none';
+        if (headerCollapsed) headerCollapsed.style.display = 'flex';
+        grid.style.gridTemplateColumns = '36px 1fr';
+    } else {
+        // Rozwijanie
+        content.style.display = 'flex';
+        if (headerFull) headerFull.style.display = 'flex';
+        if (headerCollapsed) headerCollapsed.style.display = 'none';
+        grid.style.gridTemplateColumns = '230px 1fr';
+    }
+};
 
 function onZleceniaStopnieChange() {
     const hiddenInput = document.getElementById('zl-rodzaj-stopni');
@@ -2180,10 +2224,10 @@ async function saveProductionOrder() {
             populateZleceniaForm(zleceniaElementsList[zleceniaSelectedIdx]);
         }
         refreshGlobalMetrics();
-        showToast(`✅ Zlecenie produkcyjne zapisane${extraMsg}`, 'success');
+        showToast(`<i data-lucide="check-circle-2"></i> Zlecenie produkcyjne zapisane${extraMsg}`, 'success');
     } catch (err) {
         console.error('saveProductionOrder error:', err);
-        showToast('❌ Błąd zapisu: ' + err.message, 'error');
+        showToast('<i data-lucide="x-circle"></i> Błąd zapisu: ' + err.message, 'error');
     }
 }
 
@@ -2307,10 +2351,10 @@ async function acceptProductionOrder() {
             populateZleceniaForm(zleceniaElementsList[zleceniaSelectedIdx]);
         }
         refreshGlobalMetrics();
-        showToast('🔒 Zlecenie zaakceptowane — ' + po.productionOrderNumber, 'success');
+        showToast('<i data-lucide="lock"></i> Zlecenie zaakceptowane — ' + po.productionOrderNumber, 'success');
     } catch (err) {
         console.error('acceptProductionOrder error:', err);
-        showToast('❌ Błąd akceptacji: ' + err.message, 'error');
+        showToast('<i data-lucide="x-circle"></i> Błąd akceptacji: ' + err.message, 'error');
     }
 }
 
@@ -2353,7 +2397,7 @@ async function revokeProductionOrder() {
     if (zleceniaSelectedIdx >= 0 && zleceniaElementsList[zleceniaSelectedIdx]) {
         populateZleceniaForm(zleceniaElementsList[zleceniaSelectedIdx]);
     }
-    showToast('🔓 Akceptacja cofnięta — studnia odblokowana', 'info');
+    showToast('<i data-lucide="unlock"></i> Akceptacja cofnięta — studnia odblokowana', 'info');
 }
 
 window.openZleceniaProdukcyjne = openZleceniaProdukcyjne;

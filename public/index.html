@@ -9,7 +9,7 @@
             content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
         />
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+            href="css/inter.css"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="css/style.css?v=1.5" />
@@ -17,7 +17,7 @@
     </head>
 
     <body class="index-page">
-        <!-- Shared Navigation Header (shown after login) -->
+        <!-- Wspólny nagłówek nawigacji (widoczny po zalogowaniu) -->
         <header class="header" id="dash-header">
             <div class="header-inner">
                 <div class="header-left">
@@ -37,23 +37,23 @@
 
                     <div class="nav-apps">
                         <div class="nav-tile active">
-                            <span class="nav-tile-icon">🏠</span>
+                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
                             <span class="nav-tile-text">Pulpit</span>
                         </div>
                         <a href="app.html#/studnie" class="nav-tile">
-                            <span class="nav-tile-icon">🏗️</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="app.html#/rury" class="nav-tile">
-                            <span class="nav-tile-icon">🔩</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a href="app.html#/kartoteka" class="nav-tile">
-                            <span class="nav-tile-icon">🗄️</span>
+                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
                             <span class="nav-tile-text">Kartoteka</span>
                         </a>
                         <a href="app.html#/zlecenia" class="nav-tile">
-                            <span class="nav-tile-icon">🏭</span>
+                            <span class="nav-tile-icon"><i data-lucide="factory"></i></span>
                             <span class="nav-tile-text">Zlecenia</span>
                         </a>
                     </div>
@@ -112,7 +112,7 @@
 
             <!-- Login Form -->
             <div id="login-section" class="login-box">
-                <h3>🔐 Logowanie</h3>
+                <h3><i data-lucide="lock"></i> Logowanie</h3>
                 <input
                     type="text"
                     id="login-username"
@@ -145,10 +145,10 @@
                         </div>
                     </div>
                     <div class="user-actions">
-                        <a href="app.html#/kartoteka" class="btn-hero btn-accent">📂 Kartoteka</a>
-                        <button class="btn-hero" onclick="showChangePassword()">🔑 Hasło</button>
+                        <a href="app.html#/kartoteka" class="btn-hero btn-accent"><i data-lucide="folder-open"></i> Kartoteka</a>
+                        <button class="btn-hero" onclick="showChangePassword()"><i data-lucide="key"></i> Hasło</button>
                         <button class="btn-hero" onclick="doLogout()" style="color: #f87171">
-                            🚪 Wyloguj
+                            <i data-lucide="log-out"></i> Wyloguj
                         </button>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
                 <!-- Launcher Grid -->
                 <div class="launch-grid">
                     <a href="app.html#/rury" class="launch-card rury">
-                        <span class="launch-icon">🔩</span>
+                        <span class="launch-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
                         <div class="launch-content">
                             <h2>Oferty Rury</h2>
                             <p>Betonowe, żelbetowe i jajowe z PEHD</p>
@@ -165,7 +165,7 @@
                     </a>
 
                     <a href="app.html#/studnie" class="launch-card studnie">
-                        <span class="launch-icon">🏗️</span>
+                        <span class="launch-icon"><i data-lucide="cylinder"></i></span>
                         <div class="launch-content">
                             <h2>Oferty Studnie</h2>
                             <p>Studnie betonowe i żelbetowe</p>
@@ -178,7 +178,7 @@
                         class="launch-card kartoteka"
                         style="border-left-color: #ec4899"
                     >
-                        <span class="launch-icon">🏭</span>
+                        <span class="launch-icon"><i data-lucide="factory"></i></span>
                         <div class="launch-content">
                             <h2>Kartoteka Zleceń</h2>
                             <p>Produkcja zleceń na studnie</p>
@@ -191,7 +191,7 @@
                 <div id="recycled-panel" class="admin-container">
                     <div class="admin-header-row" style="margin-bottom: 0.5rem">
                         <div class="admin-title-group">
-                            <h3>♻️ Numery do odzysku</h3>
+                            <h3><i data-lucide="recycle"></i> Numery do odzysku</h3>
                         </div>
                     </div>
                     <div class="admin-card system-card">
@@ -220,7 +220,7 @@
 
                     <div class="admin-card system-card">
                         <div style="display: flex; align-items: center; gap: 0.75rem">
-                            <span style="font-size: 1.5rem">📅</span>
+                            <span style="font-size: 1.5rem"><i data-lucide="calendar"></i></span>
                             <div style="font-size: 0.85rem; font-weight: 800; color: white">
                                 Litera roku:
                                 <span
@@ -395,7 +395,7 @@
                                     class="btn-hero btn-accent"
                                     onclick="createUser()"
                                 >
-                                    ➕ Dodaj
+                                    <i data-lucide="plus"></i> Dodaj
                                 </button>
                                 <button
                                     id="cancel-edit-btn"
@@ -559,7 +559,7 @@
                 document.getElementById('dash-header').classList.add('visible');
                 const dashUser = document.getElementById('dash-username');
                 const dashRole = document.getElementById('dash-role');
-                if (dashUser) dashUser.textContent = '👤 ' + user.username;
+                if (dashUser) dashUser.innerHTML = '<i data-lucide="user"></i> ' + user.username;
                 if (dashRole) {
                     dashRole.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
                     dashRole.style.background = user.role === 'admin' ? '#2d2208' : '#152040';
@@ -640,8 +640,8 @@
             <td style="color:#60a5fa; font-weight:800;">${u.orderStartNumber || 1}</td>
             <td style="color:var(--primary-hover); font-weight:800;">${u.productionOrderStartNumber || 1}</td>
             <td style="white-space:nowrap;">
-              <button class="btn-hero" onclick="startEditUser('${u.id}')" style="padding:0.4rem; display:inline-flex;">✏️</button>
-              ${u.username !== 'admin' ? `<button class="btn-hero" onclick="deleteUser('${u.id}')" style="padding:0.4rem; display:inline-flex; border-color:rgba(239,68,68,0.2); color:#f87171;">🗑️</button>` : ''}
+              <button class="btn-hero" onclick="startEditUser('${u.id}')" style="padding:0.4rem; display:inline-flex;"><i data-lucide="pencil"></i></button>
+              ${u.username !== 'admin' ? `<button class="btn-hero" onclick="deleteUser('${u.id}')" style="padding:0.4rem; display:inline-flex; border-color:rgba(239,68,68,0.2); color:#f87171;"><i data-lucide="trash-2"></i></button>` : ''}
             </td>
           </tr>`;
                             if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
@@ -657,7 +657,7 @@
           <tr class="subordinate-row">
             <td colspan="8">
                 <div class="subordinate-list" style="justify-content: center; display: flex; align-items: center; margin: 0.5rem auto; max-width: fit-content;">
-                    <span class="subordinate-label">👥 POWIĄZANI HANDLOWCY:</span>
+                    <span class="subordinate-label"><i data-lucide="users"></i> POWIĄZANI HANDLOWCY:</span>
                     <div class="subordinate-badges">
                         ${subUsersNames.map((name) => `<span class="token-badge sub-token">${name}</span>`).join('')}
                     </div>
@@ -694,7 +694,7 @@
                 document.getElementById('form-mode-label').style.display = 'inline-block';
                 document.getElementById('form-mode-label').textContent =
                     'EDYCJA: ' + (u.firstName || u.username);
-                document.getElementById('add-user-btn').innerHTML = '💾 Zapisz';
+                document.getElementById('add-user-btn').innerHTML = '<i data-lucide="save"></i> Zapisz';
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
             }
 
@@ -713,7 +713,7 @@
                 document.getElementById('new-user-prod-order-start').value = 1;
                 document.getElementById('new-user-role').value = 'user';
 
-                document.getElementById('add-user-btn').innerHTML = '➕ Dodaj';
+                document.getElementById('add-user-btn').innerHTML = '<i data-lucide="plus"></i> Dodaj';
                 document.getElementById('cancel-edit-btn').classList.add('hidden');
 
                 selectedSubUsers = [];
@@ -860,5 +860,6 @@
                 }
             }
         </script>
-    </body>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
 </html>

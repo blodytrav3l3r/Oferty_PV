@@ -124,7 +124,7 @@ function validateWizardStep2() {
         wrapper.classList.toggle('confirmed', confirmed);
         wrapper.classList.toggle('needs-selection', !confirmed);
         const icon = wrapper.querySelector('.status-icon');
-        if (icon) icon.textContent = confirmed ? '✅' : '⚠️';
+        if (icon) icon.innerHTML = confirmed ? '<i data-lucide="check-circle-2"></i>' : '<i data-lucide="alert-triangle"></i>';
     });
 
     const msg = document.getElementById('wizard-validation-msg');

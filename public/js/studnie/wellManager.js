@@ -94,8 +94,8 @@ function createNewWell(name, dn = 1000) {
 
 /* ===== BLOKADA OFERTY (po utworzeniu zamówienia) ===== */
 const OFFER_LOCKED_MSG =
-    '🔒 Oferta zablokowana — posiada zamówienie. Edytuj zamówienie zamiast oferty.';
-const WELL_LOCKED_MSG = '🔒 Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
+    '<i data-lucide="lock"></i> Oferta zablokowana — posiada zamówienie. Edytuj zamówienie zamiast oferty.';
+const WELL_LOCKED_MSG = '<i data-lucide="lock"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 function isOfferLocked() {
     if (orderEditMode) return false; // Tryb edycji zamówienia jest zawsze dozwolony
     if (!editingOfferIdStudnie) return false;
@@ -149,7 +149,7 @@ function renderOfferLockBanner() {
 
     lockBanner.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:1.3rem;">🔒</span>
+            <span style="font-size:1.3rem;"><i data-lucide="lock"></i></span>
             <div>
                 <div style="font-size:0.82rem; font-weight:800; color:#f87171;">
                     OFERTA ZABLOKOWANA
@@ -163,7 +163,7 @@ function renderOfferLockBanner() {
             ${
                 orderId
                     ? `<button class="btn btn-sm" onclick="window.location.href='/studnie?order=${orderId}'" style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.7rem; font-weight:700; padding:0.3rem 0.7rem;">
-                📦 Edytuj zamówienie
+                <i data-lucide="package"></i> Edytuj zamówienie
             </button>`
                     : ''
             }
@@ -709,7 +709,7 @@ function renderWellParams() {
 
     html += `</div>`;
     html += `<div style="display:flex; gap:0.4rem; margin-top:1rem; justify-content:flex-end;">`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;">🔄 Przywróć domyślne (Krok 2)</button>`;
+    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;"><i data-lucide="refresh-cw"></i> Przywróć domyślne (Krok 2)</button>`;
     html += `</div>`;
 
     container.innerHTML = html;
@@ -885,7 +885,7 @@ function updateAutoLockUI() {
     const btnAuto = document.getElementById('btn-auto-select');
     if (!btnLock || !btnAuto) return;
     if (!well) {
-        btnLock.innerHTML = '🔓 Ręczny';
+        btnLock.innerHTML = '<i data-lucide="unlock"></i> Ręczny';
         btnLock.style.backgroundColor = 'var(--bg-glass)';
         btnLock.style.borderColor = 'var(--border-glass)';
         btnAuto.disabled = true;
@@ -894,14 +894,14 @@ function updateAutoLockUI() {
     }
 
     if (well.autoLocked) {
-        btnLock.innerHTML = '🔒 Tryb ręczny (Włączony)';
+        btnLock.innerHTML = '<i data-lucide="lock"></i> Tryb ręczny (Włączony)';
         btnLock.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; // bursztynowy/czerwony
         btnLock.style.borderColor = 'rgba(239, 68, 68, 0.5)';
         btnAuto.disabled = true;
         btnAuto.style.opacity = '0.4';
         btnAuto.style.cursor = 'not-allowed';
     } else {
-        btnLock.innerHTML = '🔓 Tryb ręczny (Wyłączony)';
+        btnLock.innerHTML = '<i data-lucide="unlock"></i> Tryb ręczny (Wyłączony)';
         btnLock.style.backgroundColor = 'var(--bg-glass)';
         btnLock.style.borderColor = 'var(--border-glass)';
         btnAuto.disabled = false;
@@ -995,7 +995,7 @@ function renderDiscountPanel() {
         grandDiscounted = 0;
 
     let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:0.5px; margin-bottom:0.3rem;">💰 Rabaty i podsumowanie</div>`;
+        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:0.5px; margin-bottom:0.3rem;"><i data-lucide="banknote"></i> Rabaty i podsumowanie</div>`;
 
     activeDNs.forEach((dn) => {
         const groupWells = wells.filter((w) => w.dn === dn);
@@ -1270,6 +1270,11 @@ function calcWellStats(well) {
 
             price += dP;
             priceNadbudowa += dP;
+            
+            if (item.doplata) {
+                price += item.doplata;
+                priceNadbudowa += item.doplata;
+            }
 
             weight += p.weight || 0;
         });

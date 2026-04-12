@@ -19,12 +19,12 @@ function showToast(msg, type = 'info') {
     toast.className = 'toast toast-' + type;
 
     const text = document.createElement('span');
-    text.textContent = msg;
+    text.innerHTML = msg;
     text.style.flex = '1';
     toast.appendChild(text);
 
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
+    closeBtn.innerHTML = '<i data-lucide="x"></i>';
     closeBtn.style.cssText =
         'background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;opacity:.7;';
     closeBtn.addEventListener('click', () => toast.remove());
@@ -94,7 +94,7 @@ function showUserSelectionPopup(users, defaultUserId) {
         modal.style.cssText =
             'background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;';
 
-        let html = `<div style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;">👤 Przypisz do użytkownika (Opiekun)</div>`;
+        let html = `<div style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
         html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
         html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
 
@@ -103,7 +103,7 @@ function showUserSelectionPopup(users, defaultUserId) {
                 u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
             const isDefault = u.id === defaultUserId;
             const symbol = u.symbol || '??';
-            const roleBadge = u.role === 'admin' ? '🔑' : u.role === 'pro' ? '⭐' : '👤';
+            const roleBadge = u.role === 'admin' ? '<i data-lucide="key"></i>' : u.role === 'pro' ? '⭐' : '<i data-lucide="user"></i>';
 
             html += `<button class="user-select-btn" data-user-id="${u.id}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
@@ -210,17 +210,17 @@ function appConfirm(message, opts = {}) {
         const cancelBtn = document.getElementById('app-confirm-cancel');
         const iconEl = document.getElementById('app-confirm-icon');
 
-        const iconMap = { info: 'ℹ️', warning: '⚠️', danger: '🗑️' };
+        const iconMap = { info: 'ℹ️', warning: '<i data-lucide="alert-triangle"></i>', danger: '<i data-lucide="trash-2"></i>' };
         const accentMap = { info: '#6366f1', warning: '#f59e0b', danger: '#ef4444' };
         const accent = accentMap[type] || accentMap.info;
 
-        if (iconEl) iconEl.textContent = iconMap[type] || iconMap.info;
+        if (iconEl) iconEl.innerHTML = iconMap[type] || iconMap.info;
         if (titleEl) titleEl.textContent = title;
         if (msgEl) msgEl.innerHTML = _escapeHtml(message).replace(/\n/g, '<br>');
 
-        okBtn.textContent = okText;
+        okBtn.innerHTML = okText;
         okBtn.style.background = accent;
-        cancelBtn.textContent = cancelText;
+        cancelBtn.innerHTML = cancelText;
 
         overlay.style.display = 'flex';
         overlay.style.opacity = '0';

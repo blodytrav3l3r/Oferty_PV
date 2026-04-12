@@ -55,25 +55,25 @@ function renderStudniePriceList() {
     });
 
     const groupLabels = {
-        dennica: '🟩 Dennicy',
+        dennica: '<i data-lucide="square"></i> Dennicy',
         osadnik: '🪣 Osadniki',
-        konus: '🔶 Konusy',
-        krag: '🟦 Kręgi',
-        krag_ot: '🟪 Kręgi z otworami (OT)',
-        plyta_din: '📐 Płyty DIN',
+        konus: '<i data-lucide="diamond"></i> Konusy',
+        krag: '<i data-lucide="square"></i> Kręgi',
+        krag_ot: '<i data-lucide="square"></i> Kręgi z otworami (OT)',
+        plyta_din: '<i data-lucide="triangle-right"></i> Płyty DIN',
         plyta_najazdowa: '🪨 Płyty odciążające',
         plyta_zamykajaca: '🪨 Płyta odciążająca',
         pierscien_odciazajacy: '⭕ Pierścienie odciążające',
         plyta_redukcyjna: '⬛ Płyty redukcyjne',
-        avr: '⚙️ AVR / Pierścienie wyrównawcze',
-        uszczelka: '🟢 Uszczelki',
-        inne: '📦 Inne',
-        przejscie: '🔗 Nawiercenia / Przejścia',
-        dn1000: '🔵 DN1000',
-        dn1200: '🟣 DN1200',
-        dn1500: '🔴 DN1500',
-        dn2000: '🟠 DN2000',
-        dn2500: '🔴 DN2500'
+        avr: '<i data-lucide="settings"></i> AVR / Pierścienie wyrównawcze',
+        uszczelka: '<i data-lucide="circle-check"></i> Uszczelki',
+        inne: '<i data-lucide="package"></i> Inne',
+        przejscie: '<i data-lucide="link"></i> Nawiercenia / Przejścia',
+        dn1000: '<i data-lucide="circle"></i> DN1000',
+        dn1200: '<i data-lucide="circle"></i> DN1200',
+        dn1500: '<i data-lucide="circle-x"></i> DN1500',
+        dn2000: '<i data-lucide="circle"></i> DN2000',
+        dn2500: '<i data-lucide="circle-x"></i> DN2500'
     };
 
     let groupOrder = [
@@ -112,9 +112,9 @@ function renderStudniePriceList() {
 
     let html = `<div class="table-wrap">
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end;">
-        ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj kategorię</button>`}
-        <button class="btn btn-secondary" onclick="addStudnieElement()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ Dodaj element</button>
-        ${isKinety ? `<button class="btn btn-secondary" onclick="generateDefaultKinety()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">🔌 Generuj puste Kinety</button>` : ''}
+        ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj kategorię</button>`}
+        <button class="btn btn-secondary" onclick="addStudnieElement()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj element</button>
+        ${isKinety ? `<button class="btn btn-secondary" onclick="generateDefaultKinety()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plug"></i> Generuj puste Kinety</button>` : ''}
     </div>
     <table style="table-layout: fixed; width: 100%;">
       <thead>
@@ -183,9 +183,9 @@ function renderStudniePriceList() {
             <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
               <button class="btn-icon" title="Dodaj element do tej kategorii" onclick="addStudnieElement('${groupKey.replace(/'/g, "\\'")}')"
-                style="padding:0.2rem 0.5rem; font-size:0.75rem;">➕</button>
+                style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="plus"></i></button>
               <button class="btn-icon del" title="Usuń całą kategorię" onclick="deleteStudnieCategory('${groupKey.replace(/'/g, "\\'")}')"
-                style="padding:0.2rem 0.5rem; font-size:0.75rem;">🗑️</button>
+                style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
         </td>
@@ -251,8 +251,8 @@ function renderStudniePriceList() {
             html += `
         <td class="text-right" onclick="editStudnieCell(this,'price','${p.id}')" style="cursor:pointer; font-weight:700; color:var(--success);">${fmtInt(p.price)}</td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" onclick="copyStudnieProduct('${p.id}')">📋</button>
-          <button class="btn-icon" title="Usuń" onclick="deleteStudnieProduct('${p.id}')">✕</button>
+          <button class="btn-icon" title="Powiel" onclick="copyStudnieProduct('${p.id}')"><i data-lucide="clipboard-list"></i></button>
+          <button class="btn-icon" title="Usuń" onclick="deleteStudnieProduct('${p.id}')"><i data-lucide="x"></i></button>
         </td>
       </tr>`;
         });
@@ -642,7 +642,7 @@ function showAddStudnieProductModal() {
     overlay.id = 'add-product-modal';
     overlay.innerHTML = `
     <div class="modal">
-      <div class="modal-header"><h3>➕ Dodaj element</h3><button class="btn-icon" onclick="closeModal()">✕</button></div>
+      <div class="modal-header"><h3><i data-lucide="plus"></i> Dodaj element</h3><button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map((c) => `<option value="${c}">${c}</option>`).join('')}</select>
         <input type="text" class="form-input" id="np-custom-category" placeholder="Nazwa nowej kategorii (np. W + PVC)" style="display:none; margin-top:0.5rem;" list="przejscia-cats-list">

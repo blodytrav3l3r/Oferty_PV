@@ -8,8 +8,8 @@ const AppZlecenia = (() => {
     let selectedIds = new Set(); // multi-select for batch print
 
     const statusMap = {
-        draft: { label: 'Oczekujące', class: 'status-draft', icon: '⏳' },
-        accepted: { label: 'Zatwierdzone', class: 'status-accepted', icon: '✅' }
+        draft: { label: 'Oczekujące', class: 'status-draft', icon: '<i data-lucide="hourglass-2"></i>' },
+        accepted: { label: 'Zatwierdzone', class: 'status-accepted', icon: '<i data-lucide="check-check"></i>' }
     };
 
     /* ===== INIT ===== */
@@ -154,7 +154,7 @@ const AppZlecenia = (() => {
             renderTable(searchInput ? searchInput.value.toLowerCase().trim() : '');
         } catch (err) {
             console.error(err);
-            showToast('❌ Błąd pobierania zleceń', 'error');
+            showToast('<i data-lucide="x-circle"></i> Błąd pobierania zleceń', 'error');
             if (tbody) {
                 tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:#ef4444;">Wystąpił błąd: ${err.message}</td></tr>`;
             }
@@ -177,28 +177,28 @@ const AppZlecenia = (() => {
 
         container.innerHTML = `
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(129,140,248,0.1); color:#818cf8;">📋</div>
+                <div class="zlecenia-stat-icon" style="background:rgba(129,140,248,0.1); color:#818cf8;"><i data-lucide="layers"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${total}</div>
                     <div class="zlecenia-stat-label">Wszystkie zlecenia</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(16,185,129,0.1); color:#34d399;">✅</div>
+                <div class="zlecenia-stat-icon" style="background:rgba(16,185,129,0.1); color:#34d399;"><i data-lucide="check-check"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${accepted}</div>
                     <div class="zlecenia-stat-label">Zatwierdzone</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;">⏳</div>
+                <div class="zlecenia-stat-icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;"><i data-lucide="hourglass-2"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${draft}</div>
                     <div class="zlecenia-stat-label">Oczekujące</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(168,85,247,0.1); color:#c084fc;">🕐</div>
+                <div class="zlecenia-stat-icon" style="background:rgba(168,85,247,0.1); color:#c084fc;"><i data-lucide="zap"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${todayCount}</div>
                     <div class="zlecenia-stat-label">Dodane dziś</div>
@@ -293,7 +293,7 @@ const AppZlecenia = (() => {
                 const statusConfig = statusMap[o.status] || {
                     label: o.status || 'Nieznany',
                     class: '',
-                    icon: '❓'
+                    icon: '<i data-lucide="help-circle"></i>'
                 };
 
                 const orderNum = o.productionOrderNumber
@@ -319,12 +319,12 @@ const AppZlecenia = (() => {
                 // Action buttons
                 let actions = '';
                 if (o.offerId) {
-                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${o.offerId}', '${o.wellId || ''}', '${o.elementIndex !== undefined ? o.elementIndex : ''}', '${o.dbSalesOrderId || ''}')" title="Edytuj">✏️</button>`;
+                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${o.offerId}', '${o.wellId || ''}', '${o.elementIndex !== undefined ? o.elementIndex : ''}', '${o.dbSalesOrderId || ''}')" title="Edytuj"><i data-lucide="pencil"></i></button>`;
                 }
-                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleZlecenie('${o.id}')" title="Drukuj zlecenie">🖨️</button>`;
-                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleEtykieta('${o.id}')" title="Drukuj etykietę">🏷️</button>`;
+                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleZlecenie('${o.id}')" title="Drukuj zlecenie"><i data-lucide="printer"></i></button>`;
+                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleEtykieta('${o.id}')" title="Drukuj etykietę"><i data-lucide="tag"></i></button>`;
                 if (isDraft) {
-                    actions += `<button class="action-btn action-btn-delete" onclick="AppZlecenia.deleteOrder('${o.id}')" title="Usuń zlecenie">🗑️</button>`;
+                    actions += `<button class="action-btn action-btn-delete" onclick="AppZlecenia.deleteOrder('${o.id}')" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>`;
                 }
 
                 return `
@@ -340,8 +340,8 @@ const AppZlecenia = (() => {
                     </td>
                     <td>${salesOrderLabel}</td>
                     <td class="element-cell">${elementInfo}</td>
-                    <td><span class="person-badge person-handler">👤 ${o.handlerName || '—'}</span></td>
-                    <td><span class="person-badge person-creator">⚙️ ${o.creatorName || '—'}</span></td>
+                    <td><span class="person-badge person-handler"><i data-lucide="user"></i> ${o.handlerName || '—'}</span></td>
+                    <td><span class="person-badge person-creator"><i data-lucide="settings"></i> ${o.creatorName || '—'}</span></td>
                     <td><span class="status-badge ${statusConfig.class}">${statusConfig.icon} ${statusConfig.label}</span></td>
                     <td style="text-align:right">
                         <div style="display:flex; gap:0.25rem; justify-content:flex-end;">

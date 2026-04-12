@@ -597,7 +597,7 @@
             }
 
             .tile.active-top-closure::after {
-                content: '✓';
+                content: '✔';
                 position: absolute;
                 top: 5px;
                 right: 5px;
@@ -1468,7 +1468,7 @@
                     </div>
                     <div class="nav-apps">
                         <a href="index.html" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon">🏠</span>
+                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
                             <span class="nav-tile-text">Pulpit</span>
                         </a>
                         <a
@@ -1477,15 +1477,15 @@
                             class="nav-tile active"
                             style="--nav-accent: #10b981; --nav-glow: #0f3328"
                         >
-                            <span class="nav-tile-icon">🏗️</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="app.html#/rury" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon">🔩</span>
+                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a href="app.html#/kartoteka" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon">🗄️</span>
+                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
                             <span class="nav-tile-text">Kartoteka</span>
                         </a>
                     </div>
@@ -1499,7 +1499,7 @@
                             style="--nav-accent: #10b981; --nav-glow: #0d2b22"
                             onclick="showSection('builder')"
                         >
-                            <span class="nav-tile-icon">🏗️</span>
+                            <span class="nav-tile-icon"><i data-lucide="hard-hat"></i></span>
                             <span class="nav-tile-text">Konfiguracja</span>
                         </button>
                         <button
@@ -1509,7 +1509,7 @@
                             style="--nav-accent: #3b82f6; --nav-glow: #152040"
                             onclick="showSection('offer')"
                         >
-                            <span class="nav-tile-icon">📊</span>
+                            <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
                             <span class="nav-tile-text">Oferta</span>
                         </button>
                         <button
@@ -1519,7 +1519,7 @@
                             style="--nav-accent: #8b5cf6; --nav-glow: #1e1540"
                             onclick="showSection('pricelist')"
                         >
-                            <span class="nav-tile-icon">📋</span>
+                            <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
                             <span class="nav-tile-text">Cennik</span>
                         </button>
                     </nav>
@@ -1622,7 +1622,7 @@
                                 color: var(--text-primary);
                             "
                         >
-                            🔍 Podgląd studni
+                            <i data-lucide="search"></i> Podgląd studni
                         </h3>
                         <div
                             class="well-summary-mini"
@@ -1710,7 +1710,7 @@
                                     Usuń
                                 </div>
                                 <div class="ws-value" style="font-size: 0.85rem; margin-top: -2px">
-                                    🗑️
+                                    <i data-lucide="trash-2"></i>
                                 </div>
                             </div>
                         </div>
@@ -1813,7 +1813,7 @@
                                             flex-shrink: 0;
                                         "
                                     >
-                                        📋
+                                        <i data-lucide="clipboard-list"></i>
                                     </div>
                                     <div>
                                         <h2
@@ -1835,19 +1835,19 @@
                                             onclick="showClientsDb()"
                                             style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                                         >
-                                            📂 Wczytaj klienta
+                                            <i data-lucide="folder-open"></i> Wczytaj klienta
                                         </button>
                                         <button
                                             class="btn btn-primary btn-sm"
                                             onclick="saveClientToDb()"
                                             style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                                         >
-                                            💾 Zapisz klienta
+                                            <i data-lucide="save"></i> Zapisz klienta
                                         </button>
                                     </div>
                                 </div>
                                 <div class="wizard-card-body">
-                                    <div class="wizard-section-title">👤 Dane klienta</div>
+                                    <div class="wizard-section-title"><i data-lucide="user"></i> Dane klienta</div>
                                     <div
                                         class="wizard-form-grid"
                                         style="grid-template-columns: 1fr 1fr"
@@ -1890,7 +1890,7 @@
                                     </div>
 
                                     <div class="wizard-section-title" style="margin-top: 1.2rem">
-                                        🏗️ Inwestycja
+                                        <i data-lucide="hard-hat"></i> Inwestycja
                                     </div>
                                     <div
                                         class="wizard-form-grid"
@@ -1932,7 +1932,7 @@
                                         "
                                     >
                                         <div class="wizard-section-title" style="margin: 0">
-                                            📄 Oferta
+                                            <i data-lucide="file-text"></i> Oferta
                                         </div>
                                         <button
                                             id="btn-change-offer-user"
@@ -1948,7 +1948,7 @@
                                             "
                                             onclick="changeOfferUser()"
                                         >
-                                            👤 Zmień opiekuna
+                                            <i data-lucide="user"></i> Zmień opiekuna
                                         </button>
                                     </div>
                                     <div
@@ -2068,7 +2068,7 @@
                                             flex-shrink: 0;
                                         "
                                     >
-                                        ⚙️
+                                        <i data-lucide="settings"></i>
                                     </div>
                                     <div>
                                         <h2
@@ -2121,7 +2121,7 @@
                                                     border-bottom: 1px solid #1e1e4a;
                                                 "
                                             >
-                                                🏗️ Konstrukcja
+                                                <i data-lucide="hard-hat"></i> Konstrukcja
                                             </div>
 
                                             <div
@@ -2129,7 +2129,7 @@
                                                 data-wizard-param="magazyn"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Magazyn <span class="status-icon">⚠️</span>
+                                                    Magazyn <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2154,7 +2154,7 @@
                                                 data-wizard-param="nadbudowa"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Nadbudowa <span class="status-icon">⚠️</span>
+                                                    Nadbudowa <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2179,7 +2179,7 @@
                                                 data-wizard-param="dennicaMaterial"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Dennica <span class="status-icon">⚠️</span>
+                                                    Dennica <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2204,7 +2204,7 @@
                                                 data-wizard-param="klasaBetonu"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Klasa betonu <span class="status-icon">⚠️</span>
+                                                    Klasa betonu <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2250,7 +2250,7 @@
                                                 data-wizard-param="wkladka"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Wkładka PEHD <span class="status-icon">⚠️</span>
+                                                    Wkładka PEHD <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2279,7 +2279,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Agresja chemiczna
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2308,7 +2308,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Agresja mrozowa
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2352,7 +2352,7 @@
                                                         margin-bottom: 0.4rem;
                                                     "
                                                 >
-                                                    🏋️ Klasy nośności
+                                                    <i data-lucide="dumbbell"></i> Klasy nośności
                                                 </div>
 
                                                 <div
@@ -2361,7 +2361,7 @@
                                                 >
                                                     <div class="wizard-param-label">
                                                         Dennica + Nadbudowa
-                                                        <span class="status-icon">⚠️</span>
+                                                        <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                     </div>
                                                     <div
                                                         style="
@@ -2390,7 +2390,7 @@
                                                 >
                                                     <div class="wizard-param-label">
                                                         Zwieńczenie
-                                                        <span class="status-icon">⚠️</span>
+                                                        <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                     </div>
                                                     <div
                                                         style="
@@ -2441,7 +2441,7 @@
                                                     border-bottom: 1px solid #0f3328;
                                                 "
                                             >
-                                                🛡️ Powłoka i Kineta
+                                                <i data-lucide="shield"></i> Powłoka i Kineta
                                             </div>
 
                                             <div
@@ -2450,7 +2450,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Malowanie wewnątrz
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2485,7 +2485,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Malowanie zewnątrz
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2603,7 +2603,7 @@
                                                 data-wizard-param="kineta"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Kineta <span class="status-icon">⚠️</span>
+                                                    Kineta <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2643,7 +2643,7 @@
                                                 data-wizard-param="spocznik"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Spocznik <span class="status-icon">⚠️</span>
+                                                    Spocznik <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2690,7 +2690,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Redukcja kinety
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2737,7 +2737,7 @@
                                                     border-bottom: 1px solid #2d2208;
                                                 "
                                             >
-                                                🔧 Osprzęt
+                                                <i data-lucide="settings"></i> Osprzęt
                                             </div>
 
                                             <div
@@ -2746,7 +2746,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Rodzaj stopni
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2778,7 +2778,7 @@
                                             >
                                                 <div class="wizard-param-label">
                                                     Wysokość spocznika
-                                                    <span class="status-icon">⚠️</span>
+                                                    <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2812,7 +2812,7 @@
                                                 data-wizard-param="usytuowanie"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Usytuowanie <span class="status-icon">⚠️</span>
+                                                    Usytuowanie <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2852,7 +2852,7 @@
                                                 data-wizard-param="uszczelka"
                                             >
                                                 <div class="wizard-param-label">
-                                                    Uszczelka <span class="status-icon">⚠️</span>
+                                                    Uszczelka <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
                                                 </div>
                                                 <div
                                                     style="
@@ -2883,7 +2883,7 @@
                                         </div>
                                     </div>
                                     <div class="wizard-validation-msg" id="wizard-validation-msg">
-                                        ⚠️ Wybierz opcję w każdej grupie parametrów, aby kontynuować
+                                        <i data-lucide="alert-triangle"></i> Wybierz opcję w każdej grupie parametrów, aby kontynuować
                                     </div>
                                 </div>
                                 <div class="wizard-nav">
@@ -2910,30 +2910,30 @@
                             <!-- Summary bar -->
                             <div class="wizard-summary-bar" id="wizard-summary-bar">
                                 <span class="wizard-summary-item"
-                                    >📄 <strong id="wsb-offer">—</strong></span
+                                    ><i data-lucide="file-text"></i> <strong id="wsb-offer">—</strong></span
                                 >
                                 <span class="wizard-summary-divider"></span>
                                 <span class="wizard-summary-item"
-                                    >📋 <strong id="wsb-client">—</strong></span
+                                    ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">—</strong></span
                                 >
                                 <span class="wizard-summary-divider"></span>
                                 <span class="wizard-summary-item"
-                                    >🏗️ <strong id="wsb-invest">—</strong></span
+                                    ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">—</strong></span
                                 >
                                 <span class="wizard-summary-divider"></span>
                                 <span class="wizard-summary-item"
-                                    >📍 <strong id="wsb-address">—</strong></span
+                                    ><i data-lucide="map-pin"></i> <strong id="wsb-address">—</strong></span
                                 >
                                 <span class="wizard-summary-divider"></span>
                                 <span class="wizard-summary-item"
-                                    >⚙️ <strong id="wsb-params">—</strong></span
+                                    ><i data-lucide="settings"></i> <strong id="wsb-params">—</strong></span
                                 >
 
                                 <button class="wizard-summary-edit" onclick="goToWizardStep(1)">
-                                    ✏️ Edytuj dane
+                                    <i data-lucide="pencil"></i> Edytuj dane
                                 </button>
                                 <button class="wizard-summary-edit" onclick="goToWizardStep(2)">
-                                    ⚙️ Edytuj parametry
+                                    <i data-lucide="settings"></i> Edytuj parametry
                                 </button>
                             </div>
 
@@ -2949,7 +2949,7 @@
                                                 font-weight: 800;
                                                 color: var(--text-primary);
                                             "
-                                            >⚙️ Konfiguracja studni</span
+                                            ><i data-lucide="settings"></i> Konfiguracja studni</span
                                         >
                                     </div>
                                     <!-- Row 2: Nr + Rz fields + indicators -->
@@ -3216,7 +3216,7 @@
                                                     border-color: var(--border-glass);
                                                 "
                                             >
-                                                🔓 Ręczny
+                                                <i data-lucide="unlock"></i> Ręczny
                                             </button>
                                             <button
                                                 class="btn btn-secondary btn-sm"
@@ -3282,7 +3282,7 @@
                                                         border-color: var(--border-glass);
                                                     "
                                                 >
-                                                    🔽 Zak. DN1000
+                                                    <span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zak. DN1000
                                                 </button>
                                             </div>
                                             <button
@@ -3295,7 +3295,7 @@
                                                     border-color: var(--border-glass);
                                                 "
                                             >
-                                                🔽 Zakończenie
+                                                <span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie
                                             </button>
                                             <button
                                                 class="btn btn-primary btn-sm"
@@ -3303,14 +3303,14 @@
                                                 id="btn-auto-select"
                                                 style="font-size: 0.8rem; padding: 0.3rem 0.6rem"
                                             >
-                                                🔧 Auto
+                                                <i data-lucide="settings"></i> Auto
                                             </button>
                                             <button
                                                 class="btn btn-secondary btn-sm"
                                                 onclick="clearWellConfig()"
                                                 style="font-size: 0.8rem; padding: 0.3rem 0.6rem"
                                             >
-                                                🔄
+                                                <i data-lucide="refresh-cw"></i>
                                             </button>
                                         </div>
                                     </div>
@@ -3336,9 +3336,9 @@
                                             toggleCard('well-params-content', 'well-params-icon')
                                         "
                                     >
-                                        <span>📋 Parametry tej studni</span>
+                                        <span><i data-lucide="clipboard-list"></i> Parametry tej studni</span>
                                         <span id="well-params-icon" style="font-size: 0.75rem"
-                                            >🔽</span
+                                            ><i data-lucide="chevron-down"></i></span
                                         >
                                     </div>
                                     <div
@@ -3368,14 +3368,14 @@
                                         onclick="switchBuilderTab('concrete')"
                                         id="btab-concrete"
                                     >
-                                        🏗️ Prefabrykaty betonowe
+                                        <i data-lucide="cylinder"></i> Prefabrykaty betonowe
                                     </button>
                                     <button
                                         class="b-tab-btn"
                                         onclick="switchBuilderTab('transitions')"
                                         id="btab-transitions"
                                     >
-                                        💧 Przejścia szczelne
+                                        <i data-lucide="droplets"></i> Przejścia szczelne
                                     </button>
                                 </div>
 
@@ -3398,9 +3398,9 @@
                                             "
                                             onclick="toggleCard('tiles-content', 'tiles-icon')"
                                         >
-                                            <span>🧱 Wybór elementów</span>
+                                            <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
                                             <span id="tiles-icon" style="font-size: 0.75rem"
-                                                >🔼</span
+                                                ><i data-lucide="chevron-up"></i></span
                                             >
                                         </div>
                                         <div
@@ -3428,9 +3428,9 @@
                                                 toggleCard('well-config-wrap', 'well-config-icon')
                                             "
                                         >
-                                            <span>📦 Konfiguracja betonowa</span>
+                                            <span><i data-lucide="package"></i> Konfiguracja betonowa</span>
                                             <span id="well-config-icon" style="font-size: 0.75rem"
-                                                >🔼</span
+                                                ><i data-lucide="chevron-up"></i></span
                                             >
                                         </div>
                                         <div id="well-config-wrap" class="table-wrap card-content">
@@ -3482,9 +3482,9 @@
                                                 )
                                             "
                                         >
-                                            <span>➕ Dodaj Przejście Szczelne</span>
+                                            <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
                                             <span id="przejscia-app-icon" style="font-size: 0.75rem"
-                                                >🔽</span
+                                                ><i data-lucide="chevron-down"></i></span
                                             >
                                         </div>
                                         <div
@@ -3509,7 +3509,7 @@
                                                 align-items: center;
                                             "
                                         >
-                                            <span>📖 Lista dodanych przejść</span>
+                                            <span><i data-lucide="book-open"></i> Lista dodanych przejść</span>
                                             <span
                                                 id="przejscia-count"
                                                 style="font-size: 0.65rem; color: var(--text-muted)"
@@ -3689,7 +3689,7 @@
                                         "
                                         onclick="window.openGlobalRecalcModal()"
                                     >
-                                        <span style="font-size: 1rem">⚙️</span>
+                                        <span style="font-size: 1rem"><i data-lucide="settings"></i></span>
                                         <span
                                             style="
                                                 font-size: 0.55rem;
@@ -3716,7 +3716,7 @@
                                         "
                                         onclick="saveOfferStudnie()"
                                     >
-                                        <span style="font-size: 1rem">💾</span>
+                                        <span style="font-size: 1rem"><i data-lucide="save"></i></span>
                                         <span
                                             style="
                                                 font-size: 0.55rem;
@@ -3745,7 +3745,7 @@
                                         "
                                         onclick="createOrderFromOffer()"
                                     >
-                                        <span style="font-size: 1rem">📦</span>
+                                        <span style="font-size: 1rem"><i data-lucide="package"></i></span>
                                         <span
                                             style="
                                                 font-size: 0.55rem;
@@ -3774,7 +3774,7 @@
                                         "
                                         onclick="openZleceniaProdukcyjne()"
                                     >
-                                        <span style="font-size: 1rem">🏭</span>
+                                        <span style="font-size: 1rem"><i data-lucide="factory"></i></span>
                                         <span
                                             style="
                                                 font-size: 0.55rem;
@@ -3803,7 +3803,7 @@
                                         "
                                         onclick="printOfferStudnie()"
                                     >
-                                        <span style="font-size: 1rem">📄</span>
+                                        <span style="font-size: 1rem"><i data-lucide="file-text"></i></span>
                                         <span
                                             style="
                                                 font-size: 0.55rem;
@@ -3934,7 +3934,7 @@
                                         id="stab-list"
                                         style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
                                     >
-                                        🗂️ Lista studni
+                                        <i data-lucide="folder-open"></i> Lista studni
                                         <span
                                             id="wells-counter"
                                             style="opacity: 0.6; margin-left: 2px"
@@ -3947,7 +3947,7 @@
                                         id="stab-discounts"
                                         style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
                                     >
-                                        💰 Rabaty
+                                        <i data-lucide="banknote"></i> Rabaty
                                     </button>
                                 </div>
                             </div>
@@ -4038,14 +4038,14 @@
                             width: 100%;
                         "
                     >
-                        <span id="offer-form-title-studnie">📋 Dane klienta i oferty</span>
+                        <span id="offer-form-title-studnie"><i data-lucide="clipboard-list"></i> Dane klienta i oferty</span>
                         <div style="display: flex; gap: 0.4rem">
                             <button
                                 class="btn btn-secondary btn-sm"
                                 onclick="clearOfferForm()"
                                 style="padding: 0.2rem 0.5rem; font-size: 0.7rem"
                             >
-                                🔄 Nowa Oferta
+                                <i data-lucide="refresh-cw"></i> Nowa Oferta
                             </button>
                             <button
                                 class="btn btn-primary btn-sm"
@@ -4053,7 +4053,7 @@
                                 onclick="saveOfferStudnie()"
                                 style="padding: 0.2rem 0.5rem; font-size: 0.7rem"
                             >
-                                💾 Zapisz ofertę
+                                <i data-lucide="save"></i> Zapisz ofertę
                             </button>
                             <button
                                 class="btn btn-sm"
@@ -4066,7 +4066,7 @@
                                     color: #34d399;
                                 "
                             >
-                                📦 Utwórz zamówienie
+                                <i data-lucide="package"></i> Utwórz zamówienie
                             </button>
                             <button
                                 class="btn btn-sm"
@@ -4079,7 +4079,7 @@
                                     color: #f97316;
                                 "
                             >
-                                🏭 Zlecenia produkcyjne
+                                <i data-lucide="factory"></i> Zlecenia produkcyjne
                             </button>
                             <button
                                 class="btn btn-sm"
@@ -4092,7 +4092,7 @@
                                     color: #f87171;
                                 "
                             >
-                                📄 Wydruk oferty
+                                <i data-lucide="file-text"></i> Wydruk oferty
                             </button>
                         </div>
                     </div>
@@ -4150,7 +4150,7 @@
                 <div class="card" style="margin-bottom: 1rem">
                     <div class="toolbar" style="margin-top: 0; margin-bottom: 0.5rem; padding: 0">
                         <h2 style="font-size: 1rem; font-weight: 700">
-                            📊 Zestawienie ofertowe (Studnie)
+                            <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Studnie)
                         </h2>
                     </div>
                     <!-- Transport breakdown will go here -->
@@ -4292,7 +4292,7 @@
             <!-- ===== SECTION: PRICE LIST ===== -->
             <div class="section" id="section-pricelist">
                 <div class="toolbar" style="flex-wrap: wrap">
-                    <h2 style="font-size: 1rem; font-weight: 700">📋 Cennik elementów studni</h2>
+                    <h2 style="font-size: 1rem; font-weight: 700"><i data-lucide="clipboard-list"></i> Cennik elementów studni</h2>
                     <div class="toolbar-spacer"></div>
                     <div class="search-box" style="margin: 0; width: 100%; max-width: 350px">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4311,19 +4311,19 @@
                         style="display: flex; gap: 0.5rem; justify-content: flex-end"
                     >
                         <button class="btn btn-primary" onclick="showAddStudnieProductModal()">
-                            ➕ Dodaj
+                            <i data-lucide="plus"></i> Dodaj
                         </button>
                         <button class="btn btn-secondary" onclick="manuallySaveStudnieProductsDB()">
-                            💾 Zapisz
+                            <i data-lucide="save"></i> Zapisz
                         </button>
                         <button class="btn btn-secondary" onclick="exportStudnieToExcel()">
-                            📤 Eksportuj Excel
+                            <i data-lucide="upload"></i> Eksportuj Excel
                         </button>
                         <button
                             class="btn btn-secondary"
                             onclick="document.getElementById('import-studnie-excel').click()"
                         >
-                            📥 Importuj Excel
+                            <i data-lucide="download"></i> Importuj Excel
                         </button>
                         <input
                             type="file"
@@ -4333,7 +4333,7 @@
                             onchange="importStudnieFromExcel(event)"
                         />
                         <button class="btn btn-secondary" onclick="resetStudniePriceList()">
-                            🔄 Reset
+                            <i data-lucide="refresh-cw"></i> Reset
                         </button>
                     </div>
                 </div>
@@ -4587,7 +4587,7 @@
             <div class="zlecenia-container">
                 <!-- LEFT: Well SVG Preview (same as Kalkulator Studni) -->
                 <div class="zlecenia-left">
-                    <div class="card-title-sm" style="margin-bottom: 0.5rem">📐 Podgląd studni</div>
+                    <div class="card-title-sm" style="margin-bottom: 0.5rem"><i data-lucide="triangle-right"></i> Podgląd studni</div>
                     <svg
                         id="zlecenia-svg-preview"
                         style="
@@ -4625,7 +4625,7 @@
                             class="card-title-sm"
                             style="margin-bottom: 0.3rem; font-size: 0.72rem"
                         >
-                            🏗️ Konfiguracja
+                            <i data-lucide="cylinder"></i> Konfiguracja
                         </div>
                         <div
                             id="zlecenia-well-config-body"
@@ -4650,7 +4650,7 @@
                         "
                     >
                         <div class="card-title" style="margin-bottom: 0">
-                            🏭 Zlecenie Produkcyjne
+                            <i data-lucide="factory"></i> Zlecenie Produkcyjne
                         </div>
                         <div style="display: flex; gap: 0.4rem">
                             <button
@@ -4663,7 +4663,7 @@
                                     color: #34d399;
                                 "
                             >
-                                ✅ Zaakceptuj
+                                <i data-lucide="check-circle-2"></i> Zaakceptuj
                             </button>
                             <button
                                 id="zl-btn-revoke"
@@ -4676,7 +4676,7 @@
                                     color: #fbbf24;
                                 "
                             >
-                                🔓 Cofnij
+                                <i data-lucide="unlock"></i> Cofnij
                             </button>
                             <button
                                 id="zl-btn-delete"
@@ -4688,14 +4688,14 @@
                                     color: #f87171;
                                 "
                             >
-                                🗑️ Usuń
+                                <i data-lucide="trash-2"></i> Usuń
                             </button>
                             <button
                                 id="zl-btn-save"
                                 class="btn btn-sm btn-success zlecenia-header-btn"
                                 onclick="saveProductionOrder()"
                             >
-                                💾 Zapisz
+                                <i data-lucide="save"></i> Zapisz
                             </button>
                             <button
                                 id="zl-btn-print"
@@ -4707,7 +4707,7 @@
                                     color: #a5b4fc;
                                 "
                             >
-                                🖨️ Zlecenie
+                                <i data-lucide="printer"></i> Zlecenie
                             </button>
                             <button
                                 id="zl-btn-label"
@@ -4719,14 +4719,14 @@
                                     color: #38bdf8;
                                 "
                             >
-                                🏷️ Etykieta
+                                <i data-lucide="tag"></i> Etykieta
                             </button>
                             <button
                                 id="zl-btn-close"
                                 class="btn btn-sm btn-danger zlecenia-header-btn"
                                 onclick="closeZleceniaModal()"
                             >
-                                ✕ Zamknij
+                                <i data-lucide="x"></i> Zamknij
                             </button>
                         </div>
                     </div>
@@ -4750,7 +4750,7 @@
                 <!-- RIGHT: Well Elements List -->
                 <div class="zlecenia-right">
                     <div class="zlecenia-right-header">
-                        <div class="card-title-sm" style="margin-bottom: 0">📋 Elementy</div>
+                        <div class="card-title-sm" style="margin-bottom: 0"><i data-lucide="clipboard-list"></i> Elementy</div>
                         <span id="zlecenia-el-count" class="badge" style="font-size: 0.6rem"></span>
                     </div>
                     <div
@@ -4760,7 +4760,7 @@
                             type="text"
                             id="zlecenia-search"
                             class="form-input form-input-sm"
-                            placeholder="🔍 Szukaj..."
+                            placeholder="Szukaj..."
                             oninput="filterZleceniaList()"
                             style="width: 100%"
                         />
@@ -4780,21 +4780,21 @@
                             data-filter="all"
                             onclick="setZleceniaFilter('all')"
                         >
-                            📂 Otwarte
+                            <i data-lucide="folder-open"></i> Otwarte
                         </button>
                         <button
                             class="zlecenia-filter-btn"
                             data-filter="saved"
                             onclick="setZleceniaFilter('saved')"
                         >
-                            💾 Zapisane
+                            <i data-lucide="save"></i> Zapisane
                         </button>
                         <button
                             class="zlecenia-filter-btn"
                             data-filter="accepted"
                             onclick="setZleceniaFilter('accepted')"
                         >
-                            🔒 Zaakceptowane
+                            <i data-lucide="lock"></i> Zaakceptowane
                         </button>
                     </div>
                     <div class="zlecenia-right-list" id="zlecenia-elements-list"></div>
@@ -4803,7 +4803,7 @@
         </div>
 
         <div id="toast-container" class="toast-container"></div>
-        <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+        <script src="js/shared/xlsx.full.min.js"></script>
 
         <!-- PV script dependencies -->
         <script type="module" src="js/pv/pv_sales_ui.js?v=2.0"></script>
@@ -4827,5 +4827,6 @@
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>
         <script src="js/app_studnie.js?v=3.0"></script>
         <!-- Confirm modal is now created dynamically by appConfirm() in shared/ui.js -->
-    </body>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
 </html>

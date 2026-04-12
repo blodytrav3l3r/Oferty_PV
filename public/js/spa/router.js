@@ -26,12 +26,12 @@ const SpaRouter = (() => {
             sections: [
                 {
                     id: 'offer',
-                    icon: '📝',
+                    icon: '<i data-lucide="edit"></i>',
                     label: 'Nowa Oferta',
                     accent: '#10b981',
                     glow: '#0d2a20'
                 },
-                { id: 'pricelist', icon: '📋', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
+                { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
             ]
         },
         studnie: {
@@ -41,13 +41,13 @@ const SpaRouter = (() => {
             sections: [
                 {
                     id: 'builder',
-                    icon: '🏗️',
+                    icon: '<i data-lucide="cylinder"></i>',
                     label: 'Konfiguracja',
                     accent: '#10b981',
                     glow: '#0d2b22'
                 },
-                { id: 'offer', icon: '📊', label: 'Oferta', accent: '#3b82f6', glow: '#152040' },
-                { id: 'pricelist', icon: '📋', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
+                { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta', accent: '#3b82f6', glow: '#152040' },
+                { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
             ]
         },
         kartoteka: {
@@ -95,7 +95,7 @@ const SpaRouter = (() => {
         if (!config) return;
 
         const logoText = document.getElementById('spa-logo-text');
-        if (logoText) logoText.textContent = config.logo;
+        if (logoText) logoText.innerHTML = config.logo;
 
         const lgSpa = document.getElementById('lg-spa');
         if (lgSpa) {
@@ -295,7 +295,7 @@ const SpaRouter = (() => {
                 authData.user.firstName && authData.user.lastName
                     ? `${authData.user.firstName} ${authData.user.lastName}`
                     : authData.user.username;
-            if (userEl) userEl.textContent = '👤 ' + displayName;
+            if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + displayName;
             if (roleEl) {
                 const role = authData.user.role;
                 roleEl.textContent = role === 'admin' ? 'ADMIN' : role === 'pro' ? 'PRO' : 'USER';

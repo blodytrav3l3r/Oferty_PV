@@ -91,7 +91,7 @@ async function saveOffer() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
             }
         } catch (e) {
             console.error('Błąd wyboru opiekuna:', e);
@@ -158,7 +158,7 @@ async function saveOffer() {
             return;
         }
         const result = await storageService.saveOffer(offerDoc);
-        showToast('Oferta zapisana ✔', 'success');
+        showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         editingOfferId = result.id || offerDoc.id;
 
         // Update local array for immediate render
@@ -200,9 +200,9 @@ function clearOfferForm() {
 
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
-    if (titleEl) titleEl.innerHTML = `📋 Dane klienta i oferty (Nowa)`;
+    if (titleEl) titleEl.innerHTML = `<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)`;
     const btnEl = document.getElementById('btn-save-offer');
-    if (btnEl) btnEl.innerHTML = `💾 Zapisz ofertę`;
+    if (btnEl) btnEl.innerHTML = `<i data-lucide="save"></i> Zapisz ofertę`;
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
@@ -210,7 +210,7 @@ function clearOfferForm() {
             currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
                 ? 'inline-block'
                 : 'none';
-        btnChangeUser.textContent = `👤 Zmień opiekuna`;
+        btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
     }
 
     renderOfferItems();
@@ -248,12 +248,12 @@ function renderSavedOffers() {
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
           <h3 style="margin-bottom:0.2rem; word-break:break-all;">${o.number}</h3>
           <div style="font-weight:700; color:var(--text-primary); font-size: 0.9rem; white-space:nowrap;">
-            💰 ${fmt(o.totalBrutto)} PLN
+            <i data-lucide="banknote"></i> ${fmt(o.totalBrutto)} PLN
           </div>
         </div>
         <div class="meta" style="margin-top:0.3rem;">
-          <span>📅 <strong>${o.date}</strong></span>
-          <span>📦 <strong>${o.items.length}</strong> poz.</span>
+          <span><i data-lucide="calendar"></i> <strong>${o.date}</strong></span>
+          <span><i data-lucide="package"></i> <strong>${o.items.length}</strong> poz.</span>
           ${
               isAdmin && o.userName
                   ? (() => {
@@ -271,7 +271,7 @@ function renderSavedOffers() {
                         ) {
                             displayUN = currentUser.displayName || currentUser.username || rawUN;
                         }
-                        return `<span style="color:var(--accent-hover)">👤 <strong>${displayUN}</strong></span>`;
+                        return `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> <strong>${displayUN}</strong></span>`;
                     })()
                   : ''
           }
@@ -280,21 +280,21 @@ function renderSavedOffers() {
             o.clientName || o.investName || o.clientContact
                 ? `
         <div class="offer-client-badges">
-          ${o.clientName ? `<div class="badge-client">🏢 <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
-          ${o.investName ? `<div class="badge-invest">🏗️ <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
-          ${o.clientContact ? `<div class="badge-contact">📞 <strong>Kontakt:</strong> <span style="font-weight:500">${o.clientContact}</span></div>` : ''}
+          ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
+          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
+          ${o.clientContact ? `<div class="badge-contact"><i data-lucide="phone"></i> <strong>Kontakt:</strong> <span style="font-weight:500">${o.clientContact}</span></div>` : ''}
         </div>`
                 : ''
         }
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-        <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}>✏️ Edytuj</button>
-        <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj">📋 Duplikuj</button>
-        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian">⏳ Historia</button>` : ''}
-        <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON">💾 JSON</button>
-        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX">📊 XLSX</button>
-        <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF">📄 PDF</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}>🗑️ Usuń</button>
+        <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil"></i> Edytuj</button>
+        <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj"><i data-lucide="clipboard-list"></i> Duplikuj</button>
+        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian"><i data-lucide="hourglass"></i> Historia</button>` : ''}
+        <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON"><i data-lucide="save"></i> JSON</button>
+        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2"></i> XLSX</button>
+        <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text"></i> PDF</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2"></i> Usuń</button>
       </div>
     </div>
   `;
@@ -370,10 +370,10 @@ async function loadOffer(id) {
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
     if (titleEl)
-        titleEl.innerHTML = `✏️ Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
+        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
     const btnEl = document.getElementById('btn-save-offer');
     if (btnEl) {
-        btnEl.innerHTML = `💾 Zapisz zmiany`;
+        btnEl.innerHTML = `<i data-lucide="save"></i> Zapisz zmiany`;
         btnEl.disabled = !canEdit;
         btnEl.title = canEdit ? '' : 'Brak uprawnień do edycji tej oferty';
     }
@@ -385,9 +385,9 @@ async function loadOffer(id) {
                 ? 'inline-block'
                 : 'none';
         if (editingOfferAssignedUserName) {
-            btnChangeUser.textContent = `👤 Opiekun: ${editingOfferAssignedUserName}`;
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
         } else {
-            btnChangeUser.textContent = `👤 Zmień opiekuna`;
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
         }
     }
 
@@ -503,7 +503,7 @@ function showOfferHistory(id) {
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
             <div style="font-size:0.85rem; color:var(--text-secondary);">Wersja przed zmianą</div>
-            <div style="font-size:1.1rem; font-weight:700;">💰 ${fmt(h.totalBrutto)} PLN</div>
+            <div style="font-size:1.1rem; font-weight:700;"><i data-lucide="banknote"></i> ${fmt(h.totalBrutto)} PLN</div>
             <div style="font-size:0.8rem; color:var(--text-muted);">Pozycji: ${h.items ? h.items.length : 0}</div>
           </div>
           <div style="text-align:right;">
@@ -523,8 +523,8 @@ function showOfferHistory(id) {
     overlay.innerHTML = `
     <div class="modal" style="max-width:800px; width:95%; border-radius:12px; max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-weight:700;">⏳ Historia zmian oferty: ${offer.number}</h3>
-        <button class="btn-icon" onclick="closeModal()">✕</button>
+        <h3 style="font-weight:700;"><i data-lucide="hourglass"></i> Historia zmian oferty: ${offer.number}</h3>
+        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
       </div>
       <div style="padding:1rem 0; overflow-y:auto; flex:1;">
         ${historyHtml}

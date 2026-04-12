@@ -226,8 +226,8 @@ function renderTransportBreakdown(result, costPerTrip) {
     const totalWeight = result.lines.reduce((s, l) => s + l.totalWeight, 0);
 
     let html = `<div class="cat-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" onclick="toggleTransportBreakdown()">
-    <div>🚚 Kalkulacja transportu <span class="cat-count">(max ${fmtInt(MAX_TRANSPORT_WEIGHT)} kg / transport)</span></div>
-    <span id="transport-toggle-icon">${isTransportBreakdownExpanded ? '🔼' : '🔽'}</span>
+    <div><i data-lucide="truck"></i> Kalkulacja transportu <span class="cat-count">(max ${fmtInt(MAX_TRANSPORT_WEIGHT)} kg / transport)</span></div>
+    <span id="transport-toggle-icon">${isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
   </div>`;
     html += `<div id="transport-breakdown-content" style="display:${isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
     html += `<div class="table-wrap"><table>
@@ -271,7 +271,7 @@ function renderTransportBreakdown(result, costPerTrip) {
 
     if (result.saved > 0) {
         html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(16,185,129,0.08);border-radius:8px;font-size:.82rem;color:var(--success)">
-      ✅ Optymalizacja: połączono niepełne transporty, zaoszczędzono <strong>${result.saved}</strong> transportów
+      <i data-lucide="check-circle-2"></i> Optymalizacja: połączono niepełne transporty, zaoszczędzono <strong>${result.saved}</strong> transportów
       (${totalDedicated} → ${result.totalTransports})</div>`;
     }
 
