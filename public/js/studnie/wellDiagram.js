@@ -1,10 +1,10 @@
-/* ===== SVG HIGHLIGHTING ===== */
+/* ===== PODŚWIETLANIE SVG ===== */
 window.highlightSvg = function (type, index) {
     document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
         el.style.filter = 'drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9)) brightness(1.3)';
     });
 
-    // Auto-highlight corresponding list tile
+    // Automatycznie podświetl odpowiedni kafel listy
     if (type === 'cfg') {
         const tile = document.querySelector('.config-tile[data-cfg-idx="' + index + '"]');
         if (tile) tile.style.filter = 'brightness(1.1)';
@@ -45,7 +45,7 @@ window.svgPrzPointerLeave = function (ev, idx) {
     window.unhighlightSvg('prz', idx);
 };
 
-/* ===== WELL DIAGRAM (SVG) ===== */
+/* ===== SCHEMAT STUDNI (SVG) ===== */
 
 /**
  * ZASADA BEZWZGLĘDNA: Krąg z przejściem = ZAWSZE krąg wiercony.
@@ -254,7 +254,7 @@ function renderWellDiagram(targetSvg, targetWell) {
             let effH = p.height || 0;
             if (p.componentType === 'dennica') {
                 currentDennica++;
-                // The bottom-most dennica remains full height. Others get -100mm.
+                // Dennica na samym dole pozostaje o pełnej wysokości. Inne otrzymują -100mm.
                 if (currentDennica < totalDennice) {
                     effH = Math.max(0, effH - 100);
                 }
@@ -303,17 +303,17 @@ function renderWellDiagram(targetSvg, targetWell) {
         mB = 22; // mL=75 dla szerszego pasa wymiarowego po lewej
     const drawW = svgW - mL - mR;
 
-    // ── Real physical outer diameters for each element type ──
-    // Konus: bottom = well DN, top = 625mm standard opening
-    // Płyta DIN: outer = well DN, 625mm opening hole
-    // Płyta redukcyjna: outer = well DN (e.g. 1200), transitions to 1000 below
-    // Płyta zamykająca / pierścień odciążający: outer rim = well DN + ~200mm
-    // Płyta najazdowa: square plate = well DN + ~200mm
-    // Właz: standard 600mm manhole cover
-    // AVR: standard 625mm adjustment ring
-    // Kręgi, dennica, osadnik: = well DN (from product dn field)
+    // ── Rzeczywiste fizyczne średnice zewnętrzne dla każdego typu elementu ──
+    // Konus: dół = DN studni, góra = standardowy otwór 625mm
+    // Płyta DIN: zewnętrzna = DN studni, otwór 625mm
+    // Płyta redukcyjna: zewnętrzna = DN studni (np. 1200), przechodzi w 1000 poniżej
+    // Płyta zamykająca / pierścień odciążający: zewnętrzna krawędź = DN studni + ~200mm
+    // Płyta najazdowa: kwadratowa płyta = DN studni + ~200mm
+    // Właz: standardowy właz 600mm
+    // AVR: standardowy pierścień wyrównawczy 625mm
+    // Kręgi, dennica, osadnik: = DN studni (z pola dn produktu)
 
-    // Get the visual outer width (in mm) for diagram rendering
+    // Pobierz wizualną szerokość zewnętrzną (w mm) dla renderowania schematu
     function getElementOuterDn(comp) {
         const ct = comp.componentType;
         let prodDn = comp.dn && typeof comp.dn === 'number' ? comp.dn : bodyDN;
@@ -321,20 +321,20 @@ function renderWellDiagram(targetSvg, targetWell) {
 
         switch (ct) {
             case 'wlaz':
-                return 600; // standard manhole cover diameter
+                return 600; // standardowa średnica włazu
             case 'avr':
-                return 625; // standard adjustment ring
+                return 625; // standardowy pierścień wyrównawczy
             case 'konus':
-                return prodDn; // bottom width = well DN (top is 625, handled in rendering)
+                return prodDn; // szerokość dolna = DN studni (góra ma 625, obsługiwane podczas renderowania)
             case 'plyta_din':
                 return prodDn; // coincides with well DN
             case 'plyta_redukcyjna':
                 return prodDn; // outer = well DN
             case 'plyta_zamykajaca':
             case 'pierscien_odciazajacy':
-                return prodDn + 200; // outer rim extends beyond well shaft
+                return prodDn + 200; // zewnętrzna krawędź wystaje poza trzon studni
             case 'plyta_najazdowa':
-                return prodDn + 200; // square plate extends beyond well shaft
+                return prodDn + 200; // kwadratowa płyta wystaje poza trzon studni
             case 'dennica':
             case 'krag':
             case 'krag_ot':
@@ -430,12 +430,12 @@ function renderWellDiagram(targetSvg, targetWell) {
         }
 
         if (localCompType === 'konus') {
-            // Konus: trapezoid — top = 625mm opening, bottom = well DN
+            // Konus: trapez — góra = otwór 625mm, dół = DN studni
             const topW = Math.max(mmToPx(625), 20);
             const topX = cx - topW / 2;
             svg_out += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${y + h} ${x},${y + h}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (localCompType === 'dennica' || localCompType === 'styczna') {
-            // Dennica or Styczna: rectangle with thick bottom line
+            // Dennica lub Styczna: prostokąt z grubą dolną linią
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
             svg_out += `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${c.stroke}" stroke-width="3"/>`;
         } else if (localCompType === 'plyta_redukcyjna') {
@@ -445,19 +445,19 @@ function renderWellDiagram(targetSvg, targetWell) {
             localCompType === 'plyta_zamykajaca' ||
             localCompType === 'pierscien_odciazajacy'
         ) {
-            // Wider plate/ring with outer rim
+            // Szersza płyta/pierścień z zewnętrzną krawędzią
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (localCompType === 'plyta_najazdowa') {
-            // Square drive-over plate
+            // Kwadratowa płyta najazdowa
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (localCompType === 'plyta_din') {
-            // Same width as well shaft
+            // Ta sama szerokość co trzon studni
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (localCompType === 'wlaz') {
-            // Właz: 600mm manhole cover
+            // Właz: pokrywa włazu 600mm
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.95"/>`;
         } else if (localCompType === 'avr') {
-            // AVR: 625mm adjustment ring
+            // AVR: pierścień wyrównawczy 625mm
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else if (localCompType === 'osadnik') {
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
@@ -465,7 +465,7 @@ function renderWellDiagram(targetSvg, targetWell) {
             svg_out += `<line x1="${x + 4}" y1="${oy}" x2="${x + w - 4}" y2="${oy}" stroke="${c.stroke}" stroke-width="0.7" stroke-dasharray="3,2" opacity="0.6"/>`;
             svg_out += `<line x1="${x + 4}" y1="${oy + h * 0.15}" x2="${x + w - 4}" y2="${oy + h * 0.15}" stroke="${c.stroke}" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.4"/>`;
         } else {
-            // Kręgi and other elements
+            // Kręgi i inne elementy
             svg_out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
             if (localCompType === 'krag_ot') {
                 const hr = Math.min(h * 0.15, 7);
@@ -504,7 +504,7 @@ function renderWellDiagram(targetSvg, targetWell) {
         y += h;
     });
 
-    // Draw Przejscia
+    // Rysuj przejścia
     if (well.przejscia && well.przejscia.length > 0 && well.rzednaDna !== null) {
         const bottomElev = parseFloat(well.rzednaDna) || 0;
 
@@ -563,7 +563,7 @@ function renderWellDiagram(targetSvg, targetWell) {
                 if (isRect) {
                     svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 } else if (isEgg) {
-                    // SVG ellipse for jajowe pipe cross-section
+                    // Elipsa SVG dla przekroju rury jajowej
                     svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
                 } else {
                     svg_out += `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})"><circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} /></g>`;
@@ -589,7 +589,7 @@ function renderWellDiagram(targetSvg, targetWell) {
             (a, b) => b - a
         );
         const dX = 52;
-        const dimColor = '#94a3b8'; // neutral grey
+        const dimColor = '#94a3b8'; // neutralny szary
 
         dimLinesY.forEach((pY) => {
             svg_out += `<line x1="${dX - 4}" y1="${pY}" x2="${dX + 4}" y2="${pY}" stroke="${dimColor}" stroke-width="1.2"/>`;
@@ -633,7 +633,7 @@ function renderWellDiagram(targetSvg, targetWell) {
                         const pyB = Math.round((prY + radiusH) * 10) / 10;
                         const pyT = Math.round((prY - radiusH) * 10) / 10;
 
-                        // Compare segment rounded values with pipe boundary
+                        // Porównaj zaokrąglone wartości segmentu z granicą rury
                         if (Math.abs(yB - pyB) <= 1.2 && Math.abs(yT - pyT) <= 1.2) {
                             labelText = `DN ${Math.round(prH)}`; // oznacz jako rura
                             isPipe = true;

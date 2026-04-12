@@ -423,14 +423,16 @@ const AppZlecenia = (() => {
         if (przejscia.length === 0) return '';
         const rzDna = parseFloat(po.rzednaDna) || 0;
 
-        const size = 240;
+        const size = 320;
         const center = size / 2;
         const radius = 60;
 
-        let svg = `<svg viewBox="0 0 ${size} ${size}" width="180" height="180" style="background:transparent; overflow:visible;">`;
+        let svg = `<svg viewBox="0 0 ${size} ${size}" width="200" height="200" style="background:transparent; overflow:visible;">`;
         svg += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`;
         svg += `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`;
         svg += `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`;
+
+        const labels = [];
 
         przejscia.forEach((p, i) => {
             const angle = parseFloat(p.angle) || 0;
@@ -441,13 +443,19 @@ const AppZlecenia = (() => {
 
             svg += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`;
 
-            const labelRadius = radius + 11;
+            const labelRadius = radius + 20;
             const lx = center - labelRadius * Math.sin(rad);
             const ly = center + labelRadius * Math.cos(rad);
 
             let anchor = 'middle';
-            if (lx < center - 8) anchor = 'end';
-            if (lx > center + 8) anchor = 'start';
+            let offsetX = 0;
+            if (lx < center - 15) {
+                anchor = 'end';
+                offsetX = -2;
+            } else if (lx > center + 15) {
+                anchor = 'start';
+                offsetX = 2;
+            }
 
             const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
             const hMm = Math.round((pel - rzDna) * 1000);
@@ -455,9 +463,45 @@ const AppZlecenia = (() => {
 
             const rodzaj = (p.productCategory || (isWylot ? 'WYLOT' : 'WLOT')).toUpperCase();
 
-            svg += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#000">`;
-            svg += `<tspan x="${lx}" dy="0" fill="#000">${i}. ${rodzaj}</tspan>`;
-            svg += `<tspan x="${lx}" dy="1.15em" font-size="10" font-weight="normal" fill="#444">${angle}°${hText}</tspan>`;
+            labels.push({
+                origX: lx, origY: ly, lx: lx, ly: ly,
+                anchor: anchor,
+                offsetX: offsetX,
+                isRight: (lx >= center),
+                text1: `${i}. ${rodzaj}`,
+                text2: `${angle}°${hText}`
+            });
+        });
+
+        // Anti-overlap pass (vertical sorting/pushing)
+        let leftLabels = labels.filter(l => !l.isRight).sort((a,b) => a.ly - b.ly);
+        let rightLabels = labels.filter(l => l.isRight).sort((a,b) => a.ly - b.ly);
+        
+        const MIN_DY = 28;
+        function spread(arr) {
+            for(let loops = 0; loops < 8; loops++) {
+                for(let i = 0; i < arr.length - 1; i++) {
+                    let diff = arr[i+1].ly - arr[i].ly;
+                    if(diff < MIN_DY) {
+                        let push = (MIN_DY - diff) / 2;
+                        arr[i].ly -= push;
+                        arr[i+1].ly += push;
+                    }
+                }
+            }
+        }
+        spread(leftLabels);
+        spread(rightLabels);
+
+        labels.forEach(l => {
+            if (Math.abs(l.origY - l.ly) > 2) {
+                // Skrócona linia przerywana aby nie wchodziła pod tekst
+                let lineDist = (l.ly > l.origY) ? -8 : 8; 
+                svg += `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`;
+            }
+            svg += `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#000">`;
+            svg += `<tspan x="${l.lx + l.offsetX}" dy="0" fill="#000">${l.text1}</tspan>`;
+            svg += `<tspan x="${l.lx + l.offsetX}" dy="1.15em" font-size="10" font-weight="normal" fill="#444">${l.text2}</tspan>`;
             svg += `</text>`;
         });
 

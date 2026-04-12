@@ -55,20 +55,20 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         throw new Error('Oferta studni nie znaleziona');
     }
 
-    // Parse offer data
+    // Parsowanie danych oferty
     let offerData: any = {};
     try {
         offerData = offer.data ? JSON.parse(offer.data) : {};
     } catch (e) {
-        logger.warn('PdfStudnie', 'Failed to parse offer data', e);
+        logger.warn('PdfStudnie', 'Nie udało się sparsować danych oferty', e);
     }
 
-    // wellsExport zawiera studnie z obliczonymi cenami (zapisane przez frontend)
+    // wellsExport zawiera studnie z obliczonymi cenami (zapisane przez interfejs użytkownika)
     let wells: any[] = [];
     if (offerData.wellsExport && Array.isArray(offerData.wellsExport)) {
         wells = offerData.wellsExport;
     } else if (offerData.wells && Array.isArray(offerData.wells)) {
-        // Fallback: użyj surowych wells (bez cen)
+        // Opcja zapasowa: użyj surowych danych studni (bez cen)
         wells = offerData.wells;
     }
 
@@ -79,7 +79,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         logger.debug('PdfStudnie', 'Przykładowa studnia', wells[0]);
     }
 
-    // Oblicz transport z offer.data
+    // Oblicz transport z danych oferty (offer.data)
     const transportKm = offerData.transportKm || 0;
     const transportRate = offerData.transportRate || 0;
     const totalWeight = offerData.totalWeight || 0;
@@ -89,7 +89,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         totalTransportCost = totalTransports * transportKm * transportRate;
     }
 
-    // Przygotuj items dla szablonu - grupowanie po DN
+    // Przygotuj elementy (items) dla szablonu - grupowanie po średnicy DN
     const itemsByDN: Record<string, any[]> = {};
     let grandTotal = 0;
 
@@ -110,7 +110,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         });
     });
 
-    // Spłaszcz items dla szablonu
+    // Spłaszcz elementy (items) dla szablonu
     const items: any[] = [];
     for (const [_dn, dnItems] of Object.entries(itemsByDN)) {
         items.push(...dnItems);
@@ -122,7 +122,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
         : null;
 
-    // Pobierz dane autora i opiekuna z bazy
+    // Pobierz dane autora i opiekuna handlowego z bazy danych (users)
     const { authorUser, guardianUser } = await lookupOfferUsers(offerData, offer.userId);
 
     const html = await generateStudnieHTML({
@@ -468,7 +468,7 @@ export async function lookupOfferUsers(
                     phone: u.phone || ''
                 };
         } catch (e) {
-            logger.warn('PdfUsers', 'Guardian lookup failed', e);
+            logger.warn('PdfUsers', 'Nie udało się wyszukać opiekuna (guardian)', e);
         }
     }
 
@@ -484,7 +484,7 @@ export async function lookupOfferUsers(
                     phone: u.phone || ''
                 };
         } catch (e) {
-            logger.warn('PdfUsers', 'Author lookup failed', e);
+            logger.warn('PdfUsers', 'Nie udało się wyszukać autora', e);
         }
     } else if (authorId && authorId === guardianId) {
         // Jeżeli autor = opiekun, nie duplikuj
@@ -548,11 +548,11 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
 
     const validityString = data.validity || '30 dni';
 
-    // Load template
+    // Załaduj szablon
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'oferta_studnie.html');
     const template = fs.readFileSync(templatePath, 'utf-8');
 
-    // Load header and footer images as base64 data URIs
+    // Załaduj obrazy nagłówka i stopki jako URI danych base64
     const naglowekPath = path.join(process.cwd(), '1 Pliki przykładowe', 'naglowek.png');
     const stopkaPath = path.join(process.cwd(), '1 Pliki przykładowe', 'stopka.png');
     let naglowekBase64 = '';
@@ -561,16 +561,16 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         const naglowekBuf = fs.readFileSync(naglowekPath);
         naglowekBase64 = `data:image/png;base64,${naglowekBuf.toString('base64')}`;
     } catch (e) {
-        logger.warn('PdfAssets', 'Failed to load naglowek.png', e);
+        logger.warn('PdfAssets', 'Nie udało się załadować naglowek.png', e);
     }
     try {
         const stopkaBuf = fs.readFileSync(stopkaPath);
         stopkaBase64 = `data:image/png;base64,${stopkaBuf.toString('base64')}`;
     } catch (e) {
-        logger.warn('PdfAssets', 'Failed to load stopka.png', e);
+        logger.warn('PdfAssets', 'Nie udało się załadować stopka.png', e);
     }
 
-    // Build client data
+    // Budowanie danych klienta
     const daneKlienta = `
     <div><strong>${data.clientName}</strong></div>
     ${data.clientAddress ? `<div>${data.clientAddress}</div>` : ''}
@@ -578,13 +578,13 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     ${data.clientPhone ? `<div>Kontakt: ${data.clientPhone}</div>` : ''}
   `.trim();
 
-    // Build investment data
+    // Budowanie danych inwestycji
     const daneInwestycji = `
     ${data.investName ? `<div><strong>Budowa:</strong> ${data.investName}</div>` : '<div>—</div>'}
     ${data.investAddress ? `<div>Adres: ${data.investAddress}</div>` : ''}
   `.trim();
 
-    // Group items by DN
+    // Grupowanie elementów według średnicy DN
     const itemsByDN: Record<string, typeof data.items> = {};
     for (const item of data.items) {
         const dn = item.DN || item.dodatkowe_info || 'Inne';
@@ -592,7 +592,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         itemsByDN[dn].push(item);
     }
 
-    // Build tables per DN - matching frontend buildDiameterTableHtml format
+    // Buduj tabele dla każdej średnicy DN - zgodnie z formatem buildDiameterTableHtml z frontendu
     let tabeleDN = '';
     let grandTotal = 0;
     let globalLp = 1;
@@ -669,7 +669,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         }
     }
 
-    // Build summary - matching frontend buildOfferSummaryHtml format
+    // Budowanie podsumowania - zgodne z formatem frontend offerPrintManager.js → buildOfferSummaryHtml()
 
     let summaryRows = '';
     for (const s of summariesForTotal) {
@@ -694,7 +694,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     </div>
   `;
 
-    // Build notes section
+    // Budowanie sekcji uwag
     const sekcjaUwagi = data.notes
         ? `
     <div class="notes-section">
@@ -703,13 +703,13 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
   `
         : '';
 
-    // Build contact data section — author + guardian
+    // Budowanie sekcji danych kontaktowych — autor + opiekun
     const daneKontaktowe = buildContactSectionHTML(
         data.authorUser || null,
         data.guardianUser || null
     );
 
-    // Replace placeholders - use base64 images for header/footer
+    // Zastąp symbole zastępcze (placeholders) - użyj obrazów base64 dla nagłówka/stopki
     let html = template;
     html = html.replace(/\{\{NR_OFERTY\}\}/g, data.offerNumber);
     html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDate(data.createdAt));
@@ -720,10 +720,10 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     html = html.replace(/\{\{PODSUMOWANIE\}\}/g, podsumowanie);
     html = html.replace(/\{\{SEKCJA_UWAGI\}\}/g, sekcjaUwagi);
     html = html.replace(/\{\{DANE_KONTAKTOWE\}\}/g, daneKontaktowe);
-    // Replace {{BASE_URL}} with actual base64 images
+    // Zastąp {{BASE_URL}} rzeczywistymi obrazami base64
     html = html.replace(/\{\{BASE_URL\}\}\/templates\/naglowek\.png/g, naglowekBase64);
     html = html.replace(/\{\{BASE_URL\}\}\/templates\/stopka\.png/g, stopkaBase64);
-    // Fallback: remove any remaining {{BASE_URL}} placeholders
+    // Fallback: usuń pozostałe symbole zastępcze {{BASE_URL}}
     html = html.replace(/\{\{BASE_URL\}\}/g, '');
 
     return html;

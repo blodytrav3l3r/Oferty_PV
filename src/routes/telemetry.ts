@@ -42,7 +42,7 @@ router.post('/override', requireAuth, (req, res) => {
     }
 });
 
-// GET /api/telemetry/logs (Admin only)
+// GET /api/telemetry/logs (Tylko administrator)
 router.get('/logs', requireAuth, (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user?.role !== 'admin') {
@@ -55,7 +55,7 @@ router.get('/logs', requireAuth, (req, res) => {
             take: 100
         })
         .then((logs) => {
-            // Deserialize JSON for admin view
+            // Deserializacja JSON dla widoku administratora
             logs.forEach((l: any) => {
                 try {
                     l.original_auto_config = JSON.parse(l.original_auto_config);

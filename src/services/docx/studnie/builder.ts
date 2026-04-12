@@ -1,7 +1,7 @@
 /**
- * StudnieDocx — Document Builder
+ * StudnieDocx — Budowniczy dokumentów (Document Builder)
  *
- * Assembles the complete DOCX Document object from individual sections.
+ * Składa kompletny obiekt Document DOCX z poszczególnych sekcji.
  */
 
 import { Document, Paragraph, Table } from 'docx';
@@ -21,7 +21,7 @@ import { buildWellTables } from './tables';
 import { buildStaticTerms } from './content';
 
 /**
- * Build the complete studnie offer Document from parsed data
+ * Buduje kompletny obiekt Document oferty studni na podstawie sparsowanych danych
  */
 export function buildStudnieDocument(
     offer: any,

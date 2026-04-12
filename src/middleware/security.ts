@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
+/**
+ * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
+ */
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
     if (process.env.NODE_ENV === 'production' && !(req as any).secure) {
         res.redirect('https://' + req.headers.host + req.url);
@@ -8,6 +11,9 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
     next();
 }
 
+/**
+ * Ustawia nagłówki bezpieczeństwa HTTP.
+ */
 export function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');

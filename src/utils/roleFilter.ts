@@ -1,4 +1,4 @@
-// Removed Prisma import
+// Usunięto import Prisma
 import { User } from '../helpers';
 
 /**
@@ -9,10 +9,10 @@ import { User } from '../helpers';
  * - domyślnie ('user') widzi wyłącznie własne wpisy
  */
 export function buildRoleWhereClause(user: User) {
-    // Note: while specifically typed above to avoid "any", most Prisma where inputs
-    // are structurally compatible here for the unified userId check.
+    // Uwaga: mimo sprecyzowanego typowania powyżej, większość wejść 'where' w Prisma
+    // jest strukturalnie kompatybilna dla zunifikowanego sprawdzenia userId.
     if (user.role === 'admin') {
-        return undefined; // No filter = all records
+        return undefined; // Brak filtra = wszystkie rekordy
     }
 
     if (user.role === 'pro') {

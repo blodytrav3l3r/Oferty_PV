@@ -210,7 +210,7 @@ router.post('/', requireAuth, async (req, res) => {
 
         res.json({ ok: true, id: docId });
     } catch (e: any) {
-        logger.error('Production', 'POST error', e.message);
+        logger.error('Production', 'Błąd POST', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -267,7 +267,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
         logAudit('production_order', docId, existing.userId || '', 'delete', null, oldData);
 
-        // Recycle the production order number
+        // Recykling numeru zlecenia produkcyjnego (recykle)
         const prodNum = (oldData.productionOrderNumber as string) || '';
         if (prodNum) {
             const parts = prodNum.split('/');

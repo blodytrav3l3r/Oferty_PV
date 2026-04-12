@@ -1,3 +1,6 @@
+/**
+ * Interfejs reprezentujący dokument użytkownika z bazy danych
+ */
 export interface UserDoc {
     id: string;
     username: string;
@@ -26,6 +29,9 @@ export interface User {
     subUsers: string[];
 }
 
+/**
+ * Mapuje dokument użytkownika na obiekt użytkownika z sesji
+ */
 export function getUserObject(doc: UserDoc): User {
     let subUsers: string[] = [];
     try {
@@ -48,6 +54,9 @@ export function getUserObject(doc: UserDoc): User {
     };
 }
 
+/**
+ * Filtruje wiersze (np. oferty, klientów) na podstawie roli i uprawnień użytkownika
+ */
 export function filterRowsByRole(docs: UserDoc[], user: User): UserDoc[] {
     if (user.role === 'admin') {
         return docs;
@@ -62,6 +71,9 @@ export function filterRowsByRole(docs: UserDoc[], user: User): UserDoc[] {
     return docs.filter((d) => d.id === user.id);
 }
 
+/**
+ * Bezpiecznie parsuje pole JSON z bazy danych
+ */
 export function parseJsonField<T>(raw: string | null | undefined, fallback: T): T {
     if (!raw) return fallback;
     try {

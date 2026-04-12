@@ -119,7 +119,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
  * Zapewnia istnienie admina podczas pierwszego uruchomienia
  */
 export async function ensureAdminExists(): Promise<void> {
-    logger.info('Auth', 'Checking for admin user...');
+    logger.info('Auth', 'Sprawdzanie użytkownika administratora...');
     try {
         const admin = await prisma.users.findUnique({
             where: { username: 'admin' }
@@ -137,9 +137,9 @@ export async function ensureAdminExists(): Promise<void> {
                     lastName: 'Admin'
                 }
             });
-            logger.info('Auth', 'Default admin created.');
+            logger.info('Auth', 'Domyślny administrator został utworzony.');
         }
     } catch (e: any) {
-        logger.error('Auth', 'ensureAdminExists failed', e.message);
+        logger.error('Auth', 'Błąd ensureAdminExists', e.message);
     }
 }

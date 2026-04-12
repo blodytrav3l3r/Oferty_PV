@@ -70,12 +70,12 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             }
         });
     } catch (e: any) {
-        logger.error('Auth', 'Login error', e.message);
+        logger.error('Auth', 'Błąd logowania', e.message);
         res.status(500).json({ error: 'Błąd serwera bazy danych' });
     }
 });
 
-// POST /api/auth/register (admin only)
+// POST /api/auth/register (tylko administrator)
 router.post(
     '/register',
     requireAuth,

@@ -108,15 +108,21 @@ class PVSalesUI {
 
     async loadLocalOffers() {
         const listDiv = document.getElementById('pv-local-offers-list');
-        if (!listDiv) return;
+        if (!listDiv) {
+            console.warn('[PVSalesUI] Nie znaleziono elementu listy ofert (id: pv-local-offers-list)');
+            return;
+        }
 
+        console.log('[PVSalesUI] loadLocalOffers: Rozpoczęcie pobierania...');
         try {
             // Zawsze najpierw pobierzmy najświeższą mapę zamówień (omijanie cache'u)
+            console.log('[PVSalesUI] loadLocalOffers: Pobieranie mapy zamówień...');
             await this.loadOrdersMap();
 
             // Pobieramy oferty przez StorageService
-
+            console.log('[PVSalesUI] loadLocalOffers: Wywołanie storageService.getOffers()...');
             const docs = await storageService.getOffers();
+            console.log(`[PVSalesUI] loadLocalOffers: Pobrano ${docs.length} dokumentów.`);
 
             if (docs.length === 0) {
                 listDiv.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Nie masz jeszcze żadnych zapisanych ofert.</div>`;
@@ -124,10 +130,16 @@ class PVSalesUI {
             }
 
             this.allLocalOffers = docs;
+            console.log('[PVSalesUI] loadLocalOffers: Filtrowanie i renderowanie...');
             this.filterLocalOffers(); // Używa zintegrowanej logiki filtrowania z uwzględnieniem wyszukiwarki i filtrów statusu
+            console.log('[PVSalesUI] loadLocalOffers: Gotowe.');
         } catch (error) {
             console.error('[PVSalesUI] Błąd pobierania ofert:', error);
-            listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd pobierania ofert z serwera.</div>`;
+            listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">
+                <strong>Błąd pobierania ofert:</strong><br/>
+                <span style="font-size:0.85rem; opacity:0.8;">${error.message || 'Wystąpił nieoczekiwany błąd sieciowy'}</span><br/>
+                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.location.reload()">Odśwież stronę</button>
+            </div>`;
         }
     }
 

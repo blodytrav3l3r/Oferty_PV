@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 
 const router = express.Router();
 
-/* ===== EXPORT ENDPOINTS ===== */
+/* ===== PUNKTY KOŃCOWE EKSPORTU (EXPORT) ===== */
 
 // GET /api/offers-rury/:id/export-pdf
 router.get('/:id/export-pdf', requireAuth, async (req, res) => {
@@ -17,7 +17,7 @@ router.get('/:id/export-pdf', requireAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${id}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: any) {
-        logger.error('Export', 'PDF Export Error', e.message);
+        logger.error('Export', 'Błąd eksportu PDF', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -31,7 +31,7 @@ router.get('/studnie/:id/export-pdf', requireAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${id}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: any) {
-        logger.error('Export', 'PDF Export Error', e.message);
+        logger.error('Export', 'Błąd eksportu PDF', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -48,7 +48,7 @@ router.get('/:id/export-docx', requireAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${id}.docx"`);
         res.send(docxBuffer);
     } catch (e: any) {
-        logger.error('Export', 'DOCX Export Error', e.message);
+        logger.error('Export', 'Błąd eksportu DOCX', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -65,7 +65,7 @@ router.get('/studnie/:id/export-docx', requireAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${id}.docx"`);
         res.send(docxBuffer);
     } catch (e: any) {
-        logger.error('Export', 'DOCX Export Error', e.message);
+        logger.error('Export', 'Błąd eksportu DOCX', e.message);
         res.status(500).json({ error: e.message });
     }
 });

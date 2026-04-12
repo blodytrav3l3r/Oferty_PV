@@ -166,7 +166,7 @@ function buildOfferNotesHtml(notes, paymentTerms, validity) {
         html += `<div><strong>Warunki płatności:</strong> ${paymentTerms}</div>`;
     }
     if (validity) {
-        // Now moved to top part, so we skip it here
+        // Przeniesiono do górnej części, więc tutaj pomijamy
         // html += `<div><strong>Data ważności oferty:</strong> ${validity}</div>`;
     }
     html += `</div>`;

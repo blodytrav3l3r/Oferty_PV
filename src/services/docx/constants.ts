@@ -4,14 +4,14 @@ import { BorderStyle } from 'docx';
 
 export const FONT = 'Arial';
 export const COLOR_BODY = '1a1a2e';
-export const COLOR_GRAY_HEADER = '999999'; // .dn-header, table th bg, .grand-total bg
+export const COLOR_GRAY_HEADER = '999999'; // .dn-header, tło th tabeli, tło .grand-total
 export const COLOR_WHITE = 'FFFFFF';
 export const COLOR_LABEL = '888888'; // .info-box h3
-export const COLOR_BORDER = 'CCCCCC'; // table td border
+export const COLOR_BORDER = 'CCCCCC'; // obramowanie td tabeli (border)
 
-export const COLOR_BG_SUMMARY = 'F0F0F0'; // .dn-summary-row, transport table headers
+export const COLOR_BG_SUMMARY = 'F0F0F0'; // .dn-summary-row, nagłówki tabel transportowych
 export const COLOR_BG_NOTE = 'FFFBE6'; // .note-box
-export const COLOR_NOTE_BORDER = 'F5A623'; // .note-box border-left
+export const COLOR_NOTE_BORDER = 'F5A623'; // lewe obramowanie .note-box
 
 export type BorderDef = {
     style: (typeof BorderStyle)[keyof typeof BorderStyle];
@@ -35,11 +35,11 @@ export const CELL_BORDERS: CellBorders = {
     right: BORDER_THIN
 };
 
-// Rozmiary czcionek w half-points (1pt = 2 half-points) — z CSS szablonu
-export const SZ_TITLE = 32; // 16pt — .offer-title
+// Rozmiary czcionek w półpunktach (half-points) (1pt = 2 half-points) — z CSS szablonu
+export const SZ_TITLE = 32; // 16pt — tytuł oferty (.offer-title)
 export const SZ_BODY = 20; // 10pt — body
-export const SZ_TABLE_BODY = 18; // 9pt  — table.offer-table / .conditions
-export const SZ_TABLE_HEADER = 16; // 8pt  — table.offer-table th
+export const SZ_TABLE_BODY = 18; // 9pt  — tabela ofertowa (.offer-table) / warunki (.conditions)
+export const SZ_TABLE_HEADER = 16; // 8pt  — nagłówek tabeli ofertowej (.offer-table th)
 export const SZ_ZWIENCZENIE = 17; // 8.4pt — .zwienczenie-cell
 export const SZ_INFO_BOX = 18; // 9pt  — .info-box
 export const SZ_INFO_LABEL = 16; // 8pt  — .info-box h3

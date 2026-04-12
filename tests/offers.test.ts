@@ -9,20 +9,20 @@ describe('Offers Routes', () => {
         app = express();
         app.use(express.json());
         app.use('/api/offers', offerRoutes);
-        // Note: In real tests, you'd mock the Prisma client
+        // Uwaga: W prawdziwych testach powinieneś zamockować klienta Prisma
     });
 
     describe('GET /api/offers', () => {
-        it('should return offers list', async () => {
+        it('powinien zwrócić listę ofert', async () => {
             const res = await request(app).get('/api/offers');
 
-            // Expect either 200 with data or 401 if auth required
+            // Oczekuj albo 200 z danymi, albo 401 jeśli wymagana autoryzacja
             expect([200, 401]).toContain(res.statusCode);
         });
     });
 
     describe('POST /api/offers', () => {
-        it('should return 400 if required fields are missing', async () => {
+        it('powinien zwrócić 400 jeśli brakuje wymaganych pól', async () => {
             const res = await request(app).post('/api/offers').send({});
 
             expect(res.statusCode).toBeGreaterThanOrEqual(400);

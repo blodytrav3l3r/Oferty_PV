@@ -1,4 +1,4 @@
-// Mock prismaClient BEFORE importing db.ts (which auto-runs cleanupAuditLogs)
+// Mockuj prismaClient PRZED importem db.ts (który automatycznie uruchamia cleanupAuditLogs)
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
@@ -14,7 +14,7 @@ jest.mock('../src/prismaClient', () => ({
 import { computeDiff } from '../src/db';
 
 describe('computeDiff', () => {
-    it('should detect changed fields', () => {
+    it('powinien wykrywać zmienione pola', () => {
         const oldObj = { name: 'Jan', price: 100 };
         const newObj = { name: 'Jan', price: 200 };
         const result = computeDiff(oldObj, newObj);
@@ -24,13 +24,13 @@ describe('computeDiff', () => {
         expect(result!.old).toEqual({ price: 100 });
     });
 
-    it('should return null when objects are identical', () => {
+    it('powinien zwrócić null, gdy obiekty są identyczne', () => {
         const obj = { name: 'Test', value: 42 };
         const result = computeDiff(obj, { ...obj });
         expect(result).toBeNull();
     });
 
-    it('should detect added fields', () => {
+    it('powinien wykrywać dodane pola', () => {
         const oldObj = { name: 'Jan' };
         const newObj = { name: 'Jan', newField: 'added' };
         const result = computeDiff(oldObj, newObj);
@@ -40,7 +40,7 @@ describe('computeDiff', () => {
         expect(result!.old).toEqual({ newField: undefined });
     });
 
-    it('should detect removed fields', () => {
+    it('powinien wykrywać usunięte pola', () => {
         const oldObj = { name: 'Jan', removed: 'value' };
         const newObj = { name: 'Jan' };
         const result = computeDiff(oldObj, newObj);
@@ -50,22 +50,22 @@ describe('computeDiff', () => {
         expect(result!.old).toEqual({ removed: 'value' });
     });
 
-    it('should handle null oldObj', () => {
+    it('powinien obsługiwać null jako oldObj', () => {
         const result = computeDiff(null, { name: 'new' });
         expect(result).toEqual({ changed: { name: 'new' }, old: {} });
     });
 
-    it('should handle null newObj', () => {
+    it('powinien obsługiwać null jako newObj', () => {
         const result = computeDiff({ name: 'old' }, null);
         expect(result).toEqual({ changed: {}, old: { name: 'old' } });
     });
 
-    it('should handle both null', () => {
+    it('powinien obsługiwać oba obiekty jako null', () => {
         const result = computeDiff(null, null);
         expect(result).toEqual({ changed: {}, old: {} });
     });
 
-    it('should detect nested object changes via JSON comparison', () => {
+    it('powinien wykrywać zmiany w zagnieżdżonych obiektach poprzez porównanie JSON', () => {
         const oldObj = { config: { a: 1, b: 2 } };
         const newObj = { config: { a: 1, b: 3 } };
         const result = computeDiff(oldObj, newObj);
@@ -74,14 +74,14 @@ describe('computeDiff', () => {
         expect(result!.changed).toHaveProperty('config');
     });
 
-    it('should treat identical nested objects as unchanged', () => {
+    it('powinien traktować identyczne zagnieżdżone obiekty jako niezmienione', () => {
         const oldObj = { config: { a: 1, b: 2 } };
         const newObj = { config: { a: 1, b: 2 } };
         const result = computeDiff(oldObj, newObj);
         expect(result).toBeNull();
     });
 
-    it('should handle multiple simultaneous changes', () => {
+    it('powinien obsługiwać wiele jednoczesnych zmian', () => {
         const oldObj = { a: 1, b: 'old', c: true };
         const newObj = { a: 2, b: 'new', c: false };
         const result = computeDiff(oldObj, newObj);
@@ -90,7 +90,7 @@ describe('computeDiff', () => {
         expect(Object.keys(result!.changed)).toHaveLength(3);
     });
 
-    it('should handle empty objects', () => {
+    it('powinien obsługiwać puste obiekty', () => {
         const result = computeDiff({}, {});
         expect(result).toBeNull();
     });

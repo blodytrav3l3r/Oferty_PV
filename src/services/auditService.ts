@@ -1,8 +1,8 @@
 /**
- * AuditService — Centralized Audit Logging
+ * AuditService — Centralizowane logowanie audytu
  *
- * Provides functions for logging entity changes with diff computation,
- * debouncing repeated updates, and cleaning up old audit entries.
+ * Dostarcza funkcje do logowania zmian encji wraz z obliczaniem różnic (diff),
+ * debouncingiem powtarzających się aktualizacji oraz czyszczeniem starych wpisów.
  */
 
 import prisma from '../prismaClient';
@@ -11,11 +11,11 @@ import { logger } from '../utils/logger';
 const DEBOUNCE_SECONDS = 30;
 const MAX_AUDIT_AGE_DAYS = 180;
 
-// ─── Diff Computation ───────────────────────────────────────────────
+// ─── Obliczanie różnic (Diff Computation) ───────────────────────────
 
 /**
- * Compute shallow diff between two objects (1st-level keys only).
- * Returns { changed, old } with only the modified fields, or null if identical.
+ * Oblicza płytką różnicę między dwoma obiektami (tylko klucze pierwszego poziomu).
+ * Zwraca { changed, old } tylko ze zmodyfikowanymi polami lub null, jeśli są identyczne.
  */
 export function computeDiff(
     oldObj: Record<string, unknown> | null,
@@ -41,19 +41,19 @@ export function computeDiff(
     return { changed, old };
 }
 
-// ─── Audit Logging ──────────────────────────────────────────────────
+// ─── Logowanie Audytu (Audit Logging) ───────────────────────────────
 
 /**
- * Generate a unique audit log ID
+ * Generuje unikalny identyfikator logu audytu.
  */
 function generateAuditId(): string {
     return Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
 }
 
 /**
- * Log an audit entry for entity changes.
- * For 'update' actions: computes diff and debounces repeated changes within 30s.
- * For 'create'/'delete' actions: stores full data snapshot.
+ * Loguje wpis audytu dla zmian encji.
+ * Dla akcji 'update': oblicza różnicę (diff) i stosuje debouncing (pomija zmiany w ciągu 30s).
+ * Dla akcji 'create'/'delete': przechowuje pełną migawkę danych.
  */
 export async function logAudit(
     entityType: string,
@@ -71,7 +71,7 @@ export async function logAudit(
             return;
         }
 
-        // Dla 'create' / 'delete': pełny snapshot
+        // Dla 'create' / 'delete': pełna migawka (snapshot)
         await prisma.audit_logs.create({
             data: {
                 id: generateAuditId(),
@@ -90,8 +90,8 @@ export async function logAudit(
 }
 
 /**
- * Log an update with diff computation and debouncing.
- * If an update for the same entity was logged within DEBOUNCE_SECONDS, overwrite it.
+ * Loguje aktualizację z obliczeniem różnic i debouncingiem.
+ * Jeśli aktualizacja dla tej samej encji została zalogowana w ciągu DEBOUNCE_SECONDS, nadpisuje ją.
  */
 async function logUpdateWithDebounce(
     entityType: string,
@@ -144,11 +144,11 @@ async function logUpdateWithDebounce(
     });
 }
 
-// ─── Retention Cleanup ──────────────────────────────────────────────
+// ─── Czyszczenie logów (Retention Cleanup) ──────────────────────────
 
 /**
- * Delete audit logs older than MAX_AUDIT_AGE_DAYS.
- * Should be called once at application startup.
+ * Usuwa logi audytu starsze niż MAX_AUDIT_AGE_DAYS.
+ * Powinno być wywołane raz przy starcie aplikacji.
  */
 export async function cleanupAuditLogs(): Promise<void> {
     try {
@@ -171,5 +171,5 @@ export async function cleanupAuditLogs(): Promise<void> {
     }
 }
 
-// Run cleanup on module load
+// Uruchom czyszczenie przy ładowaniu modułu
 cleanupAuditLogs();

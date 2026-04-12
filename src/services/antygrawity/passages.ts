@@ -1,8 +1,8 @@
 /**
- * Antygrawity — Passage Placement Logic
+ * Antygrawity — Logika rozmieszczania przejść (Passages)
  *
- * Handles placing pipe passages (przejścia) within manhole components,
- * checking clearances (zapasy), and inserting OT rings when needed.
+ * Obsługuje umieszczanie przejść rur w elementach studni,
+ * sprawdza zapasy oraz wstawia kręgi wiercone OT, gdy jest to wymagane.
  */
 
 import { WellComponent, PassageConfig } from '../../types';
@@ -16,8 +16,8 @@ export interface PassagePlacementResult {
 }
 
 /**
- * Place passages in components with proper clearances (zapasy).
- * Validates that passages don't land on joints and have sufficient clearance.
+ * Rozmieszcza przejścia w elementach z odpowiednimi zapasami.
+ * Sprawdza, czy przejścia nie wypadały na połączeniach i czy mają wystarczający zapas.
  */
 export async function placePrzejscia(
     components: WellComponent[],
@@ -41,7 +41,7 @@ export async function placePrzejscia(
 }
 
 /**
- * Process a single passage and update the result with errors/warnings
+ * Przetwarza pojedyncze przejście i aktualizuje wynik o błędy/ostrzeżenia
  */
 function processPassage(
     components: WellComponent[],
@@ -80,7 +80,7 @@ function processPassage(
 }
 
 /**
- * Find which component a passage falls within based on height from bottom
+ * Znajduje, w którym elemencie znajduje się przejście na podstawie wysokości od dna
  */
 function findTargetComponent(
     components: WellComponent[],
@@ -105,7 +105,7 @@ function findTargetComponent(
 }
 
 /**
- * Check if passage lands on a component joint (niedozwolone)
+ * Sprawdza, czy przejście wypada na połączeniu elementów (niedozwolone)
  */
 function validateJointClearance(
     targetComponent: WellComponent,
@@ -126,7 +126,7 @@ function validateJointClearance(
 }
 
 /**
- * Check if passage in dennica requires an OT ring
+ * Sprawdza, czy przejście w dennicy wymaga kręgu wierconego OT
  */
 function checkDennicaOtRequirement(
     components: WellComponent[],
@@ -145,7 +145,7 @@ function checkDennicaOtRequirement(
 }
 
 /**
- * Validate bottom and top clearances against recommended and minimum values
+ * Waliduje dolne i górne zapasy względem wartości zalecanych i minimalnych
  */
 function validateClearances(
     targetComponent: WellComponent,
@@ -180,7 +180,7 @@ function validateClearances(
 }
 
 /**
- * Validate a single clearance value against recommended and minimum thresholds
+ * Waliduje pojedynczą wartość zapasu względem progów zalecanych i minimalnych
  */
 function validateSingleClearance(
     actual: number,
@@ -205,7 +205,7 @@ function validateSingleClearance(
 }
 
 /**
- * Insert OT ring at specified position, shifting subsequent components
+ * Wstawia krąg OT na określonej pozycji, przesuwając kolejne elementy
  */
 export function insertOtRing(
     components: WellComponent[],

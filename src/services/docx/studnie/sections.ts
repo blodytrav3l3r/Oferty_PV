@@ -1,8 +1,8 @@
 /**
- * StudnieDocx — Document Sections
+ * StudnieDocx — Sekcje dokumentu
  *
- * Builds individual DOCX sections: title, dates, client/invest info,
- * notes, payment terms, and contact sections.
+ * Buduje poszczególne sekcje DOCX: tytuł, daty, informacje o kliencie/inwestycji,
+ * uwagi, warunki płatności oraz sekcje kontaktowe.
  */
 
 import {
@@ -37,7 +37,7 @@ import {
 } from '../constants';
 import { fmtCurrency, textCell } from '../helpers';
 
-// ─── Title ──────────────────────────────────────────────────────────
+// ─── Tytuł (Title) ──────────────────────────────────────────────────
 
 export function buildTitleParagraph(offerNumber: string): Paragraph {
     return new Paragraph({
@@ -55,7 +55,7 @@ export function buildTitleParagraph(offerNumber: string): Paragraph {
     });
 }
 
-// ─── Dates ──────────────────────────────────────────────────────────
+// ─── Daty (Dates) ───────────────────────────────────────────────────
 
 export function buildDateParagraphs(offerDate: string, validity: string): Paragraph[] {
     return [
@@ -91,7 +91,7 @@ export function buildDateParagraphs(offerDate: string, validity: string): Paragr
     ];
 }
 
-// ─── Notes ──────────────────────────────────────────────────────────
+// ─── Uwagi (Notes) ──────────────────────────────────────────────────
 
 export function buildNotesParagraph(notes: string): Paragraph {
     return new Paragraph({
@@ -105,7 +105,7 @@ export function buildNotesParagraph(notes: string): Paragraph {
     });
 }
 
-// ─── Payment Terms ──────────────────────────────────────────────────
+// ─── Warunki płatności (Payment Terms) ──────────────────────────────
 
 export function buildPaymentTermsParagraph(paymentTerms: string): Paragraph {
     return new Paragraph({
@@ -122,7 +122,7 @@ export function buildPaymentTermsParagraph(paymentTerms: string): Paragraph {
     });
 }
 
-// ─── Client + Investment Info Grid ──────────────────────────────────
+// ─── Siatka informacji o kliencie i inwestycji ──────────────────────
 
 export function buildClientInvestTable(
     name: string,
@@ -246,7 +246,7 @@ function buildInvestRuns(
     return runs;
 }
 
-// ─── Summary Section ────────────────────────────────────────────────
+// ─── Sekcja podsumowania (Summary Section) ──────────────────────────
 
 export interface DnSummary {
     label: string;
@@ -331,7 +331,7 @@ export function buildSummarySection(
     return result;
 }
 
-// ─── Contact Section ────────────────────────────────────────────────
+// ─── Sekcja kontaktowa (Contact Section) ────────────────────────────
 
 export function buildContactSection(
     authorUser: UserContactInfo | null,

@@ -1,4 +1,4 @@
-/* ===== WIZARD ===== */
+/* ===== KREATOR ===== */
 function goToWizardStep(step) {
     currentWizardStep = step;
     document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
@@ -29,23 +29,23 @@ function wizardPrev() {
 function wizardNavStep(targetStep) {
     if (targetStep === currentWizardStep || targetStep < 1 || targetStep > 3) return;
 
-    // Allow backward navigation freely
+    // Pozwól na dowolną nawigację wstecz
     if (targetStep < currentWizardStep) {
         goToWizardStep(targetStep);
         return;
     }
 
-    // Forward navigation
+    // Nawigacja w przód
     if (targetStep === 2) {
         goToWizardStep(2);
     } else if (targetStep === 3) {
-        // Always validate before allowing navigation to step 3
+        // Zawsze waliduj przed zezwoleniem na nawigację do kroku 3
         if (!validateWizardStep2()) {
             showToast(
                 'Wybierz opcję w każdej grupie parametrów przed przejściem do konfiguracji',
                 'error'
             );
-            // If user tried to jump from step 1 directly to 3, take them to step 2 instead
+            // Jeśli użytkownik próbował przeskoczyć z kroku 1 bezpośrednio do 3, zabierz go zamiast tego do kroku 2
             if (currentWizardStep === 1) goToWizardStep(2);
             return;
         }
@@ -63,7 +63,7 @@ function getActiveTileValue(paramName) {
 function validateWizardStep2() {
     const allConfirmed = WIZARD_REQUIRED_PARAMS.every((p) => wizardConfirmedParams.has(p));
 
-    // Read painting values from DOM tiles (works even without a well)
+    // Odczytaj wartości malowania z kafelków DOM (działa nawet bez studni)
     const malowanieWVal = getActiveTileValue('malowanieW');
     const malowanieZVal = getActiveTileValue('malowanieZ');
 
@@ -85,7 +85,7 @@ function validateWizardStep2() {
         malCenaZValid = !!(mcZ && mcZ.value.trim() !== '' && !isNaN(parseFloat(mcZ.value)));
     }
 
-    // Show/hide powłoka name fields based on current tile selection
+    // Pokaż/ukryj pola nazwy powłoki na podstawie aktualnego wyboru kafelka
     const powlokaWGroup = document.getElementById('powloka-name-w-group');
     if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
     const malCenaWGroup = document.getElementById('malowanie-wew-cena-group');
@@ -96,7 +96,7 @@ function validateWizardStep2() {
     const malCenaZGroup = document.getElementById('malowanie-zew-cena-group');
     if (malCenaZGroup) malCenaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
 
-    // Clear hidden fields
+    // Wyczyść ukryte pola
     if (malowanieWVal === 'brak') {
         const pwWInput = document.getElementById('powloka-name-w');
         if (pwWInput) pwWInput.value = '';
@@ -116,7 +116,7 @@ function validateWizardStep2() {
     const nextBtn = document.getElementById('wizard-next-step2');
     if (nextBtn) nextBtn.disabled = !isFullyValid;
 
-    // Update visual state of each param group wrapper
+    // Zaktualizuj stan wizualny owijki każdej grupy parametrów
     document.querySelectorAll('.wizard-param-group').forEach((wrapper) => {
         const param = wrapper.dataset.wizardParam;
         if (!param) return;
@@ -182,24 +182,58 @@ function skipWizardToStep3() {
     goToWizardStep(3);
 }
 
-/* ===== STORAGE (REST API) ===== */
+/* ===== PRZECHOWYWANIE (REST API) ===== */
+
+/**
+ * Lazy-loading danych domyślnych studni z pliku JSON.
+ * Zastępuje globalną stałą DEFAULT_PRODUCTS_STUDNIE z pricelist_studnie.js.
+ * Cache'uje dane po pierwszym załadowaniu.
+ */
+let _defaultProductsStudnieCache = null;
+
+async function getDefaultProductsStudnie() {
+    // 1. Sprawdź cache
+    if (_defaultProductsStudnieCache) {
+        return _defaultProductsStudnieCache;
+    }
+    // 2. Załaduj z JSON
+    try {
+        const res = await fetch('/data/products_studnie.json');
+        if (res.ok) {
+            _defaultProductsStudnieCache = await res.json();
+            console.log(`[Studnie] Załadowano ${_defaultProductsStudnieCache.length} domyślnych produktów z JSON`);
+            return _defaultProductsStudnieCache;
+        }
+    } catch (e) {
+        console.warn('[Studnie] Nie udało się załadować products_studnie.json:', e);
+    }
+    // 3. Fallback — stara globalna zmienna (kompatybilność wsteczna)
+    if (typeof DEFAULT_PRODUCTS_STUDNIE !== 'undefined') {
+        _defaultProductsStudnieCache = DEFAULT_PRODUCTS_STUDNIE;
+        return _defaultProductsStudnieCache;
+    }
+    console.error('[Studnie] Brak danych domyślnych produktów!');
+    return [];
+}
+
 async function loadStudnieProducts() {
+    const defaultProducts = await getDefaultProductsStudnie();
+
     function migrateProducts(arr) {
         arr.forEach((p) => {
             if (p.formaStandardowa == null) p.formaStandardowa = 1;
             if (p.formaStandardowaKLB == null) p.formaStandardowaKLB = 1;
 
-            // Fix corrupted categories from previous backend bug
+            // Napraw uszkodzone kategorie z poprzedniego błędu backendu
             if (p.category === 'studnie' || !p.category) {
-                const def = DEFAULT_PRODUCTS_STUDNIE.find((dp) => dp.id === p.id);
+                const def = defaultProducts.find((dp) => dp.id === p.id);
                 if (def) p.category = def.category;
             }
 
-            // Fix DN2500 seals that were incorrectly saved with dn=2000
+            // Napraw uszczelki DN2500, które zostały błędnie zapisane z dn=2000
             if (p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000) {
                 p.dn = 2500;
             }
-            // Usunięto: renamePłyty(p);
         });
         return arr;
     }
@@ -208,7 +242,7 @@ async function loadStudnieProducts() {
         const json = await res.json();
         let saved = json.data;
         if (!saved || saved.length === 0) {
-            const data = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS_STUDNIE));
+            const data = JSON.parse(JSON.stringify(defaultProducts));
             migrateProducts(data);
             await fetch('/api/products-studnie', {
                 method: 'PUT',
@@ -217,18 +251,18 @@ async function loadStudnieProducts() {
             });
             return data;
         }
-        // Detect DN2500 seal bug before migration fixes it in-place
+        // Wykryj błąd uszczelek DN2500 przed naprawą przez migrację
         const hadDn2500Bug = saved.some(
             (p) => p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000
         );
         const migrated = migrateProducts(saved);
-        // Persist migration fixes (e.g. DN2500 seal dn correction) back to API
+        // Utrwal poprawki migracji z powrotem do API
         if (hadDn2500Bug) {
             saveStudnieProducts(migrated).catch(() => {});
         }
         return migrated;
     } catch {
-        const data = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS_STUDNIE));
+        const data = JSON.parse(JSON.stringify(defaultProducts));
         return migrateProducts(data);
     }
 }
@@ -258,7 +292,7 @@ async function saveStudnieProducts(data) {
     }
 }
 
-/* ===== BACKEND STATUS CHECKER ===== */
+/* ===== SPRAWDZANIE STATUSU BACKENDU ===== */
 async function checkBackendStatus() {
     const indicators = [
         document.querySelector('#backend-status-indicator span'),
@@ -293,7 +327,7 @@ async function checkBackendStatus() {
         });
     }
 }
-checkBackendStatus(); // Check immediately on load
-setInterval(checkBackendStatus, 15000); // Check every 15 seconds
+checkBackendStatus(); // Sprawdź natychmiast po załadowaniu
+setInterval(checkBackendStatus, 15000); // Sprawdź co 15 sekund
 
 // DOMContentLoaded

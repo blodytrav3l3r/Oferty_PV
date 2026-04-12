@@ -1,32 +1,32 @@
 /**
- * PricelistService — Shared Pricelist CRUD & Migration Logic
+ * PricelistService — Współdzielona logika CRUD i migracji cenników
  *
- * Provides reusable operations for reading, writing, and migrating
- * JSON-based pricelists stored in the settings table.
- * Used by both products (rury) and productsStudnie routes.
+ * Zapewnia reużywalne operacje do odczytu, zapisu i migracji
+ * cenników opartych na formacie JSON przechowywanych w tabeli settings.
+ * Używane zarówno przez trasy produktów rur (rury), jak i studni (productsStudnie).
  */
 
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
 
 export interface PricelistConfig {
-    /** Settings key for the current pricelist (e.g. 'pricelist_rury') */
+    /** Klucz w tabeli settings dla bieżącego cennika (np. 'pricelist_rury') */
     keyCurrent: string;
-    /** Settings key for default/factory pricelist (e.g. 'pricelist_rury_default') */
+    /** Klucz w tabeli settings dla domyślnego/fabrycznego cennika (np. 'pricelist_rury_default') */
     keyDefault: string;
-    /** Legacy Prisma model name for migration (e.g. 'products_rury_rel') */
+    /** Nazwa starego modelu Prisma dla migracji (np. 'products_rury_rel') */
     legacyTable: string;
-    /** Old default key to migrate from (e.g. 'default_rury') */
+    /** Stary klucz domyślny, z którego należy migrować (np. 'default_rury') */
     legacyDefaultKey: string;
-    /** Human-readable label for logging (e.g. 'rury', 'studnie') */
+    /** Czytelna etykieta dla logowania (np. 'rury', 'studnie') */
     label: string;
 }
 
-// ─── Migration ──────────────────────────────────────────────────────
+// ─── Migracja ──────────────────────────────────────────────────────
 
 /**
- * One-time migration: copy data from legacy relational table to JSON settings.
- * Safe to call multiple times — skips if already migrated.
+ * Jednorazowa migracja: kopiuje dane ze starej tabeli relacyjnej do ustawień JSON.
+ * Bezpieczne przy wielokrotnym wywołaniu — pomija, jeśli już zmigrowano.
  */
 export async function migrateFromLegacyIfNeeded(config: PricelistConfig): Promise<void> {
     await migrateLegacyData(config);
@@ -64,7 +64,7 @@ async function migrateLegacyData(config: PricelistConfig): Promise<void> {
             `Przeniesiono ${products.length} produktów ${config.label} do nowego formatu JSON.`
         );
     } catch (err: any) {
-        logger.error('Migration', `Migracja ${config.label} error`, err.message);
+        logger.error('Migration', `Błąd migracji ${config.label}`, err.message);
     }
 }
 
@@ -90,14 +90,14 @@ async function migrateLegacyDefaults(config: PricelistConfig): Promise<void> {
             `Przeniesiono wartości fabryczne ${config.label} do nowego klucza.`
         );
     } catch (err: any) {
-        logger.error('Migration', `Migracja default_${config.label} error`, err.message);
+        logger.error('Migration', `Błąd migracji default_${config.label}`, err.message);
     }
 }
 
-// ─── CRUD Operations ────────────────────────────────────────────────
+// ─── Operacje CRUD ────────────────────────────────────────────────
 
 /**
- * Read pricelist from settings by key. Returns parsed array or empty array.
+ * Odczytuje cennik z ustawień (settings) po kluczu. Zwraca sparsowaną tablicę lub pustą tablicę.
  */
 export async function readPricelist(key: string): Promise<any[]> {
     const row = await prisma.settings.findUnique({ where: { key } });
@@ -105,7 +105,7 @@ export async function readPricelist(key: string): Promise<any[]> {
 }
 
 /**
- * Write pricelist to settings by key. Creates or updates the setting.
+ * Zapisuje cennik do ustawień (settings) po kluczu. Tworzy lub aktualizuje wpis.
  */
 export async function writePricelist(key: string, data: any[]): Promise<number> {
     const json = JSON.stringify(data);
@@ -113,10 +113,10 @@ export async function writePricelist(key: string, data: any[]): Promise<number> 
     return data.length;
 }
 
-// ─── Internal Helper ────────────────────────────────────────────────
+// ─── Pomocnik wewnętrzny ────────────────────────────────────────────────
 
 /**
- * Upsert a settings row: try update first, create if not exists.
+ * Operacja Upsert dla ustawień: najpierw próbuje aktualizować, tworzy jeśli nie istnieje.
  */
 async function upsertSetting(key: string, value: string): Promise<void> {
     try {

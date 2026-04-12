@@ -69,6 +69,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 /* ── Animated Background ── */
 body.index-page::before {
     content: '';
+    display: block; /* override style.css body::before { display:none } */
     position: absolute;
     top: -50%;
     left: -50%;
@@ -814,140 +815,15 @@ body.index-page::before {
     background: rgba(99, 102, 241, 0.2) !important;
 }
 
-/* ── Dashboard Navigation Header ── */
-.dash-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(10, 14, 26, 0.85);
-    backdrop-filter: blur(16px) saturate(1.2);
-    -webkit-backdrop-filter: blur(16px) saturate(1.2);
-    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
-    padding: 0 1rem;
+/* ── Shared Header Visibility Override (index page) ── */
+/* Header uses shared .header class from style.css.
+   On the index page, it starts hidden and is shown via JS after login. */
+body.index-page .header {
     display: none;
 }
 
-.dash-header.visible {
+body.index-page .header.visible {
     display: block;
-}
-
-.dash-header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1400px;
-    margin: 0 auto;
-    height: 42px;
-}
-
-.dash-header-left {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-}
-
-.dash-nav-logo {
-    font-size: 1.1rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #6366f1, #34d399);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.5px;
-}
-
-.dash-nav-apps {
-    display: flex;
-    gap: 0.5rem;
-    padding-left: 1rem;
-    margin-left: 1rem;
-    border-left: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-.dash-nav-tile {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.3rem 0.7rem;
-    border: 1px solid rgba(99, 102, 241, 0.1);
-    border-radius: 10px;
-    background: rgba(30, 41, 59, 0.5);
-    backdrop-filter: blur(8px);
-    color: #94a3b8;
-    text-decoration: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s;
-    position: relative;
-}
-
-.dash-nav-tile:hover {
-    background: rgba(30, 30, 74, 0.5);
-    border-color: rgba(99, 102, 241, 0.2);
-    color: #f1f5f9;
-    transform: translateY(-1px);
-}
-
-.dash-nav-tile.active {
-    color: #818cf8;
-    background: rgba(99, 102, 241, 0.1);
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-.dash-nav-tile.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    background: #818cf8;
-    border-radius: 1px;
-}
-
-.dash-nav-tile-icon {
-    font-size: 0.95rem;
-}
-
-.dash-header-right {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-}
-
-.dash-header-right .dash-username {
-    color: #94a3b8;
-    font-weight: 500;
-}
-
-.dash-header-right .dash-role {
-    font-size: 0.6rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-right: 0.5rem;
-}
-
-.dash-logout-btn {
-    padding: 0.3rem 0.7rem;
-    border: 1px solid rgba(99, 102, 241, 0.1);
-    border-radius: 8px;
-    background: transparent;
-    color: #64748b;
-    font:
-        500 0.72rem 'Inter',
-        sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.dash-logout-btn:hover {
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* ── Footer ── */

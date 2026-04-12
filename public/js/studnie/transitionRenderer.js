@@ -1,16 +1,16 @@
 /**
  * transitionRenderer.js
  *
- * Unified renderer for transition (przejścia) tiles.
- * Used by both the configurator (autoSelect.js) and the order modal (orderManager.js).
+ * Zunifikowany renderer dla kafelków przejść.
+ * Używany zarówno przez konfigurator (autoSelect.js), jak i okno zamówienia (orderManager.js).
  *
- * This module generates HTML for a single transition row. Both consuming contexts
- * call it with the same data shape (`item`, `globalIndex`, `options`) and get
- * consistent visual output.
+ * Ten moduł generuje HTML dla pojedynczego wiersza przejścia. Oba konteksty wywołują go
+ * z tym samym kształtem danych (`item`, `globalIndex`, `options`) i otrzymują
+ * spójny wynik wizualny.
  */
 
 // ──────────────────────────────────────
-// Helpers
+// Pomocnicy
 // ──────────────────────────────────────
 
 function getFlowVisuals(flowType) {
@@ -37,25 +37,25 @@ function calcGonyAngle(angle) {
 }
 
 // ──────────────────────────────────────
-// Main tile renderer
+// Główny renderer kafelków
 // ──────────────────────────────────────
 
 /**
- * Generates the HTML for a single transition tile row.
+ * Generuje HTML dla pojedynczego wiersza kafelka przejścia.
  *
- * @param {Object}  item         - The transition object from well.przejscia[].
- * @param {number}  globalIndex  - The index of the transition in well.przejscia.
- * @param {Object}  product      - The studnieProducts entry for item.productId.
- * @param {Object}  opts         - Rendering options.
- * @param {number}  opts.heightMm      - Height from element bottom in mm.
- * @param {boolean} opts.showDeleteBtn - Whether to show a delete button (true in configurator).
- * @param {boolean} opts.showEditBtn   - Whether to show an edit button (true in configurator).
- * @param {boolean} opts.showPrice     - Whether to show the price column (true in configurator).
- * @param {string}  opts.spadekKinetaLabel - Label for "Spadek w kinecie" (short version for mirror).
- * @param {string}  opts.spadekMufaLabel   - Label for "Spadek w mufie" (short version for mirror).
- * @param {boolean} opts.enableDragDrop    - Whether to add drag handles (true in configurator).
- * @param {number}  opts.assignedCfgIndex  - Config index for SVG highlight (if available).
- * @returns {string} HTML string.
+ * @param {Object}  item         - Obiekt przejścia z well.przejscia[].
+ * @param {number}  globalIndex  - Indeks przejścia w well.przejscia.
+ * @param {Object}  product      - Wpis z studnieProducts dla item.productId.
+ * @param {Object}  opts         - Opcje renderowania.
+ * @param {number}  opts.heightMm      - Wysokość od dna elementu w mm.
+ * @param {boolean} opts.showDeleteBtn - Czy pokazać przycisk usuwania (true w konfiguratorze).
+ * @param {boolean} opts.showEditBtn   - Czy pokazać przycisk edycji (true w konfiguratorze).
+ * @param {boolean} opts.showPrice     - Czy pokazać kolumnę ceny (true w konfiguratorze).
+ * @param {string}  opts.spadekKinetaLabel - Etykieta dla "Spadek w kinecie".
+ * @param {string}  opts.spadekMufaLabel   - Etykieta dla "Spadek w mufie".
+ * @param {boolean} opts.enableDragDrop    - Czy dodać uchwyty do przeciągania (true w konfiguratorze).
+ * @param {number}  opts.assignedCfgIndex  - Indeks konfiguracji do podświetlenia SVG (jeśli dostępny).
+ * @returns {string} Ciąg HTML.
  */
 function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const przName = product ? product.category : 'Nieznane';
@@ -92,7 +92,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     const dnLabel = typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn;
 
-    // Actions column
+    // Kolumna akcji
     let actionsHTML = '';
     if (showEdit || showDelete) {
         actionsHTML = `<div style="display:flex; align-items:center; gap:0.25rem; padding-left:0.5rem; border-left:1px dashed rgba(255,255,255,0.1);">`;
@@ -105,7 +105,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         actionsHTML += `</div>`;
     }
 
-    // Price column
+    // Kolumna ceny
     const priceHTML = showPrice
         ? `<div style="text-align:right; min-width:60px;">
              <div class="ui-text-muted-sm">Cena</div>
@@ -113,7 +113,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
            </div>`
         : '';
 
-    // Ensure stable ID for QE
+    // Zapewnij stabilny identyfikator dla QE (Quick Edit)
     if (!item.id) item.id = 'prz-legacy-' + globalIndex + '-' + Math.floor(Math.random() * 1000);
 
     return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; height:49px; padding:0 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
@@ -123,7 +123,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-top:-2px;">${flow.label}</span>
       </button>
 
-      <!-- DETAILS -->
+      <!-- SZCZEGÓŁY -->
       <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; white-space:nowrap;">
         <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:100px; overflow:hidden;">
            <div style="display:flex; align-items:center; gap:0.6rem; white-space:nowrap;">
@@ -170,16 +170,16 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 }
 
 // ──────────────────────────────────────
-// Config map builder (shared between configurator and orders)
+// Budowniczy mapy konfiguracji (współdzielony między konf. a zamówieniami)
 // ──────────────────────────────────────
 
 /**
- * Builds a mapping of well config elements to their vertical position range.
+ * Buduje mapowanie elementów konfiguracji studni na ich pionowe zakresy pozycji.
  *
- * @param {Object}   well            - The well object.
- * @param {Function} findProductFn   - A function(productId) => product, typically studnieProducts.find(...)
- * @param {boolean}  includeName     - Whether to include name and bg in the map entries.
- * @returns {Array}  Array of { index, start, end, [name], [bg] }.
+ * @param {Object}   well            - Obiekt studni.
+ * @param {Function} findProductFn   - Funkcja(productId) => produkt, zazwyczaj studnieProducts.find(...)
+ * @param {boolean}  includeName     - Czy uwzględnić nazwę i tło we wpisach mapy.
+ * @returns {Array}  Tablica { index, start, end, [name], [bg] }.
  */
 function buildConfigMap(well, findProductFn, includeName = false) {
     const typeBadge = {
@@ -227,10 +227,10 @@ function buildConfigMap(well, findProductFn, includeName = false) {
 }
 
 /**
- * Determines which configMap entry a transition belongs to.
+ * Określa, do którego wpisu configMap należy przejście.
  *
- * @param {number}  mmFromBottom - The mm-from-bottom value for the transition.
- * @param {Array}   configMap    - The config map from buildConfigMap().
+ * @param {number}  mmFromBottom - Wartość mm-od-dna dla przejścia.
+ * @param {Array}   configMap    - Mapa konfiguracji z buildConfigMap().
  * @returns {{ assignedIndex: number, entry: Object|null }}
  */
 function findAssignedElement(mmFromBottom, configMap) {
@@ -239,7 +239,7 @@ function findAssignedElement(mmFromBottom, configMap) {
             return { assignedIndex: cm.index, entry: cm };
         }
     }
-    // Fallback to first or last
+    // Powrót do pierwszego lub ostatniego
     if (configMap.length > 0) {
         const tgt = mmFromBottom < 0 ? configMap[0] : configMap[configMap.length - 1];
         return { assignedIndex: tgt.index, entry: tgt };
@@ -248,11 +248,11 @@ function findAssignedElement(mmFromBottom, configMap) {
 }
 
 /**
- * Computes the height from element bottom for a transition.
+ * Oblicza wysokość od dna elementu dla przejścia.
  *
- * @param {number} mmFromBottom - mm from the well bottom.
- * @param {Array}  configMap    - The config map from buildConfigMap().
- * @returns {number} Height in mm from the element's bottom edge.
+ * @param {number} mmFromBottom - mm od dna studni.
+ * @param {Array}  configMap    - Mapa konfiguracji z buildConfigMap().
+ * @returns {number} Wysokość w mm od dolnej krawędzi elementu.
  */
 function computeHeightFromElement(mmFromBottom, configMap) {
     let elementStartMm = 0;
@@ -266,19 +266,19 @@ function computeHeightFromElement(mmFromBottom, configMap) {
 }
 
 // ──────────────────────────────────────
-// Render a filtered list of transitions (mirror mode for orders)
+// Renderuj odfiltrowaną listę przejść (tryb lustrzany dla zamówień)
 // ──────────────────────────────────────
 
 /**
- * Renders a filtered list of transitions into a container.
- * Used by the order modal to display only transitions for a specific element.
+ * Renderuje odfiltrowaną listę przejść do kontenera.
+ * Używane przez okno zamówienia do wyświetlania tylko przejść dla konkretnego elementu.
  *
- * @param {HTMLElement} container       - The DOM element to render into.
- * @param {Array}       items           - Subset of well.przejscia assigned to this element.
- * @param {Object}      well            - The full well object (to look up globalIndex).
- * @param {Function}    findProductFn   - A function(productId) => product.
- * @param {Array}       configMap       - The config map from buildConfigMap().
- * @param {number}      rzDna           - The rzednaDna from the well.
+ * @param {HTMLElement} container       - Element DOM do renderowania.
+ * @param {Array}       items           - Podzbiór well.przejscia przypisany do tego elementu.
+ * @param {Object}      well            - Pełny obiekt studni (do wyszukania globalIndex).
+ * @param {Function}    findProductFn   - Funkcja(productId) => produkt.
+ * @param {Array}       configMap       - Mapa konfiguracji z buildConfigMap().
+ * @param {number}      rzDna           - Rzędna dna ze studni.
  */
 function renderMirrorTransitions(container, items, well, findProductFn, configMap, rzDna) {
     if (!container) return;
@@ -312,7 +312,7 @@ function renderMirrorTransitions(container, items, well, findProductFn, configMa
         .join('');
 }
 
-// Export to window for non-module usage
+// Eksport do okna (window) dla użycia bez modułów
 window.renderTransitionTileHTML = renderTransitionTileHTML;
 window.buildConfigMap = buildConfigMap;
 window.findAssignedElement = findAssignedElement;

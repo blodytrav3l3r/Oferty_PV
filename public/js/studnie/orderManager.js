@@ -1,4 +1,4 @@
-/* ===== ORDERS STUDNIE (Zamówienia) ===== */
+/* ===== ZAMÓWIENIA STUDNI ===== */
 async function loadOrdersStudnie() {
     try {
         const res = await fetch('/api/orders-studnie', { headers: authHeaders() });
@@ -23,14 +23,14 @@ async function saveOrdersDataStudnie(data) {
 }
 
 async function createOrderFromOffer() {
-    // Prevent UI race conditions if user double clicked or clicked Zamówienie while Save was running
+    // Zapobiegaj wyścigom w UI, jeśli użytkownik kliknął dwukrotnie lub kliknął Zamówienie podczas trwania zapisu
     if (isSavingOffer) {
         showToast('Trwa zapisywanie...', 'info');
         while (isSavingOffer) {
             await new Promise((r) => setTimeout(r, 200));
         }
     } else {
-        // Auto-save the offer to ensure latest state is pushed to SQLite and state is refreshed
+        // Automatycznie zapisz ofertę, aby upewnić się, że najnowszy stan został przesłany do SQLite i odświeżony
         const saveOk = await saveOfferStudnie();
         if (!saveOk) return; // Save failed or locked
     }
@@ -72,7 +72,7 @@ async function createOrderFromOffer() {
     }
 
     const oId = normalizeId(offer.id);
-    // Check if order already exists
+    // Sprawdź, czy zamówienie już istnieje
     const existingOrder = ordersStudnie
         ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
         : null;
@@ -89,7 +89,7 @@ async function createOrderFromOffer() {
             : [];
     }
 
-    // Determine assigned user for order numbering — default to offer's opiekun
+    // Określ przypisanego użytkownika dla numeracji zamówienia — domyślnie opiekun oferty
     let assignedUserId = offer.userId || (currentUser ? currentUser.id : null);
     let assignedUserName =
         offer.userName ||
@@ -99,7 +99,7 @@ async function createOrderFromOffer() {
                 : currentUser.username
             : '');
 
-    // If pro or admin — ask which user to assign the order to
+    // Jeśli pro lub admin — zapytaj, któremu użytkownikowi przypisać zamówienie
     if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
         try {
             const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
@@ -123,7 +123,7 @@ async function createOrderFromOffer() {
         }
     }
 
-    // Claim order number from server
+    // Pobierz numer zamówienia z serwera
     let orderNumber = '';
     try {
         const claimResp = await fetch('/api/orders-studnie/claim-number/' + assignedUserId, {
@@ -142,7 +142,7 @@ async function createOrderFromOffer() {
         return;
     }
 
-    // Create order from offer — deep copy everything, save original snapshot
+    // Utwórz zamówienie z oferty — wykonaj głęboką kopię wszystkiego, zapisz oryginalną migawkę
     const order = {
         id: 'order_studnie_' + Date.now(),
         offerId: offer.id,
@@ -173,10 +173,10 @@ async function createOrderFromOffer() {
         createdBy: currentUser ? currentUser.username : ''
     };
 
-    // Freeze prices on the order wells at the moment of creation
+    // Zamroź ceny studni w zamówieniu w momencie tworzenia
     freezeWellPrices(order.wells);
 
-    // Mark the offer as having an order
+    // Oznacz ofertę jako posiadającą zamówienie
     offer.hasOrder = true;
     offer.orderId = order.id;
     await saveOffersDataStudnie(offersStudnie);
@@ -188,7 +188,7 @@ async function createOrderFromOffer() {
 
     showToast(`📦 Zamówienie ${orderNumber} utworzone z oferty ${offer.number}`, 'success');
 
-    // Open order in the same window (uses main studnie editor in order mode)
+    // Otwórz zamówienie w tym samym oknie (używa głównego edytora studni w trybie zamówienia)
     window.location.href = '/studnie?order=' + order.id;
 }
 
@@ -200,15 +200,15 @@ function saveOrderStudnie() {
     const order = ordersStudnie ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId) : null;
     if (!order) return;
 
-    // Freeze prices on all elements before saving
+    // Zamroź ceny wszystkich elementów przed zapisem
     freezeWellPrices(wells);
 
-    // Update order wells with current wells state (prices already frozen)
+    // Zaktualizuj studnie zamówienia bieżącym stanem studni (ceny są już zamrożone)
     order.wells = JSON.parse(JSON.stringify(wells));
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
 
-    // Recalculate totals
+    // Przelicz sumy
     let totalNetto = 0,
         totalWeight = 0;
     wells.forEach((well) => {
@@ -224,10 +224,10 @@ function saveOrderStudnie() {
     showToast('📦 Zamówienie zaktualizowane', 'success');
 }
 
-/** Freeze current prices on all config items and przejscia in every well */
+/** Zamraża bieżące ceny wszystkich elementów konfiguracji i przejść w każdej studni */
 function freezeWellPrices(wellsArr) {
     (wellsArr || []).forEach((well) => {
-        // Freeze config items (kręgi, dennicy, konusy, etc.)
+        // Zamroź elementy konfiguracji (kręgi, dennice, konusy itp.)
         (well.config || []).forEach((item) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
@@ -236,7 +236,7 @@ function freezeWellPrices(wellsArr) {
             item.frozenName = p.name;
         });
 
-        // Freeze przejscia prices
+        // Zamroź ceny przejść
         let discNadbudowa = 0;
         if (well.dn && wellDiscounts[well.dn]) {
             discNadbudowa = wellDiscounts[well.dn].nadbudowa || 0;
@@ -278,7 +278,7 @@ async function deleteOrderStudnie(orderId) {
     )
         return;
 
-    // API Call to delete order physically
+    // Wywołanie API w celu fizycznego usunięcia zamówienia
     try {
         const res = await fetch(`/api/orders-studnie/${orderId}`, {
             method: 'DELETE',
@@ -298,7 +298,7 @@ async function deleteOrderStudnie(orderId) {
     let affectedOfferId = null;
     if (order) {
         affectedOfferId = normalizeId(order.offerId);
-        // Remove hasOrder flag from offer
+        // Usuń flagę hasOrder z oferty
         const offer = offersStudnie.find((o) => normalizeId(o.id) === affectedOfferId);
         if (offer) {
             offer.hasOrder = false;
@@ -313,7 +313,7 @@ async function deleteOrderStudnie(orderId) {
     renderSavedOffersStudnie();
     showToast('Zamówienie usunięte. Oferta odblokowana.', 'info');
 
-    // Refresh main config if open
+    // Odśwież główną konfigurację, jeśli jest otwarta
     if (typeof renderWellConfig === 'function') renderWellConfig();
 
     // Jeśli usunięte zamówienie dotyczy aktualnie otwartej oferty w edytorze, odśwież widok
@@ -321,13 +321,13 @@ async function deleteOrderStudnie(orderId) {
         refreshAll();
     }
 
-    // Refresh UI list globally
+    // Odśwież listę UI globalnie
     if (window.pvSalesUI) {
         window.pvSalesUI.loadOrdersMap().then(() => window.pvSalesUI.filterLocalOffers());
     }
 }
 
-/** Compare current order wells vs originalSnapshot, return changes map */
+/** Porównaj bieżące studnie zamówienia z originalSnapshot, zwróć mapę zmian */
 function getOrderChanges(order) {
     if (!order || !order.originalSnapshot) return {};
     const changes = {}; // { wellIndex: { type: 'modified'|'added'|'removed', fields: [...] } }
@@ -348,7 +348,7 @@ function getOrderChanges(order) {
             c = curr[i];
         const diffs = [];
 
-        // Compare config (components) - order doesn't matter, only productId and total quantity
+        // Porównaj konfigurację (komponenty) - kolejność nie ma znaczenia, tylko productId i całkowita ilość
         const getConfigCounts = (conf) => {
             const counts = {};
             (conf || []).forEach((item) => {
@@ -360,7 +360,7 @@ function getOrderChanges(order) {
         const oCounts = getConfigCounts(o.config);
         const cCounts = getConfigCounts(c.config);
 
-        // Compare objects by keys and values
+        // Porównaj obiekty według kluczy i wartości
         const oKeys = Object.keys(oCounts).sort();
         const cKeys = Object.keys(cCounts).sort();
 
@@ -375,7 +375,7 @@ function getOrderChanges(order) {
         }
         if (configDiff) diffs.push('config');
 
-        // Compare przejscia (ignoring angle, angleExecution, angleGony)
+        // Porównaj przejścia (ignorując kąt, wykonanie kąta, angleGony)
         const cleanPrzejscia = (arr) =>
             (arr || []).map((p) => ({
                 productId: p.productId,
@@ -389,7 +389,7 @@ function getOrderChanges(order) {
             diffs.push('przejscia');
         }
 
-        // Compare params
+        // Porównaj parametry
         const paramKeys = [
             'nadbudowa',
             'dennicaMaterial',
@@ -409,7 +409,7 @@ function getOrderChanges(order) {
             if ((o[key] || '') !== (c[key] || '')) diffs.push(key);
         });
 
-        // Compare basic fields & elevations
+        // Porównaj podstawowe pola i rzędne
         if ((o.dn || 0) !== (c.dn || 0)) diffs.push('dn');
         if ((o.name || '') !== (c.name || '')) diffs.push('name');
         if (
@@ -427,7 +427,7 @@ function getOrderChanges(order) {
     return changes;
 }
 
-/** Check if current offer has an active order */
+/** Sprawdź, czy bieżąca oferta ma aktywne zamówienie */
 function getCurrentOfferOrder() {
     if (orderEditMode) return orderEditMode.order;
     if (!editingOfferIdStudnie) return null;
@@ -436,7 +436,7 @@ function getCurrentOfferOrder() {
         : null;
 }
 
-/** Enter order editing mode — loads order into main editor */
+/** Wejdź w tryb edycji zamówienia — ładuje zamówienie do głównego edytora */
 async function enterOrderEditMode(orderId) {
     try {
         console.log('[enterOrderEditMode] START orderId=', orderId);
@@ -462,11 +462,11 @@ async function enterOrderEditMode(orderId) {
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
 
-        // Load wells from order — ensure wells is always an array
+        // Wczytaj studnie z zamówienia — upewnij się, że wells jest zawsze tablicą
         wells = Array.isArray(order.wells) ? JSON.parse(JSON.stringify(order.wells)) : [];
         migrateWellData(wells);
 
-        // Double-ensure every well has config and przejscia arrays
+        // Dodatkowo upewnij się, że każda studnia ma tablice config i przejscia
         wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
@@ -489,7 +489,7 @@ async function enterOrderEditMode(orderId) {
         wellCounter = wells.length;
         currentWellIndex = 0;
 
-        // Fill client/offer fields
+        // Wypełnij pola klienta/oferty
         document.getElementById('offer-number').value = order.number || '';
         document.getElementById('offer-date').value =
             order.date || new Date().toISOString().slice(0, 10);
@@ -503,19 +503,19 @@ async function enterOrderEditMode(orderId) {
 
         console.log('[enterOrderEditMode] fields filled, calling skipWizardToStep3...');
 
-        // Skip wizard → go to step 3 (config)
+        // Pomiń kreatora → przejdź do kroku 3 (konfiguracja)
         skipWizardToStep3();
         showSection('builder');
 
         console.log('[enterOrderEditMode] calling refreshAll...');
-        // Update UI
+        // Aktualizuj UI
         refreshAll();
 
         console.log('[enterOrderEditMode] calling renderOrderModeBanner...');
-        // Show order mode banner
+        // Pokaż baner trybu zamówienia
         renderOrderModeBanner();
 
-        // Update page title
+        // Aktualizuj tytuł strony
         document.title = `📦 Zamówienie: ${order.number || orderId}`;
 
         console.log('[enterOrderEditMode] DONE');
@@ -631,7 +631,7 @@ window.loadOrderSnapshot = loadOrderSnapshot;
 function renderOrderModeBanner() {
     let banner = document.getElementById('order-mode-banner');
     if (!banner) {
-        // Create banner div at the top of the center column
+        // Utwórz baner u góry środkowej kolumny
         const centerCol = document.querySelector('.well-center-column');
         if (!centerCol) return;
         banner = document.createElement('div');
@@ -645,7 +645,7 @@ function renderOrderModeBanner() {
     }
 
     const order = orderEditMode.order;
-    // Compute changes vs current wells
+    // Oblicz zmiany w stosunku do bieżących studni
     const tempOrder = { ...order, wells: wells };
     const changes = getOrderChanges({ ...order, wells: wells });
     const changeCount = Object.keys(changes).length;
@@ -690,7 +690,7 @@ async function saveCurrentOrder() {
     // Freeze prices on all elements before saving
     freezeWellPrices(wells);
 
-    // Update order with current wells (prices already frozen)
+    // Zaktualizuj zamówienie bieżącymi studniami (ceny już zamrożone)
     order.wells = JSON.parse(JSON.stringify(wells));
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
@@ -707,7 +707,7 @@ async function saveCurrentOrder() {
     order.totalNetto = totalNetto;
     order.totalBrutto = totalNetto * 1.23;
 
-    // Save via PATCH
+    // Zapisz przez PATCH
     try {
         await fetch(`/api/orders-studnie/${order.id}`, {
             method: 'PATCH',
@@ -754,13 +754,13 @@ async function syncSourceData() {
 }
 window.syncSourceData = syncSourceData;
 
-/* ===== ZLECENIA PRODUKCYJNE (Production Orders) ===== */
+/* ===== ZLECENIA PRODUKCYJNE ===== */
 let productionOrders = [];
 let zleceniaElementsList = []; // [{wellIndex, elementIndex, well, product, configItem}]
 let zleceniaSelectedIdx = -1;
 let zleceniaActiveFilter = 'all'; // 'all' | 'saved' | 'accepted'
 
-/** Returns element status: 'accepted', 'saved', or 'open' */
+/** Zwraca status elementu: 'zaakceptowany', 'zapisany' lub 'otwarty' */
 function getElementStatus(el) {
     const savedOrder = (productionOrders || []).find(
         (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
@@ -770,7 +770,7 @@ function getElementStatus(el) {
     return 'open';
 }
 
-/** Set active filter for zlecenia elements list */
+/** Ustaw aktywny filtr dla listy elementów zleceń */
 function setZleceniaFilter(filter) {
     zleceniaActiveFilter = filter;
     document.querySelectorAll('.zlecenia-filter-btn').forEach((btn) => {
@@ -813,7 +813,7 @@ async function saveProductionOrdersData(data) {
 }
 
 function parseWysokoscGlebokosc(productName) {
-    // Parse "H=450/300" from product name like "Dennica DN1000 H=450/300"
+    // Parsuje "H=450/300" z nazwy produktu, np. "Dennica DN1000 H=450/300"
     const m = productName && productName.match(/H\s*=\s*(\d+)\s*\/\s*(\d+)/i);
     if (m) return { wysokosc: parseInt(m[1]), glebokosc: parseInt(m[2]) };
     return { wysokosc: 0, glebokosc: 0 };
@@ -832,7 +832,7 @@ function calcStopnieExecution(angle) {
 
 /**
  * Build a snapshot of etykieta elements from well config.
- * Stored with the PO so the registry can print labels without studnieProducts context.
+ * Przechowywane ze zleceniem produkcyjnym, aby rejestr mógł drukować etykiety bez kontekstu studnieProducts.
  */
 function buildEtykietaElementsSnapshot(well) {
     const config = well.config || [];
@@ -857,7 +857,7 @@ function buildEtykietaElementsSnapshot(well) {
         }
     });
 
-    // Add uszczelka if applicable
+    // Dodaj uszczelkę, jeśli dotyczy
     if (typeof studnieProducts !== 'undefined') {
         const uszczelka = studnieProducts.find(
             (p) =>
@@ -897,21 +897,21 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.add('active');
 
-    // MOVEMENT OF MAIN SVG DIAGRAM TO MODAL
+    // PRZENIESIENIE GŁÓWNEGO DIAGRAMU SVG DO MODALA
     const zwp = document.querySelector('.zlecenia-left');
     const dz = document.getElementById('drop-zone-diagram');
     if (zwp && dz) {
-        zwp.innerHTML = ''; // clear original preview container
+        zwp.innerHTML = ''; // wyczyść oryginalny kontener podglądu
         zwp.appendChild(dz);
         dz.style.flex = '1';
-        dz.style.border = 'none'; // remove outer border if any
+        dz.style.border = 'none'; // usuń obramowanie zewnętrzne, jeśli istnieje
         dz.style.background = 'transparent';
-        dz.style.padding = '0.8rem 1.2rem'; // Match modal side-padding
+        dz.style.padding = '0.8rem 1.2rem'; // Dopasuj do dopełnienia bocznego modala
     }
 
     buildZleceniaWellList();
 
-    // Auto select target element if provided, otherwise first element
+    // Automatycznie wybierz element docelowy, jeśli został podany, w przeciwnym razie pierwszy element
     if (zleceniaElementsList.length > 0) {
         let idxToSelect = 0;
         let foundIdx = -1;
@@ -958,14 +958,14 @@ async function closeZleceniaModal() {
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.remove('active');
 
-    // RESTORE MAIN SVG DIAGRAM TO MAIN LAYOUT
+    // PRZYWRÓĆ GŁÓWNY DIAGRAM SVG DO GŁÓWNEGO UKŁADU
     const mainLayout = document.querySelector('.well-app-layout');
     const dz = document.getElementById('drop-zone-diagram');
     if (mainLayout && dz) {
         dz.style.flex = '';
         dz.style.border = '';
         dz.style.background = '';
-        dz.style.padding = ''; // Reset inline padding
+        dz.style.padding = ''; // Resetuj dopełnienie inline
         mainLayout.insertBefore(dz, mainLayout.firstChild);
     }
 }
@@ -979,13 +979,13 @@ function buildZleceniaWellList() {
             const item = well.config[eIdx];
             let p = studnieProducts.find((pr) => pr.id === item.productId);
 
-            // Fallback for missing products on different servers
+            // Zabezpieczenie na wypadek brakujących produktów na różnych serwerach
             if (!p && item.productId) {
                 console.warn(
                     `[buildZleceniaWellList] Produkt o ID ${item.productId} nie został znaleziony w bazie! Próbuję dopasować po nazwie...`
                 );
-                // If it's saved in order mode, maybe we have temporary product stored?
-                // For now, let's create a dummy product object so the UI doesn't break
+                // Jeśli jest zapisane w trybie zamówienia, być może mamy zapisany tymczasowy produkt?
+                // Na razie utwórzmy fikcyjny obiekt produktu, aby UI się nie zepsuło
                 p = {
                     id: item.productId,
                     name: 'Produkt nieznany (ID: ' + item.productId + ')',
@@ -1019,7 +1019,7 @@ function buildZleceniaWellList() {
     renderZleceniaList();
 }
 
-/** Helper to find the last physical element (ignoring gaskets) for tangential check */
+/** Pomocnik do znalezienia ostatniego fizycznego elementu (ignorując uszczelki) dla sprawdzenia studni stycznej */
 function findRealBaseIndex(well) {
     if (!well || !well.config) return -1;
     for (let i = well.config.length - 1; i >= 0; i--) {
@@ -1042,7 +1042,7 @@ function renderZleceniaList() {
     const groupedElements = {};
     let visibleCount = 0;
 
-    // Build filtered + sorted items list
+    // Buduj filtrowaną i posortowaną listę elementów
     const statusPriority = { accepted: 0, saved: 1, open: 2 };
     const itemsWithStatus = zleceniaElementsList.map((el, i) => ({
         el,
@@ -1050,7 +1050,7 @@ function renderZleceniaList() {
         status: getElementStatus(el)
     }));
 
-    // Sort by status priority (accepted first, then saved, then open)
+    // Sortuj według priorytetu statusu (najpierw zaakceptowane, potem zapisane, na końcu otwarte)
     itemsWithStatus.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
 
     itemsWithStatus.forEach((item) => {
@@ -1070,7 +1070,7 @@ function renderZleceniaList() {
             poNum.includes(search);
         if (!matchesSearch) return;
 
-        // Apply status filter
+        // Zastosuj filtr statusu
         if (zleceniaActiveFilter === 'saved' && item.status === 'open') return;
         if (zleceniaActiveFilter === 'accepted' && item.status !== 'accepted') return;
 
@@ -1090,7 +1090,7 @@ function renderZleceniaList() {
     Object.keys(groupedElements).forEach((wIdx) => {
         const group = groupedElements[wIdx];
 
-        // Well Header
+        // Nagłówek studni
         html += `<div style="background:var(--bg-secondary); padding:0.6rem 0.8rem; border-bottom:1px solid var(--border-glass); border-top:1px solid var(--border-glass); position:sticky; top:0; z-index:5; display:flex; justify-content:space-between; align-items:center; margin-top:-1px;">
             <div style="font-size:0.75rem; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.5px;">🏷️ ${group.wellName}</div>
             <div style="font-size:0.65rem; font-weight:700; color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius:12px; border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + group.wellDn}</div>
@@ -1148,7 +1148,7 @@ function renderZleceniaList() {
         html = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.75rem;">${msg}</div>`;
     }
 
-    // Remove default padding from the container if we bring our own wrappers
+    // Usuń domyślne dopełnienie z kontenera, jeśli wprowadzamy własne opakowania
     container.style.padding = '0';
     container.innerHTML = html;
 
@@ -1165,12 +1165,12 @@ function selectZleceniaElement(idx) {
     const el = zleceniaElementsList[idx];
     if (!el) return;
 
-    // Set global well context to the order's well
+    // Ustaw globalny kontekst studni na studnię z zamówienia
     if (currentWellIndex !== el.wellIndex) {
         currentWellIndex = el.wellIndex;
     }
 
-    // Ensure the diagram updates with correct index and UI gets refreshed
+    // Upewnij się, że diagram aktualizuje się z poprawnym indeksem i UI zostaje odświeżone
     renderWellDiagram();
     renderZleceniaWellConfig();
 
@@ -1210,7 +1210,7 @@ function renderZleceniaWellConfig() {
         const badge = typeBadge[p.componentType] || { bg: '#333', label: '?' };
         const isLocked = isWellLocked();
 
-        // Highlight if this is the element currently selected in Zlecenia list
+        // Podświetl, jeśli jest to element aktualnie wybrany na liście Zleceń
         const isCurrentlyEdited =
             zleceniaSelectedIdx !== -1 &&
             zleceniaElementsList[zleceniaSelectedIdx] &&
@@ -1244,7 +1244,7 @@ window.moveZleceniaComponent = function (index, dir) {
     const newIdx = index + dir;
     if (newIdx < 0 || newIdx >= well.config.length) return;
 
-    // Snapshot currently edited element to restore focus after reorder
+    // Wykonaj migawkę aktualnie edytowanego elementu, aby przywrócić fokus po zmianie kolejności
     const currentElObj =
         zleceniaSelectedIdx !== -1 ? zleceniaElementsList[zleceniaSelectedIdx].configItem : null;
 
@@ -1255,7 +1255,7 @@ window.moveZleceniaComponent = function (index, dir) {
     well.configSource = 'MANUAL';
     well.autoLocked = true;
 
-    // After reorder, if we were editing an element, we must find where it moved
+    // Po zmianie kolejności, jeśli edytowaliśmy element, musimy znaleźć, gdzie się przeniósł
     rebuildZleceniaListAndFocus(currentElObj);
     refreshZleceniaModal();
 };
@@ -1265,7 +1265,7 @@ function rebuildZleceniaListAndFocus(targetObj) {
     initializeZleceniaModal();
 
     if (targetObj) {
-        // Find which index in the NEW zleceniaElementsList points to the same object
+        // Znajdź, który indeks w NOWEJ zleceniaElementsList wskazuje na ten sam obiekt
         const newIdx = zleceniaElementsList.findIndex((el) => el.configItem === targetObj);
         if (newIdx !== -1) {
             zleceniaSelectedIdx = newIdx;
@@ -1280,10 +1280,10 @@ function refreshZleceniaModal() {
     if (svg && well) {
         renderWellDiagram(svg, well);
     }
-    renderZleceniaList(); // Refresh the right list too (indices updated)
+    renderZleceniaList(); // Odśwież również prawą listę (indeksy zaktualizowane)
 }
 
-/* Modal Drag & Drop */
+/* Przeciągnij i upuść w modalu */
 let draggedZlIdx = null;
 
 window.handleZlCfgDragStart = function (e) {
@@ -1335,7 +1335,7 @@ function renderZleceniaSvgPreview(well) {
     const info = document.getElementById('zlecenia-well-info-mini');
     if (!svg) return;
 
-    // Use the REAL well diagram renderer with the target SVG
+    // Użyj PRAWDZIWEGO renderera diagramu studni z docelowym SVG
     renderWellDiagram(svg, well);
     renderZleceniaWellConfig();
 
@@ -1352,7 +1352,7 @@ function populateZleceniaForm(el) {
 
     const parsed = parseWysokoscGlebokosc(product.name);
 
-    // Custom calculations for tangential wells
+    // Niestandardowe obliczenia dla studni stycznych
     let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';
     let displayWysokosc = parsed.wysokosc || product.height || 0;
@@ -1392,7 +1392,7 @@ function populateZleceniaForm(el) {
     );
     const isAccepted = existing && existing.status === 'accepted';
 
-    // Update buttons in header
+    // Aktualizuj przyciski w nagłówku
     const btnAccept = document.getElementById('zl-btn-accept');
     const btnRevoke = document.getElementById('zl-btn-revoke');
     const btnDelete = document.getElementById('zl-btn-delete');
@@ -1403,12 +1403,12 @@ function populateZleceniaForm(el) {
     if (btnDelete) btnDelete.style.display = isAccepted ? 'none' : 'block';
     if (btnSave) btnSave.style.display = isAccepted ? 'none' : 'block';
 
-    // Compute which element gets which transition to filter for this `elementIndex`
+    // Oblicz, który element otrzymuje które przejście, aby przefiltrować dla tego elementIndex
     const rzDna = parseFloat(well.rzednaDna) || 0;
     const findProductFn = (id) => studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProductFn, true);
 
-    // Filter transitions assigned to this element
+    // Filtruj przejścia przypisane do tego elementu
     const assignedPrzejscia = (well.przejscia || []).filter((item) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
@@ -1418,7 +1418,7 @@ function populateZleceniaForm(el) {
     });
     const przejsciaCount = assignedPrzejscia.length;
 
-    // Stopnie select — derive current value
+    // Wybór stopni — wyprowadź bieżącą wartość
     const stopnieVal = existing?.rodzajStopni || '';
     const stopnieOptions = [
         ['', 'Brak'],
@@ -1432,7 +1432,7 @@ function populateZleceniaForm(el) {
     const katStopni = existing?.katStopni || '';
     const wykonanie = katStopni ? calcStopnieExecution(katStopni) : '';
 
-    // Values for tiles — kręgi wiercone domyślnie bez kinety/spocznika
+    // Wartości dla kafelków — kręgi wiercone domyślnie bez kinety/spocznika
     const isKragOt = product && product.componentType === 'krag_ot';
     const redKinetyVal =
         existing?.redukcjaKinety ?? (isKragOt ? 'nie' : (well.redukcjaKinety ?? ''));
@@ -1441,7 +1441,7 @@ function populateZleceniaForm(el) {
     const kinetaVal = existing?.kineta ?? (isKragOt ? 'brak' : (well.kineta ?? ''));
     const klasaBetonuVal = existing?.klasaBetonu ?? well.klasaBetonu ?? '';
 
-    // Quick tiles for kat stopni
+    // Szybkie kafelki dla kąta stopni
     const katOptions = ['90', '135', '180', '270'];
 
     const spocznikMatOptions = [
@@ -1472,7 +1472,7 @@ function populateZleceniaForm(el) {
     }
     const rodzajStudniVal = existing?.rodzajStudni || domyslnyRodzajStudni;
 
-    // Map well params to display labels
+    // Mapuj parametry studni na etykiety wyświetlania
     const kinetaOptions = [
         ['brak', 'Brak'],
         ['beton', 'Beton'],
@@ -1569,7 +1569,7 @@ function populateZleceniaForm(el) {
         `;
     }
 
-    // Preserve visibility states before overwrite
+    // Zachowaj stany widoczności przed nadpisaniem
     let przejsciaAppVisible = false;
     const existingPrzejsciaContainer = document.getElementById('zl-inline-przejscia-app-container');
     if (existingPrzejsciaContainer && existingPrzejsciaContainer.style.display !== 'none') {
@@ -1635,7 +1635,7 @@ function populateZleceniaForm(el) {
                     <span style="font-weight:bold; color:#818cf8; font-size:0.85rem;">${well.name || ''}</span>
                 </div>
                 
-                <!-- Underneath list -->
+                <!-- Lista poniżej -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:#0d1520; padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Średnica</span>
@@ -1842,7 +1842,7 @@ function populateZleceniaForm(el) {
     </div>
     `;
 
-    // Disable all inputs/buttons if accepted
+    // Wyłącz wszystkie pola/przyciski, jeśli zaakceptowano
     if (isAccepted) {
         setTimeout(() => {
             container.querySelectorAll('input, textarea, button').forEach((el) => {
@@ -1860,7 +1860,7 @@ function populateZleceniaForm(el) {
         }, 10);
     }
 
-    // Use full interactive transition rendering (same as configurator)
+    // Użyj pełnego interaktywnego renderowania przejść (tak samo jak w konfiguratorze)
     renderInlinePrzejsciaApp('zl-inline-przejscia-app');
     renderWellPrzejscia({
         containerId: 'zl-przejscia-list',
@@ -1935,7 +1935,7 @@ async function selectZleceniaTile(btn, targetId, val) {
                     if (existing) existing.klasaBetonu = val;
                 }
 
-                // Sync the main screen params tiles
+                // Synchronizuj kafelki parametrów głównego ekranu
                 if (typeof window.updateParamTilesUI === 'function') window.updateParamTilesUI();
 
                 const oldWellIdx = el.wellIndex;
@@ -2028,10 +2028,10 @@ async function saveProductionOrder() {
     let currentOrderNumber =
         existingIdx >= 0 ? productionOrders[existingIdx].productionOrderNumber || '' : '';
 
-    // Claim production order number immediately so the draft has it
+    // Pobierz numer zlecenia produkcyjnego natychmiast, aby wersja robocza go posiadała
     if (!currentOrderNumber) {
         try {
-            // Use assigned user (owner) for numbering if exists, otherwise current user
+            // Użyj przypisanego użytkownika (właściciela) do numeracji, jeśli istnieje, w przeciwnym razie bieżącego użytkownika
             const targetUserId =
                 typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId
                     ? editingOfferAssignedUserId
@@ -2083,7 +2083,7 @@ async function saveProductionOrder() {
         productId: product.id,
         dn: well.dn,
 
-        // Form fields
+        // Pola formularza
         obiekt: document.getElementById('zl-obiekt')?.value || '',
         data: document.getElementById('zl-data')?.value || '',
         adres: document.getElementById('zl-adres')?.value || '',
@@ -2092,7 +2092,7 @@ async function saveProductionOrder() {
         dataProdukcji: document.getElementById('zl-data-produkcji')?.value || '',
         fakturowane: document.getElementById('zl-fakturowane')?.value || '',
 
-        // Well specs
+        // Specyfikacja studni
         snr: well.numer || '',
         srednica: document.getElementById('zl-srednica')?.value || well.dn,
         wysokosc: document.getElementById('zl-wysokosc')?.value || '',
@@ -2100,7 +2100,7 @@ async function saveProductionOrder() {
         dnoKineta: document.getElementById('zl-dno-kineta')?.value || '',
         rodzajStudni: document.getElementById('zl-rodzaj-studni')?.value || '',
 
-        // Przejscia snapshot — only transitions assigned to THIS element (enriched with product data)
+        // Migawka przejść — tylko przejścia przypisane do TEGO elementu (wzbogacone o dane produktu)
         przejscia: (() => {
             const allPrzejscia = well.przejscia || [];
             const rzDna = parseFloat(well.rzednaDna) || 0;
@@ -2113,7 +2113,7 @@ async function saveProductionOrder() {
                     ? buildConfigMap(well, findProductFn, true)
                     : [];
 
-            // Filter transitions to only those assigned to this element
+            // Filtruj przejścia tylko do tych przypisanych do tego elementu
             const assigned =
                 configMap.length > 0
                     ? allPrzejscia.filter((p) => {
@@ -2125,7 +2125,7 @@ async function saveProductionOrder() {
                       })
                     : allPrzejscia;
 
-            // Enrich with product category/DN
+            // Wzbogać o kategorię produktu/DN
             return assigned.map((p) => {
                 const clone = JSON.parse(JSON.stringify(p));
                 const prod = findProductFn(p.productId);
@@ -2137,12 +2137,12 @@ async function saveProductionOrder() {
             });
         })(),
 
-        // Etykieta elements snapshot (for registry printing without studnieProducts context)
+        // Migawka elementów etykiety (do drukowania rejestru bez kontekstu studnieProducts)
         etykietaElementy: buildEtykietaElementsSnapshot(well),
 
         uwagi: document.getElementById('zl-uwagi')?.value || '',
 
-        // Params
+        // Parametry
         redukcjaKinety: document.getElementById('zl-red-kinety')?.value || '',
         spocznikH: document.getElementById('zl-spocznik-h')?.value || '',
         din: document.getElementById('zl-din')?.value || getStudniaDIN(well.dn),
@@ -2257,7 +2257,7 @@ async function acceptProductionOrder() {
     )
         return;
 
-    // Claim production order number if not claimed yet
+    // Pobierz numer zlecenia produkcyjnego, jeśli jeszcze nie został pobrany
     if (!po.productionOrderNumber) {
         try {
             const targetUserId =
@@ -2367,7 +2367,7 @@ window.revokeProductionOrder = revokeProductionOrder;
 window.onZleceniaStopnieChange = onZleceniaStopnieChange;
 window.onZleceniaKatChange = onZleceniaKatChange;
 
-/** Delete the production order for the currently selected element */
+/** Usuwa zlecenie produkcyjne dla aktualnie wybranego elementu */
 async function deleteSelectedProductionOrder() {
     if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
         showToast('Najpierw wybierz element z listy', 'error');
@@ -2386,7 +2386,7 @@ async function deleteSelectedProductionOrder() {
 }
 window.deleteSelectedProductionOrder = deleteSelectedProductionOrder;
 
-/** Refresh global dashboard metrics if running in SPA / parent window */
+/** Odśwież globalne metryki pulpitu nawigacyjnego, jeśli działa w SPA / oknie nadrzędnym */
 function refreshGlobalMetrics() {
     try {
         if (window.parent && typeof window.parent.loadRecycledNumbers === 'function') {

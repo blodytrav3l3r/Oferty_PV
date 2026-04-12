@@ -36,7 +36,7 @@ async function appLogout() {
     try {
         await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
     } catch (e) {
-        /* ignore network errors on logout */
+        /* ignoruj błędy sieciowe przy wylogowaniu */
     }
     localStorage.removeItem('authToken');
     document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';

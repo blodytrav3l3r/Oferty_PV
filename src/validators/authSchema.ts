@@ -41,7 +41,7 @@ export const validateData = (schema: z.ZodType<any, any>) => {
                     details: error.issues
                 });
             }
-            return res.status(500).json({ error: 'System error' });
+            return res.status(500).json({ error: 'Błąd systemu' });
         }
     };
 };

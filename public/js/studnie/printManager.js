@@ -77,8 +77,8 @@ function silentPrint(htmlString) {
 }
 
 /**
- * Collect all data needed for printing from the current zlecenia form
- * and the selected element. Returns null if nothing is selected.
+ * Zbiera wszystkie dane potrzebne do wydruku z bieżącego formularza zlecenia
+ * i wybranego elementu. Zwraca null, jeśli nic nie zostało wybrane.
  */
 function collectPrintData() {
     if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
@@ -104,14 +104,14 @@ function collectPrintData() {
         data: getValue('zl-data'),
         nazwisko: getValue('zl-nazwisko'),
         dataProdukcji: getValue('zl-data-produkcji'),
-        // Well specs
+        // Parametry studni
         snr: well.numer || well.name || '',
         srednica: getValue('zl-srednica', well.dn),
         wysokosc: getValue('zl-wysokosc'),
         glebokosc: getValue('zl-glebokosc'),
         dnoKineta: getValue('zl-dno-kineta'),
         rodzajStudni: getValue('zl-rodzaj-studni'),
-        // Params
+        // Parametry
         redukcjaKinety: getValue('zl-red-kinety'),
         spocznikH: getValue('zl-spocznik-h'),
         din: getValue('zl-din'),
@@ -124,7 +124,7 @@ function collectPrintData() {
         spocznik: getValue('zl-spocznik'),
         klasaBetonu: getValue('zl-klasa-betonu'),
         uwagi: getValue('zl-uwagi'),
-        // Raw data
+        // Surowe dane
         well,
         product,
         elementIndex,
@@ -133,7 +133,7 @@ function collectPrintData() {
     };
 }
 
-/** Map internal param value to human-readable label */
+/** Mapuje wewnętrzną wartość parametru na czytelną dla człowieka etykietę */
 function paramLabel(val) {
     const map = {
         tak: 'Tak',
@@ -166,8 +166,8 @@ function paramLabel(val) {
 }
 
 /**
- * Build the przejścia (transitions) rows for the Zlecenie print.
- * Returns array of objects
+ * Buduje wiersze przejść dla wydruku Zlecenia.
+ * Zwraca tablicę obiektów.
  */
 function buildPrzejsciaRows(data) {
     const well = data.well;
@@ -195,7 +195,7 @@ function buildPrzejsciaRows(data) {
         rows.push(formatPrzejscieRow(`Wlot ${i + 1}`, p, findProductFn, rzDna))
     );
 
-    // Pad to 11 rows
+    // Uzupełnij do 11 wierszy
     while (rows.length < 11) {
         const idx = rows.length === 0 ? 0 : rows.length;
         const label = idx === 0 ? 'Wylot 0' : `Wlot ${idx}`;
@@ -295,7 +295,7 @@ function generateWellSvg(data) {
     let przejscia = well.przejscia || [];
     const rzDna = parseFloat(well.rzednaDna) || 0;
 
-    // Filter transitions by assigned element if elementIndex is provided
+    // Filtruj przejścia według przypisanego elementu, jeśli podano elementIndex
     if (
         data.elementIndex !== undefined &&
         typeof buildConfigMap !== 'undefined' &&
@@ -320,11 +320,11 @@ function generateWellSvg(data) {
     if (przejscia.length === 0) return '';
 
     // Zoptymalizowany obszar roboczy (viewBox), by powiększyć studnię
-    const size = 240;
+    const size = 320; // Increased to give text more margin
     const center = size / 2;
     const radius = 60; // Znacznie większa studnia dla lepszej widoczności
 
-    let svg = `<svg viewBox="0 0 ${size} ${size}" width="180" height="180" style="background: transparent; overflow: visible;">`;
+    let svg = `<svg viewBox="0 0 ${size} ${size}" width="200" height="200" style="background: transparent; overflow: visible;">`;
 
     // Główny okrąg studni
     svg += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`;
@@ -332,6 +332,8 @@ function generateWellSvg(data) {
     // Krzyż pomocniczy
     svg += `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`;
     svg += `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`;
+
+    const labels = [];
 
     przejscia.forEach((p, i) => {
         const angleDeg = parseFloat(p.angle) || 0;
@@ -362,26 +364,59 @@ function generateWellSvg(data) {
         const uwagiText = hMm > 0 ? `+${hMm}mm` : '';
 
         // Pozycja etykiety - blisko okręgu
-        const labelRadius = radius + 11;
+        const labelRadius = radius + 20;
         const lx = center - labelRadius * Math.sin(rad);
         const ly = center + labelRadius * Math.cos(rad);
 
         // Ustalenie text-anchor
         let anchor = 'middle';
-        if (lx < center - 8) anchor = 'end';
-        if (lx > center + 8) anchor = 'start';
+        let offsetX = 0;
+        if (lx < center - 15) {
+            anchor = 'end';
+            offsetX = -2;
+        } else if (lx > center + 15) {
+            anchor = 'start';
+            offsetX = 2;
+        }
 
-        // Estetyka etykiety
-        svg += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#000">`;
+        labels.push({
+            origX: lx, origY: ly, lx: lx, ly: ly,
+            anchor: anchor,
+            offsetX: offsetX,
+            isRight: (lx >= center),
+            text1: `${i}. ${rodzaj.toUpperCase()}`,
+            text2: `${katWyk}°${uwagiText ? ' (' + uwagiText + ')' : ''}`
+        });
+    });
 
-        // Linia 1: Indeks i Rodzaj
-        svg += `<tspan x="${lx}" dy="0" fill="#000">${i}. ${rodzaj.toUpperCase()}</tspan>`;
+    // Anti-overlap pass (vertical sorting/pushing)
+    let leftLabels = labels.filter(l => !l.isRight).sort((a,b) => a.ly - b.ly);
+    let rightLabels = labels.filter(l => l.isRight).sort((a,b) => a.ly - b.ly);
+    
+    const MIN_DY = 28;
+    function spread(arr) {
+        for(let loops = 0; loops < 8; loops++) {
+            for(let i = 0; i < arr.length - 1; i++) {
+                let diff = arr[i+1].ly - arr[i].ly;
+                if(diff < MIN_DY) {
+                    let push = (MIN_DY - diff) / 2;
+                    arr[i].ly -= push;
+                    arr[i+1].ly += push;
+                }
+            }
+        }
+    }
+    spread(leftLabels);
+    spread(rightLabels);
 
-        // Linia 2: Kąt i Wysokość (jeśli jest)
-        let line2 = `${katWyk}°`;
-        if (uwagiText) line2 += ` (${uwagiText})`;
-        svg += `<tspan x="${lx}" dy="1.15em" font-size="10" font-weight="normal" fill="#444">${line2}</tspan>`;
-
+    labels.forEach(l => {
+        if (Math.abs(l.origY - l.ly) > 2) {
+            let lineDist = (l.ly > l.origY) ? -8 : 8;
+            svg += `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`;
+        }
+        svg += `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#000">`;
+        svg += `<tspan x="${l.lx + l.offsetX}" dy="0" fill="#000">${l.text1}</tspan>`;
+        svg += `<tspan x="${l.lx + l.offsetX}" dy="1.15em" font-size="10" font-weight="normal" fill="#444">${l.text2}</tspan>`;
         svg += `</text>`;
     });
 
@@ -469,7 +504,7 @@ function buildZlecenieHtml(template, data) {
 
 // ===== ETYKIETA PRINT =====
 
-/** Build the list of well components for the label. */
+/** Buduje listę komponentów studni dla etykiety. */
 function buildEtykietaElements(data) {
     const well = data.well;
     const config = well.config || [];

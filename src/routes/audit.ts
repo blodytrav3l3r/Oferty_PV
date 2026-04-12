@@ -15,12 +15,12 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT);
         const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
-        // Total count
+        // Całkowita liczba
         const total = await prisma.audit_logs.count({
             where: { entityType, entityId }
         });
 
-        // Get page of results
+        // Pobierz stronę wyników
         const logs = await prisma.audit_logs.findMany({
             where: { entityType, entityId },
             orderBy: { createdAt: 'desc' },
@@ -46,7 +46,7 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
                 entityType: l.entityType,
                 entityId: l.entityId,
                 userId: l.userId,
-                userName: null, // Would need user join
+                userName: null, // Wymagałoby dołączenia tabeli użytkowników
                 action: l.action,
                 oldData,
                 newData,
@@ -65,14 +65,14 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
     try {
         const { entityType, entityId, logId } = req.params;
 
-        // 1. Get target log
+        // 1. Pobierz docelowy log
         const targetLog = await prisma.audit_logs.findFirst({
             where: { id: logId, entityType, entityId }
         });
         if (!targetLog)
             return res.status(404).json({ error: 'Nie znaleziono wpisu historycznego.' });
 
-        // 2. Find base snapshot (full record from before/at target log time)
+        // 2. Znajdź migawkę bazową (pełny rekord sprzed lub z czasu docelowego logu)
         const baseLogs = await prisma.audit_logs.findMany({
             where: {
                 entityType,
@@ -96,7 +96,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
                         break;
                     }
                 } catch (_e) {
-                    // If JSON parse fails, treat as full snapshot
+                    // Jeśli parsowanie JSON się nie powiedzie, potraktuj jako pełną migawkę
                     baseLogRow = log;
                     break;
                 }
@@ -109,7 +109,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
                 .json({ error: 'Brak wczesnego pełnego zapisu, aby zrekonstruować ofertę.' });
         }
 
-        // 3. Start from base state
+        // 3. Rozpocznij od stanu bazowego
         let currentState: any = {};
         try {
             if (baseLogRow.action === 'delete' && baseLogRow.oldData) {
@@ -125,7 +125,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             return res.json({ data: currentState });
         }
 
-        // 4. Get all diff logs between base and target
+        // 4. Pobierz wszystkie logi różnicowe (diff) między bazą a celem
         const forwardLogs = await prisma.audit_logs.findMany({
             where: {
                 entityType,
@@ -138,7 +138,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             orderBy: { createdAt: 'asc' }
         });
 
-        // 5. Apply patches chronologically
+        // 5. Zastosuj poprawki chronologicznie
         for (const log of forwardLogs) {
             if (!log.newData) continue;
             try {

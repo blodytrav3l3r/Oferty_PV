@@ -11,24 +11,24 @@ const router = express.Router();
 
 /**
  * POST /api/products-studnie/auto-select
- * Automatically select manhole components based on configuration
+ * Automatycznie dobiera elementy studni na podstawie konfiguracji
  *
- * Request body:
+ * Ciało żądania (body):
  * {
  *   targetDn: number (1000, 1200, 1500, 2000, 2500),
- *   targetHeight: number (in mm),
- *   magazyn: string ('WL' or 'KLB'),
- *   zakonczenieType: string ('konus' or 'plyta_din', optional, default: 'konus'),
- *   przejscia: array (optional),
- *   hasPlytaOdciazajaca: boolean (optional, default: false),
- *   hasPierscienOdciazajacy: boolean (optional, default: false)
+ *   targetHeight: number (w mm),
+ *   magazyn: string ('WL' lub 'KLB'),
+ *   zakonczenieType: string ('konus' lub 'plyta_din', opcjonalnie, domyślnie: 'konus'),
+ *   przejscia: tablica (opcjonalnie),
+ *   hasPlytaOdciazajaca: boolean (opcjonalnie, domyślnie: false),
+ *   hasPierscienOdciazajacy: boolean (opcjonalnie, domyślnie: false)
  * }
  */
 router.post('/auto-select', requireAuth, async (req, res) => {
     try {
         const config = req.body;
 
-        // Validation
+        // Walidacja
         if (!config.targetDn) {
             return res.status(400).json({ error: 'Wymagane pole: targetDn' });
         }
@@ -44,17 +44,17 @@ router.post('/auto-select', requireAuth, async (req, res) => {
             res.status(400).json(result);
         }
     } catch (err: any) {
-        logger.error('AutoSelect', 'auto-select error', err.message);
+        logger.error('AutoSelect', 'Błąd auto-select', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
 /**
  * GET /api/products-studnie/available-components/:dn
- * Get available components for a specific DN and warehouse
+ * Pobiera dostępne komponenty dla konkretnej średnicy DN i magazynu
  *
- * Query params:
- * - magazyn: string ('WL' or 'KLB', default: 'WL')
+ * Parametry zapytania (query):
+ * - magazyn: string ('WL' lub 'KLB', domyślnie: 'WL')
  */
 router.get('/available-components/:dn', requireAuth, async (req, res) => {
     try {
@@ -68,16 +68,16 @@ router.get('/available-components/:dn', requireAuth, async (req, res) => {
         const components = await getAvailableComponents(dn, magazyn);
         res.json({ components });
     } catch (err: any) {
-        logger.error('AutoSelect', 'available-components error', err.message);
+        logger.error('AutoSelect', 'Błąd dostępnych komponentów', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
 /**
  * POST /api/products-studnie/validate
- * Validate a manhole configuration
+ * Waliduje konfigurację studni
  *
- * Request body:
+ * Ciało żądania (body):
  * {
  *   components: array,
  *   config: object
@@ -94,7 +94,7 @@ router.post('/validate', requireAuth, async (req, res) => {
         const validation = validateManhole(components, config);
         res.json(validation);
     } catch (err: any) {
-        logger.error('AutoSelect', 'validate error', err.message);
+        logger.error('AutoSelect', 'Błąd walidacji', err.message);
         res.status(500).json({ error: err.message });
     }
 });

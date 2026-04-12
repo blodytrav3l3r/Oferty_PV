@@ -12,38 +12,93 @@
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
             rel="stylesheet"
         />
+        <link rel="stylesheet" href="css/style.css?v=1.5" />
         <link rel="stylesheet" href="css/index.css?v=1.5" />
     </head>
 
     <body class="index-page">
-        <!-- Dashboard Navigation Header (shown after login) -->
-        <header class="dash-header" id="dash-header">
-            <div class="dash-header-inner">
-                <div class="dash-header-left">
-                    <span class="dash-nav-logo">WITROS</span>
-                    <div class="dash-nav-apps">
-                        <div class="dash-nav-tile active">
-                            <span class="dash-nav-tile-icon">🏠</span>
-                            <span>Pulpit</span>
+        <!-- Shared Navigation Header (shown after login) -->
+        <header class="header" id="dash-header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg-idx)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="lg-idx" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#6366f1" />
+                                    <stop offset="100%" stop-color="#8b5cf6" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" />
+                        </svg>
+                        <span>WITROS Oferty</span>
+                    </div>
+
+                    <div class="nav-apps">
+                        <div class="nav-tile active">
+                            <span class="nav-tile-icon">🏠</span>
+                            <span class="nav-tile-text">Pulpit</span>
                         </div>
-                        <a href="app.html#/studnie" class="dash-nav-tile">
-                            <span class="dash-nav-tile-icon">🏗️</span>
-                            <span>Studnie</span>
+                        <a href="app.html#/studnie" class="nav-tile">
+                            <span class="nav-tile-icon">🏗️</span>
+                            <span class="nav-tile-text">Studnie</span>
                         </a>
-                        <a href="app.html#/rury" class="dash-nav-tile">
-                            <span class="dash-nav-tile-icon">🔩</span>
-                            <span>Rury</span>
+                        <a href="app.html#/rury" class="nav-tile">
+                            <span class="nav-tile-icon">🔩</span>
+                            <span class="nav-tile-text">Rury</span>
                         </a>
-                        <a href="app.html#/kartoteka" class="dash-nav-tile">
-                            <span class="dash-nav-tile-icon">🗄️</span>
-                            <span>Kartoteka</span>
+                        <a href="app.html#/kartoteka" class="nav-tile">
+                            <span class="nav-tile-icon">🗄️</span>
+                            <span class="nav-tile-text">Kartoteka</span>
+                        </a>
+                        <a href="app.html#/zlecenia" class="nav-tile">
+                            <span class="nav-tile-icon">🏭</span>
+                            <span class="nav-tile-text">Zlecenia</span>
                         </a>
                     </div>
                 </div>
-                <div class="dash-header-right">
-                    <span class="dash-username" id="dash-username"></span>
-                    <span class="dash-role" id="dash-role"></span>
-                    <button class="dash-logout-btn" onclick="doLogout()">Wyloguj</button>
+
+                <div class="header-center">
+                    <nav class="nav"></nav>
+                </div>
+
+                <div class="header-right">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem">
+                        <span
+                            id="dash-username"
+                            style="color: var(--text-secondary); font-weight: 500"
+                        ></span>
+                        <span
+                            id="dash-role"
+                            style="
+                                font-size: 0.6rem;
+                                padding: 0.15rem 0.5rem;
+                                border-radius: 20px;
+                                font-weight: 600;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                                margin-right: 0.5rem;
+                            "
+                        ></span>
+                        <button
+                            onclick="doLogout()"
+                            style="
+                                padding: 0.35rem 0.8rem;
+                                border: 1px solid var(--border-glass);
+                                border-radius: 6px;
+                                background: var(--bg-glass);
+                                color: var(--text-muted);
+                                font: 500 0.75rem 'Inter', sans-serif;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            "
+                            onmouseenter="this.style.color='#f87171';this.style.borderColor='#3a1a1a'"
+                            onmouseleave="this.style.color='var(--text-muted)';this.style.borderColor='var(--border-glass)'"
+                        >
+                            Wyloguj
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>

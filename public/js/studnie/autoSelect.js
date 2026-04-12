@@ -1,4 +1,4 @@
-/* ===== ZAKOŃCZENIE (TOP CLOSURE SELECTION) ===== */
+/* ===== ZAKOŃCZENIE (WYBÓR ZAMKNIĘCIA GÓRNEGO) ===== */
 function openZakonczeniePopup() {
     const well = getCurrentWell();
     if (!well) {
@@ -16,7 +16,7 @@ function openZakonczeniePopup() {
         'pierscien_odciazajacy'
     ];
 
-    // Find all top closure products for this DN (or universal ones with dn=null)
+    // Znajdź wszystkie produkty zamknięcia górnego dla tego DN (lub uniwersalne z dn=null)
     const candidates = studnieProducts.filter(
         (p) =>
             topClosureTypes.includes(p.componentType) &&
@@ -24,7 +24,7 @@ function openZakonczeniePopup() {
             filterByWellParams(p, well)
     );
 
-    // Group by componentType for nicer display
+    // Grupuj według componentType dla ładniejszego wyświetlania
     const typeLabels = {
         konus: '🔶 Konus',
         plyta_din: '🔽 Płyta DIN',
@@ -51,7 +51,7 @@ function openZakonczeniePopup() {
             errorDn +
             '</div>';
     } else {
-        // "Auto (Konus)" default tile
+        // Domyślny kafel "Auto (Konus)"
         const isAutoActive = !currentZak;
         tilesHtml += `<div onclick="selectZakonczenie(null)" style="
             padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
@@ -117,10 +117,10 @@ async function selectZakonczenie(productId) {
     well.zakonczenie = productId;
     closeModal();
 
-    // Save as offer-level default for new wells
+    // Zapisz jako domyślne na poziomie oferty dla nowych studni
     offerDefaultZakonczenie = productId;
 
-    // Update button label to show current selection
+    // Aktualizuj etykietę przycisku, aby pokazać bieżący wybór
     updateZakonczenieButton();
 
     if (productId) {
@@ -174,7 +174,7 @@ async function toggleRedukcja() {
     }
 
     well.redukcjaDN1000 = !well.redukcjaDN1000;
-    offerDefaultRedukcja = well.redukcjaDN1000; // save as offer-level default
+    offerDefaultRedukcja = well.redukcjaDN1000; // zapisz jako domyślne na poziomie oferty
     updateRedukcjaButton();
 
     if (well.redukcjaDN1000) {
@@ -210,14 +210,14 @@ function updateRedukcjaButton() {
     if (!btn) return;
     const well = getCurrentWell();
 
-    // Hide button for DN1000 wells (no reduction possible)
+    // Ukryj przycisk dla studni DN1000 (redukcja niemożliwa)
     if (!well || ![1200, 1500, 2000, 2500].includes(well.dn)) {
         btn.style.display = 'none';
         return;
     }
     btn.style.display = '';
 
-    // Show/hide min height input next to button
+    // Pokaż/ukryj pole minimalnej wysokości obok przycisku
     const minWrap = document.getElementById('redukcja-min-wrap');
     const minInput = document.getElementById('redukcja-min-h');
 
@@ -617,7 +617,7 @@ function updateHeightIndicator() {
     }
 }
 
-/* ===== WAREHOUSE & VARIANT HELPERS ===== */
+/* ===== POMOCNICY MAGAZYNU I WARIANTÓW ===== */
 
 /**
  * Filtruje produkty wg magazynu studni i priorytetyzuje formy standardowe.
@@ -657,7 +657,7 @@ function selectRingVariants(kregiList, well) {
     else if (stopnie === 'brak') suffix = '-B';
     else suffix = '-D'; // drabinka
 
-    // Group by height
+    // Grupuj według wysokości
     const byHeight = {};
     kregiList.forEach((k) => {
         const h = k.height;
@@ -670,16 +670,16 @@ function selectRingVariants(kregiList, well) {
         .sort((a, b) => Number(b) - Number(a))
         .forEach((h) => {
             const candidates = byHeight[h];
-            // Score each candidate
+            // Oceń każdego kandydata
             let best = null,
                 bestScore = -Infinity;
             for (const c of candidates) {
                 let score = 0;
                 const id = (c.id || '').toUpperCase();
-                // Material match
+                // Dopasowanie materiału
                 if (isZelbet && id.startsWith('KDZ')) score += 10;
                 else if (!isZelbet && id.startsWith('KDB')) score += 10;
-                // Suffix match
+                // Dopasowanie przyrostka
                 if (id.includes(suffix)) score += 5;
                 // Forma standardowa
                 const mag = well.magazyn || 'Kluczbork';
@@ -726,25 +726,25 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
 
         const holeCenter = mmFromBottom + prDN / 2;
 
-        // Check if hole spans dennica-ring junction (physical pipe overlap)
+        // Sprawdź, czy otwór przesuwa się przez połączenie dennicy i kręgu (fizyczne nakładanie się rur)
         const dennicaSeg = segments.find((s) => s.type === 'dennica');
         if (dennicaSeg && mmFromBottom < dennicaSeg.end && mmFromBottom + prDN > dennicaSeg.end) {
-            // Hole crosses dennica top edge → need taller dennica
+            // Otwór przecina górną krawędź dennicy → potrzebna wyższa dennica
             result.needsTallerDennica = true;
         }
 
-        // Check if hole center is fully inside dennica — no OT needed
+        // Sprawdź, czy środek otworu znajduje się w całości wewnątrz dennicy — OT nie jest potrzebne
         if (dennicaSeg && holeCenter < dennicaSeg.end) continue;
 
-        // Find which krag segment contains the hole center
+        // Znajdź, który segment kręgu zawiera środek otworu
         for (let si = 1; si < segments.length; si++) {
             const seg = segments[si];
             if (seg.type !== 'krag' && seg.type !== 'krag_ot') continue;
-            // Check if hole center is inside this segment
+            // Sprawdź, czy środek otworu znajduje się wewnątrz tego segmentu
             if (holeCenter >= seg.start && holeCenter < seg.end && !usedSegIndices.has(si)) {
                 usedSegIndices.add(si);
 
-                // Find corresponding kregItem
+                // Znajdź odpowiedni kregItem
                 let segCount = 0;
                 for (let ki = 0; ki < newItems.length; ki++) {
                     const kp = studnieProducts.find((p) => p.id === newItems[ki].productId);
@@ -814,7 +814,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     return result;
 }
 
-/* ===== AUTO-SELECT COMPONENTS ===== */
+/* ===== AUTO-DOBÓR ELEMENTÓW ===== */
 /*
  * ZASADY DOBORU ELEMENTÓW:
  * 1. Zakończenie studni (góra) — TYLKO jedno z trzech:
@@ -918,7 +918,7 @@ async function autoSelectComponents(autoTriggered = false) {
         return;
     }
 
-    // --- Filter products by warehouse availability and well params ---
+    // --- Filtruj produkty wg dostępności w magazynie i parametrów studni ---
     const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
     // --- INTEGRACJA Z NOWYM BACKENDEM ---
@@ -930,9 +930,9 @@ async function autoSelectComponents(autoTriggered = false) {
         // Backend grupuje każdą płytę osobno: { product_id, quantity ... }
         // Więc można albo skondensować duplikaty, albo po prostu wpisać 1 sztukowa połączone kręgi (tak samo zadziała)
         const newConfig = [];
-        // The backend returns elements bottom-to-top (Dennica -> Rings -> Konus).
-        // Our JS UI renders top-to-bottom, and sortWellConfigByOrder maintains relative grouping order.
-        // Reversing it here ensures rings retain correct physical order top-to-bottom.
+        // Backend zwraca elementy od dołu do góry (Dennica -> Kręgi -> Konus).
+        // Nasze UI JS renderuje od góry do dołu, a sortWellConfigByOrder utrzymuje względną kolejność grupowania.
+        // Odwrócenie tego tutaj zapewnia, że kręgi zachowają poprawną kolejność fizyczną od góry do dołu.
         const reversedItems = [...backendResult.items].reverse();
 
         for (const bItem of reversedItems) {
@@ -957,7 +957,7 @@ async function autoSelectComponents(autoTriggered = false) {
             }
         }
 
-        // Ensure well has a manhole (Wlaz) - backend might not always return it if not constrained
+        // Upewnij się, że studnia ma właz (Wlaz) - backend może nie zawsze go zwracać, jeśli nie ma ograniczeń
         const hasWlaz = newConfig.some(
             (item) => studnieProducts.find((p) => p.id === item.productId)?.componentType === 'wlaz'
         );
@@ -1641,7 +1641,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     }
 
                     if (diff !== 0) score += Math.abs(diff) * 5;
-                    if (isOutOfBounds) score += 10000; // Penalize out of bounds height deviations
+                    if (isOutOfBounds) score += 10000; // Penalizuj odchylenia wysokości poza zakresem
                     if (conf.isMinimal) score += 50000;
 
                     if (score < bestScore) {
@@ -1856,14 +1856,14 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 function recalculateWellErrors(well) {
     if (!well) return;
     
-    // Clear out strict clearance errors from before to regenerate them
+    // Wyczyść błędy dotyczące luzów z poprzedniego wywołania, aby wygenerować je ponownie
     let liveErrors = well.configErrors ? well.configErrors.filter(e => !e.includes('Błąd zapasu')) : [];
 
-    // --- LIVE VALIDATION FOR CLEARANCES ---
+    // --- WALIDACJA LUZÓW NA ŻYWO ---
     if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
         const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
         if (rzDna !== null && !isNaN(rzDna)) {
-            // Build physical segments from bottom to top
+            // Buduj segmenty fizyczne od dołu do góry
             const segments = [];
             let cy = 0;
             const configReversed = [...well.config].reverse();
@@ -1883,7 +1883,7 @@ function recalculateWellErrors(well) {
                 }
             }
 
-            // Default clearance logic
+            // Domyślna logika luzów
             const getDefaultC = (dn) => {
                 const table = [
                     { max: 200, z: [100, 100, 50, 50] },
@@ -1939,7 +1939,7 @@ function recalculateWellErrors(well) {
     well.configStatus = well.configErrors.length > 0 ? 'ERROR' : (well.configSource ? 'OK' : well.configStatus || '');
 }
 
-/* ===== WELLS LIST RENDERING ===== */
+/* ===== RENDEROWANIE LISTY STUDNI ===== */
 function renderWellsList() {
     const container = document.getElementById('wells-list');
     if (!container) return;
@@ -1974,7 +1974,7 @@ function renderWellsList() {
     let html = '';
     const dktCap = [1000, 1200, 1500, 2000, 2500, 'styczna'];
 
-    // Check for order changes if in edit mode
+    // Sprawdź zmiany w zamówieniu, jeśli w trybie edycji
     let orderChanges = {};
     if (orderEditMode) {
         orderChanges = getOrderChanges({ ...orderEditMode.order, wells: wells });
@@ -2029,7 +2029,7 @@ function renderWellsList() {
                         ? '<span style="margin-left:0.3rem;">✅</span>'
                         : '';
 
-            // Icon for configuration source
+            // Ikona źródła konfiguracji
             let sourceBadge = '';
             if (w.configSource === 'AUTO_AI') {
                 sourceBadge =
@@ -2231,7 +2231,7 @@ function handleStycznaProductChoice(productId, mode) {
     }
 }
 
-/* ===== DN SELECTOR ===== */
+/* ===== WYBÓR DN ===== */
 function selectDN(dn) {
     if (dn === 'styczna') {
         const well = getCurrentWell();
@@ -2259,7 +2259,7 @@ function doSelectDN(dn) {
 
     if (well.dn !== dn) {
         well.dn = dn;
-        // Update name if it uses the default format
+        // Aktualizuj nazwę, jeśli używa formatu domyślnego
         if (
             !well.numer ||
             well.name.startsWith('Studnia DN') ||
@@ -2272,7 +2272,7 @@ function doSelectDN(dn) {
                     : 'Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')');
         }
 
-        // Update zakończenie to match new DN (if it's a standard one)
+        // Aktualizuj zakończenie, aby pasowało do nowego DN (jeśli jest standardowe)
         if (well.zakonczenie && dn !== 'styczna') {
             const oldProd = studnieProducts.find((p) => p.id === well.zakonczenie);
             if (oldProd) {
@@ -2285,7 +2285,7 @@ function doSelectDN(dn) {
             }
         }
 
-        // Clear old components that do not match new DN and re-run auto-select
+        // Wyczyść stare elementy, które nie pasują do nowego DN i uruchom ponownie auto-dobór
         well.config = [];
         autoSelectComponents(true);
         refreshAll();
@@ -2337,7 +2337,7 @@ function filterByWellParams(p, well) {
 
         const stopnie = well.stopnie || 'drabinka';
 
-        // Strip _OT suffix for validation
+        // Usuń przyrostek _OT dla walidacji
         const checkId = id.endsWith('_OT') ? id.replace('_OT', '') : id;
 
         // Kręgi kończą się na: -B (brak), -D (drabinka), -N-D (nierdzewna)
@@ -2408,11 +2408,11 @@ window.updateConfigToMatchParams = function (well) {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
-        // Ensure we handle dynamically generated drilled rings correctly by finding their base generic product temporarily
+        // Upewnij się, że poprawnie obsługujemy dynamicznie generowane kręgi wiercone, tymczasowo znajdując ich podstawowy produkt ogólny
         const isDrilled = p.componentType === 'krag_ot' || p.id.endsWith('_OT');
 
         if (!filterByWellParams(p, well)) {
-            // Find substitute
+            // Znajdź zamiennik
             const substitute = availProducts.find(
                 (cand) =>
                     cand.componentType === p.componentType &&
@@ -2423,7 +2423,7 @@ window.updateConfigToMatchParams = function (well) {
                 item.productId = substitute.id;
                 anyChanged = true;
             } else if (isDrilled) {
-                // For dynamic drilled rings, we find the substitute for the base ring, then append _OT
+                // Dla dynamicznych kręgów wierconych znajdujemy zamiennik dla kręgu bazowego, a następnie dodajemy _OT
                 const baseId = p.id.replace('_OT', '');
                 const baseProd = studnieProducts.find((pr) => pr.id === baseId);
                 if (baseProd) {
@@ -2456,7 +2456,7 @@ window.updateConfigToMatchParams = function (well) {
     }
 };
 
-/* ===== TILES RENDERING ===== */
+/* ===== RENDEROWANIE KAFELKÓW ===== */
 
 /**
  * Filtruje uszczelki wg wybranego typu w parametrach studni (SDV, GSG, NBR, SDV PO).
@@ -2555,12 +2555,12 @@ function renderTiles() {
         }
         if (items.length === 0) return;
 
-        // Custom sorting for tangential wells: sort by DN
+        // Niestandardowe sortowanie dla studni stycznych: sortuj wg DN
         if (group.types.includes('styczna')) {
             items.sort((a, b) => (a.dn || 0) - (b.dn || 0));
         }
 
-        // Custom sorting for dennica: sort by height from lowest to highest
+        // Niestandardowe sortowanie dla dennicy: sortuj wg wysokości od najniższej do najwyższej
         if (group.types.includes('dennica')) {
             items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
         }
@@ -2584,7 +2584,7 @@ function renderTiles() {
                 ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
                 : '';
 
-            // Calculate price with surcharge if stainless ladder is selected
+            // Oblicz cenę z dopłatą, jeśli wybrano drabinę nierdzewną
             let displayPrice = p.price || 0;
             if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
                 displayPrice += parseFloat(p.doplataDrabNierdzewna);
@@ -2605,7 +2605,7 @@ function renderTiles() {
     const primaryProducts = availProducts
         .filter((p) => {
             if (dn === 'styczna') {
-                // For styczna wells, use well.dn for superstructure but allow 'styczna' for dennica
+                // Dla studni stycznych użyj well.dn dla nadbudowy, ale pozwól na 'styczną' dla dennicy
                 if (p.componentType === 'dennica' || p.componentType === 'styczna') {
                     return p.dn === 'styczna' || p.componentType === 'styczna';
                 }
@@ -2618,7 +2618,7 @@ function renderTiles() {
         .filter((p) => filterByWellParams(p, well));
 
     groups.forEach((g) => {
-        // Special logic for tangential wells to show the correct seal parameter in the seals category
+        // Specjalna logika dla studni stycznych, aby pokazać poprawny parametr uszczelki w kategorii uszczelek
         if (g.types.includes('uszczelka')) {
             let items = primaryProducts.filter((p) => g.types.includes(p.componentType));
             items = filterSealsByWellType(items, well);
@@ -2667,7 +2667,7 @@ function renderTiles() {
             html += `<h3 style="color:#f59e0b; margin-bottom:1rem; font-size:1.1rem;">⏬ Redukcja (DN1000)</h3>`;
             groups.forEach((g) => {
                 if (g.types.includes('uszczelka')) {
-                    // Apply the same seal type filtering for the reduction section
+                    // Zastosuj to samo filtrowanie typu uszczelki dla sekcji redukcji
                     let items = redProducts.filter((p) => g.types.includes(p.componentType));
                     items = filterSealsByWellType(items, well);
                     if (items.length > 0) {
@@ -2698,9 +2698,9 @@ function renderTiles() {
     container.innerHTML = html;
 }
 
-/* ===== WELL CONFIGURATION ===== */
+/* ===== KONFIGURACJA STUDNI ===== */
 
-/* --- Drag & Drop for Well Components --- */
+/* --- Przeciągnij i upuść dla elementów studni --- */
 window.currentDraggedPlaceholderId = null;
 
 function dragWellComponent(ev, productId) {
@@ -2751,7 +2751,7 @@ function allowDropWellComponent(ev) {
 
     if (window.currentDraggedPlaceholderId) {
         const plIdx = well.config.findIndex((c) => c.isPlaceholder);
-        // Avoid flickering by not rendering if position mapped is practically same
+        // Unikaj migotania, nie renderując, jeśli zmapowana pozycja jest praktycznie taka sama
         let currentEffIdx = plIdx;
         let newEffIdx = targetIdx;
         if (plIdx > -1 && plIdx < targetIdx) newEffIdx -= 1;
@@ -2990,7 +2990,7 @@ function addWellComponent(productId) {
         });
     }
 
-    // Helper to add a single product to well config at the correct position
+    // Pomocnik do dodawania pojedynczego produktu do konfiguracji studni w odpowiedniej pozycji
     const addSingle = (prod) => {
         const topClosureTypes = [
             'plyta_din',
@@ -3126,7 +3126,7 @@ function removeWellComponent(index) {
             if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
 
             showToast('Usunięto redukcję ze studni.', 'info');
-            // Allow code to continue and re-render without auto selecting
+            // Pozwól kodowi kontynuować i ponownie wyrenderować bez automatycznego dobierania
         }
     }
 
@@ -3154,7 +3154,7 @@ function updateWellQuantity(index, value) {
     }
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
-    // We do not allow changing quantity to > 1 for concrete items, but keeping the function for removals
+    // Nie pozwalamy na zmianę ilości na > 1 dla elementów betonowych, ale zachowujemy funkcję do usuwania
     well.config[index].quantity = 1;
     renderWellConfig();
     renderWellDiagram();
@@ -3189,7 +3189,7 @@ function renderWellConfig() {
         return;
     }
 
-    // Component type visual order mapping (top of well → bottom)
+    // Mapowanie wizualnej kolejności typu komponentu (góra studni → dół)
     const typeOrderMap = {
         wlaz: 0,
         avr: 1,
@@ -3205,7 +3205,7 @@ function renderWellConfig() {
         kineta: 7
     };
 
-    // Type color badges
+    // Odznaki kolorów typów
     const typeBadge = {
         wlaz: { bg: '#1e293b', label: 'Właz' },
         plyta_din: { bg: '#be185d', label: 'Płyta' },
@@ -3512,8 +3512,8 @@ function sortWellConfigByOrder() {
         const ob = pb ? (typeOrder[pb.componentType] ?? 99) : 99;
         if (oa !== ob) return oa - ob;
 
-        // Items of the same type keep their relative structural order.
-        // Previously kręgi were forced sorted by height, which scrambled krag_ot positions.
+        // Elementy tego samego typu zachowują swoją względną kolejność strukturalną.
+        // Wcześniej kręgi były sortowane według wysokości, co mieszało pozycje krag_ot.
         return 0;
     });
 }
@@ -3530,7 +3530,7 @@ window.refreshZleceniaModalIfActive = function () {
         if (typeof populateZleceniaForm === 'function') {
             const el = zleceniaElementsList[zleceniaSelectedIdx];
             if (el) {
-                // To keep the modal context fully consistent, we update it via the main list object
+                // Aby zachować pełną spójność kontekstu modala, aktualizujemy go za pomocą obiektu listy głównej
                 populateZleceniaForm(el);
             }
         }
@@ -3556,18 +3556,18 @@ function renderWellPrzejscia(opts) {
                 return;
             }
 
-            // Cancel any pending refresh from another field's blur
+            // Anuluj wszelkie oczekujące odświeżania po utracie fokusu (blur) przez inne pole
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
                 window.__pendingPrzejsciaRefresh = null;
 
-                // Flush pending save immediately!
+                // Natychmiast zapisz oczekujące zmiany!
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
                     window.__pendingPrzejsciaApply();
                     window.__pendingPrzejsciaApply = null;
                 }
 
-                // Which container does this element belong to?
+                // Do którego kontenera należy ten element?
                 const containerId = element.closest('#zl-przejscia-list')
                     ? 'zl-przejscia-list'
                     : 'well-przejscia-tiles';
@@ -3688,7 +3688,7 @@ function renderWellPrzejscia(opts) {
                 }
             };
 
-            // Use a short delay for refresh to allow 'click' on next element to fire first
+            // Użyj krótkiego opóźnienia do odświeżenia, aby pozwolić na wcześniejsze wywołanie kliknięcia na następnym elemencie
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
@@ -3713,7 +3713,7 @@ function renderWellPrzejscia(opts) {
         return;
     }
 
-    // If filterElementIndex is set, check if ANY transition belongs to the element
+    // Jeśli ustawiono filterElementIndex, sprawdź, czy DOWOLNE przejście należy do elementu
     if (filterElementIndex != null) {
         const rzDnaCheck = parseFloat(well.rzednaDna) || 0;
         const findProdCheck = (id) => studnieProducts.find((pr) => pr.id === id);
@@ -3737,7 +3737,7 @@ function renderWellPrzejscia(opts) {
     const findProduct = (id) => studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProduct, true);
 
-    // Auto-sort by element level (assignedIndex) and then by angle
+    // Automatyczne sortowanie według poziomu elementu (assignedIndex), a następnie według kąta
     const sorted = well.przejscia
         .map((item) => {
             let pel = parseFloat(item.rzednaWlaczenia);
@@ -3753,7 +3753,7 @@ function renderWellPrzejscia(opts) {
             return (a.item.angle || 0) - (b.item.angle || 0);
         });
 
-    // Rebuild przejscia array in sorted order
+    // Przebuduj tablicę przejść w posortowanej kolejności
     well.przejscia = sorted.map((s) => s.item);
 
     let totalPrice = 0;
@@ -3909,7 +3909,7 @@ function renderWellPrzejscia(opts) {
 
     html += '</div>';
 
-    // Summary bar
+    // Pasek podsumowania
     const countLabel =
         filterElementIndex != null
             ? `Przejścia tego elementu (${filteredCount} szt.)`
@@ -3945,7 +3945,7 @@ function movePrzejscie(index, direction) {
     window.refreshZleceniaModalIfActive();
 }
 
-/* ===== DRAG & DROP FOR PRZEJŚCIA ===== */
+/* ===== PRZECIĄGNIJ I UPUŚĆ DLA PRZEJŚĆ ===== */
 let draggedPrzIndex = null;
 
 window.handlePrzDragStart = function (e) {
@@ -3983,10 +3983,10 @@ window.handlePrzDrop = function (e) {
         const well = getCurrentWell();
         if (!well) return;
 
-        // Extract the dragged item
+        // Wyodrębnij przeciągany element
         const draggedItem = well.przejscia.splice(draggedPrzIndex, 1)[0];
 
-        // Insert at the new position
+        // Wstaw w nowej pozycji
         well.przejscia.splice(dropIndex, 0, draggedItem);
 
         renderWellPrzejscia();
@@ -4069,7 +4069,7 @@ function savePrzejscieEdit(index) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
-    syncEditState(); // save values from DOM to state just in case
+    syncEditState(); // zapisz wartości z DOM do stanu na wszelki wypadek
 
     if (!editPrzejscieState.dnId) {
         showToast('Wybierz typ i średnicę przejścia', 'error');
@@ -4175,12 +4175,12 @@ function switchBuilderTab(tab) {
 let inlinePrzejsciaState = { type: null, dnId: null };
 let visiblePrzejsciaTypes = new Set(); // By default, all types are hidden
 
-/* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
+/* ===== POPUP WIDOCZNOŚCI PRZEJŚĆ ===== */
 function openPrzejsciaVisibilityPopup(containerId) {
     const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
     const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
 
-    // Create overlay
+    // Utwórz nakładkę
     let overlay = document.getElementById('przejscia-visibility-overlay');
     if (overlay) overlay.remove();
 
@@ -4231,12 +4231,12 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     document.body.appendChild(overlay);
 
-    // Measure longest tile name and set uniform column width
+    // Zmierz najdłuższą nazwę kafelka i ustaw jednolitą szerokość kolumny
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     ctx.font = '700 0.85rem Inter, sans-serif';
     const maxTextWidth = Math.max(...allTypes.map((n) => ctx.measureText(n).width));
-    const tileMinW = Math.ceil(maxTextWidth + 24); // +24 for padding
+    const tileMinW = Math.ceil(maxTextWidth + 24); // +24 dla marginesu wewnętrznego
     const gridEl = overlay.querySelector('.przejscia-vis-grid');
     if (gridEl) gridEl.style.setProperty('--tile-min-w', tileMinW + 'px');
 }
@@ -4301,13 +4301,13 @@ window.setPrzejsciaVisibilityAll = setPrzejsciaVisibilityAll;
 function renderInlinePrzejsciaApp(containerId) {
     const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
     const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
-    // Filter to only visible types
+    // Filtruj tylko do widocznych typów
     const types = allTypes.filter((t) => visiblePrzejsciaTypes.has(t));
 
     const container = document.getElementById(containerId || 'inline-przejscia-app');
     if (!container) return;
 
-    // Reset type if it's been hidden
+    // Zresetuj typ, jeśli został ukryty
     if (inlinePrzejsciaState.type && !types.includes(inlinePrzejsciaState.type)) {
         inlinePrzejsciaState.type = types[0] || null;
         inlinePrzejsciaState.dnId = null;
@@ -4320,7 +4320,7 @@ function renderInlinePrzejsciaApp(containerId) {
     const visibilityBtnLabel =
         hiddenCount > 0 ? `👁️ Pokaż/Ukryj (${hiddenCount} ukrytych)` : '👁️ Pokaż/Ukryj';
 
-    // If no types visible, show empty state
+    // Jeśli żadne typy nie są widoczne, pokaż stan pusty
     if (types.length === 0) {
         container.innerHTML = `
             <div style="text-align:center; padding:1.5rem; border:1px dashed rgba(99,102,241,0.2); border-radius:10px; background:rgba(15,23,42,0.3); margin:0.4rem 0;">
@@ -4345,7 +4345,7 @@ function renderInlinePrzejsciaApp(containerId) {
         : null;
 
     container.innerHTML = `
-        <!-- Rodzaj tiles - scrollable grid -->
+        <!-- Rodzaj kafelków - przewijalna siatka -->
         <div style="padding:0.4rem 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Rodzaj materiału</div>
@@ -4373,7 +4373,7 @@ function renderInlinePrzejsciaApp(containerId) {
             </div>
         </div>
 
-        <!-- DN selector -->
+        <!-- Wybór DN -->
         <div style="padding:0.3rem 0;">
             <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight:700;">Średnica (DN) — ${inlinePrzejsciaState.type || ''}</div>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
@@ -4739,7 +4739,7 @@ function removePrzejscieFromWell(index) {
     }
 }
 
-/* ===== SUMMARY ===== */
+/* ===== PODSUMOWANIE ===== */
 function updateSummary() {
     const well = getCurrentWell();
     if (!well) {
@@ -4766,7 +4766,7 @@ function updateSummary() {
     }
     const stats = calcWellStats(well);
 
-    // Bottom bar
+    // Dolny pasek
     document.getElementById('sum-price').textContent = fmtInt(stats.price) + ' PLN';
     document.getElementById('sum-weight').textContent = fmtInt(stats.weight) + ' kg';
     document.getElementById('sum-height').textContent = fmtInt(stats.height) + ' mm';
@@ -4791,13 +4791,13 @@ function updateSummary() {
 
         if (diff > 0) {
             diffMmText = '-' + fmtInt(diff) + ' mm';
-            diffColor = '#f87171'; // red
+            diffColor = '#f87171'; // czerwony
         } else if (diff < 0) {
             diffMmText = '+' + fmtInt(Math.abs(diff)) + ' mm';
-            diffColor = '#facc15'; // yellow/orange
+            diffColor = '#facc15'; // żółty/pomarańczowy
         } else {
             diffMmText = 'OK';
-            diffColor = '#4ade80'; // green
+            diffColor = '#4ade80'; // zielony
         }
     }
 

@@ -1,7 +1,7 @@
 import prisma from './src/prismaClient';
 
 async function testPersistence() {
-    console.log('[TEST] Odświeżenie danych bazy (Reading current pricelist)...');
+    console.log('[TEST] Odświeżenie danych bazy (Odczytywanie aktualnego cennika)...');
     const row = await prisma.settings.findUnique({ where: { key: 'pricelist_studnie' } });
     
     if (!row || !row.value) {
@@ -16,7 +16,7 @@ async function testPersistence() {
         const oldName = arr[0].name;
         const testName = 'TESTOWY_ELEMENT_DO_USUNIECIA_' + Date.now();
         
-        console.log(`[TEST] Zmieniam element [index: 0, id: ${arr[0].id}] z "${oldName}" na "${testName}"...`);
+        console.log(`[TEST] Zmieniam element [indeks: 0, id: ${arr[0].id}] z "${oldName}" na "${testName}"...`);
         arr[0].name = testName;
         
         console.log('[TEST] Wykonuję zapis (komenda UPDATE do SQLite)...');

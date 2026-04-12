@@ -25,7 +25,7 @@ async function getNextOrderNumber(user: any, year: number): Promise<string> {
     }
 }
 
-// GET /api/users (admin only)
+// GET /api/users (tylko administrator)
 router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     try {
         const users = await prisma.users.findMany();
@@ -65,7 +65,7 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     }
 });
 
-// PUT /api/users/:id (admin only)
+// PUT /api/users/:id (tylko administrator)
 router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     const {
         username,
@@ -147,7 +147,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// DELETE /api/users/:id (admin only)
+// DELETE /api/users/:id (tylko administrator)
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (req.params.id === authReq.user?.id)

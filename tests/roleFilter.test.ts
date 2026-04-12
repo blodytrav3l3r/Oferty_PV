@@ -2,7 +2,7 @@ import { buildRoleWhereClause } from '../src/utils/roleFilter';
 import { User } from '../src/helpers';
 
 describe('buildRoleWhereClause', () => {
-    it('admin should get undefined (no filter = all records)', () => {
+    it('admin powinien otrzymać undefined (brak filtra = wszystkie rekordy)', () => {
         const admin: User = {
             id: 'admin1',
             username: 'admin',
@@ -12,7 +12,7 @@ describe('buildRoleWhereClause', () => {
         expect(buildRoleWhereClause(admin)).toBeUndefined();
     });
 
-    it('regular user should get filter by own userId', () => {
+    it('zwykły użytkownik powinien otrzymać filtr po własnym userId', () => {
         const user: User = {
             id: 'user1',
             username: 'jan',
@@ -23,7 +23,7 @@ describe('buildRoleWhereClause', () => {
         expect(result).toEqual({ userId: 'user1' });
     });
 
-    it('pro user should get filter by own id and subUsers', () => {
+    it('użytkownik pro powinien otrzymać filtr po własnym id i podużytkownikach (subUsers)', () => {
         const pro: User = {
             id: 'pro1',
             username: 'szef',
@@ -34,7 +34,7 @@ describe('buildRoleWhereClause', () => {
         expect(result).toEqual({ userId: { in: ['pro1', 'sub1', 'sub2'] } });
     });
 
-    it('pro user with no subUsers should include only own id', () => {
+    it('użytkownik pro bez podużytkowników powinien zawierać tylko własne id', () => {
         const pro: User = {
             id: 'pro1',
             username: 'szef',
@@ -45,7 +45,7 @@ describe('buildRoleWhereClause', () => {
         expect(result).toEqual({ userId: { in: ['pro1'] } });
     });
 
-    it('unknown role should fall through to userId filter', () => {
+    it('nieznana rola powinna przejść do filtra userId', () => {
         const unknown: User = {
             id: 'x1',
             username: 'unknown',

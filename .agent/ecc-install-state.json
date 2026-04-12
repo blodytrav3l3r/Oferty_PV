@@ -1,0 +1,3887 @@
+{
+  "schemaVersion": "ecc.install.v1",
+  "installedAt": "2026-04-11T19:44:27.423Z",
+  "target": {
+    "id": "antigravity-project",
+    "target": "antigravity",
+    "kind": "project",
+    "root": "G:\\GitHub\\Oferty_PV\\.agent",
+    "installStatePath": "G:\\GitHub\\Oferty_PV\\.agent\\ecc-install-state.json"
+  },
+  "request": {
+    "profile": null,
+    "modules": [
+      "rules-core",
+      "agents-core",
+      "commands-core",
+      "framework-language",
+      "workflow-quality",
+      "security",
+      "operator-workflows"
+    ],
+    "includeComponents": [],
+    "excludeComponents": [],
+    "legacyLanguages": [],
+    "legacyMode": false
+  },
+  "resolution": {
+    "selectedModules": [
+      "rules-core",
+      "agents-core",
+      "commands-core",
+      "platform-configs",
+      "framework-language",
+      "workflow-quality",
+      "security",
+      "operator-workflows"
+    ],
+    "skippedModules": []
+  },
+  "source": {
+    "repoVersion": "1.10.0",
+    "repoCommit": "c593c81b94cf40eb1cc9be4b66daf01e755c150a",
+    "manifestVersion": 1
+  },
+  "operations": [
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\agents.md",
+      "sourceRelativePath": "rules/common/agents.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-agents.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\code-review.md",
+      "sourceRelativePath": "rules/common/code-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-code-review.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\coding-style.md",
+      "sourceRelativePath": "rules/common/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\development-workflow.md",
+      "sourceRelativePath": "rules/common/development-workflow.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-development-workflow.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\git-workflow.md",
+      "sourceRelativePath": "rules/common/git-workflow.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-git-workflow.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\hooks.md",
+      "sourceRelativePath": "rules/common/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\patterns.md",
+      "sourceRelativePath": "rules/common/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\performance.md",
+      "sourceRelativePath": "rules/common/performance.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-performance.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\security.md",
+      "sourceRelativePath": "rules/common/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\common\\testing.md",
+      "sourceRelativePath": "rules/common/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\common-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\cpp\\coding-style.md",
+      "sourceRelativePath": "rules/cpp/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\cpp-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\cpp\\hooks.md",
+      "sourceRelativePath": "rules/cpp/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\cpp-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\cpp\\patterns.md",
+      "sourceRelativePath": "rules/cpp/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\cpp-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\cpp\\security.md",
+      "sourceRelativePath": "rules/cpp/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\cpp-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\cpp\\testing.md",
+      "sourceRelativePath": "rules/cpp/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\cpp-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\csharp\\coding-style.md",
+      "sourceRelativePath": "rules/csharp/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\csharp-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\csharp\\hooks.md",
+      "sourceRelativePath": "rules/csharp/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\csharp-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\csharp\\patterns.md",
+      "sourceRelativePath": "rules/csharp/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\csharp-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\csharp\\security.md",
+      "sourceRelativePath": "rules/csharp/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\csharp-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\csharp\\testing.md",
+      "sourceRelativePath": "rules/csharp/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\csharp-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\dart\\coding-style.md",
+      "sourceRelativePath": "rules/dart/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\dart-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\dart\\hooks.md",
+      "sourceRelativePath": "rules/dart/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\dart-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\dart\\patterns.md",
+      "sourceRelativePath": "rules/dart/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\dart-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\dart\\security.md",
+      "sourceRelativePath": "rules/dart/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\dart-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\dart\\testing.md",
+      "sourceRelativePath": "rules/dart/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\dart-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\golang\\coding-style.md",
+      "sourceRelativePath": "rules/golang/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\golang-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\golang\\hooks.md",
+      "sourceRelativePath": "rules/golang/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\golang-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\golang\\patterns.md",
+      "sourceRelativePath": "rules/golang/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\golang-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\golang\\security.md",
+      "sourceRelativePath": "rules/golang/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\golang-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\golang\\testing.md",
+      "sourceRelativePath": "rules/golang/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\golang-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\java\\coding-style.md",
+      "sourceRelativePath": "rules/java/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\java-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\java\\hooks.md",
+      "sourceRelativePath": "rules/java/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\java-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\java\\patterns.md",
+      "sourceRelativePath": "rules/java/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\java-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\java\\security.md",
+      "sourceRelativePath": "rules/java/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\java-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\java\\testing.md",
+      "sourceRelativePath": "rules/java/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\java-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\kotlin\\coding-style.md",
+      "sourceRelativePath": "rules/kotlin/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\kotlin-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\kotlin\\hooks.md",
+      "sourceRelativePath": "rules/kotlin/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\kotlin-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\kotlin\\patterns.md",
+      "sourceRelativePath": "rules/kotlin/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\kotlin-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\kotlin\\security.md",
+      "sourceRelativePath": "rules/kotlin/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\kotlin-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\kotlin\\testing.md",
+      "sourceRelativePath": "rules/kotlin/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\kotlin-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\perl\\coding-style.md",
+      "sourceRelativePath": "rules/perl/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\perl-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\perl\\hooks.md",
+      "sourceRelativePath": "rules/perl/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\perl-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\perl\\patterns.md",
+      "sourceRelativePath": "rules/perl/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\perl-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\perl\\security.md",
+      "sourceRelativePath": "rules/perl/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\perl-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\perl\\testing.md",
+      "sourceRelativePath": "rules/perl/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\perl-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\php\\coding-style.md",
+      "sourceRelativePath": "rules/php/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\php-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\php\\hooks.md",
+      "sourceRelativePath": "rules/php/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\php-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\php\\patterns.md",
+      "sourceRelativePath": "rules/php/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\php-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\php\\security.md",
+      "sourceRelativePath": "rules/php/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\php-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\php\\testing.md",
+      "sourceRelativePath": "rules/php/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\php-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\python\\coding-style.md",
+      "sourceRelativePath": "rules/python/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\python-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\python\\hooks.md",
+      "sourceRelativePath": "rules/python/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\python-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\python\\patterns.md",
+      "sourceRelativePath": "rules/python/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\python-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\python\\security.md",
+      "sourceRelativePath": "rules/python/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\python-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\python\\testing.md",
+      "sourceRelativePath": "rules/python/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\python-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\README.md",
+      "sourceRelativePath": "rules/README.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\README.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\rust\\coding-style.md",
+      "sourceRelativePath": "rules/rust/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\rust-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\rust\\hooks.md",
+      "sourceRelativePath": "rules/rust/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\rust-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\rust\\patterns.md",
+      "sourceRelativePath": "rules/rust/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\rust-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\rust\\security.md",
+      "sourceRelativePath": "rules/rust/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\rust-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\rust\\testing.md",
+      "sourceRelativePath": "rules/rust/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\rust-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\swift\\coding-style.md",
+      "sourceRelativePath": "rules/swift/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\swift-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\swift\\hooks.md",
+      "sourceRelativePath": "rules/swift/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\swift-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\swift\\patterns.md",
+      "sourceRelativePath": "rules/swift/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\swift-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\swift\\security.md",
+      "sourceRelativePath": "rules/swift/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\swift-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\swift\\testing.md",
+      "sourceRelativePath": "rules/swift/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\swift-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\typescript\\coding-style.md",
+      "sourceRelativePath": "rules/typescript/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\typescript-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\typescript\\hooks.md",
+      "sourceRelativePath": "rules/typescript/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\typescript-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\typescript\\patterns.md",
+      "sourceRelativePath": "rules/typescript/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\typescript-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\typescript\\security.md",
+      "sourceRelativePath": "rules/typescript/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\typescript-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\typescript\\testing.md",
+      "sourceRelativePath": "rules/typescript/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\typescript-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\coding-style.md",
+      "sourceRelativePath": "rules/web/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\design-quality.md",
+      "sourceRelativePath": "rules/web/design-quality.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-design-quality.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\hooks.md",
+      "sourceRelativePath": "rules/web/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\patterns.md",
+      "sourceRelativePath": "rules/web/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\performance.md",
+      "sourceRelativePath": "rules/web/performance.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-performance.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\security.md",
+      "sourceRelativePath": "rules/web/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\web\\testing.md",
+      "sourceRelativePath": "rules/web/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\web-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\agents.md",
+      "sourceRelativePath": "rules/zh/agents.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-agents.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\code-review.md",
+      "sourceRelativePath": "rules/zh/code-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-code-review.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\coding-style.md",
+      "sourceRelativePath": "rules/zh/coding-style.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-coding-style.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\development-workflow.md",
+      "sourceRelativePath": "rules/zh/development-workflow.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-development-workflow.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\git-workflow.md",
+      "sourceRelativePath": "rules/zh/git-workflow.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-git-workflow.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\hooks.md",
+      "sourceRelativePath": "rules/zh/hooks.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-hooks.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\patterns.md",
+      "sourceRelativePath": "rules/zh/patterns.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-patterns.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\performance.md",
+      "sourceRelativePath": "rules/zh/performance.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-performance.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\README.md",
+      "sourceRelativePath": "rules/zh/README.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-README.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\security.md",
+      "sourceRelativePath": "rules/zh/security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-security.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "rules-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\rules\\zh\\testing.md",
+      "sourceRelativePath": "rules/zh/testing.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\rules\\zh-testing.md",
+      "strategy": "flatten-copy",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\plugins\\marketplace.json",
+      "sourceRelativePath": ".agents\\plugins\\marketplace.json",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\plugins\\marketplace.json",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\agent-introspection-debugging\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\agent-introspection-debugging\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\agent-introspection-debugging\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\agent-sort\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\agent-sort\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\agent-sort\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\api-design\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\api-design\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\api-design\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\api-design\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\api-design\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\api-design\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\article-writing\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\article-writing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\article-writing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\article-writing\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\article-writing\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\article-writing\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\backend-patterns\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\backend-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\backend-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\backend-patterns\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\backend-patterns\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\backend-patterns\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\brand-voice\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\brand-voice\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\brand-voice\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\brand-voice\\references\\voice-profile-schema.md",
+      "sourceRelativePath": ".agents\\skills\\brand-voice\\references\\voice-profile-schema.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\brand-voice\\references\\voice-profile-schema.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\bun-runtime\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\bun-runtime\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\bun-runtime\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\bun-runtime\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\bun-runtime\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\bun-runtime\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\claude-api\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\claude-api\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\claude-api\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\claude-api\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\claude-api\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\claude-api\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\coding-standards\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\coding-standards\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\coding-standards\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\coding-standards\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\coding-standards\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\coding-standards\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\content-engine\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\content-engine\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\content-engine\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\content-engine\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\content-engine\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\content-engine\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\crosspost\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\crosspost\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\crosspost\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\crosspost\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\crosspost\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\crosspost\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\deep-research\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\deep-research\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\deep-research\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\deep-research\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\deep-research\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\deep-research\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\dmux-workflows\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\dmux-workflows\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\dmux-workflows\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\dmux-workflows\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\dmux-workflows\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\dmux-workflows\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\documentation-lookup\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\documentation-lookup\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\documentation-lookup\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\documentation-lookup\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\documentation-lookup\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\documentation-lookup\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\e2e-testing\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\e2e-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\e2e-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\e2e-testing\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\e2e-testing\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\e2e-testing\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\eval-harness\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\eval-harness\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\eval-harness\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\eval-harness\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\eval-harness\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\eval-harness\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\everything-claude-code\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\everything-claude-code\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\everything-claude-code\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\everything-claude-code\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\everything-claude-code\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\everything-claude-code\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\exa-search\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\exa-search\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\exa-search\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\exa-search\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\exa-search\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\exa-search\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\fal-ai-media\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\fal-ai-media\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\fal-ai-media\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\fal-ai-media\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\fal-ai-media\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\fal-ai-media\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\frontend-design\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\frontend-design\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\frontend-design\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\frontend-patterns\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\frontend-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\frontend-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\frontend-patterns\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\frontend-patterns\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\frontend-patterns\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\frontend-slides\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\frontend-slides\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\frontend-slides\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\frontend-slides\\STYLE_PRESETS.md",
+      "sourceRelativePath": ".agents\\skills\\frontend-slides\\STYLE_PRESETS.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\frontend-slides\\STYLE_PRESETS.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\frontend-slides\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\frontend-slides\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\frontend-slides\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\investor-materials\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\investor-materials\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\investor-materials\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\investor-materials\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\investor-materials\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\investor-materials\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\investor-outreach\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\investor-outreach\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\investor-outreach\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\investor-outreach\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\investor-outreach\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\investor-outreach\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\market-research\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\market-research\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\market-research\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\market-research\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\market-research\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\market-research\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\mcp-server-patterns\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\mcp-server-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\mcp-server-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\nextjs-turbopack\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\nextjs-turbopack\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\nextjs-turbopack\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\nextjs-turbopack\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\nextjs-turbopack\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\nextjs-turbopack\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\product-capability\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\product-capability\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\product-capability\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\security-review\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\security-review\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\security-review\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\security-review\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\security-review\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\security-review\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\strategic-compact\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\strategic-compact\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\strategic-compact\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\strategic-compact\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\strategic-compact\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\strategic-compact\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\tdd-workflow\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\tdd-workflow\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\tdd-workflow\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\tdd-workflow\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\tdd-workflow\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\tdd-workflow\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\verification-loop\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\verification-loop\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\verification-loop\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\verification-loop\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\verification-loop\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\verification-loop\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\video-editing\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\video-editing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\video-editing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\video-editing\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\video-editing\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\video-editing\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\x-api\\SKILL.md",
+      "sourceRelativePath": ".agents\\skills\\x-api\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\x-api\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\.agents\\skills\\x-api\\agents\\openai.yaml",
+      "sourceRelativePath": ".agents\\skills\\x-api\\agents\\openai.yaml",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\.agents\\skills\\x-api\\agents\\openai.yaml",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\architect.md",
+      "sourceRelativePath": "agents\\architect.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\architect.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\build-error-resolver.md",
+      "sourceRelativePath": "agents\\build-error-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\build-error-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\chief-of-staff.md",
+      "sourceRelativePath": "agents\\chief-of-staff.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\chief-of-staff.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\code-architect.md",
+      "sourceRelativePath": "agents\\code-architect.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\code-architect.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\code-explorer.md",
+      "sourceRelativePath": "agents\\code-explorer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\code-explorer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\code-reviewer.md",
+      "sourceRelativePath": "agents\\code-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\code-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\code-simplifier.md",
+      "sourceRelativePath": "agents\\code-simplifier.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\code-simplifier.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\comment-analyzer.md",
+      "sourceRelativePath": "agents\\comment-analyzer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\comment-analyzer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\conversation-analyzer.md",
+      "sourceRelativePath": "agents\\conversation-analyzer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\conversation-analyzer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\cpp-build-resolver.md",
+      "sourceRelativePath": "agents\\cpp-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\cpp-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\cpp-reviewer.md",
+      "sourceRelativePath": "agents\\cpp-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\cpp-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\csharp-reviewer.md",
+      "sourceRelativePath": "agents\\csharp-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\csharp-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\dart-build-resolver.md",
+      "sourceRelativePath": "agents\\dart-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\dart-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\database-reviewer.md",
+      "sourceRelativePath": "agents\\database-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\database-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\doc-updater.md",
+      "sourceRelativePath": "agents\\doc-updater.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\doc-updater.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\docs-lookup.md",
+      "sourceRelativePath": "agents\\docs-lookup.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\docs-lookup.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\e2e-runner.md",
+      "sourceRelativePath": "agents\\e2e-runner.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\e2e-runner.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\flutter-reviewer.md",
+      "sourceRelativePath": "agents\\flutter-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\flutter-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\gan-evaluator.md",
+      "sourceRelativePath": "agents\\gan-evaluator.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\gan-evaluator.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\gan-generator.md",
+      "sourceRelativePath": "agents\\gan-generator.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\gan-generator.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\gan-planner.md",
+      "sourceRelativePath": "agents\\gan-planner.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\gan-planner.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\go-build-resolver.md",
+      "sourceRelativePath": "agents\\go-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\go-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\go-reviewer.md",
+      "sourceRelativePath": "agents\\go-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\go-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\harness-optimizer.md",
+      "sourceRelativePath": "agents\\harness-optimizer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\harness-optimizer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\healthcare-reviewer.md",
+      "sourceRelativePath": "agents\\healthcare-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\healthcare-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\java-build-resolver.md",
+      "sourceRelativePath": "agents\\java-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\java-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\java-reviewer.md",
+      "sourceRelativePath": "agents\\java-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\java-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\kotlin-build-resolver.md",
+      "sourceRelativePath": "agents\\kotlin-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\kotlin-reviewer.md",
+      "sourceRelativePath": "agents\\kotlin-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\loop-operator.md",
+      "sourceRelativePath": "agents\\loop-operator.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\loop-operator.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\opensource-forker.md",
+      "sourceRelativePath": "agents\\opensource-forker.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\opensource-forker.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\opensource-packager.md",
+      "sourceRelativePath": "agents\\opensource-packager.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\opensource-packager.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\opensource-sanitizer.md",
+      "sourceRelativePath": "agents\\opensource-sanitizer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\opensource-sanitizer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\performance-optimizer.md",
+      "sourceRelativePath": "agents\\performance-optimizer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\performance-optimizer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\planner.md",
+      "sourceRelativePath": "agents\\planner.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\planner.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\pr-test-analyzer.md",
+      "sourceRelativePath": "agents\\pr-test-analyzer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\pr-test-analyzer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\python-reviewer.md",
+      "sourceRelativePath": "agents\\python-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\python-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\pytorch-build-resolver.md",
+      "sourceRelativePath": "agents\\pytorch-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\pytorch-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\refactor-cleaner.md",
+      "sourceRelativePath": "agents\\refactor-cleaner.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\refactor-cleaner.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\rust-build-resolver.md",
+      "sourceRelativePath": "agents\\rust-build-resolver.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\rust-build-resolver.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\rust-reviewer.md",
+      "sourceRelativePath": "agents\\rust-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\rust-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\security-reviewer.md",
+      "sourceRelativePath": "agents\\security-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\security-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\seo-specialist.md",
+      "sourceRelativePath": "agents\\seo-specialist.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\seo-specialist.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\silent-failure-hunter.md",
+      "sourceRelativePath": "agents\\silent-failure-hunter.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\silent-failure-hunter.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\tdd-guide.md",
+      "sourceRelativePath": "agents\\tdd-guide.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\tdd-guide.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\type-design-analyzer.md",
+      "sourceRelativePath": "agents\\type-design-analyzer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\type-design-analyzer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\agents\\typescript-reviewer.md",
+      "sourceRelativePath": "agents\\typescript-reviewer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\typescript-reviewer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "agents-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\AGENTS.md",
+      "sourceRelativePath": "AGENTS.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\AGENTS.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\agent-sort.md",
+      "sourceRelativePath": "commands\\agent-sort.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\agent-sort.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\aside.md",
+      "sourceRelativePath": "commands\\aside.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\aside.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\build-fix.md",
+      "sourceRelativePath": "commands\\build-fix.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\build-fix.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\checkpoint.md",
+      "sourceRelativePath": "commands\\checkpoint.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\checkpoint.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\claw.md",
+      "sourceRelativePath": "commands\\claw.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\claw.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\code-review.md",
+      "sourceRelativePath": "commands\\code-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\code-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\context-budget.md",
+      "sourceRelativePath": "commands\\context-budget.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\context-budget.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\cpp-build.md",
+      "sourceRelativePath": "commands\\cpp-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\cpp-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\cpp-review.md",
+      "sourceRelativePath": "commands\\cpp-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\cpp-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\cpp-test.md",
+      "sourceRelativePath": "commands\\cpp-test.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\cpp-test.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\devfleet.md",
+      "sourceRelativePath": "commands\\devfleet.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\devfleet.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\docs.md",
+      "sourceRelativePath": "commands\\docs.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\docs.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\e2e.md",
+      "sourceRelativePath": "commands\\e2e.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\e2e.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\eval.md",
+      "sourceRelativePath": "commands\\eval.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\eval.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\evolve.md",
+      "sourceRelativePath": "commands\\evolve.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\evolve.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\feature-dev.md",
+      "sourceRelativePath": "commands\\feature-dev.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\feature-dev.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\flutter-build.md",
+      "sourceRelativePath": "commands\\flutter-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\flutter-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\flutter-review.md",
+      "sourceRelativePath": "commands\\flutter-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\flutter-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\flutter-test.md",
+      "sourceRelativePath": "commands\\flutter-test.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\flutter-test.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\gan-build.md",
+      "sourceRelativePath": "commands\\gan-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\gan-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\gan-design.md",
+      "sourceRelativePath": "commands\\gan-design.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\gan-design.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\go-build.md",
+      "sourceRelativePath": "commands\\go-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\go-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\go-review.md",
+      "sourceRelativePath": "commands\\go-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\go-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\go-test.md",
+      "sourceRelativePath": "commands\\go-test.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\go-test.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\gradle-build.md",
+      "sourceRelativePath": "commands\\gradle-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\gradle-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\harness-audit.md",
+      "sourceRelativePath": "commands\\harness-audit.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\harness-audit.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\hookify-configure.md",
+      "sourceRelativePath": "commands\\hookify-configure.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\hookify-configure.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\hookify-help.md",
+      "sourceRelativePath": "commands\\hookify-help.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\hookify-help.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\hookify-list.md",
+      "sourceRelativePath": "commands\\hookify-list.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\hookify-list.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\hookify.md",
+      "sourceRelativePath": "commands\\hookify.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\hookify.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\instinct-export.md",
+      "sourceRelativePath": "commands\\instinct-export.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\instinct-export.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\instinct-import.md",
+      "sourceRelativePath": "commands\\instinct-import.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\instinct-import.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\instinct-status.md",
+      "sourceRelativePath": "commands\\instinct-status.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\instinct-status.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\jira.md",
+      "sourceRelativePath": "commands\\jira.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\jira.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\kotlin-build.md",
+      "sourceRelativePath": "commands\\kotlin-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\kotlin-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\kotlin-review.md",
+      "sourceRelativePath": "commands\\kotlin-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\kotlin-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\kotlin-test.md",
+      "sourceRelativePath": "commands\\kotlin-test.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\kotlin-test.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\learn-eval.md",
+      "sourceRelativePath": "commands\\learn-eval.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\learn-eval.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\learn.md",
+      "sourceRelativePath": "commands\\learn.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\learn.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\loop-start.md",
+      "sourceRelativePath": "commands\\loop-start.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\loop-start.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\loop-status.md",
+      "sourceRelativePath": "commands\\loop-status.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\loop-status.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\model-route.md",
+      "sourceRelativePath": "commands\\model-route.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\model-route.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\multi-backend.md",
+      "sourceRelativePath": "commands\\multi-backend.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\multi-backend.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\multi-execute.md",
+      "sourceRelativePath": "commands\\multi-execute.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\multi-execute.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\multi-frontend.md",
+      "sourceRelativePath": "commands\\multi-frontend.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\multi-frontend.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\multi-plan.md",
+      "sourceRelativePath": "commands\\multi-plan.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\multi-plan.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\multi-workflow.md",
+      "sourceRelativePath": "commands\\multi-workflow.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\multi-workflow.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\orchestrate.md",
+      "sourceRelativePath": "commands\\orchestrate.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\orchestrate.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\plan.md",
+      "sourceRelativePath": "commands\\plan.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\plan.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\pm2.md",
+      "sourceRelativePath": "commands\\pm2.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\pm2.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\projects.md",
+      "sourceRelativePath": "commands\\projects.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\projects.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\promote.md",
+      "sourceRelativePath": "commands\\promote.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\promote.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prompt-optimize.md",
+      "sourceRelativePath": "commands\\prompt-optimize.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prompt-optimize.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prp-commit.md",
+      "sourceRelativePath": "commands\\prp-commit.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prp-commit.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prp-implement.md",
+      "sourceRelativePath": "commands\\prp-implement.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prp-implement.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prp-plan.md",
+      "sourceRelativePath": "commands\\prp-plan.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prp-plan.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prp-pr.md",
+      "sourceRelativePath": "commands\\prp-pr.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prp-pr.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prp-prd.md",
+      "sourceRelativePath": "commands\\prp-prd.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prp-prd.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\prune.md",
+      "sourceRelativePath": "commands\\prune.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\prune.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\python-review.md",
+      "sourceRelativePath": "commands\\python-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\python-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\quality-gate.md",
+      "sourceRelativePath": "commands\\quality-gate.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\quality-gate.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\refactor-clean.md",
+      "sourceRelativePath": "commands\\refactor-clean.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\refactor-clean.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\resume-session.md",
+      "sourceRelativePath": "commands\\resume-session.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\resume-session.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\review-pr.md",
+      "sourceRelativePath": "commands\\review-pr.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\review-pr.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\rules-distill.md",
+      "sourceRelativePath": "commands\\rules-distill.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\rules-distill.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\rust-build.md",
+      "sourceRelativePath": "commands\\rust-build.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\rust-build.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\rust-review.md",
+      "sourceRelativePath": "commands\\rust-review.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\rust-review.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\rust-test.md",
+      "sourceRelativePath": "commands\\rust-test.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\rust-test.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\santa-loop.md",
+      "sourceRelativePath": "commands\\santa-loop.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\santa-loop.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\save-session.md",
+      "sourceRelativePath": "commands\\save-session.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\save-session.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\sessions.md",
+      "sourceRelativePath": "commands\\sessions.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\sessions.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\setup-pm.md",
+      "sourceRelativePath": "commands\\setup-pm.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\setup-pm.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\skill-create.md",
+      "sourceRelativePath": "commands\\skill-create.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\skill-create.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\skill-health.md",
+      "sourceRelativePath": "commands\\skill-health.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\skill-health.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\tdd.md",
+      "sourceRelativePath": "commands\\tdd.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\tdd.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\test-coverage.md",
+      "sourceRelativePath": "commands\\test-coverage.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\test-coverage.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\update-codemaps.md",
+      "sourceRelativePath": "commands\\update-codemaps.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\update-codemaps.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\update-docs.md",
+      "sourceRelativePath": "commands\\update-docs.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\update-docs.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "commands-core",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\commands\\verify.md",
+      "sourceRelativePath": "commands\\verify.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\workflows\\verify.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\android-clean-architecture\\SKILL.md",
+      "sourceRelativePath": "skills\\android-clean-architecture\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\android-clean-architecture\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\api-design\\SKILL.md",
+      "sourceRelativePath": "skills\\api-design\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\api-design\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\backend-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\backend-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\backend-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\coding-standards\\SKILL.md",
+      "sourceRelativePath": "skills\\coding-standards\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\coding-standards\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\compose-multiplatform-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\compose-multiplatform-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\compose-multiplatform-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\csharp-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\csharp-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\csharp-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\cpp-coding-standards\\SKILL.md",
+      "sourceRelativePath": "skills\\cpp-coding-standards\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\cpp-coding-standards\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\cpp-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\cpp-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\cpp-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\dart-flutter-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\dart-flutter-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\dart-flutter-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\django-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\django-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\django-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\django-tdd\\SKILL.md",
+      "sourceRelativePath": "skills\\django-tdd\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\django-tdd\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\django-verification\\SKILL.md",
+      "sourceRelativePath": "skills\\django-verification\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\django-verification\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\dotnet-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\dotnet-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\dotnet-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\frontend-design\\SKILL.md",
+      "sourceRelativePath": "skills\\frontend-design\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\frontend-design\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\frontend-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\frontend-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\frontend-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\frontend-slides\\SKILL.md",
+      "sourceRelativePath": "skills\\frontend-slides\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\frontend-slides\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\frontend-slides\\STYLE_PRESETS.md",
+      "sourceRelativePath": "skills\\frontend-slides\\STYLE_PRESETS.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\frontend-slides\\STYLE_PRESETS.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\golang-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\golang-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\golang-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\golang-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\golang-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\golang-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\java-coding-standards\\SKILL.md",
+      "sourceRelativePath": "skills\\java-coding-standards\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\java-coding-standards\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\kotlin-coroutines-flows\\SKILL.md",
+      "sourceRelativePath": "skills\\kotlin-coroutines-flows\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-coroutines-flows\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\kotlin-exposed-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\kotlin-exposed-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-exposed-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\kotlin-ktor-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\kotlin-ktor-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-ktor-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\kotlin-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\kotlin-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\kotlin-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\kotlin-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\kotlin-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\laravel-plugin-discovery\\SKILL.md",
+      "sourceRelativePath": "skills\\laravel-plugin-discovery\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\laravel-plugin-discovery\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\laravel-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\laravel-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\laravel-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\laravel-tdd\\SKILL.md",
+      "sourceRelativePath": "skills\\laravel-tdd\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\laravel-tdd\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\laravel-verification\\SKILL.md",
+      "sourceRelativePath": "skills\\laravel-verification\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\laravel-verification\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\mcp-server-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\mcp-server-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\mcp-server-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\nestjs-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\nestjs-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\nestjs-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\perl-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\perl-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\perl-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\perl-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\perl-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\perl-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\python-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\python-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\python-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\python-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\python-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\python-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\rust-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\rust-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\rust-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\rust-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\rust-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\rust-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\springboot-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\springboot-patterns\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\springboot-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\springboot-tdd\\SKILL.md",
+      "sourceRelativePath": "skills\\springboot-tdd\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\springboot-tdd\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "framework-language",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\springboot-verification\\SKILL.md",
+      "sourceRelativePath": "skills\\springboot-verification\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\springboot-verification\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\agent-sort\\SKILL.md",
+      "sourceRelativePath": "skills\\agent-sort\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\agent-sort\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\agent-introspection-debugging\\SKILL.md",
+      "sourceRelativePath": "skills\\agent-introspection-debugging\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\agent-introspection-debugging\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\ai-regression-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\ai-regression-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\ai-regression-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\configure-ecc\\SKILL.md",
+      "sourceRelativePath": "skills\\configure-ecc\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\configure-ecc\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\code-tour\\SKILL.md",
+      "sourceRelativePath": "skills\\code-tour\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\code-tour\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning\\SKILL.md",
+      "sourceRelativePath": "skills\\continuous-learning\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning\\config.json",
+      "sourceRelativePath": "skills\\continuous-learning\\config.json",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning\\config.json",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning\\evaluate-session.sh",
+      "sourceRelativePath": "skills\\continuous-learning\\evaluate-session.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning\\evaluate-session.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\SKILL.md",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\agents\\observer-loop.sh",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\agents\\observer-loop.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\agents\\observer-loop.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\agents\\observer.md",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\agents\\observer.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\agents\\observer.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\agents\\session-guardian.sh",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\agents\\session-guardian.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\agents\\session-guardian.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\agents\\start-observer.sh",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\agents\\start-observer.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\agents\\start-observer.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\config.json",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\config.json",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\config.json",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\hooks\\observe.sh",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\hooks\\observe.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\hooks\\observe.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\scripts\\detect-project.sh",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\scripts\\detect-project.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\scripts\\detect-project.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\scripts\\instinct-cli.py",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\scripts\\instinct-cli.py",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\scripts\\instinct-cli.py",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\continuous-learning-v2\\scripts\\test_parse_instinct.py",
+      "sourceRelativePath": "skills\\continuous-learning-v2\\scripts\\test_parse_instinct.py",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\continuous-learning-v2\\scripts\\test_parse_instinct.py",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\council\\SKILL.md",
+      "sourceRelativePath": "skills\\council\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\council\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\e2e-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\e2e-testing\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\e2e-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\eval-harness\\SKILL.md",
+      "sourceRelativePath": "skills\\eval-harness\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\eval-harness\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\hookify-rules\\SKILL.md",
+      "sourceRelativePath": "skills\\hookify-rules\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\hookify-rules\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\iterative-retrieval\\SKILL.md",
+      "sourceRelativePath": "skills\\iterative-retrieval\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\iterative-retrieval\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\plankton-code-quality\\SKILL.md",
+      "sourceRelativePath": "skills\\plankton-code-quality\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\plankton-code-quality\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\skill-stocktake\\SKILL.md",
+      "sourceRelativePath": "skills\\skill-stocktake\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\skill-stocktake\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\skill-stocktake\\scripts\\quick-diff.sh",
+      "sourceRelativePath": "skills\\skill-stocktake\\scripts\\quick-diff.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\skill-stocktake\\scripts\\quick-diff.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\skill-stocktake\\scripts\\save-results.sh",
+      "sourceRelativePath": "skills\\skill-stocktake\\scripts\\save-results.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\skill-stocktake\\scripts\\save-results.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\skill-stocktake\\scripts\\scan.sh",
+      "sourceRelativePath": "skills\\skill-stocktake\\scripts\\scan.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\skill-stocktake\\scripts\\scan.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\strategic-compact\\SKILL.md",
+      "sourceRelativePath": "skills\\strategic-compact\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\strategic-compact\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\strategic-compact\\suggest-compact.sh",
+      "sourceRelativePath": "skills\\strategic-compact\\suggest-compact.sh",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\strategic-compact\\suggest-compact.sh",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\tdd-workflow\\SKILL.md",
+      "sourceRelativePath": "skills\\tdd-workflow\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\tdd-workflow\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "workflow-quality",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\verification-loop\\SKILL.md",
+      "sourceRelativePath": "skills\\verification-loop\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\verification-loop\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\defi-amm-security\\SKILL.md",
+      "sourceRelativePath": "skills\\defi-amm-security\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\defi-amm-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\django-security\\SKILL.md",
+      "sourceRelativePath": "skills\\django-security\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\django-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\healthcare-phi-compliance\\SKILL.md",
+      "sourceRelativePath": "skills\\healthcare-phi-compliance\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\healthcare-phi-compliance\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\hipaa-compliance\\SKILL.md",
+      "sourceRelativePath": "skills\\hipaa-compliance\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\hipaa-compliance\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\laravel-security\\SKILL.md",
+      "sourceRelativePath": "skills\\laravel-security\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\laravel-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\llm-trading-agent-security\\SKILL.md",
+      "sourceRelativePath": "skills\\llm-trading-agent-security\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\llm-trading-agent-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\nodejs-keccak256\\SKILL.md",
+      "sourceRelativePath": "skills\\nodejs-keccak256\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\nodejs-keccak256\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\perl-security\\SKILL.md",
+      "sourceRelativePath": "skills\\perl-security\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\perl-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\security-review\\SKILL.md",
+      "sourceRelativePath": "skills\\security-review\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\security-review\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\security-review\\cloud-infrastructure-security.md",
+      "sourceRelativePath": "skills\\security-review\\cloud-infrastructure-security.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\security-review\\cloud-infrastructure-security.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\security-scan\\SKILL.md",
+      "sourceRelativePath": "skills\\security-scan\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\security-scan\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\security-bounty-hunter\\SKILL.md",
+      "sourceRelativePath": "skills\\security-bounty-hunter\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\security-bounty-hunter\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\springboot-security\\SKILL.md",
+      "sourceRelativePath": "skills\\springboot-security\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\springboot-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\evm-token-decimals\\SKILL.md",
+      "sourceRelativePath": "skills\\evm-token-decimals\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\evm-token-decimals\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\automation-audit-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\automation-audit-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\automation-audit-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\api-connector-builder\\SKILL.md",
+      "sourceRelativePath": "skills\\api-connector-builder\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\api-connector-builder\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\connections-optimizer\\SKILL.md",
+      "sourceRelativePath": "skills\\connections-optimizer\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\connections-optimizer\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\customer-billing-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\customer-billing-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\customer-billing-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\dashboard-builder\\SKILL.md",
+      "sourceRelativePath": "skills\\dashboard-builder\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\dashboard-builder\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\ecc-tools-cost-audit\\SKILL.md",
+      "sourceRelativePath": "skills\\ecc-tools-cost-audit\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\ecc-tools-cost-audit\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\email-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\email-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\email-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\finance-billing-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\finance-billing-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\finance-billing-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\github-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\github-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\github-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\google-workspace-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\google-workspace-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\google-workspace-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\jira-integration\\SKILL.md",
+      "sourceRelativePath": "skills\\jira-integration\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\jira-integration\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\knowledge-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\knowledge-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\knowledge-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\messages-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\messages-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\messages-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\project-flow-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\project-flow-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\project-flow-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\terminal-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\terminal-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\terminal-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\unified-notifications-ops\\SKILL.md",
+      "sourceRelativePath": "skills\\unified-notifications-ops\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\unified-notifications-ops\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "operator-workflows",
+      "sourcePath": "G:\\GitHub\\Oferty_PV\\everything-claude-code\\skills\\workspace-surface-audit\\SKILL.md",
+      "sourceRelativePath": "skills\\workspace-surface-audit\\SKILL.md",
+      "destinationPath": "G:\\GitHub\\Oferty_PV\\.agent\\skills\\workspace-surface-audit\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    }
+  ]
+}

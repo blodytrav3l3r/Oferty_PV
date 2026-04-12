@@ -1,4 +1,4 @@
-/* ===== DEFAULT PRODUCT DATA ===== */
+/* ===== DOMYŚLNE DANE PRODUKTÓW ===== */
 const DEFAULT_PRODUCTS = [
     // Rury Betonowe
     {
@@ -750,7 +750,7 @@ const CATEGORIES = [
     'Uszczelki'
 ];
 
-/* ===== GASKET AUTO-ADD MAP (Duże Żelbetowe II → Uszczelki) ===== */
+/* ===== MAPA AUTOMATYCZNEGO DODAWANIA USZCZELEK (Duże Żelbetowe II → Uszczelki) ===== */
 const GASKET_MAP = {
     'RGZ-2-14-30-BU': 'Y-U-GZ-U-14-BU',
     'RGZ-2-15-30-BU': 'Y-U-GZ-U-15-BU',

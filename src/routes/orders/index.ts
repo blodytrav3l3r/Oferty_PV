@@ -1,5 +1,5 @@
 /**
- * Orders — barrel index
+ * Zamówienia — indeks zbiorczy (barrel index)
  *
  * Montuje sub-routery zamówień, zleceń produkcyjnych i numeracji
  * w jeden router kompatybilny z istniejącym importem w server.ts.

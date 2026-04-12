@@ -31,7 +31,7 @@ router.get('/', async (_req, res) => {
         const data = await readPricelist(config.keyCurrent);
         res.json({ data });
     } catch (err: any) {
-        logger.error('Products', 'GET error', err.message);
+        logger.error('Products', 'Błąd pobierania (GET)', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -49,7 +49,7 @@ router.put('/', requireAuth, async (req, res) => {
         const count = await writePricelist(config.keyCurrent, arr);
         res.json({ ok: true, count });
     } catch (err: any) {
-        logger.error('Products', 'PUT error', err.message);
+        logger.error('Products', 'Błąd zapisu (PUT)', err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -62,7 +62,7 @@ router.get('/default', async (_req, res) => {
         const data = await readPricelist(config.keyDefault);
         res.json({ data });
     } catch (err: any) {
-        logger.error('Products', 'GET default error', err.message);
+        logger.error('Products', 'Błąd pobierania domyślnych (GET default)', err.message);
         res.json({ data: [] });
     }
 });
@@ -76,7 +76,7 @@ router.put('/default', requireAuth, async (req, res) => {
         const count = await writePricelist(config.keyDefault, arr);
         res.json({ ok: true, count });
     } catch (err: any) {
-        logger.error('Products', 'PUT default error', err.message);
+        logger.error('Products', 'Błąd zapisu domyślnych (PUT default)', err.message);
         res.status(500).json({ error: err.message });
     }
 });

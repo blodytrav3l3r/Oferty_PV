@@ -7,7 +7,7 @@ import { buildRoleWhereClause } from '../../utils/roleFilter';
 
 const router = express.Router();
 
-/* ===== ORDERS STUDNIE (Zamówienia) ===== */
+/* ===== ZAMÓWIENIA STUDNIE ===== */
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -102,7 +102,7 @@ router.put('/', requireAuth, async (req, res) => {
     }
 });
 
-/* ===== ORDER BY ID ===== */
+/* ===== ZAMÓWIENIE PO ID (ZAMÓWIENIE) ===== */
 
 router.get('/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

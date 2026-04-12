@@ -3,7 +3,7 @@ import request from 'supertest';
 import { createRateLimiter } from '../src/middleware/rateLimiter';
 
 describe('createRateLimiter', () => {
-    it('should allow requests within limit', async () => {
+    it('powinien zezwalać na żądania w ramach limitu', async () => {
         const app = express();
         app.use(createRateLimiter({ maxHits: 5, windowMs: 60000 }));
         app.get('/test', (_req, res) => res.json({ ok: true }));
@@ -13,7 +13,7 @@ describe('createRateLimiter', () => {
         expect(res.headers['x-ratelimit-limit']).toBe('5');
     });
 
-    it('should set X-RateLimit-Remaining header', async () => {
+    it('powinien ustawiać nagłówek X-RateLimit-Remaining', async () => {
         const app = express();
         app.use(createRateLimiter({ maxHits: 3, windowMs: 60000 }));
         app.get('/test', (_req, res) => res.json({ ok: true }));
@@ -23,22 +23,22 @@ describe('createRateLimiter', () => {
         expect(Number(res.headers['x-ratelimit-remaining'])).toBeGreaterThanOrEqual(0);
     });
 
-    it('should block requests exceeding limit with 429', async () => {
+    it('powinien blokować żądania przekraczające limit błędem 429', async () => {
         const app = express();
         app.use(createRateLimiter({ maxHits: 2, windowMs: 60000 }));
         app.get('/test', (_req, res) => res.json({ ok: true }));
 
-        // First 2 requests should pass
+        // Pierwsze 2 żądania powinny przejść
         await request(app).get('/test');
         await request(app).get('/test');
 
-        // 3rd request should be blocked
+        // Trzecie żądanie powinno zostać zablokowane
         const res = await request(app).get('/test');
         expect(res.statusCode).toBe(429);
         expect(res.body.error).toContain('Zbyt wiele prób');
     });
 
-    it('should set Retry-After header when blocked', async () => {
+    it('powinien ustawiać nagłówek Retry-After przy blokadzie', async () => {
         const app = express();
         app.use(createRateLimiter({ maxHits: 1, windowMs: 60000 }));
         app.get('/test', (_req, res) => res.json({ ok: true }));
@@ -51,7 +51,7 @@ describe('createRateLimiter', () => {
         expect(Number(res.headers['retry-after'])).toBeGreaterThan(0);
     });
 
-    it('should use custom error message', async () => {
+    it('powinien używać własnego komunikatu o błędzie', async () => {
         const customMessage = 'Custom rate limit msg';
         const app = express();
         app.use(createRateLimiter({ maxHits: 0, message: customMessage }));
@@ -62,7 +62,7 @@ describe('createRateLimiter', () => {
         expect(res.body.error).toBe(customMessage);
     });
 
-    it('should use default options when none provided', async () => {
+    it('powinien używać domyślnych opcji, gdy nie podano żadnych', async () => {
         const app = express();
         app.use(createRateLimiter());
         app.get('/test', (_req, res) => res.json({ ok: true }));

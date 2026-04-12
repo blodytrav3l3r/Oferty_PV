@@ -1,29 +1,29 @@
-/* ===== GLOBALS ===== */
+/* ===== ZMIENNE GLOBALNE ===== */
 let studnieProducts = [];
 let currentUser = null;
 let currentCennikTab = 'dn1000';
 
-// Multi-well system
-let wells = []; // Array of { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
+// System wielu studni
+let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
 let wellCounter = 1;
-let wellDiscounts = {}; // Discounts per DN: { 1000: { dennica: 0, nadbudowa: 0 }, ... }
+let wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0 }, ... }
 
-// Global offer-level defaults (persist until manually changed)
-let offerDefaultZakonczenie = null; // product ID or null (=konus)
-let offerDefaultRedukcja = false; // true = reduction to DN1000
-let offerDefaultRedukcjaMinH = 2500; // minimum bottom section height in mm
-let offerDefaultRedukcjaZak = null; // product ID for reduction top closure (DN1000)
+// Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
+let offerDefaultZakonczenie = null; // ID produktu lub null (=konus)
+let offerDefaultRedukcja = false; // true = redukcja do DN1000
+let offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
+let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
 
-// Multi-offer system
+// System wielu ofert
 let offersStudnie = [];
 let ordersStudnie = [];
 let editingOfferIdStudnie = null;
 let isSavingOffer = false;
-let orderEditMode = null; // When editing an order: { orderId, order }
+let orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
 let clientsDb = [];
 
-// Wizard state
+// Stan kreatora
 let currentWizardStep = 1;
 let wizardConfirmedParams = new Set();
 const WIZARD_REQUIRED_PARAMS = [
@@ -46,7 +46,7 @@ const WIZARD_REQUIRED_PARAMS = [
     'magazyn'
 ];
 
-/* ===== FORMATTING ===== */
+/* ===== FORMATOWANIE ===== */
 // fmt() i fmtInt() — dostępne z shared/formatters.js
 
 /* ===== AUTH ===== */
@@ -55,7 +55,7 @@ const WIZARD_REQUIRED_PARAMS = [
 /* ===== TOAST ===== */
 // showToast() — dostępne z shared/ui.js
 
-/* ===== CARD TOGGLE ===== */
+/* ===== PRZEŁĄCZANIE KART ===== */
 function toggleCard(contentId, iconId) {
     const content = document.getElementById(contentId);
     const icon = document.getElementById(iconId);
@@ -65,7 +65,7 @@ function toggleCard(contentId, iconId) {
     if (icon) icon.textContent = isOpen ? '🔽' : '🔼';
 }
 
-/* ===== NAVIGATION ===== */
+/* ===== NAWIGACJA ===== */
 function showSection(id) {
     document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
@@ -95,7 +95,7 @@ function syncOfferClientSummary() {
     s('offer-disp-transport', km !== '—' && rate !== '—' ? `${km} km × ${rate} PLN/km` : '—');
 }
 
-/* ===== OFFER NUMBER ===== */
+/* ===== NUMER OFERTY ===== */
 function generateOfferNumberStudnie() {
     const d = new Date();
     const year = d.getFullYear();
@@ -114,7 +114,7 @@ function generateOfferNumberStudnie() {
     return `OS/${String(count).padStart(6, '0')}/${symbol}/${year}`;
 }
 
-/** Utility to strip prefixes from compound IDs like offer:studnie:user:uuid */
+/** Narzędzie do usuwania prefiksów ze złożonych identyfikatorów, np. offer:studnie:user:uuid */
 function normalizeId(id) {
     if (!id || typeof id !== 'string') return id;
     if (id.includes(':')) return id.split(':').pop();

@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 
-describe('Health Check', () => {
+describe('Sprawdzanie stanu zdrowia (Health Check)', () => {
     let app: express.Application;
 
     beforeAll(() => {
@@ -18,7 +18,7 @@ describe('Health Check', () => {
     });
 
     describe('GET /health', () => {
-        it('should return health status', async () => {
+        it('powinien zwrócić status zdrowia (health status)', async () => {
             const res = await request(app).get('/health');
 
             expect(res.statusCode).toBe(200);

@@ -4,7 +4,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
-/* ===== YEAR LETTER (Litera roku obrotowego) ===== */
+/* ===== LITERA ROKU (Litera roku obrotowego) ===== */
 
 router.get('/year-letter', requireAuth, async (_req, res) => {
     try {

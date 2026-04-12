@@ -6,7 +6,7 @@ import { logger } from '../utils/logger';
 const router = express.Router();
 
 /**
- * SEARCH: Wyszukiwanie ofert
+ * SZUKAJ: Wyszukiwanie ofert
  */
 router.post('/search', async (req, res) => {
     const {
@@ -23,7 +23,7 @@ router.post('/search', async (req, res) => {
         let offers: any[];
         offers = await prisma.offers_rel.findMany();
 
-        // Filter in memory for backward compatibility
+        // Filtruj w pamięci dla zachowania kompatybilności wstecznej
         const filtered = offers.filter((offer) => {
             if (query) {
                 const q = query.toLowerCase();
@@ -35,7 +35,7 @@ router.post('/search', async (req, res) => {
             return true;
         });
 
-        // Map to expected format
+        // Mapuj do oczekiwanego formatu
         const docsPromises = filtered.slice(skip, skip + limit).map(async (offer) => {
             const items = await prisma.offer_items_rel.findMany({
                 where: { offerId: offer.id }
@@ -61,8 +61,8 @@ router.post('/search', async (req, res) => {
             bookmark: null
         });
     } catch (err: any) {
-        logger.error('PvMarketplace', 'Search error', err.message);
-        res.status(500).json({ error: 'Search service unavailable' });
+        logger.error('PvMarketplace', 'Błąd wyszukiwania', err.message);
+        res.status(500).json({ error: 'Usługa wyszukiwania niedostępna' });
     }
 });
 
@@ -72,7 +72,7 @@ router.post('/search', async (req, res) => {
 router.post('/moderate/:offerId', requireAuth, requireAdmin, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Only admins can moderate offers' });
+        return res.status(403).json({ error: 'Tylko administratorzy mogą moderować oferty' });
     }
 
     const { action, reason: _reason } = req.body;
@@ -87,7 +87,7 @@ router.post('/moderate/:offerId', requireAuth, requireAdmin, async (req, res) =>
 
         res.json({ ok: true, status: newState });
     } catch (_err) {
-        res.status(500).json({ error: 'Moderation failed' });
+        res.status(500).json({ error: 'Moderacja nie powiodła się' });
     }
 });
 

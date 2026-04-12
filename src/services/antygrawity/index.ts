@@ -1,8 +1,8 @@
 /**
- * Antygrawity — Automatic Manhole Component Selection System
+ * Antygrawity — Automatyczny System Doboru Elementów Studni
  *
- * Automatically selects manhole components for DN1000, DN1200, DN1500, DN2000, DN2500
- * with support for reduction plates, cones, DIN plates, load-bearing rings, and passages.
+ * Automatycznie dobiera elementy studni dla średnic DN1000, DN1200, DN1500, DN2000, DN2500
+ * z obsługą płyt redukcyjnych, konusów, płyt DIN, pierścieni odciążających i przejść szczelnych.
  *
  * @module antygrawity
  */
@@ -19,12 +19,12 @@ import {
 } from './selection';
 import { placePrzejscia, insertOtRing } from './passages';
 
-// ─── Constants ──────────────────────────────────────────────────────
+// ─── Stałe ──────────────────────────────────────────────────────────
 
-/** Valid DN sizes supported by the system */
+/** Prawidłowe rozmiary DN obsługiwane przez system */
 const VALID_DN_SIZES = [1000, 1200, 1500, 2000, 2500];
 
-/** Mapping of DN sizes to their reduction target DN */
+/** Mapowanie rozmiarów DN na ich docelowe DN redukcji */
 const REDUCTION_OPTIONS: Record<number, number> = {
     1200: 1000,
     1500: 1000,
@@ -32,7 +32,7 @@ const REDUCTION_OPTIONS: Record<number, number> = {
     2500: 1000
 };
 
-// ─── Types ──────────────────────────────────────────────────────────
+// ─── Typy ──────────────────────────────────────────────────────────
 
 export interface ManholeConfig {
     targetDn: number;
@@ -53,11 +53,11 @@ export interface SelectionResult {
     metadata?: Record<string, unknown>;
 }
 
-// ─── Main Orchestrator ──────────────────────────────────────────────
+// ─── Główny koordynator (Orchestrator) ──────────────────────────────
 
 /**
- * Automatically select and assemble manhole components based on configuration.
- * Pipeline: dennica → support → buildup rings → reduction → ending → passages
+ * Automatycznie dobiera i składa elementy studni na podstawie konfiguracji.
+ * Potok (Pipeline): dennica → podpora → kręgi nadbudowy → redukcja → zakończenie → przejścia
  */
 export async function selectManholeComponents(config: ManholeConfig): Promise<SelectionResult> {
     const {
@@ -107,7 +107,7 @@ export async function selectManholeComponents(config: ManholeConfig): Promise<Se
     return result;
 }
 
-// ─── Assembly Pipeline ──────────────────────────────────────────────
+// ─── Potok montażu (Assembly Pipeline) ──────────────────────────────
 
 interface AssemblyContext {
     targetDn: number;
@@ -122,13 +122,13 @@ interface AssemblyContext {
 }
 
 /**
- * Execute the full component assembly pipeline
+ * Wykonuje pełny potok montażu elementów
  */
 async function assembleComponents(
     result: SelectionResult,
     ctx: AssemblyContext
 ): Promise<void> {
-    // Step 1: Bottom plate (dennica)
+    // Krok 1: Dennica (bottom plate)
     const dennica = await selectDennica(ctx.targetDn, ctx.magazynField, ctx.formaStdField);
     if (!dennica) {
         result.errors.push(`Brak dostępnej dennicy dla DN${ctx.targetDn} w magazynie ${ctx.magazyn}`);
@@ -137,14 +137,14 @@ async function assembleComponents(
     }
     addComponent(result, dennica, 'dennica');
 
-    // Step 2: Handle load-bearing support
+    // Krok 2: Obsługa podpory odciążającej (load-bearing support)
     let currentDn = ctx.targetDn;
     if (ctx.hasPlytaOdciazajaca || ctx.hasPierscienOdciazajacy) {
         const added = await addLoadBearingSupport(result, ctx);
         if (!added) return;
     }
 
-    // Step 3: Determine reduction and ending
+    // Krok 3: Określenie redukcji i zakończenia
     const needsReduction = REDUCTION_OPTIONS[ctx.targetDn] !== undefined;
     const reductionDn = needsReduction ? REDUCTION_OPTIONS[ctx.targetDn] : ctx.targetDn;
 
@@ -157,7 +157,7 @@ async function assembleComponents(
 
     let remainingHeight = ctx.targetHeight - result.totalHeight - (ending.height || 0);
 
-    // Step 4: Reduction plate (if needed)
+    // Krok 4: Płyta redukcyjna (jeśli potrzebna)
     let reductionPlate: WellComponent | null = null;
     if (needsReduction) {
         reductionPlate = await selectPlytaRedukcyjna(ctx.targetDn, reductionDn, ctx.magazynField, ctx.formaStdField);
@@ -169,24 +169,24 @@ async function assembleComponents(
         remainingHeight -= reductionPlate.height || 0;
     }
 
-    // Step 5: Buildup rings
+    // Krok 5: Kręgi nadbudowy (buildup rings)
     await addBuildupRings(result, currentDn, remainingHeight, ctx.magazynField, ctx.formaStdField);
 
-    // Step 6: Reduction plate placement
+    // Krok 6: Umieszczenie płyty redukcyjnej
     if (reductionPlate) {
         addComponent(result, reductionPlate, 'plyta_redukcyjna');
         currentDn = reductionDn;
     }
 
-    // Step 7: Ending
+    // Krok 7: Zakończenie (ending)
     addComponent(result, ending, 'zakonczenie');
 
-    // Step 8: Passages
+    // Krok 8: Przejścia szczelne (passages)
     if (ctx.przejscia.length > 0) {
         await processPassages(result, currentDn, ctx);
     }
 
-    // Step 9: Final height validation
+    // Krok 9: Końcowa walidacja wysokości
     if (Math.abs(result.totalHeight - ctx.targetHeight) > 100) {
         result.warnings.push(
             `Różnica wysokości: ${Math.abs(result.totalHeight - ctx.targetHeight)}mm (cel: ${ctx.targetHeight}mm)`
@@ -194,10 +194,10 @@ async function assembleComponents(
     }
 }
 
-// ─── Assembly Helpers ───────────────────────────────────────────────
+// ─── Pomocniki montażu (Assembly Helpers) ───────────────────────────
 
 /**
- * Add a component to the result with auto-incrementing position
+ * Dodaje element do wyniku z automatycznie inkrementowaną pozycją
  */
 function addComponent(result: SelectionResult, component: WellComponent, layer: string): void {
     result.components.push({
@@ -209,7 +209,7 @@ function addComponent(result: SelectionResult, component: WellComponent, layer: 
 }
 
 /**
- * Add load-bearing support ring. Returns false if selection fails.
+ * Dodaje pierścień podpory odciążającej. Zwraca false, jeśli dobór się nie powiedzie.
  */
 async function addLoadBearingSupport(
     result: SelectionResult,
@@ -237,7 +237,7 @@ async function addLoadBearingSupport(
 }
 
 /**
- * Select and add buildup rings to fill the remaining height
+ * Dobiera i dodaje kręgi nadbudowy, aby wypełnić pozostałą wysokość
  */
 async function addBuildupRings(
     result: SelectionResult,
@@ -258,7 +258,7 @@ async function addBuildupRings(
 }
 
 /**
- * Process pipe passages and handle OT ring requirement
+ * Przetwarza przejścia rur i obsługuje wymóg kręgu wierconego (OT)
  */
 async function processPassages(
     result: SelectionResult,
@@ -291,7 +291,7 @@ async function processPassages(
 }
 
 /**
- * Create error result for invalid DN size
+ * Tworzy wynik błędu dla nieprawidłowego rozmiaru DN
  */
 function createInvalidDnResult(targetDn: number): SelectionResult {
     return {
@@ -307,7 +307,7 @@ function createInvalidDnResult(targetDn: number): SelectionResult {
     };
 }
 
-// ─── Public API Re-exports ──────────────────────────────────────────
+// ─── Re-eksporty publicznego API ────────────────────────────────────
 
 export { getAvailableComponents } from './selection';
 export { validateManhole } from './validators';

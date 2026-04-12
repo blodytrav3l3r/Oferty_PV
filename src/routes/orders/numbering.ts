@@ -4,7 +4,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 
 const router = express.Router();
 
-/* ===== RECYCLED NUMBERS ===== */
+/* ===== RECYKLING NUMERÓW ===== */
 
 router.get('/recycled', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -20,7 +20,7 @@ router.get('/recycled', requireAuth, async (req, res) => {
     }
 });
 
-/* ===== ORDER NUMBER GENERATION ===== */
+/* ===== GENEROWANIE NUMERU ZAMÓWIENIA ===== */
 
 router.get('/next-number/:userId', requireAuth, async (req, res) => {
     try {
@@ -31,7 +31,7 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
             where: { id: userId },
             select: { symbol: true }
         });
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
 
         const symbol = user.symbol || '??';
 
@@ -56,7 +56,7 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
             where: { id: userId },
             select: { symbol: true }
         });
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
 
         const symbol = user.symbol || '??';
 
@@ -78,7 +78,7 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
     }
 });
 
-/* ===== PRODUCTION ORDER NUMBER GENERATION ===== */
+/* ===== GENEROWANIE NUMERU ZLECENIA PRODUKCYJNEGO ===== */
 
 router.post('/claim-production-number/:userId', requireAuth, async (req, res) => {
     try {
@@ -90,19 +90,19 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
             where: { id: userId },
             select: { symbol: true, productionOrderStartNumber: true }
         });
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
 
         const symbol = user.symbol || '??';
         const startNum = user.productionOrderStartNumber || 1;
 
-        // Get year letter
+        // Pobierz literę roku
         const letterKey = 'year_letter_' + year;
         const letterRow = await prisma.settings.findUnique({
             where: { key: letterKey }
         });
         const yearLetter = letterRow ? letterRow.value : '?';
 
-        // Check for recycled numbers
+        // Sprawdź czy są numery z recyklingu (recycled)
         const recycled = await prisma.recycled_production_numbers.findFirst({
             where: { userId, year },
             orderBy: { seqNumber: 'asc' }

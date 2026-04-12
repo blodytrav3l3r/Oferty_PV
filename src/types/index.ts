@@ -1,3 +1,6 @@
+/**
+ * Generyczny interfejs odpowiedzi API
+ */
 export interface ApiResponse<T> {
     data?: T;
     error?: string;
@@ -6,6 +9,9 @@ export interface ApiResponse<T> {
     offset?: number;
 }
 
+/**
+ * Interfejs reprezentujący komponent studni (np. krąg, dennica)
+ */
 export interface WellComponent {
     id?: string;
     name?: string;
@@ -19,7 +25,7 @@ export interface WellComponent {
     waga?: number;
     pojemnosc?: number;
     ilosc_stopni?: number;
-    wykorzystano?: number; // Used for algorithm building parts
+    wykorzystano?: number; // Używane przez algorytm do budowania elementów
     przejscia?: PassageConfig[];
     position?: number;
     isOverwritten?: boolean;
@@ -27,6 +33,9 @@ export interface WellComponent {
     [key: string]: unknown;
 }
 
+/**
+ * Konfiguracja przejścia szczelnego rury przez ścianę studni
+ */
 export interface PassageConfig {
     kat?: string | number;
     angle?: string | number;
@@ -42,6 +51,9 @@ export interface PassageConfig {
     [key: string]: unknown;
 }
 
+/**
+ * Wpis w logu audytu
+ */
 export interface AuditLogEntry {
     id: string;
     entityType: string;

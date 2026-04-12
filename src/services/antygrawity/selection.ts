@@ -1,15 +1,15 @@
 /**
- * Antygrawity — Component Selection Functions
+ * Antygrawity — Funkcje doboru elementów
  *
- * Database query functions for selecting individual manhole components:
- * dennica, rings, cones, DIN plates, reduction plates, and OT rings.
+ * Funkcje zapytań do bazy danych służące do doboru poszczególnych elementów studni:
+ * dennic, kręgów, konusów, płyt DIN, płyt redukcyjnych oraz kręgów OT.
  */
 
 import prisma from '../../prismaClient';
 import { WellComponent } from '../../types';
 
 /**
- * Select bottom plate (dennica) — prioritize standard form, lowest height
+ * Dobiera dennicę — priorytet dla formy standardowej, najniższa (najmniejsza wysokość) jako pierwsza
  */
 export async function selectDennica(
     dn: number,
@@ -29,7 +29,7 @@ export async function selectDennica(
 }
 
 /**
- * Select ring by DN — prioritize standard form, tallest first
+ * Dobiera krąg według DN — priorytet dla formy standardowej, najwyższy jako pierwszy
  */
 export async function selectKragByDn(
     dn: number,
@@ -50,7 +50,7 @@ export async function selectKragByDn(
 }
 
 /**
- * Select ending component (cone or DIN plate)
+ * Dobiera element zakończenia (konus lub płyta DIN)
  */
 export async function selectZakonczenie(
     dn: number,
@@ -73,7 +73,7 @@ export async function selectZakonczenie(
 }
 
 /**
- * Select reduction plate matching source→target DN transition
+ * Dobiera płytę redukcyjną pasującą do przejścia DN źródłowe → docelowe
  */
 export async function selectPlytaRedukcyjna(
     fromDn: number,
@@ -100,7 +100,7 @@ export async function selectPlytaRedukcyjna(
 }
 
 /**
- * Select buildup rings to fill remaining height — greedy, tallest-first
+ * Dobierz kręgi nadbudowy, aby wypełnić pozostałą wysokość — wybiera najwyższe dopasowane elementy (greedy)
  */
 export async function selectKragiNadbudowy(
     dn: number,
@@ -139,7 +139,7 @@ export async function selectKragiNadbudowy(
 }
 
 /**
- * Find the tallest ring that fits within remainingHeight
+ * Znajduje najwyższy krąg, który mieści się w pozostałej wysokości (remainingHeight)
  */
 function findBestFitRing(
     availableRings: WellComponent[],
@@ -154,7 +154,7 @@ function findBestFitRing(
 }
 
 /**
- * Select drilled ring (OT — otwarty) for passage support
+ * Dobierz krąg wiercony (OT — otwarty) dla obsługi przejść szczelnych
  */
 export async function selectKragOt(
     dn: number,
@@ -174,7 +174,7 @@ export async function selectKragOt(
 }
 
 /**
- * Get all available components for a given DN and warehouse
+ * Pobierz wszystkie dostępne elementy dla danego DN i magazynu
  */
 export async function getAvailableComponents(
     dn: number,

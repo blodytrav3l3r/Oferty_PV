@@ -1,9 +1,9 @@
-/* ===== OFFER SUMMARY ===== */
+/* ===== PODSUMOWANIE OFERTY ===== */
 function renderOfferSummary() {
     const container = document.getElementById('offer-summary-body');
     if (!container) return;
 
-    // Check for order changes dynamically against current wells in memory
+    // Sprawdź dynamicznie zmiany w zamówieniu względem bieżących studni w pamięci
     const order = getCurrentOfferOrder();
     const orderChanges = order ? getOrderChanges({ ...order, wells: wells }) : {};
     const hasChanges = Object.keys(orderChanges).length > 0;
@@ -13,7 +13,7 @@ function renderOfferSummary() {
 
     let html = '';
 
-    // Order status banner
+    // Baner statusu zamówienia
     if (order) {
         const changeCount = Object.keys(orderChanges).length;
         html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'}; border:1px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}; border-radius:8px;">
@@ -25,7 +25,7 @@ function renderOfferSummary() {
         </div>`;
     }
 
-    // Pre-calculate global transport cost
+    // Wstępnie oblicz całkowity koszt transportu
     let globalWeight = 0;
     wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
 
@@ -143,7 +143,7 @@ function renderOfferSummary() {
         const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
         const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
 
-        // Component details
+        // Szczegóły komponentów
         well.config.forEach((item, index) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
@@ -305,13 +305,13 @@ function renderOfferSummary() {
 
     container.innerHTML = html;
 
-    // Update offer totals
+    // Aktualizuj sumy oferty
     const totalEl = document.getElementById('sum-total-netto');
     const bruttoEl = document.getElementById('sum-brutto-details');
     const weightEl = document.getElementById('sum-netto-weight');
     const transCostEl = document.getElementById('sum-transport-cost');
 
-    // Transport UI indicators
+    // Wskaźniki UI transportu
     if (totalTransportCost > 0) {
         if (transCostEl) transCostEl.textContent = fmtInt(totalTransportCost) + ' PLN';
 
@@ -336,12 +336,12 @@ function renderOfferSummary() {
     if (weightEl) weightEl.textContent = fmtInt(totalWeight) + ' kg';
 }
 
-/* ===== OFFERS STUDNIE (SERVER API) ===== */
+/* ===== OFERTY STUDNIE (API SERWERA) ===== */
 
 /**
- * Normalizes an offer object by flattening .data properties to the top level.
- * This is needed because the backend stores nested data in a JSON blob,
- * but the UI expects flat fields like offer.wells, offer.clientName, etc.
+ * Normalizuje obiekt oferty poprzez spłaszczenie właściwości .data do poziomu nadrzędnego.
+ * Jest to potrzebne, ponieważ backend przechowuje zagnieżdżone dane w obiekcie JSON,
+ * ale UI oczekuje płaskich pól, takich jak offer.wells, offer.clientName itp.
  */
 function normalizeOfferData(doc) {
     if (!doc) return doc;
@@ -385,7 +385,7 @@ function normalizeOfferData(doc) {
                 doc[key] = val;
             }
         }
-        // Fallback mappings for alternative field names
+        // Mapowania awaryjne dla alternatywnych nazw pól
         if (!doc.number && doc.data.offerNumber) doc.number = doc.data.offerNumber;
         if (!doc.date && doc.data.offerDate) doc.date = doc.data.offerDate;
         if (!doc.totalNetto && doc.data.summary && doc.data.summary.totalValue)
@@ -401,7 +401,7 @@ async function loadOffersStudnie() {
         const res = await fetch('/api/offers-studnie', { headers: authHeaders() });
         const json = await res.json();
         const rawOffers = json.data || [];
-        // Normalize each offer to flatten .data properties (number, date, wells, etc.)
+        // Normalizuj każdą ofertę, aby spłaszczyć właściwości .data (numer, data, studnie itp.)
         return rawOffers.map((o) => normalizeOfferData(o));
     } catch (e) {
         console.error('Błąd ładowania ofert:', e);
@@ -410,11 +410,11 @@ async function loadOffersStudnie() {
 }
 
 async function saveOffersDataStudnie(data) {
-    // This function is no longer used as offers are saved individually via saveOfferStudnie
-    // and fetched via loadOffersStudnie which now directly uses the REST API.
+    // Ta funkcja nie jest już używana, ponieważ oferty są zapisywane indywidualnie za pomocą saveOfferStudnie
+    // i pobierane za pomocą loadOffersStudnie, które teraz bezpośrednio korzysta z REST API.
 }
 
-/* ===== OFFER SUMMARY (Studnie) ===== */
+/* ===== PODSUMOWANIE OFERTY (Studnie) ===== */
 let editingOfferAssignedUserId = null;
 let editingOfferAssignedUserName = '';
 let editingOfferCreatedByUserId = null;
@@ -448,7 +448,7 @@ async function changeOfferUser() {
                 if (editingOfferIdStudnie) {
                     saveOfferStudnie();
 
-                    // Propagate opiekun change to associated order
+                    // Przenieś zmianę opiekuna na powiązane zamówienie
                     const oId = normalizeId(editingOfferIdStudnie);
                     const linkedOrder = ordersStudnie
                         ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
@@ -505,7 +505,7 @@ async function changeOfferUserFromListStudnie(offerId) {
                 const { storageService } = await import('../shared/StorageService.js');
                 await storageService.saveOffer(offer);
 
-                // Propagate opiekun change to associated order
+                // Przenieś zmianę opiekuna na powiązane zamówienie
                 const oId = normalizeId(offerId);
                 const linkedOrder = ordersStudnie
                     ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
@@ -649,7 +649,9 @@ async function saveOfferStudnie() {
     if (editingOfferIdStudnie) {
         try {
             existingDoc = await storageService.getOfferById(editingOfferIdStudnie);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[OfferManager] Nie udało się pobrać istniejącej oferty studni do edycji:', e);
+        }
     }
 
     const simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
@@ -758,7 +760,7 @@ async function saveOfferStudnie() {
         const savedId = result.id || offerDoc.id;
         editingOfferIdStudnie = savedId;
 
-        // Update local array for immediate rendering using the confirmed ID
+        // Aktualizuj lokalną tablicę dla natychmiastowego renderowania przy użyciu potwierdzonego ID
         const idx = offersStudnie.findIndex((o) => o.id === editingOfferIdStudnie);
         let updatedOffer = { ...offerDoc, id: editingOfferIdStudnie };
 
@@ -861,7 +863,7 @@ function clearOfferForm() {
     refreshAll();
     showSection('builder');
     renderOfferSummary();
-    // Reset wizard to step 1
+    // Reset kreatora do kroku 1
     wizardConfirmedParams = new Set();
     goToWizardStep(1);
 }
@@ -971,23 +973,23 @@ function renderSavedOffersStudnie() {
         .join('');
 }
 
-/** Migrate old well data (material -> nadbudowa/dennicaMaterial) */
+/** Migruj stare dane studni (material -> nadbudowa/dennicaMaterial) */
 function migrateWellData(wellsArr) {
     if (!wellsArr) return wellsArr;
     wellsArr.forEach((w) => {
-        // Migrate old 'material' field to new 'nadbudowa' + 'dennicaMaterial'
+        // Migruj stare pole 'material' do nowych 'nadbudowa' + 'dennicaMaterial'
         if (w.material && !w.nadbudowa) {
             w.nadbudowa = w.material;
         }
         if (w.material && !w.dennicaMaterial) {
             w.dennicaMaterial = w.material;
         }
-        // Ensure defaults
+        // Zapewnij wartości domyślne
         if (!w.nadbudowa) w.nadbudowa = 'betonowa';
         if (!w.dennicaMaterial) w.dennicaMaterial = 'betonowa';
         if (!w.klasaNosnosci_korpus) w.klasaNosnosci_korpus = 'D400';
         if (!w.klasaNosnosci_zwienczenie) w.klasaNosnosci_zwienczenie = 'D400';
-        // Ensure config and przejscia arrays exist
+        // Zapewnij istnienie tablic config i przejscia
         if (!Array.isArray(w.config)) w.config = [];
         if (!Array.isArray(w.przejscia)) w.przejscia = [];
     });
@@ -1015,10 +1017,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
 
     if (!offer) return;
 
-    // Inline normalization — storageService is ESM-only and not available in global scope
+    // Normalizacja inline — storageService jest tylko ESM i nie jest dostępny w zasięgu globalnym
     const normalized = normalizeOfferData(offer);
 
-    orderEditMode = null; // exit order mode if active
+    orderEditMode = null; // wyjdź z trybu zamówienia, jeśli jest aktywny
     editingOfferIdStudnie = normalized.id || '';
     editingOfferAssignedUserId = normalized.userId || null;
     editingOfferAssignedUserName = normalized.userName || '';
@@ -1067,7 +1069,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
 
     currentWellIndex = 0;
 
-    // Restore offer-level defaults from loaded wells
+    // Przywróć domyślne parametry poziomu oferty z wczytanych studni
     if (wells.length > 0) {
         const lastWell = wells[wells.length - 1];
         offerDefaultZakonczenie = lastWell.zakonczenie || null;
@@ -1082,7 +1084,36 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
     }
 
     refreshAll();
-    // Skip wizard for loaded offers — go directly to offer view
+
+    // Populate step 2 DOM fields from the first well so they match what was loaded
+    if (wells.length > 0) {
+        const firstWell = wells[0];
+        ['nadbudowa', 'dennicaMaterial', 'wkladka', 'malowanieW', 'malowanieZ', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie'].forEach(param => {
+            if(firstWell[param]) {
+                const group = document.querySelector(`.param-group[data-param="${param}"]`);
+                if(group) {
+                    group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
+                    const targetTile = group.querySelector(`.param-tile[data-val="${firstWell[param]}"]`);
+                    if(targetTile) targetTile.classList.add('active');
+                }
+            }
+        });
+        if(document.getElementById('powloka-name-w')) document.getElementById('powloka-name-w').value = firstWell.powlokaNameW || '';
+        if(document.getElementById('malowanie-wew-cena')) document.getElementById('malowanie-wew-cena').value = firstWell.malowanieWewCena || '';
+        if(document.getElementById('powloka-name-z')) document.getElementById('powloka-name-z').value = firstWell.powlokaNameZ || '';
+        if(document.getElementById('malowanie-zew-cena')) document.getElementById('malowanie-zew-cena').value = firstWell.malowanieZewCena || '';
+        
+        if (typeof wizardConfirmedParams !== 'undefined') {
+            ['nadbudowa', 'dennicaMaterial', 'wkladka', 'malowanieW', 'malowanieZ', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie'].forEach(param => {
+                if(firstWell[param]) wizardConfirmedParams.add(param);
+            });
+        }
+        if (typeof validateWizardStep2 === 'function') {
+            validateWizardStep2();
+        }
+    }
+
+    // Pomiń kreatora dla wczytanych ofert — przejdź bezpośrednio do widoku oferty
     if (typeof skipWizardToStep3 === 'function') skipWizardToStep3();
     showSection(sectionToShow);
     showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
@@ -1107,11 +1138,11 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
         }
     }
 
-    // Show lock banner if offer has order
+    // Pokaż baner blokady, jeśli oferta ma zamówienie
     if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
 }
 
-// Global expose
+// Globalne udostępnienie
 window.loadSavedOfferStudnie = loadSavedOfferStudnie;
 
 async function deleteOfferStudnie(id) {
@@ -1186,7 +1217,7 @@ function importOfferFromFileStudnie() {
 
 /* ===== CLIENT DATABASE — CRUD przeniesione do shared/clientManager.js ===== */
 
-/* --- SVG Diagram Logic Helper --- */
+/* --- Pomocnik Logiki Diagramu SVG --- */
 window.decDiagramWellQty = function (idx) {
     const well = getCurrentWell();
     if (well && well.config[idx]) {
@@ -1201,7 +1232,7 @@ window.svgPointerDown = function (ev, idx) {
     const well = getCurrentWell();
     if (!well) return;
 
-    // If Zlecenia modal is open, select element instead of dragging
+    // Jeśli modal Zlecenia jest otwarty, zaznacz element zamiast przeciągania
     const zlModal = document.getElementById('zlecenia-modal');
     if (zlModal && zlModal.classList.contains('active')) {
         const targetIdx = zleceniaElementsList.findIndex(
@@ -1317,7 +1348,7 @@ document.addEventListener('mouseup', (ev) => {
             updateSummary();
         }
 
-        // Reset trash visual state
+        // Reset wizualny stanu kosza
         if (trash) {
             trash.style.background = 'rgba(239,68,68,0.1)';
             trash.style.borderColor = 'rgba(239,68,68,0.4)';
@@ -1337,7 +1368,7 @@ document.addEventListener('touchend', (ev) => {
     }
 });
 
-let dragOverCount = 0; // for drag & drop visual
+let dragOverCount = 0; // dla wizualizacji drag & drop
 
 let isBackendOnline = false;
 
@@ -1645,7 +1676,7 @@ async function restoreHistorySnapshot(logId) {
 
     if (log.entityType === 'order' && typeof window.loadOrderSnapshot === 'function') {
         window.loadOrderSnapshot(log.newData, log.entityId);
-        // Force unlock mode for restoration
+        // Wymuś tryb odblokowania dla przywracania
         window.isPreviewMode = false;
         const banner = document.getElementById('preview-lock-banner');
         if (banner) banner.remove();

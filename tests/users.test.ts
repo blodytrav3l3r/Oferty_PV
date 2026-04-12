@@ -9,20 +9,20 @@ describe('Users Routes', () => {
         app = express();
         app.use(express.json());
         app.use('/api/users', userRoutes);
-        // Note: In real tests, you'd mock the Prisma client
+        // Uwaga: W prawdziwych testach powinieneś zamockować klienta Prisma
     });
 
     describe('GET /api/users', () => {
-        it('should return users list', async () => {
+        it('powinien zwrócić listę użytkowników', async () => {
             const res = await request(app).get('/api/users');
 
-            // Expect either 200 with data or 401 if auth required
+            // Oczekuj albo 200 z danymi, albo 401 jeśli wymagana autoryzacja
             expect([200, 401]).toContain(res.statusCode);
         });
     });
 
     describe('POST /api/users', () => {
-        it('should return 400 if required fields are missing', async () => {
+        it('powinien zwrócić 400 jeśli brakuje wymaganych pól', async () => {
             const res = await request(app).post('/api/users').send({});
 
             expect(res.statusCode).toBeGreaterThanOrEqual(400);

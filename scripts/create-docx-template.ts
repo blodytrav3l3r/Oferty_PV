@@ -122,7 +122,7 @@ async function createTemplate() {
                     })
                 },
                 children: [
-                    // Title
+                    // Tytuł
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -137,7 +137,7 @@ async function createTemplate() {
                         spacing: { after: 200 }
                     }),
 
-                    // Offer meta
+                    // Metadane oferty
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -163,7 +163,7 @@ async function createTemplate() {
                         spacing: { after: 200 }
                     }),
 
-                    // Client data
+                    // Dane klienta
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -210,7 +210,7 @@ async function createTemplate() {
                         spacing: { after: 200 }
                     }),
 
-                    // Investment data
+                    // Dane inwestycji
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -245,7 +245,7 @@ async function createTemplate() {
                         spacing: { after: 200 }
                     }),
 
-                    // Products table header
+                    // Nagłówek tabeli produktów
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -259,7 +259,7 @@ async function createTemplate() {
                         spacing: { before: 200, after: 100 }
                     }),
 
-                    // Table header row
+                    // Wiersz nagłówka tabeli
                     new Table({
                         rows: [
                             new TableRow({
@@ -368,7 +368,7 @@ async function createTemplate() {
                                     })
                                 ]
                             }),
-                            // Example row with placeholders
+                            // Przykładowy wiersz z symbolami zastępczymi
                             new TableRow({
                                 children: [
                                     new TableCell({
@@ -473,7 +473,7 @@ async function createTemplate() {
                         spacing: { before: 60, after: 200 }
                     }),
 
-                    // Summary
+                    // Podsumowanie
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -593,7 +593,7 @@ async function createTemplate() {
                         width: { size: 100, type: WidthType.PERCENTAGE }
                     }),
 
-                    // Notes
+                    // Uwagi
                     new Paragraph({
                         children: [
                             new TextRun({
@@ -611,7 +611,7 @@ async function createTemplate() {
                         spacing: { after: 200 }
                     }),
 
-                    // Standard terms
+                    // Standardowe warunki
                     new Paragraph({
                         children: [
                             new TextRun({

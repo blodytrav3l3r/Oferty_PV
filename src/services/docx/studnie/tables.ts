@@ -1,7 +1,7 @@
 /**
- * StudnieDocx — Well Tables per DN
+ * StudnieDocx — Tabele studni według DN
  *
- * Builds per-DN well tables with headers, data rows, and subtotals.
+ * Buduje tabele studni dla każdego DN z nagłówkami, wierszami danych i podsumowaniami częściowymi.
  */
 
 import {
@@ -26,7 +26,7 @@ import {
 import { fmtCurrency, fmtInt, textCell } from '../helpers';
 import { DnSummary } from './sections';
 
-// ─── Main Table Builder ─────────────────────────────────────────────
+// ─── Główny budowniczy tabel (Main Table Builder) ───────────────────
 
 export function buildWellTables(wells: any[]): {
     paragraphs: (Paragraph | Table)[];
@@ -74,7 +74,7 @@ export function buildWellTables(wells: any[]): {
     return { paragraphs, summaries, grandTotal };
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────
+// ─── Funkcje pomocnicze (Helpers) ───────────────────────────────────
 
 function groupWellsByDn(wells: any[]): Record<string, any[]> {
     const itemsByDN: Record<string, any[]> = {};

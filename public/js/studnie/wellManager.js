@@ -1,6 +1,6 @@
-/* ===== WELLS MANAGEMENT ===== */
+/* ===== ZARZĄDZANIE STUDNIAMI ===== */
 
-/** Read the wizard step 2 global params from the UI tiles */
+/** Odczytuje parametry globalne z kroku 2 kreatora z kafelków UI */
 function getWizardGlobalParams() {
     const params = {
         nadbudowa: 'betonowa',
@@ -24,7 +24,7 @@ function getWizardGlobalParams() {
         uszczelka: 'GSG',
         magazyn: 'Kluczbork'
     };
-    // Read confirmed selections from wizard param tiles
+    // Odczytaj potwierdzone wybory z kafelków parametrów kreatora
     document.querySelectorAll('#wizard-step-2 .param-group').forEach((group) => {
         const paramName = group.getAttribute('data-param');
         if (!paramName) return;
@@ -33,7 +33,7 @@ function getWizardGlobalParams() {
             params[paramName] = activeBtn.getAttribute('data-val');
         }
     });
-    // Read text inputs
+    // Odczytaj pola tekstowe
     const pwW = document.getElementById('powloka-name-w');
     if (pwW) params.powlokaNameW = pwW.value || '';
     const pwZ = document.getElementById('powloka-name-z');
@@ -92,12 +92,12 @@ function createNewWell(name, dn = 1000) {
     };
 }
 
-/* ===== OFFER LOCK (after order is created) ===== */
+/* ===== BLOKADA OFERTY (po utworzeniu zamówienia) ===== */
 const OFFER_LOCKED_MSG =
     '🔒 Oferta zablokowana — posiada zamówienie. Edytuj zamówienie zamiast oferty.';
 const WELL_LOCKED_MSG = '🔒 Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 function isOfferLocked() {
-    if (orderEditMode) return false; // Order editing mode is always allowed
+    if (orderEditMode) return false; // Tryb edycji zamówienia jest zawsze dozwolony
     if (!editingOfferIdStudnie) return false;
     const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
     if (!offer) return false;
@@ -117,7 +117,7 @@ function isWellLocked(wellIdx) {
 }
 
 function renderOfferLockBanner() {
-    // Remove order-mode banner if present (we're not in order mode)
+    // Usuń baner trybu zamówienia, jeśli jest obecny (nie jesteśmy w trybie zamówienia)
     const orderBanner = document.getElementById('order-mode-banner');
     if (orderBanner) orderBanner.style.display = 'none';
 
@@ -183,7 +183,7 @@ function addNewWell(dn = 1000) {
     const well = createNewWell(null, dn);
     wells.push(well);
     currentWellIndex = wells.length - 1;
-    // Auto switch builder tab
+    // Automatycznie przełącz zakładkę kreatora
     const bcontentConcrete = document.getElementById('bcontent-concrete');
     if (bcontentConcrete && bcontentConcrete.style.display === 'none') {
         switchBuilderTab('concrete');
@@ -260,7 +260,7 @@ function getCurrentWell() {
 function syncGaskets(well) {
     if (!well || !well.config) return;
 
-    // Filter out existing uszczelki
+    // Wyfiltruj istniejące uszczelki
     const newConfig = well.config.filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'uszczelka');
@@ -270,7 +270,7 @@ function syncGaskets(well) {
         const uType = well.uszczelka;
         const requiredGaskets = {};
 
-        // Find the bottom-most dennica index
+        // Znajdź indeks najniższej dennicy
         let bottomDennicaIndex = -1;
         for (let i = newConfig.length - 1; i >= 0; i--) {
             const p = studnieProducts.find((pr) => pr.id === newConfig[i].productId);
@@ -280,7 +280,7 @@ function syncGaskets(well) {
             }
         }
 
-        // Find elements requiring a gasket
+        // Znajdź elementy wymagające uszczelki
         newConfig.forEach((item, index) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (
@@ -295,20 +295,20 @@ function syncGaskets(well) {
             } else if (p && p.componentType === 'dennica') {
                 if (p.dn) {
                     if (index === bottomDennicaIndex) {
-                        // The structural bottom dennica only needs a gasket if quantity > 1
+                        // Denica konstrukcyjne dno potrzebuje uszczelki tylko gdy ilość > 1
                         if (item.quantity > 1) {
                             requiredGaskets[p.dn] =
                                 (requiredGaskets[p.dn] || 0) + (item.quantity - 1);
                         }
                     } else {
-                        // All other non-bottom dennice need gaskets for themselves
+                        // Wszystkie pozostałe dennice potrzebują uszczelek dla siebie
                         requiredGaskets[p.dn] = (requiredGaskets[p.dn] || 0) + item.quantity;
                     }
                 }
             }
         });
 
-        // Add corresponding gaskets
+        // Dodaj odpowiednie uszczelki
         for (const dn in requiredGaskets) {
             const qty = requiredGaskets[dn];
             let gasketName = `Uszczelka GSG DN${dn}`;
@@ -337,7 +337,7 @@ function syncGaskets(well) {
 function syncKineta(well) {
     if (!well || !well.config) return;
 
-    // Filter out existing kineta
+    // Wyfiltruj istniejącą kinetę
     const newConfig = well.config.filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'kineta');
@@ -391,7 +391,7 @@ function refreshAll() {
     if (orderEditMode) renderOrderModeBanner();
 }
 
-/* ===== GENERAL PARAMS (TILES) ===== */
+/* ===== PARAMETRY OGÓLNE (KAFELKI) ===== */
 function setupParamTiles() {
     document.querySelectorAll('.param-group').forEach((group) => {
         const paramName = group.getAttribute('data-param');
@@ -400,11 +400,11 @@ function setupParamTiles() {
                 const val = btn.getAttribute('data-val');
                 const well = getCurrentWell();
 
-                // Always toggle visual active state (for wizard step 2 without wells)
+                // Zawsze przełączaj wizualny stan aktywności (dla kroku 2 kreatora bez studni)
                 group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // If a well exists, apply param + re-render
+                // Jeśli studnia istnieje, zastosuj parametr + odśwież renderowanie
                 if (well) {
                     well[paramName] = val;
                     enforceLoadClassRules(well, paramName);
@@ -413,11 +413,11 @@ function setupParamTiles() {
                     await autoSelectComponents(true);
                     refreshAll();
                 } else {
-                    // Enforce load class rules even in wizard (no well yet)
+                    // Wymuś zasady klas obciążenia nawet w kreatorze (brak studni)
                     enforceLoadClassRulesWizard(paramName, val);
                 }
 
-                // Wizard tracking (always)
+                // Śledzenie kreatora (zawsze)
                 wizardConfirmedParams.add(paramName);
                 validateWizardStep2();
             });
@@ -428,7 +428,7 @@ function setupParamTiles() {
 function updateParamTilesUI() {
     const well = getCurrentWell();
     if (well) {
-        // Sync tiles to well object when well exists
+        // Synchronizuj kafelki z obiektem studni, gdy studnia istnieje
         document.querySelectorAll('.param-group').forEach((group) => {
             const paramName = group.getAttribute('data-param');
             const currentVal = well[paramName] || 'brak';
@@ -441,15 +441,15 @@ function updateParamTilesUI() {
             });
         });
 
-        // Sync powłoka inputs from well
+        // Synchronizuj pola powłok ze studni
         const powlokaWInput = document.getElementById('powloka-name-w');
         if (powlokaWInput) powlokaWInput.value = well.powlokaNameW || '';
         const powlokaZInput = document.getElementById('powloka-name-z');
         if (powlokaZInput) powlokaZInput.value = well.powlokaNameZ || '';
     }
-    // Note: when no well, tiles keep their visual state from click handlers
+    // Uwaga: gdy nie ma studni, kafelki zachowują swój stan wizualny z obsługi kliknięć
 
-    // Show/hide powłoka name fields based on current tile state (works with or without well)
+    // Pokaż/ukryj pola nazw powłok w zależności od bieżącego stanu kafelków (działa ze studnią lub bez niej)
     const malowanieWVal = getActiveTileValue('malowanieW');
     const malowanieZVal = getActiveTileValue('malowanieZ');
 
@@ -470,7 +470,7 @@ function updateParamTilesUI() {
     }
 }
 
-/* ===== PER-WELL PARAMS RENDERING ===== */
+/* ===== RENDEROWANIE PARAMETRÓW DLA POSZCZEGÓLNYCH STUDNI ===== */
 const WELL_PARAM_DEFS = [
     {
         key: 'nadbudowa',
@@ -727,6 +727,15 @@ async function updateWellParam(paramKey, value) {
     const well = getCurrentWell();
     if (!well) return;
     well[paramKey] = value;
+    
+    // Zastosuj cenę malowania dla wszystkich studni w ofercie
+    if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
+        wells.forEach(w => {
+            w[paramKey] = value;
+        });
+        showToast('Zaktualizowano cenę malowania we wszystkich studniach', 'info');
+    }
+
     enforceLoadClassRules(well, paramKey);
     renderWellParams();
     updateParamTilesUI();
@@ -748,7 +757,7 @@ function resetWellParamsToDefaults() {
     WELL_PARAM_DEFS.forEach((def) => {
         if (gp[def.key] !== undefined) well[def.key] = gp[def.key];
     });
-    // Also reset powłoka names
+    // Zresetuj również nazwy powłok
     well.powlokaNameW = gp.powlokaNameW || '';
     well.powlokaNameZ = gp.powlokaNameZ || '';
     renderWellParams();
@@ -760,8 +769,8 @@ window.updateWellParam = updateWellParam;
 window.resetWellParamsToDefaults = resetWellParamsToDefaults;
 
 /**
- * Enforce load class rules on a well object:
- * - E600 or F900 for korpus (Dennica + Nadbudowa) → dennica must be żelbet
+ * Wymuś zasady klas obciążenia na obiekcie studni:
+ * - E600 lub F900 dla korpusu (Dennica + Nadbudowa) → dennica musi być żelbetowa
  */
 function enforceLoadClassRules(well, changedParam) {
     if (!well) return;
@@ -782,7 +791,7 @@ function enforceLoadClassRules(well, changedParam) {
             }
         }
     }
-    // When user tries to change dennica or nadbudowa to beton while heavy load class is active
+    // Gdy użytkownik próbuje zmienić dennicę lub nadbudowę na beton przy aktywnej ciężkiej klasie obciążenia
     if (changedParam === 'dennicaMaterial' || changedParam === 'nadbudowa') {
         const korpus = well.klasaNosnosci_korpus;
         if ((korpus === 'E600' || korpus === 'F900') && well[changedParam] !== 'zelbetowa') {
@@ -794,7 +803,7 @@ function enforceLoadClassRules(well, changedParam) {
 }
 
 /**
- * Enforce load class rules in wizard mode (no well yet, only DOM tiles).
+ * Wymuś zasady klas obciążenia w trybie kreatora (brak studni, tylko kafelki DOM).
  */
 function enforceLoadClassRulesWizard(changedParam, value) {
     if (changedParam === 'klasaNosnosci_korpus') {
@@ -846,12 +855,20 @@ async function updateParamInput(paramName, value) {
     const well = getCurrentWell();
     if (!well) return;
     well[paramName] = value;
+    
+    // Zastosuj cenę malowania dla wszystkich studni w ofercie
+    if (paramName === 'malowanieWewCena' || paramName === 'malowanieZewCena') {
+        wells.forEach(w => {
+            w[paramName] = value;
+        });
+    }
+
     updateAutoLockUI();
     await autoSelectComponents(true);
     refreshAll();
 }
 
-/* ===== AUTO-LOCK (MANUAL MODE) ===== */
+/* ===== AUTO-BLOKADA (TRYB RĘCZNY) ===== */
 function toggleAutoLock() {
     const well = getCurrentWell();
     if (!well) {
@@ -878,7 +895,7 @@ function updateAutoLockUI() {
 
     if (well.autoLocked) {
         btnLock.innerHTML = '🔒 Tryb ręczny (Włączony)';
-        btnLock.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; // amber/red
+        btnLock.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; // bursztynowy/czerwony
         btnLock.style.borderColor = 'rgba(239, 68, 68, 0.5)';
         btnAuto.disabled = true;
         btnAuto.style.opacity = '0.4';
@@ -893,7 +910,7 @@ function updateAutoLockUI() {
     }
 }
 
-/* ===== DISCOUNT PANEL ===== */
+/* ===== PANEL RABATÓW ===== */
 let appConfirmCallback = null;
 
 function handleAppConfirm(result) {
@@ -924,7 +941,7 @@ function updateDiscount(dn, type, value) {
     const oldDisc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
     const oldValue = oldDisc[type] || 0;
 
-    // Check if we need a popup (only for tangential base and if value actually changed to > 0)
+    // Sprawdź, czy potrzebny jest popup (tylko dla bazy stycznej i jeśli wartość faktycznie zmieniła się na > 0)
     if (dn === 'styczna' && type === 'dennica' && newValue > 0 && newValue !== oldValue) {
         confirmApp(
             'Uwaga rabat na studnie styczną',
@@ -932,7 +949,7 @@ function updateDiscount(dn, type, value) {
                 applyDiscount(dn, type, newValue);
             },
             () => {
-                // Cancel - reset UI
+                // Anuluj - zresetuj UI
                 renderDiscountPanel();
             }
         );
@@ -1037,7 +1054,7 @@ function renderDiscountPanel() {
         </div>`;
     });
 
-    // Grand total
+    // Suma całkowita
     const hasDiscount = grandDiscounted < grandTotal;
     html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.2rem 0.1rem; border-top:1px solid rgba(255,255,255,0.1); margin-top:0.4rem;">
       <span style="font-size:0.85rem; font-weight:700; color:var(--text-primary);">Suma całkowita</span>
@@ -1051,7 +1068,7 @@ function renderDiscountPanel() {
     panel.innerHTML = html;
 }
 
-/* ===== WELL STATS ===== */
+/* ===== STATYSTYKI STUDNI ===== */
 
 function getItemAssessedPrice(well, p, applyDiscount = true) {
     let itemPrice = p.price || 0;
@@ -1100,7 +1117,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true) {
 
         itemPrice = kinetaBase * mult;
 
-        // Add malowanie to kineta before early return
+        // Dodaj malowanie do kinety przed wczesnym wyjściem
         if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
             if (well.malowanieW === 'kineta' || well.malowanieW === 'cale') {
                 itemPrice += (p.area || 0) * well.malowanieWewCena;
@@ -1172,7 +1189,7 @@ function calcWellStats(well) {
     let priceDennica = 0,
         priceNadbudowa = 0;
 
-    // Base prices (undiscounted)
+    // Ceny bazowe (bez rabatu)
     let priceBase = 0,
         priceDennicaBase = 0,
         priceNadbudowaBase = 0;
@@ -1183,7 +1200,7 @@ function calcWellStats(well) {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
-        // Use frozen price if available (order mode), otherwise calculate from pricelist
+        // Użyj zamrożonej ceny jeśli dostępna (tryb zamówienia), w przeciwnym razie oblicz z cennika
         let itemPriceDisc, itemPriceBaseVal;
         if (item.frozenPrice != null) {
             itemPriceDisc = item.frozenPrice;
@@ -1200,7 +1217,7 @@ function calcWellStats(well) {
         price += lineTotalDisc;
         priceBase += lineTotalBase;
 
-        // Split into dennica vs nadbudowa
+        // Podział na dennicę i nadbudowę
         if (
             p.componentType === 'dennica' ||
             p.componentType === 'kineta' ||
@@ -1238,7 +1255,7 @@ function calcWellStats(well) {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
 
-            // Use frozen price if available (order mode)
+            // Użyj zamrożonej ceny, jeśli jest dostępna (tryb zamówienia)
             let bP, dP;
             if (item.frozenPrice != null) {
                 dP = item.frozenPrice;
@@ -1285,7 +1302,7 @@ function calcWellStats(well) {
     };
 }
 
-/** Sidebar tabs switcher (List vs Discounts) */
+/** Przełącznik zakładek paska bocznego (Lista vs Rabaty) */
 function switchSidebarTab(tabName) {
     const listContent = document.getElementById('sidebar-list-content');
     const discContent = document.getElementById('sidebar-discounts-content');

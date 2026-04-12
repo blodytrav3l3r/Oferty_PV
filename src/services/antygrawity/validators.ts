@@ -1,15 +1,15 @@
 /**
- * Antygrawity — Manhole Configuration Validators
+ * Antygrawity — Walidatory konfiguracji studni
  *
- * Validates structural correctness of assembled manhole components:
- * ending diameter matches, reduction plate consistency, and load-bearing support.
+ * Sprawdza poprawność konstrukcyjną złożonych elementów studni:
+ * zgodność średnicy zakończenia, spójność płyt redukcyjnych i podporę odciążającą.
  */
 
 import { WellComponent } from '../../types';
 
 /**
- * Validate a complete manhole component assembly.
- * Checks ending compatibility and load-bearing element support.
+ * Waliduje kompletny zestaw elementów studni.
+ * Sprawdza kompatybilność zakończenia i obsługę elementów odciążających.
  */
 export function validateManhole(
     components: WellComponent[],
@@ -27,7 +27,7 @@ export function validateManhole(
 }
 
 /**
- * Validate that the ending (konus/płyta DIN) matches the supporting element diameter
+ * Waliduje, czy zakończenie (konus/płyta DIN) pasuje do średnicy elementu podporowego
  */
 function validateEndingCompatibility(components: WellComponent[], issues: string[]): void {
     const ending = components.find((c) => c.layer === 'zakonczenie');
@@ -52,7 +52,7 @@ function validateEndingCompatibility(components: WellComponent[], issues: string
 }
 
 /**
- * Validate that load-bearing plates/rings have proper supporting ring underneath
+ * Waliduje, czy płyty/pierścienie odciążające mają pod spodem odpowiedni krąg podporowy
  */
 function validateLoadBearingSupport(components: WellComponent[], issues: string[]): void {
     const hasLoadBearing = components.some(

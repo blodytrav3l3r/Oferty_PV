@@ -9,7 +9,7 @@ import { logger } from '../../utils/logger';
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
 
-/* ===== OFFERS RURY — GET ===== */
+/* ===== OFERTY RURY — GET ===== */
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -55,7 +55,7 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-/* ===== OFFERS STUDNIE — GET ===== */
+/* ===== OFERTY STUDNIE — GET ===== */
 
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -92,7 +92,102 @@ router.get('/studnie', requireAuth, async (req, res) => {
     }
 });
 
-/* ===== OFFERS RURY — POST (single) ===== */
+/* ===== OFERTA RURY — GET BY ID ===== */
+
+router.get('/:id', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { id } = req.params;
+
+        // Unikaj kolizji z sub-ścieżkami (np. /studnie)
+        if (id === 'studnie') return res.status(400).json({ error: 'Nieprawidłowe ID oferty' });
+
+        const offer = await prisma.offers_rel.findUnique({
+            where: { id }
+        });
+        if (!offer) return res.status(404).json({ error: 'Oferta nie istnieje' });
+
+        // Weryfikacja uprawnień odczytu
+        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+            return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
+        }
+
+        const itemsRaw = await prisma.offer_items_rel.findMany({
+            where: { offerId: offer.id }
+        });
+        const items = itemsRaw.map((i: any) => ({
+            id: i.id,
+            productId: i.productId,
+            quantity: i.quantity,
+            discount: i.discount,
+            price: i.price,
+            unitPrice: i.price
+        }));
+
+        res.json({
+            data: {
+                id: offer.id,
+                type: 'offer',
+                userId: offer.userId,
+                title: `Oferta ${offer.offer_number || offer.id}`,
+                price: items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0),
+                status: offer.state === 'final' ? 'active' : 'draft',
+                createdAt: offer.createdAt,
+                updatedAt: offer.updatedAt || offer.createdAt,
+                lastEditedBy: offer.userId,
+                items: items,
+                transportCost: offer.transportCost || 0,
+                history: JSON.parse(offer.history || '[]')
+            }
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/* ===== OFERTA STUDNIA — GET BY ID ===== */
+
+router.get('/studnie/:id', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { id } = req.params;
+
+        const offer = await prisma.offers_studnie_rel.findUnique({
+            where: { id }
+        });
+        if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
+
+        // Weryfikacja uprawnień odczytu
+        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+            return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
+        }
+
+        let parsedData: any = {};
+        try {
+            if (offer.data) parsedData = JSON.parse(offer.data);
+        } catch (_e) {}
+
+        res.json({
+            data: {
+                id: offer.id,
+                type: 'studnia_oferta',
+                userId: offer.userId,
+                title: `Oferta Studnia ${offer.offer_number || offer.id}`,
+                price: parsedData.totalPrice || 0,
+                status: offer.state === 'final' ? 'active' : 'draft',
+                createdAt: offer.createdAt,
+                updatedAt: offer.updatedAt || offer.createdAt,
+                lastEditedBy: offer.userId,
+                data: parsedData,
+                history: JSON.parse(offer.history || '[]')
+            }
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/* ===== OFERTY RURY — POST (pojedyncza) ===== */
 
 router.post('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -104,7 +199,7 @@ router.post('/', requireAuth, async (req, res) => {
             let docId = o.id;
             if (!docId) docId = uuidv4();
 
-            // Snapshot current state for history
+            // Migawka bieżącego stanu dla historii
             let newHistory: any[] = [];
             const old = await prisma.offers_rel.findUnique({
                 where: { id: docId }
@@ -177,7 +272,7 @@ router.post('/', requireAuth, async (req, res) => {
                 }
             });
 
-            // Delete old items and insert new ones
+            // Usuń stare elementy i wstaw nowe
             await prisma.offer_items_rel.deleteMany({
                 where: { offerId: docId }
             });
@@ -205,12 +300,12 @@ router.post('/', requireAuth, async (req, res) => {
         );
         res.json({ ok: true, results });
     } catch (e: any) {
-        logger.error('Offers', 'POST offers error', e.message);
+        logger.error('Offers', 'Błąd POST offers', e.message);
         res.status(500).json({ error: e.message });
     }
 });
 
-/* ===== OFFERS STUDNIE — POST (single) ===== */
+/* ===== OFERTY STUDNIE — POST (pojedyncza) ===== */
 
 router.post('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -286,12 +381,12 @@ router.post('/studnie', requireAuth, async (req, res) => {
         );
         res.json({ ok: true, results });
     } catch (e: any) {
-        logger.error('Offers', 'POST offers/studnie error', e.message);
+        logger.error('Offers', 'Błąd POST offers/studnie', e.message);
         res.status(500).json({ error: e.message });
     }
 });
 
-/* ===== OFFERS RURY — PUT (bulk) ===== */
+/* ===== OFERTY RURY — PUT (zbiorczo) ===== */
 
 router.put('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -324,7 +419,7 @@ router.put('/', requireAuth, async (req, res) => {
                 }
             });
 
-            // Refresh items
+            // Odśwież elementy
             await prisma.offer_items_rel.deleteMany({
                 where: { offerId: docId }
             });
@@ -351,7 +446,7 @@ router.put('/', requireAuth, async (req, res) => {
     }
 });
 
-/* ===== OFFERS STUDNIE — PUT (bulk) ===== */
+/* ===== OFERTY STUDNIE — PUT (zbiorczo) ===== */
 
 router.put('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -407,7 +502,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
         }
 
-        // Audit: zachowaj snapshot przed usunieciem
+        // Audyt: zachowaj migawkę przed usunięciem
         const oldItems = await prisma.offer_items_rel.findMany({
             where: { offerId: id }
         });
@@ -452,7 +547,7 @@ router.delete('/studnie/:id', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
         }
 
-        // Audit
+        // Audyt
         let oldData: any = {};
         try {
             oldData = JSON.parse(offer.data || '{}');

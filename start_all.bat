@@ -11,13 +11,13 @@ echo.
 echo Uruchamianie aplikacji WITROS Oferty (Node.js TypeScript + Python AI Backend)...
 echo.
 
-echo [1/2] Uruchamianie Python AI Backend...
-start "Python AI Backend" cmd /k "cd /d well_configurator_backend && python run.py"
+echo [1/2] Uruchamianie Zaplecza AI Python...
+start "Zaplecze AI Python" cmd /k "cd /d well_configurator_backend && python run.py"
 
 timeout /t 3 >nul
 
-echo [2/2] Uruchamianie Node.js Serwera (TypeScript)...
-start "Node.js Server (TypeScript)" cmd /k "npm run dev"
+echo [2/2] Uruchamianie Serwera Node.js (TypeScript)...
+start "Serwer Node.js (TypeScript)" cmd /k "npm run dev"
 
 echo.
 echo =========================================

@@ -1,5 +1,5 @@
 /**
- * Offers — barrel index
+ * Oferty — indeks zbiorczy (barrel index)
  *
  * Montuje sub-routery CRUD i eksportu dokumentów
  * w jeden router kompatybilny z istniejącym importem w server.ts.

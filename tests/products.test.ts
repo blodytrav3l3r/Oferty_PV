@@ -7,25 +7,25 @@ describe('Product Routes', () => {
     beforeAll(() => {
         app = express();
         app.use(express.json());
-        // Note: In real tests, you'd mock the Prisma client
+        // Uwaga: W prawdziwych testach powinieneś zamockować klienta Prisma
     });
 
     describe('GET /api/products', () => {
-        it('should return products data structure', async () => {
-            // This test verifies the endpoint exists and returns proper structure
-            // In production, you'd mock Prisma to return test data
+        it('powinien zwrócić strukturę danych produktów', async () => {
+            // Ten test weryfikuje, czy endpoint istnieje i zwraca poprawną strukturę
+            // Produkcyjnie powinieneś zamockować Prismę, aby zwracała dane testowe
             const res = await request(app).get('/api/products');
 
-            // Expect either 200 with data or 500 if DB not available
+            // Oczekuj albo 200 z danymi, albo 500 jeśli baza nie jest dostępna
             expect(res.statusCode).toBeGreaterThanOrEqual(200);
         });
     });
 
     describe('GET /api/products/default', () => {
-        it('should return default products structure', async () => {
+        it('powinien zwrócić domyślną strukturę produktów', async () => {
             const res = await request(app).get('/api/products/default');
 
-            // Expect either 200 with data or 500 if DB not available
+            // Oczekuj albo 200 z danymi, albo 500 jeśli baza nie jest dostępna
             expect(res.statusCode).toBeGreaterThanOrEqual(200);
         });
     });

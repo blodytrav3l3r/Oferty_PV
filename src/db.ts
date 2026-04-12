@@ -1,8 +1,8 @@
 /**
- * Database & Audit — Backward-Compatible Re-exports
+ * Baza danych i audyt — Re-eksporty zachowujące kompatybilność wsteczną
  *
- * This module re-exports audit functions from the dedicated AuditService
- * and the Prisma client singleton. Existing imports from '../../db' continue to work.
+ * Ten moduł re-eksportuje funkcje audytu z dedykowanego serwisu AuditService
+ * oraz singleton klienta Prisma. Istniejące importy z '../../db' nadal działają.
  */
 
 export { logAudit, computeDiff, cleanupAuditLogs } from './services/auditService';

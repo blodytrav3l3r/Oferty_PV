@@ -14,9 +14,10 @@ const backupPath = path.join(backupDir, backupName);
 
 try {
     fs.copyFileSync(dbPath, backupPath);
-    console.log(`[Backup] Successfully created: ${backupPath}`);
+    console.log(`[Kopia Zapasowa] Kopia utworzona pomyślnie: ${backupPath}`);
 
     const files = fs.readdirSync(backupDir);
+    // Zachowaj tylko pliki zaczynające się od 'backup_' i posortuj je
     const backups = files.filter((f) => f.startsWith('backup_')).sort();
 
     const MAX_BACKUPS = 30;
@@ -24,12 +25,12 @@ try {
         const toDelete = backups.shift();
         if (toDelete) {
             fs.unlinkSync(path.join(backupDir, toDelete));
-            console.log(`[Backup] Removed old backup: ${toDelete}`);
+            console.log(`[Kopia Zapasowa] Usunięto starą kopię: ${toDelete}`);
         }
     }
 
-    console.log(`[Backup] Total backups: ${backups.length}`);
+    console.log(`[Kopia Zapasowa] Całkowita liczba kopii: ${backups.length}`);
 } catch (error: any) {
-    console.error('[Backup] Error:', error.message);
+    console.error('[Kopia Zapasowa] Błąd:', error.message);
     process.exit(1);
 }

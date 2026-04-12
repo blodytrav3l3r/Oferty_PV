@@ -10,37 +10,37 @@ import request from 'supertest';
 // ─── loginSchema ────────────────────────────────────────────────────
 
 describe('loginSchema', () => {
-    it('should accept valid login data', () => {
+    it('powinien akceptować prawidłowe dane logowania', () => {
         const result = loginSchema.safeParse({ username: 'admin', password: 'admin123' });
         expect(result.success).toBe(true);
     });
 
-    it('should reject missing username', () => {
+    it('powinien odrzucać brakujący login', () => {
         const result = loginSchema.safeParse({ password: 'admin123' });
         expect(result.success).toBe(false);
     });
 
-    it('should reject missing password', () => {
+    it('powinien odrzucać brakujące hasło', () => {
         const result = loginSchema.safeParse({ username: 'admin' });
         expect(result.success).toBe(false);
     });
 
-    it('should reject empty body', () => {
+    it('powinien odrzucać pusty body', () => {
         const result = loginSchema.safeParse({});
         expect(result.success).toBe(false);
     });
 
-    it('should reject username shorter than 3 chars', () => {
+    it('powinien odrzucać login krótszy niż 3 znaki', () => {
         const result = loginSchema.safeParse({ username: 'ab', password: 'test123' });
         expect(result.success).toBe(false);
     });
 
-    it('should reject password shorter than 4 chars', () => {
+    it('powinien odrzucać hasło krótsze niż 4 znaki', () => {
         const result = loginSchema.safeParse({ username: 'admin', password: 'abc' });
         expect(result.success).toBe(false);
     });
 
-    it('should accept exact minimum lengths', () => {
+    it('powinien akceptować dane o dokładnie minimalnej wymaganej długości', () => {
         const result = loginSchema.safeParse({ username: 'abc', password: 'abcd' });
         expect(result.success).toBe(true);
     });
@@ -49,7 +49,7 @@ describe('loginSchema', () => {
 // ─── changePasswordSchema ───────────────────────────────────────────
 
 describe('changePasswordSchema', () => {
-    it('should accept valid password change data', () => {
+    it('powinien akceptować prawidłowe dane zmiany hasła', () => {
         const result = changePasswordSchema.safeParse({
             oldPassword: 'old123',
             newPassword: 'newPass123'
@@ -57,17 +57,17 @@ describe('changePasswordSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('should reject missing oldPassword', () => {
+    it('powinien odrzucać brakujące stare hasło', () => {
         const result = changePasswordSchema.safeParse({ newPassword: 'newPass123' });
         expect(result.success).toBe(false);
     });
 
-    it('should reject missing newPassword', () => {
+    it('powinien odrzucać brakujące nowe hasło', () => {
         const result = changePasswordSchema.safeParse({ oldPassword: 'old123' });
         expect(result.success).toBe(false);
     });
 
-    it('should reject newPassword shorter than 6 chars', () => {
+    it('powinien odrzucać nowe hasło krótsze niż 6 znaków', () => {
         const result = changePasswordSchema.safeParse({
             oldPassword: 'old123',
             newPassword: '12345'
@@ -79,7 +79,7 @@ describe('changePasswordSchema', () => {
 // ─── registerSchema ─────────────────────────────────────────────────
 
 describe('registerSchema', () => {
-    it('should accept full valid registration', () => {
+    it('powinien akceptować pełną prawidłową rejestrację', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
@@ -93,7 +93,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('should accept minimal registration (only username + password)', () => {
+    it('powinien akceptować minimalną rejestrację (tylko login i hasło)', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123'
@@ -101,7 +101,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('should reject invalid role', () => {
+    it('powinien odrzucać nieprawidłową rolę', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
@@ -110,7 +110,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(false);
     });
 
-    it('should accept all valid roles', () => {
+    it('powinien akceptować wszystkie prawidłowe role', () => {
         for (const role of ['admin', 'user', 'pro']) {
             const result = registerSchema.safeParse({
                 username: 'testuser',
@@ -121,7 +121,7 @@ describe('registerSchema', () => {
         }
     });
 
-    it('should reject invalid email format', () => {
+    it('powinien odrzucać nieprawidłowy format email', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
@@ -130,7 +130,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(false);
     });
 
-    it('should accept empty string as email', () => {
+    it('powinien akceptować pusty ciąg jako email', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
@@ -139,7 +139,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('should accept subUsers array', () => {
+    it('powinien akceptować tablicę subUsers', () => {
         const result = registerSchema.safeParse({
             username: 'prouser',
             password: 'secret123',
@@ -148,7 +148,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('should accept numeric orderStartNumber', () => {
+    it('powinien akceptować liczbowy orderStartNumber', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
@@ -157,7 +157,7 @@ describe('registerSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('should accept string orderStartNumber', () => {
+    it('powinien akceptować ciąg znaków jako orderStartNumber', () => {
         const result = registerSchema.safeParse({
             username: 'newuser',
             password: 'secret123',
@@ -180,7 +180,7 @@ describe('validateData middleware', () => {
         });
     });
 
-    it('should pass valid data through', async () => {
+    it('powinien przepuszczać prawidłowe dane', () => {
         const res = await request(app)
             .post('/test')
             .send({ username: 'admin', password: 'admin123' });
@@ -189,7 +189,7 @@ describe('validateData middleware', () => {
         expect(res.body.ok).toBe(true);
     });
 
-    it('should return 400 for invalid data', async () => {
+    it('powinien zwracać 400 dla nieprawidłowych danych', () => {
         const res = await request(app).post('/test').send({ username: 'a' });
 
         expect(res.statusCode).toBe(400);
@@ -198,7 +198,7 @@ describe('validateData middleware', () => {
         expect(Array.isArray(res.body.details)).toBe(true);
     });
 
-    it('should return 400 for empty body', async () => {
+    it('powinien zwracać 400 dla pustego body', () => {
         const res = await request(app).post('/test').send({});
 
         expect(res.statusCode).toBe(400);

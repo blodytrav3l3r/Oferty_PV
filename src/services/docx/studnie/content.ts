@@ -1,8 +1,8 @@
 /**
- * StudnieDocx — Static Commercial Terms & Transport Tables
+ * StudnieDocx — Statyczne warunki handlowe i tabele transportowe
  *
- * Contains all static text content for the offer document:
- * commercial terms, transport security pricing, and transport loop pricing.
+ * Zawiera całą statyczną treść tekstową dla dokumentu oferty:
+ * warunki handlowe, cennik zabezpieczeń transportu oraz cennik pętli transportowych.
  */
 
 import {
@@ -24,7 +24,7 @@ import {
 } from '../constants';
 import { textCell } from '../helpers';
 
-// ─── Static Terms ───────────────────────────────────────────────────
+// ─── Warunki statyczne (Static Terms) ───────────────────────────────
 
 export function buildStaticTerms(): (Paragraph | Table)[] {
     const result: (Paragraph | Table)[] = [];
@@ -90,7 +90,7 @@ export function buildStaticTerms(): (Paragraph | Table)[] {
     return result;
 }
 
-// ─── Commercial Terms Data ──────────────────────────────────────────
+// ─── Dane warunków handlowych (Commercial Terms) ────────────────────
 
 interface TermEntry {
     text: string;
@@ -156,9 +156,9 @@ const COMMERCIAL_TERMS: TermEntry[] = [
     }
 ];
 
-// ─── Transport Tables ───────────────────────────────────────────────
+// ─── Tabele transportowe (Transport Tables) ─────────────────────────
 
-/** Transport security pricing per pipe diameter */
+/** Ceny zabezpieczeń transportu według średnicy rury */
 const TRANSPORT_SECURITY_DATA: [string, string][] = [
     ['DN 300', '13,00'],
     ['DN 400', '13,00'],
@@ -223,7 +223,7 @@ function buildTransportSecurityTable(): Table {
     return new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
 }
 
-/** Transport loops pricing per well diameter */
+/** Ceny pętli transportowych według średnicy studni */
 const TRANSPORT_LOOPS_DATA: [string, string, string, string, string][] = [
     ['Pętle transportowe dla studni DN1000', 'RD16', '65,00', '3', '195,00'],
     ['Pętle transportowe dla studni DN1200', 'RD18', '70,00', '3', '210,00'],

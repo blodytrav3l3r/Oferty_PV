@@ -1,7 +1,7 @@
 /**
- * StudnieDocx — Barrel Export
+ * StudnieDocx — Główny eksport (barrel)
  *
- * Public API for generating studnie offer DOCX documents.
+ * Publiczne API do generowania dokumentów DOCX dla ofert studni.
  */
 
 import { Packer } from 'docx';
@@ -11,7 +11,7 @@ import { buildStudnieDocument } from './builder';
 import { logger } from '../../../utils/logger';
 
 /**
- * Generate a DOCX buffer for a studnie offer by ID
+ * Generuje bufor DOCX dla oferty studni na podstawie ID
  */
 export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer> {
     const offer = await prisma.offers_studnie_rel.findUnique({ where: { id: offerId } });
@@ -21,7 +21,7 @@ export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer>
     try {
         offerData = offer.data ? JSON.parse(offer.data) : {};
     } catch (e) {
-        logger.warn('DocxStudnie', 'Failed to parse offer data', e);
+        logger.warn('DocxStudnie', 'Nie udało się sparsować danych oferty', e);
     }
 
     let wells: any[] = [];

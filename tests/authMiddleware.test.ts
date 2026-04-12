@@ -31,18 +31,18 @@ describe('getSession', () => {
         jest.clearAllMocks();
     });
 
-    it('should return null for undefined token', async () => {
+    it('powinien zwrócić null dla niezdefiniowanego tokenu', async () => {
         const result = await getSession(undefined);
         expect(result).toBeNull();
     });
 
-    it('should return null when session not found in DB', async () => {
+    it('powinien zwrócić null, gdy sesja nie została znaleziona w bazie danych', async () => {
         mockPrisma.sessions.findUnique.mockResolvedValue(null);
         const result = await getSession('nonexistent-token');
         expect(result).toBeNull();
     });
 
-    it('should return session for valid token', async () => {
+    it('powinien zwrócić sesję dla prawidłowego tokenu', async () => {
         const mockSession = {
             token: 'valid-token',
             userId: 'user1',
@@ -55,7 +55,7 @@ describe('getSession', () => {
         expect(result?.userId).toBe('user1');
     });
 
-    it('should delete expired session and return null', async () => {
+    it('powinien usunąć wygasłą sesję i zwrócić null', async () => {
         const expiredTime = BigInt(Date.now() - SESSION_MAX_AGE_MS - 1000);
         mockPrisma.sessions.findUnique.mockResolvedValue({
             token: 'expired-token',
@@ -71,7 +71,7 @@ describe('getSession', () => {
         });
     });
 
-    it('should handle DB errors gracefully', async () => {
+    it('powinien łagodnie obsługiwać błędy bazy danych', async () => {
         mockPrisma.sessions.findUnique.mockRejectedValue(new Error('DB down'));
         const result = await getSession('some-token');
         expect(result).toBeNull();
@@ -85,7 +85,7 @@ describe('requireAuth', () => {
         jest.clearAllMocks();
     });
 
-    it('should return 401 when no token provided', async () => {
+    it('powinien zwrócić 401, gdy nie podano tokenu', async () => {
         const app = express();
         app.use(express.json());
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
@@ -95,7 +95,7 @@ describe('requireAuth', () => {
         expect(res.body.error).toContain('Nieautoryzowany');
     });
 
-    it('should return 401 when token is invalid', async () => {
+    it('powinien zwrócić 401, gdy token jest nieprawidłowy', async () => {
         mockPrisma.sessions.findUnique.mockResolvedValue(null);
 
         const app = express();
@@ -107,7 +107,7 @@ describe('requireAuth', () => {
         expect(res.statusCode).toBe(401);
     });
 
-    it('should attach user object when session valid', async () => {
+    it('powinien dołączyć obiekt użytkownika, gdy sesja jest prawidłowa', async () => {
         const now = BigInt(Date.now());
         mockPrisma.sessions.findUnique.mockResolvedValue({
             token: 'valid-token',
@@ -137,7 +137,7 @@ describe('requireAuth', () => {
         expect(res.body.user).not.toHaveProperty('password');
     });
 
-    it('should return 401 if user not found in DB', async () => {
+    it('powinien zwrócić 401, jeśli użytkownik nie został znaleziony w bazie danych', async () => {
         const now = BigInt(Date.now());
         mockPrisma.sessions.findUnique.mockResolvedValue({
             token: 'valid-token',
@@ -159,7 +159,7 @@ describe('requireAuth', () => {
 // ─── requireAdmin middleware ─────────────────────────────────────────
 
 describe('requireAdmin', () => {
-    it('should return 403 when user is not admin', async () => {
+    it('powinien zwrócić 403, gdy użytkownik nie jest administratorem', async () => {
         const app = express();
         app.get(
             '/admin',
@@ -175,7 +175,7 @@ describe('requireAdmin', () => {
         expect(res.statusCode).toBe(403);
     });
 
-    it('should pass through when user is admin', async () => {
+    it('powinien przepuścić, gdy użytkownik jest administratorem', async () => {
         const app = express();
         app.get(
             '/admin',
@@ -192,7 +192,7 @@ describe('requireAdmin', () => {
         expect(res.body.ok).toBe(true);
     });
 
-    it('should return 403 when no user attached', async () => {
+    it('powinien zwrócić 403, gdy nie dołączono użytkownika', async () => {
         const app = express();
         app.get('/admin', requireAdmin, (_req, res) => res.json({ ok: true }));
 

@@ -17,7 +17,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-/* ===== HEALTH CHECK (before security middleware to avoid HTTPS redirect) ===== */
+/* ===== SPRAWDZENIE STATUSU (przed middleware bezpieczeństwa, aby uniknąć przekierowania HTTPS) ===== */
 app.get('/health', (_req, res) => {
     res.json({
         status: 'ok',
@@ -28,7 +28,7 @@ app.get('/health', (_req, res) => {
     });
 });
 
-/* ===== SECURITY ===== */
+/* ===== BEZPIECZEŃSTWO ===== */
 app.use(
     helmet({
         contentSecurityPolicy: false,
@@ -39,7 +39,7 @@ app.use(securityHeaders);
 app.use(httpsRedirect);
 app.use(compression());
 
-/* ===== MIDDLEWARE ===== */
+/* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
@@ -69,14 +69,14 @@ if (NODE_ENV === 'production') {
     );
 }
 
-/* ===== API RATE LIMITING ===== */
+/* ===== LIMITOWANIE ŻĄDAŃ API ===== */
 const apiLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minut
     maxHits: 300,
     message: 'Zbyt wiele żądań. Odczekaj chwilę.'
 });
 
-/* ===== ROUTES ===== */
+/* ===== ŚCIEŻKI (ROUTES) ===== */
 import authRoutes from './src/routes/auth';
 import userRoutes from './src/routes/users';
 import productRoutes from './src/routes/products';
@@ -90,7 +90,7 @@ import auditRoutes from './src/routes/audit';
 import settingsRoutes from './src/routes/settings';
 import telemetryRoutes from './src/routes/telemetry';
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
 app.use('/api/users-for-assignment', (req, res, next) => {
     req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
@@ -101,10 +101,10 @@ app.use('/api/products', productRoutes);
 app.use('/api/products-studnie', productStudnieRoutes);
 app.use('/api/products-studnie', productStudnieAutoRoutes);
 
-// Oferty Rury (standard path)
+// Oferty Rury (standardowa ścieżka)
 app.use('/api/offers-rury', offerRoutes);
 
-// Oferty Studnie (Alias: /api/offers-studnie -> offers.js router with /studnie prefix)
+// Oferty Studnie (Alias: /api/offers-studnie -> router offers.js z prefiksem /studnie)
 app.use('/api/offers-studnie', (req, res, next) => {
     req.url = '/studnie' + (req.url === '/' ? '' : req.url);
     offerRoutes(req, res, next);
@@ -117,13 +117,13 @@ app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 
-/* ===== GLOBAL ERROR HANDLER ===== */
+/* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    logger.error('Server', 'Unhandled error', err.stack || err.message);
+    logger.error('Server', 'Nieobsłużony błąd', err.stack || err.message);
     res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
 });
 
-/* ===== INIT ===== */
+/* ===== INICJALIZACJA ===== */
 ensureAdminExists().then(() => {
     app.listen(PORT, HOST, () => {
         logger.info('Server', `WITROS Oferty — serwer działa na: http://localhost:${PORT}`);

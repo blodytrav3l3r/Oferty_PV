@@ -1,4 +1,4 @@
-/* ===== CENNIK TABS ===== */
+/* ===== ZAKŁADKI CENNIKA ===== */
 const CENNIK_TAB_FILTERS = {
     dn1000: (p) => p.category === 'Studnie DN1000',
     dn1200: (p) => p.category === 'Studnie DN1200',
@@ -20,7 +20,7 @@ function selectCennikTab(tab) {
     renderStudniePriceList();
 }
 
-/* ===== PRICE LIST ===== */
+/* ===== LISTA CENOWA ===== */
 function renderStudniePriceList() {
     const container = document.getElementById('studnie-pricelist-body');
     const searchVal =
@@ -103,7 +103,7 @@ function renderStudniePriceList() {
     if (isPrzejscia || isKinety) {
         groupOrder = Array.from(dynamicGroups).sort();
     } else {
-        // Append any custom groups not in the predefined order
+        // Dodaj wszelkie niestandardowe grupy, których nie ma w zdefiniowanej kolejności
         const allGroupKeys = Object.keys(groups);
         allGroupKeys.forEach((k) => {
             if (!groupOrder.includes(k)) groupOrder.push(k);
@@ -191,7 +191,7 @@ function renderStudniePriceList() {
         </td>
       </tr>`;
 
-        // Sort by DN ascending for przejścia
+        // Sortuj rosnąco według DN dla przejść
         if (isPrzejscia) {
             items.sort((a, b) => {
                 const dnA = typeof a.dn === 'string' ? parseInt(a.dn) || 0 : a.dn || 0;
@@ -269,7 +269,7 @@ function renderStudniePriceList() {
     container.innerHTML = html;
 }
 
-/* ===== KINETY CAT. MANAGEMENT ===== */
+/* ===== ZARZĄDZANIE KATEGORIAMI KINET ===== */
 async function generateDefaultKinety(auto = false) {
     if (
         !auto &&
@@ -323,7 +323,7 @@ async function generateDefaultKinety(auto = false) {
     }
 }
 
-/* ===== PRZEJŚCIA CAT. MANAGEMENT ===== */
+/* ===== ZARZĄDZANIE KATEGORIAMI PRZEJŚĆ ===== */
 function addPrzejsciaCategory() {
     let name = prompt('Podaj nazwę nowej kategorii (np. GRP, Incor):');
     if (!name) return;
@@ -366,9 +366,9 @@ function deletePrzejsciaCategory(cat) {
     deleteStudnieCategory(cat);
 }
 
-/* ===== GENERIC CATEGORY / ELEMENT MANAGEMENT ===== */
+/* ===== GENERYCZNE ZARZĄDZANIE KATEGORIAMI / ELEMENTAMI ===== */
 
-// Map tab -> { category, dn, componentType defaults }
+// Mapuj zakładkę -> { kategoria, dn, domyślne componentType }
 function _tabDefaults() {
     const tab = currentCennikTab;
     const dnMap = { dn1000: 1000, dn1200: 1200, dn1500: 1500, dn2000: 2000, dn2500: 2500 };
@@ -402,10 +402,10 @@ function addStudnieCategory() {
     if (!name || !name.trim()) return;
 
     const catName = name.trim();
-    // Check if any products already have this as componentType
+    // Sprawdź, czy jakiekolwiek produkty mają to już jako componentType
     const existingKey = catName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 
-    // Create one placeholder element in this category
+    // Utwórz jeden element zastępczy w tej kategorii
     const newProduct = {
         id: existingKey + '_1',
         name: catName,
@@ -434,7 +434,7 @@ function addStudnieCategory() {
 function addStudnieElement(groupKey) {
     const defaults = _tabDefaults();
 
-    // If groupKey provided, find example product in that group to copy defaults from
+    // Jeśli podano groupKey, znajdź przykładowy produkt w tej grupie, aby skopiować domyślne wartości
     let template = null;
     if (groupKey) {
         if (defaults.isPrzejscia) {
@@ -455,7 +455,7 @@ function addStudnieElement(groupKey) {
         }
     }
 
-    // Fallback: find any product in current tab
+    // Wycofanie: znajdź dowolny produkt w bieżącej zakładce
     if (!template) {
         const tabFilter = CENNIK_TAB_FILTERS[defaults.tab];
         if (tabFilter) {
@@ -526,7 +526,7 @@ async function deleteStudnieCategory(groupKey) {
             (p) => !(p.componentType === 'dennica' && p.dn === dn)
         );
     } else {
-        // Delete by componentType within the current tab filter
+        // Usuń według componentType w obrębie bieżącego filtra zakładki
         const tabFilter = CENNIK_TAB_FILTERS[defaults.tab];
         studnieProducts = studnieProducts.filter((p) => {
             if (!tabFilter || !tabFilter(p)) return true; // keep items not in this tab
@@ -539,7 +539,7 @@ async function deleteStudnieCategory(groupKey) {
     showToast(`Usunięto kategorię ${label}`, 'info');
 }
 
-/* ===== TOGGLE MAGAZYN FIELD ===== */
+/* ===== PRZEŁĄCZANIE POLA MAGAZYNU ===== */
 function toggleMagazynField(el, field, id) {
     const product = studnieProducts.find((p) => p.id === id);
     if (!product) return;
@@ -548,7 +548,7 @@ function toggleMagazynField(el, field, id) {
     renderStudniePriceList();
 }
 
-/* ===== INLINE EDIT ===== */
+/* ===== EDYCJA W MIEJSCU ===== */
 function editStudnieCell(el, field, id) {
     if (el.querySelector('input')) return;
     const product = studnieProducts.find((p) => p.id === id);
@@ -602,7 +602,7 @@ function editStudnieCell(el, field, id) {
     });
 }
 
-/* ===== PRODUCT CRUD ===== */
+/* ===== CRUD PRODUKTÓW ===== */
 async function deleteStudnieProduct(id) {
     if (
         !(await appConfirm('Usunąć ten element z cennika?', {
@@ -807,7 +807,7 @@ function addStudnieProduct() {
 
 /* closeModal — przeniesione do shared/ui.js */
 
-/* ===== RESET / SAVE DEFAULT ===== */
+/* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
     try {
         const res = await fetch('/api/products-studnie/default');
@@ -830,7 +830,8 @@ async function resetStudniePriceList() {
                 }))
             )
                 return;
-            studnieProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS_STUDNIE));
+            const defaultData1 = await getDefaultProductsStudnie();
+            studnieProducts = JSON.parse(JSON.stringify(defaultData1));
         }
     } catch {
         if (
@@ -840,7 +841,8 @@ async function resetStudniePriceList() {
             }))
         )
             return;
-        studnieProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS_STUDNIE));
+        const defaultData2 = await getDefaultProductsStudnie();
+        studnieProducts = JSON.parse(JSON.stringify(defaultData2));
     }
     await saveStudnieProducts(studnieProducts);
     renderStudniePriceList();
@@ -871,9 +873,9 @@ async function manuallySaveStudnieProductsDB() {
     }
 }
 
-/* ===== EXCEL IMPORT / EXPORT ===== */
+/* ===== IMPORT / EKSPORT EXCEL ===== */
 
-// Column definitions for export/import - order matters
+// Definicje kolumn dla eksportu/importu - kolejność ma znaczenie
 const EXPORT_COLUMNS = [
     { key: 'id', header: 'Indeks' },
     { key: 'name', header: 'Nazwa' },
@@ -911,13 +913,13 @@ const EXPORT_COLUMNS = [
     { key: 'cena3', header: 'Cena 3 PLN' }
 ];
 
-// Build reverse lookup: Polish header -> key
+// Budowanie odwrotnego wyszukiwania: polski nagłówek -> klucz
 const HEADER_TO_KEY = {};
 EXPORT_COLUMNS.forEach((c) => {
     HEADER_TO_KEY[c.header] = c.key;
     HEADER_TO_KEY[c.key] = c.key;
 });
-// Backward compatibility: old header 'Forma std.' maps to formaStandardowa (WL)
+// Kompatybilność wsteczna: stary nagłówek 'Forma std.' mapuje do formaStandardowa (WL)
 HEADER_TO_KEY['Forma std.'] = 'formaStandardowa';
 
 function exportStudnieToExcel() {
@@ -960,7 +962,7 @@ function exportStudnieToExcel() {
             return 'Inne';
         }
 
-        // Group products by custom category
+        // Grupuj produkty według niestandardowej kategorii
         const categories = {};
         studnieProducts.forEach((p) => {
             const cat = getSheetName(p);
@@ -969,10 +971,10 @@ function exportStudnieToExcel() {
         });
 
         Object.keys(categories).forEach((cat) => {
-            // Sort przejścia by DN ascending within each sheet
+            // Sortuj przejścia rosnąco według DN w każdym arkuszu
             if (cat === 'Przejścia') {
                 categories[cat].sort((a, b) => {
-                    // Group by category first, then sort by DN
+                    // Grupuj najpierw według kategorii, a następnie sortuj według DN
                     if (a.category !== b.category)
                         return (a.category || '').localeCompare(b.category || '');
                     const dnA = typeof a.dn === 'string' ? parseInt(a.dn) || 0 : a.dn || 0;
@@ -981,7 +983,7 @@ function exportStudnieToExcel() {
                 });
             }
 
-            // Build export rows with ordered columns and Polish headers
+            // Buduj wiersze eksportu z uporządkowanymi kolumnami i polskimi nagłówkami
             const rows = categories[cat].map((p) => {
                 const row = {};
                 EXPORT_COLUMNS.forEach((col) => {
@@ -992,12 +994,12 @@ function exportStudnieToExcel() {
 
             const ws = XLSX.utils.json_to_sheet(rows);
 
-            // Set column widths
+            // Ustaw szerokości kolumn
             ws['!cols'] = EXPORT_COLUMNS.map((col) => ({
                 wch: Math.max(col.header.length + 2, 15)
             }));
 
-            // Ensure valid sheet name (max 31 chars, no forbidden chars)
+            // Upewnij się, że nazwa arkuszu jest poprawna (maks. 31 znaków, brak zakazanych znaków)
             let sheetName = cat.replace(/[\[\]\*\/\\\?\:]/g, '_').substring(0, 31);
             XLSX.utils.book_append_sheet(wb, ws, sheetName);
         });
@@ -1041,7 +1043,7 @@ function importStudnieFromExcel(event) {
                 return;
             }
 
-            // Normalize imported data — map Polish headers to keys & set defaults
+            // Normalizuj zaimportowane dane — mapuj polskie nagłówki na klucze i ustaw wartości domyślne
             const numericFields = [
                 'height',
                 'weight',
@@ -1085,7 +1087,7 @@ function importStudnieFromExcel(event) {
                         product[key] = raw[col];
                     });
 
-                    // Required fields validation
+                    // Walidacja wymaganych pól
                     product.id = String(product.id || '').trim();
                     product.name = String(product.name || '').trim();
 
@@ -1110,7 +1112,7 @@ function importStudnieFromExcel(event) {
                         product.componentType = 'kineta';
                     }
 
-                    // Parse numeric fields robustly
+                    // Solidne parsowanie pól numerycznych
                     numericFields.forEach((f) => {
                         let valValue = product[f];
                         if (
@@ -1120,7 +1122,7 @@ function importStudnieFromExcel(event) {
                             valValue === '—' ||
                             valValue === '-'
                         ) {
-                            // Special defaults for magazyn and formaStandardowa
+                            // Specjalne wartości domyślne dla magazynu i formaStandardowa
                             if (
                                 [
                                     'magazynWL',
@@ -1143,13 +1145,13 @@ function importStudnieFromExcel(event) {
                         }
                     });
 
-                    // DN can be string for egg-shaped pipes ("600/900")
+                    // DN może być ciągiem znaków dla rur jajowych ("600/900")
                     const rawDn = raw[HEADER_TO_KEY['dn'] || 'dn'];
                     if (product.dn !== null && typeof rawDn === 'string' && rawDn.includes('/')) {
                         product.dn = rawDn;
                     }
 
-                    // Ensure final sanity check for defaults
+                    // Zapewnij ostateczne sprawdzenie poprawności wartości domyślnych
                     if (product.magazynWL == null) product.magazynWL = 0;
                     if (product.magazynKLB == null) product.magazynKLB = 0;
                     if (product.formaStandardowa == null) product.formaStandardowa = 1;
@@ -1189,9 +1191,9 @@ function importStudnieFromExcel(event) {
     reader.readAsArrayBuffer(file);
 }
 
-/* ===== INIT ===== */
+/* ===== INICJALIZACJA ===== */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Auth check
+    // Sprawdzenie autoryzacji
     const token = getAuthToken();
     if (!token) {
         window.location.href = 'index.html';
@@ -1210,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Display user info
+    // Wyświetlanie informacji o użytkowniku
     const userEl = document.getElementById('header-username');
     const roleEl = document.getElementById('header-role-badge');
     if (userEl)
@@ -1228,26 +1230,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : '1px solid rgba(59,130,246,0.3)';
     }
 
-    // ── Setup navigation FIRST (before async data loading) ──
+    // ── Ustaw najpierw nawigację (przed asynchronicznym ładowaniem danych) ──
     document.querySelectorAll('.nav-btn').forEach((btn) => {
         btn.addEventListener('click', () => showSection(btn.dataset.section));
     });
 
-    // Setup search
+    // Ustawianie wyszukiwania
     document
         .getElementById('studnie-pricelist-search')
         ?.addEventListener('input', renderStudniePriceList);
 
-    // Setup offer defaults
+    // Ustawianie domyślnych parametrów oferty
     document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
 
-    // Wizard: start at step 1
+    // Kreator: zacznij od kroku 1
     wizardConfirmedParams = new Set();
     goToWizardStep(1);
 
-    // ── Load data (wrapped in try-catch so failures don't break navigation) ──
+    // ── Ładowanie danych (opakowane w try-catch, aby błędy nie przerywały nawigacji) ──
     try {
-        // Load products
+        // Ładowanie produktów
         studnieProducts = await loadStudnieProducts();
 
         if (!studnieProducts.some((p) => p.componentType === 'kineta')) {
@@ -1272,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             saveStudnieProducts(studnieProducts);
         }
 
-        // Start with no wells — user adds first well themselves
+        // Zacznij bez studni — użytkownik sam dodaje pierwszą studnię
         wells = [];
         wellCounter = 0;
         currentWellIndex = 0;
@@ -1281,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         offerDefaultRedukcjaMinH = 2500;
         offerDefaultRedukcjaZak = null;
 
-        // Initial render
+        // Wstępne renderowanie
         refreshAll();
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -1293,14 +1295,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         clientsDb = await loadClientsDb();
         renderSavedOffersStudnie();
 
-        // Check if we're opening an order for editing
+        // Sprawdź, czy otwieramy zamówienie do edycji
         if (orderParam) {
             await enterOrderEditMode(orderParam);
         } else if (tab) {
             showSection(tab);
         }
 
-        // Set initial offer number properly based on loaded offers
+        // Ustaw odpowiednio początkowy numer oferty na podstawie załadowanych ofert
         if (!orderEditMode) {
             document.getElementById('offer-number').value = generateOfferNumberStudnie();
         }

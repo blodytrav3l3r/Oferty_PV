@@ -1,3 +1,6 @@
+// Schemat bazy danych Prisma dla systemu WITROS Oferty
+// Ten plik definiuje modele danych dla SQLite
+
 generator client {
   provider      = "prisma-client-js"
   output        = "../generated/prisma"
@@ -9,6 +12,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Logi telemetryczne AI o nadpisaniach użytkownika
 model ai_telemetry_logs {
   id                   String   @id
   userId               String?
@@ -18,6 +22,7 @@ model ai_telemetry_logs {
   createdAt            String?  @default("datetime('now')")
 }
 
+// Logi audytowe (śledzenie zmian w bazie)
 model audit_logs {
   id         String   @id
   entityType String
@@ -31,6 +36,7 @@ model audit_logs {
   @@index([entityType, entityId], map: "idx_audit_entity")
 }
 
+// Baza klientów
 model clients_rel {
   id        String  @id
   userId    String?
@@ -63,6 +69,7 @@ model offer_studnie_items_rel {
   dodatkowe_info String?
 }
 
+// Główne dokumenty ofert (typ rury/ogólne)
 model offers_rel {
   id            String   @id
   userId        String?
@@ -76,6 +83,7 @@ model offers_rel {
   history       String?  @default("[]")
 }
 
+// Główne dokumenty ofert (typ studnie)
 model offers_studnie_rel {
   id            String   @id
   userId        String?
@@ -89,6 +97,7 @@ model offers_studnie_rel {
   history       String?  @default("[]")
 }
 
+// Liczniki numeracji ofert
 model order_counters {
   userId     String
   year       Int
@@ -97,6 +106,7 @@ model order_counters {
   @@id([userId, year])
 }
 
+// Zamówienia na studnie
 model orders_studnie_rel {
   id             String  @id
   userId         String?
@@ -138,6 +148,7 @@ model products_rury_rel {
   unit      String? @default("szt")
 }
 
+// Katalog produktów (studnie i elementy)
 model products_studnie_rel {
   id                  String   @id
   name                String?
@@ -188,6 +199,7 @@ model settings {
   value String?
 }
 
+// Użytkownicy systemu
 model users {
   id                         String   @id
   username                   String   @unique
