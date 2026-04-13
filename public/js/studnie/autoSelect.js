@@ -588,13 +588,15 @@ function updateHeightIndicator() {
                 '<i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>' +
                 liveErrors.map((e) => `• ${e}`).join('<br>');
             errContainer.style.display = 'block';
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
         } else {
             errContainer.style.display = 'none';
         }
     }
 
     const prevErrors = well.configErrors ? well.configErrors.length : 0;
-    if (prevErrors !== liveErrors.length) renderWellsList();
     if (prevErrors !== liveErrors.length) renderWellsList();
 
     const stats = calcWellStats(well);
@@ -1864,7 +1866,7 @@ function recalculateWellErrors(well) {
     if (!well) return;
     
     // Wyczyść błędy dotyczące luzów z poprzedniego wywołania, aby wygenerować je ponownie
-    let liveErrors = well.configErrors ? well.configErrors.filter(e => !e.includes('Błąd zapasu')) : [];
+    let liveErrors = well.configErrors ? well.configErrors.filter(e => !e.includes('Błąd zapasu') && !e.includes('nie spełnia zapasów')) : [];
 
     // --- WALIDACJA LUZÓW NA ŻYWO ---
     if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
@@ -1904,12 +1906,16 @@ function recalculateWellErrors(well) {
                 return [300, 300, 250, 200];
             };
 
-            for (const pr of well.przejscia) {
+            const przZegarowe = well.przejscia.map((pr, idx) => ({ pr, origIdx: idx })).sort((a, b) => {
+                return (parseFloat(a.pr.angle) || 0) - (parseFloat(b.pr.angle) || 0);
+            });
+
+            przZegarowe.forEach(({ pr }, porzadekIdx) => {
                 const pel = parseFloat(pr.rzednaWlaczenia);
-                if (isNaN(pel)) continue;
+                if (isNaN(pel)) return;
 
                 const pprod = studnieProducts.find((x) => x.id === pr.productId);
-                if (!pprod) continue;
+                if (!pprod) return;
 
                 let dn_val = 160;
                 if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
@@ -1923,23 +1929,31 @@ function recalculateWellErrors(well) {
                 const zd_req = parseFloat(pprod.zapasDol) || defs[0];
                 const hc_invert = (pel - rzDna) * 1000;
                 const top_pos = hc_invert + dn_val;
+                
+                const typStr = pr.flowType === 'wylot' ? "wylot" : "dolot";
+                const displayType = `nr ${porzadekIdx + 1} (${typStr} DN${dn_val}, rodzaj: ${pprod.name})`;
 
                 for (const seg of segments) {
                     if (hc_invert >= seg.start && hc_invert < seg.end) {
                         const distToBottom = hc_invert - seg.start;
                         const distToTop = seg.end - top_pos;
 
-                        if (distToBottom < zd_req && distToBottom >= 0) {
-                            const errStr = `Błąd zapasu dolnego w "${seg.name}" dla przejścia ${pprod.name} (jest ${Math.round(distToBottom)}mm, wymagane ${zd_req}mm z cennika)`;
+                        // Dla absolutnie najniższej dennicy, tolerujemy rzędną włączenia 0 (brak wymaganego zapasu dolnego) ale tylko gdy to molocha "ddd"
+                        const isBottomMostDennica = seg.start === 0 && (seg.type === 'dennica' || seg.type === 'styczna');
+                        const isDdd = seg.product.id.toLowerCase().includes('ddd');
+                        const applyingZdReq = (isBottomMostDennica && isDdd) ? 0 : zd_req;
+
+                        if (distToBottom < applyingZdReq && distToBottom >= 0) {
+                            const errStr = `Błąd zapasu dolnego w "${seg.name}" dla przejścia ${displayType} (jest ${Math.round(distToBottom)}mm, wymagane ${applyingZdReq}mm z cennika)`;
                             if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
                         }
                         if (distToTop < zg_req) {
-                            const errStr = `Błąd zapasu górnego w "${seg.name}" dla przejścia ${pprod.name} (zostało ${Math.round(distToTop)}mm, wymagane ${zg_req}mm z cennika)`;
+                            const errStr = `Błąd zapasu górnego w "${seg.name}" dla przejścia ${displayType} (zostało ${Math.round(distToTop)}mm, wymagane ${zg_req}mm z cennika)`;
                             if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
                         }
                     }
                 }
-            }
+            });
         }
     }
     well.configErrors = [...new Set(liveErrors)];
@@ -3088,6 +3102,7 @@ function addWellComponent(productId) {
     updateSummary();
     renderWellsList();
     renderTiles(); // Update highlight
+    updateHeightIndicator(); // Odśwież błędy
 
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
@@ -3143,6 +3158,7 @@ function removeWellComponent(index) {
     updateSummary();
     renderWellsList();
     renderTiles(); // Update highlight
+    updateHeightIndicator(); // Odśwież błędy
 }
 
 function updateWellQuantity(index, value) {
@@ -3167,6 +3183,7 @@ function updateWellQuantity(index, value) {
     renderWellDiagram();
     updateSummary();
     renderTiles(); // highlight items
+    updateHeightIndicator(); // Odśwież błędy
 }
 
 function clearWellConfig() {
@@ -3338,6 +3355,7 @@ function moveWellComponent(index, direction) {
     well.configSource = 'MANUAL';
 
     renderWellConfig();
+    updateHeightIndicator(); // Odśwież błędy po przesunięciu
 }
 
 /* ===== DRAG & DROP FOR CONCRETE CONFIG ===== */
@@ -3449,6 +3467,7 @@ window.handleCfgDrop = function (e) {
             renderWellConfig();
             renderWellDiagram();
             updateSummary();
+            updateHeightIndicator();
         } else if (window.currentDraggedPlaceholderId) {
             tile.style.borderTop = '';
 
@@ -3475,6 +3494,7 @@ window.handleCfgDrop = function (e) {
             renderWellConfig();
             renderWellDiagram();
             updateSummary();
+            updateHeightIndicator();
         }
     }
 };
@@ -3490,6 +3510,7 @@ window.handleCfgDragEnd = function (e) {
         window.requestAnimationFrame(() => {
             renderWellConfig();
             renderWellDiagram();
+            updateHeightIndicator();
         });
     }
 };
@@ -3530,14 +3551,45 @@ window.refreshZleceniaModalIfActive = function () {
     if (
         zlModal &&
         zlModal.classList.contains('active') &&
-        typeof zleceniaElementsList !== 'undefined' &&
-        typeof zleceniaSelectedIdx !== 'undefined' &&
-        zleceniaSelectedIdx >= 0
+        typeof zleceniaElementsList !== 'undefined'
     ) {
-        if (typeof populateZleceniaForm === 'function') {
+        let oldWellIdx = -1;
+        let oldElIdx = -1;
+        
+        if (typeof zleceniaSelectedIdx !== 'undefined' && zleceniaSelectedIdx >= 0) {
+            const oldEl = zleceniaElementsList[zleceniaSelectedIdx];
+            if (oldEl) {
+                oldWellIdx = oldEl.wellIndex;
+                oldElIdx = oldEl.elementIndex;
+            }
+        }
+
+        // Zawsze zbuduj od nowa listę elementów (by the kręgi z the otworami się the uaktualniły)
+        if (typeof buildZleceniaWellList === 'function') {
+            buildZleceniaWellList();
+            
+            // Znajdź na nowo the index do okna the (priorytet elementIndex lub najbliższy w dół)
+            if (oldWellIdx !== -1) {
+                let fallbackIdx = -1;
+                let foundExact = -1;
+                for (let i = 0; i < zleceniaElementsList.length; i++) {
+                    const el = zleceniaElementsList[i];
+                    if (el.wellIndex === oldWellIdx) {
+                        fallbackIdx = i;
+                        if (el.elementIndex === oldElIdx) {
+                            foundExact = i;
+                            break;
+                        }
+                    }
+                }
+                zleceniaSelectedIdx = foundExact !== -1 ? foundExact : fallbackIdx;
+            }
+        }
+
+        if (typeof populateZleceniaForm === 'function' && typeof zleceniaSelectedIdx !== 'undefined' && zleceniaSelectedIdx >= 0) {
             const el = zleceniaElementsList[zleceniaSelectedIdx];
             if (el) {
-                // Aby zachować pełną spójność kontekstu modala, aktualizujemy go za pomocą obiektu listy głównej
+                // Aktualizujemy główny kontekst modala elementem z zaktualizowanej listy
                 populateZleceniaForm(el);
             }
         }
@@ -3778,6 +3830,9 @@ function renderWellPrzejscia(opts) {
     let prevAssignedIndex = -999;
     let filteredCount = 0;
 
+    // Nadaj displayIndex przejściom, które go nie mają (kompatybilność wsteczna)
+    ensureDisplayIndices(well.przejscia);
+
     well.przejscia.forEach((item, index) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
@@ -3936,6 +3991,9 @@ function renderWellPrzejscia(opts) {
     </div>`;
 
     container.innerHTML = html;
+    if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+    }
     if (countEl)
         countEl.textContent = `(${filterElementIndex != null ? filteredCount : well.przejscia.length})`;
 }

@@ -1701,7 +1701,7 @@ function populateZleceniaForm(el) {
 
             <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto; padding:0.5rem 0.6rem; flex:1;">
                 <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                    <span><i data-lucide="link"></i> Lista dodanych układów</span>
+                    <span><i data-lucide="link"></i> Lista przejść</span>
                     <span id="zl-przejscia-count" style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
                 </div>
                 <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">

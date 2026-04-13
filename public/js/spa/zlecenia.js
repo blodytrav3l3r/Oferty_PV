@@ -363,13 +363,36 @@ const AppZlecenia = (() => {
      * Build przejscia rows from the stored PO snapshot.
      * This is a simplified version that doesn't require studnieProducts/buildConfigMap.
      */
+    function ensureDisplayIndices(przejscia) {
+        if (!przejscia || przejscia.length === 0) return;
+
+        const sorted = [...przejscia].sort((a, b) => {
+            return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
+        });
+
+        let currentIdx = 0;
+        let prevAngle = null;
+
+        sorted.forEach(p => {
+            const angle = parseFloat(p.angle) || 0;
+            if (prevAngle !== null && angle !== prevAngle) {
+                currentIdx++;
+            }
+            p.displayIndex = currentIdx;
+            prevAngle = angle;
+        });
+    }
+
+    /**
+     * Buduje wiersze przejść z zapisanego PO.
+     * Iteruje po displayIndex od 0 do max, zostawiając puste wiersze dla luk.
+     * Etykiety (Wlot/Wylot) odpowiadają rzeczywistemu flowType przejścia.
+     */
     function buildPrzejsciaRowsFromPO(po) {
         const przejscia = po.przejscia || [];
         const rzDna = parseFloat(po.rzednaDna) || 0;
 
-        const rows = [];
-        const wylot = przejscia.find((p) => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
-        const wloty = przejscia.filter((p) => p !== wylot);
+        ensureDisplayIndices(przejscia);
 
         function formatRow(label, p) {
             const spadekK = p.spadekKineta || '';
@@ -396,23 +419,31 @@ const AppZlecenia = (() => {
             };
         }
 
-        if (wylot) rows.push(formatRow('Wylot 0', wylot));
-        wloty.forEach((p, i) => rows.push(formatRow(`Wlot ${i + 1}`, p)));
+        const maxIdx = przejscia.length > 0
+            ? Math.max(...przejscia.map(p => p.displayIndex))
+            : -1;
+        const totalSlots = Math.max(maxIdx + 1, 4);
 
-        while (rows.length < 11) {
-            const idx = rows.length === 0 ? 0 : rows.length;
-            const label = idx === 0 ? 'Wylot 0' : `Wlot ${idx}`;
-            rows.push({
-                label,
-                rodzaj: '',
-                srednica: '',
-                spadekKineta: '',
-                spadekMufa: '',
-                katStopien: '',
-                uwagi: '',
-                katGon: '',
-                katWykonania: ''
-            });
+        const rows = [];
+        for (let i = 0; i < totalSlots; i++) {
+            const p = przejscia.find(t => t.displayIndex === i);
+            if (p) {
+                const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+                rows.push(formatRow(`${prefix} ${i}`, p));
+            } else {
+                const label = i === 0 ? 'Wylot 0' : `Wlot ${i}`;
+                rows.push({
+                    label,
+                    rodzaj: '',
+                    srednica: '',
+                    spadekKineta: '',
+                    spadekMufa: '',
+                    katStopien: '',
+                    uwagi: '',
+                    katGon: '',
+                    katWykonania: ''
+                });
+            }
         }
         return rows;
     }
@@ -423,88 +454,157 @@ const AppZlecenia = (() => {
         if (przejscia.length === 0) return '';
         const rzDna = parseFloat(po.rzednaDna) || 0;
 
-        const size = 320;
+        const size = 400;
         const center = size / 2;
-        const radius = 60;
+        const radius = 55;
+        const labelFontSize = 11;
+        const angleFontSize = 9;
+        const lineHeight = 10;
 
-        let svg = `<svg viewBox="0 0 ${size} ${size}" width="200" height="200" style="background:transparent; overflow:visible;">`;
-        svg += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`;
-        svg += `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`;
-        svg += `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`;
+        const svgParts = [];
+        svgParts.push(`<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`);
+        svgParts.push(`<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`);
+        svgParts.push(`<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`);
 
         const labels = [];
 
-        przejscia.forEach((p, i) => {
+        const wylot = przejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
+
+        // Etykiety z displayIndex — zgodne z tabelą i rzeczywistym flowType
+        ensureDisplayIndices(przejscia);
+        const labelsMap = new Map();
+        przejscia.forEach(p => {
+            const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+            labelsMap.set(p, `${prefix} ${p.displayIndex}`);
+        });
+
+        przejscia.forEach((p) => {
             const angle = parseFloat(p.angle) || 0;
             const rad = (angle * Math.PI) / 180;
-            const x = center - radius * Math.sin(rad);
+            const x = center + radius * Math.sin(rad);
             const y = center + radius * Math.cos(rad);
-            const isWylot = p.flowType === 'wylot' || angle === 0;
+            const isWylot = p === wylot;
 
-            svg += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`;
+            svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`);
 
-            const labelRadius = radius + 20;
-            const lx = center - labelRadius * Math.sin(rad);
+            const labelRadius = radius + 40;
+            const lx = center + labelRadius * Math.sin(rad);
             const ly = center + labelRadius * Math.cos(rad);
 
             let anchor = 'middle';
             let offsetX = 0;
             if (lx < center - 15) {
                 anchor = 'end';
-                offsetX = -2;
+                offsetX = -4;
             } else if (lx > center + 15) {
                 anchor = 'start';
-                offsetX = 2;
+                offsetX = 4;
             }
 
             const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
             const hMm = Math.round((pel - rzDna) * 1000);
             const hText = hMm > 0 ? ` (+${hMm}mm)` : '';
 
-            const rodzaj = (p.productCategory || (isWylot ? 'WYLOT' : 'WLOT')).toUpperCase();
+            const rodzaj = (p.productCategory || '').toUpperCase();
+            const dn = p.productDn || '';
+            const prefix = labelsMap.get(p) || 'Wlot';
+
+            const fullName = `${prefix}${rodzaj ? ' ' + rodzaj : ''}${dn ? ' DN' + dn : ''}`;
+            const maxLineLen = 16;
+            const words = fullName.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if (currentLine.length + word.length + 1 > maxLineLen && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = currentLine ? currentLine + ' ' + word : word;
+                }
+            }
+            if (currentLine) lines.push(currentLine);
 
             labels.push({
-                origX: lx, origY: ly, lx: lx, ly: ly,
-                anchor: anchor,
-                offsetX: offsetX,
+                origX: lx, origY: ly, lx, ly,
+                anchor, offsetX,
                 isRight: (lx >= center),
-                text1: `${i}. ${rodzaj}`,
-                text2: `${angle}°${hText}`
+                lines,
+                textAngle: `${angle}°${hText}`
             });
         });
 
-        // Anti-overlap pass (vertical sorting/pushing)
-        let leftLabels = labels.filter(l => !l.isRight).sort((a,b) => a.ly - b.ly);
-        let rightLabels = labels.filter(l => l.isRight).sort((a,b) => a.ly - b.ly);
-        
-        const MIN_DY = 28;
-        function spread(arr) {
-            for(let loops = 0; loops < 8; loops++) {
-                for(let i = 0; i < arr.length - 1; i++) {
-                    let diff = arr[i+1].ly - arr[i].ly;
-                    if(diff < MIN_DY) {
-                        let push = (MIN_DY - diff) / 2;
+        // Anti-overlap pass
+        const leftLabels = labels.filter(l => !l.isRight).sort((a, b) => a.ly - b.ly);
+        const rightLabels = labels.filter(l => l.isRight).sort((a, b) => a.ly - b.ly);
+
+        function spreadLabels(arr) {
+            const requiredGapBase = 8 + lineHeight;
+            for (let loops = 0; loops < 15; loops++) {
+                for (let i = 0; i < arr.length - 1; i++) {
+                    const aLines = arr[i].lines.length;
+                    const requiredGap = requiredGapBase + aLines * lineHeight;
+                    const diff = arr[i + 1].ly - arr[i].ly;
+                    if (diff < requiredGap) {
+                        const push = (requiredGap - diff) / 2;
                         arr[i].ly -= push;
-                        arr[i+1].ly += push;
+                        arr[i + 1].ly += push;
                     }
                 }
             }
         }
-        spread(leftLabels);
-        spread(rightLabels);
+        spreadLabels(leftLabels);
+        spreadLabels(rightLabels);
+
+        // Oblicz pełny bounding box z zawartości (okrąg + etykiety)
+        let minX = center - radius - 5;
+        let maxX = center + radius + 5;
+        let minY = center - radius - 5;
+        let maxY = center + radius + 5;
 
         labels.forEach(l => {
-            if (Math.abs(l.origY - l.ly) > 2) {
-                // Skrócona linia przerywana aby nie wchodziła pod tekst
-                let lineDist = (l.ly > l.origY) ? -8 : 8; 
-                svg += `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`;
+            const textHeight = (l.lines.length + 1) * lineHeight;
+            if (l.ly - 5 < minY) minY = l.ly - 5;
+            if (l.ly + textHeight > maxY) maxY = l.ly + textHeight;
+
+            // Szerokość tekstu szacunkowo ~8px na literę
+            const svgTexts = [...l.lines, l.textAngle];
+            const maxTextLen = Math.max(...svgTexts.map(t => t.length));
+            const textW = maxTextLen * 8;
+
+            if (l.anchor === 'end') {
+                if (l.lx + l.offsetX - textW - 10 < minX) minX = l.lx + l.offsetX - textW - 10;
+            } else if (l.anchor === 'start') {
+                if (l.lx + l.offsetX + textW + 10 > maxX) maxX = l.lx + l.offsetX + textW + 10;
+            } else {
+                if (l.lx + l.offsetX - textW / 2 - 10 < minX) minX = l.lx + l.offsetX - textW / 2 - 10;
+                if (l.lx + l.offsetX + textW / 2 + 10 > maxX) maxX = l.lx + l.offsetX + textW / 2 + 10;
             }
-            svg += `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#000">`;
-            svg += `<tspan x="${l.lx + l.offsetX}" dy="0" fill="#000">${l.text1}</tspan>`;
-            svg += `<tspan x="${l.lx + l.offsetX}" dy="1.15em" font-size="10" font-weight="normal" fill="#444">${l.text2}</tspan>`;
-            svg += `</text>`;
+
+            // Linia prowadząca (leader line)
+            if (Math.abs(l.origY - l.ly) > 2) {
+                const lineDist = (l.ly > l.origY) ? -8 : 8;
+                svgParts.push(`<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`);
+            }
+            let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" fill="#000">`;
+            l.lines.forEach((line, li) => {
+                textSvg += `<tspan x="${l.lx + l.offsetX}" dy="${li === 0 ? '0' : '1.1em'}" fill="#000">${line}</tspan>`;
+            });
+            textSvg += `<tspan x="${l.lx + l.offsetX}" dy="1.1em" font-size="${angleFontSize}" font-weight="normal" fill="#444">${l.textAngle}</tspan>`;
+            textSvg += `</text>`;
+            svgParts.push(textSvg);
         });
 
+        // Dynamiczny viewBox — przycięty do pełnej zawartości
+        const pad = 12;
+        const vbX = Math.floor(minX - pad);
+        const vbY = Math.floor(minY - pad);
+        const vbW = Math.ceil(maxX - minX + pad * 2);
+        const vbH = Math.ceil(maxY - minY + pad * 2);
+        const svgW = 200;
+        const svgH = Math.round(svgW * (vbH / vbW));
+
+        let svg = `<svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${svgW}" height="${svgH}" style="background:transparent;">`;
+        svg += svgParts.join('');
         svg += `</svg>`;
         return svg;
     }

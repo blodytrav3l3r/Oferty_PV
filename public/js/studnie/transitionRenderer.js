@@ -36,6 +36,23 @@ function calcGonyAngle(angle) {
     return (angle === 0 || angle === 360 ? 0 : ((360 - angle) * 400) / 360).toFixed(2);
 }
 
+function getClockIndex(item, opts) {
+    if (item.displayIndex !== undefined && item.displayIndex !== null) {
+        return item.displayIndex;
+    }
+    let w = opts.well;
+    if (!w && typeof window.getCurrentWell === 'function') {
+        w = window.getCurrentWell();
+    }
+    if (!w || !w.przejscia) return '';
+
+    const sorted = [...w.przejscia].sort((a, b) => {
+        return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
+    });
+    const idx = sorted.indexOf(item);
+    return idx >= 0 ? (idx + 1) : '';
+}
+
 // ──────────────────────────────────────
 // Główny renderer kafelków
 // ──────────────────────────────────────
@@ -128,23 +145,27 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     // Zapewnij stabilny identyfikator dla QE (Quick Edit)
     if (!item.id) item.id = 'prz-legacy-' + globalIndex + '-' + Math.floor(Math.random() * 1000);
 
+    const clockIdx = getClockIndex(item, opts);
+    const numDisplay = clockIdx !== '' && clockIdx !== undefined ? `<div title="Oznaczenie zegarowe" style="position:absolute; top:-6px; right:-6px; background:#1e293b; border:1px solid ${flow.border}; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:${flow.color}; box-shadow:0 1px 3px rgba(0,0,0,0.5);">${clockIdx}</div>` : '';
+
     return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; height:54px; padding:0 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
-      <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:55px; transition:all 0.2s;">
+      <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:55px; min-width:55px; transition:all 0.2s;">
+        ${numDisplay}
         <span style="font-size:1.1rem; margin-bottom:0px;">${flow.icon}</span>
         <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-top:-2px;">${flow.label}</span>
       </button>
 
       <!-- SZCZEGÓŁY -->
-      <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; white-space:nowrap;">
-        <div style="display:flex; flex-direction:column; gap:0.1rem; width:150px; overflow:hidden; flex-shrink:0;">
-           <div style="display:flex; align-items:center; gap:0.6rem; white-space:nowrap;">
-             <span onclick="window.openChangePrzejscieTypePopup(${globalIndex})" title="Kliknij, aby zmienić typ przejścia" style="font-size:1.0rem; font-weight:800; color:var(--text-primary); cursor:pointer; transition:color 0.2s;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${przName}</span>
-             <span onclick="window.openChangePrzejscieDnPopup(${globalIndex})" title="Kliknij, aby zmienić średnicę" style="font-size:1.0rem; color:#a78bfa; font-weight:800; cursor:pointer; transition:color 0.2s;" onmouseenter="this.style.color='#c084fc'" onmouseleave="this.style.color='#a78bfa'">${dnLabel}</span>
+      <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+        <div style="display:flex; flex-direction:column; gap:0.1rem; flex:1; min-width:200px; white-space:normal; padding-right:0.5rem;">
+           <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+             <span onclick="window.openChangePrzejscieTypePopup(${globalIndex})" title="Kliknij, aby zmienić typ przejścia" style="font-size:0.95rem; font-weight:800; color:var(--text-primary); cursor:pointer; transition:color 0.2s;" onmouseenter="this.style.color='#60a5fa'" onmouseleave="this.style.color='var(--text-primary)'">${przName}</span>
+             <span onclick="window.openChangePrzejscieDnPopup(${globalIndex})" title="Kliknij, aby zmienić średnicę" style="font-size:0.95rem; color:#a78bfa; font-weight:800; cursor:pointer; transition:color 0.2s;" onmouseenter="this.style.color='#c084fc'" onmouseleave="this.style.color='#a78bfa'">${dnLabel}</span>
            </div>
         </div>
 
-        <div style="display:flex; align-items:center; gap:0.5rem; margin-right: 0.2rem; white-space:nowrap; flex:1; justify-content:flex-end;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-right: 0.2rem; white-space:nowrap; flex-shrink:0;">
           <div style="width:135px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:center;">${spadekKLabel} [mm]</div>
             <div data-qe-id="${item.id}" data-qe-field="spadekKineta" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; display:inline-block; margin-top:2px;" onmouseenter="this.style.color='#60a5fa'; this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.color='var(--text-primary)'; this.style.background='rgba(255,255,255,0.03)';">${item.spadekKineta != null && item.spadekKineta !== '' ? Math.round(parseFloat(item.spadekKineta)) + ' mm' : '—'}</div>
@@ -319,7 +340,8 @@ function renderMirrorTransitions(container, items, well, findProductFn, configMa
                 showPrice: false,
                 spadekKinetaLabel: 'Spadek w k.',
                 spadekMufaLabel: 'Spadek w m.',
-                enableDragDrop: false
+                enableDragDrop: false,
+                well: well
             });
         })
         .join('');
@@ -331,3 +353,29 @@ window.buildConfigMap = buildConfigMap;
 window.findAssignedElement = findAssignedElement;
 window.computeHeightFromElement = computeHeightFromElement;
 window.renderMirrorTransitions = renderMirrorTransitions;
+
+/**
+ * Nadaje displayIndex przejściom na podstawie kątów (ruch wskazówek zegara).
+ * Przejścia na tym samym kącie dostają ten sam numer.
+ * Kąt 0° (wylot) = indeks 0.
+ */
+function ensureDisplayIndices(przejscia) {
+    if (!przejscia || przejscia.length === 0) return;
+
+    const sorted = [...przejscia].sort((a, b) => {
+        return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
+    });
+
+    let currentIdx = 0;
+    let prevAngle = null;
+
+    sorted.forEach(p => {
+        const angle = parseFloat(p.angle) || 0;
+        if (prevAngle !== null && angle !== prevAngle) {
+            currentIdx++;
+        }
+        p.displayIndex = currentIdx;
+        prevAngle = angle;
+    });
+}
+window.ensureDisplayIndices = ensureDisplayIndices;
