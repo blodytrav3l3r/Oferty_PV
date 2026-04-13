@@ -354,6 +354,31 @@ function generateWellSvg(data) {
     const angleFontSize = 9;
     const lineHeight = 10;
 
+    // Oceniamy z jakich kątów korzystamy
+    let useKatWykonania = false;
+    let angleTypeTitle = "Wg Kąt Stopień";
+    
+    // Pobranie z normalizacją do liczby (DN '1000' -> 1000)
+    const dnStr = String(well.dn || '');
+    const match = dnStr.match(/(\d{3,4})/);
+    const numDn = match ? parseInt(match[1]) : 0;
+
+    let isKragOt = false;
+    if (data.product && data.product.componentType === 'krag_ot') {
+        isKragOt = true;
+    }
+
+    if (isKragOt) {
+        useKatWykonania = false;
+        angleTypeTitle = "Kąty: Kąt Stopień";
+    } else if (numDn === 2000 || numDn === 2500) {
+        useKatWykonania = false;
+        angleTypeTitle = "Kąty: Kąt Stopień";
+    } else if ([1000, 1200, 1500].includes(numDn)) {
+        useKatWykonania = true;
+        angleTypeTitle = "Kąty: Kąt Wykonania";
+    }
+
     // Budujemy elementy SVG do tablicy — viewBox dokleimy na końcu
     const svgParts = [];
 
@@ -363,6 +388,10 @@ function generateWellSvg(data) {
     // Krzyż pomocniczy
     svgParts.push(`<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`);
     svgParts.push(`<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`);
+
+    // Znacznik 0 stopni na dole grafiki
+    svgParts.push(`<line x1="${center}" y1="${center + radius}" x2="${center}" y2="${center + radius + 10}" stroke="#777" stroke-width="1.5" />`);
+    svgParts.push(`<text x="${center}" y="${center + radius + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#666">0°</text>`);
 
     const wylot = przejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
     ensureDisplayIndices(przejscia);
@@ -375,11 +404,15 @@ function generateWellSvg(data) {
     const labels = [];
 
     przejscia.forEach((p) => {
-        const angleDeg = parseFloat(p.angle) || 0;
-        // Rysuj pozycję na podstawie kąta stopień (zgodnie z ruchem wskazówek zegara od 0° na dole)
+        const baseAngle = parseFloat(p.angle) || 0;
+        let angleDeg = baseAngle;
+        if (useKatWykonania) {
+            angleDeg = p.angleExecution !== undefined ? parseFloat(p.angleExecution) : (baseAngle === 0 || baseAngle === 360 ? 0 : 360 - baseAngle);
+        }
+
         const rad = (angleDeg * Math.PI) / 180;
 
-        const x = center + radius * Math.sin(rad);
+        const x = center - radius * Math.sin(rad);
         const y = center + radius * Math.cos(rad);
 
         const isWylot = p === wylot;
@@ -396,7 +429,7 @@ function generateWellSvg(data) {
         const uwagiText = hMm > 0 ? `+${hMm}mm` : '';
 
         const labelRadius = radius + 40;
-        const lx = center + labelRadius * Math.sin(rad);
+        const lx = center - labelRadius * Math.sin(rad);
         const ly = center + labelRadius * Math.cos(rad);
 
         let anchor = 'middle';
@@ -433,8 +466,6 @@ function generateWellSvg(data) {
             textAngle: `${angleDeg}°${uwagiText ? ' (' + uwagiText + ')' : ''}`
         });
     });
-
-    // Anti-overlap pass
     const leftLabels = labels.filter(l => !l.isRight).sort((a, b) => a.ly - b.ly);
     const rightLabels = labels.filter(l => l.isRight).sort((a, b) => a.ly - b.ly);
 
@@ -513,6 +544,17 @@ function generateWellSvg(data) {
 function buildZlecenieHtml(template, data) {
     const przejsciaRows = buildPrzejsciaRows(data);
 
+    let angleTypeTitle = "Kąt stopień";
+    const dnStr = String(data.well.dn || '');
+    const numDn = parseInt(dnStr.match(/(\d{3,4})/) ? dnStr.match(/(\d{3,4})/)[1] : "0");
+    if (data.product && data.product.componentType === 'krag_ot') {
+        angleTypeTitle = "Kąt stopień";
+    } else if (numDn === 2000 || numDn === 2500) {
+        angleTypeTitle = "Kąt stopień";
+    } else if ([1000, 1200, 1500].includes(numDn)) {
+        angleTypeTitle = "Kąt wykonania";
+    }
+
     // Zbudowanie dużego płaskiego obiektu z wartościami dla {{ZMIENNYCH}}
     const payload = {
         NR_ZLECENIA: data.productionOrderNumber || '',
@@ -542,6 +584,7 @@ function buildZlecenieHtml(template, data) {
         KAT_STOPNI: data.katStopni ? data.katStopni + '°' : 'Brak',
         WYKONANIE: data.wykonanie || 'Brak',
         POWLOKA: getPowlokaString(data.well),
+        TYP_KATA: angleTypeTitle,
         GRAFIKA_KATOW: generateWellSvg(data)
     };
 
