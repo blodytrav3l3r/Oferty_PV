@@ -385,6 +385,7 @@ function refreshAll() {
     updateAutoLockUI();
     updateZakonczenieButton();
     updateRedukcjaButton();
+    if (typeof updatePsiaBudaButton === 'function') updatePsiaBudaButton();
     updateParamTilesUI();
     renderWellParams();
     renderOfferSummary();
@@ -502,11 +503,11 @@ const WELL_PARAM_DEFS = [
         label: 'Klasa betonu',
         options: [
             ['C40/50', 'C40/50'],
-            ['C40/50(HSR!!!!)', 'C40/50(HSR)'],
+            ['C40/50(HSR)', 'C40/50 HSR'],
             ['C45/55', 'C45/55'],
-            ['C45/55(HSR!!!!)', 'C45/55(HSR)'],
+            ['C45/55(HSR)', 'C45/55 HSR'],
             ['C70/85', 'C70/85'],
-            ['C70/80(HSR!!!!)', 'C70/80(HSR)']
+            ['C70/80(HSR)', 'C70/80 HSR']
         ]
     },
     {
@@ -529,7 +530,7 @@ const WELL_PARAM_DEFS = [
     },
     {
         key: 'klasaNosnosci_korpus',
-        label: 'Kl. nośn. Den+Nadb',
+        label: 'Klasa nośności Den.+Nadb.',
         options: [
             ['D400', 'D400'],
             ['E600', 'E600'],
@@ -538,7 +539,7 @@ const WELL_PARAM_DEFS = [
     },
     {
         key: 'klasaNosnosci_zwienczenie',
-        label: 'Kl. nośn. Zwieńcz.',
+        label: 'Klasa nośności Zwieńcz.',
         options: [
             ['D400', 'D400'],
             ['E600', 'E600'],
@@ -1194,13 +1195,14 @@ function calcWellStats(well) {
         priceDennicaBase = 0,
         priceNadbudowaBase = 0;
 
-    let dennicaCount = 0;
+    let lastWasDennica = !!well.psiaBuda;
+    const configReversed = [...(well.config || [])].reverse();
 
-    (well.config || []).forEach((item) => {
+    configReversed.forEach((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
-        // Użyj zamrożonej ceny jeśli dostępna (tryb zamówienia), w przeciwnym razie oblicz z cennika
+        // Ceny bazowe (bez rabatu)
         let itemPriceDisc, itemPriceBaseVal;
         if (item.frozenPrice != null) {
             itemPriceDisc = item.frozenPrice;
@@ -1234,13 +1236,15 @@ function calcWellStats(well) {
         areaInt += (p.area || 0) * item.quantity;
         areaExt += (p.areaExt || 0) * item.quantity;
 
-        if (p.componentType === 'dennica') {
-            for (let q = 0; q < item.quantity; q++) {
-                dennicaCount++;
-                height += (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
+        // Liczenie wysokości z uwzględnieniem dennic piętrowych (adjacency check)
+        // Idziemy od dołu do góry, więc lastWasDennica oznacza dennicę PONIŻEJ
+        for (let q = 0; q < item.quantity; q++) {
+            let h = p.height || 0;
+            if (p.componentType === 'dennica' && lastWasDennica) {
+                h -= 100;
             }
-        } else {
-            height += (p.height || 0) * item.quantity;
+            height += h;
+            lastWasDennica = (p.componentType === 'dennica');
         }
     });
 

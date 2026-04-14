@@ -1356,6 +1356,23 @@ function populateZleceniaForm(el) {
     let dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
     let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
 
+    // Logika dennica na dennicy LUB tryb Psia buda
+    const isStacked = elementIndex < well.config.length - 1 && (well.config[elementIndex + 1]);
+    const nextItem = isStacked ? well.config[elementIndex + 1] : null;
+    const nextProduct = nextItem ? studnieProducts.find((p) => p.id === nextItem.productId) : null;
+    
+    const shouldReduce = (product.componentType === 'dennica') && (
+        (nextProduct && nextProduct.componentType === 'dennica') || 
+        (well.psiaBuda && elementIndex === well.config.length - 1)
+    );
+
+    if (shouldReduce) {
+        const reducedH = (product.height || 0) - 100;
+        displayWysokosc = reducedH;
+        displayGlebokosc = reducedH;
+        displayDnoKineta = 0;
+    }
+
     if (well.dn === 'styczna') {
         const dnMatch = (product.name || '').match(/DN\s*(\d+)/i);
         if (dnMatch) displayDN = `Styczna DN${dnMatch[1]}`;
@@ -1431,11 +1448,12 @@ function populateZleceniaForm(el) {
 
     // Wartości dla kafelków — kręgi wiercone domyślnie bez kinety/spocznika
     const isKragOt = product && product.componentType === 'krag_ot';
+    const shouldForceBrak = shouldReduce || isKragOt;
     const redKinetyVal =
-        existing?.redukcjaKinety ?? (isKragOt ? 'nie' : (well.redukcjaKinety ?? ''));
-    const spocznikHVal = existing?.spocznikH ?? (isKragOt ? 'brak' : (well.spocznikH ?? ''));
+        existing?.redukcjaKinety ?? (shouldForceBrak ? 'nie' : (well.redukcjaKinety ?? ''));
+    const spocznikHVal = existing?.spocznikH ?? (shouldForceBrak ? 'brak' : (well.spocznikH ?? ''));
     const usytuowanieVal = existing?.usytuowanie ?? well.usytuowanie ?? '';
-    const kinetaVal = existing?.kineta ?? (isKragOt ? 'brak' : (well.kineta ?? ''));
+    const kinetaVal = existing?.kineta ?? (shouldForceBrak ? 'brak' : (well.kineta ?? ''));
     const klasaBetonuVal = existing?.klasaBetonu ?? well.klasaBetonu ?? '';
 
     // Szybkie kafelki dla kąta stopni
@@ -1459,7 +1477,7 @@ function populateZleceniaForm(el) {
     ];
 
     const dinVal = existing?.din ?? din;
-    const spocznikMatVal = existing?.spocznik ?? (isKragOt ? 'brak' : (well.spocznik ?? ''));
+    const spocznikMatVal = existing?.spocznik ?? (shouldForceBrak ? 'brak' : (well.spocznik ?? ''));
 
     let domyslnyRodzajStudni = '';
     if (product && product.componentType === 'dennica') {
@@ -1548,6 +1566,16 @@ function populateZleceniaForm(el) {
     // 8. Klasa nośności korpusu
     if (well.klasaNosnosci_korpus === 'E600' || well.klasaNosnosci_korpus === 'F900') {
         autoUwagi.push('Kl. nośn. ' + well.klasaNosnosci_korpus);
+    }
+
+    // 9. Psia buda / Krąg na formie
+    if (well.psiaBuda && elementIndex === well.config.length - 1) {
+        autoUwagi.push('UWAGA ! PSIA BUDA');
+    }
+    const nextItem_uwagi = elementIndex < well.config.length - 1 && (well.config[elementIndex + 1]);
+    const nextProd_uwagi = nextItem_uwagi ? studnieProducts.find((p) => p.id === nextItem_uwagi.productId) : null;
+    if (product.componentType === 'dennica' && nextProd_uwagi && nextProd_uwagi.componentType === 'dennica') {
+        autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
     }
 
     const defaultUwagiStr = autoUwagi.join(', ');

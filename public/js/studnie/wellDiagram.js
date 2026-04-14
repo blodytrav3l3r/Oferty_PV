@@ -69,19 +69,26 @@ function enforceOtRings() {
 
     // Config jest od góry (właz) do dołu (dennica) — iteruj od końca
     const configReversed = [...well.config].reverse();
+    let lastWasDennica = !!well.psiaBuda;
     for (const item of configReversed) {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || !p.height) continue;
         const qty = item.quantity || 1;
         for (let i = 0; i < qty; i++) {
+            let actualHeight = p.height || 0;
+            if (p.componentType === 'dennica' && lastWasDennica) {
+                actualHeight -= 100;
+            }
+
             segments.push({
                 type: p.componentType,
                 start: cy,
-                end: cy + (p.height || 0),
+                end: cy + actualHeight,
                 configItem: item,
                 product: p
             });
-            cy += p.height || 0;
+            cy += actualHeight;
+            lastWasDennica = (p.componentType === 'dennica');
         }
     }
 
@@ -246,30 +253,33 @@ function renderWellDiagram(targetSvg, targetWell) {
     });
 
     const components = [];
-    let currentDennica = 0;
-    well.config.forEach((item, index) => {
+    let lastWasDennica = !!well.psiaBuda;
+    const configReversedElements = [...well.config].reverse();
+
+    configReversedElements.forEach((item, revIdx) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         for (let i = 0; i < item.quantity; i++) {
             let effH = p.height || 0;
-            if (p.componentType === 'dennica') {
-                currentDennica++;
-                // Dennica na samym dole pozostaje o pełnej wysokości. Inne otrzymują -100mm.
-                if (currentDennica < totalDennice) {
-                    effH = Math.max(0, effH - 100);
-                }
+            if (p.componentType === 'dennica' && lastWasDennica) {
+                effH = Math.max(0, effH - 100);
             }
+
             components.push({
                 ...p,
                 height: effH,
                 _originalHeight: p.height,
-                _cfgIdx: index,
+                _cfgIdx: well.config.length - 1 - revIdx, // Odzyskaj oryginalny indeks z config
                 _isFirst: i === 0,
                 _isLast: i === item.quantity - 1,
                 isPlaceholder: !!item.isPlaceholder
             });
+            lastWasDennica = (p.componentType === 'dennica');
         }
     });
+
+    // Pamiętaj: components są teraz od dołu do góry. Renderowanie potrzebuje ich od GÓRY do DOŁU.
+    components.reverse();
 
     const visible = components.filter(
         (c) =>

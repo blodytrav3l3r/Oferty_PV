@@ -349,7 +349,7 @@ function generateWellSvg(data) {
     // Zoptymalizowany obszar roboczy (viewBox), by powiększyć studnię
     const size = 400;
     const center = size / 2;
-    const radius = 55;
+    const radius = 58;
     const labelFontSize = 11;
     const angleFontSize = 9;
     const lineHeight = 10;
@@ -527,15 +527,13 @@ function generateWellSvg(data) {
     });
 
     // Dynamiczny viewBox — przycięty do pełnej zawartości
-    const pad = 12;
+    const pad = 4;
     const vbX = Math.floor(minX - pad);
     const vbY = Math.floor(minY - pad);
     const vbW = Math.ceil(maxX - minX + pad * 2);
     const vbH = Math.ceil(maxY - minY + pad * 2);
-    const svgW = 200;
-    const svgH = Math.round(svgW * (vbH / vbW));
 
-    let svg = `<svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${svgW}" height="${svgH}" style="background:transparent;">`;
+    let svg = `<svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}" style="width:100%; max-height:115px; background:transparent; display:block; margin:0 auto;">`;
     svg += svgParts.join('');
     svg += `</svg>`;
     return svg;

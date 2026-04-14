@@ -130,6 +130,7 @@ function renderStudniePriceList() {
           <th class="text-right" class="ui-col-8">Zap. góra</th>
           <th class="text-right" class="ui-col-8">Zap. dół min</th>
           <th class="text-right" class="ui-col-8">Zap. góra min</th>
+          <th class="text-center" style="width: 4%;" title="Czy przejście jest widoczne w konfiguratorze (1=Tak, 0=Nie)">Dost.</th>
           `
                   : isKinety
                     ? `
@@ -178,7 +179,7 @@ function renderStudniePriceList() {
 
         html += `<tbody>
       <tr>
-        <td colspan="${isPrzejscia ? '10' : isKinety ? '16' : '18'}" style="padding:0; border-bottom:1px solid var(--border);">
+        <td colspan="${isPrzejscia ? '11' : isKinety ? '16' : '18'}" style="padding:0; border-bottom:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(99,102,241,0.06); font-size:0.85rem;">
             <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
@@ -213,6 +214,7 @@ function renderStudniePriceList() {
         <td class="text-right" onclick="editStudnieCell(this,'zapasGora','${p.id}')" style="cursor:pointer;">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'zapasDolMin','${p.id}')" style="cursor:pointer; color:#fbbf24;">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'zapasGoraMin','${p.id}')" style="cursor:pointer; color:#fbbf24;">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
+        <td class="text-center" onclick="toggleMagazynField(this,'active','${p.id}')" style="cursor:pointer; font-weight:700; color:${p.active !== 0 ? '#34d399' : '#f87171'};">${p.active !== 0 ? '1' : '0'}</td>
                `;
             } else if (isKinety) {
                 html += `
@@ -267,6 +269,7 @@ function renderStudniePriceList() {
     }
 
     container.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
 }
 
 /* ===== ZARZĄDZANIE KATEGORIAMI KINET ===== */
@@ -544,8 +547,14 @@ function toggleMagazynField(el, field, id) {
     const product = studnieProducts.find((p) => p.id === id);
     if (!product) return;
     product[field] = product[field] === 1 ? 0 : 1;
+
+    // Natychmiastowa aktualizacja UI bez pełnego re-renderu
+    const newVal = product[field];
+    el.textContent = newVal;
+    el.style.color = newVal === 1 ? '#34d399' : '#f87171';
+
     saveStudnieProducts(studnieProducts);
-    renderStudniePriceList();
+    // Usuwamy renderStudniePriceList() tutaj, aby uniknąć mignięcia tabeli
 }
 
 /* ===== EDYCJA W MIEJSCU ===== */
@@ -650,7 +659,7 @@ function showAddStudnieProductModal() {
             ${[
                 ...new Set(
                     studnieProducts
-                        .filter((p) => p.componentType === 'przejscie')
+                        .filter((p) => p.componentType === 'przejscie' && p.active !== 0)
                         .map((p) => p.category)
                 )
             ]
