@@ -62,3 +62,4 @@ coverage/
 *.tmp
 *.temp
 order_data.json
+everything-claude-code
