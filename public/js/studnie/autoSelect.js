@@ -296,12 +296,12 @@ function updatePsiaBudaButton() {
     const well = getCurrentWell();
 
     if (well && well.psiaBuda) {
-        btn.innerHTML = '🐶 Psia buda <span style="font-size:0.75rem;"><i data-lucide="check"></i></span>';
+        btn.innerHTML = '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda <span style="font-size:0.75rem; margin-left:4px;"><i data-lucide="check"></i></span>';
         btn.style.borderColor = 'rgba(16,185,129,0.5)';
         btn.style.color = '#6ee7b7';
         btn.style.background = 'rgba(16,185,129,0.15)';
     } else {
-        btn.innerHTML = '🐶 Psia buda';
+        btn.innerHTML = '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';
