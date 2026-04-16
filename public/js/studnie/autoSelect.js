@@ -296,12 +296,12 @@ function updatePsiaBudaButton() {
     const well = getCurrentWell();
 
     if (well && well.psiaBuda) {
-        btn.innerHTML = '🐶 Psia buda <span style="font-size:0.75rem;"><i data-lucide="check"></i></span>';
+        btn.innerHTML = '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda <span style="font-size:0.75rem; margin-left:4px;"><i data-lucide="check"></i></span>';
         btn.style.borderColor = 'rgba(16,185,129,0.5)';
         btn.style.color = '#6ee7b7';
         btn.style.background = 'rgba(16,185,129,0.15)';
     } else {
-        btn.innerHTML = '🐶 Psia buda';
+        btn.innerHTML = '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';
@@ -659,24 +659,24 @@ function updateHeightIndicator() {
     if (prevErrors !== liveErrors.length) renderWellsList();
 
     const stats = calcWellStats(well);
-    const confM = (stats.height / 1000).toFixed(2).replace('.', ',');
+    const confM = (stats.height / 1000).toFixed(3).replace('.', ',');
     confEl.textContent = confM + ' m';
 
     const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
 
     if (well.rzednaWlazu != null && well.rzednaWlazu > rzDna) {
         const requiredMm = Math.round((well.rzednaWlazu - rzDna) * 1000);
-        const reqM = (requiredMm / 1000).toFixed(2).replace('.', ',');
+        const reqM = (requiredMm / 1000).toFixed(3).replace('.', ',');
         reqEl.textContent = reqM + ' m';
 
         const diff = stats.height - requiredMm;
         if (Math.abs(diff) <= 50) {
             diffEl.innerHTML = '<span style="color:#10b981;"><i data-lucide="check-circle-2"></i> Wysokość OK</span>';
         } else if (diff > 0) {
-            const diffM = (diff / 1000).toFixed(2).replace('.', ',');
+            const diffM = (diff / 1000).toFixed(3).replace('.', ',');
             diffEl.innerHTML = `<span style="color:#f59e0b;"><i data-lucide="alert-triangle"></i> +${diffM} m za dużo</span>`;
         } else {
-            const diffM = (Math.abs(diff) / 1000).toFixed(2).replace('.', ',');
+            const diffM = (Math.abs(diff) / 1000).toFixed(3).replace('.', ',');
             diffEl.innerHTML = `<span style="color:#f87171;"><i data-lucide="alert-triangle"></i> Brakuje ${diffM} m</span>`;
         }
     } else {
@@ -1277,13 +1277,19 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         let bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
         let center = bottomEdge + prDN / 2;
 
+        const parseHoleClearance = (val) => {
+            if (val === undefined || val === null || val === '') return 0;
+            const p = parseFloat(val);
+            return isNaN(p) ? 0 : p;
+        };
+
         return {
             z: center - prDN / 2,
             ruraDz: prDN,
-            zdD: prod ? parseFloat(prod.zapasDol) || 0 : 0,
-            zdDM: prod ? parseFloat(prod.zapasDolMin) || 0 : 0,
-            zdG: prod ? parseFloat(prod.zapasGora) || 0 : 0,
-            zdGM: prod ? parseFloat(prod.zapasGoraMin) || 0 : 0
+            zdD: prod ? parseHoleClearance(prod.zapasDol) : 0,
+            zdDM: prod ? parseHoleClearance(prod.zapasDolMin) : 0,
+            zdG: prod ? parseHoleClearance(prod.zapasGora) : 0,
+            zdGM: prod ? parseHoleClearance(prod.zapasGoraMin) : 0
         };
     });
 
@@ -1437,7 +1443,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 segs.push({ type: 'krag', h: actualH, start: y, end: y + actualH });
                 y += actualH;
             }
-            lastWasDennica = (kp && kp.componentType === 'dennica');
+            if (kp && kp.componentType !== 'uszczelka') {
+                lastWasDennica = (kp.componentType === 'dennica');
+            }
         }
         for (let t of [...topItems].reverse()) {
             const tp = studnieProducts.find((p) => p.id === t.productId);
@@ -1447,7 +1455,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
                 segs.push({ type: tp.componentType, h: actualH, start: y, end: y + actualH });
                 y += actualH;
-                lastWasDennica = (tp.componentType === 'dennica');
+                if (tp.componentType !== 'uszczelka') {
+                    lastWasDennica = (tp.componentType === 'dennica');
+                }
             }
         }
 
@@ -1970,7 +1980,7 @@ function recalculateWellErrors(well) {
             // Buduj segmenty fizyczne od dołu do góry
             const segments = [];
             let cy = 0;
-            let lastWasDennica = false;
+            let lastWasDennica = !!well.psiaBuda;
             const configReversed = [...well.config].reverse();
             for (const item of configReversed) {
                 const p = studnieProducts.find((pr) => pr.id === item.productId);
@@ -1990,7 +2000,9 @@ function recalculateWellErrors(well) {
                         name: p.name
                     });
                     cy += actualHeight;
-                    lastWasDennica = (p.componentType === 'dennica');
+                    if (p.componentType !== 'uszczelka') {
+                        lastWasDennica = (p.componentType === 'dennica');
+                    }
                 }
             }
 
@@ -2027,8 +2039,13 @@ function recalculateWellErrors(well) {
                 }
 
                 const defs = getDefaultC(dn_val);
-                const zg_req = parseFloat(pprod.zapasGora) || defs[1];
-                const zd_req = parseFloat(pprod.zapasDol) || defs[0];
+                const parseClearance = (val, defVal) => {
+                    if (val === undefined || val === null || val === '') return defVal;
+                    const p = parseFloat(val);
+                    return isNaN(p) ? defVal : p;
+                };
+                const zg_req = parseClearance(pprod.zapasGora, defs[1]);
+                const zd_req = parseClearance(pprod.zapasDol, defs[0]);
                 const hc_invert = (pel - rzDna) * 1000;
                 const top_pos = hc_invert + dn_val;
                 
@@ -2213,8 +2230,8 @@ function renderWellsList() {
               ${
                   hasElevations
                       ? `<div class="well-list-elevations">
-                <span>↑ <strong>${w.rzednaWlazu.toFixed(2)}</strong></span>
-                <span>↓ <strong>${w.rzednaDna.toFixed(2)}</strong></span>
+                <span>↑ <strong>${w.rzednaWlazu.toFixed(3)}</strong></span>
+                <span>↓ <strong>${w.rzednaDna.toFixed(3)}</strong></span>
                 <span style="margin-left:auto;">H=<strong>${requiredH}</strong>mm</span>
               </div>`
                       : ''
@@ -3767,12 +3784,12 @@ function renderWellPrzejscia(opts) {
                 val = well.przejscia[index].doplata || '0';
                 step = '1';
             } else {
-                val = well.przejscia[index].rzednaWlaczenia || '';
-                step = '0.01';
+                val = (well.przejscia[index].rzednaWlaczenia !== null && well.przejscia[index].rzednaWlaczenia !== undefined) ? well.przejscia[index].rzednaWlaczenia : '';
+                step = '0.001';
             }
             const w = element.offsetWidth;
 
-            element.innerHTML = `<input type="number" step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            element.innerHTML = `<input type="number" step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
             const inp = element.querySelector('input');
             inp.focus();
         };
@@ -3826,7 +3843,7 @@ function renderWellPrzejscia(opts) {
                             showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
                             numVal = rzWlazu;
                         }
-                        well.przejscia[index].rzednaWlaczenia = parseFloat(numVal).toFixed(2);
+                        well.przejscia[index].rzednaWlaczenia = parseFloat(numVal).toFixed(3);
                     }
                 } else if (field === 'spadekKineta') {
                     well.przejscia[index].spadekKineta = isNaN(numVal) ? null : Math.round(numVal);
@@ -3845,7 +3862,7 @@ function renderWellPrzejscia(opts) {
                     if (isNaN(numVal)) numVal = 0;
                     if (numVal < 0) numVal = 0;
                     const newRzedna = rzDnaQ + (elStart + numVal) / 1000;
-                    well.przejscia[index].rzednaWlaczenia = parseFloat(newRzedna).toFixed(2);
+                    well.przejscia[index].rzednaWlaczenia = parseFloat(newRzedna).toFixed(3);
                 } else if (field === 'doplata') {
                     well.przejscia[index].doplata = isNaN(numVal) ? 0 : parseFloat(numVal);
                 }
@@ -4037,7 +4054,7 @@ function renderWellPrzejscia(opts) {
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Rzędna [m]</label>
-                  <input type="number" class="form-input" id="edit-rzedna-${index}" step="0.01" value="${editPrzejscieState.rzedna}" placeholder="142.50" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                  <input type="number" class="form-input" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
                 </div>
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Kąt [°]</label>
@@ -4264,7 +4281,7 @@ function savePrzejscieEdit(index) {
 
     well.przejscia[index] = {
         productId: newProductId,
-        rzednaWlaczenia: rzedna ? parseFloat(rzedna).toFixed(2) : null,
+        rzednaWlaczenia: (rzedna !== null && rzedna !== undefined && rzedna !== '') ? parseFloat(rzedna).toFixed(3) : null,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
@@ -4475,6 +4492,7 @@ window.togglePrzejsciaTypeVisibility = togglePrzejsciaTypeVisibility;
 window.setPrzejsciaVisibilityAll = setPrzejsciaVisibilityAll;
 
 function renderInlinePrzejsciaApp(containerId) {
+    const well = getCurrentWell();
     const przejsciaProducts = studnieProducts.filter((p) => p.componentType === 'przejscie' && p.active !== 0);
     const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
     // Filtruj tylko do widocznych typów
@@ -4586,19 +4604,22 @@ function renderInlinePrzejsciaApp(containerId) {
             <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.4rem; align-items:end;">
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Rzędna [m]</div>
-                    <input type="number" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.01" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
+                           onfocus="this.select()"
+                           value="${(well && (well.rzednaDna !== null && well.rzednaDna !== undefined)) ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
+                           placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Kąt [°]</div>
-                    <input type="number" class="form-input" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; color:#818cf8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onfocus="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; color:#818cf8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w kinecie [mm]</div>
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onfocus="this.select()" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w mufie [mm]</div>
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onfocus="this.select()" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
 
                 <div style="text-align:center;">
@@ -4689,7 +4710,7 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     well.przejscia.push({
         id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         productId: id,
-        rzednaWlaczenia: rzedna ? parseFloat(rzedna).toFixed(2) : null,
+        rzednaWlaczenia: (rzedna !== null && rzedna !== undefined && rzedna !== '') ? parseFloat(rzedna).toFixed(3) : null,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,

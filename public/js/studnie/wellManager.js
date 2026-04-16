@@ -1244,7 +1244,9 @@ function calcWellStats(well) {
                 h -= 100;
             }
             height += h;
-            lastWasDennica = (p.componentType === 'dennica');
+            if (p.componentType !== 'uszczelka') {
+                lastWasDennica = (p.componentType === 'dennica');
+            }
         }
     });
 

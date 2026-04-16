@@ -1357,13 +1357,18 @@ function populateZleceniaForm(el) {
     let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
 
     // Logika dennica na dennicy LUB tryb Psia buda
-    const isStacked = elementIndex < well.config.length - 1 && (well.config[elementIndex + 1]);
-    const nextItem = isStacked ? well.config[elementIndex + 1] : null;
-    const nextProduct = nextItem ? studnieProducts.find((p) => p.id === nextItem.productId) : null;
+    let actualNextProduct = null;
+    for (let i = elementIndex + 1; i < well.config.length; i++) {
+        const _p = studnieProducts.find((p) => p.id === well.config[i].productId);
+        if (_p && _p.componentType !== 'uszczelka') {
+            actualNextProduct = _p;
+            break;
+        }
+    }
     
     const shouldReduce = (product.componentType === 'dennica') && (
-        (nextProduct && nextProduct.componentType === 'dennica') || 
-        (well.psiaBuda && elementIndex === well.config.length - 1)
+        (actualNextProduct && actualNextProduct.componentType === 'dennica') || 
+        (well.psiaBuda && !actualNextProduct)
     );
 
     if (shouldReduce) {
@@ -1569,12 +1574,10 @@ function populateZleceniaForm(el) {
     }
 
     // 9. Psia buda / Krąg na formie
-    if (well.psiaBuda && elementIndex === well.config.length - 1) {
+    if (well.psiaBuda && !actualNextProduct) {
         autoUwagi.push('UWAGA ! PSIA BUDA');
     }
-    const nextItem_uwagi = elementIndex < well.config.length - 1 && (well.config[elementIndex + 1]);
-    const nextProd_uwagi = nextItem_uwagi ? studnieProducts.find((p) => p.id === nextItem_uwagi.productId) : null;
-    if (product.componentType === 'dennica' && nextProd_uwagi && nextProd_uwagi.componentType === 'dennica') {
+    if (product.componentType === 'dennica' && actualNextProduct && actualNextProduct.componentType === 'dennica') {
         autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
     }
 

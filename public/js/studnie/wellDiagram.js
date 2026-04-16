@@ -274,7 +274,9 @@ function renderWellDiagram(targetSvg, targetWell) {
                 _isLast: i === item.quantity - 1,
                 isPlaceholder: !!item.isPlaceholder
             });
-            lastWasDennica = (p.componentType === 'dennica');
+            if (p.componentType !== 'uszczelka') {
+                lastWasDennica = (p.componentType === 'dennica');
+            }
         }
     });
 
