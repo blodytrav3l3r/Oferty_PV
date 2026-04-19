@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="description"
+            content="WITROS — Kartoteka Ofert. Przeglądaj, filtruj i zarządzaj ofertami na rury i studnie."
+        />
+        <title>WITROS — Kartoteka Ofert</title>
+        <link rel="stylesheet" href="css/style.css?v=1.6" />
+    </head>
+
+    <body>
+        <!-- HEADER (hidden when inside SPA iframe) -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#f59e0b" />
+                                    <stop offset="100%" stop-color="#fbbf24" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" />
+                        </svg>
+                        <span>Kartoteka Ofert</span>
+                    </div>
+
+                    <div class="nav-apps">
+                        <a href="index.html" target="_parent" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
+                            <span class="nav-tile-text">Pulpit</span>
+                        </a>
+                        <a href="app.html#/studnie" target="_parent" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
+                            <span class="nav-tile-text">Studnie</span>
+                        </a>
+                        <a href="app.html#/rury" target="_parent" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                            <span class="nav-tile-text">Rury</span>
+                        </a>
+                        <a
+                            href="app.html#/kartoteka"
+                            target="_parent"
+                            class="nav-tile active"
+                            style="--nav-accent: #f59e0b; --nav-glow: #2d2208"
+                        >
+                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
+                            <span class="nav-tile-text">Kartoteka</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div
+                        id="header-user-info"
+                        style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem"
+                    >
+                        <span
+                            id="header-username"
+                            style="color: var(--text-secondary); font-weight: 500"
+                        ></span>
+                        <span
+                            id="header-role-badge"
+                            style="
+                                font-size: 0.6rem;
+                                padding: 0.15rem 0.5rem;
+                                border-radius: 20px;
+                                font-weight: 600;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                                margin-right: 0.5rem;
+                            "
+                        ></span>
+                        <button
+                            onclick="appLogout()"
+                            style="
+                                padding: 0.35rem 0.8rem;
+                                border: 1px solid var(--border-glass);
+                                border-radius: 6px;
+                                background: var(--bg-glass);
+                                color: var(--text-muted);
+                                font:
+                                    500 0.75rem 'Inter',
+                                    sans-serif;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            "
+                            onmouseenter="
+                                this.style.color = '#f87171';
+                                this.style.borderColor = '#3a1a1a';
+                            "
+                            onmouseleave="
+                                this.style.color = 'var(--text-muted)';
+                                this.style.borderColor = 'var(--border-glass)';
+                            "
+                        >
+                            Wyloguj
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- ===== KARTOTEKA: Full-width offers view ===== -->
+            <div class="section active" id="section-kartoteka">
+                <div class="toolbar">
+                    <h2 style="font-size: 1rem; font-weight: 700"><i data-lucide="archive"></i> Kartoteka Ofert</h2>
+                    <div class="toolbar-spacer"></div>
+                    <button
+                        class="btn btn-primary btn-sm"
+                        onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
+                        title="Odśwież bazę ofert"
+                    >
+                        <i data-lucide="refresh-cw"></i> Odśwież
+                    </button>
+                </div>
+
+                <div
+                    class="app-container"
+                    style="max-width: 1900px; margin: 0 auto; padding: 0 0.5rem"
+                >
+                    <!-- Filter Tabs: Type -->
+                    <div
+                        style="
+                            display: flex;
+                            gap: 0.5rem;
+                            margin-bottom: 1rem;
+                            flex-wrap: wrap;
+                            align-items: center;
+                        "
+                    >
+                        <span
+                            style="
+                                font-size: 0.8rem;
+                                color: var(--text-muted);
+                                font-weight: 600;
+                                margin-right: 0.4rem;
+                            "
+                            >Typ:</span
+                        >
+                        <button
+                            class="btn btn-sm pv-type-filter-btn active"
+                            data-type-filter="all"
+                            onclick="filterByType('all')"
+                            style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                        >
+                            Wszystkie
+                        </button>
+                        <button
+                            class="btn btn-sm btn-secondary pv-type-filter-btn"
+                            data-type-filter="offer"
+                            onclick="filterByType('offer')"
+                            style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                        >
+                            <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
+                        </button>
+                        <button
+                            class="btn btn-sm btn-secondary pv-type-filter-btn"
+                            data-type-filter="studnia_oferta"
+                            onclick="filterByType('studnia_oferta')"
+                            style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                        >
+                            <i data-lucide="cylinder"></i> Studnie
+                        </button>
+                    </div>
+
+                    <!-- Main Offers List -->
+                    <section
+                        class="card pv-card"
+                        style="
+                            padding: 0.8rem 0.6rem;
+                            background: var(--bg-card);
+                            border-radius: 12px;
+                            border: 1px solid var(--border-glass);
+                            margin-bottom: 2rem;
+                        "
+                    >
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                border-bottom: 1px solid var(--border-glass);
+                                padding-bottom: 0.8rem;
+                                margin-bottom: 1rem;
+                                flex-wrap: wrap;
+                                gap: 1rem;
+                            "
+                        >
+                            <h3 style="margin: 0; font-size: 1rem; flex: 1; min-width: 250px">
+                                Moje Oferty
+                            </h3>
+
+                            <div
+                                class="pv-filters"
+                                style="
+                                    display: flex;
+                                    gap: 0.4rem;
+                                    flex-wrap: wrap;
+                                    align-items: center;
+                                "
+                            >
+                                <button
+                                    class="btn btn-sm pv-filter-btn active"
+                                    data-filter="all"
+                                    onclick="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.setFilterLocalOffers('all')
+                                    "
+                                    style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    class="btn btn-sm btn-secondary pv-filter-btn"
+                                    data-filter="with_order"
+                                    onclick="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.setFilterLocalOffers('with_order')
+                                    "
+                                    style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                                >
+                                    <i data-lucide="package"></i> Z zamówieniem
+                                </button>
+                                <button
+                                    class="btn btn-sm btn-secondary pv-filter-btn"
+                                    data-filter="without_order"
+                                    onclick="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.setFilterLocalOffers('without_order')
+                                    "
+                                    style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                                >
+                                    Brak zamówienia
+                                </button>
+                            </div>
+
+                            <div
+                                class="search-box"
+                                style="margin: 0; width: 350px; position: relative"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    style="
+                                        position: absolute;
+                                        left: 0.7rem;
+                                        top: 50%;
+                                        transform: translateY(-50%);
+                                        width: 1rem;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m21 21-4.35-4.35" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    id="pv-local-search-input"
+                                    class="form-input form-input-sm"
+                                    placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
+                                    style="
+                                        font-weight: normal;
+                                        padding-left: 2.4rem !important;
+                                        width: 100%;
+                                    "
+                                    oninput="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.filterLocalOffers &&
+                                            window.pvSalesUI.filterLocalOffers()
+                                    "
+                                />
+                            </div>
+                        </div>
+                        <div
+                            id="pv-local-offers-list"
+                            style="display: flex; flex-direction: column; gap: 0.3rem"
+                        >
+                            <div
+                                style="
+                                    text-align: center;
+                                    padding: 2rem;
+                                    color: var(--text-muted);
+                                    font-style: italic;
+                                "
+                            >
+                                Ładowanie ofert z serwera...
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Dependencies -->
+        <script src="js/shared/formatters.js?v=2.0"></script>
+        <script src="js/shared/auth.js?v=2.0"></script>
+        <script src="js/shared/ui.js?v=2.0"></script>
+        <script type="module" src="js/pv/pv_sales_ui.js?v=2.0"></script>
+
+        <script>
+            /* ===== KARTOTEKA INITIALIZATION ===== */
+            let currentTypeFilter = 'all';
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                // Auth check
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                try {
+                    const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
+                    const authData = await authRes.json();
+                    if (!authData.user) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    const user = authData.user;
+                    sessionStorage.setItem('user', JSON.stringify(user));
+
+                    const userEl = document.getElementById('header-username');
+                    const roleEl = document.getElementById('header-role-badge');
+                    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + user.username;
+                    if (roleEl) {
+                        roleEl.textContent =
+                            user.role === 'admin' ? 'ADMIN' : user.role === 'pro' ? 'PRO' : 'USER';
+                        const colorMap = {
+                            admin: {
+                                bg: 'rgba(245,158,11,0.15)',
+                                fg: '#f59e0b',
+                                border: 'rgba(245,158,11,0.3)'
+                            },
+                            pro: {
+                                bg: 'rgba(16,185,129,0.15)',
+                                fg: '#10b981',
+                                border: 'rgba(16,185,129,0.3)'
+                            },
+                            user: {
+                                bg: 'rgba(59,130,246,0.15)',
+                                fg: '#60a5fa',
+                                border: 'rgba(59,130,246,0.3)'
+                            }
+                        };
+                        const c = colorMap[user.role] || colorMap.user;
+                        roleEl.style.background = c.bg;
+                        roleEl.style.color = c.fg;
+                        roleEl.style.border = '1px solid ' + c.border;
+                    }
+                } catch (e) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+            });
+
+            /**
+             * Filtruj oferty po typie (rury/studnie/wszystkie).
+             * Nadpisuje PVSalesUI.filterLocalOffers, dodając dodatkowy filtr typu.
+             */
+            function filterByType(type) {
+                currentTypeFilter = type;
+
+                // Update button states
+                document.querySelectorAll('.pv-type-filter-btn').forEach((btn) => {
+                    btn.classList.toggle('active', btn.dataset.typeFilter === type);
+                    if (btn.dataset.typeFilter === type) {
+                        btn.classList.remove('btn-secondary');
+                    } else {
+                        btn.classList.add('btn-secondary');
+                    }
+                });
+
+                // Delegate to PVSalesUI
+                if (window.pvSalesUI) {
+                    window.pvSalesUI.setTypeFilter(type);
+                }
+            }
+
+            // Override the showSection to be a no-op (kartoteka has only one section)
+            function showSection() {}
+        </script>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
+</html>

@@ -1,19 +1,66 @@
 /* ===== PODSUMOWANIE OFERTY ===== */
+
+function toggleWellExpansion(index, event) {
+    if (event) event.stopPropagation();
+    if (expandedWellIndices.has(index)) {
+        expandedWellIndices.delete(index);
+    } else {
+        expandedWellIndices.add(index);
+    }
+    renderOfferSummary();
+}
+
+/**
+ * Główna funkcja renderująca podsumowanie oferty.
+ * Zrefaktoryzowana zgodnie z zasadami SRP i limitami długości funkcji.
+ */
 function renderOfferSummary() {
     const container = document.getElementById('offer-summary-body');
     if (!container) return;
 
-    // Sprawdź dynamicznie zmiany w zamówieniu względem bieżących studni w pamięci
     const order = getCurrentOfferOrder();
     const orderChanges = order ? getOrderChanges({ ...order, wells: wells }) : {};
-    const hasChanges = Object.keys(orderChanges).length > 0;
-
-    let totalPrice = 0,
-        totalWeight = 0;
-
+    
+    // Obliczenia globalne
+    const totals = calculateOfferTotals();
+    
     let html = '';
+    // Baner statusu zamówienia i postęp
+    html += renderOrderBanners(order, orderChanges);
+    
+    // Tabela zestawienia
+    html += renderOfferSummaryTable(order, orderChanges, totals);
+    
+    container.innerHTML = html;
+    
+    // Inicjalizacja ikon Lucide dla nowo dodanych elementów
+    if (window.lucide) window.lucide.createIcons();
+    
+    // Aktualizacja wskaźników zewnętrznych (stopka)
+    updateOfferSummaryUI(totals);
+}
 
-    // Baner statusu zamówienia
+function calculateOfferTotals() {
+    let globalWeight = 0;
+    wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
+
+    const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
+    const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
+    
+    let totalTransports = 0, transportCostPerTrip = 0, totalTransportCost = 0;
+    if (transportKm > 0 && transportRate > 0) {
+        totalTransports = Math.ceil(globalWeight / 24000);
+        transportCostPerTrip = transportKm * transportRate;
+        totalTransportCost = totalTransports * transportCostPerTrip;
+    }
+
+    return { globalWeight, totalTransports, transportCostPerTrip, totalTransportCost };
+}
+
+function renderOrderBanners(order, orderChanges) {
+    let html = '';
+    const hasChanges = Object.keys(orderChanges).length > 0;
+    
     if (order) {
         const changeCount = Object.keys(orderChanges).length;
         html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'}; border:1px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}; border-radius:8px;">
@@ -25,303 +72,330 @@ function renderOfferSummary() {
         </div>`;
     }
 
-    // Wstępnie oblicz całkowity koszt transportu
-    let globalWeight = 0;
-    wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
-
-    const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
-    const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
-    let totalTransportCost = 0;
-    let totalTransports = 0;
-    let transportCostPerTrip = 0;
-
-    if (transportKm > 0 && transportRate > 0) {
-        totalTransports = Math.ceil(globalWeight / 24000);
-        transportCostPerTrip = transportKm * transportRate;
-        totalTransportCost = totalTransports * transportCostPerTrip;
+    if (!orderEditMode && editingOfferIdStudnie && wells.length > 0) {
+        html += renderPartialOrderProgress();
     }
+    return html;
+}
 
-    html += `<div class="table-wrap">
-    <table style="table-layout:fixed; width:100%;">
+function renderPartialOrderProgress() {
+    const progress = typeof getOfferOrderProgress === 'function'
+        ? getOfferOrderProgress(editingOfferIdStudnie, wells)
+        : { ordered: 0, total: wells.length, percent: 0 };
+    const orderedIds = typeof getOrderedWellIds === 'function'
+        ? getOrderedWellIds(editingOfferIdStudnie)
+        : new Set();
+    const availableCount = wells.filter((w) => !orderedIds.has(w.id)).length;
+
+    if (progress.ordered === 0 && availableCount === wells.length) return '';
+
+    const progressColor = progress.percent >= 100 ? '#34d399' : '#60a5fa';
+    return `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:8px;">
+        <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+                <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary);">
+                    <i data-lucide="package"></i> Postęp zamówień
+                </span>
+                <span style="font-size:0.72rem; font-weight:800; color:${progressColor};">
+                    ${progress.ordered} / ${progress.total} studni (${progress.percent}%)
+                </span>
+            </div>
+            <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div style="height:100%; width:${progress.percent}%; background:${progressColor}; border-radius:3px; transition:width 0.3s ease;"></div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderOfferSummaryTable(order, orderChanges, totals) {
+    const showOrderSelection = !orderEditMode && editingOfferIdStudnie;
+    const orderedWellIds = showOrderSelection && typeof getOrderedWellIds === 'function' ? getOrderedWellIds(editingOfferIdStudnie) : new Set();
+
+    let html = `<div class="table-wrap"><table style="table-layout:fixed; width:100%;">
       <thead>
         <tr>
-          <th style="width:5%;">Lp.</th>
-          <th style="width:18%;">Nazwa studni</th>
-          <th style="width:8%;">DN</th>
-          <th style="width:8%;">Elementy</th>
-          <th class="text-right" style="width:12%;">Waga</th>
-          <th class="text-right" style="width:10%;">Wys.</th>
-          <th class="text-right" style="width:12%;">Pow. wewn.</th>
-          <th class="text-right" style="width:12%;">Pow. zewn.</th>
-          <th class="text-right" style="width:15%;">Cena netto</th>
+          ${showOrderSelection ? `<th style="width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" style="cursor:pointer; width:16px; height:16px;"></th>` : ''}
+          <th style="width:40px; text-align:center;">Lp.</th>
+          <th style="width:30px;"></th> <!-- Expand icon -->
+          <th>Nazwa studni</th>
+          <th style="width:80px; text-align:center;">DN</th>
+          <th style="width:120px;" class="text-right">Cena</th>
+          <th style="width:100px;" class="text-right">Akcje</th>
         </tr>
       </thead>
       <tbody>`;
 
+    let runningTotalPrice = 0;
+    let runningTotalWeight = 0;
+
     wells.forEach((well, i) => {
         const stats = calcWellStats(well);
-        totalWeight += stats.weight;
-
-        // Koszt transportu przypisany do tej studni proporcjonalnie do jej wagi
-        const wellTransportCost =
-            globalWeight > 0 ? totalTransportCost * (stats.weight / globalWeight) : 0;
-
-        // Zwiększamy statystykę ceny o koszt transportu (aby kwota brutto na pasku zamówienia i rubryki się zgadzały)
+        const wellTransportCost = totals.globalWeight > 0 ? totals.totalTransportCost * (stats.weight / totals.globalWeight) : 0;
         stats.price += wellTransportCost;
-        totalPrice += stats.price;
+        
+        runningTotalPrice += stats.price;
+        runningTotalWeight += stats.weight;
 
-        const wc = orderChanges[i];
-        const isChanged = !!wc;
-        const rowStyle = isChanged
-            ? wc.type === 'added'
-                ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);'
-                : 'border-left:3px solid #ef4444; background:rgba(239,68,68,0.05);'
-            : '';
-        const changeBadge = isChanged
-            ? wc.type === 'added'
-                ? '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWE</span>'
-                : '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>'
-            : '';
-
-        html += `<tr style="cursor:pointer; ${rowStyle}" onclick="showSection('builder'); selectWell(${i})">
-      <td>${i + 1}</td>
-      <td style="font-weight:600; color:var(--text-primary);">${well.name}${changeBadge}</td>
-      <td>DN${well.dn}</td>
-      <td>${(well.config || []).length}</td>
-      <td class="text-right">${fmtInt(stats.weight)} kg</td>
-      <td class="text-right">${fmtInt(stats.height)} mm</td>
-      <td class="text-right">${fmt(stats.areaInt)} m²</td>
-      <td class="text-right">${fmt(stats.areaExt)} m²</td>
-      <td class="text-right" style="font-weight:700; color:var(--success);">${fmtInt(stats.price)} PLN</td>
-    </tr>`;
-
-        const rzDna = parseFloat(well.rzednaDna) || 0;
-        const configMap = [];
-        let currY = 0;
-        let dennicaProcessedCount = 0;
-        for (let j = well.config.length - 1; j >= 0; j--) {
-            const item = well.config[j];
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) continue;
-
-            let h = 0;
-            if (p.componentType === 'dennica') {
-                for (let q = 0; q < item.quantity; q++) {
-                    dennicaProcessedCount++;
-                    h += (p.height || 0) - (dennicaProcessedCount > 1 ? 100 : 0);
-                }
-            } else {
-                h = (p.height || 0) * item.quantity;
-            }
-
-            configMap.push({ index: j, start: currY, end: currY + h });
-            currY += h;
-        }
-
-        const assignedPrzejscia = {};
-        if (well.przejscia) {
-            well.przejscia.forEach((pr) => {
-                let pel = parseFloat(pr.rzednaWlaczenia);
-                if (isNaN(pel)) pel = rzDna;
-                const mmFromBottom = (pel - rzDna) * 1000;
-
-                let assignedIndex = -1;
-                for (let cm of configMap) {
-                    if (mmFromBottom >= cm.start && mmFromBottom < cm.end) {
-                        assignedIndex = cm.index;
-                        break;
-                    }
-                }
-                if (assignedIndex === -1 && well.config.length > 0)
-                    assignedIndex = well.config.length - 1;
-
-                if (!assignedPrzejscia[assignedIndex]) assignedPrzejscia[assignedIndex] = [];
-                assignedPrzejscia[assignedIndex].push(pr);
-            });
-        }
-
-        const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
-        const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
-
-        // Szczegóły komponentów
-        well.config.forEach((item, index) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) return;
-            if (p.componentType === 'kineta') return; // Wyświetlana jako podpunkt pod dennicą
-
-            let discStr = '';
-            if (
-                p.componentType === 'dennica' ||
-                p.componentType === 'kineta' ||
-                p.componentType === 'styczna'
-            ) {
-                if (disc.dennica > 0)
-                    discStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.dennica}%)</span>`;
-            } else {
-                if (disc.nadbudowa > 0)
-                    discStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
-            }
-
-            const itemPrice = getItemAssessedPrice(well, p, true);
-            let totalLinePrice = itemPrice * item.quantity;
-
-            if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                const kinetaItem = well.config.find((c) => {
-                    const pr = studnieProducts.find((x) => x.id === c.productId);
-                    return pr && pr.componentType === 'kineta';
-                });
-                if (kinetaItem) {
-                    const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
-                    if (kinetaProd) {
-                        const rawKinetaPrice = getItemAssessedPrice(well, kinetaProd, true);
-                        totalLinePrice += rawKinetaPrice * (kinetaItem.quantity || 1);
-                    }
-                }
-                // Dodaj też część kosztu transportu studni do dennicy / bazy stycznej
-                totalLinePrice += wellTransportCost;
-            }
-            let totalLineWeight = (p.weight || 0) * item.quantity;
-
-            const itemPrzejscia = assignedPrzejscia[index] || [];
-            itemPrzejscia.forEach((pr) => {
-                const prProd = studnieProducts.find((x) => x.id === pr.productId);
-                if (prProd) {
-                    totalLinePrice += (prProd.price || 0) * nadbudowaMult;
-                    if (pr.doplata) totalLinePrice += pr.doplata;
-                    totalLineWeight += prProd.weight || 0;
-                }
-            });
-
-            const isDennicaOrStyczna =
-                p.componentType === 'dennica' || p.componentType === 'styczna';
-            if (isDennicaOrStyczna && well.doplata) {
-                totalLinePrice += well.doplata;
-            }
-
-            html += `<tr style="opacity:0.6; ${isChanged && wc.type === 'modified' && wc.fields?.includes('config') ? 'color:#f87171;' : ''}">
-        <td></td>
-        <td colspan="2" style="padding-left:1.5rem; font-size:0.78rem; ${isChanged && wc.type === 'modified' && wc.fields?.includes('config') ? 'color:#f87171;' : 'color:var(--text-muted);'}">↳ ${p.name}${discStr}</td>
-        <td class="ui-text-lg">${item.quantity} szt.</td>
-        <td class="text-right" class="ui-text-lg">${fmtInt(totalLineWeight)} kg</td>
-        <td class="text-right" class="ui-text-lg">${p.height ? fmtInt(p.height) + ' mm' : '—'}</td>
-        <td class="text-right" class="ui-text-lg">${p.area ? fmt(p.area * item.quantity) : '—'}</td>
-        <td class="text-right" class="ui-text-lg">${p.areaExt ? fmt(p.areaExt * item.quantity) : '—'}</td>
-        <td class="text-right" class="ui-text-lg">${p.componentType === 'kineta' ? 'wliczone (' + fmtInt(totalLinePrice) + ' PLN)' : fmtInt(totalLinePrice) + ' PLN'}</td>
-      </tr>`;
-
-            if (isDennicaOrStyczna && well.doplata) {
-                const doplataColor = well.doplata < 0 ? '#ef4444' : '#10b981';
-                html += `<tr style="opacity:0.6; color:${doplataColor};">
-                    <td></td>
-                    <td colspan="2" style="padding-left:2.5rem; font-size:0.72rem;">↳ + Dopłata</td>
-                    <td class="ui-text-sm">1 skmpl.</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">wliczone (${fmtInt(well.doplata)} PLN)</td>
-                </tr>`;
-            }
-
-            itemPrzejscia.forEach((pr) => {
-                const prProd = studnieProducts.find((x) => x.id === pr.productId);
-                if (!prProd) return;
-
-                let pDiscStr = '';
-                if (disc.nadbudowa > 0)
-                    pDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.nadbudowa}%)</span>`;
-
-                let prPriceDoliczane = (prProd.price || 0) * nadbudowaMult;
-                if (pr.doplata) prPriceDoliczane += pr.doplata;
-
-                html += `<tr style="opacity:0.6; ${isChanged && wc.type === 'modified' && wc.fields?.includes('przejscia') ? 'color:#f87171;' : 'color:#818cf8;'}">
-                    <td></td>
-                    <td colspan="2" style="padding-left:2.5rem; font-size:0.72rem;">↳ + Przejście szczelne: ${prProd.category} ${typeof prProd.dn === 'string' && prProd.dn.includes('/') ? prProd.dn : 'DN' + prProd.dn} (${pr.angle}°)${pDiscStr}</td>
-                    <td class="ui-text-sm">1 szt.</td>
-                    <td class="text-right" class="ui-text-sm">wliczone (${fmtInt(prProd.weight || 0)} kg)</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">—</td>
-                    <td class="text-right" class="ui-text-sm">wliczone (${fmtInt(prPriceDoliczane)} PLN)</td>
-                </tr>`;
-            });
-
-            // Podpunkt dla kinety, jeśli renderujemy dennicę / bazę styczną
-            if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                const kinetaItem = well.config.find((c) => {
-                    const pr = studnieProducts.find((x) => x.id === c.productId);
-                    return pr && pr.componentType === 'kineta';
-                });
-                if (kinetaItem) {
-                    const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
-                    if (kinetaProd) {
-                        let kDiscStr = '';
-                        if (disc.dennica > 0)
-                            kDiscStr = ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${disc.dennica}%)</span>`;
-
-                        const kPriceDoliczane =
-                            getItemAssessedPrice(well, kinetaProd, true) *
-                            (kinetaItem.quantity || 1);
-                        const kWeight = (kinetaProd.weight || 0) * kinetaItem.quantity;
-
-                        html += `<tr style="opacity:0.6; ${isChanged && wc.type === 'modified' && wc.fields?.includes('config') ? 'color:#f87171;' : 'color:#f472b6;'}">
-                            <td></td>
-                            <td colspan="2" style="padding-left:2.5rem; font-size:0.72rem;">↳ + ${kinetaProd.name}${kDiscStr}</td>
-                            <td class="ui-text-sm">${kinetaItem.quantity} szt.</td>
-                            <td class="text-right" class="ui-text-sm">${kWeight > 0 ? fmtInt(kWeight) + ' kg' : 'wliczone (0 kg)'}</td>
-                            <td class="text-right" class="ui-text-sm">—</td>
-                            <td class="text-right" class="ui-text-sm">—</td>
-                            <td class="text-right" class="ui-text-sm">—</td>
-                            <td class="text-right" class="ui-text-sm">wliczone (${fmtInt(kPriceDoliczane)} PLN)</td>
-                        </tr>`;
-                    }
-                }
-
-                // Dodaj wiersz "Transport" pod dennicą / bazą styczną, jeśli istnieje koszt
-                if (wellTransportCost > 0) {
-                    html += `<tr style="opacity:0.6; color:#a855f7;">
-                        <td></td>
-                        <td colspan="2" style="padding-left:2.5rem; font-size:0.72rem;">↳ <i data-lucide="truck"></i> Koszt transportu</td>
-                        <td class="ui-text-sm">1 skmpl.</td>
-                        <td class="text-right" class="ui-text-sm">—</td>
-                        <td class="text-right" class="ui-text-sm">—</td>
-                        <td class="text-right" class="ui-text-sm">—</td>
-                        <td class="text-right" class="ui-text-sm">—</td>
-                        <td class="text-right" class="ui-text-sm">wliczone (${fmtInt(wellTransportCost)} PLN)</td>
-                    </tr>`;
-                }
-            }
-        });
+        html += renderWellHeaderRow(well, i, stats, orderChanges[i], orderedWellIds.has(well.id), showOrderSelection);
+        html += renderWellDetailsRow(well, i, orderChanges[i], wellTransportCost);
     });
 
-    html += `</tbody>
-      <tfoot>
+    html += renderOfferSummaryFooter(wells.length, runningTotalWeight, runningTotalPrice, showOrderSelection);
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection) {
+    const isExpanded = expandedWellIndices.has(i);
+    const rowStyle = getWellRowStyle(change, isOrdered);
+    const badges = getWellBadges(change, isOrdered);
+    
+    let checkbox = '';
+    if (showOrderSelection) {
+        checkbox = isOrdered 
+            ? `<td style="text-align:center;"><i data-lucide="package-check" style="width:16px; height:16px; color:#a5b4fc;"></i></td>`
+            : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" style="cursor:pointer; width:16px; height:16px;"></td>`;
+    }
+
+    return `<tr class="well-row-header" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
+        ${checkbox}
+        <td style="text-align:center; color:var(--text-muted); font-weight:600;">${i + 1}</td>
+        <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
+        <td style="font-weight:700; color:var(--text-primary);">${well.name}${badges}</td>
+        <td style="text-align:center; font-weight:600; color:var(--text-secondary);">DN${well.dn}</td>
+        <td class="text-right" style="font-weight:800; color:var(--success);">${fmtInt(stats.price)} PLN</td>
+        <td class="text-right" onclick="event.stopPropagation()">
+            <button class="btn btn-icon btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię">
+                <i data-lucide="edit-3"></i>
+            </button>
+        </td>
+    </tr>`;
+}
+
+function getWellRowStyle(change, isOrdered) {
+    if (change) {
+        return change.type === 'added' 
+            ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);' 
+            : 'border-left:3px solid #ef4444; background:rgba(239,68,68,0.05);';
+    }
+    return isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
+}
+
+function getWellBadges(change, isOrdered) {
+    let html = '';
+    if (change) {
+        html += change.type === 'added'
+            ? `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWA</span>`
+            : `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>`;
+    }
+    if (isOrdered) {
+        html += `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(99,102,241,0.2); color:#a5b4fc; font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>`;
+    }
+    return html;
+}
+
+function renderWellDetailsRow(well, i, change, wellTransportCost) {
+    const isExpanded = expandedWellIndices.has(i);
+    if (!isExpanded) return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="10"></td></tr>`;
+
+    const stats = calcWellStats(well);
+    const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
+    const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
+    
+    let detailsHtml = `<tr class="well-details-row"><td colspan="10">
+        <div class="well-details-container">
+            <div class="well-details-grid">
+                <div class="well-detail-item">
+                    <span class="well-detail-label">Masa całkowita</span>
+                    <span class="well-detail-value">${fmtInt(stats.weight)} kg</span>
+                </div>
+                <div class="well-detail-item">
+                    <span class="well-detail-label">Wysokość rz.</span>
+                    <span class="well-detail-value">${fmtInt(stats.height)} mm</span>
+                </div>
+                <div class="well-detail-item">
+                    <span class="well-detail-label">Pow. wewnętrzna</span>
+                    <span class="well-detail-value">${fmt(stats.areaInt)} m²</span>
+                </div>
+                <div class="well-detail-item">
+                    <span class="well-detail-label">Pow. zewnętrzna</span>
+                    <span class="well-detail-value">${fmt(stats.areaExt)} m²</span>
+                </div>
+            </div>
+            <div style="margin-top:0.8rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.5rem;">
+                <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:600; margin-bottom:0.3rem;">Konfiguracja elementów:</div>
+                <table style="width:100%; font-size:0.75rem;">
+                    ${renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, change)}
+                </table>
+            </div>
+        </div>
+    </td></tr>`;
+    
+    return detailsHtml;
+}
+
+function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, change) {
+    let html = '';
+    const assignedPrzejscia = calculateAssignedPrzejscia(well);
+
+    well.config.forEach((item, index) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        if (!p || p.componentType === 'kineta') return;
+
+        const discStr = getDiscountStr(p, disc);
+        let { totalLinePrice, totalLineWeight } = calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, assignedPrzejscia[index]);
+
+        html += `<tr style="opacity:0.8;">
+            <td style="color:var(--text-secondary);">↳ ${p.name}${discStr}</td>
+            <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
+            <td style="width:100px;" class="text-right">${fmtInt(totalLineWeight)} kg</td>
+            <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmtInt(totalLinePrice) + ' PLN'}</td>
+        </tr>`;
+
+        // Renderowanie szczegółów dopłaty, przejść i kinety (jako sub-elementy w skróconej tabeli)
+        html += renderComponentSubItems(well, p, item, assignedPrzejscia[index], disc, nadbudowaMult, wellTransportCost);
+    });
+    return html;
+}
+
+function calculateAssignedPrzejscia(well) {
+    const assigned = {};
+    const rzDna = parseFloat(well.rzednaDna) || 0;
+    const configMap = [];
+    let currY = 0;
+    let dennicaCount = 0;
+    
+    // Budujemy mapę wysokości elementów (od dołu)
+    for (let j = well.config.length - 1; j >= 0; j--) {
+        const p = studnieProducts.find(x => x.id === well.config[j].productId);
+        if (!p) continue;
+        let h = 0;
+        if (p.componentType === 'dennica') {
+            dennicaCount++;
+            h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
+        } else {
+            h = (p.height || 0) * (well.config[j].quantity || 1);
+        }
+        configMap.push({ index: j, start: currY, end: currY + h });
+        currY += h;
+    }
+
+    if (well.przejscia) {
+        well.przejscia.forEach(pr => {
+            const mmFromBottom = (parseFloat(pr.rzednaWlaczenia || rzDna) - rzDna) * 1000;
+            const target = configMap.find(cm => mmFromBottom >= cm.start && mmFromBottom < cm.end);
+            const idx = target ? target.index : well.config.length - 1;
+            if (!assigned[idx]) assigned[idx] = [];
+            assigned[idx].push(pr);
+        });
+    }
+    return assigned;
+}
+
+function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMult, wellTransportCost) {
+    let html = '';
+    const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
+    
+    if (isBase && well.doplata) {
+        html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--success);">
+            <td colspan="3" style="padding-left:1.5rem;">↳ + Dopłata indywidualna</td>
+            <td class="text-right">${fmtInt(well.doplata)} PLN</td>
+        </tr>`;
+    }
+
+    if (itemPrzejscia) {
+        itemPrzejscia.forEach(pr => {
+            const prProd = studnieProducts.find(x => x.id === pr.productId);
+            if (!prProd) return;
+            let prPrice = (prProd.price || 0) * nadbudowaMult;
+            if (pr.doplata) prPrice += pr.doplata;
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
+                <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${prProd.category} ${prProd.dn} (${pr.angle}°)</td>
+                <td class="text-right">${fmtInt(prPrice)} PLN</td>
+            </tr>`;
+        });
+    }
+
+    if (isBase) {
+        const kineta = well.config.find(c => studnieProducts.find(x => x.id === c.productId)?.componentType === 'kineta');
+        if (kineta) {
+            const kp = studnieProducts.find(x => x.id === kineta.productId);
+            const kPrice = getItemAssessedPrice(well, kp, true) * (kineta.quantity || 1);
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;">
+                <td colspan="3" style="padding-left:1.5rem;">↳ + ${kp.name}</td>
+                <td class="text-right">${fmtInt(kPrice)} PLN</td>
+            </tr>`;
+        }
+        if (wellTransportCost > 0) {
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#a855f7;">
+                <td colspan="3" style="padding-left:1.5rem;">↳ <i data-lucide="truck"></i> Udział w transporcie</td>
+                <td class="text-right">${fmtInt(wellTransportCost)} PLN</td>
+            </tr>`;
+        }
+    }
+    return html;
+}
+
+function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, itemPrzejscia) {
+    const itemPrice = getItemAssessedPrice(well, p, true);
+    let totalLinePrice = itemPrice * item.quantity;
+    let totalLineWeight = (p.weight || 0) * item.quantity;
+
+    if (p.componentType === 'dennica' || p.componentType === 'styczna') {
+        const kinetaItem = well.config.find(c => studnieProducts.find(x => x.id === c.productId)?.componentType === 'kineta');
+        if (kinetaItem) {
+            const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
+            if (kinetaProd) {
+                totalLinePrice += getItemAssessedPrice(well, kinetaProd, true) * (kinetaItem.quantity || 1);
+            }
+        }
+        totalLinePrice += wellTransportCost;
+        if (well.doplata) totalLinePrice += well.doplata;
+    }
+
+    if (itemPrzejscia) {
+        itemPrzejscia.forEach(pr => {
+            const prProd = studnieProducts.find(x => x.id === pr.productId);
+            if (prProd) {
+                totalLinePrice += ((prProd.price || 0) * nadbudowaMult) + (pr.doplata || 0);
+                totalLineWeight += prProd.weight || 0;
+            }
+        });
+    }
+
+    return { totalLinePrice, totalLineWeight };
+}
+
+function getDiscountStr(p, disc) {
+    const isDen = p.componentType === 'dennica' || p.componentType === 'kineta' || p.componentType === 'styczna';
+    const val = isDen ? disc.dennica : disc.nadbudowa;
+    return val > 0 ? ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${val}%)</span>` : '';
+}
+
+function renderOfferSummaryFooter(count, weight, price, showOrderSelection) {
+    const colspan = showOrderSelection ? 5 : 4;
+    return `<tfoot>
         <tr style="border-top:2px solid var(--border-glass);">
-          <td colspan="4" style="font-weight:700; font-size:0.95rem; color:var(--text-primary);">RAZEM (${wells.length} studni)</td>
-          <td class="text-right" style="font-weight:700;">${fmtInt(totalWeight)} kg</td>
-          <td></td><td></td><td></td>
-          <td class="text-right" style="font-weight:800; font-size:1.1rem; color:var(--success);">${fmtInt(totalPrice)} PLN</td>
+          <td colspan="${colspan}" style="font-weight:700; font-size:0.9rem; color:var(--text-primary); padding:1rem 0.5rem;">RAZEM (${count} studni)</td>
+          <td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-muted);">${fmtInt(weight)} kg</td>
+          <td class="text-right" style="font-weight:800; font-size:1rem; color:var(--success);">${fmtInt(price)} PLN</td>
         </tr>
-      </tfoot>
-    </table></div>`;
+      </tfoot>`;
+}
 
-    container.innerHTML = html;
-
-    // Aktualizuj sumy oferty
+function updateOfferSummaryUI(totals) {
     const totalEl = document.getElementById('sum-total-netto');
     const bruttoEl = document.getElementById('sum-brutto-details');
     const weightEl = document.getElementById('sum-netto-weight');
     const transCostEl = document.getElementById('sum-transport-cost');
 
-    // Wskaźniki UI transportu
-    if (totalTransportCost > 0) {
-        if (transCostEl) transCostEl.innerHTML = fmtInt(totalTransportCost) + ' PLN';
-
+    if (totals.totalTransportCost > 0) {
+        if (transCostEl) transCostEl.innerHTML = fmtInt(totals.totalTransportCost) + ' PLN';
         const transDetails = document.getElementById('transport-breakdown');
         if (transDetails) {
-            transDetails.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); background:rgba(15,23,42,0.4); padding:0.8rem; border-radius:8px; border:1px solid rgba(255,255,245,0.05); margin-bottom:1rem;">
-             <i data-lucide="route"></i> Łączny ciężar to <strong>${fmtInt(totalWeight)} kg</strong> co wymaga ok. <strong>${totalTransports} transportów</strong>. 
-             Koszt jednego kursu: <strong>${fmtInt(transportCostPerTrip)} PLN</strong>. Łącznie transport: <strong>${fmtInt(totalTransportCost)} PLN</strong> (koszt rozbity na poszczególne studnie w tabeli wyżej).
+            transDetails.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); background:rgba(15,23,42,0.4); padding:0.6rem 0.8rem; border-radius:8px; border:1px solid rgba(255,255,245,0.05); margin-bottom:0.8rem;">
+             <i data-lucide="route" style="width:14px; height:14px; margin-right:4px;"></i> Łączny ciężar: <strong>${fmtInt(totals.globalWeight)} kg</strong> (${totals.totalTransports} transporty). 
+             Koszt trasy: <strong>${fmtInt(totals.transportCostPerTrip)} PLN</strong>. Łącznie transport: <strong>${fmtInt(totals.totalTransportCost)} PLN</strong>.
            </div>`;
         }
     } else {
@@ -330,13 +404,19 @@ function renderOfferSummary() {
         if (transDetails) transDetails.innerHTML = '';
     }
 
-    // Transport jest już wliczony w totalPrice podczas pętli studni
-    const finalNetto = totalPrice;
+    let finalNetto = 0;
+    let finalWeight = 0;
+    wells.forEach(w => {
+        const s = calcWellStats(w);
+        finalNetto += s.price + (totals.globalWeight > 0 ? totals.totalTransportCost * (s.weight / totals.globalWeight) : 0);
+        finalWeight += s.weight;
+    });
 
     if (totalEl) totalEl.textContent = fmtInt(finalNetto) + ' PLN';
     if (bruttoEl) bruttoEl.textContent = 'Brutto: ' + fmtInt(finalNetto * 1.23) + ' PLN';
-    if (weightEl) weightEl.textContent = fmtInt(totalWeight) + ' kg';
+    if (weightEl) weightEl.textContent = fmtInt(finalWeight) + ' kg';
 }
+
 
 /* ===== OFERTY STUDNIE (API SERWERA) ===== */
 
@@ -885,20 +965,30 @@ function renderSavedOffersStudnie() {
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
         .map((o) => {
             const oId = normalizeId(o.id);
-            const hasOrder =
-                o.hasOrder ||
-                (ordersStudnie && ordersStudnie.some((ord) => normalizeId(ord.offerId) === oId));
-            const order = ordersStudnie
-                ? ordersStudnie.find((ord) => normalizeId(ord.offerId) === oId)
-                : null;
-            const orderBadge = hasOrder
-                ? `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:rgba(16,185,129,0.15); border:2px solid rgba(16,185,129,0.4); border-radius:6px; margin-top:0.3rem;">
-                <span style="font-size:0.85rem;"><i data-lucide="package"></i></span>
-                <span style="font-size:0.68rem; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">Zamówienie ${order ? order.number : ''}</span>
-               </div>`
-                : '';
+            // Oblicz postęp zamówień częściowych
+            const progress = typeof getOfferOrderProgress === 'function' 
+                ? getOfferOrderProgress(oId, o.wells) 
+                : { ordered: 0, total: (o.wells || []).length, percent: 0 };
+            
+            const hasOrder = progress.ordered > 0;
+            const isFullyOrdered = progress.percent >= 100;
+            
+            let orderBadge = '';
+            if (hasOrder) {
+                const badgeColor = isFullyOrdered ? '#34d399' : '#60a5fa';
+                const badgeBg = isFullyOrdered ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)';
+                const badgeBorder = isFullyOrdered ? 'rgba(16,185,129,0.4)' : 'rgba(59,130,246,0.4)';
+                
+                orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius:6px; margin-top:0.3rem;">
+                <span style="font-size:0.85rem;"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
+                <span style="font-size:0.68rem; font-weight:800; color:${badgeColor}; text-transform:uppercase; letter-spacing:0.5px;">
+                    ${isFullyOrdered ? 'Zrealizowana' : 'W realizacji'} (${progress.ordered}/${progress.total})
+                </span>
+               </div>`;
+            }
+            
             return `
-        <div class="offer-list-item" ${hasOrder ? 'style="border-left:3px solid #34d399;"' : ''}>
+        <div class="offer-list-item" ${hasOrder ? `style="border-left:3px solid ${isFullyOrdered ? '#34d399' : '#60a5fa'};"` : ''}>
             <div class="offer-info" style="min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
                     <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
@@ -1699,3 +1789,29 @@ async function restoreHistorySnapshot(logId) {
 
     closeModal();
 }
+/* ===== WYBÓR STUDNI DO ZAMÓWIENIA ===== */
+
+/** Zaznacza/odznacza wszystkie dostępne studnie w tabeli podsumowania */
+function toggleAllWellsForOrder(checked) {
+    const checkboxes = document.querySelectorAll('.well-order-checkbox');
+    checkboxes.forEach((cb) => {
+        cb.checked = checked;
+    });
+    updateOrderSelectionCount();
+}
+
+/** Aktualizuje licznik zaznaczonych studni (opcjonalnie do logiki UI w przyszłości) */
+function updateOrderSelectionCount() {
+    const count = document.querySelectorAll('.well-order-checkbox:checked').length;
+    const total = document.querySelectorAll('.well-order-checkbox').length;
+    
+    // Zaktualizuj stan nagłówkowego checkboxa
+    const headerCheckbox = document.getElementById('select-all-wells-for-order');
+    if (headerCheckbox) {
+        headerCheckbox.checked = count > 0 && count === total;
+        headerCheckbox.indeterminate = count > 0 && count < total;
+    }
+}
+
+window.toggleAllWellsForOrder = toggleAllWellsForOrder;
+window.updateOrderSelectionCount = updateOrderSelectionCount;

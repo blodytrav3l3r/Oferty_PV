@@ -117,15 +117,31 @@ function validateWizardStep2() {
     if (nextBtn) nextBtn.disabled = !isFullyValid;
 
     // Zaktualizuj stan wizualny owijki każdej grupy parametrów
+    let iconsChanged = false;
     document.querySelectorAll('.wizard-param-group').forEach((wrapper) => {
         const param = wrapper.dataset.wizardParam;
         if (!param) return;
         const confirmed = wizardConfirmedParams.has(param);
-        wrapper.classList.toggle('confirmed', confirmed);
-        wrapper.classList.toggle('needs-selection', !confirmed);
-        const icon = wrapper.querySelector('.status-icon');
-        if (icon) icon.innerHTML = confirmed ? '<i data-lucide="check-circle-2"></i>' : '<i data-lucide="alert-triangle"></i>';
+        const wasConfirmed = wrapper.classList.contains('confirmed');
+
+        // Przełącz klasy tylko gdy stan się zmienił
+        if (confirmed !== wasConfirmed) {
+            wrapper.classList.toggle('confirmed', confirmed);
+            wrapper.classList.toggle('needs-selection', !confirmed);
+            const icon = wrapper.querySelector('.status-icon');
+            if (icon) {
+                icon.innerHTML = confirmed
+                    ? '<i data-lucide="check-circle-2"></i>'
+                    : '<i data-lucide="alert-triangle"></i>';
+                iconsChanged = true;
+            }
+        }
     });
+
+    // Przerenderuj ikony Lucide tylko gdy faktycznie zmieniono HTML
+    if (iconsChanged && window.lucide) {
+        window.lucide.createIcons();
+    }
 
     const msg = document.getElementById('wizard-validation-msg');
     if (msg) msg.classList.toggle('hidden', isFullyValid);

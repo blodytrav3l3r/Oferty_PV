@@ -18,11 +18,6 @@ describe('securityHeaders', () => {
         expect(res.headers['x-content-type-options']).toBe('nosniff');
     });
 
-    it('powinien ustawić nagłówek X-Frame-Options', async () => {
-        const res = await request(app).get('/test');
-        expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
-    });
-
     it('powinien ustawić nagłówek X-XSS-Protection', async () => {
         const res = await request(app).get('/test');
         expect(res.headers['x-xss-protection']).toBe('1; mode=block');

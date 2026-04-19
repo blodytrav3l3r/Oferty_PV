@@ -99,7 +99,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
 
         let newPassword = user.password;
         if (password) {
-            newPassword = bcrypt.hashSync(password, 10);
+            newPassword = await bcrypt.hash(password, 10);
         }
 
         const newRole = role || user.role;

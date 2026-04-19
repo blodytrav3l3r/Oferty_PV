@@ -31,7 +31,25 @@ app.get('/health', (_req, res) => {
 /* ===== BEZPIECZEŃSTWO ===== */
 app.use(
     helmet({
-        contentSecurityPolicy: false,
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrcAttr: ["'unsafe-inline'"], // Pozwala na inline event handlers (onclick, etc.)
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", 'data:', 'blob:'],
+                connectSrc: [
+                    "'self'",
+                    'http://localhost:5000',
+                    'http://localhost:8000',
+                    'ws://localhost:*'
+                ],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'self'"]
+            }
+        },
         crossOriginEmbedderPolicy: false
     })
 );

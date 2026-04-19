@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="WITROS — Kartoteka Zleceń Produkcyjnych." />
+        <title>WITROS — Kartoteka Zleceń</title>
+        <link rel="stylesheet" href="css/style.css?v=2.0" />
+        <style>
+            /* ===== Kartoteka Zleceń — Premium Design ===== */
+
+            .zlecenia-page {
+                max-width: 1860px;
+                margin: 0 auto;
+                padding: 0 1rem;
+            }
+
+            /* Summary stats bar */
+            .zlecenia-stats {
+                display: flex;
+                gap: 0.8rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+            }
+            .zlecenia-stat-card {
+                flex: 1;
+                min-width: 180px;
+                max-width: 250px;
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 14px;
+                padding: 1rem 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                cursor: default;
+                backdrop-filter: blur(10px);
+                position: relative;
+                overflow: hidden;
+            }
+            .zlecenia-stat-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            }
+            .zlecenia-stat-card:hover {
+                border-color: rgba(99, 102, 241, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.1);
+            }
+            .zlecenia-stat-icon {
+                font-size: 1.5rem;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                flex-shrink: 0;
+                box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            }
+            .zlecenia-stat-info {
+                flex: 1;
+            }
+            .zlecenia-stat-value {
+                font-size: 1.6rem;
+                font-weight: 800;
+                color: var(--text-primary);
+                line-height: 1.1;
+                letter-spacing: -0.5px;
+                font-family: 'Inter', sans-serif;
+            }
+            .zlecenia-stat-label {
+                font-size: 0.68rem;
+                font-weight: 700;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                margin-top: 2px;
+            }
+
+            /* Filter tabs */
+            .zlecenia-filters {
+                display: flex;
+                gap: 0.4rem;
+            }
+            .zlecenia-filter-tab {
+                padding: 0.4rem 0.9rem;
+                border-radius: 8px;
+                border: 1px solid var(--border-glass);
+                background: transparent;
+                color: var(--text-muted);
+                font-size: 0.75rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .zlecenia-filter-tab:hover {
+                background: rgba(255, 255, 255, 0.04);
+                color: var(--text-primary);
+            }
+            .zlecenia-filter-tab.active {
+                background: rgba(129, 140, 248, 0.12);
+                border-color: rgba(129, 140, 248, 0.4);
+                color: #818cf8;
+            }
+
+            /* Table styling */
+            .zlecenia-table-container {
+                overflow-x: auto;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                background: rgba(17, 24, 39, 0.4);
+                backdrop-filter: blur(8px);
+                box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+                scrollbar-width: thin;
+            }
+            .zlecenia-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.85rem;
+            }
+            .zlecenia-table th {
+                text-align: left;
+                padding: 0.7rem 1rem;
+                background: rgba(0, 0, 0, 0.2);
+                color: var(--text-muted);
+                font-weight: 700;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 1px solid var(--border-glass);
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                white-space: nowrap;
+            }
+            .zlecenia-table td {
+                padding: 0.8rem 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+                color: var(--text-primary);
+                vertical-align: middle;
+                transition: all 0.2s;
+            }
+            .zlecenia-table tbody tr {
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+            }
+            .zlecenia-table tbody tr:hover {
+                background: rgba(99, 102, 241, 0.08);
+                box-shadow: inset 4px 0 0 var(--accent);
+            }
+            .zlecenia-table tbody tr:hover td {
+                color: #fff;
+            }
+            .zlecenia-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            /* Order number column */
+            .order-num {
+                font-family: 'JetBrains Mono', 'Consolas', monospace;
+                font-size: 0.9rem;
+                font-weight: 800;
+                color: #c084fc;
+            }
+            .order-num-missing {
+                color: var(--text-muted);
+                font-style: italic;
+                font-size: 0.8rem;
+            }
+
+            /* Status badges */
+            .status-badge {
+                padding: 0.35rem 0.8rem;
+                border-radius: 10px;
+                font-size: 0.68rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                position: relative;
+                overflow: hidden;
+            }
+            .status-badge svg {
+                width: 14px;
+                height: 14px;
+            }
+            .status-draft {
+                background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+                color: #fbbf24;
+                border: 1px solid rgba(245, 158, 11, 0.4);
+                box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+                animation: pulse-draft 3s infinite;
+            }
+            @keyframes pulse-draft {
+                0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
+                50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+                100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
+            }
+            .status-accepted {
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+                color: #34d399;
+                border: 1px solid rgba(16, 185, 129, 0.4);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+            }
+
+            /* Sales order badge */
+            .sales-order-badge {
+                background: rgba(129, 140, 248, 0.08);
+                color: #818cf8;
+                border: 1px solid rgba(129, 140, 248, 0.2);
+                padding: 0.2rem 0.5rem;
+                font-size: 0.78rem;
+                font-family: monospace;
+                font-weight: 800;
+                border-radius: 6px;
+                display: inline-block;
+            }
+
+            /* Person badges */
+            .person-badge {
+                font-size: 0.72rem;
+                font-weight: 600;
+                padding: 0.3rem 0.6rem;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                white-space: nowrap;
+                border: 1px solid transparent;
+            }
+            .person-handler {
+                background: rgba(6, 182, 212, 0.1);
+                color: #22d3ee;
+                border-color: rgba(6, 182, 212, 0.2);
+            }
+            .person-creator {
+                background: rgba(148, 163, 184, 0.08);
+                color: #cbd5e1;
+                border-color: rgba(148, 163, 184, 0.15);
+            }
+
+            /* Action buttons */
+            .action-btn {
+                padding: 0.3rem 0.45rem;
+                border-radius: 6px;
+                border: 1px solid var(--border-glass);
+                background: transparent;
+                cursor: pointer;
+                font-size: 0.72rem;
+                transition: all 0.2s;
+                color: var(--text-secondary);
+                line-height: 1;
+                white-space: nowrap;
+            }
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            .action-btn-edit {
+                border-color: rgba(14, 165, 233, 0.3);
+                color: #38bdf8;
+            }
+            .action-btn-edit:hover {
+                background: rgba(14, 165, 233, 0.1);
+            }
+            .action-btn-delete {
+                border-color: rgba(239, 68, 68, 0.3);
+                color: #f87171;
+            }
+            .action-btn-delete:hover {
+                background: rgba(239, 68, 68, 0.12);
+            }
+
+            /* Well name + project */
+            .well-cell-name {
+                font-weight: 700;
+                font-size: 0.85rem;
+                color: var(--text-primary);
+            }
+            .well-cell-project {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                margin-top: 1px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 250px;
+            }
+
+            /* Element cell */
+            .element-cell {
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: var(--text-secondary);
+            }
+
+            /* Date cell */
+            .date-cell {
+                font-size: 0.78rem;
+                color: var(--text-secondary);
+                white-space: nowrap;
+            }
+
+            /* Batch action bar */
+            .zlecenia-batch-bar {
+                display: none;
+                align-items: center;
+                gap: 1rem;
+                padding: 0.8rem 1.2rem;
+                background: linear-gradient(
+                    135deg,
+                    rgba(99, 102, 241, 0.25) 0%,
+                    rgba(129, 140, 248, 0.15) 100%
+                );
+                border: 1px solid rgba(129, 140, 248, 0.4);
+                border-radius: 14px;
+                margin-bottom: 1.2rem;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1);
+                backdrop-filter: blur(12px);
+                animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            @keyframes batchBarIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .batch-info {
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: #818cf8;
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .batch-count {
+                background: rgba(129, 140, 248, 0.2);
+                padding: 0.15rem 0.5rem;
+                border-radius: 8px;
+                font-weight: 800;
+                font-size: 0.85rem;
+            }
+            .batch-actions {
+                display: flex;
+                gap: 0.4rem;
+                margin-left: auto;
+            }
+            .batch-btn {
+                padding: 0.4rem 0.8rem;
+                border-radius: 8px;
+                border: 1px solid var(--border-glass);
+                background: rgba(255, 255, 255, 0.04);
+                color: var(--text-primary);
+                font-size: 0.75rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 0.3rem;
+            }
+            .batch-btn:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            .batch-btn-print {
+                border-color: rgba(14, 165, 233, 0.4);
+                color: #38bdf8;
+            }
+            .batch-btn-print:hover {
+                background: rgba(14, 165, 233, 0.12);
+            }
+            .batch-btn-label {
+                border-color: rgba(168, 85, 247, 0.4);
+                color: #c084fc;
+            }
+            .batch-btn-label:hover {
+                background: rgba(168, 85, 247, 0.12);
+            }
+        </style>
+    </head>
+
+    <body>
+        <!-- HEADER (hidden when inside SPA iframe) -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <span>Kartoteka Zleceń</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="section active" id="section-zlecenia">
+                <div class="toolbar">
+                    <h2 style="font-size: 1rem; font-weight: 700">
+                        <i data-lucide="factory"></i> Kartoteka Zleceń Produkcyjnych
+                    </h2>
+                    <div class="toolbar-spacer"></div>
+                    <button
+                        class="btn btn-primary btn-sm"
+                        onclick="AppZlecenia.loadOrders()"
+                        title="Odśwież bazę zleceń"
+                    >
+                        <i data-lucide="refresh-cw"></i> Odśwież
+                    </button>
+                </div>
+
+                <div class="zlecenia-page">
+                    <!-- Summary stats -->
+                    <div class="zlecenia-stats" id="zlecenia-stats"></div>
+
+                    <!-- Main card -->
+                    <section style="margin-bottom: 2rem">
+                        <!-- Header: filters + search -->
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                margin-bottom: 0.8rem;
+                                flex-wrap: wrap;
+                                gap: 0.8rem;
+                            "
+                        >
+                            <div class="zlecenia-filters" id="zlecenia-filter-tabs">
+                                <button
+                                    class="zlecenia-filter-tab active"
+                                    data-filter="all"
+                                    onclick="AppZlecenia.setFilter('all')"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    class="zlecenia-filter-tab"
+                                    data-filter="draft"
+                                    onclick="AppZlecenia.setFilter('draft')"
+                                >
+                                    <i data-lucide="hourglass-2"></i> Oczekujące
+                                </button>
+                                <button
+                                    class="zlecenia-filter-tab"
+                                    data-filter="accepted"
+                                    onclick="AppZlecenia.setFilter('accepted')"
+                                >
+                                    <i data-lucide="check-check"></i> Zatwierdzone
+                                </button>
+                            </div>
+
+                            <div
+                                class="search-box"
+                                style="margin: 0; width: 600px; position: relative"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    style="
+                                        position: absolute;
+                                        left: 0.7rem;
+                                        top: 50%;
+                                        transform: translateY(-50%);
+                                        width: 1rem;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m21 21-4.35-4.35" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    id="zlecenia-search-input"
+                                    class="form-input form-input-sm"
+                                    placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
+                                    style="
+                                        font-weight: normal;
+                                        padding-left: 2.4rem !important;
+                                        width: 100%;
+                                    "
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Batch action bar (visible when items selected) -->
+                        <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
+                            <div class="batch-info">
+                                <i data-lucide="check-check"></i> Zaznaczono: <span class="batch-count">0</span>
+                            </div>
+                            <div class="batch-actions">
+                                <button
+                                    class="batch-btn batch-btn-print"
+                                    onclick="AppZlecenia.printBatchZlecenia()"
+                                >
+                                    <i data-lucide="printer"></i> Drukuj zlecenia
+                                </button>
+                                <button
+                                    class="batch-btn batch-btn-label"
+                                    onclick="AppZlecenia.printBatchEtykiety()"
+                                >
+                                    <i data-lucide="tag"></i> Drukuj etykiety
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="zlecenia-table-container">
+                            <table class="zlecenia-table" id="zlecenia-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center">
+                                            <input
+                                                type="checkbox"
+                                                id="zlecenia-select-all"
+                                                onclick="AppZlecenia.toggleSelectAll(this)"
+                                                style="
+                                                    cursor: pointer;
+                                                    width: 16px;
+                                                    height: 16px;
+                                                    accent-color: #818cf8;
+                                                "
+                                                title="Zaznacz wszystkie"
+                                            />
+                                        </th>
+                                        <th style="width: 140px">Nr zlecenia</th>
+                                        <th style="width: 130px">Data</th>
+                                        <th>Budowa / Studnia</th>
+                                        <th style="width: 150px">Nr zamówienia</th>
+                                        <th>Element</th>
+                                        <th>Opiekun</th>
+                                        <th>Generator</th>
+                                        <th style="width: 105px">Status</th>
+                                        <th style="width: 150px; text-align: right">Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="zlecenia-table-body">
+                                    <tr>
+                                        <td
+                                            colspan="10"
+                                            style="
+                                                text-align: center;
+                                                padding: 2rem;
+                                                color: var(--text-muted);
+                                                font-style: italic;
+                                            "
+                                        >
+                                            Ładowanie danych z serwera...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Dependencies -->
+        <script src="js/shared/formatters.js?v=2.0"></script>
+        <script src="js/shared/auth.js?v=2.0"></script>
+        <script src="js/shared/ui.js?v=2.0"></script>
+        <script src="js/spa/zlecenia.js?v=2.0"></script>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
+</html>

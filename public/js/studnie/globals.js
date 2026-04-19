@@ -21,6 +21,7 @@ let ordersStudnie = [];
 let editingOfferIdStudnie = null;
 let isSavingOffer = false;
 let orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
+let expandedWellIndices = new Set();
 let clientsDb = [];
 
 // Stan kreatora

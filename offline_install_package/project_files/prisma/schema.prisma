@@ -1,0 +1,217 @@
+// Schemat bazy danych Prisma dla systemu WITROS Oferty
+// Ten plik definiuje modele danych dla SQLite
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Logi telemetryczne AI o nadpisaniach użytkownika
+model ai_telemetry_logs {
+  id                   String   @id
+  userId               String?
+  original_auto_config String?
+  final_user_config    String?
+  override_reason      String?
+  createdAt            String?  @default("datetime('now')")
+}
+
+// Logi audytowe (śledzenie zmian w bazie)
+model audit_logs {
+  id         String   @id
+  entityType String
+  entityId   String
+  userId     String?
+  action     String
+  oldData    String?
+  newData    String?
+  createdAt  String?  @default("datetime('now')")
+
+  @@index([entityType, entityId], map: "idx_audit_entity")
+}
+
+// Baza klientów
+model clients_rel {
+  id        String  @id
+  userId    String?
+  name      String?
+  nip       String?
+  address   String?
+  email     String?
+  phone     String?
+  contact   String? @default("")
+  createdAt String?
+  updatedAt String?
+}
+
+model offer_items_rel {
+  id        String  @id
+  offerId   String?
+  productId String?
+  quantity  Float?
+  discount  Float?
+  price     Float?
+}
+
+model offer_studnie_items_rel {
+  id             String  @id
+  offerId        String?
+  productId      String?
+  quantity       Float?
+  discount       Float?
+  price          Float?
+  dodatkowe_info String?
+}
+
+// Główne dokumenty ofert (typ rury/ogólne)
+model offers_rel {
+  id            String   @id
+  userId        String?
+  clientId      String?
+  state         String?
+  createdAt     String?
+  transportCost Float?
+  offer_number  String?
+  data          String?
+  updatedAt     String?
+  history       String?  @default("[]")
+}
+
+// Główne dokumenty ofert (typ studnie)
+model offers_studnie_rel {
+  id            String   @id
+  userId        String?
+  clientId      String?
+  state         String?
+  createdAt     String?
+  transportCost Float?
+  offer_number  String?
+  data          String?
+  updatedAt     String?
+  history       String?  @default("[]")
+}
+
+// Liczniki numeracji ofert
+model order_counters {
+  userId     String
+  year       Int
+  lastNumber Int?    @default(0)
+
+  @@id([userId, year])
+}
+
+// Zamówienia na studnie
+model orders_studnie_rel {
+  id             String  @id
+  userId         String?
+  offerStudnieId String?
+  createdAt      String?
+  status         String?
+  data           String?
+}
+
+model production_order_counters {
+  userId     String
+  year       Int
+  lastNumber Int?   @default(0)
+
+  @@id([userId, year])
+}
+
+model production_orders_rel {
+  id           String  @id
+  userId       String?
+  orderId      String?
+  wellId       String?
+  elementIndex Int?
+  createdAt    String?
+  updatedAt    String?
+  data         String?
+  creatorId    String? @default("")
+}
+
+model products_rury_rel {
+  id        String  @id
+  name      String?
+  price     Float?
+  category  String?
+  weight    Float?
+  transport Int?
+  area      Float?
+  data      String? @default("{}")
+  unit      String? @default("szt")
+}
+
+// Katalog produktów (studnie i elementy)
+model products_studnie_rel {
+  id                  String   @id
+  name                String?
+  price               Float?
+  category            String?
+  weight              Float?
+  componentType       String?
+  dn                  Float?
+  h                   Int?
+  grubosc             Int?
+  wewnetrzna          Int?
+  l                   Int?
+  element             String?
+  index_k             String?
+  index_p             String?
+  formaStandardowa    Int?
+  spocznikH           String?
+  data                String?
+  magazynWL           Int?     @default(1)
+  magazynKLB          Int?     @default(1)
+  height              Float?   @default(0)
+  formaStandardowaKLB Int?     @default(1)
+  area                Float?
+  areaExt             Float?
+  transport           Int?
+  zapasDol            Float?
+  zapasGora           Float?
+  zapasDolMin         Float?
+  zapasGoraMin        Float?
+}
+
+model recycled_production_numbers {
+  userId    String
+  year      Int
+  seqNumber Int
+
+  @@id([userId, year, seqNumber])
+}
+
+model sessions {
+  token     String @id
+  userId    String
+  createdAt BigInt
+}
+
+model settings {
+  key   String @id
+  value String?
+}
+
+// Użytkownicy systemu
+model users {
+  id                         String   @id
+  username                   String   @unique
+  password                   String
+  role                       String
+  firstName                  String?
+  lastName                   String?
+  phone                      String?
+  email                      String?
+  symbol                     String?
+  subUsers                   String?
+  createdAt                  String?
+  orderStartNumber           Int?     @default(1)
+  productionOrderStartNumber Int?     @default(1)
+}

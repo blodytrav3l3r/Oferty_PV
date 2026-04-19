@@ -35,7 +35,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             where: { username }
         });
 
-        if (!user || !user.password || !bcrypt.compareSync(password, user.password)) {
+        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: 'Nieprawidłowy login lub hasło' });
         }
 
@@ -49,7 +49,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
         }
 
         res.cookie('authToken', token, {
-            httpOnly: false, // false aby frontend mógł odczytać
+            httpOnly: true, // true - cookie недоступний JavaScript
             maxAge: SESSION_MAX_AGE_MS,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax', // lax zamiast strict dla nawigacji między stronami
@@ -105,7 +105,7 @@ router.post(
                 return res.status(409).json({ error: 'Użytkownik o takim loginie już istnieje' });
             }
 
-            const hash = bcrypt.hashSync(password, 10);
+            const hash = await bcrypt.hash(password, 10);
             const userId = 'user_' + Date.now();
             const subUsersString = Array.isArray(subUsers) ? JSON.stringify(subUsers) : '[]';
 
@@ -175,11 +175,11 @@ router.post(
                 where: { id: authReq.user!.id }
             });
 
-            if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
+            if (!user || !(await bcrypt.compare(oldPassword, user.password))) {
                 return res.status(401).json({ error: 'Nieprawidłowe stare hasło' });
             }
 
-            const hash = bcrypt.hashSync(newPassword, 10);
+            const hash = await bcrypt.hash(newPassword, 10);
             await prisma.users.update({
                 where: { id: authReq.user!.id },
                 data: { password: hash }

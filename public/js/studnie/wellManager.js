@@ -92,28 +92,37 @@ function createNewWell(name, dn = 1000) {
     };
 }
 
-/* ===== BLOKADA OFERTY (po utworzeniu zamówienia) ===== */
+/* ===== BLOKADA OFERTY (per-studnia po utworzeniu zamówienia) ===== */
 const OFFER_LOCKED_MSG =
-    '<i data-lucide="lock"></i> Oferta zablokowana — posiada zamówienie. Edytuj zamówienie zamiast oferty.';
+    '<i data-lucide="lock"></i> Ta studnia jest zablokowana — jest częścią zamówienia. Edytuj ją przez zamówienie.';
 const WELL_LOCKED_MSG = '<i data-lucide="lock"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
+
+/**
+ * Oferta jako całość nie jest już blokowana.
+ * Blokada działa per-studnia (isWellLocked).
+ * Zwraca false aby zachować dotychczasowy interfejs API.
+ */
 function isOfferLocked() {
-    if (orderEditMode) return false; // Tryb edycji zamówienia jest zawsze dozwolony
-    if (!editingOfferIdStudnie) return false;
-    const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
-    if (!offer) return false;
-    return !!(
-        offer.hasOrder ||
-        (ordersStudnie && ordersStudnie.some((ord) => ord.offerId === offer.id))
-    );
+    if (orderEditMode) return false;
+    return false;
 }
 
 function isWellLocked(wellIdx) {
+    if (orderEditMode) return false; // W trybie edycji zamówienia studnie są edytowalne
     const idx = wellIdx !== undefined ? wellIdx : currentWellIndex;
     const well = wells[idx];
     if (!well) return false;
-    return (
+
+    // Sprawdź zaakceptowane zlecenia produkcyjne
+    const hasAcceptedPO = (
         typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : []
     ).some((po) => po.wellId === well.id && po.status === 'accepted');
+    if (hasAcceptedPO) return true;
+
+    // Sprawdź, czy studnia jest częścią istniejącego zamówienia
+    if (typeof isWellOrdered === 'function' && isWellOrdered(well)) return true;
+
+    return false;
 }
 
 function renderOfferLockBanner() {
@@ -130,45 +139,82 @@ function renderOfferLockBanner() {
         centerCol.insertBefore(lockBanner, centerCol.firstChild);
     }
 
-    if (!isOfferLocked()) {
+    // Oblicz stan zamówień częściowych
+    const well = getCurrentWell();
+    const wellLocked = well && typeof isWellOrdered === 'function' && isWellOrdered(well);
+    const hasAnyOrders = editingOfferIdStudnie &&
+        typeof getOrdersForOffer === 'function' &&
+        getOrdersForOffer(editingOfferIdStudnie).length > 0;
+
+    if (!hasAnyOrders && !wellLocked) {
         lockBanner.style.display = 'none';
         return;
     }
 
-    const order = ordersStudnie
-        ? ordersStudnie.find((o) => o.offerId === editingOfferIdStudnie)
-        : null;
-    const orderId = order ? order.id : '';
+    // Pokaż info o zamówieniach częściowych
+    const orders = typeof getOrdersForOffer === 'function'
+        ? getOrdersForOffer(editingOfferIdStudnie)
+        : [];
+    const progress = typeof getOfferOrderProgress === 'function'
+        ? getOfferOrderProgress(editingOfferIdStudnie, wells)
+        : { ordered: 0, total: wells.length, percent: 0 };
 
-    lockBanner.style.cssText = `
-        display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-        padding:0.7rem 1rem; margin-bottom:0.6rem; border-radius:10px;
-        background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(245,158,11,0.08));
-        border: 2px solid rgba(239,68,68,0.3);
-    `;
+    if (wellLocked) {
+        // Znajdź zamówienie, do którego należy bieżąca studnia
+        const wellOrder = orders.find((ord) =>
+            (ord.wells || []).some((w) => w.id === well.id)
+        );
 
-    lockBanner.innerHTML = `
-        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:1.3rem;"><i data-lucide="lock"></i></span>
-            <div>
-                <div style="font-size:0.82rem; font-weight:800; color:#f87171;">
-                    OFERTA ZABLOKOWANA
-                </div>
-                <div style="font-size:0.65rem; color:var(--text-muted);">
-                    Ta oferta posiada zamówienie — edycja jest zablokowana. Zmiany wprowadzaj na zamówieniu.
+        lockBanner.style.cssText = `
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
+            padding:0.7rem 1rem; margin-bottom:0.6rem; border-radius:10px;
+            background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(245,158,11,0.08));
+            border: 2px solid rgba(239,68,68,0.3);
+        `;
+
+        lockBanner.innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span style="font-size:1.3rem;"><i data-lucide="lock"></i></span>
+                <div>
+                    <div style="font-size:0.82rem; font-weight:800; color:#f87171;">
+                        STUDNIA ZABLOKOWANA
+                    </div>
+                    <div style="font-size:0.65rem; color:var(--text-muted);">
+                        „${well.name}" jest częścią zamówienia${wellOrder ? ' ' + (wellOrder.orderNumber || '') : ''}.
+                        Edytuj ją przez zamówienie lub wybierz inną studnię.
+                        <span style="color:#34d399; font-weight:700;">${progress.ordered}/${progress.total} studni zamówionych</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div style="display:flex; gap:0.4rem; align-items:center;">
-            ${
-                orderId
-                    ? `<button class="btn btn-sm" onclick="window.location.href='/studnie?order=${orderId}'" style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.7rem; font-weight:700; padding:0.3rem 0.7rem;">
-                <i data-lucide="package"></i> Edytuj zamówienie
-            </button>`
+            <div style="display:flex; gap:0.4rem; align-items:center;">
+                ${wellOrder
+                    ? `<button class="btn btn-sm" onclick="window.location.href='/studnie?order=${wellOrder.id}'" style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.7rem; font-weight:700; padding:0.3rem 0.7rem;">
+                        <i data-lucide="package"></i> Edytuj zamówienie
+                    </button>`
                     : ''
-            }
-        </div>
-    `;
+                }
+            </div>
+        `;
+    } else {
+        // Oferta ma zamówienia, ale bieżąca studnia jest wolna
+        lockBanner.style.cssText = `
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
+            padding:0.5rem 1rem; margin-bottom:0.6rem; border-radius:10px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05));
+            border: 1px solid rgba(16,185,129,0.25);
+        `;
+
+        lockBanner.innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span style="font-size:1rem;"><i data-lucide="info"></i></span>
+                <div style="font-size:0.7rem; color:var(--text-muted);">
+                    Oferta ma <strong style="color:#34d399;">${orders.length}</strong> zamówień
+                    (<strong style="color:#34d399;">${progress.ordered}/${progress.total}</strong> studni zamówionych).
+                    Ta studnia jest <strong style="color:#6ee7b7;">dostępna do edycji</strong>.
+                </div>
+            </div>
+        `;
+    }
 }
 
 function addNewWell(dn = 1000) {
@@ -1244,7 +1290,9 @@ function calcWellStats(well) {
                 h -= 100;
             }
             height += h;
-            lastWasDennica = (p.componentType === 'dennica');
+            if (p.componentType !== 'uszczelka') {
+                lastWasDennica = (p.componentType === 'dennica');
+            }
         }
     });
 

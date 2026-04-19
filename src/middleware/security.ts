@@ -16,7 +16,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
  */
 export function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // X-Frame-Options removed - SPA uses hash routing, blocks own iframes in some browsers
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');

@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>WITROS — Generator Ofert</title>
+        <meta
+            name="description"
+            content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
+        />
+        <link
+            href="css/inter.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="css/style.css?v=1.5" />
+        <link rel="stylesheet" href="css/index.css?v=1.5" />
+    </head>
+
+    <body class="index-page">
+        <!-- Wspólny nagłówek nawigacji (widoczny po zalogowaniu) -->
+        <header class="header" id="dash-header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg-idx)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="lg-idx" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#6366f1" />
+                                    <stop offset="100%" stop-color="#8b5cf6" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" />
+                        </svg>
+                        <span>WITROS Oferty</span>
+                    </div>
+
+                    <div class="nav-apps">
+                        <div class="nav-tile active">
+                            <span class="nav-tile-icon"><i data-lucide="home"></i></span>
+                            <span class="nav-tile-text">Pulpit</span>
+                        </div>
+                        <a href="app.html#/studnie" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
+                            <span class="nav-tile-text">Studnie</span>
+                        </a>
+                        <a href="app.html#/rury" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                            <span class="nav-tile-text">Rury</span>
+                        </a>
+                        <a href="app.html#/kartoteka" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
+                            <span class="nav-tile-text">Kartoteka</span>
+                        </a>
+                        <a href="app.html#/zlecenia" class="nav-tile">
+                            <span class="nav-tile-icon"><i data-lucide="factory"></i></span>
+                            <span class="nav-tile-text">Zlecenia</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="header-center">
+                    <nav class="nav"></nav>
+                </div>
+
+                <div class="header-right">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem">
+                        <span
+                            id="dash-username"
+                            style="color: var(--text-secondary); font-weight: 500"
+                        ></span>
+                        <span
+                            id="dash-role"
+                            style="
+                                font-size: 0.6rem;
+                                padding: 0.15rem 0.5rem;
+                                border-radius: 20px;
+                                font-weight: 600;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                                margin-right: 0.5rem;
+                            "
+                        ></span>
+                        <button
+                            onclick="doLogout()"
+                            style="
+                                padding: 0.35rem 0.8rem;
+                                border: 1px solid var(--border-glass);
+                                border-radius: 6px;
+                                background: var(--bg-glass);
+                                color: var(--text-muted);
+                                font: 500 0.75rem 'Inter', sans-serif;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            "
+                            onmouseenter="this.style.color='#f87171';this.style.borderColor='#3a1a1a'"
+                            onmouseleave="this.style.color='var(--text-muted)';this.style.borderColor='var(--border-glass)'"
+                        >
+                            Wyloguj
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <script src="js/shared/formatters.js?v=1.5"></script>
+        <script src="js/shared/auth.js?v=1.5"></script>
+        <script src="js/index.js?v=1.5"></script>
+        <div class="container">
+            <div class="index-logo">WITROS</div>
+            <div class="subtitle">Generator Ofert Handlowych</div>
+
+            <!-- Login Form -->
+            <div id="login-section" class="login-box">
+                <h3><i data-lucide="lock"></i> Logowanie</h3>
+                <input
+                    type="text"
+                    id="login-username"
+                    placeholder="Login"
+                    autocomplete="username"
+                />
+                <input
+                    type="password"
+                    id="login-password"
+                    placeholder="Hasło"
+                    autocomplete="current-password"
+                />
+                <button class="login-btn" onclick="doLogin()">Zaloguj się</button>
+                <div class="login-error" id="login-error"></div>
+            </div>
+
+            <!-- User Section (Dashboard) -->
+            <div
+                id="user-section"
+                class="hidden"
+                style="width: 100%; display: flex; flex-direction: column; align-items: center"
+            >
+                <!-- User Hero Bar -->
+                <div class="user-hero">
+                    <div class="user-profile-card">
+                        <div class="user-avatar" id="user-avatar-initial">?</div>
+                        <div class="user-info-text">
+                            <span class="user-display-name" id="user-display-name">...</span>
+                            <span class="user-display-role-badge" id="user-display-role">...</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <a href="app.html#/kartoteka" class="btn-hero btn-accent"><i data-lucide="folder-open"></i> Kartoteka</a>
+                        <button class="btn-hero" onclick="showChangePassword()"><i data-lucide="key"></i> Hasło</button>
+                        <button class="btn-hero" onclick="doLogout()" style="color: #f87171">
+                            <i data-lucide="log-out"></i> Wyloguj
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Launcher Grid -->
+                <div class="launch-grid">
+                    <a href="app.html#/rury" class="launch-card rury">
+                        <span class="launch-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                        <div class="launch-content">
+                            <h2>Oferty Rury</h2>
+                            <p>Betonowe, żelbetowe i jajowe z PEHD</p>
+                        </div>
+                        <span class="launch-btn-label">OTWÓRZ</span>
+                    </a>
+
+                    <a href="app.html#/studnie" class="launch-card studnie">
+                        <span class="launch-icon"><i data-lucide="cylinder"></i></span>
+                        <div class="launch-content">
+                            <h2>Oferty Studnie</h2>
+                            <p>Studnie betonowe i żelbetowe</p>
+                        </div>
+                        <span class="launch-btn-label">OTWÓRZ</span>
+                    </a>
+
+                    <a
+                        href="app.html#/zlecenia"
+                        class="launch-card kartoteka"
+                        style="border-left-color: #ec4899"
+                    >
+                        <span class="launch-icon"><i data-lucide="factory"></i></span>
+                        <div class="launch-content">
+                            <h2>Kartoteka Zleceń</h2>
+                            <p>Produkcja zleceń na studnie</p>
+                        </div>
+                        <span class="launch-btn-label">OTWÓRZ</span>
+                    </a>
+                </div>
+
+                <!-- Recycled Numbers Widget -->
+                <div id="recycled-panel" class="admin-container">
+                    <div class="admin-header-row" style="margin-bottom: 0.5rem">
+                        <div class="admin-title-group">
+                            <h3><i data-lucide="recycle"></i> Numery do odzysku</h3>
+                        </div>
+                    </div>
+                    <div class="admin-card system-card">
+                        <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.75rem">
+                            Gotowe do użycia przy następnym zleceniu
+                        </div>
+                        <div
+                            id="recycled-numbers-list"
+                            style="display: flex; flex-wrap: wrap; gap: 0.5rem"
+                        >
+                            <span style="color: #64748b; font-size: 0.85rem"
+                                >Brak odzyskanych numerów.</span
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Panel Section -->
+                <div id="admin-panel" class="admin-container hidden">
+                    <!-- System Config Widget -->
+                    <div class="admin-header-row">
+                        <div class="admin-title-group">
+                            <h3>Konfiguracja Systemu</h3>
+                        </div>
+                    </div>
+
+                    <div class="admin-card system-card">
+                        <div style="display: flex; align-items: center; gap: 0.75rem">
+                            <span style="font-size: 1.5rem"><i data-lucide="calendar"></i></span>
+                            <div style="font-size: 0.85rem; font-weight: 800; color: white">
+                                Litera roku:
+                                <span
+                                    id="year-letter-preview"
+                                    class="token-badge"
+                                    style="margin-left: 5px"
+                                    >-</span
+                                >
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem">
+                            <span
+                                id="year-letter-year"
+                                style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700"
+                            ></span>
+                            <input
+                                type="text"
+                                id="year-letter-input"
+                                maxlength="1"
+                                style="
+                                    width: 45px;
+                                    height: 36px;
+                                    text-align: center;
+                                    font-size: 1.1rem;
+                                    font-weight: 900;
+                                    color: var(--primary-hover);
+                                    background: #0f172a;
+                                    border: 1px solid var(--glass-border);
+                                    border-radius: 8px;
+                                "
+                            />
+                            <button
+                                class="btn-hero btn-accent"
+                                onclick="saveYearLetter()"
+                                style="padding: 0.4rem 1rem"
+                            >
+                                Zapisz
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- User Management Widget -->
+                    <div
+                        class="admin-header-row"
+                        style="display: flex; justify-content: center; margin: 1.5rem 0 1rem"
+                    >
+                        <div class="admin-title-group" style="text-align: center">
+                            <h3>Zarządzanie Użytkownikami</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        class="admin-card"
+                        style="padding: 0; display: flex; flex-direction: column"
+                    >
+                        <div class="admin-table-wrap" style="flex: 1">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 22%">Pracownik</th>
+                                        <th style="width: 8%">Sym.</th>
+                                        <th style="width: 14%">Login</th>
+                                        <th style="width: 15%">Kontakt</th>
+                                        <th style="width: 8%">Rola</th>
+                                        <th style="width: 8%">Nr Zam.</th>
+                                        <th style="width: 8%">Nr Zlec.</th>
+                                        <th style="width: 17%">Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Inline User Form -->
+                        <div class="admin-form-inline" id="user-form-container">
+                            <div class="form-grid">
+                                <input
+                                    type="text"
+                                    id="new-user-firstname"
+                                    placeholder="Imię"
+                                    class="glass-input"
+                                />
+                                <input
+                                    type="text"
+                                    id="new-user-lastname"
+                                    placeholder="Nazwisko"
+                                    class="glass-input"
+                                />
+                                <input
+                                    type="text"
+                                    id="new-user-symbol"
+                                    placeholder="Sym."
+                                    title="Symbol w numeracji"
+                                    class="glass-input"
+                                />
+                                <input
+                                    type="text"
+                                    id="new-user-login"
+                                    placeholder="Login"
+                                    autocomplete="username"
+                                    class="glass-input"
+                                />
+                                <input
+                                    type="password"
+                                    id="new-user-password"
+                                    placeholder="Hasło"
+                                    autocomplete="new-password"
+                                    class="glass-input"
+                                />
+
+                                <input
+                                    type="email"
+                                    id="new-user-email"
+                                    placeholder="Email"
+                                    class="glass-input"
+                                />
+                                <input
+                                    type="text"
+                                    id="new-user-phone"
+                                    placeholder="Telefon"
+                                    class="glass-input"
+                                />
+                                <select
+                                    id="new-user-role"
+                                    onchange="toggleSubUsersList()"
+                                    class="glass-input"
+                                >
+                                    <option value="user">USER</option>
+                                    <option value="pro">PRO</option>
+                                    <option value="admin">ADMIN</option>
+                                </select>
+                                <input
+                                    type="number"
+                                    id="new-user-order-start"
+                                    value="1"
+                                    title="Start Zamówień"
+                                    placeholder="Nr Zam."
+                                    class="glass-input"
+                                />
+                                <input
+                                    type="number"
+                                    id="new-user-prod-order-start"
+                                    value="1"
+                                    title="Start Zleceń"
+                                    placeholder="Nr Zlec."
+                                    class="glass-input"
+                                />
+                            </div>
+
+                            <!-- SubUsers container (only visible if role === 'pro') -->
+                            <div id="sub-users-container" class="hidden sub-users-compact">
+                                <span class="sub-users-title">Przypisani Użytkownicy:</span>
+                                <div id="sub-users-list" class="sub-users-list-compact">
+                                    <!-- Checkboxes will be rendered here -->
+                                </div>
+                            </div>
+
+                            <div class="form-actions-inline">
+                                <span
+                                    id="form-mode-label"
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: #94a3b8;
+                                        font-weight: 600;
+                                        margin-right: 1rem;
+                                        display: none;
+                                    "
+                                    >TRYB EDYCJI</span
+                                >
+                                <button
+                                    id="add-user-btn"
+                                    class="btn-hero btn-accent"
+                                    onclick="createUser()"
+                                >
+                                    <i data-lucide="plus"></i> Dodaj
+                                </button>
+                                <button
+                                    id="cancel-edit-btn"
+                                    class="btn-hero hidden"
+                                    onclick="cancelEditUser()"
+                                    style="
+                                        background: rgba(239, 68, 68, 0.1);
+                                        color: #f87171;
+                                        border: 1px solid rgba(239, 68, 68, 0.2);
+                                    "
+                                >
+                                    Anuluj
+                                </button>
+                            </div>
+                            <div
+                                id="admin-error"
+                                class="login-error"
+                                style="margin-top: 0.5rem; text-align: center"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">WITROS © 2026 • Generator Ofert</div>
+
+        <script>
+            let adminUsers = [];
+            let editingUserId = null;
+            let selectedSubUsers = [];
+            let currentUser = null;
+
+            function toggleSubUsersList() {
+                const role = document.getElementById('new-user-role').value;
+                const container = document.getElementById('sub-users-container');
+                const listObj = document.getElementById('sub-users-list');
+                if (role === 'pro') {
+                    container.classList.remove('hidden');
+                    // render normal users as checkboxes
+                    const regularUsers = adminUsers.filter(
+                        (u) => u.role !== 'admin' && u.id !== editingUserId
+                    );
+                    if (regularUsers.length === 0) {
+                        listObj.innerHTML =
+                            '<span style="color:#64748b;">Brak innych użytkowników do przypisania</span>';
+                    } else {
+                        listObj.innerHTML = regularUsers
+                            .map(
+                                (u) => `
+                        <label style="display:flex; align-items:center; gap:0.3rem; background:var(--bg-lighter); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; border:1px solid var(--border-glass);">
+                            <input type="checkbox" value="${u.id}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
+                            ${u.firstName && u.lastName ? u.firstName + ' ' + u.lastName : u.username}
+                        </label>
+                    `
+                            )
+                            .join('');
+                    }
+                } else {
+                    container.classList.add('hidden');
+                    selectedSubUsers = [];
+                }
+            }
+
+            function updateSubUsers(checkbox) {
+                if (checkbox.checked) {
+                    if (!selectedSubUsers.includes(checkbox.value))
+                        selectedSubUsers.push(checkbox.value);
+                } else {
+                    selectedSubUsers = selectedSubUsers.filter((id) => id !== checkbox.value);
+                }
+            }
+
+            function getToken() {
+                return localStorage.getItem('authToken');
+            }
+
+            function authHeaders() {
+                const token = getToken();
+                return token
+                    ? { 'X-Auth-Token': token, 'Content-Type': 'application/json' }
+                    : { 'Content-Type': 'application/json' };
+            }
+
+            window.addEventListener('DOMContentLoaded', async () => {
+                const token = getToken();
+                if (token) {
+                    try {
+                        const res = await fetch('/api/auth/me', { headers: authHeaders() });
+                        const data = await res.json();
+                        if (data.user) {
+                            showLoggedIn(data.user);
+                            return;
+                        }
+                    } catch (e) {}
+                }
+                showLogin();
+            });
+
+            async function loadRecycledNumbers(user) {
+                const u = user || currentUser;
+                if (!u) return;
+                try {
+                    const res = await fetch('/api/orders-studnie/recycled', {
+                        headers: authHeaders()
+                    });
+                    const data = await res.json();
+                    const container = document.getElementById('recycled-numbers-list');
+
+                    if (data.recycled && data.recycled.length > 0) {
+                        const yearShort = String(new Date().getFullYear()).slice(-2);
+                        container.innerHTML = data.recycled
+                            .map(
+                                (num) =>
+                                    `<span class="token-badge" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); padding:0.25rem 0.6rem; font-family:monospace; font-size:0.95rem;">${u.symbol || '?'}/.../${String(num).padStart(5, '0')}/${yearShort}</span>`
+                            )
+                            .join('');
+                    } else {
+                        container.innerHTML =
+                            '<span style="color:#64748b; font-size:0.85rem;">Brak odzyskanych numerów.</span>';
+                    }
+                } catch (e) {
+                    console.error('Failed to load recycled numbers', e);
+                }
+            }
+
+            // Handle Enter key in login fields
+            document.addEventListener('keydown', (e) => {
+                if (
+                    e.key === 'Enter' &&
+                    !document.getElementById('login-section').classList.contains('hidden')
+                ) {
+                    doLogin();
+                }
+            });
+
+            function showLogin() {
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('user-section').classList.add('hidden');
+                document.getElementById('dash-header').classList.remove('visible');
+                document.querySelector('.container').classList.remove('logged-in');
+            }
+
+            function showLoggedIn(user) {
+                currentUser = user;
+                sessionStorage.setItem('user', JSON.stringify(user));
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('user-section').classList.remove('hidden');
+                document.querySelector('.container').classList.add('logged-in');
+                document.getElementById('user-display-name').textContent =
+                    user.firstName && user.lastName
+                        ? user.firstName + ' ' + user.lastName
+                        : user.username;
+                document.getElementById('user-avatar-initial').textContent = user.username
+                    .charAt(0)
+                    .toUpperCase();
+                const roleEl = document.getElementById('user-display-role');
+                roleEl.textContent = user.role.toUpperCase();
+
+                // Show dashboard nav header
+                document.getElementById('dash-header').classList.add('visible');
+                const dashUser = document.getElementById('dash-username');
+                const dashRole = document.getElementById('dash-role');
+                if (dashUser) dashUser.innerHTML = '<i data-lucide="user"></i> ' + user.username;
+                if (dashRole) {
+                    dashRole.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
+                    dashRole.style.background = user.role === 'admin' ? '#2d2208' : '#152040';
+                    dashRole.style.color = user.role === 'admin' ? '#f59e0b' : '#60a5fa';
+                    dashRole.style.border =
+                        user.role === 'admin' ? '1px solid #2d2208' : '1px solid #152040';
+                }
+
+                if (user.role === 'admin') {
+                    document.getElementById('admin-panel').classList.remove('hidden');
+                    loadUsers();
+                    loadYearLetter();
+                } else {
+                    document.getElementById('admin-panel').classList.add('hidden');
+                }
+
+                loadRecycledNumbers(user);
+            }
+
+            async function doLogin() {
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value;
+                const errorEl = document.getElementById('login-error');
+                errorEl.textContent = '';
+
+                if (!username || !password) {
+                    errorEl.textContent = 'Podaj login i hasło';
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        errorEl.textContent = data.error || 'Błąd logowania';
+                        return;
+                    }
+                    localStorage.setItem('authToken', data.token);
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
+                    showLoggedIn(data.user);
+                } catch (e) {
+                    errorEl.textContent = 'Błąd połączenia z serwerem';
+                }
+            }
+
+            async function doLogout() {
+                try {
+                    await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
+                } catch (e) {}
+                localStorage.removeItem('authToken');
+                showLogin();
+                document.getElementById('login-username').value = '';
+                document.getElementById('login-password').value = '';
+            }
+
+            async function loadUsers() {
+                try {
+                    const res = await fetch('/api/users', { headers: authHeaders() });
+                    const data = await res.json();
+                    adminUsers = data.data || [];
+                    const tbody = document.getElementById('users-table-body');
+                    tbody.innerHTML = adminUsers
+                        .map((u) => {
+                            let html = `
+          <tr>
+            <td>
+                <div style="font-weight:700; color:white; text-align: center;">${(u.firstName || '') + ' ' + (u.lastName || '')}</div>
+                <div style="font-size:0.65rem; color:var(--text-dim); text-align: center;">${u.email || 'brak email'}</div>
+            </td>
+            <td><span class="token-badge" style="color:var(--warn);">${u.symbol || '??'}</span></td>
+            <td style="font-family:monospace; color:var(--primary-hover);">${u.username}</td>
+            <td style="font-size:0.75rem;">${u.phone || '—'}</td>
+            <td><span class="badge-role ${u.role}">${u.role.toUpperCase()}</span></td>
+            <td style="color:#60a5fa; font-weight:800;">${u.orderStartNumber || 1}</td>
+            <td style="color:var(--primary-hover); font-weight:800;">${u.productionOrderStartNumber || 1}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn-hero" onclick="startEditUser('${u.id}')" style="padding:0.4rem; display:inline-flex;"><i data-lucide="pencil"></i></button>
+              ${u.username !== 'admin' ? `<button class="btn-hero" onclick="deleteUser('${u.id}')" style="padding:0.4rem; display:inline-flex; border-color:rgba(239,68,68,0.2); color:#f87171;"><i data-lucide="trash-2"></i></button>` : ''}
+            </td>
+          </tr>`;
+                            if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
+                                const subUsersNames = u.subUsers.map((subId) => {
+                                    const subU = adminUsers.find((x) => x.id === subId);
+                                    return subU
+                                        ? subU.firstName && subU.lastName
+                                            ? subU.firstName + ' ' + subU.lastName
+                                            : subU.username
+                                        : 'Nieznany';
+                                });
+                                html += `
+          <tr class="subordinate-row">
+            <td colspan="8">
+                <div class="subordinate-list" style="justify-content: center; display: flex; align-items: center; margin: 0.5rem auto; max-width: fit-content;">
+                    <span class="subordinate-label"><i data-lucide="users"></i> POWIĄZANI HANDLOWCY:</span>
+                    <div class="subordinate-badges">
+                        ${subUsersNames.map((name) => `<span class="token-badge sub-token">${name}</span>`).join('')}
+                    </div>
+                </div>
+            </td>
+          </tr>`;
+                            }
+                            return html;
+                        })
+                        .join('');
+                } catch (e) {}
+            }
+
+            function startEditUser(id) {
+                const u = adminUsers.find((x) => x.id === id);
+                if (!u) return;
+                editingUserId = id;
+                document.getElementById('new-user-firstname').value = u.firstName || '';
+                document.getElementById('new-user-lastname').value = u.lastName || '';
+                document.getElementById('new-user-symbol').value = u.symbol || '';
+                document.getElementById('new-user-login').value = u.username;
+                document.getElementById('new-user-password').value = '';
+                document.getElementById('new-user-password').placeholder =
+                    'Nowe hasło (opcjonalnie)';
+                document.getElementById('new-user-email').value = u.email || '';
+                document.getElementById('new-user-phone').value = u.phone || '';
+                document.getElementById('new-user-order-start').value = u.orderStartNumber || 1;
+                document.getElementById('new-user-prod-order-start').value =
+                    u.productionOrderStartNumber || 1;
+                document.getElementById('new-user-role').value = u.role;
+                selectedSubUsers = [...(u.subUsers || [])];
+                toggleSubUsersList();
+
+                document.getElementById('form-mode-label').style.display = 'inline-block';
+                document.getElementById('form-mode-label').textContent =
+                    'EDYCJA: ' + (u.firstName || u.username);
+                document.getElementById('add-user-btn').innerHTML = '<i data-lucide="save"></i> Zapisz';
+                document.getElementById('cancel-edit-btn').classList.remove('hidden');
+            }
+
+            function cancelEditUser() {
+                editingUserId = null;
+                document.getElementById('form-mode-label').style.display = 'none';
+                document.getElementById('new-user-firstname').value = '';
+                document.getElementById('new-user-lastname').value = '';
+                document.getElementById('new-user-symbol').value = '';
+                document.getElementById('new-user-login').value = '';
+                document.getElementById('new-user-password').value = '';
+                document.getElementById('new-user-password').placeholder = 'Hasło';
+                document.getElementById('new-user-email').value = '';
+                document.getElementById('new-user-phone').value = '';
+                document.getElementById('new-user-order-start').value = 1;
+                document.getElementById('new-user-prod-order-start').value = 1;
+                document.getElementById('new-user-role').value = 'user';
+
+                document.getElementById('add-user-btn').innerHTML = '<i data-lucide="plus"></i> Dodaj';
+                document.getElementById('cancel-edit-btn').classList.add('hidden');
+
+                selectedSubUsers = [];
+                toggleSubUsersList();
+            }
+
+            async function createUser() {
+                const firstName = document.getElementById('new-user-firstname').value.trim();
+                const lastName = document.getElementById('new-user-lastname').value.trim();
+                const symbol = document.getElementById('new-user-symbol').value.trim();
+                const login = document.getElementById('new-user-login').value.trim();
+                const password = document.getElementById('new-user-password').value;
+                const email = document.getElementById('new-user-email').value.trim();
+                const phone = document.getElementById('new-user-phone').value.trim();
+                const role = document.getElementById('new-user-role').value;
+                const errorEl = document.getElementById('admin-error');
+                errorEl.textContent = '';
+
+                if (!login) {
+                    errorEl.textContent = 'Podaj login';
+                    return;
+                }
+                // For new users, password is required
+                if (!editingUserId && !password) {
+                    errorEl.textContent = 'Podaj hasło dla nowego użytkownika';
+                    return;
+                }
+
+                try {
+                    const isEditing = !!editingUserId;
+                    const url = isEditing ? `/api/users/${editingUserId}` : '/api/auth/register';
+                    const method = isEditing ? 'PUT' : 'POST';
+                    const payload = {
+                        username: login,
+                        role,
+                        firstName,
+                        lastName,
+                        symbol,
+                        phone,
+                        email,
+                        subUsers: selectedSubUsers,
+                        orderStartNumber:
+                            parseInt(document.getElementById('new-user-order-start').value) || 1,
+                        productionOrderStartNumber:
+                            parseInt(document.getElementById('new-user-prod-order-start').value) ||
+                            1
+                    };
+                    if (password) payload.password = password;
+
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: authHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        errorEl.textContent =
+                            data.error || (isEditing ? 'Błąd zapisu' : 'Błąd tworzenia konta');
+                        return;
+                    }
+                    cancelEditUser(); // Clears form and resets state
+                    loadUsers();
+                } catch (e) {
+                    errorEl.textContent = 'Błąd połączenia';
+                }
+            }
+
+            async function deleteUser(id) {
+                if (!confirm('Czy na pewno usunąć tego użytkownika?')) return;
+                try {
+                    await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
+                    loadUsers();
+                } catch (e) {}
+            }
+
+            function showChangePassword() {
+                const oldPw = prompt('Podaj stare hasło:');
+                if (!oldPw) return;
+                const newPw = prompt('Podaj nowe hasło (min. 4 znaki):');
+                if (!newPw) return;
+                if (newPw.length < 4) {
+                    alert('Hasło musi mieć min. 4 znaki');
+                    return;
+                }
+
+                fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
+                })
+                    .then((r) => r.json())
+                    .then((data) => {
+                        if (data.ok) {
+                            alert('Hasło zmienione!');
+                        } else {
+                            alert(data.error || 'Błąd zmiany hasła');
+                        }
+                    })
+                    .catch(() => alert('Błąd połączenia'));
+            }
+
+            /* ===== YEAR LETTER MANAGEMENT ===== */
+            async function loadYearLetter() {
+                try {
+                    const res = await fetch('/api/settings/year-letter', {
+                        headers: authHeaders()
+                    });
+                    const data = await res.json();
+                    const input = document.getElementById('year-letter-input');
+                    const yearEl = document.getElementById('year-letter-year');
+                    const preview = document.getElementById('year-letter-preview');
+                    if (input) input.value = data.letter || '';
+                    if (yearEl) yearEl.textContent = 'Rok: ' + (data.year || '');
+                    if (preview) preview.textContent = data.letter || '?';
+                } catch (e) {
+                    console.error('loadYearLetter:', e);
+                }
+            }
+
+            async function saveYearLetter() {
+                const letter = (document.getElementById('year-letter-input').value || '')
+                    .trim()
+                    .toUpperCase();
+                if (!letter || letter.length !== 1) {
+                    alert('Litera musi być pojedynczym znakiem (A-Z)');
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/settings/year-letter', {
+                        method: 'PUT',
+                        headers: authHeaders(),
+                        body: JSON.stringify({ letter })
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        const preview = document.getElementById('year-letter-preview');
+                        if (preview) preview.textContent = letter;
+                        alert('Litera roku zapisana: ' + letter);
+                    } else {
+                        alert(data.error || 'Błąd zapisu');
+                    }
+                } catch (e) {
+                    alert('Błąd połączenia');
+                }
+            }
+        </script>
+        <script src="js/shared/icons-slim.js?v=2.0"></script>
+</body>
+</html>

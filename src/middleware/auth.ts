@@ -125,8 +125,17 @@ export async function ensureAdminExists(): Promise<void> {
             where: { username: 'admin' }
         });
         if (!admin) {
-            const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
-            const hash = bcrypt.hashSync(defaultPassword, 10);
+            const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD;
+            if (!defaultPassword) {
+                logger.error(
+                    'Auth',
+                    'BŁĄD KRYTYCZNY: DEFAULT_ADMIN_PASSWORD nie jest ustawiony. Ustaw zmienną środowiskową.'
+                );
+                throw new Error(
+                    'DEFAULT_ADMIN_PASSWORD must be set - cannot create default admin account'
+                );
+            }
+            const hash = await bcrypt.hash(defaultPassword, 10);
             await prisma.users.create({
                 data: {
                     id: 'usr_admin',

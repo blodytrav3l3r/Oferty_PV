@@ -22,6 +22,47 @@ async function saveOrdersDataStudnie(data) {
     }
 }
 
+/* ===== POMOCNIKI ZAMÓWIEŃ CZĘŚCIOWYCH ===== */
+
+/** Zwraca wszystkie zamówienia powiązane z daną ofertą */
+function getOrdersForOffer(offerId) {
+    if (!ordersStudnie || !offerId) return [];
+    const nId = normalizeId(offerId);
+    return ordersStudnie.filter((o) => normalizeId(o.offerId) === nId);
+}
+
+/** Zwraca Set<string> z ID studni, które są już zamówione dla danej oferty */
+function getOrderedWellIds(offerId) {
+    const orders = getOrdersForOffer(offerId);
+    const ids = new Set();
+    orders.forEach((order) => {
+        (order.wells || []).forEach((w) => {
+            if (w.id) ids.add(w.id);
+        });
+    });
+    return ids;
+}
+
+/** Sprawdza, czy dana studnia jest zamówiona w ramach bieżącej oferty */
+function isWellOrdered(well) {
+    if (!well || !well.id || !editingOfferIdStudnie) return false;
+    return getOrderedWellIds(editingOfferIdStudnie).has(well.id);
+}
+
+/** Oblicza progres zamówień dla danej oferty: { ordered, total, percent } */
+function getOfferOrderProgress(offerId, offerWells) {
+    const orderedIds = getOrderedWellIds(offerId);
+    const total = (offerWells || []).length;
+    const ordered = (offerWells || []).filter((w) => w.id && orderedIds.has(w.id)).length;
+    const percent = total > 0 ? Math.round((ordered / total) * 100) : 0;
+    return { ordered, total, percent };
+}
+
+window.getOrdersForOffer = getOrdersForOffer;
+window.getOrderedWellIds = getOrderedWellIds;
+window.isWellOrdered = isWellOrdered;
+window.getOfferOrderProgress = getOfferOrderProgress;
+
 async function createOrderFromOffer() {
     // Zapobiegaj wyścigom w UI, jeśli użytkownik kliknął dwukrotnie lub kliknął Zamówienie podczas trwania zapisu
     if (isSavingOffer) {
@@ -45,15 +86,6 @@ async function createOrderFromOffer() {
         return;
     }
 
-    // Ostrzeżenie że oferta zostanie zablokowana
-    if (
-        !(await appConfirm(
-            'Po utworzeniu zamówienia oferta zostanie zablokowana do edycji.\nDalsze zmiany będą możliwe tylko w zamówieniu.\n\nKontynuować?',
-            { title: 'Tworzenie zamówienia', type: 'warning' }
-        ))
-    )
-        return;
-
     console.log('[createOrderFromOffer] editingOfferIdStudnie =', editingOfferIdStudnie);
     console.log('[createOrderFromOffer] offersStudnie count =', offersStudnie.length);
     const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
@@ -71,23 +103,34 @@ async function createOrderFromOffer() {
         return;
     }
 
-    const oId = normalizeId(offer.id);
-    // Sprawdź, czy zamówienie już istnieje
-    const existingOrder = ordersStudnie
-        ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
-        : null;
-    if (existingOrder) {
-        if (
-            !(await appConfirm(
-                'Zamówienie dla tej oferty już istnieje. Czy chcesz utworzyć nowe (nadpisze poprzednie)?',
-                { title: 'Nadpisanie zamówienia', type: 'warning' }
-            ))
-        )
-            return;
-        ordersStudnie = ordersStudnie
-            ? ordersStudnie.filter((o) => normalizeId(o.offerId) !== oId)
-            : [];
+    // Zbierz zaznaczone studnie z checkboxów w podsumowaniu oferty
+    const selectedWells = collectSelectedWellsForOrder();
+    if (selectedWells.length === 0) {
+        showToast('Zaznacz co najmniej jedną studnię do zamówienia', 'error');
+        return;
     }
+
+    // Weryfikacja — wybrane studnie nie mogą być już zamówione
+    const alreadyOrderedIds = getOrderedWellIds(offer.id);
+    const conflicting = selectedWells.filter((w) => alreadyOrderedIds.has(w.id));
+    if (conflicting.length > 0) {
+        showToast('Wybrane studnie są już częścią innego zamówienia', 'error');
+        return;
+    }
+
+    // Ostrzeżenie: wybrane studnie zostaną zablokowane do edycji w ofercie
+    const confirmMsg =
+        selectedWells.length === wells.length
+            ? `Utworzysz zamówienie na WSZYSTKIE ${selectedWells.length} studni z oferty.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\n\nKontynuować?`
+            : `Utworzysz zamówienie na ${selectedWells.length} z ${wells.length} studni.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\nPozostałe studnie będziesz mógł domówić później.\n\nKontynuować?`;
+
+    if (
+        !(await appConfirm(confirmMsg, {
+            title: 'Tworzenie zamówienia częściowego',
+            type: 'warning'
+        }))
+    )
+        return;
 
     // Określ przypisanego użytkownika dla numeracji zamówienia — domyślnie opiekun oferty
     let assignedUserId = offer.userId || (currentUser ? currentUser.id : null);
@@ -142,7 +185,8 @@ async function createOrderFromOffer() {
         return;
     }
 
-    // Utwórz zamówienie z oferty — wykonaj głęboką kopię wszystkiego, zapisz oryginalną migawkę
+    // Utwórz zamówienie z WYBRANYCH studni — wykonaj głęboką kopię, zapisz oryginalną migawkę
+    const selectedWellsCopy = JSON.parse(JSON.stringify(selectedWells));
     const order = {
         id: 'order_studnie_' + Date.now(),
         offerId: offer.id,
@@ -160,9 +204,9 @@ async function createOrderFromOffer() {
         investAddress: offer.investAddress,
         investContractor: offer.investContractor,
         notes: offer.notes,
-        wells: JSON.parse(JSON.stringify(offer.wells)),
+        wells: selectedWellsCopy,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
-        originalSnapshot: JSON.parse(JSON.stringify(offer.wells)), // frozen copy for diff
+        originalSnapshot: JSON.parse(JSON.stringify(selectedWellsCopy)),
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
         totalWeight: offer.totalWeight,
@@ -173,23 +217,49 @@ async function createOrderFromOffer() {
         createdBy: currentUser ? currentUser.username : ''
     };
 
+    // Przelicz sumy tylko dla wybranych studni
+    let totalNetto = 0;
+    let totalWeight = 0;
+    selectedWells.forEach((well) => {
+        const stats = calcWellStats(well);
+        totalNetto += stats.price;
+        totalWeight += stats.weight;
+    });
+    order.totalWeight = totalWeight;
+    order.totalNetto = totalNetto;
+    order.totalBrutto = totalNetto * 1.23;
+
     // Zamroź ceny studni w zamówieniu w momencie tworzenia
     freezeWellPrices(order.wells);
-
-    // Oznacz ofertę jako posiadającą zamówienie
-    offer.hasOrder = true;
-    offer.orderId = order.id;
-    await saveOffersDataStudnie(offersStudnie);
 
     if (!ordersStudnie) ordersStudnie = [];
     ordersStudnie.push(order);
     await saveOrdersDataStudnie(ordersStudnie);
+
+    // Zapisz ofertę (aby zachować powiązania)
+    await saveOfferStudnie();
     renderSavedOffersStudnie();
 
-    showToast(`<i data-lucide="package"></i> Zamówienie ${orderNumber} utworzone z oferty ${offer.number}`, 'success');
+    showToast(
+        `<i data-lucide="package"></i> Zamówienie ${orderNumber} utworzone (${selectedWells.length} studni z oferty ${offer.number})`,
+        'success'
+    );
 
     // Otwórz zamówienie w tym samym oknie (używa głównego edytora studni w trybie zamówienia)
     window.location.href = '/studnie?order=' + order.id;
+}
+
+/** Zbiera indeksy zaznaczonych studni z checkboxów w podsumowaniu oferty */
+function collectSelectedWellsForOrder() {
+    const checkboxes = document.querySelectorAll('.well-order-checkbox:checked');
+    const selectedWells = [];
+    checkboxes.forEach((cb) => {
+        const idx = parseInt(cb.dataset.wellIndex, 10);
+        if (!isNaN(idx) && wells[idx]) {
+            selectedWells.push(wells[idx]);
+        }
+    });
+    return selectedWells;
 }
 
 function saveOrderStudnie() {
@@ -298,20 +368,13 @@ async function deleteOrderStudnie(orderId) {
     let affectedOfferId = null;
     if (order) {
         affectedOfferId = normalizeId(order.offerId);
-        // Usuń flagę hasOrder z oferty
-        const offer = offersStudnie.find((o) => normalizeId(o.id) === affectedOfferId);
-        if (offer) {
-            offer.hasOrder = false;
-            delete offer.orderId;
-            saveOffersDataStudnie(offersStudnie);
-        }
     }
     if (ordersStudnie) {
         ordersStudnie = ordersStudnie.filter((o) => o.id !== orderId);
         saveOrdersDataStudnie(ordersStudnie);
     }
     renderSavedOffersStudnie();
-    showToast('Zamówienie usunięte. Oferta odblokowana.', 'info');
+    showToast('Zamówienie usunięte. Studnie odblokowane do ponownego zamówienia.', 'info');
 
     // Odśwież główną konfigurację, jeśli jest otwarta
     if (typeof renderWellConfig === 'function') renderWellConfig();
@@ -1357,13 +1420,18 @@ function populateZleceniaForm(el) {
     let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
 
     // Logika dennica na dennicy LUB tryb Psia buda
-    const isStacked = elementIndex < well.config.length - 1 && (well.config[elementIndex + 1]);
-    const nextItem = isStacked ? well.config[elementIndex + 1] : null;
-    const nextProduct = nextItem ? studnieProducts.find((p) => p.id === nextItem.productId) : null;
+    let actualNextProduct = null;
+    for (let i = elementIndex + 1; i < well.config.length; i++) {
+        const _p = studnieProducts.find((p) => p.id === well.config[i].productId);
+        if (_p && _p.componentType !== 'uszczelka') {
+            actualNextProduct = _p;
+            break;
+        }
+    }
     
     const shouldReduce = (product.componentType === 'dennica') && (
-        (nextProduct && nextProduct.componentType === 'dennica') || 
-        (well.psiaBuda && elementIndex === well.config.length - 1)
+        (actualNextProduct && actualNextProduct.componentType === 'dennica') || 
+        (well.psiaBuda && !actualNextProduct)
     );
 
     if (shouldReduce) {
@@ -1432,8 +1500,6 @@ function populateZleceniaForm(el) {
     });
     const przejsciaCount = assignedPrzejscia.length;
 
-    // Wybór stopni — wyprowadź bieżącą wartość
-    const stopnieVal = existing?.rodzajStopni || '';
     const stopnieOptions = [
         ['', 'Brak'],
         ['drabinka_a_stalowa', 'Drabinka Typ A/stalowa'],
@@ -1443,11 +1509,29 @@ function populateZleceniaForm(el) {
         ['inne', 'Inne']
     ];
 
-    const katStopni = existing?.katStopni || '';
+    let baseKatStopni = '';
+    let baseRodzajStopni = '';
+    const dennicaConfigIdx = well.config.findIndex(c => {
+        const p = findProductFn(c.productId);
+        return p && p.componentType === 'dennica';
+    });
+    
+    if (dennicaConfigIdx >= 0 && elementIndex !== dennicaConfigIdx) {
+        const dennicaPo = (productionOrders || []).find(po => po.wellId === well.id && po.elementIndex === dennicaConfigIdx);
+        if (dennicaPo) {
+            if (dennicaPo.katStopni) baseKatStopni = dennicaPo.katStopni;
+            if (dennicaPo.rodzajStopni) baseRodzajStopni = dennicaPo.rodzajStopni;
+        }
+    }
+
+    const katStopni = existing?.katStopni || baseKatStopni || '';
     const wykonanie = katStopni ? calcStopnieExecution(katStopni) : '';
+    // Wybór stopni — wyprowadź bieżącą wartość z uwzględnieniem dziedziczenia
+    const stopnieVal = existing?.rodzajStopni || baseRodzajStopni || '';
 
     // Wartości dla kafelków — kręgi wiercone domyślnie bez kinety/spocznika
     const isKragOt = product && product.componentType === 'krag_ot';
+    const isAnyKrag = product && product.componentType && product.componentType.startsWith('krag');
     const shouldForceBrak = shouldReduce || isKragOt;
     const redKinetyVal =
         existing?.redukcjaKinety ?? (shouldForceBrak ? 'nie' : (well.redukcjaKinety ?? ''));
@@ -1569,12 +1653,10 @@ function populateZleceniaForm(el) {
     }
 
     // 9. Psia buda / Krąg na formie
-    if (well.psiaBuda && elementIndex === well.config.length - 1) {
+    if (well.psiaBuda && !actualNextProduct) {
         autoUwagi.push('UWAGA ! PSIA BUDA');
     }
-    const nextItem_uwagi = elementIndex < well.config.length - 1 && (well.config[elementIndex + 1]);
-    const nextProd_uwagi = nextItem_uwagi ? studnieProducts.find((p) => p.id === nextItem_uwagi.productId) : null;
-    if (product.componentType === 'dennica' && nextProd_uwagi && nextProd_uwagi.componentType === 'dennica') {
+    if (product.componentType === 'dennica' && actualNextProduct && actualNextProduct.componentType === 'dennica') {
         autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
     }
 
@@ -1753,7 +1835,7 @@ function populateZleceniaForm(el) {
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
             <!-- Kolumna 1 -->
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <div class="form-group-sm">
+                <div class="form-group-sm" ${isAnyKrag ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
                     <label class="form-label-sm">Redukcja kinety</label>
                     <div class="ui-row-gap zl-param-group">
                         ${redKinetyOptions
@@ -1811,7 +1893,7 @@ function populateZleceniaForm(el) {
 
             <!-- Kolumna 2 -->
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <div class="form-group-sm">
+                <div class="form-group-sm" ${isKragOt ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
                     <label class="form-label-sm">Wysokość spocznika</label>
                     <div class="ui-row-gap zl-param-group">
                         ${spocznikOptions
@@ -1837,7 +1919,7 @@ function populateZleceniaForm(el) {
                     <input type="hidden" id="zl-usytuowanie" value="${usytuowanieVal}">
                 </div>
 
-                <div class="form-group-sm">
+                <div class="form-group-sm" ${isKragOt ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
                     <label class="form-label-sm">Kineta</label>
                     <div class="ui-row-gap zl-param-group">
                         ${kinetaOptions
@@ -1850,7 +1932,7 @@ function populateZleceniaForm(el) {
                     <input type="hidden" id="zl-kineta" value="${kinetaVal}">
                 </div>
 
-                <div class="form-group-sm">
+                <div class="form-group-sm" ${isKragOt ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
                     <label class="form-label-sm">Spocznik</label>
                     <div class="ui-row-gap zl-param-group">
                         ${spocznikMatOptions
@@ -1983,13 +2065,15 @@ async function selectZleceniaTile(btn, targetId, val) {
 
                 const oldWellIdx = el.wellIndex;
                 const oldCat = el.product.category;
+                const oldElementIndex = el.elementIndex;
 
                 if (targetId === 'zl-rodzaj-studni') {
                     if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
 
                     // 1. Zaktualizowanie komponentów by dobrać wyrobienie Żelbet/Beton (i uaktualnić ich ceny)
-                    if (typeof window.autoSelectComponents === 'function') {
-                        await window.autoSelectComponents(false);
+                    // Zamiast niszczyć konfigurację przez autoSelectComponents, w Zleceniach po prostu podmieniamy produkty 1:1.
+                    if (typeof window.updateConfigToMatchParams === 'function') {
+                        window.updateConfigToMatchParams(el.well);
                     }
                 }
 
@@ -2010,8 +2094,13 @@ async function selectZleceniaTile(btn, targetId, val) {
 
                 // 4. Spróbujmy znaleźć przeliczony index elementu i go wybrać powtórnie
                 let newTargetIdx = zleceniaElementsList.findIndex(
-                    (e) => e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat
+                    (e) => e.wellIndex === oldWellIdx && e.elementIndex === oldElementIndex
                 );
+                if (newTargetIdx === -1) {
+                    newTargetIdx = zleceniaElementsList.findIndex(
+                        (e) => e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat
+                    );
+                }
                 if (newTargetIdx === -1) {
                     newTargetIdx = zleceniaElementsList.findIndex(
                         (e) => e.wellIndex === oldWellIdx

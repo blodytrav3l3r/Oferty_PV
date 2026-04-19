@@ -555,6 +555,63 @@ tbody tr:hover {
     background: #1e1e4a;
 }
 
+/* Rozwijane wiersze studni */
+.well-row-header {
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.well-row-header:hover {
+    background: rgba(99, 102, 241, 0.1) !important;
+}
+
+.well-details-row {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.well-details-row.hidden {
+    display: none;
+}
+
+.well-details-container {
+    padding: 0.8rem 1rem;
+    border-left: 2px solid var(--accent);
+    margin: 0.2rem 0.5rem 0.5rem 2.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0 0 8px 8px;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.well-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.well-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.well-detail-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.well-detail-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
 .text-right {
     text-align: right;
 }

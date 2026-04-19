@@ -180,7 +180,7 @@ describe('validateData middleware', () => {
         });
     });
 
-    it('powinien przepuszczać prawidłowe dane', () => {
+    it('powinien przepuszczać prawidłowe dane', async () => {
         const res = await request(app)
             .post('/test')
             .send({ username: 'admin', password: 'admin123' });
@@ -189,7 +189,7 @@ describe('validateData middleware', () => {
         expect(res.body.ok).toBe(true);
     });
 
-    it('powinien zwracać 400 dla nieprawidłowych danych', () => {
+    it('powinien zwracać 400 dla nieprawidłowych danych', async () => {
         const res = await request(app).post('/test').send({ username: 'a' });
 
         expect(res.statusCode).toBe(400);
@@ -198,7 +198,7 @@ describe('validateData middleware', () => {
         expect(Array.isArray(res.body.details)).toBe(true);
     });
 
-    it('powinien zwracać 400 dla pustego body', () => {
+    it('powinien zwracać 400 dla pustego body', async () => {
         const res = await request(app).post('/test').send({});
 
         expect(res.statusCode).toBe(400);

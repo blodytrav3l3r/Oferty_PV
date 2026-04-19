@@ -8,10 +8,7 @@
             name="description"
             content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
         />
-        <link
-            href="css/inter.css"
-            rel="stylesheet"
-        />
+        <link href="css/inter.css" rel="stylesheet" />
         <link rel="stylesheet" href="css/style.css?v=1.5" />
         <link rel="stylesheet" href="css/index.css?v=1.5" />
     </head>
@@ -45,7 +42,9 @@
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="app.html#/rury" class="nav-tile">
-                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                            <span class="nav-tile-icon"
+                                ><i data-lucide="cylinder" class="lucide-rotate-n90"></i
+                            ></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a href="app.html#/kartoteka" class="nav-tile">
@@ -64,7 +63,9 @@
                 </div>
 
                 <div class="header-right">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem">
+                    <div
+                        style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem"
+                    >
                         <span
                             id="dash-username"
                             style="color: var(--text-secondary); font-weight: 500"
@@ -89,12 +90,20 @@
                                 border-radius: 6px;
                                 background: var(--bg-glass);
                                 color: var(--text-muted);
-                                font: 500 0.75rem 'Inter', sans-serif;
+                                font:
+                                    500 0.75rem 'Inter',
+                                    sans-serif;
                                 cursor: pointer;
                                 transition: all 0.2s;
                             "
-                            onmouseenter="this.style.color='#f87171';this.style.borderColor='#3a1a1a'"
-                            onmouseleave="this.style.color='var(--text-muted)';this.style.borderColor='var(--border-glass)'"
+                            onmouseenter="
+                                this.style.color = '#f87171';
+                                this.style.borderColor = '#3a1a1a';
+                            "
+                            onmouseleave="
+                                this.style.color = 'var(--text-muted)';
+                                this.style.borderColor = 'var(--border-glass)';
+                            "
                         >
                             Wyloguj
                         </button>
@@ -105,7 +114,6 @@
 
         <script src="js/shared/formatters.js?v=1.5"></script>
         <script src="js/shared/auth.js?v=1.5"></script>
-        <script src="js/index.js?v=1.5"></script>
         <div class="container">
             <div class="index-logo">WITROS</div>
             <div class="subtitle">Generator Ofert Handlowych</div>
@@ -145,8 +153,12 @@
                         </div>
                     </div>
                     <div class="user-actions">
-                        <a href="app.html#/kartoteka" class="btn-hero btn-accent"><i data-lucide="folder-open"></i> Kartoteka</a>
-                        <button class="btn-hero" onclick="showChangePassword()"><i data-lucide="key"></i> Hasło</button>
+                        <a href="app.html#/kartoteka" class="btn-hero btn-accent"
+                            ><i data-lucide="folder-open"></i> Kartoteka</a
+                        >
+                        <button class="btn-hero" onclick="showChangePassword()">
+                            <i data-lucide="key"></i> Hasło
+                        </button>
                         <button class="btn-hero" onclick="doLogout()" style="color: #f87171">
                             <i data-lucide="log-out"></i> Wyloguj
                         </button>
@@ -156,7 +168,9 @@
                 <!-- Launcher Grid -->
                 <div class="launch-grid">
                     <a href="app.html#/rury" class="launch-card rury">
-                        <span class="launch-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                        <span class="launch-icon"
+                            ><i data-lucide="cylinder" class="lucide-rotate-n90"></i
+                        ></span>
                         <div class="launch-content">
                             <h2>Oferty Rury</h2>
                             <p>Betonowe, żelbetowe i jajowe z PEHD</p>
@@ -694,7 +708,8 @@
                 document.getElementById('form-mode-label').style.display = 'inline-block';
                 document.getElementById('form-mode-label').textContent =
                     'EDYCJA: ' + (u.firstName || u.username);
-                document.getElementById('add-user-btn').innerHTML = '<i data-lucide="save"></i> Zapisz';
+                document.getElementById('add-user-btn').innerHTML =
+                    '<i data-lucide="save"></i> Zapisz';
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
             }
 
@@ -713,7 +728,8 @@
                 document.getElementById('new-user-prod-order-start').value = 1;
                 document.getElementById('new-user-role').value = 'user';
 
-                document.getElementById('add-user-btn').innerHTML = '<i data-lucide="plus"></i> Dodaj';
+                document.getElementById('add-user-btn').innerHTML =
+                    '<i data-lucide="plus"></i> Dodaj';
                 document.getElementById('cancel-edit-btn').classList.add('hidden');
 
                 selectedSubUsers = [];
@@ -861,5 +877,5 @@
             }
         </script>
         <script src="js/shared/icons-slim.js?v=2.0"></script>
-</body>
+    </body>
 </html>
