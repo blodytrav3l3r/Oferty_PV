@@ -162,24 +162,22 @@ class StorageService {
     async getOfferById(id) {
         const headers = this.getHeaders();
         const stringId = String(id);
+        const isStudnie = stringId.startsWith('offer_studnie_');
 
-        // Próba 1: Dedykowany endpoint rury
-        try {
-            const res = await fetch(`/api/offers-rury/${encodeURIComponent(stringId)}`, { headers });
-            if (res.ok) {
-                const json = await res.json();
-                return this.normalizeOffer(json.data);
-            }
-        } catch (_e) { /* endpoint niedostępny — próbuj dalej */ }
+        // Ustal kolejność prób na podstawie prefiksu ID
+        const endpoints = isStudnie
+            ? [`/api/offers-rury/studnie/${encodeURIComponent(stringId)}`, `/api/offers-rury/${encodeURIComponent(stringId)}`]
+            : [`/api/offers-rury/${encodeURIComponent(stringId)}`, `/api/offers-rury/studnie/${encodeURIComponent(stringId)}`];
 
-        // Próba 2: Dedykowany endpoint studnie
-        try {
-            const res = await fetch(`/api/offers-rury/studnie/${encodeURIComponent(stringId)}`, { headers });
-            if (res.ok) {
-                const json = await res.json();
-                return this.normalizeOffer(json.data);
-            }
-        } catch (_e) { /* endpoint niedostępny — fallback */ }
+        for (const url of endpoints) {
+            try {
+                const res = await fetch(url, { headers });
+                if (res.ok) {
+                    const json = await res.json();
+                    return this.normalizeOffer(json.data);
+                }
+            } catch (_e) { /* endpoint niedostępny — próbuj dalej */ }
+        }
 
         // Fallback: pobierz wszystkie (kompatybilność wsteczna)
         console.warn(

@@ -210,13 +210,21 @@ function appConfirm(message, opts = {}) {
         const cancelBtn = document.getElementById('app-confirm-cancel');
         const iconEl = document.getElementById('app-confirm-icon');
 
-        const iconMap = { info: 'ℹ️', warning: '<i data-lucide="alert-triangle"></i>', danger: '<i data-lucide="trash-2"></i>' };
+        const iconMap = { info: '<i data-lucide="info" style="width: 32px; height: 32px; color: #6366f1;"></i>', warning: '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: #f59e0b;"></i>', danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: #ef4444;"></i>' };
         const accentMap = { info: '#6366f1', warning: '#f59e0b', danger: '#ef4444' };
         const accent = accentMap[type] || accentMap.info;
 
         if (iconEl) iconEl.innerHTML = iconMap[type] || iconMap.info;
-        if (titleEl) titleEl.textContent = title;
-        if (msgEl) msgEl.innerHTML = _escapeHtml(message).replace(/\n/g, '<br>');
+        if (titleEl) {
+            if (opts.allowHtml) {
+                titleEl.innerHTML = title;
+            } else {
+                titleEl.textContent = title;
+            }
+        }
+        if (msgEl) {
+            msgEl.innerHTML = opts.allowHtml ? message.replace(/\n/g, '<br>') : _escapeHtml(message).replace(/\n/g, '<br>');
+        }
 
         okBtn.innerHTML = okText;
         okBtn.style.background = accent;
@@ -228,6 +236,10 @@ function appConfirm(message, opts = {}) {
             overlay.style.opacity = '1';
         });
         setTimeout(() => okBtn.focus(), 50);
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            setTimeout(() => window.lucide.createIcons({ root: overlay }), 10);
+        }
 
         const cleanup = (result) => {
             overlay.style.opacity = '0';
@@ -273,8 +285,8 @@ function _ensureConfirmDOM() {
             background:#0d1520;
             border:1px solid #2e2e75;
             border-radius:16px;
-            width:100%; max-width:420px;
-            padding:1.5rem;
+            width:100%; max-width:800px;
+            padding:1.5rem 3rem;
             box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.08);
             text-align:center;
             animation:appConfirmIn 0.2s ease-out;

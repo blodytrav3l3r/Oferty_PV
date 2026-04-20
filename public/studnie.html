@@ -6,1445 +6,10 @@
         <meta name="description" content="WITROS — Kalkulator studni betonowych i żelbetowych" />
         <title>WITROS — Kalkulator Studni</title>
         <link rel="stylesheet" href="css/style.css?v=1.5" />
+        <link rel="stylesheet" href="css/studnie.css" />
+        <!-- CSS extracted to css/studnie.css -->
         <style>
-            /* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
-            .well-app-layout {
-                display: grid;
-                grid-template-columns: 350px 1fr 350px;
-                gap: 0;
-                margin: -0.8rem -1.5rem -2rem -1.5rem;
-                align-items: stretch;
-                height: calc(100vh - 58px);
-                /* 100vh minus header */
-                overflow: hidden;
-                background: var(--bg-primary);
-            }
-
-            @media (max-width: 1400px) {
-                .well-app-layout {
-                    grid-template-columns: 300px 1fr 300px;
-                }
-            }
-
-            @media (max-width: 1200px) {
-                .well-app-layout {
-                    grid-template-columns: 1fr 240px;
-                }
-
-                .well-diagram-panel {
-                    display: none;
-                }
-            }
-
-            @media (max-width: 900px) {
-                .well-app-layout {
-                    grid-template-columns: 1fr;
-                }
-            }
-
-            /* ── Layout modifier for steps 1 and 2 ── */
-            .well-app-layout.intro-mode {
-                grid-template-columns: 1fr;
-                max-width: 1200px;
-                margin: 0 auto;
-                height: auto;
-                overflow: visible;
-            }
-
-            .well-app-layout.intro-mode .well-diagram-panel,
-            .well-app-layout.intro-mode .wells-sidebar {
-                display: none !important;
-            }
-
-            /* ── Left: Well Diagram ── */
-            .well-diagram-panel {
-                background: var(--bg-secondary);
-                border-right: 1px solid var(--border-glass);
-                border-radius: 0;
-                padding: 0.8rem 1.2rem;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            .well-diagram-panel h3 {
-                padding: 0.8rem 1.2rem;
-                margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
-                border-bottom: 1px solid var(--border-glass);
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                font-size: 0.82rem;
-                font-weight: 700;
-                color: var(--text-primary);
-                display: flex;
-                align-items: center;
-                gap: 0.3rem;
-                flex-shrink: 0;
-                min-height: 57px;
-                background: var(--bg-secondary);
-            }
-
-            .well-diagram-svg {
-                width: 100%;
-                flex: 1;
-                height: auto;
-                min-height: 200px;
-                border-radius: 8px;
-                background: #0d1520;
-                border: 1px solid #161640;
-            }
-
-            .well-summary-mini {
-                margin-top: 0.4rem;
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 0.25rem;
-                flex-shrink: 0;
-            }
-
-            .well-summary-mini .ws-item {
-                background: #1a2536;
-                border: 1px solid var(--border-glass);
-                border-radius: 6px;
-                padding: 0.25rem;
-                text-align: center;
-            }
-
-            .ws-item .ws-label {
-                font-size: 0.55rem;
-                text-transform: uppercase;
-                color: var(--text-muted);
-                letter-spacing: 0.3px;
-            }
-
-            .ws-item .ws-value {
-                font-size: 0.85rem;
-                font-weight: 700;
-                color: var(--text-primary);
-                margin-top: 0.05rem;
-            }
-
-            .ws-item .ws-value.accent {
-                color: var(--success);
-            }
-
-            /* ── Right: Wells sidebar ── */
-            .wells-sidebar {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                background: var(--bg-secondary);
-                border-left: 1px solid var(--border-glass);
-            }
-
-            .wells-sidebar-panel {
-                background: transparent;
-                border: none;
-                border-radius: 0;
-                padding: 0.8rem 1.2rem;
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            .well-center-column {
-                height: 100%;
-                overflow-y: auto;
-                padding: 0 1rem;
-                scrollbar-width: thin;
-                scrollbar-color: #3730a3 #0f172a;
-            }
-
-            .well-center-column::-webkit-scrollbar,
-            #wells-list::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .well-center-column::-webkit-scrollbar-track,
-            #wells-list::-webkit-scrollbar-track {
-                background: #0f172a;
-                border-radius: 4px;
-            }
-
-            .well-center-column::-webkit-scrollbar-thumb,
-            #wells-list::-webkit-scrollbar-thumb {
-                background: #3730a3;
-                border-radius: 4px;
-            }
-
-            .well-center-column::-webkit-scrollbar-thumb:hover,
-            #wells-list::-webkit-scrollbar-thumb:hover {
-                background: #4f46e5;
-            }
-
-            .wells-sidebar-header {
-                padding: 0.8rem 1.2rem;
-                margin: -0.8rem -1.2rem 0.6rem -1.2rem;
-                border-bottom: 1px solid var(--border-glass);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                min-height: 57px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                background: var(--bg-secondary);
-            }
-
-            .wells-sidebar-header h3 {
-                font-size: 0.82rem;
-                font-weight: 700;
-                color: var(--text-primary);
-                display: flex;
-                align-items: center;
-                gap: 0.35rem;
-            }
-
-            #wells-list {
-                flex: 1;
-                overflow-y: auto;
-                overflow-x: hidden;
-                padding-right: 4px;
-                /* for scrollbar */
-                margin-right: -4px;
-                scrollbar-width: thin;
-                scrollbar-color: #3730a3 #0f172a;
-            }
-
-            .wells-sidebar-header .wells-count {
-                font-size: 0.65rem;
-                color: var(--text-muted);
-                font-weight: 500;
-            }
-
-            .wells-add-btn {
-                padding: 0.25rem 0.55rem;
-                border: 1px solid #2e2e75;
-                border-radius: 6px;
-                background: #161640;
-                color: #a5b4fc;
-                font:
-                    600 0.72rem 'Inter',
-                    sans-serif;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .wells-add-btn:hover {
-                background: #22225a;
-                border-color: #4d4da0;
-            }
-
-            .well-list-item {
-                background: rgba(26, 37, 54, 0.4);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                backdrop-filter: blur(4px);
-                border-radius: 8px;
-                padding: 0.4rem 0.6rem;
-                margin-bottom: 0.25rem;
-                cursor: pointer;
-                transition: all 0.15s ease-out;
-                position: relative;
-            }
-
-            .well-list-item:hover {
-                border-color: rgba(99, 102, 241, 0.3);
-                background: rgba(30, 45, 66, 0.6);
-                transform: translateX(2px);
-            }
-
-            .well-list-item.active {
-                border-color: rgba(99, 102, 241, 0.6);
-                background: rgba(19, 19, 53, 0.8);
-                box-shadow: inset 0 0 12px rgba(99, 102, 241, 0.1);
-            }
-
-            .well-list-item.active::before {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 15%;
-                height: 70%;
-                width: 3px;
-                background: #6366f1;
-                border-radius: 0 4px 4px 0;
-            }
-
-            .well-list-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .well-list-name {
-                font-size: 0.78rem;
-                font-weight: 600;
-                color: var(--text-primary);
-            }
-
-            .well-list-actions {
-                display: flex;
-                gap: 0.1rem;
-                opacity: 0;
-                transition: opacity 0.2s;
-            }
-
-            .well-list-item:hover .well-list-actions {
-                opacity: 1;
-            }
-
-            .well-list-action {
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 0.65rem;
-                padding: 0.1rem 0.25rem;
-                border-radius: 3px;
-                transition: background 0.15s;
-                color: var(--text-muted);
-            }
-
-            .well-list-action:hover {
-                background: #1a1e25;
-            }
-
-            .well-list-action.del:hover {
-                background: #301515;
-                color: #f87171;
-            }
-
-            .well-list-meta {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 0.62rem;
-                color: rgba(255, 255, 255, 0.4);
-                margin-top: 0.2rem;
-            }
-
-            .well-list-price {
-                font-weight: 800;
-                color: #4ade80 !important;
-                font-size: 0.72rem;
-            }
-
-            .well-list-elevations {
-                font-size: 0.58rem;
-                color: rgba(255, 255, 255, 0.35);
-                margin-top: 0.1rem;
-                display: flex;
-                gap: 0.4rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.03);
-                padding-top: 0.15rem;
-            }
-
-            .well-list-elevations strong {
-                color: rgba(255, 255, 255, 0.6);
-                font-weight: 600;
-            }
-
-            /* ── Well info fields ── */
-            .well-info-card {
-                background: #0d1520;
-                border: 1px solid var(--border-glass);
-                border-radius: 8px;
-                padding: 0.5rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .well-info-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 0.4rem;
-            }
-
-            .well-info-field label {
-                display: block;
-                font-size: 0.65rem;
-                text-transform: uppercase;
-                color: var(--text-muted);
-                letter-spacing: 0.3px;
-                margin-bottom: 0.2rem;
-            }
-
-            .well-info-field input {
-                width: 100%;
-                padding: 0.35rem 0.45rem;
-                background: #1e2d42;
-                border: 1px solid var(--border-glass);
-                border-radius: 5px;
-                color: var(--text-primary);
-                font:
-                    600 0.8rem 'Inter',
-                    sans-serif;
-                text-align: center;
-                transition: border-color 0.2s;
-            }
-
-            .well-info-field input:focus {
-                outline: none;
-                border-color: #4d4da0;
-            }
-
-            .well-info-field .computed {
-                text-align: center;
-                padding: 0.35rem 0.45rem;
-                font:
-                    700 0.85rem 'Inter',
-                    sans-serif;
-                color: #818cf8;
-            }
-
-            /* ── Tiles & Config ── */
-            .tiles-section {
-                margin-bottom: 0.6rem;
-            }
-
-            .tiles-section-title {
-                font-size: 0.72rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.4px;
-                color: var(--text-secondary);
-                margin-bottom: 0.35rem;
-                display: flex;
-                align-items: center;
-                gap: 0.3rem;
-            }
-
-            .tiles-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, 160px);
-                gap: 0.35rem;
-            }
-
-            .tile {
-                background: #1e2d42;
-                border: 1px solid var(--border-glass);
-                border-radius: 8px;
-                padding: 0.4rem 0.5rem;
-                cursor: pointer;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                display: flex;
-                flex-direction: column;
-                gap: 0.15rem;
-                position: relative;
-                overflow: hidden;
-                min-height: 4.2rem;
-                height: 100%;
-            }
-
-            .tile::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: var(--tile-accent, #6366f1);
-                opacity: 0;
-                transition: opacity 0.2s;
-            }
-
-            .tile:hover {
-                border-color: var(--tile-accent, #3a3a8a);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 16px #0a0a0a;
-            }
-
-            .tile:hover::before {
-                opacity: 1;
-            }
-
-            .tile:active {
-                transform: translateY(0);
-            }
-
-            .tile-name {
-                font-size: 0.72rem;
-                font-weight: 600;
-                color: var(--text-primary);
-                line-height: 1.15;
-            }
-
-            .tile-meta {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 0.62rem;
-                color: var(--text-muted);
-            }
-
-            .tile-price {
-                font-weight: 700;
-                color: var(--tile-accent, #818cf8);
-            }
-
-            /* DN Selector */
-            .dn-selector {
-                display: flex;
-                gap: 0.25rem;
-                flex-wrap: wrap;
-            }
-
-            .dn-btn {
-                padding: 0.3rem 0.7rem;
-                border: 1px solid var(--border-glass);
-                border-radius: 6px;
-                background: #1a2536;
-                color: var(--text-secondary);
-                font:
-                    600 0.75rem 'Inter',
-                    sans-serif;
-                cursor: pointer;
-                transition: all 0.15s;
-            }
-
-            .dn-btn:hover {
-                border-color: #2e2e75;
-                color: var(--text-primary);
-            }
-
-            .dn-btn.active {
-                background: #1e1e4a;
-                border-color: #4d4da0;
-                color: #a5b4fc;
-            }
-
-            /* Config table */
-            .well-config-table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-            .well-config-table th {
-                padding: 0.3rem 0.4rem;
-                text-align: left;
-                font-size: 0.65rem;
-                text-transform: uppercase;
-                color: var(--text-muted);
-                border-bottom: 1px solid var(--border-glass);
-            }
-
-            .well-config-table td {
-                padding: 0.25rem 0.4rem;
-                font-size: 0.78rem;
-                border-bottom: 1px solid #14171c;
-                color: var(--text-secondary);
-            }
-
-            .well-config-table tr:hover td {
-                background: #0e0e25;
-            }
-
-            .config-remove-btn {
-                background: none;
-                border: 1px solid #3a1a1a;
-                color: #f87171;
-                font-size: 0.7rem;
-                padding: 0.2rem 0.5rem;
-                border-radius: 4px;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .config-remove-btn:hover {
-                background: #251010;
-                border-color: #7a3030;
-            }
-
-            .cfg-move-btn {
-                background: none;
-                border: 1px solid #1e2530;
-                color: var(--text-muted);
-                font-size: 0.55rem;
-                padding: 1px 5px;
-                border-radius: 3px;
-                cursor: pointer;
-                transition: all 0.15s;
-                line-height: 1;
-            }
-
-            .cfg-move-btn:hover:not(:disabled) {
-                background: #1e1e4a;
-                border-color: #3a3a8a;
-                color: #818cf8;
-            }
-
-            .cfg-move-btn:disabled {
-                opacity: 0.2;
-                cursor: not-allowed;
-            }
-
-            /* Tile type colors */
-            .tile[data-type='dennica'] {
-                --tile-accent: #10b981;
-            }
-
-            .tile[data-type='krag'],
-            .tile[data-type='krag_ot'] {
-                --tile-accent: #6366f1;
-            }
-
-            .tile[data-type='konus'] {
-                --tile-accent: #f59e0b;
-            }
-
-            .tile.active-top-closure {
-                border-color: #6060d0 !important;
-                box-shadow: 0 0 0 2px #4d4da0;
-                background: #1e1e4a !important;
-            }
-
-            .tile.active-top-closure::after {
-                content: '✔';
-                position: absolute;
-                top: 5px;
-                right: 5px;
-                background: #6366f1;
-                color: white;
-                border-radius: 50%;
-                width: 16px;
-                height: 16px;
-                font-size: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .tile[data-type='plyta_din'],
-            .tile[data-type='plyta_najazdowa'],
-            .tile[data-type='plyta_zamykajaca'] {
-                --tile-accent: #ec4899;
-            }
-
-            .tile[data-type='plyta_redukcyjna'] {
-                --tile-accent: #8b5cf6;
-            }
-
-            .tile[data-type='pierscien_odciazajacy'] {
-                --tile-accent: #06b6d4;
-            }
-
-            .tile[data-type='avr'] {
-                --tile-accent: #64748b;
-            }
-
-            .tile[data-type='uszczelka'] {
-                --tile-accent: #84cc16;
-            }
-
-            /* Cennik Tabs */
-            .cennik-tab {
-                padding: 0.45rem 1rem;
-                border: 1px solid var(--border-glass);
-                border-radius: 8px;
-                background: #1a2536;
-                color: var(--text-muted);
-                font:
-                    600 0.8rem 'Inter',
-                    sans-serif;
-                cursor: pointer;
-                transition: all 0.25s;
-                display: flex;
-                align-items: center;
-                gap: 0.4rem;
-            }
-
-            .cennik-tab:hover {
-                border-color: #3a4050;
-                color: var(--text-secondary);
-            }
-
-            .cennik-tab.active {
-                background: #1a1a3e;
-                border-color: #3a3a8a;
-                color: #c7d2fe;
-                box-shadow: 0 0 12px #131335;
-            }
-
-            .cennik-tab-icon {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                display: inline-block;
-                flex-shrink: 0;
-            }
-
-            /* Offer */
-            .offer-stats-bar {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1rem;
-                margin-bottom: 1rem;
-            }
-
-            .offer-stat-card {
-                background: var(--bg-card);
-                border: 1px solid var(--border-glass);
-                border-radius: 12px;
-                padding: 1rem;
-                text-align: center;
-            }
-
-            .offer-stat-label {
-                font-size: 0.7rem;
-                text-transform: uppercase;
-                color: var(--text-muted);
-                letter-spacing: 0.5px;
-            }
-
-            .offer-stat-value {
-                font-size: 1.6rem;
-                font-weight: 800;
-                margin-top: 0.2rem;
-            }
-
-            /* Inline Builder Tabs */
-            .b-tab-btn {
-                flex: 1;
-                padding: 0.45rem;
-                border-radius: 6px;
-                border: 1px solid transparent;
-                background: transparent;
-                color: var(--text-muted);
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-                font-size: 0.75rem;
-            }
-
-            .b-tab-btn:hover {
-                color: var(--text-primary);
-                background: #121720;
-            }
-
-            .b-tab-btn.active {
-                background: #1e1e4a;
-                border-color: #2e2e75;
-                color: var(--text-primary);
-            }
-
-            /* Sidebar Tabs */
-            .s-tab-btn {
-                flex: 1;
-                padding: 0.4rem;
-                border-radius: 6px;
-                border: 1px solid transparent;
-                background: transparent;
-                color: var(--text-muted);
-                font-weight: 700;
-                cursor: pointer;
-                transition: all 0.2s;
-                font-size: 0.72rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.35rem;
-            }
-
-            .s-tab-btn:hover {
-                color: var(--text-primary);
-                background: rgba(255, 255, 255, 0.05);
-            }
-
-            .s-tab-btn.active {
-                background: #1e1e4a;
-                border-color: #3b3b9b;
-                color: #a5b4fc;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            }
-
-            .param-tile {
-                padding: 0.35rem 0.8rem;
-                border-radius: 6px;
-                background: #1a2536;
-                border: 1px solid var(--border-glass);
-                color: var(--text-secondary);
-                font-size: 0.72rem;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.15s ease-in-out;
-                white-space: nowrap;
-            }
-
-            .param-tile:hover {
-                border-color: #5a3010;
-                color: var(--text-primary);
-            }
-
-            .param-tile.active {
-                background: #2d1a08;
-                border-color: #f97316;
-                color: #ffedd5;
-                box-shadow: 0 0 10px #2d1a08;
-            }
-
-            /* Inline Transitions App styles reusing fs-* names but localized */
-            .fs-sidebar {
-                background: #0d1520;
-                border-right: 1px solid #1e2530;
-                padding: 1.5rem;
-                overflow-y: auto;
-            }
-
-            .fs-type-btn {
-                width: 100%;
-                padding: 1.2rem;
-                margin-bottom: 0.8rem;
-                background: #121720;
-                border: 1px solid #1e2530;
-                border-radius: 12px;
-                color: var(--text-muted);
-                text-align: left;
-                font-size: 1rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .fs-type-btn:hover {
-                background: #161640;
-                border-color: #2e2e75;
-                color: var(--text-primary);
-                transform: translateX(4px);
-            }
-
-            .fs-type-btn.active {
-                background: linear-gradient(135deg, #22225a, #1e1540);
-                border-color: #4d4da0;
-                color: #fff;
-                box-shadow: 0 4px 15px #0a0a0a;
-            }
-
-            .fs-main {
-                padding: 2.5rem;
-                overflow-y: auto;
-                display: flex;
-                flex-direction: column;
-                gap: 2rem;
-            }
-
-            .fs-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                gap: 1.2rem;
-            }
-
-            .fs-dn-tile {
-                background: #1a2536;
-                border: 1px solid #1e2530;
-                border-radius: 16px;
-                padding: 1.5rem;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.3s;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .fs-dn-tile:hover {
-                border-color: var(--indigo-500);
-                transform: translateY(-5px);
-                background: #131335;
-            }
-
-            .fs-dn-tile.active {
-                border-color: var(--indigo-500);
-                background: #1e1e4a;
-                box-shadow: 0 0 20px #22225a;
-            }
-
-            .fs-dn-tile .dn-label {
-                font-size: 1.4rem;
-                font-weight: 800;
-                color: var(--text-primary);
-            }
-
-            .fs-dn-tile .price-label {
-                font-size: 0.85rem;
-                color: var(--success);
-                margin-top: 0.5rem;
-                font-weight: 600;
-            }
-
-            .fs-inputs-pane {
-                background: #1e2d42;
-                border: 1px solid #22225a;
-                border-radius: 20px;
-                padding: 2rem;
-                animation: slideUp 0.4s ease-out;
-                max-width: 800px;
-                margin: 0 auto;
-                width: 100%;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                }
-
-                to {
-                    opacity: 1;
-                }
-            }
-
-            @keyframes slideUp {
-                from {
-                    transform: translateY(30px);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-
-            /* ── Wizard Steps ── */
-            .wizard-indicator {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0;
-                margin-bottom: 0.6rem;
-                padding: 0.3rem 0;
-            }
-
-            .wizard-step-dot {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                gap: 0.3rem;
-                z-index: 1;
-                cursor: pointer;
-                transition:
-                    transform 0.2s,
-                    opacity 0.2s;
-            }
-
-            .wizard-step-dot:hover {
-                opacity: 0.8;
-                transform: scale(1.05);
-            }
-
-            .wizard-dot-number {
-                width: 22px;
-                height: 22px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.65rem;
-                background: #1e293b;
-                border: 2px solid #334155;
-                color: var(--text-muted);
-                transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .wizard-step-dot.active .wizard-dot-number {
-                background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                border-color: #818cf8;
-                color: white;
-                box-shadow: 0 0 8px #4338ca;
-            }
-
-            .wizard-step-dot.completed .wizard-dot-number {
-                background: linear-gradient(135deg, #10b981, #34d399);
-                border-color: #34d399;
-                color: white;
-            }
-
-            .wizard-dot-label {
-                font-size: 0.62rem;
-                font-weight: 600;
-                color: var(--text-muted);
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-                transition: color 0.3s;
-            }
-
-            .wizard-step-dot.active .wizard-dot-label {
-                color: #c7d2fe;
-            }
-
-            .wizard-step-dot.completed .wizard-dot-label {
-                color: #6ee7b7;
-            }
-
-            .wizard-step-line {
-                width: 50px;
-                height: 2px;
-                background: #334155;
-                transition: background 0.4s;
-                margin: 0 0.35rem;
-            }
-
-            .wizard-step-line.completed {
-                background: linear-gradient(90deg, #34d399, #6366f1);
-            }
-
-            .wizard-step {
-                display: none;
-                animation: wizardFadeIn 0.35s ease-out;
-            }
-
-            .wizard-step.active {
-                display: block;
-            }
-
-            @keyframes wizardFadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(16px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .wizard-card {
-                max-width: 1200px;
-                margin: 0 auto;
-                background: var(--bg-card);
-                border: 1px solid var(--border-glass);
-                border-radius: 16px;
-                padding: 1.8rem 2rem;
-                box-shadow: 0 8px 32px #080808;
-            }
-
-            .wizard-card-header {
-                text-align: left;
-                margin-bottom: 1.3rem;
-                padding-bottom: 1rem;
-                border-bottom: 1px solid var(--border-glass);
-            }
-
-            .wizard-card-icon {
-                font-size: 2.2rem;
-                margin-bottom: 0.4rem;
-            }
-
-            .wizard-card-title {
-                font-size: 1.25rem;
-                font-weight: 800;
-                color: var(--text-primary);
-                margin: 0 0 0.25rem 0;
-            }
-
-            .wizard-card-subtitle {
-                font-size: 0.8rem;
-                color: var(--text-muted);
-                margin: 0;
-            }
-
-            .wizard-section-title {
-                font-size: 0.72rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                color: var(--text-secondary);
-                margin-bottom: 0.5rem;
-                padding-bottom: 0.3rem;
-                border-bottom: 1px solid #1e2530;
-            }
-
-            .wizard-form-grid {
-                display: grid;
-                gap: 0.7rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .wizard-form-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.25rem;
-            }
-
-            .wizard-form-label {
-                font-size: 0.7rem;
-                font-weight: 600;
-                color: var(--text-muted);
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-            }
-
-            .wizard-form-input {
-                padding: 0.5rem 0.65rem;
-                background: #1e2d42;
-                border: 1px solid var(--border-glass);
-                border-radius: 8px;
-                color: var(--text-primary);
-                font:
-                    500 0.82rem 'Inter',
-                    sans-serif;
-                transition:
-                    border-color 0.2s,
-                    box-shadow 0.2s;
-            }
-
-            .wizard-form-input:focus {
-                outline: none;
-                border-color: #4d4da0;
-                box-shadow: 0 0 0 3px #161640;
-            }
-
-            .wizard-nav {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 1.3rem;
-                padding-top: 1rem;
-                border-top: 1px solid var(--border-glass);
-            }
-
-            .wizard-btn {
-                padding: 0.55rem 1.6rem;
-                border: none;
-                border-radius: 10px;
-                font:
-                    600 0.82rem 'Inter',
-                    sans-serif;
-                cursor: pointer;
-                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                display: flex;
-                align-items: center;
-                gap: 0.4rem;
-            }
-
-            .wizard-btn-next {
-                background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                color: white;
-                box-shadow: 0 4px 15px #2e2e75;
-            }
-
-            .wizard-btn-next:hover:not(:disabled) {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px #3a3a8a;
-            }
-
-            .wizard-btn-next:disabled {
-                opacity: 0.35;
-                cursor: not-allowed;
-                transform: none;
-                box-shadow: none;
-            }
-
-            .wizard-btn-prev {
-                background: #1e2d42;
-                color: var(--text-secondary);
-                border: 1px solid var(--border-glass);
-            }
-
-            .wizard-btn-prev:hover {
-                background: #1e293b;
-                color: var(--text-primary);
-                border-color: #2e2e75;
-            }
-
-            .wizard-summary-bar {
-                display: flex;
-                align-items: center;
-                gap: 0.8rem;
-                padding: 0.45rem 0.75rem;
-                background: #0d1520;
-                border: 1px solid var(--border-glass);
-                border-radius: 10px;
-                margin-bottom: 0.5rem;
-                font-size: 0.72rem;
-                flex-wrap: wrap;
-            }
-
-            .wizard-summary-item {
-                display: flex;
-                align-items: center;
-                gap: 0.2rem;
-                color: var(--text-muted);
-            }
-
-            .wizard-summary-item strong {
-                color: var(--text-primary);
-                font-weight: 600;
-            }
-
-            .wizard-summary-divider {
-                width: 1px;
-                height: 14px;
-                background: var(--border-glass);
-            }
-
-            .wizard-summary-edit {
-                margin-left: auto;
-                padding: 0.2rem 0.55rem;
-                border: 1px solid #2e2e75;
-                border-radius: 5px;
-                background: #161640;
-                color: #a5b4fc;
-                font:
-                    600 0.65rem 'Inter',
-                    sans-serif;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .wizard-summary-edit:hover {
-                background: #22225a;
-                border-color: #4d4da0;
-            }
-
-            .wizard-param-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.2rem;
-                padding: 0.6rem;
-                border-radius: 10px;
-                border: 2px solid transparent;
-                background: #0d1520;
-                transition:
-                    border-color 0.3s,
-                    background 0.3s;
-            }
-
-            .wizard-param-group.needs-selection {
-                border-color: #2a1111;
-                background: #140d0d;
-            }
-
-            .wizard-param-group.confirmed {
-                border-color: #0d2a20;
-                background: #061c14;
-            }
-
-            .wizard-param-label {
-                font-size: 0.62rem;
-                color: var(--text-muted);
-                text-transform: uppercase;
-                font-weight: 700;
-                display: flex;
-                align-items: center;
-                gap: 0.3rem;
-            }
-
-            .wizard-param-label .status-icon {
-                font-size: 0.7rem;
-                transition: opacity 0.3s;
-            }
-
-            .wizard-validation-msg {
-                text-align: center;
-                font-size: 0.75rem;
-                color: #f87171;
-                margin-top: 0.6rem;
-                transition: opacity 0.3s;
-            }
-
-            .wizard-validation-msg.hidden {
-                opacity: 0;
-            }
-
-            /* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
-            @keyframes fadeInOverlay {
-                from {
-                    opacity: 0;
-                }
-
-                to {
-                    opacity: 1;
-                }
-            }
-
-            .przejscia-vis-popup {
-                background: #0d1520;
-                border: 1px solid #22225a;
-                border-radius: 12px;
-                padding: 1rem;
-                width: 95vw;
-                max-width: 1100px;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow:
-                    0 20px 60px #050505,
-                    0 0 40px #131335;
-                animation: fadeInOverlay 0.15s ease;
-                scrollbar-width: thin;
-                scrollbar-color: #1e1e4a #0a0e1a;
-            }
-
-            .przejscia-vis-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 0.5rem;
-                padding-bottom: 0.4rem;
-                border-bottom: 1px solid #1e2530;
-            }
-
-            .przejscia-vis-actions {
-                display: flex;
-                gap: 0.3rem;
-                margin-bottom: 0.6rem;
-            }
-
-            .przejscia-vis-action-btn {
-                padding: 0.25rem 0.6rem;
-                border-radius: 5px;
-                border: 1px solid #1e2530;
-                background: #1e2530;
-                color: var(--text-secondary);
-                font:
-                    600 0.6rem 'Inter',
-                    sans-serif;
-                cursor: pointer;
-                transition: all 0.15s ease;
-            }
-
-            .przejscia-vis-action-btn:hover {
-                background: #1e1e4a;
-                border-color: #2e2e75;
-                color: #a5b4fc;
-            }
-
-            .przejscia-vis-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-w, 160px), 1fr));
-                gap: 0.3rem;
-            }
-
-            .przejscia-vis-tile {
-                padding: 0.4rem 0.5rem;
-                border-radius: 6px;
-                cursor: pointer;
-                transition: all 0.18s ease;
-                text-align: center;
-                user-select: none;
-            }
-
-            .przejscia-vis-tile.visible {
-                background: #0f3328;
-                border: 1.5px solid #0d2a20;
-                box-shadow:
-                    0 0 10px #0d2a20,
-                    inset 0 0 12px #0d2a20;
-            }
-
-            .przejscia-vis-tile.visible .przejscia-vis-tile-name {
-                color: #6ee7b7;
-            }
-
-            .przejscia-vis-tile.visible:hover {
-                background: #0d2a20;
-                border-color: #0d2a20;
-                box-shadow:
-                    0 0 16px #0d2a20,
-                    inset 0 0 16px #0d2a20;
-                transform: translateY(-1px);
-            }
-
-            .przejscia-vis-tile.hidden-type {
-                background: #1e2530;
-                border: 1.5px solid #1e2530;
-                opacity: 0.45;
-            }
-
-            .przejscia-vis-tile.hidden-type:hover {
-                background: #1e2530;
-                border-color: #1e2530;
-                opacity: 0.8;
-                transform: translateY(-1px);
-            }
-
-            .przejscia-vis-tile-name {
-                font-size: 0.85rem;
-                font-weight: 700;
-                color: var(--text-primary);
-                white-space: nowrap;
-                line-height: 1.3;
-            }
-
-            /* Generic Confirm Modal */
-            .app-confirm-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.75);
-                backdrop-filter: blur(4px);
-                z-index: 9999;
-                display: none;
-                align-items: center;
-                justify-content: center;
-                animation: fadeInOverlay 0.2s ease;
-            }
-
-            .app-confirm-modal {
-                background: #0d1520;
-                border: 1px solid #2e2e75;
-                border-radius: 16px;
-                width: 100%;
-                max-width: 400px;
-                padding: 1.5rem;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                text-align: center;
-            }
-
-            .app-confirm-title {
-                font-size: 1.1rem;
-                font-weight: 700;
-                color: #fff;
-                margin-bottom: 0.8rem;
-            }
-
-            .app-confirm-message {
-                font-size: 0.85rem;
-                color: var(--text-muted);
-                margin-bottom: 1.5rem;
-                line-height: 1.5;
-            }
-
-            .app-confirm-actions {
-                display: flex;
-                gap: 0.75rem;
-                justify-content: center;
-            }
-
-            .app-confirm-btn {
-                flex: 1;
-                padding: 0.6rem 1rem;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 0.85rem;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .app-confirm-btn-ok {
-                background: #4f46e5;
-                color: white;
-                border: none;
-            }
-
-            .app-confirm-btn-ok:hover {
-                background: #4338ca;
-                transform: translateY(-1px);
-            }
-
-            .app-confirm-btn-cancel {
-                background: #1e2d42;
-                color: var(--text-muted);
-                border: 1px solid var(--border-glass);
-            }
-
-            .app-confirm-btn-cancel:hover {
-                color: #fff;
-                background: #2d3e5a;
-            }
+            /* Placeholder — all styles moved to css/studnie.css */
         </style>
     </head>
 
@@ -4037,7 +2602,7 @@
             <!-- /section-builder -->
 
             <!-- ===== SECTION: OFFER ===== -->
-            <div class="section" id="section-offer">
+            <div class="section" id="section-offer" style="padding-bottom: 140px;">
                 <!-- Client & offer info summary (read from builder form) -->
                 <div class="card card-compact" style="margin-bottom: 1rem">
                     <div
@@ -4171,21 +2736,24 @@
 
                 <!-- Summary Foot -->
                 <div
+                    id="offer-summary-footer-fixed"
                     style="
-                        position: sticky;
+                        position: fixed;
                         bottom: 0;
+                        left: 0;
+                        right: 0;
                         background: #111827;
                         border-top: 1px solid var(--border-glass);
-                        margin: 0 -1rem -0.8rem -1rem;
-                        padding: 1.2rem 1.5rem;
-                        z-index: 100;
+                        padding: 1.2rem 2.5rem;
+                        z-index: 9999;
                         box-shadow: 0 -8px 30px #080808;
                     "
                 >
                     <div
                         class="summary-grid"
                         style="
-                            margin-top: 0;
+                            margin: 0 auto;
+                            max-width: 1536px;
                             display: grid;
                             grid-template-columns: repeat(4, 1fr);
                             gap: 1rem;
@@ -4223,32 +2791,88 @@
                         </div>
                         <div
                             class="summary-card"
+                            onclick="openTransportPopup()"
                             style="
                                 padding: 1rem;
                                 height: 100%;
                                 display: flex;
                                 flex-direction: column;
                                 justify-content: center;
+                                align-items: center;
+                                text-align: center;
                                 border-left: 1px solid var(--border-glass);
-                                border-right: 1px solid var(--border-glass);
+                                cursor: pointer;
+                                transition: background 0.2s;
+                                min-width: 250px;
                             "
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='transparent'"
                         >
                             <div
                                 class="label"
                                 style="
                                     font-size: 0.9rem;
                                     text-transform: uppercase;
-                                    margin-bottom: 0.2rem;
+                                    margin-bottom: 0.5rem;
+                                    width: 100%;
                                 "
                             >
                                 Koszt transportu
                             </div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; width: 100%;">
+                                <div
+                                    class="value"
+                                    id="sum-transport-cost"
+                                    style="color: var(--warn); font-size: 1.25rem; margin: 0; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 0.4rem;"
+                                >
+                                    <i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0 PLN
+                                </div>
+                                <div id="offer-active-transport-info" style="font-size: 0.75rem; color: #94a3b8; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.3; text-align: left;">
+                                    <!-- info o transporcie wg. JS -->
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="summary-card"
+                            onclick="openOfferDiscountsPopup()"
+                            style="
+                                padding: 1rem;
+                                height: 100%;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                border-left: 1px solid var(--border-glass);
+                                border-right: 1px solid var(--border-glass);
+                                cursor: pointer;
+                                transition: background 0.2s;
+                                min-width: 530px;
+                            "
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='transparent'"
+                        >
                             <div
-                                class="value"
-                                id="sum-transport-cost"
-                                style="color: var(--warn); font-size: 1.4rem; margin: 0"
+                                class="label"
+                                style="
+                                    font-size: 0.9rem;
+                                    text-transform: uppercase;
+                                    margin-bottom: 0.5rem;
+                                    width: 100%;
+                                    text-align: center;
+                                "
                             >
-                                0,00 PLN
+                                Zarządzanie Rabatami
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; width: 100%;">
+                                <div
+                                    class="value"
+                                    style="color: #6366f1; font-size: 1.25rem; margin: 0; display: flex; align-items: center; gap: 0.4rem; font-weight: 700; white-space: nowrap;"
+                                >
+                                    <i data-lucide="percent" style="width: 20px; height: 20px;"></i> Edytuj
+                                </div>
+                                <div id="offer-active-discounts-info" style="flex: 1; font-size: 0.85rem; color: #94a3b8; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; gap: 0.2rem;">
+                                    <!-- Puste lub zastąpione przez updateOfferSummaryUI -->
+                                </div>
                             </div>
                         </div>
                         <div
@@ -4429,171 +3053,73 @@
             </div>
         </main>
 
-        <!-- ===== ZLECENIA PRODUKCYJNE MODAL ===== -->
+        <!-- ===== OFFER DISCOUNTS MODAL ===== -->
+        <div id="offer-discounts-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 1400px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 2rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
+                    <div style="font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; gap: 0.8rem; color: #6366f1;">
+                        <i data-lucide="percent" style="width: 28px; height: 28px;"></i> Zarządzanie Rabatami Oferty
+                    </div>
+                    <button class="btn btn-icon" onclick="closeOfferDiscountsPopup()" style="color: var(--text-muted);"><i data-lucide="x"></i></button>
+                </div>
+                <div id="offer-discounts-modal-body" style="padding: 1.5rem 2rem; max-height: 65vh; overflow-y: auto;">
+                    <!-- Zawartość wstrzykiwana przez JS -->
+                </div>
+                <div style="padding: 1.5rem 2rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button class="btn btn-secondary" onclick="handleOfferDiscountsCancel()" style="font-size: 1.2rem; padding: 0.8rem 2rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleOfferDiscountsSave()" style="font-size: 1.2rem; padding: 0.8rem 2.5rem; font-weight: 800;"><i data-lucide="check" style="width: 20px; height: 20px; margin-right: 0.5rem;"></i> Zastosuj</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== OFFER TRANSPORT MODAL ===== -->
         <style>
-            .zlecenia-overlay {
-                position: fixed;
-                inset: 0;
-                z-index: 9999;
-                background: rgba(0, 0, 0, 0.85);
-                display: none;
-                align-items: stretch;
-                justify-content: center;
-                animation: fadeIn 0.2s ease;
+            #offer-transport-modal input::-webkit-outer-spin-button,
+            #offer-transport-modal input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                appearance: none;
+                margin: 0;
             }
-
-            .zlecenia-overlay.active {
-                display: flex;
-            }
-
-            .zlecenia-container {
-                width: 100%;
-                height: 100vh;
-                display: grid;
-                grid-template-columns: 350px 1fr 350px;
-                background: var(--bg-primary);
-                overflow: hidden;
-            }
-
-            .zlecenia-left {
-                background: var(--bg-secondary);
-                border-right: 1px solid var(--border-glass);
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            .zlecenia-center {
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                background: var(--bg-primary);
-            }
-
-            .zlecenia-right {
-                background: var(--bg-secondary);
-                border-left: 1px solid var(--border-glass);
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            #zlecenia-modal #well-diagram-title {
-                padding: 0.8rem 1.2rem;
-                margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
-                border-bottom: 1px solid var(--border-glass);
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                display: flex;
-                align-items: center;
-                min-height: 57px;
-                background: var(--bg-secondary);
-            }
-
-            .zlecenia-right-header {
-                padding: 0.8rem 1.2rem;
-                border-bottom: 1px solid var(--border-glass);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                min-height: 57px;
-                /* matches the button bar height */
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            }
-
-            .zlecenia-right-list {
-                flex: 1;
-                overflow-y: auto;
-                padding: 0.4rem;
-            }
-
-            .zlecenia-el-item {
-                background: var(--bg-glass);
-                border: 1px solid var(--border-glass);
-                border-radius: var(--radius-sm);
-                padding: 0.5rem 0.7rem;
-                margin-bottom: 0.3rem;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .zlecenia-el-item:hover {
-                border-color: var(--accent);
-                background: #1e1e4a;
-            }
-
-            .zlecenia-el-item.active {
-                border-color: #f97316;
-                background: #2d1a08;
-                box-shadow: 0 0 12px rgba(249, 115, 22, 0.15);
-            }
-
-            .zlecenia-el-item.saved {
-                border-left: 3px solid var(--success);
-            }
-
-            .zlecenia-el-item.accepted {
-                border-left: 3px solid #ef4444;
-                background: rgba(239, 68, 68, 0.06);
-            }
-
-            .zlecenia-header-btn {
-                min-width: 100px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.35rem;
-                font-size: 0.68rem !important;
-                font-weight: 700 !important;
-                padding: 0.35rem 0.7rem !important;
-                white-space: nowrap;
-                transition: var(--transition);
-            }
-
-            .zlecenia-filter-btn {
-                flex: 1;
-                padding: 0.3rem 0.5rem;
-                border-radius: var(--radius-sm);
-                background: var(--bg-glass);
-                border: 1px solid var(--border-glass);
-                color: var(--text-secondary);
-                font-size: 0.65rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .zlecenia-filter-btn:hover {
-                border-color: var(--accent);
-                background: rgba(99, 102, 241, 0.08);
-            }
-
-            .zlecenia-filter-btn.active {
-                background: rgba(99, 102, 241, 0.15);
-                border-color: rgba(99, 102, 241, 0.4);
-                color: #a5b4fc;
-                font-weight: 700;
-            }
-
-            @media (max-width: 1100px) {
-                .zlecenia-container {
-                    grid-template-columns: 1fr 300px;
-                }
-
-                .zlecenia-left {
-                    display: none;
-                }
-            }
-
-            @media (max-width: 700px) {
-                .zlecenia-container {
-                    grid-template-columns: 1fr;
-                }
-
-                .zlecenia-right {
-                    display: none;
-                }
+            #offer-transport-modal input[type=number] {
+                -moz-appearance: textfield;
+                appearance: textfield;
             }
         </style>
+        <div id="offer-transport-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 1400px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 2rem 3rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
+                    <div style="font-weight: 800; font-size: 3.2rem; display: flex; align-items: center; gap: 1.2rem; color: #eab308;">
+                        <i data-lucide="truck" style="width: 48px; height: 48px;"></i> Koszty Transportu
+                    </div>
+                    <button class="btn btn-icon" onclick="handleOfferTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 32px; height: 32px;"></i></button>
+                </div>
+                <div style="padding: 4rem 3rem;">
+                    <p style="color: var(--text-muted); margin-bottom: 3.5rem; font-size: 2.2rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
+                    <div style="display: flex; gap: 3rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 1.2rem; display: block; font-weight: 600;">Odległość (km)</label>
+                            <input type="number" id="transport-modal-km" class="input-modern" style="width: 100%; font-size: 2.8rem; font-weight: 700; padding: 1.5rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 1.2rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
+                            <input type="number" id="transport-modal-rate" class="input-modern" style="width: 100%; font-size: 2.8rem; font-weight: 700; padding: 1.5rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
+                        </div>
+                    </div>
+                    <div style="margin-top: 3.5rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 2rem; border-radius: 12px;">
+                        <div style="font-size: 1.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
+                        <div id="transport-modal-total-val" style="font-size: 4rem; font-weight: 800; color: var(--success); letter-spacing: -1px;">
+                            0 PLN
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 2rem 3rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 1.5rem;">
+                    <button class="btn btn-secondary" onclick="handleOfferTransportCancel()" style="font-size: 1.2rem; padding: 0.8rem 2rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleOfferTransportSave()" style="font-size: 1.2rem; padding: 0.8rem 2.5rem; font-weight: 800;"><i data-lucide="check" style="width: 20px; height: 20px; margin-right: 0.5rem;"></i> Zastosuj</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ZLECENIA PRODUKCYJNE MODAL ===== -->
         <div id="zlecenia-modal" class="zlecenia-overlay">
             <div class="zlecenia-container">
                 <!-- LEFT: Well SVG Preview (same as Kalkulator Studni) -->
@@ -4827,10 +3353,15 @@
         <script src="js/studnie/uiHelpers.js?v=3.0"></script>
         <script src="js/studnie/pricelistManager.js?v=3.0"></script>
         <script src="js/studnie/wellManager.js?v=3.0"></script>
+        <script src="js/studnie/wellConfigRules.js?v=3.0"></script>
+        <script src="js/studnie/wellSolver.js?v=3.0"></script>
+        <script src="js/studnie/wellTransitions.js?v=3.0"></script>
+        <script src="js/studnie/wellPopups.js?v=3.0"></script>
+        <script src="js/studnie/wellActions.js?v=3.0"></script>
+        <script src="js/studnie/wellUI.js?v=3.0"></script>
         <script src="js/studnie/transitionRenderer.js?v=3.0"></script>
         <script src="js/studnie/ruleEngine.js?v=3.0"></script>
         <script src="js/studnie/ringOptimizer.js?v=3.0"></script>
-        <script src="js/studnie/autoSelect.js?v=3.0"></script>
         <script src="js/studnie/wellDiagram.js?v=3.0"></script>
         <script src="js/studnie/offerManager.js?v=3.0"></script>
         <script src="js/studnie/orderManager.js?v=3.0"></script>

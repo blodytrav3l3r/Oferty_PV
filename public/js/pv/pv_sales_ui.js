@@ -259,21 +259,28 @@ class PVSalesUI {
                     ? new Date(offer.createdAt).toLocaleDateString('pl-PL')
                     : '—';
 
-                let priceVal = offer.totalNetto || offer.totalBrutto || 0;
-                if (!priceVal && offer.data) {
-                    if (offer.data.summary)
-                        priceVal =
-                            offer.data.summary.totalValue ||
-                            offer.data.summary.totalNetto ||
-                            offer.data.summary.totalBrutto ||
-                            0;
-                    else if (offer.data.costSummary)
-                        priceVal = offer.data.costSummary.totalValue || 0;
-                    else priceVal = offer.data.totalNetto || offer.data.totalBrutto || 0;
-                }
-                if (!priceVal && offer.price) priceVal = offer.price;
-
                 const isWell = offer.type === 'studnia_oferta';
+                let priceVal = 0;
+
+                // Dla studni wolimy obliczyć sumę z wellsExport, bo tam jest już transport per studnia
+                if (isWell && (offer.wellsExport || (offer.data && offer.data.wellsExport))) {
+                    const exportData = offer.wellsExport || offer.data.wellsExport;
+                    priceVal = exportData.reduce((sum, w) => sum + (w.totalPrice || 0), 0);
+                } else {
+                    priceVal = offer.totalNetto || offer.totalBrutto || 0;
+                    if (!priceVal && offer.data) {
+                        if (offer.data.summary)
+                            priceVal =
+                                offer.data.summary.totalValue ||
+                                offer.data.summary.totalNetto ||
+                                offer.data.summary.totalBrutto ||
+                                0;
+                        else if (offer.data.costSummary)
+                            priceVal = offer.data.costSummary.totalValue || 0;
+                        else priceVal = offer.data.totalNetto || offer.data.totalBrutto || 0;
+                    }
+                    if (!priceVal && offer.price) priceVal = offer.price;
+                }
                 const icon = isWell ? '<i data-lucide="cylinder"></i>' : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
 
                 let itemCount = 0;
