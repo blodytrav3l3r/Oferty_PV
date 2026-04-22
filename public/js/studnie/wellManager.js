@@ -1,4 +1,4 @@
-﻿/* ===== ZARZĄDZANIE STUDNIAMI ===== */
+/* ===== ZARZĄDZANIE STUDNIAMI ===== */
 
 /** Odczytuje parametry globalne z kroku 2 kreatora z kafelków UI */
 function getWizardGlobalParams() {
@@ -189,7 +189,7 @@ async function removeWell(index) {
 function selectWell(index) {
     if (index < 0 || index >= wells.length) return;
     currentWellIndex = index;
-    refreshAll();
+    refreshAll(true); // skipSummary = true, aby nie odrysowywać ogromnego panelu po prawej
 }
 
 function renameWell(index) {
@@ -322,7 +322,7 @@ function syncKineta(well) {
     well.config = newConfig;
 }
 
-function refreshAll() {
+function refreshAll(skipSummary = false) {
     const well = getCurrentWell();
     if (well) {
         syncGaskets(well);
@@ -343,8 +343,16 @@ function refreshAll() {
     if (typeof updatePsiaBudaButton === 'function') updatePsiaBudaButton();
     updateParamTilesUI();
     renderWellParams();
-    renderOfferSummary();
+    
+    if (!skipSummary) {
+        renderOfferSummary();
+    }
+    
     if (orderEditMode) renderOrderModeBanner();
+
+    // Wymuszenie przetworzenia ikon tylko w zaktualizowanych kontenerach
+    // globalny skan, ale szybki, bo omija te, które już stały się <svg>
+    if (window.lucide) window.lucide.createIcons();
 }
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) — przeniesione do wellUI.js ===== */

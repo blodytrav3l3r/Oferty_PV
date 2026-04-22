@@ -18,8 +18,8 @@ function renderOfferSummary() {
     const container = document.getElementById('offer-summary-body');
     if (!container) return;
 
-    const order = getCurrentOfferOrder();
-    const orderChanges = order ? getOrderChanges({ ...order, wells: wells }) : {};
+    const order = orderEditMode ? getCurrentOfferOrder() : null;
+    const orderChanges = orderEditMode && order ? getOrderChanges({ ...order, wells: wells }) : {};
     
     // Obliczenia globalne
     const totals = calculateOfferTotals();
@@ -33,8 +33,8 @@ function renderOfferSummary() {
     
     container.innerHTML = html;
     
-    // Inicjalizacja ikon Lucide dla nowo dodanych elementów
-    if (window.lucide) window.lucide.createIcons();
+    // Inicjalizacja ikon Lucide tylko dla nowo wyrenderowanego kontenera (zapobiega miganiu całego ekranu)
+    if (window.lucide) window.lucide.createIcons({ root: container });
     
     // Aktualizacja wskaźników zewnętrznych (stopka)
     updateOfferSummaryUI(totals);
@@ -115,40 +115,56 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
       <thead>
         <tr>
           ${showOrderSelection ? `<th style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" style="cursor:pointer; width:16px; height:16px;"></th>` : ''}
-          <th style="width:4%; min-width:40px; text-align:center;">Lp.</th>
-          <th style="width:4%; min-width:30px;"></th> <!-- Expand icon -->
-          <th style="width:auto;">Nazwa studni</th>
-          <th style="width:8%; min-width:70px; text-align:center;">DN</th>
-          <th style="width:15%; min-width:110px;" class="text-right">Cena</th>
-          <th style="width:12%; min-width:90px;" class="text-right">Akcje</th>
+          <th style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
+          <th style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
+          <th style="width:100%;">Nazwa studni</th>
+          <th style="width:1%; min-width:70px; text-align:center; white-space:nowrap;">DN</th>
+          <th style="width:1%; min-width:170px; white-space:nowrap;" class="text-right">Cena</th>
+          <th style="width:1%; min-width:130px; white-space:nowrap;" class="text-right">Akcje</th>
         </tr>
       </thead>
       <tbody>`;
 
     let runningTotalPrice = 0;
     let runningTotalWeight = 0;
+    const dnGroups = {};
 
-    wells.forEach((well, i) => {
+    // Posortuj studnie po DN do wyświetlenia (zachowując oryginalne indexy)
+    const sortedWells = wells.map((well, originalIndex) => ({ well, originalIndex }))
+        .sort((a, b) => {
+            const dnA = a.well.dn === 'styczna' ? Infinity : parseInt(a.well.dn) || 0;
+            const dnB = b.well.dn === 'styczna' ? Infinity : parseInt(b.well.dn) || 0;
+            return dnA - dnB;
+        });
+
+    sortedWells.forEach(({ well, originalIndex }, displayIndex) => {
         const stats = calcWellStats(well);
         const wellTransportCost = totals.globalWeight > 0 ? totals.totalTransportCost * (stats.weight / totals.globalWeight) : 0;
         stats.price += wellTransportCost;
-        
+
         runningTotalPrice += stats.price;
         runningTotalWeight += stats.weight;
 
-        html += renderWellHeaderRow(well, i, stats, orderChanges[i], orderedWellIds.has(well.id), showOrderSelection);
-        html += renderWellDetailsRow(well, i, orderChanges[i], wellTransportCost);
+        const dnKey = well.dn || '—';
+        if (!dnGroups[dnKey]) dnGroups[dnKey] = { count: 0, sumPrice: 0, sumHeight: 0 };
+        dnGroups[dnKey].count++;
+        dnGroups[dnKey].sumPrice += stats.price;
+        dnGroups[dnKey].sumHeight += stats.height;
+
+        html += renderWellHeaderRow(well, originalIndex, stats, orderChanges[originalIndex], orderedWellIds.has(well.id), showOrderSelection, displayIndex + 1);
+        html += renderWellDetailsRow(well, originalIndex, orderChanges[originalIndex], wellTransportCost);
     });
 
-    html += renderOfferSummaryFooter(wells.length, runningTotalWeight, runningTotalPrice, showOrderSelection);
+    html += renderOfferSummaryFooter(wells.length, runningTotalWeight, runningTotalPrice, showOrderSelection, dnGroups);
     html += `</tbody></table></div>`;
     return html;
 }
 
-function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection) {
+function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection, lp) {
     const isExpanded = expandedWellIndices.has(i);
     const rowStyle = getWellRowStyle(change, isOrdered);
-    const badges = getWellBadges(change, isOrdered);
+    const badges = getWellBadges(change, isOrdered, well);
+    const displayLp = lp !== undefined ? lp : (i + 1);
     
     let checkbox = '';
     if (showOrderSelection) {
@@ -159,14 +175,14 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
 
     return `<tr class="well-row-header" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
         ${checkbox}
-        <td style="text-align:center; color:var(--text-muted); font-weight:600;">${i + 1}</td>
+        <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
         <td style="font-weight:700; color:var(--text-primary);">${well.name}${badges}</td>
-        <td style="text-align:center; font-weight:600; color:var(--text-secondary);">DN${well.dn}</td>
-        <td class="text-right" style="font-weight:800; color:var(--success);">${fmtInt(stats.price)} PLN</td>
-        <td class="text-right" onclick="event.stopPropagation()">
-            <button class="btn btn-icon btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię">
-                <i data-lucide="edit-3"></i>
+        <td style="text-align:center; font-weight:600; color:var(--text-secondary); white-space:nowrap;">DN${well.dn}</td>
+        <td class="text-right" style="font-weight:800; color:var(--success); white-space:nowrap;">${fmt(stats.price)} PLN</td>
+        <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap;">
+            <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size:0.7rem; padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
+                <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Edytuj
             </button>
         </td>
     </tr>`;
@@ -181,15 +197,26 @@ function getWellRowStyle(change, isOrdered) {
     return isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
 }
 
-function getWellBadges(change, isOrdered) {
+function getWellBadges(change, isOrdered, well) {
     let html = '';
     if (change) {
         html += change.type === 'added'
             ? `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWA</span>`
             : `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>`;
     }
-    if (isOrdered) {
-        html += `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(99,102,241,0.2); color:#a5b4fc; font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>`;
+    if (isOrdered && well) {
+        const wellOrder = typeof getOrderForWellId === 'function'
+            ? getOrderForWellId(well.id, editingOfferIdStudnie)
+            : null;
+        if (wellOrder && wellOrder.orderNumber) {
+            html += `<span onclick="event.stopPropagation(); window.location.href='/studnie?order=${wellOrder.id}'"
+                title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
+                style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.15); color:#34d399; font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:3px;">
+                <i data-lucide="package"></i> ${wellOrder.orderNumber}
+            </span>`;
+        } else {
+            html += `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(99,102,241,0.2); color:#a5b4fc; font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>`;
+        }
     }
     return html;
 }
@@ -249,7 +276,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             <td style="color:var(--text-secondary);">↳ ${p.name}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
             <td style="width:100px;" class="text-right">${fmtInt(totalLineWeight)} kg</td>
-            <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmtInt(totalLinePrice) + ' PLN'}</td>
+            <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
         </tr>`;
 
         // Renderowanie szczegółów dopłaty, przejść i kinety (jako sub-elementy w skróconej tabeli)
@@ -311,7 +338,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
             if (pr.doplata) prPrice += pr.doplata;
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${prProd.category} ${prProd.dn} (${pr.angle}°)</td>
-                <td class="text-right">${fmtInt(prPrice)} PLN</td>
+                <td class="text-right">${fmt(prPrice)} PLN</td>
             </tr>`;
         });
     }
@@ -323,13 +350,13 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
             const kPrice = getItemAssessedPrice(well, kp, true) * (kineta.quantity || 1);
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ + ${kp.name}</td>
-                <td class="text-right">${fmtInt(kPrice)} PLN</td>
+                <td class="text-right">${fmt(kPrice)} PLN</td>
             </tr>`;
         }
         if (wellTransportCost > 0) {
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#a855f7;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ <i data-lucide="truck"></i> Udział w transporcie</td>
-                <td class="text-right">${fmtInt(wellTransportCost)} PLN</td>
+                <td class="text-right">${fmt(wellTransportCost)} PLN</td>
             </tr>`;
         }
     }
@@ -372,15 +399,38 @@ function getDiscountStr(p, disc) {
     return val > 0 ? ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${val}%)</span>` : '';
 }
 
-function renderOfferSummaryFooter(count, weight, price, showOrderSelection) {
-    const colspan = showOrderSelection ? 5 : 4;
-    return `<tfoot>
-        <tr style="border-top:2px solid var(--border-glass);">
+function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGroups) {
+    const colspan = showOrderSelection ? 4 : 3;
+    let html = '<tfoot>';
+
+    if (dnGroups && Object.keys(dnGroups).length > 0) {
+        const sortedDnKeys = Object.keys(dnGroups).sort((a, b) => {
+            const dnA = a === 'styczna' ? Infinity : parseInt(a) || 0;
+            const dnB = b === 'styczna' ? Infinity : parseInt(b) || 0;
+            return dnA - dnB;
+        });
+
+        sortedDnKeys.forEach(dn => {
+            const g = dnGroups[dn];
+            const avgPrice = g.sumPrice / g.count;
+            const avgHeight = g.sumHeight / g.count;
+            html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
+              <td colspan="${colspan}" style="padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-secondary);">Podsumowanie DN${dn} — ${g.count} szt.</td>
+              <td class="text-right" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">śr. ${fmtInt(avgHeight)} mm</td>
+              <td class="text-right" style="font-size:0.85rem; color:var(--success); font-weight:700; white-space:nowrap;">${fmt(g.sumPrice)} PLN</td>
+              <td class="text-right" style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">śr. ${fmt(avgPrice)}</td>
+            </tr>`;
+        });
+    }
+
+    html += `<tr style="border-top:2px solid var(--border-glass);">
           <td colspan="${colspan}" style="font-weight:700; font-size:0.9rem; color:var(--text-primary); padding:1rem 0.5rem;">RAZEM (${count} studni)</td>
           <td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-muted);">${fmtInt(weight)} kg</td>
-          <td class="text-right" style="font-weight:800; font-size:1rem; color:var(--success);">${fmtInt(price)} PLN</td>
+          <td class="text-right" style="font-weight:800; font-size:1rem; color:var(--success);">${fmt(price)} PLN</td>
+          <td></td>
         </tr>
       </tfoot>`;
+    return html;
 }
 
 function updateOfferSummaryUI(totals) {
@@ -1094,11 +1144,18 @@ function renderSavedOffersStudnie() {
                 ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian"><i data-lucide="hourglass"></i> Historia</button>` : ''}
                 <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń"><i data-lucide="trash-2"></i> Usuń</button>
                 ${
-                    hasOrder && order
-                        ? `
-                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.75rem; font-weight:800; padding:0.4rem 0.8rem;" onclick="window.location.href='/studnie?order=${order.id}'" title="Otwórz zamówienie"><i data-lucide="package"></i> Otwórz zamówienie</button>
-                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie"><i data-lucide="trash-2"></i> Zamówienie</button>
-                `
+                    hasOrder
+                        ? (() => {
+                            const offerOrders = getOrdersForOffer(oId);
+                            let buttonsHtml = '';
+                            offerOrders.forEach(order => {
+                                buttonsHtml += `
+                                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.75rem; font-weight:800; padding:0.4rem 0.8rem;" onclick="window.location.href='/studnie?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package"></i> Otwórz zamówienie ${order.orderNumber || ''}</button>
+                                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i> Zamówienie ${order.orderNumber || ''}</button>
+                                `;
+                            });
+                            return buttonsHtml;
+                        })()
                         : ''
                 }
             </div>
@@ -2007,7 +2064,7 @@ function renderOfferDiscountsPopupContent() {
             -moz-appearance: textfield;
         }
     </style>
-    <div style="display: flex; flex-direction: column; gap: 1rem;">`;
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">`;
     
     let totalOverallNetto = 0;
 
@@ -2043,45 +2100,45 @@ function renderOfferDiscountsPopupContent() {
         const dnColor = 'var(--accent)';
         
         html += `
-        <div style="display: grid; grid-template-columns: 2fr 3fr 3fr 2fr; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 1.2rem 2rem; margin-bottom: 1rem; gap: 2rem; opacity: 1;">
+        <div style="display: grid; grid-template-columns: 2fr 3fr 3fr 2fr; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 0.5rem; gap: 1rem; opacity: 1;">
             
             <!-- 1. Średnica -->
-            <div style="font-weight: 800; font-size: 1.6rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.8rem;">
-                <span style="display:inline-block; width:18px; height:18px; border-radius:50%; background:${dnColor};"></span>
+            <div style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                <span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${dnColor};"></span>
                 ${displayDn}
             </div>
 
             <!-- 2. Rabat Dennica -->
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Dennica/Kineta:</span>
-                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 200px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(0,0,0,0.4); height: 60px; overflow: hidden; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#6366f1'" onfocusout="this.style.borderColor='rgba(99,102,241,0.3)'">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.5rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Dennica/Kineta:</span>
+                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(0,0,0,0.4); height: 30px; overflow: hidden; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#6366f1'" onfocusout="this.style.borderColor='rgba(99,102,241,0.3)'">
                     <input type="number" class="text-center offer-discount-input" 
                            value="${disc.dennica}" 
                            onfocus="this.dataset.oldValue=this.value; this.value='';"
                            onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', 'dennica', this.value);}"
                            onkeydown="if(event.key==='Enter') this.blur();"
-                           style="min-width:0; flex:1; font-size: 2.2rem; font-weight: 900; color: #818cf8; background: transparent; border: none; outline: none; box-shadow: none;">
-                    <span style="font-size: 1.6rem; font-weight: 800; color: rgba(165,180,252,0.6); padding-right: 0.8rem; pointer-events: none;">%</span>
+                           style="min-width:0; flex:1; font-size: 1.1rem; font-weight: 900; color: #818cf8; background: transparent; border: none; outline: none; box-shadow: none;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: rgba(165,180,252,0.6); padding-right: 0.4rem; pointer-events: none;">%</span>
                 </div>
             </div>
 
             <!-- 3. Rabat Nadbudowa -->
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Nadbudowa:</span>
-                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 200px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(0,0,0,0.4); height: 60px; overflow: hidden; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#6366f1'" onfocusout="this.style.borderColor='rgba(99,102,241,0.3)'">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.5rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Nadbudowa:</span>
+                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(0,0,0,0.4); height: 30px; overflow: hidden; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#6366f1'" onfocusout="this.style.borderColor='rgba(99,102,241,0.3)'">
                     <input type="number" class="text-center offer-discount-input" 
                            value="${disc.nadbudowa}" 
                            onfocus="this.dataset.oldValue=this.value; this.value='';"
                            onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', 'nadbudowa', this.value);}"
                            onkeydown="if(event.key==='Enter') this.blur();"
-                           style="min-width:0; flex:1; font-size: 2.2rem; font-weight: 900; color: #818cf8; background: transparent; border: none; outline: none; box-shadow: none;">
-                    <span style="font-size: 1.6rem; font-weight: 800; color: rgba(165,180,252,0.6); padding-right: 0.8rem; pointer-events: none;">%</span>
+                           style="min-width:0; flex:1; font-size: 1.1rem; font-weight: 900; color: #818cf8; background: transparent; border: none; outline: none; box-shadow: none;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: rgba(165,180,252,0.6); padding-right: 0.4rem; pointer-events: none;">%</span>
                 </div>
             </div>
 
             <!-- 4. Wartość netto -->
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
-                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 1.8rem;">${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN</div>
+                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.9rem;">${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
 
         </div>`;
@@ -2092,13 +2149,13 @@ function renderOfferDiscountsPopupContent() {
     // SUMA PODSUMOWANIE NA DOLE
     if (totalOverallNetto > 0) {
         html += `
-        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Łączna Suma Netto:</span>
-            <span id="offer-total-popup-price" style="font-size: 2.2rem; font-weight: 900; color: var(--success);">${typeof fmtInt === 'function' ? fmtInt(totalOverallNetto) : totalOverallNetto} PLN</span>
+        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 2px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Łączna Suma Netto:</span>
+            <span id="offer-total-popup-price" style="font-size: 1.1rem; font-weight: 900; color: var(--success);">${typeof fmtInt === 'function' ? fmtInt(totalOverallNetto) : totalOverallNetto} PLN</span>
         </div>
         `;
     } else {
-        html += `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size: 1.2rem;">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>`;
+        html += `<div style="text-align:center; padding: 1rem; color: var(--text-muted); font-size: 0.6rem;">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>`;
     }
 
     body.innerHTML = html;
@@ -2126,7 +2183,18 @@ window.openTransportPopup = function() {
     
     if (kmInput && modalKm) modalKm.value = kmInput.value || 0;
     if (rateInput && modalRate) modalRate.value = rateInput.value || 0;
-    
+
+    // Aktualizacja info o ilości transportów
+    const tripsInfoEl = document.getElementById('transport-modal-trips-info');
+    if (tripsInfoEl) {
+        let globalWeight = 0;
+        if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
+            wells.forEach(w => globalWeight += calcWellStats(w).weight);
+        }
+        const totalTransports = globalWeight > 0 ? Math.ceil(globalWeight / 24000) : 0;
+        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? fmtInt(globalWeight) : globalWeight} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${totalTransports}</strong></span>`;
+    }
+
     document.getElementById('offer-transport-modal').style.display = 'flex';
     if(typeof lucide !== 'undefined') lucide.createIcons();
 };
@@ -2189,4 +2257,15 @@ window.syncTransportFromModal = function() {
     
     // Kluczowe: renderOfferSummary przelicza totals i odświeża całe UI oferty (w tym suma w modal)
     if(typeof renderOfferSummary === 'function') renderOfferSummary();
+
+    // Aktualizacja info o ilości transportów
+    const tripsInfoEl = document.getElementById('transport-modal-trips-info');
+    if (tripsInfoEl) {
+        let globalWeight = 0;
+        if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
+            wells.forEach(w => globalWeight += calcWellStats(w).weight);
+        }
+        const totalTransports = globalWeight > 0 ? Math.ceil(globalWeight / 24000) : 0;
+        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? fmtInt(globalWeight) : globalWeight} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${totalTransports}</strong></span>`;
+    }
 };

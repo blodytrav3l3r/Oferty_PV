@@ -701,9 +701,22 @@ window.renderWellsList = function renderWellsList() {
                 errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.join('<br>')}</div>`;
             }
 
-            const wellLockBadge = isWellLocked(i)
-                ? '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;"><i data-lucide="lock"></i></span>'
-                : '';
+            let wellLockBadge = '';
+            if (isWellLocked(i)) {
+                // Sprawdź, czy blokada pochodzi z zamówienia (pokaż numer zamówienia)
+                const wellOrder = typeof getOrderForWellId === 'function'
+                    ? getOrderForWellId(w.id, editingOfferIdStudnie)
+                    : null;
+                if (wellOrder && wellOrder.orderNumber) {
+                    wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
+                        onclick="event.stopPropagation(); window.location.href='/studnie?order=${wellOrder.id}'"
+                        style="font-size:0.55rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
+                        <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
+                    </span>`;
+                } else {
+                    wellLockBadge = '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
+                }
+            }
 
             let doplataBadge = '';
             if (w.doplata && w.doplata !== 0) {

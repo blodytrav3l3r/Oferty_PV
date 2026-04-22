@@ -58,10 +58,21 @@ function getOfferOrderProgress(offerId, offerWells) {
     return { ordered, total, percent };
 }
 
+/** Zwraca zamówienie, do którego należy dana studnia (jeśli istnieje) */
+function getOrderForWellId(wellId, offerId) {
+    if (!wellId || !ordersStudnie) return null;
+    const nId = offerId ? normalizeId(offerId) : null;
+    return ordersStudnie.find((order) => {
+        if (nId && normalizeId(order.offerId) !== nId) return false;
+        return (order.wells || []).some((w) => w.id === wellId);
+    }) || null;
+}
+
 window.getOrdersForOffer = getOrdersForOffer;
 window.getOrderedWellIds = getOrderedWellIds;
 window.isWellOrdered = isWellOrdered;
 window.getOfferOrderProgress = getOfferOrderProgress;
+window.getOrderForWellId = getOrderForWellId;
 
 async function createOrderFromOffer() {
     // Zapobiegaj wyścigom w UI, jeśli użytkownik kliknął dwukrotnie lub kliknął Zamówienie podczas trwania zapisu
@@ -394,7 +405,11 @@ async function deleteOrderStudnie(orderId) {
 function getOrderChanges(order) {
     if (!order || !order.originalSnapshot) return {};
     const changes = {}; // { wellIndex: { type: 'modified'|'added'|'removed', fields: [...] } }
-    const orig = order.originalSnapshot;
+
+    // Normalizuj originalSnapshot przez migrację, aby uniknąć false positive
+    // (migracja dodaje domyślne wartości jak nadbudowa='betonowa', dennicaMaterial itp.)
+    const orig = JSON.parse(JSON.stringify(order.originalSnapshot));
+    if (typeof migrateWellData === 'function') migrateWellData(orig);
     const curr = order.wells;
 
     const maxLen = Math.max(orig.length, curr.length);
@@ -416,7 +431,8 @@ function getOrderChanges(order) {
             const counts = {};
             (conf || []).forEach((item) => {
                 if (!item.productId) return;
-                counts[item.productId] = (counts[item.productId] || 0) + (item.quantity || 1);
+                if (item.autoAdded) return; // Ignoruj komponenty dodane automatycznie przez system (uszczelki, kineta)
+                counts[item.productId] = (counts[item.productId] || 0) + (parseInt(item.quantity, 10) || 1);
             });
             return counts;
         };
@@ -438,17 +454,23 @@ function getOrderChanges(order) {
         }
         if (configDiff) diffs.push('config');
 
-        // Porównaj przejścia (ignorując kąt, wykonanie kąta, angleGony)
-        const cleanPrzejscia = (arr) =>
-            (arr || []).map((p) => ({
-                productId: p.productId,
-                rzednaWlaczenia: p.rzednaWlaczenia,
-                notes: p.notes
-            }));
-        if (
-            JSON.stringify(cleanPrzejscia(o.przejscia)) !==
-            JSON.stringify(cleanPrzejscia(c.przejscia))
-        ) {
+        // Porównaj przejścia (ignorując kąt, wykonanie kąta, angleGony oraz oryginalną kolejność tablicy)
+        const cleanPrzejscia = (arr) => {
+            const mapped = (arr || []).map((p) => {
+                let rz = p.rzednaWlaczenia;
+                if (rz !== null && rz !== undefined && rz !== '') {
+                    rz = parseFloat(rz).toFixed(3);
+                }
+                return JSON.stringify({
+                    productId: p.productId,
+                    rzednaWlaczenia: rz,
+                    notes: p.notes || '' // Normalizuj undefined/null do '' aby uniknąć false positive
+                });
+            });
+            return mapped.sort();
+        };
+
+        if (cleanPrzejscia(o.przejscia).join('|') !== cleanPrzejscia(c.przejscia).join('|')) {
             diffs.push('przejscia');
         }
 
@@ -469,19 +491,22 @@ function getOrderChanges(order) {
             'usytuowanie'
         ];
         paramKeys.forEach((key) => {
-            if ((o[key] || '') !== (c[key] || '')) diffs.push(key);
+            if (String(o[key] || '') !== String(c[key] || '')) diffs.push(key);
         });
 
-        // Porównaj podstawowe pola i rzędne
-        if ((o.dn || 0) !== (c.dn || 0)) diffs.push('dn');
+        const eqNum = (a, b) => {
+            const n1 = parseFloat(a);
+            const n2 = parseFloat(b);
+            if (isNaN(n1) && isNaN(n2)) return true;
+            return Math.abs((n1 || 0) - (n2 || 0)) < 0.001;
+        };
+
+        // Porównaj podstawowe pola i rzędne (normalizuj typy — string vs number)
+        if (!eqNum(o.dn, c.dn)) diffs.push('dn');
         if ((o.name || '') !== (c.name || '')) diffs.push('name');
-        if (
-            (o.rzednaWlazu == null ? '' : o.rzednaWlazu) !==
-            (c.rzednaWlazu == null ? '' : c.rzednaWlazu)
-        )
-            diffs.push('rzednaWlazu');
-        if ((o.rzednaDna == null ? '' : o.rzednaDna) !== (c.rzednaDna == null ? '' : c.rzednaDna))
-            diffs.push('rzednaDna');
+        
+        if (!eqNum(o.rzednaWlazu, c.rzednaWlazu)) diffs.push('rzednaWlazu');
+        if (!eqNum(o.rzednaDna, c.rzednaDna)) diffs.push('rzednaDna');
 
         if (diffs.length > 0) {
             changes[i] = { type: 'modified', fields: diffs };
@@ -800,14 +825,19 @@ window.deleteOrderStudnie = deleteOrderStudnie;
 async function syncSourceData() {
     let synced = '';
     try {
-        if (typeof window.saveOfferStudnie === 'function') {
-            const offerSaved = await window.saveOfferStudnie();
-            if (offerSaved) synced += 'Oferta';
-        }
         if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+            // Jesteśmy w trybie edycji zamówienia.
+            // Zapisujemy TYLKO zamówienie. Zapisanie oferty w tym trybie usunęłoby studnie,
+            // ponieważ globalna tablica 'wells' zawiera teraz tylko studnie z zamówienia.
             if (typeof window.saveCurrentOrder === 'function') {
                 await window.saveCurrentOrder();
-                synced += (synced ? ' + ' : '') + 'Zamówienie';
+                synced += 'Zamówienie';
+            }
+        } else {
+            // Jesteśmy w trybie edycji oferty
+            if (typeof window.saveOfferStudnie === 'function') {
+                const offerSaved = await window.saveOfferStudnie();
+                if (offerSaved) synced += 'Oferta';
             }
         }
     } catch (err) {

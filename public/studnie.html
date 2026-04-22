@@ -2763,34 +2763,6 @@
                     >
                         <div
                             class="summary-card"
-                            style="
-                                padding: 1rem;
-                                height: 100%;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                            "
-                        >
-                            <div
-                                class="label"
-                                style="
-                                    font-size: 0.9rem;
-                                    text-transform: uppercase;
-                                    margin-bottom: 0.2rem;
-                                "
-                            >
-                                Waga Netto
-                            </div>
-                            <div
-                                class="value accent"
-                                id="sum-netto-weight"
-                                style="font-size: 1.4rem; color: var(--text-primary); margin: 0"
-                            >
-                                0 kg
-                            </div>
-                        </div>
-                        <div
-                            class="summary-card"
                             onclick="openTransportPopup()"
                             style="
                                 padding: 1rem;
@@ -3055,19 +3027,19 @@
 
         <!-- ===== OFFER DISCOUNTS MODAL ===== -->
         <div id="offer-discounts-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 1400px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 2rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div style="font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; gap: 0.8rem; color: #6366f1;">
-                        <i data-lucide="percent" style="width: 28px; height: 28px;"></i> Zarządzanie Rabatami Oferty
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 700px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
+                    <div style="font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem; color: #6366f1;">
+                        <i data-lucide="percent" style="width: 14px; height: 14px;"></i> Zarządzanie Rabatami Oferty
                     </div>
                     <button class="btn btn-icon" onclick="closeOfferDiscountsPopup()" style="color: var(--text-muted);"><i data-lucide="x"></i></button>
                 </div>
-                <div id="offer-discounts-modal-body" style="padding: 1.5rem 2rem; max-height: 65vh; overflow-y: auto;">
+                <div id="offer-discounts-modal-body" style="padding: 0.75rem 1rem; max-height: 65vh; overflow-y: auto;">
                     <!-- Zawartość wstrzykiwana przez JS -->
                 </div>
-                <div style="padding: 1.5rem 2rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 1rem;">
-                    <button class="btn btn-secondary" onclick="handleOfferDiscountsCancel()" style="font-size: 1.2rem; padding: 0.8rem 2rem; font-weight: 700;">Zamknij</button>
-                    <button class="btn btn-primary" onclick="handleOfferDiscountsSave()" style="font-size: 1.2rem; padding: 0.8rem 2.5rem; font-weight: 800;"><i data-lucide="check" style="width: 20px; height: 20px; margin-right: 0.5rem;"></i> Zastosuj</button>
+                <div style="padding: 0.75rem 1rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <button class="btn btn-secondary" onclick="handleOfferDiscountsCancel()" style="font-size: 0.6rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleOfferDiscountsSave()" style="font-size: 0.6rem; padding: 0.4rem 1.25rem; font-weight: 800;"><i data-lucide="check" style="width: 10px; height: 10px; margin-right: 0.25rem;"></i> Zastosuj</button>
                 </div>
             </div>
         </div>
@@ -3086,35 +3058,38 @@
             }
         </style>
         <div id="offer-transport-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 1400px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 2rem 3rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div style="font-weight: 800; font-size: 3.2rem; display: flex; align-items: center; gap: 1.2rem; color: #eab308;">
-                        <i data-lucide="truck" style="width: 48px; height: 48px;"></i> Koszty Transportu
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 700px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
+                    <div style="font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem; color: #eab308;">
+                        <i data-lucide="truck" style="width: 24px; height: 24px;"></i> Koszty Transportu
                     </div>
-                    <button class="btn btn-icon" onclick="handleOfferTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 32px; height: 32px;"></i></button>
+                    <button class="btn btn-icon" onclick="handleOfferTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
                 </div>
-                <div style="padding: 4rem 3rem;">
-                    <p style="color: var(--text-muted); margin-bottom: 3.5rem; font-size: 2.2rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
-                    <div style="display: flex; gap: 3rem; align-items: flex-end;">
+                <div style="padding: 2rem 1.5rem;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 1.1rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
+                    <div style="display: flex; gap: 1.5rem; align-items: flex-end;">
                         <div class="form-group" style="flex: 1; margin: 0;">
-                            <label style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 1.2rem; display: block; font-weight: 600;">Odległość (km)</label>
-                            <input type="number" id="transport-modal-km" class="input-modern" style="width: 100%; font-size: 2.8rem; font-weight: 700; padding: 1.5rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
+                            <label style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
+                            <input type="number" id="transport-modal-km" class="input-modern" style="width: 100%; font-size: 1.4rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
                         </div>
                         <div class="form-group" style="flex: 1; margin: 0;">
-                            <label style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 1.2rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
-                            <input type="number" id="transport-modal-rate" class="input-modern" style="width: 100%; font-size: 2.8rem; font-weight: 700; padding: 1.5rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
+                            <label style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
+                            <input type="number" id="transport-modal-rate" class="input-modern" style="width: 100%; font-size: 1.4rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
                         </div>
                     </div>
-                    <div style="margin-top: 3.5rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 2rem; border-radius: 12px;">
-                        <div style="font-size: 1.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
-                        <div id="transport-modal-total-val" style="font-size: 4rem; font-weight: 800; color: var(--success); letter-spacing: -1px;">
+                    <div id="transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+                        <!-- ilość transportów -->
+                    </div>
+                    <div style="margin-top: 1.75rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 1rem; border-radius: 12px;">
+                        <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
+                        <div id="transport-modal-total-val" style="font-size: 2rem; font-weight: 800; color: var(--success); letter-spacing: -1px;">
                             0 PLN
                         </div>
                     </div>
                 </div>
-                <div style="padding: 2rem 3rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 1.5rem;">
-                    <button class="btn btn-secondary" onclick="handleOfferTransportCancel()" style="font-size: 1.2rem; padding: 0.8rem 2rem; font-weight: 700;">Zamknij</button>
-                    <button class="btn btn-primary" onclick="handleOfferTransportSave()" style="font-size: 1.2rem; padding: 0.8rem 2.5rem; font-weight: 800;"><i data-lucide="check" style="width: 20px; height: 20px; margin-right: 0.5rem;"></i> Zastosuj</button>
+                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button class="btn btn-secondary" onclick="handleOfferTransportCancel()" style="font-size: 0.6rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleOfferTransportSave()" style="font-size: 0.6rem; padding: 0.4rem 1.25rem; font-weight: 800;"><i data-lucide="check" style="width: 10px; height: 10px; margin-right: 0.25rem;"></i> Zastosuj</button>
                 </div>
             </div>
         </div>

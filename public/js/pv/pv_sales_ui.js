@@ -394,7 +394,7 @@ class PVSalesUI {
                             ${
                                 isLocalList
                                     ? `
-                                <button class="btn btn-sm btn-primary btn-edit-pv-offer" data-id="${offer.id}" data-type="${offer.type}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="${hasOrder ? 'Oferta zablokowana przez zamówienie' : 'Edytuj ofertę'}" ${hasOrder ? 'disabled' : ''}><i data-lucide="pencil"></i> Edytuj</button>
+                                <button class="btn btn-sm btn-primary btn-edit-pv-offer" data-id="${offer.id}" data-type="${offer.type}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Edytuj ofertę"><i data-lucide="pencil"></i> Edytuj</button>
                                 <button class="btn btn-sm btn-copy-pv-offer" data-id="${offer.id}" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: #0ea5e9; padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Skopiuj ofertę jako nową wersję"><i data-lucide="clipboard-list"></i> Wersja</button>
                                 <button class="btn btn-sm btn-secondary btn-history-pv-offer" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;"><i data-lucide="hourglass"></i> Historia</button>
                                 ${isAdminOrPro ? `<button class="btn btn-sm btn-secondary btn-change-owner" data-id="${offer.id}" style="padding: 0.3rem 0.7rem; font-weight: 600; font-size: 0.75rem;" title="Zmień opiekuna oferty"><i data-lucide="user"></i> Opiekun</button>` : ''}
