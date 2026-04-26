@@ -16,9 +16,10 @@ router.get('/:id/export-pdf', requireAuth, async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${id}.pdf"`);
         res.send(pdfBuffer);
-    } catch (e: any) {
-        logger.error('Export', 'Błąd eksportu PDF', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Export', 'Błąd eksportu PDF', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -30,9 +31,10 @@ router.get('/studnie/:id/export-pdf', requireAuth, async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${id}.pdf"`);
         res.send(pdfBuffer);
-    } catch (e: any) {
-        logger.error('Export', 'Błąd eksportu PDF', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Export', 'Błąd eksportu PDF', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -47,9 +49,10 @@ router.get('/:id/export-docx', requireAuth, async (req, res) => {
         );
         res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${id}.docx"`);
         res.send(docxBuffer);
-    } catch (e: any) {
-        logger.error('Export', 'Błąd eksportu DOCX', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Export', 'Błąd eksportu DOCX', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -64,9 +67,10 @@ router.get('/studnie/:id/export-docx', requireAuth, async (req, res) => {
         );
         res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${id}.docx"`);
         res.send(docxBuffer);
-    } catch (e: any) {
-        logger.error('Export', 'Błąd eksportu DOCX', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Export', 'Błąd eksportu DOCX', message);
+        res.status(500).json({ error: message });
     }
 });
 

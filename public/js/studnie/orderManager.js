@@ -196,8 +196,15 @@ async function createOrderFromOffer() {
         return;
     }
 
+    // Przelicz sumy tylko dla wybranych studni korzystając z rabatów oferty
+    const effectiveDiscounts = (offer && offer.wellDiscounts) ? JSON.parse(JSON.stringify(offer.wellDiscounts)) : {};
+
     // Utwórz zamówienie z WYBRANYCH studni — wykonaj głęboką kopię, zapisz oryginalną migawkę
     const selectedWellsCopy = JSON.parse(JSON.stringify(selectedWells));
+    // Upewnij się, że kineta jest zsynchronizowana w każdej studni przed zamrożeniem cen
+    if (typeof syncKineta === 'function') {
+        selectedWellsCopy.forEach((w) => syncKineta(w));
+    }
     const order = {
         id: 'order_studnie_' + Date.now(),
         offerId: offer.id,
@@ -217,18 +224,23 @@ async function createOrderFromOffer() {
         notes: offer.notes,
         wells: selectedWellsCopy,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
-        originalSnapshot: JSON.parse(JSON.stringify(selectedWellsCopy)),
+        originalSnapshot: {
+            wells: JSON.parse(JSON.stringify(selectedWellsCopy)),
+            wellDiscounts: JSON.parse(JSON.stringify(effectiveDiscounts))
+        },
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
-        totalWeight: offer.totalWeight,
-        totalNetto: offer.totalNetto,
-        totalBrutto: offer.totalBrutto,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: currentUser ? currentUser.username : ''
     };
+    
+    // Tymczasowo nadpisz globalne rabaty, aby calcWellStats i freezeWellPrices ich użyły
+    const originalGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? JSON.parse(JSON.stringify(wellDiscounts)) : {};
+    if (typeof wellDiscounts !== 'undefined') {
+        window.wellDiscounts = effectiveDiscounts;
+    }
 
-    // Przelicz sumy tylko dla wybranych studni
     let totalNetto = 0;
     let totalWeight = 0;
     selectedWells.forEach((well) => {
@@ -236,12 +248,30 @@ async function createOrderFromOffer() {
         totalNetto += stats.price;
         totalWeight += stats.weight;
     });
-    order.totalWeight = totalWeight;
-    order.totalNetto = totalNetto;
-    order.totalBrutto = totalNetto * 1.23;
 
-    // Zamroź ceny studni w zamówieniu w momencie tworzenia
+    // Oblicz transport dla zamówienia (proporcjonalnie do wagi wybranych studni)
+    let orderTransportCost = 0;
+    const globalOfferWeight = offer.totalWeight || 0;
+    const globalOfferTransport = offer.totalTransportCost || 0;
+    if (globalOfferWeight > 0 && totalWeight > 0) {
+        orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
+    }
+    
+    const finalOrderNetto = totalNetto + orderTransportCost;
+
+    order.totalWeight = totalWeight;
+    order.totalNetto = finalOrderNetto;
+    order.originalTotalNetto = finalOrderNetto;
+    order.totalBrutto = finalOrderNetto * 1.23;
+    order.wellDiscounts = effectiveDiscounts;
+
+    // Zamroź ceny studni w zamówieniu w momencie tworzenia (używając aktualnie ustawionych rabatów oferty)
     freezeWellPrices(order.wells);
+
+    // Przywróć oryginalne rabaty globalne
+    if (typeof wellDiscounts !== 'undefined') {
+        window.wellDiscounts = originalGlobalDiscounts;
+    }
 
     if (!ordersStudnie) ordersStudnie = [];
     ordersStudnie.push(order);
@@ -286,6 +316,9 @@ function saveOrderStudnie() {
 
     // Zaktualizuj studnie zamówienia bieżącym stanem studni (ceny są już zamrożone)
     order.wells = JSON.parse(JSON.stringify(wells));
+    if (typeof window.wellDiscounts !== 'undefined') {
+        order.wellDiscounts = JSON.parse(JSON.stringify(window.wellDiscounts));
+    }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
 
@@ -319,8 +352,10 @@ function freezeWellPrices(wellsArr) {
 
         // Zamroź ceny przejść
         let discNadbudowa = 0;
-        if (well.dn && wellDiscounts[well.dn]) {
-            discNadbudowa = wellDiscounts[well.dn].nadbudowa || 0;
+        // Mapowanie dn na klucz rabatów (styczna -> styczne)
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+        if (discountKey && wellDiscounts[discountKey]) {
+            discNadbudowa = wellDiscounts[discountKey].nadbudowa || 0;
         }
         const mult = 1 - discNadbudowa / 100;
 
@@ -407,8 +442,10 @@ function getOrderChanges(order) {
     const changes = {}; // { wellIndex: { type: 'modified'|'added'|'removed', fields: [...] } }
 
     // Normalizuj originalSnapshot przez migrację, aby uniknąć false positive
-    // (migracja dodaje domyślne wartości jak nadbudowa='betonowa', dennicaMaterial itp.)
-    const orig = JSON.parse(JSON.stringify(order.originalSnapshot));
+    const originalSnapshotData = order.originalSnapshot;
+    const originalWells = Array.isArray(originalSnapshotData) ? originalSnapshotData : (originalSnapshotData.wells || []);
+    
+    const orig = JSON.parse(JSON.stringify(originalWells));
     if (typeof migrateWellData === 'function') migrateWellData(orig);
     const curr = order.wells;
 
@@ -503,7 +540,8 @@ function getOrderChanges(order) {
 
         // Porównaj podstawowe pola i rzędne (normalizuj typy — string vs number)
         if (!eqNum(o.dn, c.dn)) diffs.push('dn');
-        if ((o.name || '') !== (c.name || '')) diffs.push('name');
+        // Nazwa studni jest ignorowana - zmiana nazwy nie wpływa na cenę
+        // if ((o.name || '') !== (c.name || '')) diffs.push('name');
         
         if (!eqNum(o.rzednaWlazu, c.rzednaWlazu)) diffs.push('rzednaWlazu');
         if (!eqNum(o.rzednaDna, c.rzednaDna)) diffs.push('rzednaDna');
@@ -554,10 +592,19 @@ async function enterOrderEditMode(orderId) {
         wells = Array.isArray(order.wells) ? JSON.parse(JSON.stringify(order.wells)) : [];
         migrateWellData(wells);
 
+        // Załaduj zapisane rabaty z zamówienia (zabezpieczenie, jeśli zamówienie ma własne rabaty)
+        if (order.wellDiscounts) {
+            window.wellDiscounts = JSON.parse(JSON.stringify(order.wellDiscounts));
+        } else {
+            // Jeśli stare zamówienie nie ma wellDiscounts, można zostawić obecne lub zresetować:
+            // window.wellDiscounts = {}; 
+        }
+
         // Dodatkowo upewnij się, że każda studnia ma tablice config i przejscia
         wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
+            if (typeof syncKineta === 'function') syncKineta(w);
         });
 
         console.log('[enterOrderEditMode] wells migrated, count:', wells.length);
@@ -668,12 +715,21 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         editingOfferIdStudnie = order.offerId || null;
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
+        
+        // Załaduj rabaty zamówienia dla poprawnego przeliczania cen w podglądzie
+        if (order.wellDiscounts) {
+            window.wellDiscounts = JSON.parse(JSON.stringify(order.wellDiscounts));
+        } else {
+            window.wellDiscounts = {};
+        }
 
         wells = Array.isArray(order.wells) ? JSON.parse(JSON.stringify(order.wells)) : [];
         if (typeof migrateWellData === 'function') migrateWellData(wells);
         wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
+
+            if (typeof syncKineta === 'function') syncKineta(w);
 
             if (w.przejscia) {
                 w.przejscia.forEach((pr) => {
@@ -780,6 +836,9 @@ async function saveCurrentOrder() {
 
     // Zaktualizuj zamówienie bieżącymi studniami (ceny już zamrożone)
     order.wells = JSON.parse(JSON.stringify(wells));
+    if (typeof window.wellDiscounts !== 'undefined') {
+        order.wellDiscounts = JSON.parse(JSON.stringify(window.wellDiscounts));
+    }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
 
@@ -802,6 +861,7 @@ async function saveCurrentOrder() {
             headers: authHeaders(),
             body: JSON.stringify({
                 wells: order.wells,
+                wellDiscounts: order.wellDiscounts,
                 updatedAt: order.updatedAt,
                 totalWeight: order.totalWeight,
                 totalNetto: order.totalNetto,

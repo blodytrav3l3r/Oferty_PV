@@ -119,19 +119,25 @@ class RuleEngine:
         ]
 
     def get_reduction_plate(self) -> Optional[ProductModel]:
-        """Szuka płyty redukcyjnej (zawsze z DN do DN1000)"""
+        """Szuka płyty redukcyjnej (z DN studni na target_dn)"""
         if (
             not self.config.use_reduction
             or self.config.dn == "styczna"
             or (isinstance(self.config.dn, int) and self.config.dn <= 1000)
         ):
             return None
-        # Z założenia redukcja sprowadza z self.config.dn np. 1500, 2000 na 1000. Szukamy "plyta_redukcyjna"
+        target_dn = getattr(self.config, "target_dn", 1000) or 1000
         plates = [
             p
             for p in self.products
             if p.componentType == "plyta_redukcyjna" and p.dn == self.config.dn
         ]
+        # Preferuj płytę pasującą do target_dn w nazwie/id
+        for plate in plates:
+            plate_name = (plate.name or "").upper()
+            plate_id = (plate.id or "").upper()
+            if f"DN{target_dn}" in plate_name or str(target_dn) in plate_id:
+                return plate
         return plates[0] if plates else None
 
     def get_top_closure(
@@ -141,7 +147,12 @@ class RuleEngine:
         Dobór zakończenia. Zawsze próbuje Konus. Jeśli wymuszone w config, to używa wymuszonego.
         Jeżeli fallback_to_din == True (bo przechodzi np. otwór), wymusza Płytę DIN.
         """
-        top_dn = 1000 if is_reduced or self.config.dn == "styczna" else self.config.dn
+        if self.config.dn == "styczna":
+            top_dn = 1000
+        elif is_reduced:
+            top_dn = getattr(self.config, "target_dn", 1000) or 1000
+        else:
+            top_dn = self.config.dn
 
         # Jeśli użytkownik wymusił coś w UI (np. "PDD-20")
         if self.config.forced_top_closure_id and not fallback_to_din:
@@ -220,14 +231,21 @@ class RuleEngine:
         
         return dennicy
 
-    def get_kregi_list(self, dn: Any) -> List[ProductModel]:
-        """Wylistuj kręgi dla danej średnicy"""
+    def get_kregi_list(self, dn: Any, include_ot: bool = False) -> List[ProductModel]:
+        """Wylistuj kręgi dla danej średnicy. Domyślnie wyklucza krag_ot (są dodawane później przez substitute_ot_rings)."""
         target_dn = 1000 if dn == "styczna" else dn
-        kregi = [
-            p
-            for p in self.products
-            if p.componentType in ["krag", "krag_ot"] and p.dn == target_dn
-        ]
+        if include_ot:
+            kregi = [
+                p
+                for p in self.products
+                if p.componentType in ["krag", "krag_ot"] and p.dn == target_dn
+            ]
+        else:
+            kregi = [
+                p
+                for p in self.products
+                if p.componentType == "krag" and p.dn == target_dn
+            ]
         attr_forma = (
             "formaStandardowaWL"
             if self.config.warehouse == "WL"
@@ -259,6 +277,20 @@ class RuleEngine:
         attr_forma = "formaStandardowaWL" if self.config.warehouse == "WL" else "formaStandardowaKLB"
         candidates.sort(key=lambda x: -(getattr(x, attr_forma, 0) or 0))
         return candidates[0]
+
+    def get_avr_list(self, max_height: Optional[int] = None) -> List[ProductModel]:
+        """Wylistuj regulatory wejściowe (AVR) dostępne w magazynie.
+        Zwraca posortowane malejąco po wysokości (najwyższe pierwsze).
+        max_height — opcjonalnie ograniczenie górne (np. 260 mm).
+        """
+        avrs = [
+            p for p in self.products
+            if p.componentType == "avr"
+        ]
+        if max_height is not None:
+            avrs = [p for p in avrs if (p.height or 0) <= max_height]
+        avrs.sort(key=lambda x: -(x.height or 0))
+        return avrs
 
     def get_default_hatch(self) -> Optional[ProductModel]:
         """Zwraca domyślny właz (preferowany 150mm)"""

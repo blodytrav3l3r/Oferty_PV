@@ -98,10 +98,11 @@ export async function selectManholeComponents(config: ManholeConfig): Promise<Se
             hasPlytaOdciazajaca,
             hasPierscienOdciazajacy
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
         result.success = false;
-        result.errors.push(`Błąd systemu: ${error.message}`);
-        logger.error('Antygrawity', 'Błąd systemu', error);
+        result.errors.push(`Błąd systemu: ${message}`);
+        logger.error('Antygrawity', 'Błąd systemu', message);
     }
 
     return result;

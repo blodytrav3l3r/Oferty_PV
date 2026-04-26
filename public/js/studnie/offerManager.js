@@ -110,6 +110,7 @@ function renderPartialOrderProgress() {
 function renderOfferSummaryTable(order, orderChanges, totals) {
     const showOrderSelection = !orderEditMode && editingOfferIdStudnie;
     const orderedWellIds = showOrderSelection && typeof getOrderedWellIds === 'function' ? getOrderedWellIds(editingOfferIdStudnie) : new Set();
+    const showPriceComparison = orderEditMode && order && order.originalSnapshot;
 
     let html = `<div class="table-wrap"><table style="width:100%;">
       <thead>
@@ -118,9 +119,12 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
           <th style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
           <th style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
           <th style="width:100%;">Nazwa studni</th>
-          <th style="width:1%; min-width:70px; text-align:center; white-space:nowrap;">DN</th>
-          <th style="width:1%; min-width:170px; white-space:nowrap;" class="text-right">Cena</th>
-          <th style="width:1%; min-width:130px; white-space:nowrap;" class="text-right">Akcje</th>
+          <th style="width:1%; min-width:70px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">Status</th>
+          <th style="width:1%; min-width:60px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">DN</th>
+          ${showPriceComparison ? `<th style="width:1%; min-width:110px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Cena z oferty</th>` : ''}
+          <th style="width:1%; min-width:110px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">${showPriceComparison ? 'Cena zamówienia' : 'Cena'}</th>
+          ${showPriceComparison ? `<th style="width:1%; min-width:90px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Różnica</th>` : ''}
+          <th style="width:1%; min-width:90px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Akcje</th>
         </tr>
       </thead>
       <tbody>`;
@@ -146,21 +150,50 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         runningTotalWeight += stats.weight;
 
         const dnKey = well.dn || '—';
-        if (!dnGroups[dnKey]) dnGroups[dnKey] = { count: 0, sumPrice: 0, sumHeight: 0 };
+        if (!dnGroups[dnKey]) dnGroups[dnKey] = { count: 0, sumPrice: 0, sumHeight: 0, sumOfferPrice: 0 };
         dnGroups[dnKey].count++;
         dnGroups[dnKey].sumPrice += stats.price;
         dnGroups[dnKey].sumHeight += stats.height;
 
-        html += renderWellHeaderRow(well, originalIndex, stats, orderChanges[originalIndex], orderedWellIds.has(well.id), showOrderSelection, displayIndex + 1);
+        // Oblicz cenę z oferty (z originalSnapshot) dla porównania
+        let offerPrice = null;
+        if (showPriceComparison) {
+            const snap = order.originalSnapshot;
+            const originalWells = Array.isArray(snap) ? snap : (snap.wells || []);
+            const originalDiscounts = Array.isArray(snap) ? null : (snap.wellDiscounts || null);
+            
+            if (originalWells[originalIndex]) {
+                const origWell = originalWells[originalIndex];
+                
+                // Tymczasowo podmień rabaty globalne na te z migawki dla poprawnego wyliczenia ceny historycznej
+                const currentGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? JSON.parse(JSON.stringify(wellDiscounts)) : {};
+                if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                    window.wellDiscounts = originalDiscounts;
+                }
+
+                const origStats = calcWellStats(origWell);
+                
+                // Przywróć rabaty
+                if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                    window.wellDiscounts = currentGlobalDiscounts;
+                }
+
+                const origTransportCost = totals.globalWeight > 0 ? totals.totalTransportCost * (origStats.weight / totals.globalWeight) : 0;
+                offerPrice = origStats.price + origTransportCost;
+                dnGroups[dnKey].sumOfferPrice += offerPrice;
+            }
+        }
+
+        html += renderWellHeaderRow(well, originalIndex, stats, orderChanges[originalIndex], orderedWellIds.has(well.id), showOrderSelection, displayIndex + 1, offerPrice);
         html += renderWellDetailsRow(well, originalIndex, orderChanges[originalIndex], wellTransportCost);
     });
 
-    html += renderOfferSummaryFooter(wells.length, runningTotalWeight, runningTotalPrice, showOrderSelection, dnGroups);
+    html += renderOfferSummaryFooter(wells.length, runningTotalWeight, runningTotalPrice, showOrderSelection, dnGroups, showPriceComparison);
     html += `</tbody></table></div>`;
     return html;
 }
 
-function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection, lp) {
+function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection, lp, offerPrice) {
     const isExpanded = expandedWellIndices.has(i);
     const rowStyle = getWellRowStyle(change, isOrdered);
     const badges = getWellBadges(change, isOrdered, well);
@@ -173,14 +206,28 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
             : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" style="cursor:pointer; width:16px; height:16px;"></td>`;
     }
 
+    // Przygotuj kolumny z porównaniem cen (tylko w trybie zamówienia)
+    let offerPriceCell = '';
+    let priceDiffCell = '';
+    if (offerPrice !== null) {
+        const priceDiff = stats.price - offerPrice;
+        const diffColor = priceDiff > 0 ? '#34d399' : (priceDiff < 0 ? '#f87171' : 'var(--text-muted)');
+        const diffSign = priceDiff > 0 ? '+' : '';
+        offerPriceCell = `<td class="text-right" style="font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(offerPrice)} PLN</td>`;
+        priceDiffCell = `<td class="text-right" style="font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
+    }
+
     return `<tr class="well-row-header" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:var(--text-primary);">${well.name}${badges}</td>
-        <td style="text-align:center; font-weight:600; color:var(--text-secondary); white-space:nowrap;">DN${well.dn}</td>
-        <td class="text-right" style="font-weight:800; color:var(--success); white-space:nowrap;">${fmt(stats.price)} PLN</td>
-        <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap;">
+        <td style="font-weight:700; color:var(--text-primary);">${well.name}</td>
+        <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
+        <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
+        ${offerPriceCell}
+        <td class="text-right" style="font-weight:800; color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
+        ${priceDiffCell}
+        <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap; padding:0.5rem 0.75rem;">
             <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size:0.7rem; padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
                 <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Edytuj
             </button>
@@ -223,13 +270,13 @@ function getWellBadges(change, isOrdered, well) {
 
 function renderWellDetailsRow(well, i, change, wellTransportCost) {
     const isExpanded = expandedWellIndices.has(i);
-    if (!isExpanded) return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="10"></td></tr>`;
+    if (!isExpanded) return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="12"></td></tr>`;
 
     const stats = calcWellStats(well);
     const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
     const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
     
-    let detailsHtml = `<tr class="well-details-row"><td colspan="10">
+    let detailsHtml = `<tr class="well-details-row"><td colspan="12">
         <div class="well-details-container">
             <div class="well-details-grid">
                 <div class="well-detail-item">
@@ -347,9 +394,10 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
         const kineta = well.config.find(c => studnieProducts.find(x => x.id === c.productId)?.componentType === 'kineta');
         if (kineta) {
             const kp = studnieProducts.find(x => x.id === kineta.productId);
-            const kPrice = getItemAssessedPrice(well, kp, true) * (kineta.quantity || 1);
+            // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
+            const kPrice = (kineta.frozenPrice != null ? kineta.frozenPrice : getItemAssessedPrice(well, kp, true)) * (kineta.quantity || 1);
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;">
-                <td colspan="3" style="padding-left:1.5rem;">↳ + ${kp.name}</td>
+                <td colspan="3" style="padding-left:1.5rem;">↳ + ${kp ? kp.name : 'Kineta'}</td>
                 <td class="text-right">${fmt(kPrice)} PLN</td>
             </tr>`;
         }
@@ -364,7 +412,8 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
 }
 
 function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, itemPrzejscia) {
-    const itemPrice = getItemAssessedPrice(well, p, true);
+    // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
+    const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p, true));
     let totalLinePrice = itemPrice * item.quantity;
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
@@ -373,7 +422,9 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaM
         if (kinetaItem) {
             const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
             if (kinetaProd) {
-                totalLinePrice += getItemAssessedPrice(well, kinetaProd, true) * (kinetaItem.quantity || 1);
+                // W zamówieniu użyj zamrożonej ceny kinety; w ofercie przelicz na nowo
+                const kinetaPrice = (kinetaItem.frozenPrice != null ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true));
+                totalLinePrice += kinetaPrice * (kinetaItem.quantity || 1);
             }
         }
         totalLinePrice += wellTransportCost;
@@ -399,8 +450,13 @@ function getDiscountStr(p, disc) {
     return val > 0 ? ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${val}%)</span>` : '';
 }
 
-function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGroups) {
-    const colspan = showOrderSelection ? 4 : 3;
+function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGroups, showPriceComparison) {
+    // Oblicz colspan dla pierwszych kolumn (stałe)
+    // Baza: Lp. (1) + Expand (1) + Nazwa (1) + Status (1) + DN (1) = 5 kolumn stałych
+    // Dodatkowe w trybie wyboru: Checkbox (1)
+    let baseColspan = 5;
+    if (showOrderSelection) baseColspan += 1;
+    
     let html = '<tfoot>';
 
     if (dnGroups && Object.keys(dnGroups).length > 0) {
@@ -414,20 +470,59 @@ function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGr
             const g = dnGroups[dn];
             const avgPrice = g.sumPrice / g.count;
             const avgHeight = g.sumHeight / g.count;
+            
+            // Oblicz różnicę cen dla grupy DN (jeśli w trybie porównania)
+            let priceDiffCell = '';
+            let offerPriceCell = '';
+            if (showPriceComparison) {
+                if (g.sumOfferPrice > 0) {
+                    const priceDiff = g.sumPrice - g.sumOfferPrice;
+                    const diffColor = priceDiff > 0 ? '#34d399' : (priceDiff < 0 ? '#f87171' : 'var(--text-muted)');
+                    const diffSign = priceDiff > 0 ? '+' : '';
+                    offerPriceCell = `<td class="text-right" style="font-size:0.8rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumOfferPrice)} PLN</td>`;
+                    priceDiffCell = `<td class="text-right" style="font-size:0.8rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
+                } else {
+                    offerPriceCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
+                    priceDiffCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
+                }
+            }
+            
             html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
-              <td colspan="${colspan}" style="padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-secondary);">Podsumowanie DN${dn} — ${g.count} szt.</td>
-              <td class="text-right" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">śr. ${fmtInt(avgHeight)} mm</td>
-              <td class="text-right" style="font-size:0.85rem; color:var(--success); font-weight:700; white-space:nowrap;">${fmt(g.sumPrice)} PLN</td>
-              <td class="text-right" style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">śr. ${fmt(avgPrice)}</td>
+              <td colspan="${baseColspan}" style="padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">Podsumowanie DN${dn} — ${g.count} szt.</td>
+              ${offerPriceCell}
+              <td class="text-right" style="font-size:0.85rem; color:var(--success); font-weight:700; white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumPrice)} PLN</td>
+              ${priceDiffCell}
+              <td class="text-right" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">śr. ${fmtInt(avgHeight)} mm</td>
             </tr>`;
         });
     }
 
+    // Oblicz sumę cen z oferty dla wszystkich studni
+    let totalOfferPrice = 0;
+    let totalPriceDiffCell = '';
+    let totalOfferPriceCell = '';
+    if (showPriceComparison) {
+        Object.values(dnGroups).forEach(g => {
+            totalOfferPrice += g.sumOfferPrice || 0;
+        });
+        if (totalOfferPrice > 0) {
+            const totalDiff = price - totalOfferPrice;
+            const diffColor = totalDiff > 0 ? '#34d399' : (totalDiff < 0 ? '#f87171' : 'var(--text-muted)');
+            const diffSign = totalDiff > 0 ? '+' : '';
+            totalOfferPriceCell = `<td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(totalOfferPrice)} PLN</td>`;
+            totalPriceDiffCell = `<td class="text-right" style="font-weight:700; font-size:0.85rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(totalDiff)} PLN</td>`;
+        } else {
+            totalOfferPriceCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
+            totalPriceDiffCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
+        }
+    }
+
     html += `<tr style="border-top:2px solid var(--border-glass);">
-          <td colspan="${colspan}" style="font-weight:700; font-size:0.9rem; color:var(--text-primary); padding:1rem 0.5rem;">RAZEM (${count} studni)</td>
-          <td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-muted);">${fmtInt(weight)} kg</td>
-          <td class="text-right" style="font-weight:800; font-size:1rem; color:var(--success);">${fmt(price)} PLN</td>
-          <td></td>
+          <td colspan="${baseColspan}" style="font-weight:700; font-size:0.9rem; color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
+          ${totalOfferPriceCell}
+          <td class="text-right" style="font-weight:800; font-size:1rem; color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>
+          ${totalPriceDiffCell}
+          <td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">${fmtInt(weight)} kg</td>
         </tr>
       </tfoot>`;
     return html;
@@ -1245,6 +1340,12 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
 
     wells = JSON.parse(JSON.stringify(normalized.wells || []));
     migrateWellData(wells);
+
+    // Przelicz uszczelki i zsynchronizuj kinetę dla wszystkich studni
+    wells.forEach((w) => {
+        if (typeof recalcGaskets === 'function') recalcGaskets(w);
+        if (typeof syncKineta === 'function') syncKineta(w);
+    });
 
     // Zawsze sprawdzaj, czy jakieś przejścia już są fizycznie dodane w studniach
     // i automatycznie włącz kategorię do widoku (aby nie trzeba było ich "wczytywać")

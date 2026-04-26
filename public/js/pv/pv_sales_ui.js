@@ -242,18 +242,31 @@ class PVSalesUI {
 
                 // Sprawdź czy oferta ma zamówienie
                 const { hasOrder, order } = this.getOrderForOffer(offer);
-                const orderBadge = hasOrder
-                    ? `<a href="javascript:void(0)" class="btn-order-badge" data-order-id="${order.id || ''}" data-offer-type="${offer.type}" 
+                
+                let orderBadge = '';
+                if (hasOrder) {
+                    const currentPrice = order.totalNetto || 0;
+                    const originalPrice = order.originalTotalTotalNetto || order.originalTotalNetto || currentPrice;
+                    const isModified = Math.abs(currentPrice - originalPrice) > 0.01;
+                    
+                    const badgeColor = isModified ? '#f59e0b' : '#34d399';
+                    const badgeBg = isModified ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)';
+                    const badgeBorder = isModified ? 'rgba(245,158,11,0.4)' : 'rgba(16,185,129,0.4)';
+                    const statusText = isModified ? 'ZAM. ZMIENIONE' : 'ZAMÓWIENIE';
+
+                    orderBadge = `<a href="javascript:void(0)" class="btn-order-badge" data-order-id="${order.id || ''}" data-offer-type="${offer.type}" 
                     style="display:inline-flex; align-items:center; gap:0.4rem; padding:4px 10px; border-radius:6px; cursor:pointer;
-                    background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#34d399; text-decoration:none;
-                    font-size:0.75rem; font-weight:700; white-space:nowrap; transition:all 0.2s; box-shadow: 0 0 5px rgba(16,185,129,0.1);"
-                    onmouseenter="this.style.background='rgba(16,185,129,0.25)'; this.style.transform='translateY(-1px)';"
-                    onmouseleave="this.style.background='rgba(16,185,129,0.15)'; this.style.transform='translateY(0)';"
-                    title="Kliknij aby edytować zamówienie${order.orderNumber ? ' ' + order.orderNumber : ''}">
-                    <i data-lucide="package"></i> ZAMÓWIENIE${order.orderNumber ? ' ' + order.orderNumber : ''}
-                   </a>`
-                    : `<span style="background:rgba(100,116,139,0.1); color:#94a3b8; padding:4px 10px; border-radius:6px;
+                    background:${badgeBg}; border:1px solid ${badgeBorder}; color:${badgeColor}; text-decoration:none;
+                    font-size:0.75rem; font-weight:700; white-space:nowrap; transition:all 0.2s; box-shadow: 0 0 5px rgba(0,0,0,0.05);"
+                    onmouseenter="this.style.background='${isModified ? 'rgba(245,158,11,0.25)' : 'rgba(16,185,129,0.25)'}'; this.style.transform='translateY(-1px)';"
+                    onmouseleave="this.style.background='${badgeBg}'; this.style.transform='translateY(0)';"
+                    title="Kliknij aby edytować zamówienie${order.orderNumber ? ' ' + order.orderNumber : ''}${isModified ? ' (Wykryto zmiany ceny)' : ''}">
+                    <i data-lucide="package"></i> ${statusText}${order.orderNumber ? ' ' + order.orderNumber : ''}
+                   </a>`;
+                } else {
+                    orderBadge = `<span style="background:rgba(100,116,139,0.1); color:#94a3b8; padding:4px 10px; border-radius:6px;
                     border:1px solid rgba(100,116,139,0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
+                }
 
                 const dateStr = offer.createdAt
                     ? new Date(offer.createdAt).toLocaleDateString('pl-PL')

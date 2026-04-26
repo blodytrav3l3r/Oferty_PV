@@ -13,7 +13,7 @@
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,
-        "moduleResolution": "node10",
+        "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "noImplicitAny": true,
         "noUnusedLocals": true,

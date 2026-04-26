@@ -1,142 +1,86 @@
-/* ===== Extracted to wellConfigRules.js ===== */
+/* ============================
+   Well Config Rules — Reguły walidacji i filtrowania studni
+   ============================ */
 
-function enforceSingularTopClosures(well, productId) {
-    const product = studnieProducts.find((p) => p.id === productId);
-    if (!product) return;
-
-    const topClosureTypes = [
-        'plyta_din',
-        'plyta_najazdowa',
-        'plyta_zamykajaca',
-        'konus',
-        'pierscien_odciazajacy'
-    ];
-
-    // ZASADA 1: Tylko jedno zakończenie studni
-    if (topClosureTypes.includes(product.componentType)) {
-        well.config = well.config.filter((item) => {
-            if (item.isPlaceholder) return true;
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            return p && !topClosureTypes.includes(p.componentType);
-        });
-    }
-
-    // ZASADA 2: Właz - tylko 1 naraz
-    if (product.componentType === 'wlaz') {
-        well.config = well.config.filter((item) => {
-            if (item.isPlaceholder) return true;
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            return p && p.componentType !== 'wlaz';
-        });
-    }
-}
-
-function sortWellConfigByOrder() {
-    const well = getCurrentWell();
-    if (!well) return;
-    const typeOrder = {
-        wlaz: 0,
-        avr: 1,
-        plyta_din: 2,
-        plyta_najazdowa: 2,
-        plyta_zamykajaca: 2,
-        konus: 2,
-        pierscien_odciazajacy: 3,
-        plyta_redukcyjna: 5,
-        krag: 5,
-        krag_ot: 5,
-        dennica: 6,
-        kineta: 7
-    };
-    well.config.sort((a, b) => {
-        const pa = studnieProducts.find((p) => p.id === a.productId);
-        const pb = studnieProducts.find((p) => p.id === b.productId);
-        const oa = pa ? (typeOrder[pa.componentType] ?? 99) : 99;
-        const ob = pb ? (typeOrder[pb.componentType] ?? 99) : 99;
-        if (oa !== ob) return oa - ob;
-
-        // Elementy tego samego typu zachowują swoją względną kolejność strukturalną.
-        // Wcześniej kręgi były sortowane według wysokości, co mieszało pozycje krag_ot.
-        return 0;
-    });
-}
-
+/**
+ * Filtruje listę produktów na podstawie parametrów studni.
+ * 
+ * @param {Object} p - produkt z bazy
+ * @param {Object} well - aktualnie edytowana studnia
+ * @returns {boolean} czy produkt jest dostępny
+ */
 function filterByWellParams(p, well) {
     if (!well) return true;
-    const id = (p.id || '').toUpperCase();
 
-    // 1. Kręgi (KDZ/KDB), Konus (JZW) i stopnie (-B, -D, -N)
-    if (
-        p.componentType === 'krag' ||
-        p.componentType === 'krag_ot' ||
-        p.componentType === 'konus'
-    ) {
-        const isZelbet = well.nadbudowa === 'zelbetowa';
-        if (isZelbet && id.startsWith('KDB') && p.dn !== 2000 && p.dn !== 2500) return false;
-        if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+    try {
+        const id = p.id || '';
+        // Strip OT suffix for step checking (both static -OT z cennika and dynamic _OT z solvera)
+        let checkId = id;
+        if (checkId.endsWith('_OT')) checkId = checkId.slice(0, -3);
+        else if (checkId.endsWith('-OT')) checkId = checkId.slice(0, -3);
 
-        const stopnie = well.stopnie || 'drabinka';
+        // 1. Filtrowanie materiału (Beton / Żelbet)
+        // Kręgi
+        if (p.componentType === 'krag') {
+            const isZelbet = well.nadbudowa === 'zelbetowa';
+            // Blokada KDB dla żelbetu i KDZ dla betonu (z wyjątkiem DN2000/2500, które są zawsze żelbetowe)
+            if (isZelbet && id.startsWith('KDB') && p.dn !== 2000 && p.dn !== 2500) return false;
+            if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+        }
 
-        // Usuń przyrostek _OT dla walidacji
-        const checkId = id.endsWith('_OT') ? id.replace('_OT', '') : id;
+        // Kręgi z otworem (krag_ot) - filtrowane beton/żelbet tak samo jak zwykłe kręgi
+        if (p.componentType === 'krag_ot') {
+            const isZelbet = well.nadbudowa === 'zelbetowa';
+            if (isZelbet && id.startsWith('KDB') && p.dn !== 2000 && p.dn !== 2500) return false;
+            if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+        }
 
-        // Kręgi kończą się na: -B (brak), -D (drabinka), -N-D (nierdzewna)
-        const hasStepsAny = checkId.endsWith('-B') || checkId.endsWith('-D');
-
-        if (hasStepsAny) {
-            if (stopnie === 'nierdzewna') {
-                if (!checkId.endsWith('-N-D')) return false;
-            } else if (stopnie === 'brak') {
-                if (!checkId.endsWith('-B')) return false;
-            } else {
-                // drabinka (domyślna)
-                if (!checkId.endsWith('-D') || checkId.endsWith('-N-D')) return false;
+        // Dennice
+        if (p.componentType === 'dennica') {
+            const isZelbet = well.dennicaMaterial === 'zelbetowa';
+            // Dla DN1200 dennice zaczynają się od DDD i są uniwersalne
+            // Dla DN2000/2500 też są uniwersalne (wszystko jest żelbetowe w standardzie)
+            if (p.dn !== 1200 && p.dn !== 2000 && p.dn !== 2500) {
+                if (isZelbet && id.startsWith('DU') && !id.startsWith('DUZ')) return false;
+                if (!isZelbet && id.startsWith('DUZ')) return false;
             }
         }
-    }
 
-    // 2. Dennice (DUZ/DU)
-    if (p.componentType === 'dennica') {
-        const isZelbet = well.dennicaMaterial === 'zelbetowa';
-        if (
-            isZelbet &&
-            id.startsWith('DU') &&
-            !id.startsWith('DUZ') &&
-            p.dn !== 2000 &&
-            p.dn !== 2500
-        )
-            return false;
-        if (!isZelbet && id.startsWith('DUZ') && p.dn !== 2000 && p.dn !== 2500) return false;
-    }
+        // 2. Filtrowanie stopni (tylko dla kręgów i konusów)
+        // Kręgi z otworem (krag_ot) są zawsze widoczne niezależnie od rodzaju stopni
+        if (p.componentType === 'krag' || p.componentType === 'konus') {
+            const isNierdzewna = checkId.endsWith('-N-D');
+            const isDrabinka = !isNierdzewna && checkId.endsWith('-D');
+            const isBrak = checkId.endsWith('-B');
+            const hasStepSuffix = isNierdzewna || isDrabinka || isBrak;
 
-    // 3. Płyty (PDZ/PD itp)
-    if (
-        ['plyta_najazdowa', 'plyta_zamykajaca', 'plyta_din', 'plyta_redukcyjna'].includes(
-            p.componentType
-        )
-    ) {
-        const isZelbet = well.nadbudowa === 'zelbetowa';
-        if (
-            isZelbet &&
-            id.startsWith('PD') &&
-            !id.startsWith('PDZ') &&
-            p.dn !== 2000 &&
-            p.dn !== 2500
-        )
-            return false;
-        if (!isZelbet && id.startsWith('PDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
-        if (
-            isZelbet &&
-            id.startsWith('PZ') &&
-            !id.startsWith('PZZ') &&
-            p.dn !== 2000 &&
-            p.dn !== 2500
-        )
-            return false;
-        if (!isZelbet && id.startsWith('PZZ') && p.dn !== 2000 && p.dn !== 2500) return false;
-    }
+            if (well.stopnie === 'brak') {
+                // Brak stopni: pokaż tylko warianty -B, odrzuć -D i -N-D
+                if (hasStepSuffix && !isBrak) return false;
+            } else if (well.stopnie === 'nierdzewna') {
+                // Drabinka nierdzewna: pokaż tylko -N-D, odrzuć -D i -B
+                if (isBrak || isDrabinka) return false;
+                if (!isNierdzewna) return false;
+            } else {
+                // Drabinka standardowa: pokaż tylko -D, odrzuć -N-D i -B
+                if (isBrak || isNierdzewna) return false;
+                if (!hasStepSuffix) return false;
+            }
+        }
+        // Kręgi z otworem (krag_ot) są zawsze widoczne niezależnie od rodzaju stopni
+        // Rozróżnienie tylko na beton/żelbet (obsługiwane w sekcji 1 powyżej)
 
-    return true;
+        // 3. Płyta redukcyjna - tylko gdy zaznaczona redukcja
+        if (p.componentType === 'plyta_redukcyjna' && !well.redukcjaDN1000) {
+            return false;
+        }
+
+        // 4. Inne elementy (płyty DIN, zamykające, pierścienie odciążające) są uniwersalne
+        return true;
+    } catch (e) {
+        console.error('Błąd w filterByWellParams:', e, p, well);
+        return true;
+    }
 }
 
 function filterSealsByWellType(sealItems, well) {
@@ -172,25 +116,37 @@ function filterSealsByWellType(sealItems, well) {
 }
 
 function getAvailableProducts(well) {
+    if (!well || !studnieProducts) return [];
     const mag = well.magazyn || 'Kluczbork';
     const isWl = mag.includes('oc') || mag.includes('Włoc');
-    const magField = isWl ? 'magazynWL' : 'magazynKLB';
-    const formaField = isWl ? 'formaStandardowa' : 'formaStandardowaKLB';
-    return studnieProducts
-        .filter((p) => p[magField] === 1)
-        .sort((a, b) => {
-            // 1. Priorytet dla formy standardowej (malejąco: 1 -> 0)
-            const fA = b[formaField] || 0;
-            const fB = a[formaField] || 0;
-            if (fA !== fB) return fA - fB;
+    const field = isWl ? 'magazynWL' : 'magazynKLB';
 
-            // 2. Sortowanie wg wysokości (rosnąco: 250, 500, 750, 1000)
-            const hA = parseFloat(a.height) || 0;
-            const hB = parseFloat(b.height) || 0;
-            return hA - hB;
-        });
+    return studnieProducts.filter((p) => {
+        // Luźne porównanie: akceptuje zarówno 1 (number) jak i "1" (string)
+        // Produkty bez ustawionego pola magazynu (undefined) również traktujemy jako dostępne
+        const val = p[field];
+        return val === 1 || val === '1' || val === undefined;
+    });
 }
 
+function getSortedConfig(config) {
+    if (!config) return [];
+    return [...config].sort((a, b) => {
+        const pA = studnieProducts.find((p) => p.id === a.productId);
+        const pB = studnieProducts.find((p) => p.id === b.productId);
+        if (!pA || !pB) return 0;
+
+        const order = ['Wlaz', 'Pokrywa', 'Plyta DIN', 'Konus', 'Krąg', 'Dennica'];
+        const typeA = pA.componentType;
+        const typeB = pB.componentType;
+
+        const idxA = order.findIndex((t) => typeA.toLowerCase().includes(t.toLowerCase()));
+        const idxB = order.findIndex((t) => typeB.toLowerCase().includes(t.toLowerCase()));
+
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        return 0;
+    });
+}
 
 /* ===== AKTUALIZACJA KONFIGURACJI PO ZMIANIE PARAMETRÓW ===== */
 
@@ -252,44 +208,58 @@ window.updateConfigToMatchParams = function (well) {
 };
 
 /* ===== AUTOMATYCZNE DODANIE PARY ODCIĄŻAJĄCEJ ===== */
+window.ensureReliefRingPair = function (well) {
+    if (!well || !well.config) return;
 
-window.injectPairIfReliefComponent = function (well, productId, baseIndex) {
-    const prod = studnieProducts.find((x) => x.id === productId);
-    if (!prod) return;
+    const hasReliefRing = well.config.some((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        return p && p.componentType === 'pierscien_odciazajacy';
+    });
 
-    if (prod.componentType === 'pierscien_odciazajacy') {
-        const pair = getAvailableProducts(well).find(
-            (x) =>
-                (x.componentType === 'plyta_najazdowa' || x.componentType === 'plyta_zamykajaca') &&
-                parseInt(x.dn) === parseInt(prod.dn) &&
-                filterByWellParams(x, well)
+    const hasReliefPlate = well.config.some((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        return p && (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa');
+    });
+
+    // Jeśli nie ma żadnego elementu odciążającego, nic nie robimy
+    if (!hasReliefRing && !hasReliefPlate) return;
+
+    // Określ docelowe DN dla elementów odciążających
+    let targetDn = parseInt(well.dn);
+    if (well.dn === 'styczna') {
+        targetDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+    } else if (well.redukcjaDN1000) {
+        targetDn = well.redukcjaTargetDN || 1000;
+    }
+    if (isNaN(targetDn)) targetDn = 1000;
+
+    // 1. Jeśli jest pierścień a nie ma płyty -> dodaj płytę
+    if (hasReliefRing && !hasReliefPlate) {
+        const plate = getAvailableProducts(well).find(
+            (p) => (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa') && 
+                   parseInt(p.dn) === targetDn
         );
-        if (pair) {
-            well.config.splice(baseIndex, 0, {
-                productId: pair.id,
-                quantity: 1,
-                _addedAt: Date.now()
-            });
-            showToast('Dodano komplet: Płyta + Pierścień odciążający', 'info');
+        if (plate) {
+            well.config.push({ productId: plate.id, quantity: 1, autoAdded: true });
+            showToast('Automatycznie dodano płytę do kompletu odciążającego', 'info');
         }
-    } else if (
-        prod.componentType === 'plyta_najazdowa' ||
-        prod.componentType === 'plyta_zamykajaca' ||
-        (prod.name && prod.name.toLowerCase().includes('odciążając'))
-    ) {
-        const pair = getAvailableProducts(well).find(
-            (x) =>
-                x.componentType === 'pierscien_odciazajacy' &&
-                parseInt(x.dn) === parseInt(prod.dn) &&
-                filterByWellParams(x, well)
+    }
+
+    // 2. Jeśli jest płyta a nie ma pierścienia -> dodaj pierścień
+    if (hasReliefPlate && !hasReliefRing) {
+        const ring = getAvailableProducts(well).find(
+            (p) => p.componentType === 'pierscien_odciazajacy' && 
+                   parseInt(p.dn) === targetDn
         );
-        if (pair) {
-            well.config.splice(baseIndex + 1, 0, {
-                productId: pair.id,
-                quantity: 1,
-                _addedAt: Date.now()
-            });
-            showToast('Dodano komplet: Płyta + Pierścień odciążający', 'info');
+        if (ring) {
+            well.config.push({ productId: ring.id, quantity: 1, autoAdded: true });
+            showToast('Automatycznie dodano pierścień odciążający do kompletu', 'info');
         }
     }
 };
+
+// Eksportuj do window
+window.filterByWellParams = filterByWellParams;
+window.getAvailableProducts = getAvailableProducts;
+window.getSortedConfig = getSortedConfig;
+window.filterSealsByWellType = filterSealsByWellType;

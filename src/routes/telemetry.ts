@@ -32,11 +32,11 @@ router.post('/override', requireAuth, (req, res) => {
             .then(() => {
                 return res.json({ success: true, id });
             })
-            .catch((e: any) => {
+            .catch((e: unknown) => {
                 logger.error('Telemetry', 'Błąd zapisu', e);
                 return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
             });
-    } catch (e: any) {
+    } catch (e: unknown) {
         logger.error('Telemetry', 'Błąd zapisu', e);
         return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
     }
@@ -56,10 +56,16 @@ router.get('/logs', requireAuth, (req, res) => {
         })
         .then((logs) => {
             // Deserializacja JSON dla widoku administratora
-            logs.forEach((l: any) => {
+            logs.forEach((l: Record<string, unknown>) => {
                 try {
-                    l.original_auto_config = JSON.parse(l.original_auto_config);
-                    l.final_user_config = JSON.parse(l.final_user_config);
+                    const orig = l.original_auto_config;
+                    const final = l.final_user_config;
+                    if (typeof orig === 'string') {
+                        l.original_auto_config = JSON.parse(orig);
+                    }
+                    if (typeof final === 'string') {
+                        l.final_user_config = JSON.parse(final);
+                    }
                 } catch (_e) {}
             });
 

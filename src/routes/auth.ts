@@ -69,8 +69,9 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
                 subUsers: subUsers
             }
         });
-    } catch (e: any) {
-        logger.error('Auth', 'Błąd logowania', e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Auth', 'Błąd logowania', message);
         res.status(500).json({ error: 'Błąd serwera bazy danych' });
     }
 });
@@ -140,8 +141,9 @@ router.post(
                     subUsers: Array.isArray(subUsers) ? subUsers : []
                 }
             });
-        } catch (e: any) {
-            res.status(500).json({ error: e.message });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            res.status(500).json({ error: message });
         }
     }
 );
@@ -186,8 +188,9 @@ router.post(
             });
 
             res.json({ ok: true });
-        } catch (e: any) {
-            res.status(500).json({ error: e.message });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            res.status(500).json({ error: message });
         }
     }
 );

@@ -63,8 +63,9 @@ async function migrateLegacyData(config: PricelistConfig): Promise<void> {
             'Migration',
             `Przeniesiono ${products.length} produktów ${config.label} do nowego formatu JSON.`
         );
-    } catch (err: any) {
-        logger.error('Migration', `Błąd migracji ${config.label}`, err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Migration', `Błąd migracji ${config.label}`, message);
     }
 }
 
@@ -89,8 +90,9 @@ async function migrateLegacyDefaults(config: PricelistConfig): Promise<void> {
             'Migration',
             `Przeniesiono wartości fabryczne ${config.label} do nowego klucza.`
         );
-    } catch (err: any) {
-        logger.error('Migration', `Błąd migracji default_${config.label}`, err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Migration', `Błąd migracji default_${config.label}`, message);
     }
 }
 

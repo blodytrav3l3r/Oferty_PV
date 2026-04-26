@@ -60,8 +60,9 @@ router.post('/search', async (req, res) => {
             docs,
             bookmark: null
         });
-    } catch (err: any) {
-        logger.error('PvMarketplace', 'Błąd wyszukiwania', err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('PvMarketplace', 'Błąd wyszukiwania', message);
         res.status(500).json({ error: 'Usługa wyszukiwania niedostępna' });
     }
 });

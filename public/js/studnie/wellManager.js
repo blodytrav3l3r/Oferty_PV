@@ -212,8 +212,21 @@ function getCurrentWell() {
     return wells[currentWellIndex] || wells[0];
 }
 
-function syncGaskets(well) {
-    if (!well || !well.config) return;
+function recalcGaskets(well) {
+    if (!well) well = getCurrentWell();
+    if (!well) return;
+
+    // Zapisz zamrożone ceny istniejących uszczelek (aby zachować je w zamówieniach)
+    const existingGasketPrices = new Map();
+    well.config.forEach((item) => {
+        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        if (p && p.componentType === 'uszczelka' && item.frozenPrice != null) {
+            existingGasketPrices.set(item.productId, {
+                frozenPrice: item.frozenPrice,
+                frozenPriceBase: item.frozenPriceBase
+            });
+        }
+    });
 
     // Wyfiltruj istniejące uszczelki
     const newConfig = well.config.filter((item) => {
@@ -277,11 +290,20 @@ function syncGaskets(well) {
                 (p) => p.componentType === 'uszczelka' && p.name === gasketName
             );
             if (gasketProd) {
-                newConfig.push({
+                const newItem = {
                     productId: gasketProd.id,
                     quantity: qty,
                     autoAdded: true
-                });
+                };
+                // Przywróć zamrożone ceny jeśli uszczelka już istniała (dla zamówień)
+                const savedPrices = existingGasketPrices.get(gasketProd.id);
+                if (savedPrices) {
+                    newItem.frozenPrice = savedPrices.frozenPrice;
+                    if (savedPrices.frozenPriceBase != null) {
+                        newItem.frozenPriceBase = savedPrices.frozenPriceBase;
+                    }
+                }
+                newConfig.push(newItem);
             }
         }
     }
@@ -325,7 +347,7 @@ function syncKineta(well) {
 function refreshAll(skipSummary = false) {
     const well = getCurrentWell();
     if (well) {
-        syncGaskets(well);
+        recalcGaskets(well);
         syncKineta(well);
     }
 
@@ -340,7 +362,9 @@ function refreshAll(skipSummary = false) {
     updateAutoLockUI();
     updateZakonczenieButton();
     updateRedukcjaButton();
+    if (typeof updateRedukcjaZakButton === 'function') updateRedukcjaZakButton();
     if (typeof updatePsiaBudaButton === 'function') updatePsiaBudaButton();
+    if (typeof updateStyczna1200Button === 'function') updateStyczna1200Button();
     updateParamTilesUI();
     renderWellParams();
     
@@ -385,7 +409,9 @@ async function updateWellParam(paramKey, value) {
 
     if (typeof updateConfigToMatchParams === 'function') {
         updateConfigToMatchParams(well);
-    } else {
+    }
+    // Po zamianie elementów zawsze uruchom ponowny auto-dobór (jeśli studnia nie jest zablokowana)
+    if (!well.autoLocked) {
         await autoSelectComponents(true);
     }
 
@@ -575,6 +601,15 @@ function updateDiscount(dn, type, value) {
 function applyDiscount(dn, type, value) {
     if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0 };
     wellDiscounts[dn][type] = value;
+
+    // W trybie zamówienia: zamrożone ceny blokują przeliczanie rabatu,
+    // więc musimy je przeliczyć z nowym rabatem
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        if (typeof freezeWellPrices === 'function') {
+            freezeWellPrices(wells);
+        }
+    }
+
     renderDiscountPanel();
     updateSummary();
     renderOfferSummary();
@@ -599,7 +634,9 @@ function getItemAssessedPrice(well, p, applyDiscount = true) {
 
     let discountPct = 0;
     if (applyDiscount && well.dn) {
-        const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
+        // Mapowanie dn na klucz rabatów (styczna -> styczne)
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+        const disc = wellDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
         if (
             p.componentType === 'dennica' ||
             p.componentType === 'kineta' ||
@@ -775,8 +812,10 @@ function calcWellStats(well) {
 
     if (well.przejscia) {
         let discNadbudowa = 0;
-        if (well.dn && wellDiscounts[well.dn]) {
-            discNadbudowa = wellDiscounts[well.dn].nadbudowa || 0;
+        // Mapowanie dn na klucz rabatów (styczna -> styczne)
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+        if (discountKey && wellDiscounts[discountKey]) {
+            discNadbudowa = wellDiscounts[discountKey].nadbudowa || 0;
         }
         const mult = 1 - discNadbudowa / 100;
 

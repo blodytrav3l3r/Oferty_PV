@@ -34,8 +34,9 @@ router.get('/', requireAuth, async (req, res) => {
         });
 
         res.json({ data: mapped });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -64,8 +65,9 @@ router.get('/registry', requireAuth, async (req, res) => {
         });
 
         res.json({ data: mapped });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -137,8 +139,9 @@ router.put('/', requireAuth, async (req, res) => {
         }
 
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -209,9 +212,10 @@ router.post('/', requireAuth, async (req, res) => {
         });
 
         res.json({ ok: true, id: docId });
-    } catch (e: any) {
-        logger.error('Production', 'Błąd POST', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Production', 'Błąd POST', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -242,8 +246,9 @@ router.get('/:id', requireAuth, async (req, res) => {
                 ...parsedData
             }
         });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -305,8 +310,9 @@ router.delete('/:id', requireAuth, async (req, res) => {
             });
         }
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 

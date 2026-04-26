@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List, Any
 
 class TransitionInput(BaseModel):
@@ -31,7 +31,8 @@ class WellConfigInput(BaseModel):
     
     # Redukcja
     use_reduction: bool = False
-    redukcjaMinH: Optional[float] = 2500.0  # Minimalna wysokość komory roboczej (od dna do płyty)
+    target_dn: Optional[int] = 1000  # Docelowy DN redukcji (domyślnie 1000)
+    redukcjaMinH: Optional[float] = Field(default=2500.0, alias="redukcja_min_h_mm")  # Minimalna wysokość komory roboczej (od dna do płyty)
     
     # Zakończenie (domyślnie konus)
     forced_top_closure_id: Optional[str] = None

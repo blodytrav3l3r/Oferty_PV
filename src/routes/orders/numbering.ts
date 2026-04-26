@@ -14,9 +14,10 @@ router.get('/recycled', requireAuth, async (req, res) => {
             where: { userId: authReq.user?.id, year },
             orderBy: { seqNumber: 'asc' }
         });
-        res.json({ recycled: rows.map((r: any) => r.seqNumber) });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        res.json({ recycled: rows.map((r) => r.seqNumber) });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -42,8 +43,9 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
         const formatted = `${symbol}/${String(nextNumber).padStart(6, '0')}/${year}`;
 
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -73,8 +75,9 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
 
         const formatted = `${symbol}/${String(nextNumber).padStart(6, '0')}/${year}`;
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -132,8 +135,9 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
 
         const formatted = `${symbol}/${yearLetter}/${String(nextNumber).padStart(5, '0')}/${yearShort}`;
         res.json({ number: formatted, nextSeq: nextNumber, symbol, yearLetter, year });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 

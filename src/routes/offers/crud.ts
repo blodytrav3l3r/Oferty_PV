@@ -5,6 +5,13 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
+import { validateData } from '../../validators/authSchema';
+import {
+    offerCreateSchema,
+    offerStudnieCreateSchema,
+    offersBatchSchema,
+    offersStudnieBatchSchema
+} from '../../validators/offerSchemas';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -50,8 +57,9 @@ router.get('/', requireAuth, async (req, res) => {
         }
 
         res.json({ data: mapped });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -87,8 +95,9 @@ router.get('/studnie', requireAuth, async (req, res) => {
         });
 
         res.json({ data: mapped });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -140,8 +149,9 @@ router.get('/:id', requireAuth, async (req, res) => {
                 history: JSON.parse(offer.history || '[]')
             }
         });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -182,14 +192,15 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
                 history: JSON.parse(offer.history || '[]')
             }
         });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
 /* ===== OFERTY RURY — POST (pojedyncza) ===== */
 
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, validateData(offerCreateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -299,15 +310,16 @@ router.post('/', requireAuth, async (req, res) => {
             `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`
         );
         res.json({ ok: true, results });
-    } catch (e: any) {
-        logger.error('Offers', 'Błąd POST offers', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Offers', 'Błąd POST offers', message);
+        res.status(500).json({ error: message });
     }
 });
 
 /* ===== OFERTY STUDNIE — POST (pojedyncza) ===== */
 
-router.post('/studnie', requireAuth, async (req, res) => {
+router.post('/studnie', requireAuth, validateData(offerStudnieCreateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -380,15 +392,16 @@ router.post('/studnie', requireAuth, async (req, res) => {
             `Zapisano ${results.length} ofert studnie przez ${authReq.user?.username}`
         );
         res.json({ ok: true, results });
-    } catch (e: any) {
-        logger.error('Offers', 'Błąd POST offers/studnie', e.message);
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Offers', 'Błąd POST offers/studnie', message);
+        res.status(500).json({ error: message });
     }
 });
 
 /* ===== OFERTY RURY — PUT (zbiorczo) ===== */
 
-router.put('/', requireAuth, async (req, res) => {
+router.put('/', requireAuth, validateData(offersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -441,14 +454,15 @@ router.put('/', requireAuth, async (req, res) => {
         }
 
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
 /* ===== OFERTY STUDNIE — PUT (zbiorczo) ===== */
 
-router.put('/studnie', requireAuth, async (req, res) => {
+router.put('/studnie', requireAuth, validateData(offersStudnieBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -481,8 +495,9 @@ router.put('/studnie', requireAuth, async (req, res) => {
         }
 
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -528,8 +543,9 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
         logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -560,8 +576,9 @@ router.delete('/studnie/:id', requireAuth, async (req, res) => {
 
         logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 

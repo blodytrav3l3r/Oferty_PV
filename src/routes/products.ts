@@ -30,9 +30,10 @@ router.get('/', async (_req, res) => {
     try {
         const data = await readPricelist(config.keyCurrent);
         res.json({ data });
-    } catch (err: any) {
-        logger.error('Products', 'Błąd pobierania (GET)', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Products', 'Błąd pobierania (GET)', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -48,9 +49,10 @@ router.put('/', requireAuth, async (req, res) => {
 
         const count = await writePricelist(config.keyCurrent, arr);
         res.json({ ok: true, count });
-    } catch (err: any) {
-        logger.error('Products', 'Błąd zapisu (PUT)', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Products', 'Błąd zapisu (PUT)', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -61,8 +63,9 @@ router.get('/default', async (_req, res) => {
     try {
         const data = await readPricelist(config.keyDefault);
         res.json({ data });
-    } catch (err: any) {
-        logger.error('Products', 'Błąd pobierania domyślnych (GET default)', err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Products', 'Błąd pobierania domyślnych (GET default)', message);
         res.json({ data: [] });
     }
 });
@@ -75,9 +78,10 @@ router.put('/default', requireAuth, async (req, res) => {
         const arr = req.body.data || [];
         const count = await writePricelist(config.keyDefault, arr);
         res.json({ ok: true, count });
-    } catch (err: any) {
-        logger.error('Products', 'Błąd zapisu domyślnych (PUT default)', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Products', 'Błąd zapisu domyślnych (PUT default)', message);
+        res.status(500).json({ error: message });
     }
 });
 

@@ -84,8 +84,9 @@ export async function logAudit(
                 createdAt: now
             }
         });
-    } catch (e: any) {
-        logger.error('AuditLog', 'Błąd zapisu logu', e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('AuditLog', 'Błąd zapisu logu', message);
     }
 }
 
@@ -166,8 +167,9 @@ export async function cleanupAuditLogs(): Promise<void> {
                 `Wyczyszczono ${result.count} logów starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`
             );
         }
-    } catch (e: any) {
-        logger.error('AuditLog', 'Błąd czyszczenia logów', e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('AuditLog', 'Błąd czyszczenia logów', message);
     }
 }
 

@@ -31,8 +31,9 @@ router.get('/', requireAuth, async (req, res) => {
         });
 
         res.json({ data: mapped });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -97,8 +98,9 @@ router.put('/', requireAuth, async (req, res) => {
         }
 
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -175,8 +177,9 @@ router.patch('/:id', requireAuth, async (req, res) => {
         logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
 
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -219,8 +222,9 @@ router.delete('/:id', requireAuth, async (req, res) => {
             });
         }
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 

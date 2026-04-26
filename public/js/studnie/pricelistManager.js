@@ -786,7 +786,7 @@ function addStudnieProduct() {
         return;
     }
 
-    studnieProducts.push({
+    const newProduct = {
         id,
         name,
         price,
@@ -798,16 +798,42 @@ function addStudnieProduct() {
         category,
         dn: null,
         componentType: isPrzejscia ? 'przejscie' : 'krag',
-        zapasDol: isPrzejscia ? zapasDol : undefined,
-        zapasGora: isPrzejscia ? zapasGora : undefined,
-        zapasDolMin: isPrzejscia ? zapasDolMin : undefined,
-        zapasGoraMin: isPrzejscia ? zapasGoraMin : undefined,
-        doplataPEHD: isPrzejscia ? undefined : pehd,
-        malowanieWewnetrzne: isPrzejscia ? undefined : malW,
-        malowanieZewnetrzne: isPrzejscia ? undefined : malZ,
-        doplataZelbet: isPrzejscia ? undefined : zelbet,
-        doplataDrabNierdzewna: isPrzejscia ? undefined : drabNierdzewna
-    });
+        magazynKLB: 1,
+        magazynWL: 1,
+        active: 1
+    };
+
+    if (isPrzejscia) {
+        newProduct.zapasDol = zapasDol;
+        newProduct.zapasGora = zapasGora;
+        newProduct.zapasDolMin = zapasDolMin;
+        newProduct.zapasGoraMin = zapasGoraMin;
+    } else {
+        newProduct.doplataPEHD = pehd;
+        newProduct.malowanieWewnetrzne = malW;
+        newProduct.malowanieZewnetrzne = malZ;
+        newProduct.doplataZelbet = zelbet;
+        newProduct.doplataDrabNierdzewna = drabNierdzewna;
+
+        // Inteligentne wykrywanie typu i DN
+        const n = name.toUpperCase();
+        if (n.includes('REDUKCYJNA')) newProduct.componentType = 'plyta_redukcyjna';
+        else if (n.includes('DENNICA')) newProduct.componentType = 'dennica';
+        else if (n.includes('KONUS') || n.includes('STOŻEK')) newProduct.componentType = 'konus';
+        else if (n.includes('PŁYTA DIN') || n.includes('NAKR')) newProduct.componentType = 'plyta_din';
+        else if (n.includes('NAJAZDOWA')) newProduct.componentType = 'plyta_najazdowa';
+        else if (n.includes('ZAMYKAJĄCA')) newProduct.componentType = 'plyta_zamykajaca';
+        else if (n.includes('ODCIĄŻAJĄCY')) newProduct.componentType = 'pierscien_odciazajacy';
+        else if (n.includes('USZCZELKA')) newProduct.componentType = 'uszczelka';
+        else if (n.includes('WŁAZ')) newProduct.componentType = 'wlaz';
+        else if (n.includes('AVR')) newProduct.componentType = 'avr';
+
+        const dnMatch = (category + ' ' + name).match(/DN(\d+)/i);
+        if (dnMatch) newProduct.dn = parseInt(dnMatch[1]);
+        else if (n.includes('STYCZNA')) newProduct.dn = 'styczna';
+    }
+
+    studnieProducts.push(newProduct);
     saveStudnieProducts(studnieProducts);
     closeModal();
     renderStudniePriceList();
@@ -1320,3 +1346,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('Wystąpił błąd podczas ładowania danych. Nawigacja jest dostępna.', 'error');
     }
 });
+/**
+ * Automatycznie naprawia brakujące metadane w produktach (np. dodanych wcześniej ręcznie)
+ */
+function fixIncompleteProducts() {
+    let changed = false;
+    studnieProducts.forEach((p) => {
+        // Napraw magazyny
+        if (p.magazynKLB === undefined) { p.magazynKLB = 1; changed = true; }
+        if (p.magazynWL === undefined) { p.magazynWL = 1; changed = true; }
+        if (p.active === undefined) { p.active = 1; changed = true; }
+
+        // Napraw typ i DN (jeśli typ to domyślny 'krag' lub brak typu/dn)
+        const n = (p.name || '').toUpperCase();
+        const cat = (p.category || '').toUpperCase();
+
+        if (!p.componentType || p.componentType === 'krag') {
+            let newType = p.componentType || 'krag';
+            if (n.includes('REDUKCYJNA')) newType = 'plyta_redukcyjna';
+            else if (n.includes('DENNICA')) newType = 'dennica';
+            else if (n.includes('KONUS') || n.includes('STOŻEK')) newType = 'konus';
+            else if (n.includes('PŁYTA DIN') || n.includes('NAKR')) newType = 'plyta_din';
+            else if (n.includes('NAJAZDOWA')) newType = 'plyta_najazdowa';
+            else if (n.includes('ZAMYKAJĄCA')) newType = 'plyta_zamykajaca';
+            else if (n.includes('ODCIĄŻAJĄCY')) newType = 'pierscien_odciazajacy';
+            else if (n.includes('USZCZELKA')) newType = 'uszczelka';
+            else if (n.includes('WŁAZ')) newType = 'wlaz';
+            else if (n.includes('AVR')) newType = 'avr';
+
+            if (newType !== p.componentType) {
+                p.componentType = newType;
+                changed = true;
+            }
+        }
+
+        if (!p.dn || p.dn === null) {
+            const dnMatch = (cat + ' ' + n).match(/DN(\d+)/i);
+            if (dnMatch) {
+                p.dn = parseInt(dnMatch[1]);
+                changed = true;
+            } else if (n.includes('STYCZNA')) {
+                p.dn = 'styczna';
+                changed = true;
+            }
+        }
+    });
+
+    if (changed) {
+        saveStudnieProducts(studnieProducts);
+        console.log('Zastosowano automatyczne poprawki metadanych do produktów studni');
+    }
+}
+
+// Wywołaj naprawę przy inicjalizacji (z opóźnieniem aby upewnić się, że dane są załadowane)
+setTimeout(fixIncompleteProducts, 1000);

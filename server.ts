@@ -137,8 +137,9 @@ app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    logger.error('Server', 'Nieobsłużony błąd', err.stack || err.message);
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const errorMessage = err instanceof Error ? err.stack || err.message : 'Unknown error';
+    logger.error('Server', 'Nieobsłużony błąd', errorMessage);
     res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
 });
 

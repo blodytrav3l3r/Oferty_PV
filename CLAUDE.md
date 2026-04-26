@@ -15,6 +15,8 @@
     - `tests/` - Szablon testowy na podstawie Jesta, z wydzielonym katalogiem `mocks/` np. dla bazy Prisma.
 
 2. **Podstawowe Zasady (ECC Framework)**
+    - **Język Polski (Wymóg bezwzględny):** Cała nasza komunikacja, opisy kodu (komentarze), nazwy zmiennych (tam, gdzie to logiczne) oraz wiadomości w systemie muszą być w języku polskim.
+    - **Prawidłowe kodowanie znaków (UTF-8):** Wszystkie pliki tekstowe oraz pliki z kodem źródłowym muszą być zapisywane z rygorystycznym użyciem czystego kodowania **UTF-8 (bez BOM)**. Pozwala to na uniknięcie tzw. "mojibake" i zapewnia bezbłędne renderowanie polskich znaków (ł, ą, ę, ć, ś, ż, ź, ó, ń) zarówno w przeglądarce, jak i w edytorze kodu. Zabrania się używania narzędzi konsolowych (np. przestarzałych wersji PowerShella z domyślnym kodowaniem ANSI), które mogłyby uszkodzić znaki diakrytyczne podczas edycji.
     - **Brak Pustych Typów / Unikanie "any":** Wymagane używanie strict typingu, np. zamiast `catch(e: any)` i odwoływania się do `e.message` - stwórz zdefiniowany `Error`. (Utrzymujemy zgodność wstecznie przy refaktoringach). Typy na pierwszym miejscu!
     - **Barrel Exports:** Wszystkie sub-moduły w folderach grupujemy i eksportujemy poprzez `index.ts`. Przykład: router `offers`, generatory docx, generatory pdf.
     - **Brak Globalnych Instancji Console:** Zamiast `console.log()` / `console.error()` **Zawsze** używać ujednoliconego loggera `src/utils/logger.ts`.

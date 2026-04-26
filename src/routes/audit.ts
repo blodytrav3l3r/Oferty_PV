@@ -55,8 +55,9 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
         });
 
         res.json({ data: mapped, total, limit, offset });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -151,9 +152,10 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
         }
 
         res.json({ data: currentState });
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('AuditRebuild', 'Błąd', e);
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ error: message });
     }
 });
 

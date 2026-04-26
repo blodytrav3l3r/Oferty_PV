@@ -126,27 +126,33 @@ class StorageService {
         if (!this.initialized) throw new Error('StorageService not initialized.');
 
         const headers = this.getHeaders();
+        const stringId = String(id);
+        const isStudnie = stringId.startsWith('offer_studnie_');
 
         console.log(`[StorageService] Usuwanie oferty ${id}...`);
 
+        // Ustal kolejność prób na podstawie prefiksu ID
+        const endpoints = isStudnie
+            ? [`/api/offers-rury/studnie/${id}`, `/api/offers-rury/${id}`]
+            : [`/api/offers-rury/${id}`, `/api/offers-rury/studnie/${id}`];
+
         try {
-            const res1 = await fetch(`/api/offers-rury/${id}`, { method: 'DELETE', headers });
-            if (res1.ok) {
-                console.log(`[StorageService] Oferta ${id} została usunięta z rur.`);
-                return true;
-            }
+            for (let i = 0; i < endpoints.length; i++) {
+                const url = endpoints[i];
+                const res = await fetch(url, { method: 'DELETE', headers });
+                
+                if (res.ok) {
+                    const type = url.includes('/studnie/') ? 'studni' : 'rur';
+                    console.log(`[StorageService] Oferta ${id} została usunięta z ${type}.`);
+                    return true;
+                }
 
-            // Jeśli nie znaleziono w rurach, spróbuj w studniach
-            const res2 = await fetch(`/api/offers-rury/studnie/${id}`, {
-                method: 'DELETE',
-                headers
-            });
-            if (res2.ok) {
-                console.log(`[StorageService] Oferta ${id} została usunięta ze studni.`);
-                return true;
+                // Jeśli to ostatnia próba i nadal nie ok, rzuć błąd
+                if (i === endpoints.length - 1) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Nie udało się usunąć oferty z żadnego endpointu');
+                }
             }
-
-            throw new Error('Nie udało się usunąć oferty z żadnego endpointu');
         } catch (error) {
             console.error(`[StorageService] Błąd podczas usuwania oferty ${id}:`, error);
             throw error;

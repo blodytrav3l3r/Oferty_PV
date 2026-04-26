@@ -144,8 +144,8 @@ function updateRedukcjaButton() {
     if (!btn) return;
     const well = getCurrentWell();
 
-    // Ukryj przycisk dla studni DN1000 (redukcja niemożliwa)
-    if (!well || ![1200, 1500, 2000, 2500].includes(well.dn)) {
+    // Ukryj przycisk dla studni DN1000 i studni stycznych (redukcja niemożliwa)
+    if (!well || well.dn === 'styczna' || ![1200, 1500, 2000, 2500].includes(parseInt(well.dn))) {
         btn.style.display = 'none';
         if (typeof updatePsiaBudaButton === 'function') updatePsiaBudaButton();
         return;
@@ -155,10 +155,11 @@ function updateRedukcjaButton() {
     // Pokaż/ukryj pole minimalnej wysokości obok przycisku
     const minWrap = document.getElementById('redukcja-min-wrap');
     const minInput = document.getElementById('redukcja-min-h');
+    const targetDn = well.redukcjaTargetDN || 1000;
 
     if (well.redukcjaDN1000) {
         btn.innerHTML =
-            '<span style="font-size:0.75rem;"><i data-lucide="chevrons-down"></i></span> Redukcja DN1000 <span style="font-size:0.75rem;"><i data-lucide="check"></i></span>';
+            `<span style="font-size:0.75rem;"><i data-lucide="chevrons-down"></i></span> Redukcja DN${targetDn} <span style="font-size:0.75rem;"><i data-lucide="check"></i></span>`;
         btn.style.borderColor = 'rgba(109,40,217,0.5)';
         btn.style.color = '#a78bfa';
         btn.style.background = 'rgba(109,40,217,0.15)';
@@ -166,7 +167,7 @@ function updateRedukcjaButton() {
         if (minInput) minInput.value = ((well.redukcjaMinH || 2500) / 1000).toFixed(1);
     } else {
         btn.innerHTML =
-            '<span style="font-size:0.75rem;"><i data-lucide="chevrons-down"></i></span> Redukcja DN1000';
+            '<span style="font-size:0.75rem;"><i data-lucide="chevrons-down"></i></span> Redukcja';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';
@@ -177,10 +178,51 @@ function updateRedukcjaButton() {
     }
 }
 
+function onRedukcjaMinChange(valueMeters) {
+    const well = getCurrentWell();
+    if (!well) return;
+    const val = parseFloat(valueMeters);
+    if (isNaN(val)) return;
+    well.redukcjaMinH = Math.round(val * 1000);
+}
+
+function updateRedukcjaZakButton() {
+    const btn = document.getElementById('btn-redukcja-zak');
+    if (!btn) return;
+    const well = getCurrentWell();
+    if (!well) return;
+
+    const targetDn = well.redukcjaTargetDN || 1000;
+    if (well.redukcjaZakonczenie) {
+        const p = studnieProducts.find((pr) => pr.id === well.redukcjaZakonczenie);
+        const shortName = p
+            ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)
+            : 'Zak. DN' + targetDn;
+        btn.innerHTML =
+            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> ' +
+            shortName;
+        btn.style.borderColor = 'rgba(99,102,241,0.5)';
+        btn.style.color = '#a78bfa';
+    } else {
+        btn.innerHTML =
+            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zak. DN' + targetDn;
+        btn.style.borderColor = 'var(--border-glass)';
+        btn.style.color = '';
+    }
+    if (window.lucide) window.lucide.createIcons();
+}
+
 function updatePsiaBudaButton() {
     const btn = document.getElementById('btn-psia-buda');
     if (!btn) return;
     const well = getCurrentWell();
+
+    // Ukryj przycisk dla studni stycznych
+    if (well && well.dn === 'styczna') {
+        btn.style.display = 'none';
+        return;
+    }
+    btn.style.display = '';
 
     if (well && well.psiaBuda) {
         btn.innerHTML =
@@ -215,8 +257,9 @@ function openRedukcjaZakonczeniePopup() {
         'plyta_zamykajaca',
         'pierscien_odciazajacy'
     ];
-    const dn1000Candidates = availProducts
-        .filter((p) => topClosureTypes.includes(p.componentType) && p.dn === 1000)
+    const targetDn = well.redukcjaTargetDN || 1000;
+    const candidates = availProducts
+        .filter((p) => topClosureTypes.includes(p.componentType) && parseInt(p.dn) === parseInt(targetDn))
         .filter((p) => filterByWellParams(p, well));
 
     const typeLabels = {
@@ -276,17 +319,17 @@ function openRedukcjaZakonczeniePopup() {
         ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
     " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
        onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-        <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Konus DN1000)</div>
-        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Domyślny konus DN1000</div>
+        <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Zakończenie DN${targetDn})</div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Automatyczny dobór zakończenia dla średnicy DN${targetDn}</div>
     </div>`;
 
     // Group items
-    const konuses = dn1000Candidates.filter((p) => p.componentType === 'konus');
-    const dinPlates = dn1000Candidates.filter((p) => p.componentType === 'plyta_din');
-    const odcPlates = dn1000Candidates.filter(
+    const konuses = candidates.filter((p) => p.componentType === 'konus');
+    const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
+    const odcPlates = candidates.filter(
         (p) => p.componentType === 'plyta_najazdowa' || p.componentType === 'plyta_zamykajaca'
     );
-    const rings = dn1000Candidates.filter((p) => p.componentType === 'pierscien_odciazajacy');
+    const rings = candidates.filter((p) => p.componentType === 'pierscien_odciazajacy');
 
     // Row 1: Konusy
     konuses.forEach((p) => (tilesHtml += renderTile(p)));
@@ -307,8 +350,8 @@ function openRedukcjaZakonczeniePopup() {
     overlay.innerHTML = `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie redukcji DN1000</h3>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN1000. Wybór elementu odciążającego automatycznie doda pierścień.</p>
+        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie redukcji DN${targetDn}</h3>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN${targetDn}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
       </div>
       <div style="overflow-y:auto; padding:0.8rem; display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem;">
         ${tilesHtml}
@@ -590,7 +633,8 @@ window.applyGlobalRecalc = async function () {
 
             if (useRed) {
                 redTopId = document.getElementById(`recalc-choice-redtop-${dn}`)?.value || 'auto';
-                redMinH = parseInt(document.getElementById(`recalc-red-minh-${dn}`)?.value) || 2500;
+                const redMinHMeters = parseFloat(document.getElementById(`recalc-red-minh-${dn}`)?.value);
+                redMinH = isNaN(redMinHMeters) ? 2500 : Math.round(redMinHMeters * 1000);
             }
 
             prefs[dn] = { topId, useRed, redTopId, redMinH };
@@ -631,4 +675,151 @@ window.applyGlobalRecalc = async function () {
         }
     }
 };
+
+function openRedukcjaChoicePopup() {
+    const well = getCurrentWell();
+    if (!well) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    
+    // Check if DN1200 is available for this DN
+    const can1200 = [1500, 2000, 2500].includes(well.dn) || well.dn === 'styczna';
+    const currentTarget = well.redukcjaTargetDN || 1000;
+    const isActive = well.redukcjaDN1000;
+
+    overlay.innerHTML = `
+    <div class="modal" style="max-width:400px; width:90%; border-radius:12px; padding:1.5rem; background: var(--bg-secondary); border: 1px solid var(--border);">
+      <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+        <i data-lucide="chevrons-down" style="color:var(--accent);"></i> Wybierz rodzaj redukcji
+      </h3>
+      <div style="display:flex; flex-direction:column; gap:0.6rem;">
+        <button onclick="selectRedukcjaChoice(1000)" style="
+            padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
+            border:2px solid ${isActive && currentTarget === 1000 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
+            background:${isActive && currentTarget === 1000 ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
+            color:${isActive && currentTarget === 1000 ? '#a5b4fc' : 'var(--text-primary)'};
+        ">
+            <div style="font-weight:800; font-size:0.9rem;">Redukcja na DN1000</div>
+            <div style="font-size:0.7rem; opacity:0.7; margin-top:0.2rem;">Standardowa redukcja na kręgi DN1000.</div>
+        </button>
+        
+        ${can1200 ? `
+        <button onclick="selectRedukcjaChoice(1200)" style="
+            padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
+            border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
+            background:${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
+            color:${isActive && currentTarget === 1200 ? '#a5b4fc' : 'var(--text-primary)'};
+        ">
+            <div style="font-weight:800; font-size:0.9rem;">Redukcja na DN1200</div>
+            <div style="font-size:0.7rem; opacity:0.7; margin-top:0.2rem;">Większa redukcja na kręgi DN1200.</div>
+        </button>
+        ` : ''}
+
+        <button onclick="selectRedukcjaChoice(null)" style="
+            padding:0.6rem; border-radius:8px; cursor:pointer; text-align:center; transition:all 0.2s;
+            border:1px solid rgba(239, 68, 68, 0.3); background:rgba(239, 68, 68, 0.05); color:#ef4444; margin-top:0.4rem;
+        ">
+            Wyłącz redukcję
+        </button>
+      </div>
+      <div style="margin-top:1.2rem; text-align:right;">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">Anuluj</button>
+      </div>
+    </div>`;
+    
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function selectRedukcjaChoice(targetDn) {
+    const well = getCurrentWell();
+    if (!well) return;
+
+    const oldTarget = well.redukcjaTargetDN || 1000;
+    const wasActive = well.redukcjaDN1000;
+    const newTarget = targetDn;
+
+    if (targetDn === null) {
+        well.redukcjaDN1000 = false;
+        well.redukcjaTargetDN = 1000; // default back
+    } else {
+        well.redukcjaDN1000 = true;
+        well.redukcjaTargetDN = targetDn;
+        
+        // Specjalna obsługa dla studni stycznych
+        if (well.dn === 'styczna') {
+            well.stycznaNadbudowa1200 = (targetDn === 1200);
+        }
+    }
+
+    closeModal();
+    updateRedukcjaButton();
+    updateRedukcjaZakButton();
+    
+    if (!well.autoLocked) {
+        let swapped = false;
+        // Próbujemy podmienić elementy tylko jeśli zmieniamy średnicę aktywnej redukcji
+        if (wasActive && targetDn !== null && oldTarget !== newTarget && (well.config || []).length > 0) {
+            swapped = trySwapReductionComponents(well, oldTarget, newTarget);
+        }
+
+        if (!swapped) {
+            // Full recalculation (przelicz od nowa)
+            well.configSource = 'AUTO';
+            well.config = [];
+            await autoSelectComponents(true);
+        }
+    }
+    refreshAll();
+    showToast(targetDn ? `Redukcja na DN${targetDn} — WŁĄCZONA` : 'Redukcja — WYŁĄCZONA', targetDn ? 'success' : 'info');
+}
+
+/**
+ * Próbuje podmienić elementy w konfiguracji przy zmianie średnicy redukcji.
+ * Zwraca true jeśli udało się podmienić wszystko, false jeśli wymagany pełny re-dobór.
+ */
+function trySwapReductionComponents(well, oldTarget, newTarget) {
+    if (!well.config || well.config.length === 0) return false;
+    
+    const newConfig = [];
+    const availProducts = getAvailableProducts(well).filter(p => filterByWellParams(p, well));
+    
+    for (const item of well.config) {
+        const prod = studnieProducts.find(p => p.id === item.productId);
+        if (!prod) {
+            newConfig.push(item);
+            continue;
+        }
+        
+        // 1. Podmiana płyty redukcyjnej
+        if (prod.componentType === 'plyta_redukcyjna') {
+            const newPlate = getReductionPlate(availProducts, well.dn, true, newTarget);
+            if (!newPlate) return false; // Nie znaleziono pasującej płyty
+            newConfig.push({ productId: newPlate.id, quantity: item.quantity });
+            continue;
+        }
+        
+        // 2. Podmiana elementów o starej średnicy docelowej
+        if (parseInt(prod.dn) === oldTarget) {
+            // Szukamy odpowiednika w nowej średnicy o tym samym typie i wysokości
+            const match = availProducts.find(p => 
+                parseInt(p.dn) === newTarget && 
+                p.componentType === prod.componentType && 
+                p.height === prod.height
+            );
+            
+            if (!match) return false; // Brakuje elementu o tej samej wysokości - wymuś re-dobór
+            newConfig.push({ productId: match.id, quantity: item.quantity });
+            continue;
+        }
+        
+        // 3. Reszta (dennica, kręgi główne) zostaje bez zmian
+        newConfig.push(item);
+    }
+    
+    well.config = newConfig;
+    well.configSource = 'MANUAL_SWAP'; // Oznaczamy że to była podmiana, ale zachowujemy strukturę
+    return true;
+}
 

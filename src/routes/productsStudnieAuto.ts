@@ -43,9 +43,10 @@ router.post('/auto-select', requireAuth, async (req, res) => {
         } else {
             res.status(400).json(result);
         }
-    } catch (err: any) {
-        logger.error('AutoSelect', 'Błąd auto-select', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('AutoSelect', 'Błąd auto-select', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -67,9 +68,10 @@ router.get('/available-components/:dn', requireAuth, async (req, res) => {
 
         const components = await getAvailableComponents(dn, magazyn);
         res.json({ components });
-    } catch (err: any) {
-        logger.error('AutoSelect', 'Błąd dostępnych komponentów', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('AutoSelect', 'Błąd dostępnych komponentów', message);
+        res.status(500).json({ error: message });
     }
 });
 
@@ -93,9 +95,10 @@ router.post('/validate', requireAuth, async (req, res) => {
 
         const validation = validateManhole(components, config);
         res.json(validation);
-    } catch (err: any) {
-        logger.error('AutoSelect', 'Błąd walidacji', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('AutoSelect', 'Błąd walidacji', message);
+        res.status(500).json({ error: message });
     }
 });
 

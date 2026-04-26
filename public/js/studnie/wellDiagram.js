@@ -396,8 +396,8 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
     } else {
         // Kręgi, płyty, pierścienie, AVR i inne prostokątne elementy
         const rx = (ct === 'avr' || ct === 'plyta_din' || ct === 'plyta_redukcyjna' ||
-                    ct === 'plyta_zamykajaca' || ct === 'pierscien_odciazajacy' ||
-                    ct === 'plyta_najazdowa') ? 2 : 2;
+            ct === 'plyta_zamykajaca' || ct === 'pierscien_odciazajacy' ||
+            ct === 'plyta_najazdowa') ? 2 : 2;
         svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
 
         // Otwory wierconego kręgu

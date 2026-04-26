@@ -14,8 +14,9 @@ router.get('/year-letter', requireAuth, async (_req, res) => {
             where: { key }
         });
         res.json({ letter: row ? row.value : '', year });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -41,8 +42,9 @@ router.put('/year-letter', requireAuth, requireAdmin, async (req, res) => {
         }
 
         res.json({ ok: true, letter: letter.toUpperCase(), year });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 

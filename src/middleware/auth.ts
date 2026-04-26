@@ -148,7 +148,8 @@ export async function ensureAdminExists(): Promise<void> {
             });
             logger.info('Auth', 'Domyślny administrator został utworzony.');
         }
-    } catch (e: any) {
-        logger.error('Auth', 'Błąd ensureAdminExists', e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Auth', 'Błąd ensureAdminExists', message);
     }
 }

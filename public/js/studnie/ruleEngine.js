@@ -48,21 +48,35 @@ function getLowestDennica(products, dn, warehouse) {
 }
 
 /**
- * Szuka płyty redukcyjnej (z DN do DN1000).
+ * Szuka płyty redukcyjnej (z DN do DN1000 lub DN1200).
  *
  * Port z: Logika/rules.py → RuleEngine.get_reduction_plate()
  *
  * @param {Array} products - lista produktów
  * @param {number} dn - średnica studni
  * @param {boolean} useReduction - czy redukcja jest aktywna
+ * @param {number} targetDn - średnica docelowa (domyślnie 1000)
  * @returns {Object|null} płyta redukcyjna lub null
  */
-function getReductionPlate(products, dn, useReduction) {
+function getReductionPlate(products, dn, useReduction, targetDn = 1000) {
     if (!useReduction || parseInt(dn) <= 1000) return null;
+    const tDn = targetDn || 1000;
 
-    const plates = products.filter(
-        (p) => p.componentType === 'plyta_redukcyjna' && parseInt(p.dn) === parseInt(dn)
-    );
+    const plates = products.filter((p) => {
+        if (p.componentType !== 'plyta_redukcyjna') return false;
+        if (parseInt(p.dn) !== parseInt(dn)) return false;
+
+        // Szukamy w nazwie wzorców pasujących do docelowej średnicy (np. →DN1000, /1000, DN1000)
+        const nameUpper = (p.name || '').toUpperCase();
+        return nameUpper.includes('/' + tDn) || 
+               nameUpper.includes(' DN' + tDn) || 
+               nameUpper.includes('X' + tDn) || 
+               nameUpper.includes(' NA ' + tDn) ||
+               nameUpper.includes('→DN' + tDn) ||
+               nameUpper.includes('→' + tDn) ||
+               nameUpper.includes('->DN' + tDn) ||
+               nameUpper.includes('->' + tDn);
+    });
 
     return plates.length > 0 ? plates[0] : null;
 }

@@ -29,12 +29,12 @@ export const registerSchema = z.object({
  * Generyczny middleware aplikujący schematy `zod`
  * do nadchodzącego body. Zwraca 400 jeśli walidacja oblała.
  */
-export const validateData = (schema: z.ZodType<any, any>) => {
+export const validateData = (schema: z.ZodSchema<unknown>) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             schema.parse(req.body);
             next();
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({
                     error: 'Błąd walidacji danych wejściowych',

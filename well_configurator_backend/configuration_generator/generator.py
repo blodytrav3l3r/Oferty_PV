@@ -75,20 +75,6 @@ class ConfigurationGenerator:
         plate = self.engine.get_reduction_plate()
         is_reduced = plate is not None and self.config.use_reduction
 
-        # ─── Walidacja redukcji: sprawdź czy przejścia nie są powyżej planowanej redukcji ───
-        required_chamber_h = 0.0
-        if is_reduced:
-            reduction_errors, required_chamber_h = self._validate_reduction_transitions(plate)
-            if reduction_errors:
-                return [
-                    WellConfigResult(
-                        is_valid=False,
-                        total_height_mm=0,
-                        items=[],
-                        errors=reduction_errors,
-                    )
-                ]
-
         # ─── Stage pipeline z progresywnym rozluźnianiem ───
         stages = [
             {
@@ -124,6 +110,15 @@ class ConfigurationGenerator:
             logger.info(
                 f"═══ STAGE: {stage['name']} (tol: -{stage['tolerance_below']}/+{stage['tolerance_above']}) ═══"
             )
+
+            # Oblicz required_chamber_h z uwzględnieniem trybu zapasów dla tego stage
+            required_chamber_h = 0.0
+            if is_reduced:
+                reduction_errors, required_chamber_h = self._validate_reduction_transitions(
+                    plate, stage["clearance_mode"]
+                )
+                if reduction_errors:
+                    continue
 
             for dennica in all_dennice:
                 result = self._try_build_well(dennica, is_reduced, plate, stage, required_chamber_h)
@@ -165,10 +160,13 @@ class ConfigurationGenerator:
             )
         ]
 
-    def _validate_reduction_transitions(self, plate: ProductModel) -> Tuple[List[str], float]:
+    def _validate_reduction_transitions(
+        self, plate: ProductModel, clearance_mode: str = "standard"
+    ) -> Tuple[List[str], float]:
         """
         Kategoryczny zakaz: przejścia NIE MOGĄ być w sekcji redukcji (powyżej płyty redukcyjnej).
         Zwraca: (lista_bledow, required_chamber_h)
+        Uwzględnia zapasy standardowe lub minimalne w zależności od clearance_mode.
         """
         errors = []
         required_chamber_h = 0.0
@@ -182,7 +180,10 @@ class ConfigurationGenerator:
             
             # Pobierz zapasy dla rury
             defaults = get_default_clearance(dn)
-            z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else defaults[1]
+            if clearance_mode == "standard":
+                z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else defaults[1]
+            else:
+                z_gora = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else defaults[3]
             
             # Górna krawędź "strefy bezpieczeństwa" rury (rzędna włączenia + DN + zapas)
             top_safety_edge = float(t.height_from_bottom_mm) + dn + z_gora
@@ -538,13 +539,13 @@ class ConfigurationGenerator:
         dennica_warnings: List[str],
     ) -> WellConfigResult:
         """
-        Buduje studnię Z REDUKCJĄ do DN1000.
+        Buduje studnię Z REDUKCJĄ.
 
         SEKWENCJA:
-        dennica → kręgi DN_główny (z OT) → płyta redukcyjna → kręgi DN1000 → zwieńczenie
+        dennica → kręgi DN_główny (z OT) → płyta redukcyjna → kręgi DN_docelowy → zwieńczenie
         """
         main_dn = self.config.dn
-        reduction_dn = 1000
+        reduction_dn = getattr(self.config, "target_dn", 1000) or 1000
         hatch_h = hatch.height if hatch else 0
 
         # ─── Krok 1: Wyznaczenie minimalnej wysokości komory roboczej ───
@@ -567,7 +568,7 @@ class ConfigurationGenerator:
                 errors=[f"Brak kręgów dla DN{main_dn} poniżej redukcji."],
             )
 
-        # Szacujemy wysokość kręgów DN1000 powyżej redukcji (min: 1 krąg)
+        # Szacujemy wysokość kręgów powyżej redukcji (min: 1 krąg)
         kregi_1000 = self.engine.get_kregi_list(reduction_dn)
         min_kregi_1000_h = min((int(k.height) for k in kregi_1000), default=250)
         estimated_above_reduction = min_kregi_1000_h
@@ -610,7 +611,7 @@ class ConfigurationGenerator:
                 is_valid=False,
                 total_height_mm=dennica.height + plate.height + top.height,
                 items=[],
-                errors=["Brak kręgów DN1000 powyżej redukcji."],
+                errors=[f"Brak kręgów DN{reduction_dn} powyżej redukcji."],
             )
 
         # Pozycja startowa kręgów DN1000 = dennica + kręgi poniżej + płyta redukcyjna
@@ -636,7 +637,7 @@ class ConfigurationGenerator:
                 items=[],
                 errors=warnings_above
                 or [
-                    f"Brak kombinacji kręgów DN1000 powyżej redukcji "
+                    f"Brak kombinacji kręgów DN{reduction_dn} powyżej redukcji "
                     f"dla h={remaining_h}mm."
                 ],
             )
@@ -679,11 +680,11 @@ class ConfigurationGenerator:
         )
         cy += plate.height
 
-        # Kręgi DN1000 (powyżej redukcji)
+        # Kręgi powyżej redukcji
         for k in rings_above:
             segments.append(
                 {
-                    "type": "krag_1000",
+                    "type": "krag_reduced",
                     "start": cy,
                     "end": cy + int(k.height),
                     "is_ot": False,
@@ -765,7 +766,7 @@ class ConfigurationGenerator:
             )
         )
 
-        # Kręgi DN1000 powyżej redukcji
+        # Kręgi powyżej redukcji
         mock_kregi_above = []
         for r in rings_above:
             mock_kregi_above.append(
@@ -791,16 +792,16 @@ class ConfigurationGenerator:
         )
 
         # ─── ZASADA: Konus + Krąg 250 -> Konus+ ───
-        # Kręgi DN1000 powyżej redukcji są w mock_kregi_above
+        # Kręgi powyżej redukcji są w mock_kregi_above
         if mock_kregi_above and mock_kregi_above[-1].height_mm == 250 and not mock_kregi_above[-1].is_ot:
             if top.component_type == "konus" and top.height == 625:
-                # Szukamy Konus+ (H=850 lub H=875) DN1000 (bo powyżej redukcji)
-                konus_plus = self.engine.get_konus_plus(1000)
+                # Szukamy Konus+ (H=850 lub H=875) dla docelowego DN redukcji
+                konus_plus = self.engine.get_konus_plus(reduction_dn)
                 if konus_plus:
                     # Zamiana
                     removed_krag = mock_kregi_above.pop()
                     top = konus_plus
-                    logger.info(f"Zastosowano Konus+ {top.name} w DN1000 zamiast Konus 625 + Krąg 250")
+                    logger.info(f"Zastosowano Konus+ {top.name} w DN{reduction_dn} zamiast Konus 625 + Krąg 250")
 
         out_items.extend(mock_kregi_above)
 
@@ -1010,7 +1011,10 @@ class ConfigurationGenerator:
         return True, warnings
 
     def _select_avr_fill(self, remaining_mm: float) -> List[ItemDetail]:
-        """Dobiera pierścienie AVR aby wypełnić brakującą wysokość."""
+        """Dobiera regulatory wejściowe (AVR) aby wypełnić brakującą wysokość.
+        Używa backtrackingu (jak frontendowy bcktrAvr) by znaleźć kombinację
+        najbliższą celowi, preferując mniej elementów przy tej samej różnicy.
+        """
         if remaining_mm < 30:
             return []
 
@@ -1018,22 +1022,40 @@ class ConfigurationGenerator:
         if not avr_list:
             return []
 
-        picked = []
-        rem = float(remaining_mm)
+        deficit = float(remaining_mm)
+        best_combo: List[ProductModel] = []
+        best_diff = deficit  # najmniejsza różnica |deficit - suma|
 
-        # Dobieraj od największych
-        for avr in reversed(avr_list):
-            while rem >= (avr.height - 10):
-                picked.append(
-                    ItemDetail(
-                        product_id=avr.id,
-                        name=avr.name,
-                        component_type=avr.componentType,
-                        height_mm=avr.height,
-                    )
+        def backtrack(combo: List[ProductModel], current_sum: float, start_idx: int):
+            nonlocal best_combo, best_diff
+            d = abs(deficit - current_sum)
+            # Lepsza różnica, lub ta sama różnica ale mniej elementów
+            if d < best_diff or (abs(d - best_diff) < 0.1 and len(combo) < len(best_combo)):
+                best_diff = d
+                best_combo = list(combo)
+            if current_sum > deficit + 20:  # mała tolerancja nadmiaru
+                return
+            for i in range(start_idx, len(avr_list)):
+                avr = avr_list[i]
+                if current_sum + avr.height <= deficit + 20:
+                    combo.append(avr)
+                    backtrack(combo, current_sum + avr.height, i)
+                    combo.pop()
+
+        backtrack([], 0.0, 0)
+        if not best_combo:
+            return []
+
+        # Zwróć jako osobne ItemDetail (bez quantity) — zgodnie z resztą generatora
+        picked = []
+        for avr in best_combo:
+            picked.append(
+                ItemDetail(
+                    product_id=avr.id,
+                    name=avr.name,
+                    component_type=avr.componentType,
+                    height_mm=avr.height,
                 )
-                rem -= avr.height
-                if len(picked) > 10:
-                    break
+            )
 
         return picked

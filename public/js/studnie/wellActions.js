@@ -302,6 +302,14 @@ function dragLeaveWellComponent(ev) {
     const dz = document.getElementById('drop-zone-diagram');
     if (dz) dz.classList.remove('drag-over');
 }
+/**
+ * Wstrzykuje parę dla elementu odciążającego (płyta <-> pierścień)
+ */
+window.injectPairIfReliefComponent = function (well, productId) {
+    if (typeof window.ensureReliefRingPair === 'function') {
+        window.ensureReliefRingPair(well);
+    }
+};
 
 function dropWellComponent(ev) {
     ev.preventDefault();
@@ -353,7 +361,7 @@ function dropWellComponent(ev) {
         well.configSource = 'MANUAL';
 
         sortWellConfigByOrder();
-        syncGaskets(well);
+        recalcGaskets(well);
 
         renderWellConfig();
         renderWellDiagram();
@@ -365,7 +373,7 @@ function dropWellComponent(ev) {
         updateAutoLockUI();
         well.configSource = 'MANUAL';
 
-        syncGaskets(well);
+        recalcGaskets(well);
 
         renderWellConfig();
         renderWellDiagram();
@@ -399,7 +407,7 @@ function addWellComponent(productId) {
     }
     well.configSource = 'MANUAL';
 
-    // ZASADA 1: Tylko jedno zakończenie studni
+    // ZASADA 1: Tylko jedno zakończenie studni (z wyjątkiem kompletu odciążającego)
     const topClosureTypes = [
         'plyta_din',
         'plyta_najazdowa',
@@ -407,11 +415,35 @@ function addWellComponent(productId) {
         'konus',
         'pierscien_odciazajacy'
     ];
+    const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
+
     if (topClosureTypes.includes(product.componentType)) {
         // Usuń poprzednie elementy zakończenia
         well.config = well.config.filter((item) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
-            return p && !topClosureTypes.includes(p.componentType);
+            if (!p) return true;
+
+            // Jeśli dodajemy element odciążający (np. pierścień)
+            if (reliefTypes.includes(product.componentType)) {
+                // Jeśli istniejący element to też element odciążający...
+                if (reliefTypes.includes(p.componentType)) {
+                    // ...ale innego typu (partner), to go zostawiamy
+                    return p.componentType !== product.componentType;
+                }
+                // Inne typy zakończeń (nie-odciążające) usuwamy
+                return !topClosureTypes.includes(p.componentType);
+            }
+
+            // Jeśli dodajemy element NIE-odciążający (np. konus), usuwamy WSZYSTKIE zakończenia
+            return !topClosureTypes.includes(p.componentType);
+        });
+    }
+
+    // ZASADA: Płyta redukcyjna - tylko 1 na studnię
+    if (product.componentType === 'plyta_redukcyjna') {
+        well.config = well.config.filter((item) => {
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            return p && p.componentType !== 'plyta_redukcyjna';
         });
     }
 
@@ -506,6 +538,11 @@ function addWellComponent(productId) {
     };
 
     addSingle(product);
+    
+    // Po dodaniu upewnij się, że mamy parę jeśli to element odciążający
+    if (typeof window.ensureReliefRingPair === 'function') {
+        window.ensureReliefRingPair(well);
+    }
 
     sortWellConfigByOrder();
     syncGaskets(well);
@@ -551,16 +588,25 @@ function removeWellComponent(index) {
 
     if (removedItem) {
         const p = studnieProducts.find((pr) => pr.id === removedItem.productId);
-        if (p && p.componentType === 'redukcja') {
-            well.redukcjaDN1000 = false;
+        if (p) {
+            // 1. Obsługa usuwania kompletu odciążającego
+            const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
+            if (reliefTypes.includes(p.componentType)) {
+                well.config = well.config.filter(item => {
+                    const prod = studnieProducts.find(pr => pr.id === item.productId);
+                    return !prod || !reliefTypes.includes(prod.componentType);
+                });
+                showToast('Usunięto komplet odciążający', 'info');
+            }
 
-            const redToggle = document.getElementById('well-redukcja-toggle');
-            if (redToggle) redToggle.checked = false;
-
-            if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
-
-            showToast('Usunięto redukcję ze studni.', 'info');
-            // Pozwól kodowi kontynuować i ponownie wyrenderować bez automatycznego dobierania
+            // 2. Obsługa usuwania redukcji
+            if (p.componentType === 'redukcja') {
+                well.redukcjaDN1000 = false;
+                const redToggle = document.getElementById('well-redukcja-toggle');
+                if (redToggle) redToggle.checked = false;
+                if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
+                showToast('Usunięto redukcję ze studni.', 'info');
+            }
         }
     }
 
@@ -643,7 +689,7 @@ function renderTiles() {
             types: ['krag_ot']
         },
         { title: '<i data-lucide="square"></i> Dennica', icon: '', types: ['dennica'] },
-        { title: '🪣 Osadniki', icon: '', types: ['osadnik'] },
+        { title: 'đźŞŁ Osadniki', icon: '', types: ['osadnik'] },
         // Studnie styczne widoczne tylko gdy wybrana typu studni Styczna
         ...(dn === 'styczna'
             ? (() => {
@@ -686,7 +732,7 @@ function renderTiles() {
         }
 
         // Niestandardowe sortowanie dla dennicy: sortuj wg wysokości od najniższej do najwyższej
-        if (group.types.includes('dennica')) {
+        if (group.types.includes('dennica') || group.types.includes('krag') || group.types.includes('krag_ot')) {
             items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
         }
 
@@ -730,15 +776,34 @@ function renderTiles() {
     const primaryProducts = availProducts
         .filter((p) => {
             if (dn === 'styczna') {
-                // Dla studni stycznych użyj well.dn dla nadbudowy, ale pozwól na 'styczną' dla dennicy
+                // Dla studni stycznych używamy 'styczna' dla dennicy/stycznej bazy
                 if (p.componentType === 'dennica' || p.componentType === 'styczna') {
                     return p.dn === 'styczna' || p.componentType === 'styczna';
                 }
-                const effectiveDn = well.dn || 1000;
-                return p.dn === effectiveDn || p.dn === null;
+                // Reszta nadbudowy dla studni stycznej to standardowe DN1000 lub DN1200
+                const effDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+                return parseInt(p.dn) === effDn || p.dn === null;
             }
 
-            return p.dn === dn || p.dn === null;
+            // Porównanie DN z konwersją typów (p.dn może być string lub number)
+            if (parseInt(p.dn) !== parseInt(dn) && p.dn !== null) return false;
+
+            // Filtrowanie płyt redukcyjnych według wybranej średnicy docelowej
+            if (p.componentType === 'plyta_redukcyjna' && well.redukcjaDN1000) {
+                const tDn = well.redukcjaTargetDN || 1000;
+                const nameUpper = (p.name || '').toUpperCase();
+                const matchesTarget = nameUpper.includes('/' + tDn) || 
+                                     nameUpper.includes(' DN' + tDn) || 
+                                     nameUpper.includes('X' + tDn) || 
+                                     nameUpper.includes(' NA ' + tDn) ||
+                                     nameUpper.includes('→DN' + tDn) ||
+                                     nameUpper.includes('→' + tDn) ||
+                                     nameUpper.includes('->DN' + tDn) ||
+                                     nameUpper.includes('->' + tDn);
+                if (!matchesTarget) return false;
+            }
+
+            return true;
         })
         .filter((p) => filterByWellParams(p, well));
 
@@ -778,42 +843,70 @@ function renderTiles() {
             return p && p.componentType === 'plyta_redukcyjna';
         });
 
-    if ([1200, 1500, 2000, 2500].includes(dn) && hasReduction) {
-        const redProducts = availProducts
-            .filter(
-                (p) =>
-                    p.dn === 1000 &&
-                    p.componentType !== 'plyta_redukcyjna' &&
-                    p.componentType !== 'dennica'
-            )
-            .filter((p) => filterByWellParams(p, well));
+    if ([1200, 1500, 2000, 2500].includes(parseInt(dn)) && hasReduction) {
+        const tDn = well.redukcjaTargetDN || 1000;
+        
+        // Funkcja pomocnicza do sprawdzania czy płyta pasuje do docelowej średnicy
+        const matchesTargetDn = (name, target) => {
+            const n = (name || '').toUpperCase();
+            return n.includes('/' + target) || 
+                   n.includes(' DN' + target) || 
+                   n.includes('X' + target) || 
+                   n.includes(' NA ' + target) ||
+                   n.includes('→DN' + target) ||
+                   n.includes('→' + target) ||
+                   n.includes('->DN' + target) ||
+                   n.includes('->' + target) ||
+                   n.includes('DO ' + target);
+        };
+
+        const redProducts = availProducts.filter((p) => {
+            // 1. Płyta redukcyjna: musi być dla średnicy studni (dn) i pasować do tDn
+            if (p.componentType === 'plyta_redukcyjna') {
+                if (parseInt(p.dn) !== parseInt(dn)) return false;
+                return matchesTargetDn(p.name, tDn);
+            }
+            // 2. Inne elementy: muszą być bezpośrednio dla tDn
+            if (parseInt(p.dn) === tDn) {
+                return p.componentType !== 'dennica' && p.componentType !== 'styczna';
+            }
+            return false;
+        }).filter(p => filterByWellParams(p, well));
+
         if (redProducts.length > 0) {
             html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
-            html += `<h3 style="color:#f59e0b; margin-bottom:1rem; font-size:1.1rem;">⏬ Redukcja (DN1000)</h3>`;
+            html += `<h3 style="color:#f59e0b; margin-bottom:1rem; font-size:1.1rem;">Redukcja (DN${tDn})</h3>`;
+            
             groups.forEach((g) => {
+                let items = redProducts.filter((p) => g.types.includes(p.componentType));
+                
                 if (g.types.includes('uszczelka')) {
-                    // Zastosuj to samo filtrowanie typu uszczelki dla sekcji redukcji
-                    let items = redProducts.filter((p) => g.types.includes(p.componentType));
                     items = filterSealsByWellType(items, well);
-                    if (items.length > 0) {
-                        html += `<div class="tiles-section"><div class="tiles-section-title">${g.title}</div><div class="tiles-grid">`;
-                        items.forEach((p) => {
-                            const isLocked = isWellLocked();
-                            const lockedStyle = isLocked
-                                ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                                : '';
-                            html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
-                                <div class="tile-name">${p.name}</div>
-                                <div class="tile-meta">
-                                  <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-                                  <span class="tile-price">${fmtInt(p.price)} PLN</span>
-                                </div>
-                              </div>`;
-                        });
-                        html += `</div></div>`;
-                    }
-                } else {
-                    renderGroup(g, redProducts);
+                }
+
+                if (items.length > 0) {
+                    html += `<div class="tiles-section">
+                        <div class="tiles-section-title">${g.title}</div>
+                        <div class="tiles-grid">`;
+                    
+                    items.forEach((p) => {
+                        const isLocked = isWellLocked();
+                        const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : '';
+                        
+                        let displayPrice = p.price || 0;
+                        if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
+                            displayPrice += parseFloat(p.doplataDrabNierdzewna);
+                        }
+
+                        html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
+                            <div class="tile-name">${p.name}</div>
+                            <div class="tile-meta">
+                              <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
+                              <span class="tile-price">${fmtInt(displayPrice)} PLN</span>
+                            </div>
+                          </div>`;
+                    });
+                    html += `</div></div>`;
                 }
             });
             html += `</div>`;
@@ -872,8 +965,9 @@ function renderWellConfig() {
     well.config.forEach((item, index) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
-        const itemAssessedPrice = getItemAssessedPrice(well, p);
-        let totalPrice = itemAssessedPrice * item.quantity;
+        // W zamówieniu użyj zamrożonej ceny jeśli dostępna; w ofercie przelicz na nowo
+        const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p));
+        let totalPrice = itemPrice * item.quantity;
 
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
             const kinetaItem = well.config.find((c) => {
@@ -883,7 +977,8 @@ function renderWellConfig() {
             if (kinetaItem) {
                 const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                 if (kinetaProd) {
-                    const rawKinetaPrice = getItemAssessedPrice(well, kinetaProd);
+                    // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
+                    const rawKinetaPrice = (kinetaItem.frozenPrice != null ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd));
                     totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
                 }
             }
@@ -977,7 +1072,7 @@ function moveWellComponent(index, direction) {
     updateHeightIndicator(); // Odśwież błędy po przesunięciu
 }
 
-/* ===== ZAKOŃCZENIE (WYBÓR ZAMKNIĘCIA GÓRNEGO) ===== */
+/* ===== ZAKOŁCZENIE (WYBÓR ZAMKNIĘCIA GÓRNEGO) ===== */
 
 async function selectZakonczenie(productId) {
     const well = getCurrentWell();
@@ -1007,7 +1102,7 @@ async function selectZakonczenie(productId) {
     refreshAll();
 }
 
-/* ===== REDUKCJA DN1000 ===== */
+/* ===== REDUKCJA ===== */
 async function toggleRedukcja() {
     const well = getCurrentWell();
     if (!well) {
@@ -1015,34 +1110,36 @@ async function toggleRedukcja() {
         return;
     }
 
-    if (![1200, 1500, 2000, 2500].includes(well.dn)) {
-        showToast('Redukcja DN1000 dostępna tylko dla studni DN ≥ 1200', 'error');
+    if (![1200, 1500, 2000, 2500].includes(well.dn) && well.dn !== 'styczna') {
+        showToast('Redukcja dostępna tylko dla studni DN ≥ 1200', 'error');
         return;
     }
 
+    // Dla DN1500+ i Stycznej pokazujemy wybór
+    if ([1500, 2000, 2500].includes(well.dn) || well.dn === 'styczna') {
+        if (typeof openRedukcjaChoicePopup === 'function') {
+            openRedukcjaChoicePopup();
+            return;
+        }
+    }
+
+    // Standardowa logika dla DN1200 (tylko DN1000)
     well.redukcjaDN1000 = !well.redukcjaDN1000;
-    offerDefaultRedukcja = well.redukcjaDN1000; // zapisz jako domyślne na poziomie oferty
+    well.redukcjaTargetDN = 1000;
+    offerDefaultRedukcja = well.redukcjaDN1000;
     updateRedukcjaButton();
 
     if (well.redukcjaDN1000) {
         showToast('Redukcja DN1000 — WŁĄCZONA', 'success');
     } else {
-        showToast('Redukcja DN1000 — WYŁĄCZONA', 'info');
+        showToast('Redukcja — WYŁĄCZONA', 'info');
 
-        // Reset ewentualnego nadpisanego błędem "Zakoczenia" dla rury DN1000 i samej redukcji
         well.zakonczenie = null;
         offerDefaultZakonczenie = null;
         well.redukcjaZakonczenie = null;
         offerDefaultRedukcjaZak = null;
         updateZakonczenieButton();
-
-        const btnZak = document.getElementById('btn-redukcja-zak');
-        if (btnZak) {
-            btnZak.innerHTML =
-                '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zak. DN1000';
-            btnZak.style.borderColor = 'var(--border-glass)';
-            btnZak.style.color = '';
-        }
+        if (typeof updateRedukcjaZakButton === 'function') updateRedukcjaZakButton();
     }
 
     if (!well.autoLocked) {
@@ -1065,7 +1162,7 @@ async function togglePsiaBuda() {
     updatePsiaBudaButton();
 
     if (well.psiaBuda) {
-        showToast('Tryb Psia buda — WŁĄCZONY', 'success');
+        showToast('Tryb Psia buda — WŁĄCZONY', 'success');
 
         // Backup parametrów
         well._psiaBudaBackup = {
@@ -1079,7 +1176,7 @@ async function togglePsiaBuda() {
         well.spocznik = 'brak';
         well.spocznikH = 'brak';
     } else {
-        showToast('Tryb Psia buda — WYŁĄCZONY', 'info');
+        showToast('Tryb Psia buda — WYŁĄCZONY', 'info');
 
         // Przywracanie parametrów, jeśli backup istnieje
         if (well._psiaBudaBackup) {
@@ -1101,6 +1198,52 @@ async function togglePsiaBuda() {
     refreshAll();
 }
 
+/* ===== NADBUDOWA STYCZNA DN1200 ===== */
+async function toggleStyczna1200() {
+    const well = getCurrentWell();
+    if (!well || well.dn !== 'styczna') return;
+
+    well.stycznaNadbudowa1200 = !well.stycznaNadbudowa1200;
+    updateStyczna1200Button();
+
+    if (well.stycznaNadbudowa1200) {
+        showToast('Nadbudowa dla studni stycznej: DN1200', 'success');
+    } else {
+        showToast('Nadbudowa dla studni stycznej: DN1000', 'info');
+    }
+
+    if (!well.autoLocked) {
+        well.configSource = 'AUTO';
+        well.config = [];
+        await autoSelectComponents(true);
+    }
+    refreshAll();
+}
+
+function updateStyczna1200Button() {
+    const well = getCurrentWell();
+    const btn = document.getElementById('btn-styczna-1200');
+    if (!btn) return;
+
+    if (well && well.dn === 'styczna') {
+        btn.style.display = 'inline-block';
+        if (well.stycznaNadbudowa1200) {
+            btn.innerHTML = 'Nadbudowa DN1200';
+            btn.style.borderColor = 'rgba(99,102,241,0.5)';
+            btn.style.color = '#a5b4fc';
+            btn.style.backgroundColor = 'rgba(99,102,241,0.15)';
+        } else {
+            btn.innerHTML = 'Nadbudowa DN1200';
+            btn.style.borderColor = 'var(--border-glass)';
+            btn.style.color = '';
+            btn.style.backgroundColor = '';
+        }
+    } else {
+        btn.style.display = 'none';
+        if (well) well.stycznaNadbudowa1200 = false;
+    }
+}
+
 async function selectRedukcjaZakonczenie(productId) {
     const well = getCurrentWell();
     if (!well) return;
@@ -1109,31 +1252,26 @@ async function selectRedukcjaZakonczenie(productId) {
     offerDefaultRedukcjaZak = productId;
     closeModal();
 
-    // Update button label
-    const btn = document.getElementById('btn-redukcja-zak');
-    if (btn) {
-        if (productId) {
-            const p = studnieProducts.find((pr) => pr.id === productId);
-            btn.innerHTML =
-                '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> ' +
-                (p
-                    ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)
-                    : 'Zak. DN1000');
-            btn.style.borderColor = 'rgba(99,102,241,0.5)';
-            btn.style.color = '#a78bfa';
-        } else {
-            btn.innerHTML =
-                '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zak. DN1000';
-            btn.style.borderColor = 'var(--border-glass)';
-            btn.style.color = '';
-        }
+    if (typeof updateRedukcjaZakButton === 'function') {
+        updateRedukcjaZakButton();
     }
 
     if (productId) {
         const p = studnieProducts.find((pr) => pr.id === productId);
-        showToast(`Zakończenie redukcji: ${p ? p.name : productId}`, 'success');
+        const isRelief = p && (['plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType));
+        
+        if (isRelief) {
+            showToast(`Zakończenie redukcji: Dodano komplet odciążający (${p.name})`, 'success');
+        } else {
+            showToast(`Zakończenie redukcji: ${p ? p.name : productId}`, 'success');
+        }
     } else {
-        showToast('Zakończenie redukcji: Auto (Konus DN1000)', 'success');
+        showToast('Zakończenie redukcji: Auto', 'success');
+    }
+
+    // Wymuś parowanie elementów odciążających w konfiguracji
+    if (typeof ensureReliefRingPair === 'function') {
+        ensureReliefRingPair(well);
     }
 
     if (window.lucide) {
@@ -1342,28 +1480,61 @@ window.handleCfgDrop = function (e) {
             renderWellDiagram();
             updateSummary();
             updateHeightIndicator();
-        } else if (window.currentDraggedPlaceholderId) {
-            tile.style.borderTop = '';
+        } else if (well && window.currentDraggedPlaceholderId) {
+            try {
+                enforceSingularTopClosures(well, window.currentDraggedPlaceholderId);
 
-            enforceSingularTopClosures(well, window.currentDraggedPlaceholderId);
+                // Zamiast kasować na bezczelnego, szukamy gdzie jest nasz placeholder
+                const plIdx = well.config.findIndex((c) => c.isPlaceholder);
+                let actualIndex = -1;
+                if (plIdx > -1) {
+                    well.config[plIdx].isPlaceholder = false;
+                    actualIndex = plIdx;
+                } else {
+                    // Bezpiecznik: jeśli go nie było, dodaj na koniec
+                    well.config.push({
+                        productId: window.currentDraggedPlaceholderId,
+                        quantity: 1
+                    });
+                    actualIndex = well.config.length - 1;
+                }
 
-            well.config = well.config.filter((c) => !c.isPlaceholder);
+                if (typeof window.injectPairIfReliefComponent === 'function') {
+                    window.injectPairIfReliefComponent(
+                        well,
+                        window.currentDraggedPlaceholderId,
+                        actualIndex
+                    );
+                }
 
-            const addedProductId = window.currentDraggedPlaceholderId;
-            well.config.splice(dropIndex, 0, { productId: addedProductId, quantity: 1 });
+                // Włączamy ręczny reżim
+                well.autoLocked = true;
+                updateAutoLockUI();
+                well.configSource = 'MANUAL';
 
-            if (typeof window.injectPairIfReliefComponent === 'function') {
-                window.injectPairIfReliefComponent(well, addedProductId, dropIndex);
+                sortWellConfigByOrder();
+                recalcGaskets(well);
+
+                renderWellConfig();
+                renderWellDiagram();
+                updateSummary();
+            } catch (e) {
+                console.error('Błąd w dropWellComponent:', e);
+                showToast('Wystąpił błąd podczas upuszczania elementu', 'error');
+            } finally {
+                window.currentDraggedPlaceholderId = null;
+                // Usuwamy wszelkie pozostałe placeholdery dla bezpieczeństwa
+                well.config = well.config.filter(c => !c.isPlaceholder);
             }
-
-            window.currentDraggedPlaceholderId = null;
-
+        } else if (well && draggedCfgIndex !== null) {
+            // Zostało puszczone na puste pole SVG, resetujemy flagi i zapisujemy
+            well.config = well.config.filter(c => !c.isPlaceholder);
+            well.config.forEach((c) => (c.isPlaceholder = false));
             well.autoLocked = true;
             updateAutoLockUI();
             well.configSource = 'MANUAL';
 
-            sortWellConfigByOrder();
-            syncGaskets(well);
+            recalcGaskets(well);
 
             renderWellConfig();
             renderWellDiagram();
@@ -1389,7 +1560,7 @@ window.handleCfgDragEnd = function (e) {
     }
 };
 
-/* ===== ODŚWIEŻANIE MODALA ZLECEŃ ===== */
+/* ===== ODŁšWIEŁ»ANIE MODALA ZLECEŁ ===== */
 window.refreshZleceniaModalIfActive = function () {
     const zlModal = document.getElementById('zlecenia-modal');
     if (
@@ -1442,3 +1613,111 @@ window.refreshZleceniaModalIfActive = function () {
         }
     }
 };
+
+/**
+ * Zapewnia, że w studni znajduje się tylko jedno zakończenie górne.
+ * Jeśli dodawany produkt jest zakończeniem, usuwa inne elementy tego typu.
+ */
+function enforceSingularTopClosures(well, productId) {
+    if (!well || !well.config) return;
+
+    const product = studnieProducts.find((p) => p.id === productId);
+    if (!product) return;
+
+    const topClosureTypes = [
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'konus',
+        'pierscien_odciazajacy'
+    ];
+
+    if (topClosureTypes.includes(product.componentType)) {
+        const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
+        
+        // Usuwamy inne zakończenia górne (ale NIE usuwamy obecnego placeholder-a jeśli to on jest sprawdzany)
+        well.config = well.config.filter((item) => {
+            if (item.isPlaceholder) return true; // Zostawiamy placeholder w spokoju
+            
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            if (!p) return true;
+
+            // Jeśli dodajemy element odciążający
+            if (reliefTypes.includes(product.componentType)) {
+                // Pozwól na partnera (inny reliefType), ale usuń ten sam typ
+                if (reliefTypes.includes(p.componentType)) {
+                    return p.componentType !== product.componentType;
+                }
+                return !topClosureTypes.includes(p.componentType);
+            }
+
+            // Jeśli dodajemy element NIE-odciążający (np. konus), usuwamy WSZYSTKIE zakończenia
+            return !topClosureTypes.includes(p.componentType);
+        });
+    }
+
+    // ZASADA: Płyta redukcyjna - tylko 1 na studnię
+    if (product.componentType === 'plyta_redukcyjna') {
+        well.config = well.config.filter((item) => {
+            if (item.isPlaceholder) return true;
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            return !p || p.componentType !== 'plyta_redukcyjna';
+        });
+    }
+}
+
+/**
+ * Sortuje konfigurację studni zgodnie z fizyczną kolejnością (od góry do dołu).
+ */
+function sortWellConfigByOrder() {
+    const well = getCurrentWell();
+    if (!well || !well.config) return;
+
+    // Automatyczne dodawanie pary odciążającej (płyta + pierścień)
+    if (typeof window.ensureReliefRingPair === 'function') {
+        window.ensureReliefRingPair(well);
+    }
+
+    const typeOrder = {
+        'wlaz': 0,
+        'avr': 1,
+        'plyta_din': 2,
+        'plyta_najazdowa': 2,
+        'plyta_zamykajaca': 2,
+        'konus': 2,
+        'pierscien_odciazajacy': 3,
+        'plyta_redukcyjna': 4,
+        'krag': 5,
+        'krag_ot': 5,
+        'dennica': 6,
+        'kineta': 7,
+        'uszczelka': 8
+    };
+
+    well.config.sort((a, b) => {
+        const pA = studnieProducts.find((p) => p.id === a.productId);
+        const pB = studnieProducts.find((p) => p.id === b.productId);
+        if (!pA || !pB) return 0;
+
+        let orderA = typeOrder[pA.componentType] ?? 100;
+        let orderB = typeOrder[pB.componentType] ?? 100;
+
+        // Reguła redukcji: DN1000 nad płytą redukcyjną (order 4)
+        if ((pA.componentType === 'krag' || pA.componentType === 'krag_ot') && parseInt(pA.dn) === 1000) {
+            orderA = 3.5;
+        }
+        if ((pB.componentType === 'krag' || pB.componentType === 'krag_ot') && parseInt(pB.dn) === 1000) {
+            orderB = 3.5;
+        }
+
+        if (orderA !== orderB) return orderA - orderB;
+
+        // Usunięto automatyczne sortowanie po wysokości (pB.height - pA.height).
+        // Pozwala to na ręczne układanie elementów tej samej kategorii (np. kręgów tej samej średnicy) przez użytkownika.
+        return 0;
+    });
+}
+
+// Eksport do window dla innych modułów
+window.enforceSingularTopClosures = enforceSingularTopClosures;
+window.sortWellConfigByOrder = sortWellConfigByOrder;

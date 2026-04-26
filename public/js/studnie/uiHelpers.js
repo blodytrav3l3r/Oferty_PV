@@ -250,6 +250,32 @@ async function loadStudnieProducts() {
             if (p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000) {
                 p.dn = 2500;
             }
+
+            // Napraw brakujące pola magazynu (produkty dodane ręcznie)
+            if (p.magazynKLB === undefined || p.magazynKLB === null) p.magazynKLB = 1;
+            if (p.magazynWL === undefined || p.magazynWL === null) p.magazynWL = 1;
+
+            // Napraw brakujący componentType na podstawie nazwy
+            if (!p.componentType || (p.componentType === 'krag' && !p.id?.startsWith('KD'))) {
+                const n = (p.name || '').toUpperCase();
+                if (n.includes('REDUKCYJNA')) p.componentType = 'plyta_redukcyjna';
+                else if (n.includes('DENNICA')) p.componentType = 'dennica';
+                else if (n.includes('KONUS') || n.includes('STOŻEK')) p.componentType = 'konus';
+                else if (n.includes('PŁYTA DIN') || n.includes('NAKRYW')) p.componentType = 'plyta_din';
+                else if (n.includes('NAJAZDOWA')) p.componentType = 'plyta_najazdowa';
+                else if (n.includes('ZAMYKAJĄCA')) p.componentType = 'plyta_zamykajaca';
+                else if (n.includes('ODCIĄŻAJĄCY')) p.componentType = 'pierscien_odciazajacy';
+                else if (n.includes('USZCZELKA')) p.componentType = 'uszczelka';
+                else if (n.includes('WŁAZ')) p.componentType = 'wlaz';
+                else if (n.includes('AVR') || n.includes('PIERŚCIEŃ AVR')) p.componentType = 'avr';
+            }
+
+            // Napraw brakujące DN na podstawie nazwy/kategorii
+            if (p.dn === null || p.dn === undefined) {
+                const searchStr = ((p.category || '') + ' ' + (p.name || '')).toUpperCase();
+                const dnMatch = searchStr.match(/DN(\d+)/i);
+                if (dnMatch) p.dn = parseInt(dnMatch[1]);
+            }
         });
         return arr;
     }

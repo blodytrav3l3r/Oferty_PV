@@ -60,8 +60,9 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
         );
 
         res.json({ data: usersData });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -142,8 +143,9 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
         });
 
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -158,8 +160,9 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
             where: { id: req.params.id }
         });
         res.json({ ok: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 
@@ -187,8 +190,9 @@ router.get('/for-assignment', requireAuth, async (req, res) => {
         const allowedIds = [authReq.user?.id, ...(authReq.user?.subUsers || [])];
         const filtered = users.filter((u) => allowedIds.includes(u.id));
         res.json({ data: filtered.map(mapUser) });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 });
 

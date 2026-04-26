@@ -64,3 +64,6 @@ export interface AuditLogEntry {
     newData?: Record<string, unknown> | null;
     createdAt?: Date | string | null;
 }
+
+// Re-eksporty z modeli domenowych
+export * from './models';
