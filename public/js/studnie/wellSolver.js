@@ -13,7 +13,7 @@
  *   getCurrentWell(), getAvailableProducts(), filterByWellParams(),
  *   getLowestDennica(), getTopClosure(), getKregiList(),
  *   getReductionPlate(), optimizeRingsForDistance(),
- *   sortWellConfigByOrder(), syncGaskets(), calcWellStats(),
+ *   sortWellConfigByOrder(), recalcGaskets(), calcWellStats(),
  *   renderWellConfig(), renderWellDiagram(), updateSummary(),
  *   updateHeightIndicator(), refreshAll(), showToast(), fmtInt()
  */

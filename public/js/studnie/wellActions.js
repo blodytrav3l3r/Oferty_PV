@@ -545,7 +545,7 @@ function addWellComponent(productId) {
     }
 
     sortWellConfigByOrder();
-    syncGaskets(well);
+    recalcGaskets(well);
     renderWellConfig();
     renderWellDiagram();
     updateSummary();
@@ -610,7 +610,7 @@ function removeWellComponent(index) {
         }
     }
 
-    syncGaskets(well);
+    recalcGaskets(well);
     renderWellConfig();
     renderWellDiagram();
     updateSummary();
