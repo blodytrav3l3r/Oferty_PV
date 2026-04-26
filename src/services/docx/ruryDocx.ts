@@ -50,6 +50,23 @@ function formatDate(dateStr: string): string {
 
 // ─── Eksport publiczny ──────────────────────────────────────────────
 
+/**
+ * Generuje dokument DOCX oferty rur.
+ *
+ * Pobiera ofertę z bazy, formatuje dane klienta i pozycje,
+ * następnie buduje profesjonalny dokument Word z tabelą pozycji,
+ * podsumowaniem kosztów oraz nagłówkiem i stopką.
+ *
+ * @param offerId - ID oferty rur w bazie danych
+ * @returns Buffer zawierający wygenerowany dokument DOCX
+ * @throws Error gdy oferta nie zostanie znaleziona
+ *
+ * @example
+ * ```ts
+ * const docxBuffer = await generateOfferRuryDOCX('offer-123');
+ * fs.writeFileSync('oferta.docx', docxBuffer);
+ * ```
+ */
 export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
     const offer = await prisma.offers_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta nie znaleziona');

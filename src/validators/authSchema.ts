@@ -1,3 +1,9 @@
+/**
+ * Schematy walidacji Zod dla autentykacji i użytkowników
+ *
+ * @module validators/authSchema
+ */
+
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 
@@ -26,8 +32,30 @@ export const registerSchema = z.object({
 });
 
 /**
- * Generyczny middleware aplikujący schematy `zod`
- * do nadchodzącego body. Zwraca 400 jeśli walidacja oblała.
+ * Generyczny middleware Express walidujący dane wejściowe przy użyciu schematu Zod.
+ *
+ * Parsuje req.body zgodnie z podanym schematem. Jeśli walidacja się powiedzie,
+ * przekazuje sterowanie do następnego middleware. W przeciwnym razie zwraca
+ * odpowiedź 400 z pierwszym błędem walidacji oraz szczegółami wszystkich błędów.
+ *
+ * @param schema - Schemat Zod do walidacji danych wejściowych
+ * @returns Middleware Express obsługujący walidację
+ *
+ * @example
+ * ```ts
+ * import { Router } from 'express';
+ * import { validateData } from './validators/authSchema';
+ * import { offerCreateSchema } from './validators/offerSchemas';
+ *
+ * const router = Router();
+ *
+ * // Walidacja POST /offers
+ * router.post('/offers', validateData(offerCreateSchema), async (req, res) => {
+ *   // req.body jest typowo bezpieczne
+ *   const { clientId, items } = req.body;
+ *   // ... obsługa żądania
+ * });
+ * ```
  */
 export const validateData = (schema: z.ZodSchema<unknown>) => {
     return (req: Request, res: Response, next: NextFunction) => {

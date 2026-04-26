@@ -11,7 +11,23 @@ import { buildStudnieDocument } from './builder';
 import { logger } from '../../../utils/logger';
 
 /**
- * Generuje bufor DOCX dla oferty studni na podstawie ID
+ * Generuje dokument DOCX dla oferty studni.
+ *
+ * Pobiera ofertę studni z bazy, parsuje dane JSON zawierające studnie (wellsExport),
+ * przygotowuje dane klienta oraz informacje o autorze i opiekunie handlowym,
+ * następnie buduje kompletny dokument Word z tabelami studni i podsumowaniem.
+ *
+ * @param offerId - ID oferty studni w bazie danych
+ * @returns Buffer zawierający wygenerowany dokument DOCX
+ * @throws Error gdy oferta nie zostanie znaleziona
+ *
+ * @example
+ * ```ts
+ * const docxBuffer = await generateOfferStudnieDOCX('studnie-456');
+ * res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+ * res.setHeader('Content-Disposition', 'attachment; filename="oferta.docx"');
+ * res.send(docxBuffer);
+ * ```
  */
 export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer> {
     const offer = await prisma.offers_studnie_rel.findUnique({ where: { id: offerId } });

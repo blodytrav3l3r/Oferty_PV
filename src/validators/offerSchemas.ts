@@ -1,5 +1,24 @@
 /**
  * Schematy walidacji Zod dla ofert
+ *
+ * Definiuje struktury danych dla ofert rur i studni używane
+ * przy tworzeniu, aktualizacji i walidacji danych wejściowych API.
+ *
+ * @module validators/offerSchemas
+ * @example
+ * ```ts
+ * // Walidacja pojedynczej oferty
+ * const result = offerCreateSchema.safeParse({
+ *   clientId: 'client-123',
+ *   items: [{ productId: 'prod-1', quantity: 5, price: 100 }]
+ * });
+ *
+ * if (result.success) {
+ *   console.log('Dane poprawne:', result.data);
+ * } else {
+ *   console.error('Błędy walidacji:', result.error.issues);
+ * }
+ * ```
  */
 
 import { z } from 'zod';

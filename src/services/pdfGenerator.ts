@@ -9,7 +9,20 @@ function fmtInt(val: number): string {
 }
 
 /**
- * Generuje PDF oferty rur
+ * Generuje PDF oferty rur na podstawie danych z bazy.
+ *
+ * Pobiera ofertę z bazy danych, wczytuje powiązane pozycje i klienta,
+ * następnie generuje HTML i renderuje go do PDF używając Puppeteer.
+ *
+ * @param offerId - ID oferty w bazie danych
+ * @returns Buffer zawierający wygenerowany PDF
+ * @throws Error gdy oferta nie zostanie znaleziona
+ *
+ * @example
+ * ```ts
+ * const pdfBuffer = await generateOfferRuryPDF('offer-123');
+ * fs.writeFileSync('oferta.pdf', pdfBuffer);
+ * ```
  */
 export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
     const offer = await prisma.offers_rel.findUnique({
@@ -43,8 +56,26 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
 }
 
 /**
- * Generuje PDF oferty studni używając szablonu oferta_studnie.html
- * UWAGA: Oferty studni mają wells z cenami w polu JSON `data` (wellsExport)!
+ * Generuje PDF oferty studni używając szablonu oferta_studnie.html.
+ *
+ * Oferty studni przechowują dane w polu JSON `data`, w tym:
+ * - `wellsExport` - studnie z obliczonymi cenami (priorytet)
+ * - `wells` - surowe dane studni (fallback)
+ * - `transportKm`, `transportRate`, `totalWeight` - dane transportu
+ *
+ * Funkcja grupuje studnie po średnicy DN, oblicza koszty transportu
+ * i generuje kompletny dokument PDF z danymi klienta oraz opiekunów.
+ *
+ * @param offerId - ID oferty studni w bazie danych
+ * @returns Buffer zawierający wygenerowany PDF
+ * @throws Error gdy oferta nie zostanie znaleziona
+ *
+ * @example
+ * ```ts
+ * const pdfBuffer = await generateOfferStudniePDF('studnie-456');
+ * res.setHeader('Content-Type', 'application/pdf');
+ * res.send(pdfBuffer);
+ * ```
  */
 export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> {
     const offer = await prisma.offers_studnie_rel.findUnique({
