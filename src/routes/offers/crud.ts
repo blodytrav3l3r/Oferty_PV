@@ -69,9 +69,9 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
+        const whereClause = authReq.user?.role === 'admin' ? {} : (authReq.user ? buildRoleWhereClause(authReq.user) : { userId: '' });
         const offers = await prisma.offers_studnie_rel.findMany({
-            where: roleClause
+            where: whereClause || undefined
         });
 
         const mapped = offers.map((offer) => {
@@ -98,6 +98,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
         res.json({ data: mapped });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Offers', 'Błąd GET /studnie', message);
         res.status(500).json({ error: message });
     }
 });
