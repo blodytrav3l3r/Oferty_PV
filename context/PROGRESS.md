@@ -133,6 +133,16 @@
 - **Format:** JSDoc z @param, @returns, @throws, @example
 - **Commit:** `docs: faza 9a/9b - dokumentacja JSDoc dla serwisów i schematów`
 
+### Faza D: Optymalizacja - Usunięcie 'as' Assertions
+- **Status:** ✅ Zakończona (częściowo)
+- **Zmiany:**
+  1. `pdfGenerator.ts`: `typeof offerData.userId === 'string'` zamiast `as string`
+  2. `passages.ts`: `Number(height_from_bottom ?? 0)` zamiast `as number`
+  3. `production.ts`: `typeof oldData.productionOrderNumber === 'string'` zamiast `as string`
+  4. `productsStudnieAuto.ts`: `String(req.query.magazyn)` zamiast `as string`
+- **Wynik:** Bezpieczniejsze typowanie bez asercji
+- **Commit:** `refactor: usunięcie zbędnych 'as' assertions`
+
 ---
 
 ## 📊 Podsumowanie
@@ -171,15 +181,19 @@
 - [x] Dokumentacja schematów Zod (przykłady użycia) ✅
 - [ ] Aktualizacja README.md o nowe typy (opcjonalnie)
 
-### Opcja D: Optymalizacja (Priorytet: Niski)
-- [ ] Usunięcie zbędnych `as` assertions gdzie to możliwe
-- [ ] Przegląd duplikowanego kodu (np. `parseJsonField`)
-- [ ] Sprawdzenie wydajności zapytań Prisma
+### Opcja D: Optymalizacja ✅ (Częściowo Zakończone)
+- [x] Usunięcie zbędnych `as` assertions gdzie to możliwe ✅
+  - `pdfGenerator.ts`: `typeof` zamiast `as string` ✅
+  - `passages.ts`: `Number()` zamiast `as number` ✅
+  - `production.ts`: `typeof` zamiast `as string` ✅
+  - `productsStudnieAuto.ts`: `String()` zamiast `as string` ✅
+- [x] Przegląd duplikowanego kodu (`parseJsonField` już w `helpers.ts`) ✅
+- [ ] Sprawdzenie wydajności zapytań Prisma (opcjonalnie)
 
-### Opcja E: Walidacja Runtime (Priorytet: Wysoki)
-- [ ] Dodanie middleware walidacji Zod do wszystkich tras POST/PUT
-- [ ] Weryfikacja czy wszystkie endpointy używają `validateData`
-- [ ] Testy błędów walidacji (format odpowiedzi)
+### Opcja E: Walidacja Runtime ✅ (Zakończone)
+- [x] Dodanie middleware walidacji Zod do wszystkich tras POST/PUT ✅
+- [x] Weryfikacja czy wszystkie endpointy używają `validateData` ✅
+- [x] Testy błędów walidacji (format odpowiedzi) ✅ (16 testów E2E)
 
 ---
 
