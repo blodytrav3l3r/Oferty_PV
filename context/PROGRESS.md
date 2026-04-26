@@ -122,6 +122,17 @@
   - `offersStudnieBatchSchema` - clientId i wells opcjonalne w batch
 - **Commit:** `fix: naprawa testów po wprowadzeniu walidacji Zod`
 
+### Faza 9: Dokumentacja JSDoc
+- **Status:** ✅ Zakończona (9A, 9B)
+- **Pliki udokumentowane:**
+  - `services/pdfGenerator.ts` - generowanie PDF ofert rur i studni
+  - `services/docx/ruryDocx.ts` - generowanie DOCX ofert rur
+  - `services/docx/studnie/index.ts` - generowanie DOCX ofert studni
+  - `validators/authSchema.ts` - middleware validateData z przykładami
+  - `validators/offerSchemas.ts` - moduł schematów z przykładami użycia
+- **Format:** JSDoc z @param, @returns, @throws, @example
+- **Commit:** `docs: faza 9a/9b - dokumentacja JSDoc dla serwisów i schematów`
+
 ---
 
 ## 📊 Podsumowanie
@@ -155,10 +166,10 @@
 - **Plik:** `tests/apiValidation.test.ts` (16 testów)
 - **Status:** Wszystkie testy E2E przechodzą ✅
 
-### Opcja C: Dokumentacja (Priorytet: Średni)
-- [ ] Dodanie JSDoc do kluczowych funkcji w `src/services/`
-- [ ] Dokumentacja schematów Zod (przykłady użycia)
-- [ ] Aktualizacja README.md o nowe typy
+### Opcja C: Dokumentacja ✅ (Częściowo Zakończone)
+- [x] Dodanie JSDoc do kluczowych funkcji w `src/services/` ✅
+- [x] Dokumentacja schematów Zod (przykłady użycia) ✅
+- [ ] Aktualizacja README.md o nowe typy (opcjonalnie)
 
 ### Opcja D: Optymalizacja (Priorytet: Niski)
 - [ ] Usunięcie zbędnych `as` assertions gdzie to możliwe
