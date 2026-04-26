@@ -87,8 +87,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
                 price: parsedData.totalPrice || 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
-                createdAt: offer.createdAt,
-                updatedAt: offer.updatedAt || offer.createdAt,
+                createdAt: offer.createdAt?.toISOString() || new Date().toISOString(),
+                updatedAt: offer.updatedAt?.toISOString() || offer.createdAt?.toISOString() || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 data: parsedData,
                 history: JSON.parse(offer.history || '[]')
@@ -186,8 +186,8 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
                 price: (parsedData.totalPrice as number) || 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
-                createdAt: offer.createdAt,
-                updatedAt: offer.updatedAt || offer.createdAt,
+                createdAt: offer.createdAt?.toISOString() || new Date().toISOString(),
+                updatedAt: offer.updatedAt?.toISOString() || offer.createdAt?.toISOString() || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 data: parsedData,
                 history: JSON.parse(offer.history || '[]')
