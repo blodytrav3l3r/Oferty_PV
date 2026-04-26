@@ -259,7 +259,11 @@ router.post('/', requireAuth, validateData(offersBatchSchema), async (req, res) 
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            const created = o.createdAt || new Date().toISOString();
+            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
+            const createdRaw = o.createdAt || new Date().toISOString();
+            const created = /^\d{13}$/.test(String(createdRaw))
+                ? new Date(Number(createdRaw)).toISOString()
+                : createdRaw;
             const updated = new Date().toISOString();
             const offerNumber = o.offer_number || o.number || '';
 
@@ -361,7 +365,11 @@ router.post('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asy
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            const created = o.createdAt || new Date().toISOString();
+            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
+            const createdRaw = o.createdAt || new Date().toISOString();
+            const created = /^\d{13}$/.test(String(createdRaw))
+                ? new Date(Number(createdRaw)).toISOString()
+                : createdRaw;
             const updated = new Date().toISOString();
             const offerNumber = o.number || o.offer_number || '';
 
@@ -415,7 +423,11 @@ router.put('/', requireAuth, validateData(offersBatchSchema), async (req, res) =
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            const created = o.createdAt || new Date().toISOString();
+            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
+            const createdRaw = o.createdAt || new Date().toISOString();
+            const created = /^\d{13}$/.test(String(createdRaw))
+                ? new Date(Number(createdRaw)).toISOString()
+                : createdRaw;
 
             await prisma.offers_rel.upsert({
                 where: { id: docId },
@@ -476,7 +488,11 @@ router.put('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asyn
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            const created = o.createdAt || new Date().toISOString();
+            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
+            const createdRaw = o.createdAt || new Date().toISOString();
+            const created = /^\d{13}$/.test(String(createdRaw))
+                ? new Date(Number(createdRaw)).toISOString()
+                : createdRaw;
 
             await prisma.offers_studnie_rel.upsert({
                 where: { id: docId },
