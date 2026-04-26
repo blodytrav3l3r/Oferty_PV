@@ -40,19 +40,19 @@ async function migrateLegacyData(config: PricelistConfig): Promise<void> {
         });
         if (existing) return;
 
-        let rows: any[] = [];
+        let rows: Record<string, unknown>[] = [];
         try {
-            rows = await (prisma as any)[config.legacyTable].findMany();
+            rows = await (prisma as unknown as Record<string, { findMany: () => Promise<Record<string, unknown>[]> }>)[config.legacyTable].findMany();
         } catch (_e) {
             return; // Tabela nie istnieje
         }
 
         if (rows.length === 0) return;
 
-        const products = rows.map((row: any) => {
+        const products = rows.map((row) => {
             let extra = {};
             try {
-                if (row.data) extra = JSON.parse(row.data);
+                if (typeof row.data === 'string') extra = JSON.parse(row.data);
             } catch (_e) {}
             const { data: _data, ...rest } = row;
             return { ...rest, ...extra };
@@ -109,7 +109,7 @@ export async function readPricelist(key: string): Promise<any[]> {
 /**
  * Zapisuje cennik do ustawień (settings) po kluczu. Tworzy lub aktualizuje wpis.
  */
-export async function writePricelist(key: string, data: any[]): Promise<number> {
+export async function writePricelist(key: string, data: unknown[]): Promise<number> {
     const json = JSON.stringify(data);
     await upsertSetting(key, json);
     return data.length;

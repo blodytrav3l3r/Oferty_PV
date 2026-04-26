@@ -17,14 +17,14 @@ export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer>
     const offer = await prisma.offers_studnie_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta studni nie znaleziona');
 
-    let offerData: any = {};
+    let offerData: Record<string, unknown> = {};
     try {
-        offerData = offer.data ? JSON.parse(offer.data) : {};
+        if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
     } catch (e) {
         logger.warn('DocxStudnie', 'Nie udało się sparsować danych oferty', e);
     }
 
-    let wells: any[] = [];
+    let wells: unknown[] = [];
     if (offerData.wellsExport && Array.isArray(offerData.wellsExport)) {
         wells = offerData.wellsExport;
     } else if (offerData.wells && Array.isArray(offerData.wells)) {

@@ -28,7 +28,7 @@ import { DnSummary } from './sections';
 
 // ─── Główny budowniczy tabel (Main Table Builder) ───────────────────
 
-export function buildWellTables(wells: any[]): {
+export function buildWellTables(wells: unknown[]): {
     paragraphs: (Paragraph | Table)[];
     summaries: DnSummary[];
     grandTotal: number;
@@ -37,8 +37,9 @@ export function buildWellTables(wells: any[]): {
     const itemsByDN = groupWellsByDn(wells);
     let grandTotal = 0;
 
-    wells.forEach((well: any) => {
-        grandTotal += well.totalPrice || well.price || 0;
+    wells.forEach((w) => {
+        const well = w as Record<string, unknown>;
+        grandTotal += Number(well.totalPrice ?? well.price ?? 0);
     });
 
     const paragraphs: (Paragraph | Table)[] = [];
@@ -57,7 +58,7 @@ export function buildWellTables(wells: any[]): {
         if (!itemsByDN[dn]) continue;
         const dnItems = itemsByDN[dn];
         const dnLabel = dn === 'styczna' ? 'Studnie styczne' : `Studnie DN${dn}`;
-        const dnTotal = dnItems.reduce((sum: number, item: any) => sum + (item.price || 0), 0);
+        const dnTotal = dnItems.reduce((sum, item) => sum + (Number((item as Record<string, unknown>).price ?? 0)), 0);
         summaries.push({ label: dnLabel, count: dnItems.length, totalPrice: dnTotal });
 
         paragraphs.push(buildDnHeaderParagraph(dnLabel));
@@ -76,23 +77,24 @@ export function buildWellTables(wells: any[]): {
 
 // ─── Funkcje pomocnicze (Helpers) ───────────────────────────────────
 
-function groupWellsByDn(wells: any[]): Record<string, any[]> {
-    const itemsByDN: Record<string, any[]> = {};
+function groupWellsByDn(wells: unknown[]): Record<string, Record<string, unknown>[]> {
+    const itemsByDN: Record<string, Record<string, unknown>[]> = {};
 
-    wells.forEach((well: any) => {
+    wells.forEach((w) => {
+        const well = w as Record<string, unknown>;
         const dn = String(well.dn || 'Inne');
-        const wellPrice = well.totalPrice || well.price || 0;
-        const cleanZwienczenie = (well.zwienczenie || '\u2014')
+        const wellPrice = Number(well.totalPrice ?? well.price ?? 0);
+        const cleanZwienczenie = String(well.zwienczenie ?? '\u2014')
             .replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ')
             .replace(/\s*(bez\s+stopni|z\s+drabinką|drabinka|ze\s+stopniami|-B|-D|-N)/gi, '')
             .replace(/\s+/g, ' ').trim();
 
         if (!itemsByDN[dn]) itemsByDN[dn] = [];
         itemsByDN[dn].push({
-            name: well.name || `Studnia DN${dn}`,
+            name: String(well.name ?? `Studnia DN${dn}`),
             price: wellPrice,
             dn,
-            height: well.height || 0,
+            height: Number(well.height ?? 0),
             zwienczenie: cleanZwienczenie || '\u2014'
         });
     });
@@ -116,7 +118,7 @@ function buildDnHeaderParagraph(dnLabel: string): Paragraph {
     });
 }
 
-function buildDnTableHeaderRow(thStyle: any): TableRow {
+function buildDnTableHeaderRow(thStyle: Record<string, unknown>): TableRow {
     return new TableRow({
         tableHeader: true,
         children: [
@@ -130,8 +132,9 @@ function buildDnTableHeaderRow(thStyle: any): TableRow {
     });
 }
 
-function buildDnDataRows(dnItems: any[], dn: string, globalLp: number): TableRow[] {
-    return dnItems.map((item: any, idx: number) => {
+function buildDnDataRows(dnItems: unknown[], dn: string, globalLp: number): TableRow[] {
+    return dnItems.map((it, idx) => {
+        const item = it as Record<string, unknown>;
         const dnDisplay = dn === 'styczna' ? 'Styczna' : `DN${dn}`;
         const rowFill = idx % 2 === 1 ? 'FAFAFA' : undefined;
 
@@ -142,7 +145,7 @@ function buildDnDataRows(dnItems: any[], dn: string, globalLp: number): TableRow
                     alignment: AlignmentType.CENTER,
                     fill: rowFill
                 }),
-                textCell(item.name, {
+                textCell(String(item.name ?? ''), {
                     bold: true,
                     size: SZ_TABLE_BODY,
                     alignment: AlignmentType.CENTER,
@@ -153,17 +156,17 @@ function buildDnDataRows(dnItems: any[], dn: string, globalLp: number): TableRow
                     alignment: AlignmentType.CENTER,
                     fill: rowFill
                 }),
-                textCell(fmtInt(item.height), {
+                textCell(fmtInt(Number(item.height ?? 0)), {
                     size: SZ_TABLE_BODY,
                     alignment: AlignmentType.CENTER,
                     fill: rowFill
                 }),
-                textCell(item.zwienczenie, {
+                textCell(String(item.zwienczenie ?? ''), {
                     size: SZ_ZWIENCZENIE,
                     alignment: AlignmentType.CENTER,
                     fill: rowFill
                 }),
-                textCell(fmtCurrency(item.price), {
+                textCell(fmtCurrency(Number(item.price ?? 0)), {
                     bold: true,
                     size: SZ_TABLE_BODY,
                     alignment: AlignmentType.CENTER,

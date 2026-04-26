@@ -20,8 +20,7 @@ router.post('/search', async (req, res) => {
     } = req.body;
 
     try {
-        let offers: any[];
-        offers = await prisma.offers_rel.findMany();
+        const offers = await prisma.offers_rel.findMany();
 
         // Filtruj w pamięci dla zachowania kompatybilności wstecznej
         const filtered = offers.filter((offer) => {
@@ -45,7 +44,7 @@ router.post('/search', async (req, res) => {
                 type: 'offer',
                 userId: offer.userId,
                 title: `Oferta ${offer.offer_number || offer.id}`,
-                price: items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0),
+                price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
                 status: offer.state === 'final' ? 'active' : 'draft',
                 createdAt: offer.createdAt,
                 updatedAt: offer.updatedAt || offer.createdAt,

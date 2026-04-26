@@ -17,7 +17,7 @@ router.get('/', requireAuth, async (req, res) => {
             where: roleClause
         });
 
-        const mapped = orders.map((o: any) => {
+        const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
             return {
                 id: o.id,
@@ -131,7 +131,7 @@ router.get('/:id', requireAuth, async (req, res) => {
                 ...parsedData
             }
         });
-    } catch (_e: any) {
+    } catch (_e: unknown) {
         res.status(404).json({ error: 'Zamówienie nie znalezione' });
     }
 });
@@ -198,7 +198,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
         if (offerId) {
             const allPOs = await prisma.production_orders_rel.findMany();
-            const acceptedPOs = allPOs.filter((po: any) => {
+            const acceptedPOs = allPOs.filter((po) => {
                 const poData = parseJsonField<Record<string, unknown>>(po.data, {});
                 return poData.offerId === offerId && poData.status === 'accepted';
             });

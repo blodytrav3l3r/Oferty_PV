@@ -8,7 +8,7 @@ const router = express.Router();
 /**
  * POMOCNICZE: Pobieranie licznika zamówień
  */
-async function getNextOrderNumber(user: any, year: number): Promise<string> {
+async function getNextOrderNumber(user: { id: string; orderStartNumber?: number | null; symbol?: string | null }, year: number): Promise<string> {
     const startNum = user.orderStartNumber || 1;
     const symbol = user.symbol || '??';
 
@@ -172,7 +172,7 @@ router.get('/for-assignment', requireAuth, async (req, res) => {
     try {
         const users = await prisma.users.findMany();
 
-        const mapUser = (u: any) => ({
+        const mapUser = (u: { id: string; username: string; role: string; firstName?: string | null; lastName?: string | null; phone?: string | null; email?: string | null; symbol?: string | null; orderStartNumber?: number | null }) => ({
             id: u.id,
             username: u.username,
             role: u.role,

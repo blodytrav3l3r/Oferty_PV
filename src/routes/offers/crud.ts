@@ -7,6 +7,9 @@ import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import {
+    OfferMapped
+} from '../../types/models';
+import {
     offerCreateSchema,
     offerStudnieCreateSchema,
     offersBatchSchema,
@@ -26,18 +29,18 @@ router.get('/', requireAuth, async (req, res) => {
             where: roleClause
         });
 
-        const mapped: any[] = [];
+        const mapped: OfferMapped[] = [];
         for (const offer of offers) {
             const itemsRaw = await prisma.offer_items_rel.findMany({
                 where: { offerId: offer.id }
             });
-            const items = itemsRaw.map((i: any) => ({
+            const items = itemsRaw.map((i) => ({
                 id: i.id,
                 productId: i.productId,
                 quantity: i.quantity,
                 discount: i.discount,
                 price: i.price,
-                unitPrice: i.price
+                unitPrice: i.price ?? 0
             }));
 
             mapped.push({
@@ -45,7 +48,7 @@ router.get('/', requireAuth, async (req, res) => {
                 type: 'offer',
                 userId: offer.userId,
                 title: `Oferta ${offer.offer_number || offer.id}`,
-                price: items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0),
+                price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
                 status: offer.state === 'final' ? 'active' : 'draft',
                 createdAt: offer.createdAt,
                 updatedAt: offer.updatedAt || offer.createdAt,
@@ -74,7 +77,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
         });
 
         const mapped = offers.map((offer) => {
-            let parsedData: any = {};
+            let parsedData: Record<string, unknown> = {};
             try {
                 if (offer.data) parsedData = JSON.parse(offer.data);
             } catch (_e) {}
@@ -124,7 +127,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const itemsRaw = await prisma.offer_items_rel.findMany({
             where: { offerId: offer.id }
         });
-        const items = itemsRaw.map((i: any) => ({
+        const items = itemsRaw.map((i) => ({
             id: i.id,
             productId: i.productId,
             quantity: i.quantity,
@@ -139,7 +142,7 @@ router.get('/:id', requireAuth, async (req, res) => {
                 type: 'offer',
                 userId: offer.userId,
                 title: `Oferta ${offer.offer_number || offer.id}`,
-                price: items.reduce((sum: number, i: any) => sum + i.price * i.quantity, 0),
+                price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
                 status: offer.state === 'final' ? 'active' : 'draft',
                 createdAt: offer.createdAt,
                 updatedAt: offer.updatedAt || offer.createdAt,
@@ -172,7 +175,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
         }
 
-        let parsedData: any = {};
+        let parsedData: Record<string, unknown> = {};
         try {
             if (offer.data) parsedData = JSON.parse(offer.data);
         } catch (_e) {}
@@ -183,7 +186,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
                 type: 'studnia_oferta',
                 userId: offer.userId,
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
-                price: parsedData.totalPrice || 0,
+                price: (parsedData.totalPrice as number) || 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
                 createdAt: offer.createdAt,
                 updatedAt: offer.updatedAt || offer.createdAt,
@@ -205,13 +208,13 @@ router.post('/', requireAuth, validateData(offerCreateSchema), async (req, res) 
     try {
         const incoming = req.body.data || [req.body];
 
-        const results: any[] = [];
+        const results: Record<string, unknown>[] = [];
         for (const o of incoming) {
             let docId = o.id;
             if (!docId) docId = uuidv4();
 
             // Migawka bieżącego stanu dla historii
-            let newHistory: any[] = [];
+            let newHistory: unknown[] = [];
             const old = await prisma.offers_rel.findUnique({
                 where: { id: docId }
             });
@@ -226,7 +229,7 @@ router.post('/', requireAuth, validateData(offerCreateSchema), async (req, res) 
                     updatedAt: old.updatedAt || old.createdAt,
                     state: old.state,
                     transportCost: old.transportCost,
-                    items: oldItems.map((i: any) => ({
+                    items: oldItems.map((i) => ({
                         productId: i.productId,
                         quantity: i.quantity,
                         discount: i.discount,
@@ -324,12 +327,12 @@ router.post('/studnie', requireAuth, validateData(offerStudnieCreateSchema), asy
     try {
         const incoming = req.body.data || [req.body];
 
-        const results: any[] = [];
+        const results: Record<string, unknown>[] = [];
         for (const o of incoming) {
             let docId = o.id;
             if (!docId) docId = uuidv4();
 
-            let newHistory: any[] = [];
+            let newHistory: unknown[] = [];
             const old = await prisma.offers_studnie_rel.findUnique({
                 where: { id: docId },
                 select: { history: true, updatedAt: true, createdAt: true, data: true, state: true }
@@ -525,7 +528,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
             offer_number: offer.offer_number,
             state: offer.state,
             transportCost: offer.transportCost,
-            items: oldItems.map((i: any) => ({
+            items: oldItems.map((i) => ({
                 productId: i.productId,
                 quantity: i.quantity,
                 discount: i.discount,
@@ -564,7 +567,7 @@ router.delete('/studnie/:id', requireAuth, async (req, res) => {
         }
 
         // Audyt
-        let oldData: any = {};
+        let oldData: Record<string, unknown> = {};
         try {
             oldData = JSON.parse(offer.data || '{}');
         } catch (_e) {}

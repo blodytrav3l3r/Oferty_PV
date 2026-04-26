@@ -24,27 +24,27 @@ import { buildStaticTerms } from './content';
  * Buduje kompletny obiekt Document oferty studni na podstawie sparsowanych danych
  */
 export function buildStudnieDocument(
-    offer: any,
-    offerData: any,
-    client: any,
-    wells: any[],
+    offer: Record<string, unknown>,
+    offerData: Record<string, unknown>,
+    client: Record<string, unknown> | null,
+    wells: unknown[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null
 ): Document {
-    const offerNumber = offer.offer_number || 'N/A';
-    const offerDate = fmtDate(offerData.date || offer.createdAt || new Date().toISOString());
-    const validity = offerData.validity || '30 dni';
+    const offerNumber = String(offer.offer_number ?? 'N/A');
+    const offerDate = fmtDate(String(offerData.date ?? offer.createdAt ?? new Date().toISOString()));
+    const validity = String(offerData.validity ?? '30 dni');
 
-    const clientName = client?.name || offerData.clientName || 'Klient niezidentyfikowany';
-    const clientNip = client?.nip || offerData.clientNip || '';
-    const clientAddress = client?.address || offerData.clientAddress || '';
-    const clientContact = offerData.clientContact || client?.contact || client?.phone || '';
-    const investName = offerData.investName || '';
-    const investAddress = offerData.investAddress || '';
-    const investContractor = offerData.investContractor || '';
-    const notes = offerData.notes || '';
+    const clientName = String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany');
+    const clientNip = String(client?.nip ?? offerData.clientNip ?? '');
+    const clientAddress = String(client?.address ?? offerData.clientAddress ?? '');
+    const clientContact = String(offerData.clientContact ?? client?.contact ?? client?.phone ?? '');
+    const investName = String(offerData.investName ?? '');
+    const investAddress = String(offerData.investAddress ?? '');
+    const investContractor = String(offerData.investContractor ?? '');
+    const notes = String(offerData.notes ?? '');
     const paymentTerms =
-        offerData.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+        String(offerData.paymentTerms ?? 'Do uzgodnienia lub według indywidualnych warunków handlowych.');
 
     const children: (Paragraph | Table)[] = [];
 

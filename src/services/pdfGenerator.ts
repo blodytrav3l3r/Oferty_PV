@@ -56,15 +56,15 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
     }
 
     // Parsowanie danych oferty
-    let offerData: any = {};
+    let offerData: Record<string, unknown> = {};
     try {
-        offerData = offer.data ? JSON.parse(offer.data) : {};
+        if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
     } catch (e) {
         logger.warn('PdfStudnie', 'Nie udało się sparsować danych oferty', e);
     }
 
     // wellsExport zawiera studnie z obliczonymi cenami (zapisane przez interfejs użytkownika)
-    let wells: any[] = [];
+    let wells: unknown[] = [];
     if (offerData.wellsExport && Array.isArray(offerData.wellsExport)) {
         wells = offerData.wellsExport;
     } else if (offerData.wells && Array.isArray(offerData.wells)) {
@@ -80,9 +80,9 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
     }
 
     // Oblicz transport z danych oferty (offer.data)
-    const transportKm = offerData.transportKm || 0;
-    const transportRate = offerData.transportRate || 0;
-    const totalWeight = offerData.totalWeight || 0;
+    const transportKm = Number(offerData.transportKm ?? 0);
+    const transportRate = Number(offerData.transportRate ?? 0);
+    const totalWeight = Number(offerData.totalWeight ?? 0);
     let totalTransportCost = 0;
     if (transportKm > 0 && transportRate > 0) {
         const totalTransports = Math.ceil(totalWeight / 24000);
@@ -90,28 +90,29 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
     }
 
     // Przygotuj elementy (items) dla szablonu - grupowanie po średnicy DN
-    const itemsByDN: Record<string, any[]> = {};
+    const itemsByDN: Record<string, Record<string, unknown>[]> = {};
     let grandTotal = 0;
 
-    wells.forEach((well: any) => {
-        const dn = well.dn || 'Inne';
-        const wellPrice = well.totalPrice || well.price || 0;
+    wells.forEach((w) => {
+        const well = w as Record<string, unknown>;
+        const dn = String(well.dn ?? 'Inne');
+        const wellPrice = Number(well.totalPrice ?? well.price ?? 0);
         grandTotal += wellPrice;
 
         if (!itemsByDN[dn]) itemsByDN[dn] = [];
         itemsByDN[dn].push({
-            productName: well.name || `Studnia DN${dn}`,
+            productName: String(well.name ?? `Studnia DN${dn}`),
             quantity: 1,
             price: wellPrice,
             DN: dn,
-            height: well.height || 0,
-            zwienczenie: well.zwienczenie || '—',
-            transportCost: well.transportCost || 0
+            height: Number(well.height ?? 0),
+            zwienczenie: String(well.zwienczenie ?? '—'),
+            transportCost: Number(well.transportCost ?? 0)
         });
     });
 
     // Spłaszcz elementy (items) dla szablonu
-    const items: any[] = [];
+    const items: Record<string, unknown>[] = [];
     for (const [_dn, dnItems] of Object.entries(itemsByDN)) {
         items.push(...dnItems);
     }
@@ -127,24 +128,24 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
 
     const html = await generateStudnieHTML({
         offerNumber: offer.offer_number || 'N/A',
-        clientName: client?.name || offerData.clientName || 'Klient niezidentyfikowany',
-        clientNip: client?.nip || offerData.clientNip || '',
-        clientAddress: client?.address || offerData.clientAddress || '',
+        clientName: String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany'),
+        clientNip: String(client?.nip ?? offerData.clientNip ?? ''),
+        clientAddress: String(client?.address ?? offerData.clientAddress ?? ''),
         clientPhone:
-            offerData.clientContact ||
-            client?.contact ||
-            client?.phone ||
-            offerData.clientPhone ||
-            '',
-        investName: offerData.investName || offerData.budowa || '',
-        investAddress: offerData.investAddress || '',
+            String(offerData.clientContact ??
+            client?.contact ??
+            client?.phone ??
+            offerData.clientPhone ??
+            ''),
+        investName: String(offerData.investName ?? offerData.budowa ?? ''),
+        investAddress: String(offerData.investAddress ?? ''),
         items,
         transportCost: totalTransportCost,
-        createdAt: offerData.date || offer.createdAt || new Date().toISOString(),
-        validityDays: offerData.validityDays || 30,
-        notes: offerData.notes || '',
-        paymentTerms: offerData.paymentTerms || '',
-        validity: offerData.validity || '',
+        createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
+        validityDays: Number(offerData.validityDays ?? 30),
+        notes: String(offerData.notes ?? ''),
+        paymentTerms: String(offerData.paymentTerms ?? ''),
+        validity: String(offerData.validity ?? ''),
         authorUser,
         guardianUser
     });
@@ -445,25 +446,25 @@ export interface StudnieOfferData {
  * Pobiera dane autora i opiekuna oferty z bazy users
  */
 export async function lookupOfferUsers(
-    offerData: any,
+    offerData: Record<string, unknown>,
     offerUserId?: string | null
 ): Promise<{ authorUser: UserContactInfo | null; guardianUser: UserContactInfo | null }> {
-    const formatUserName = (u: any): string =>
-        u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
+    const formatUserName = (u: Record<string, unknown>): string =>
+        u.firstName && u.lastName ? `${String(u.firstName)} ${String(u.lastName)}` : String(u.username);
 
     let guardianUser: UserContactInfo | null = null;
     let authorUser: UserContactInfo | null = null;
 
     // Opiekun handlowy: userId z oferty
-    const guardianId = offerData.userId || offerUserId;
+    const guardianId = (offerData.userId as string | undefined) || offerUserId;
     if (guardianId) {
         try {
             const u = await prisma.users.findUnique({ where: { id: guardianId } });
             if (u)
                 guardianUser = {
-                    name: formatUserName(u),
-                    email: u.email || '',
-                    phone: u.phone || ''
+                    name: formatUserName(u as Record<string, unknown>),
+                    email: String(u.email ?? ''),
+                    phone: String(u.phone ?? '')
                 };
         } catch (e) {
             logger.warn('PdfUsers', 'Nie udało się wyszukać opiekuna (guardian)', e);
@@ -471,15 +472,15 @@ export async function lookupOfferUsers(
     }
 
     // Autor oferty: createdByUserId
-    const authorId = offerData.createdByUserId;
+    const authorId = offerData.createdByUserId as string | undefined;
     if (authorId && authorId !== guardianId) {
         try {
             const u = await prisma.users.findUnique({ where: { id: authorId } });
             if (u)
                 authorUser = {
-                    name: formatUserName(u),
-                    email: u.email || '',
-                    phone: u.phone || ''
+                    name: formatUserName(u as Record<string, unknown>),
+                    email: String(u.email ?? ''),
+                    phone: String(u.phone ?? '')
                 };
         } catch (e) {
             logger.warn('PdfUsers', 'Nie udało się wyszukać autora', e);
@@ -660,7 +661,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         if (itemsByDN[dn]) {
             const label = dn === 'styczna' ? 'Studnie styczne' : `Studnie DN${dn}`;
             const total = itemsByDN[dn].reduce(
-                (sum: number, item: any) => sum + (item.price || 0),
+                (sum, it) => sum + (Number((it as Record<string, unknown>).price ?? 0)),
                 0
             );
             summariesForTotal.push({ label, count: itemsByDN[dn].length, totalPrice: total });

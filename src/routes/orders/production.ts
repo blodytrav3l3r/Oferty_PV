@@ -18,7 +18,7 @@ router.get('/', requireAuth, async (req, res) => {
             where: roleClause
         });
 
-        const mapped = orders.map((o: any) => {
+        const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
             return {
                 id: o.id,
@@ -49,7 +49,7 @@ router.get('/registry', requireAuth, async (req, res) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        const mapped = orders.map((o: any) => {
+        const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
             return {
                 id: o.id,

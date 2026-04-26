@@ -28,9 +28,9 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
             skip: offset
         });
 
-        const mapped = logs.map((l: any) => {
-            let oldData: any = null;
-            let newData: any = null;
+        const mapped = logs.map((l) => {
+            let oldData: unknown = null;
+            let newData: unknown = null;
             try {
                 if (l.oldData) oldData = JSON.parse(l.oldData);
             } catch (_e) {
@@ -83,7 +83,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             orderBy: { createdAt: 'desc' }
         });
 
-        let baseLogRow: any = null;
+        let baseLogRow: typeof baseLogs[number] | null = null;
         for (const log of baseLogs) {
             if (log.action === 'create' || log.action === 'delete') {
                 baseLogRow = log;
@@ -111,7 +111,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
         }
 
         // 3. Rozpocznij od stanu bazowego
-        let currentState: any = {};
+        let currentState: Record<string, unknown> = {};
         try {
             if (baseLogRow.action === 'delete' && baseLogRow.oldData) {
                 currentState = JSON.parse(baseLogRow.oldData);
