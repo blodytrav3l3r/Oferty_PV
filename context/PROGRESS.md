@@ -108,6 +108,20 @@
   - Walidacja `dn` w `wellDataSchema` (nie może być pusty string)
 - **Commit:** `feat: faza 8 - testy E2E walidacji API`
 
+### Faza 8A: Naprawa Istniejących Testów
+- **Status:** ✅ Zakończona
+- **Problemy naprawione:**
+  1. `offers.crud.test.ts` - mocki dat jako Date zamiast stringów
+  2. `validators.test.ts` - dostosowanie do nowego formatu błędu
+  3. `users.test.ts` - zmiana testu na walidację email
+  4. `offerSchemas.test.ts` - dostosowanie do nowych schematów batch
+- **Zmiany w kodzie:**
+  - `validateData` zwraca pierwszy szczegółowy błąd
+  - `wellDataSchema.dn` - walidacja min 1 znak
+  - `offersBatchSchema` - clientId opcjonalny w batch
+  - `offersStudnieBatchSchema` - clientId i wells opcjonalne w batch
+- **Commit:** `fix: naprawa testów po wprowadzeniu walidacji Zod`
+
 ---
 
 ## 📊 Podsumowanie
@@ -121,19 +135,25 @@
 | `catch (e: any)` | 0 ✅ |
 | Walidacja Zod | 13 plików, 22 schematy ✅ |
 | Testy E2E walidacji | 16/16 przeszło ✅ |
+| Wszystkie testy Jest | 190/190 przeszło ✅ |
 
 ---
 
 ## 🎯 Do Wykonania Jutro (Faza 6+)
 
-### Opcja A: Poprawa Testów (Priorytet: Niski)
-- [ ] Naprawa 3 nieprzechodzących testów w `tests/validators.test.ts`
-- [ ] Naprawa testów w `tests/offers.test.ts` (jeśli występują błędy)
+### Opcja A: Poprawa Testów ✅ (Zakończone)
+- [x] Naprawa testów w `tests/validators.test.ts` ✅
+- [x] Naprawa testów w `tests/offers.crud.test.ts` ✅
+- [x] Naprawa testów w `tests/users.test.ts` ✅
+- [x] Naprawa testów w `tests/offerSchemas.test.ts` ✅
+- **Status:** Wszystkie 190 testów przechodzi ✅
 
-### Opcja B: Testy E2E dla API (Priorytet: Średni)
-- [ ] Dodanie testów endpointów `/api/offers` (GET, POST, PUT, DELETE)
-- [ ] Dodanie testów endpointów `/api/offers-studnie`
-- [ ] Testy walidacji błędnych danych (400 Bad Request)
+### Opcja B: Testy E2E dla API ✅ (Zakończone)
+- [x] Dodanie testów endpointów `/api/offers` (GET, POST, PUT, DELETE) ✅
+- [x] Dodanie testów endpointów `/api/offers-studnie` ✅
+- [x] Testy walidacji błędnych danych (400 Bad Request) ✅
+- **Plik:** `tests/apiValidation.test.ts` (16 testów)
+- **Status:** Wszystkie testy E2E przechodzą ✅
 
 ### Opcja C: Dokumentacja (Priorytet: Średni)
 - [ ] Dodanie JSDoc do kluczowych funkcji w `src/services/`
