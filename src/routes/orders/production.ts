@@ -274,7 +274,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
         logAudit('production_order', docId, existing.userId || '', 'delete', null, oldData);
 
         // Recykling numeru zlecenia produkcyjnego (recykle)
-        const prodNum = (oldData.productionOrderNumber as string) || '';
+        const prodNum = typeof oldData.productionOrderNumber === 'string' ? oldData.productionOrderNumber : '';
         if (prodNum) {
             const parts = prodNum.split('/');
             if (parts.length >= 4) {

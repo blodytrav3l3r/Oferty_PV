@@ -50,7 +50,7 @@ function processPassage(
 ): void {
     const { dn_przejscia, height_from_bottom, zapasDol, zapasGora, zapasDolMin, zapasGoraMin } =
         przejscie;
-    const hFromBottom = (height_from_bottom as number) || 0;
+    const hFromBottom = Number(height_from_bottom ?? 0);
 
     const placement = findTargetComponent(components, hFromBottom);
 
@@ -159,10 +159,10 @@ function validateClearances(
         zapasGoraMin?: number;
     }
 ): void {
-    const recommendedZapasDol = (clearances.zapasDol as number) || 300;
-    const recommendedZapasGora = (clearances.zapasGora as number) || 300;
-    const minZapasDol = (clearances.zapasDolMin as number) || 150;
-    const minZapasGora = (clearances.zapasGoraMin as number) || 150;
+    const recommendedZapasDol = Number(clearances.zapasDol ?? 300);
+    const recommendedZapasGora = Number(clearances.zapasGora ?? 300);
+    const minZapasDol = Number(clearances.zapasDolMin ?? 150);
+    const minZapasGora = Number(clearances.zapasGoraMin ?? 150);
 
     const actualZapasDol = positionInComponent;
     const actualZapasGora = (targetComponent.height || 0) - positionInComponent;

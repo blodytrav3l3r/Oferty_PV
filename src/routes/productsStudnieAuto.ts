@@ -62,7 +62,7 @@ router.post('/auto-select', requireAuth, validateData(autoSelectConfigSchema), a
 router.get('/available-components/:dn', requireAuth, async (req, res) => {
     try {
         const dn = parseInt(req.params.dn);
-        const magazyn = (req.query.magazyn as string) || 'WL';
+        const magazyn = req.query.magazyn ? String(req.query.magazyn) : 'WL';
 
         if (isNaN(dn)) {
             return res.status(400).json({ error: 'DN musi być liczbą' });

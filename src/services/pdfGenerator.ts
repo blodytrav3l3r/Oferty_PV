@@ -487,7 +487,7 @@ export async function lookupOfferUsers(
     let authorUser: UserContactInfo | null = null;
 
     // Opiekun handlowy: userId z oferty
-    const guardianId = (offerData.userId as string | undefined) || offerUserId;
+    const guardianId = typeof offerData.userId === 'string' ? offerData.userId : offerUserId;
     if (guardianId) {
         try {
             const u = await prisma.users.findUnique({ where: { id: guardianId } });
@@ -503,7 +503,7 @@ export async function lookupOfferUsers(
     }
 
     // Autor oferty: createdByUserId
-    const authorId = offerData.createdByUserId as string | undefined;
+    const authorId = typeof offerData.createdByUserId === 'string' ? offerData.createdByUserId : undefined;
     if (authorId && authorId !== guardianId) {
         try {
             const u = await prisma.users.findUnique({ where: { id: authorId } });
