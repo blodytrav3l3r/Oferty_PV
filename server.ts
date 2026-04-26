@@ -123,11 +123,8 @@ app.use('/api/products-studnie', productStudnieAutoRoutes);
 // Oferty Rury (standardowa ścieżka)
 app.use('/api/offers-rury', offerRoutes);
 
-// Oferty Studnie (Alias: /api/offers-studnie -> router offers.js z prefiksem /studnie)
-app.use('/api/offers-studnie', (req, res, next) => {
-    req.url = '/studnie' + (req.url === '/' ? '' : req.url);
-    offerRoutes(req, res, next);
-});
+// Oferty Studnie - alias dla /api/offers-rury/studnie
+app.use('/api/offers-studnie', offerRoutes);
 
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
 app.use('/api/clients', apiLimiter, clientRoutes);
