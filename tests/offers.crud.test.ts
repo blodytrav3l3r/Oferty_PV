@@ -172,10 +172,12 @@ describe('Offers CRUD Routes', () => {
                 .post('/api/offers')
                 .set('x-user-id', 'user-id')
                 .send({
-                    id: 'o-1',
-                    clientId: 'client-1',
-                    status: 'active',
-                    items: [ { productId: 'p-1', quantity: 2, price: 50, unitPrice: 50 } ]
+                    data: [{
+                        id: 'o-1',
+                        clientId: 'client-1',
+                        status: 'active',
+                        items: [ { productId: 'p-1', quantity: 2, price: 50, unitPrice: 50 } ]
+                    }]
                 });
                 
             expect(res.statusCode).toBe(200);

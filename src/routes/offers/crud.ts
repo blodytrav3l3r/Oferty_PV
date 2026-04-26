@@ -10,8 +10,6 @@ import {
     OfferMapped
 } from '../../types/models';
 import {
-    offerCreateSchema,
-    offerStudnieCreateSchema,
     offersBatchSchema,
     offersStudnieBatchSchema
 } from '../../validators/offerSchemas';
@@ -203,7 +201,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
 
 /* ===== OFERTY RURY — POST (pojedyncza) ===== */
 
-router.post('/', requireAuth, validateData(offerCreateSchema), async (req, res) => {
+router.post('/', requireAuth, validateData(offersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -322,7 +320,7 @@ router.post('/', requireAuth, validateData(offerCreateSchema), async (req, res) 
 
 /* ===== OFERTY STUDNIE — POST (pojedyncza) ===== */
 
-router.post('/studnie', requireAuth, validateData(offerStudnieCreateSchema), async (req, res) => {
+router.post('/studnie', requireAuth, validateData(offersStudnieBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
