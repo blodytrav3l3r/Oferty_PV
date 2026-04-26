@@ -39,9 +39,10 @@ export const offerUpdateSchema = offerCreateSchema.partial();
 
 /**
  * Schemat dla zbiorczego zapisu ofert rur
+ * Przy aktualizacji clientId nie jest wymagany (wymagany tylko przy tworzeniu)
  */
 export const offersBatchSchema = z.object({
-    data: z.array(offerCreateSchema)
+    data: z.array(offerCreateSchema.partial({ clientId: true }))
 });
 
 // =============================================================================
@@ -124,9 +125,10 @@ export const offerStudnieUpdateSchema = offerStudnieCreateSchema.partial();
 
 /**
  * Schemat dla zbiorczego zapisu ofert studni
+ * Przy aktualizacji clientId i wells nie są wymagane (wymagane tylko przy tworzeniu)
  */
 export const offersStudnieBatchSchema = z.object({
-    data: z.array(offerStudnieCreateSchema)
+    data: z.array(offerStudnieCreateSchema.partial({ clientId: true, wells: true }))
 });
 
 // =============================================================================

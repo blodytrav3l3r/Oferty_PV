@@ -56,7 +56,7 @@ const mockOfferRury = {
     state: 'draft',
     transportCost: 100,
     history: '[]',
-    createdAt: new Date().toISOString()
+    createdAt: new Date()
 };
 
 const mockOfferStudnie = {
@@ -66,7 +66,7 @@ const mockOfferStudnie = {
     state: 'final',
     data: '{"totalPrice": 500}',
     history: '[]',
-    createdAt: new Date().toISOString()
+    createdAt: new Date()
 };
 
 const mockItem = {
@@ -173,6 +173,7 @@ describe('Offers CRUD Routes', () => {
                 .set('x-user-id', 'user-id')
                 .send({
                     id: 'o-1',
+                    clientId: 'client-1',
                     status: 'active',
                     items: [ { productId: 'p-1', quantity: 2, price: 50, unitPrice: 50 } ]
                 });

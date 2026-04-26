@@ -156,20 +156,13 @@ describe('Users Routes', () => {
             expect(res.statusCode).toBe(409);
         });
 
-        it('powinien obsłużyć złe lub wstrzyknięte dane', async () => {
-            (prisma.users.findUnique as jest.Mock).mockResolvedValueOnce(mockUsers[1]);
+        it('powinien zwrócić 400 dla nieprawidłowych danych (walidacja Zod)', async () => {
             const res = await request(app)
                 .put('/api/users/user-id')
                 .set('x-user-role', 'admin')
-                .send({ subUsers: "invalid", orderStartNumber: "bad" });
+                .send({ email: 'invalid-email-format' });
 
-            expect(res.statusCode).toBe(200);
-            expect(prisma.users.update).toHaveBeenCalledWith(expect.objectContaining({
-                data: expect.objectContaining({
-                    subUsers: '[]',
-                    orderStartNumber: 1
-                })
-            }));
+            expect(res.statusCode).toBe(400);
         });
     });
 

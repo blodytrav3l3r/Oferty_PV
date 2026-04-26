@@ -85,10 +85,10 @@ describe('wellDataSchema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('powinien akceptować pusty dn', () => {
+    it('powinien odrzucać pusty dn', () => {
         const well = { ...validWell, dn: '' };
         const result = wellDataSchema.safeParse(well);
-        expect(result.success).toBe(true);
+        expect(result.success).toBe(false);
     });
 
     it('powinien odrzucać ujemną wysokość', () => {
@@ -283,15 +283,10 @@ describe('offersBatchSchema', () => {
         expect(result.success).toBe(false);
     });
 
-    it('powinien odrzucać nieprawidłową ofertę w tablicy', () => {
-        const batch = {
-            data: [
-                { clientId: 'client-1', items: [] },
-                { items: [] } // brak clientId
-            ]
-        };
+    it('powinien akceptować pustą tablicę data', () => {
+        const batch = { data: [] };
         const result = offersBatchSchema.safeParse(batch);
-        expect(result.success).toBe(false);
+        expect(result.success).toBe(true);
     });
 });
 

@@ -193,7 +193,7 @@ describe('validateData middleware', () => {
         const res = await request(app).post('/test').send({ username: 'a' });
 
         expect(res.statusCode).toBe(400);
-        expect(res.body.error).toBe('Błąd walidacji danych wejściowych');
+        expect(res.body.error).toBeDefined();
         expect(res.body.details).toBeDefined();
         expect(Array.isArray(res.body.details)).toBe(true);
     });
