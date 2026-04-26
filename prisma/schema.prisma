@@ -19,7 +19,7 @@ model ai_telemetry_logs {
   original_auto_config String?
   final_user_config    String?
   override_reason      String?
-  createdAt            String?  @default("datetime('now')")
+  createdAt            DateTime?  @default(now())
 }
 
 // Logi audytowe (śledzenie zmian w bazie)
@@ -31,7 +31,7 @@ model audit_logs {
   action     String
   oldData    String?
   newData    String?
-  createdAt  String?  @default("datetime('now')")
+  createdAt  DateTime?  @default(now())
 
   @@index([entityType, entityId], map: "idx_audit_entity")
 }
@@ -46,8 +46,8 @@ model clients_rel {
   email     String?
   phone     String?
   contact   String? @default("")
-  createdAt String?
-  updatedAt String?
+  createdAt DateTime?
+  updatedAt DateTime?
 }
 
 model offer_items_rel {
@@ -75,11 +75,11 @@ model offers_rel {
   userId        String?
   clientId      String?
   state         String?
-  createdAt     String?
+  createdAt     DateTime?
   transportCost Float?
   offer_number  String?
   data          String?
-  updatedAt     String?
+  updatedAt     DateTime?
   history       String?  @default("[]")
 }
 
@@ -89,11 +89,11 @@ model offers_studnie_rel {
   userId        String?
   clientId      String?
   state         String?
-  createdAt     String?
+  createdAt     DateTime?
   transportCost Float?
   offer_number  String?
   data          String?
-  updatedAt     String?
+  updatedAt     DateTime?
   history       String?  @default("[]")
 }
 
@@ -111,7 +111,7 @@ model orders_studnie_rel {
   id             String  @id
   userId         String?
   offerStudnieId String?
-  createdAt      String?
+  createdAt      DateTime?
   status         String?
   data           String?
 }
@@ -130,8 +130,8 @@ model production_orders_rel {
   orderId      String?
   wellId       String?
   elementIndex Int?
-  createdAt    String?
-  updatedAt    String?
+  createdAt    DateTime?
+  updatedAt    DateTime?
   data         String?
   creatorId    String? @default("")
 }
@@ -211,7 +211,7 @@ model users {
   email                      String?
   symbol                     String?
   subUsers                   String?
-  createdAt                  String?
+  createdAt                  DateTime?
   orderStartNumber           Int?     @default(1)
   productionOrderStartNumber Int?     @default(1)
 }

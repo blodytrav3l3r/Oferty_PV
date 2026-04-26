@@ -35,7 +35,7 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
         clientAddress: client?.address || '',
         items,
         transportCost: offer.transportCost || 0,
-        createdAt: offer.createdAt || new Date().toISOString(),
+        createdAt: offer.createdAt?.toISOString() || new Date().toISOString(),
         type: 'rury'
     });
 

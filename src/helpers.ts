@@ -12,7 +12,7 @@ export interface UserDoc {
     phone?: string | null;
     symbol?: string | null;
     subUsers?: string | null;
-    createdAt?: string | null;
+    createdAt?: Date | string | null;
     orderStartNumber?: number | null;
     productionOrderStartNumber?: number | null;
 }
