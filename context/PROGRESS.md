@@ -73,6 +73,24 @@
   - `src/helpers.ts`: `UserDoc.createdAt` → `Date | string | null`
 - **Commit:** `refactor: faza 6 - migracja dat String → DateTime w Prisma`
 
+### Faza 7: Walidacja Runtime dla Wszystkich Tras API
+- **Status:** ✅ Zakończona
+- **Plik:** `src/validators/offerSchemas.ts` (rozszerzony)
+- **Nowe Schematy:**
+  - `clientSchema` / `clientsBatchSchema` - walidacja klientów
+  - `pricelistDataSchema` - walidacja cenników
+  - `telemetryOverrideSchema` - walidacja telemetryczna
+  - `userUpdateSchema` - walidacja aktualizacji użytkownika
+  - `productionOrderItemSchema` / `productionOrdersBatchSchema` - zamówienia produkcyjne
+  - `studnieOrderItemSchema` / `studnieOrdersBatchSchema` / `studnieOrderUpdateSchema` - zamówienia studni
+  - `autoSelectConfigSchema` / `validateComponentsSchema` - automatyczny dobór studni
+  - `marketplaceSearchSchema` / `marketplaceModerateSchema` - marketplace
+- **Pliki z walidacją:** 13 plików
+  - `auth.ts`, `clients.ts`, `offers/crud.ts`, `products.ts`, `productsStudnie.ts`
+  - `settings.ts`, `telemetry.ts`, `users.ts`, `productsStudnieAuto.ts`
+  - `orders/production.ts`, `orders/studnieOrders.ts`, `pv_marketplace.ts`
+- **Commit:** `feat: faza 7 - walidacja runtime Zod dla wszystkich tras API`
+
 ---
 
 ## 📊 Podsumowanie
@@ -81,9 +99,10 @@
 |---------|---------|
 | Kompilacja TypeScript | 0 błędów ✅ |
 | Testy Zod | 38/38 przeszło ✅ |
-| Tagi | `phase-1` → `phase-6` |
+| Tagi | `phase-1` → `phase-7` |
 | `any` w src/ | 0 ✅ |
 | `catch (e: any)` | 0 ✅ |
+| Walidacja Zod | 13 plików, 22 schematy ✅ |
 
 ---
 
