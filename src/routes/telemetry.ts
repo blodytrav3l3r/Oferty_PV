@@ -3,19 +3,17 @@ import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
+import { validateData } from '../validators/authSchema';
+import { telemetryOverrideSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
 // POST /api/telemetry/override
-router.post('/override', requireAuth, (req, res) => {
+router.post('/override', requireAuth, validateData(telemetryOverrideSchema), (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { originalConfig, finalConfig, overrideReason } = req.body;
         const userId = authReq.user?.id;
-
-        if (!originalConfig || !finalConfig || !overrideReason) {
-            return res.status(400).json({ error: 'Brak wymaganych danych telemetrycznych' });
-        }
 
         const id = crypto.randomUUID();
 

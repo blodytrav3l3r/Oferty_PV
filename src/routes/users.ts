@@ -2,6 +2,8 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { validateData } from '../validators/authSchema';
+import { userUpdateSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
@@ -67,7 +69,7 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
 });
 
 // PUT /api/users/:id (tylko administrator)
-router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, validateData(userUpdateSchema), async (req, res) => {
     const {
         username,
         password,

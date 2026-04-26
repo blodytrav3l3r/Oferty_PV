@@ -144,3 +144,94 @@ export type WellDataInput = z.infer<typeof wellDataSchema>;
 export type OfferStudnieCreateInput = z.infer<typeof offerStudnieCreateSchema>;
 export type OfferStudnieUpdateInput = z.infer<typeof offerStudnieUpdateSchema>;
 export type OffersStudnieBatchInput = z.infer<typeof offersStudnieBatchSchema>;
+
+// =============================================================================
+// KLIENCI
+// =============================================================================
+
+/**
+ * Schemat pojedynczego klienta
+ */
+export const clientSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, 'Nazwa klienta jest wymagana'),
+    nip: z.string().optional(),
+    address: z.string().optional(),
+    contact: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email('Nieprawidłowy format email').optional().or(z.literal(''))
+});
+
+/**
+ * Schemat synchronizacji klientów (batch)
+ */
+export const clientsBatchSchema = z.object({
+    data: z.array(clientSchema).min(1, 'Wymagana co najmniej jeden klient')
+});
+
+export type ClientInput = z.infer<typeof clientSchema>;
+export type ClientsBatchInput = z.infer<typeof clientsBatchSchema>;
+
+// =============================================================================
+// PRODUKTY / CENNIKI
+// =============================================================================
+
+/**
+ * Schemat walidacji danych cennika (tablica pozycji)
+ */
+export const pricelistDataSchema = z.object({
+    data: z.array(z.record(z.string(), z.unknown())).min(1, 'Wymagana co najmniej jedna pozycja cennika')
+});
+
+export type PricelistDataInput = z.infer<typeof pricelistDataSchema>;
+
+// =============================================================================
+// USTAWIENIA
+// =============================================================================
+
+/**
+ * Schemat litera roku
+ */
+export const yearLetterSchema = z.object({
+    letter: z.string().length(1, 'Litera musi być pojedynczym znakiem')
+});
+
+export type YearLetterInput = z.infer<typeof yearLetterSchema>;
+
+// =============================================================================
+// TELEMETRIA
+// =============================================================================
+
+/**
+ * Schemat nadpisania konfiguracji telemetrycznej
+ */
+export const telemetryOverrideSchema = z.object({
+    originalConfig: z.record(z.string(), z.unknown()),
+    finalConfig: z.record(z.string(), z.unknown()),
+    overrideReason: z.string().min(1, 'Powód nadpisania jest wymagany')
+});
+
+export type TelemetryOverrideInput = z.infer<typeof telemetryOverrideSchema>;
+
+// =============================================================================
+// UŻYTKOWNICY
+// =============================================================================
+
+/**
+ * Schemat aktualizacji użytkownika (admin)
+ */
+export const userUpdateSchema = z.object({
+    username: z.string().min(3).optional(),
+    password: z.string().min(4).optional(),
+    role: z.enum(['admin', 'user', 'pro']).optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    symbol: z.string().optional(),
+    subUsers: z.array(z.string()).optional(),
+    orderStartNumber: z.number().int().min(1).optional(),
+    productionOrderStartNumber: z.number().int().min(1).optional()
+});
+
+export type UserUpdateInput = z.infer<typeof userUpdateSchema>;

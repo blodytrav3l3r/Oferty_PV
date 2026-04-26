@@ -1,6 +1,8 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { validateData } from '../validators/authSchema';
+import { pricelistDataSchema } from '../validators/offerSchemas';
 import {
     migrateFromLegacyIfNeeded,
     readPricelist,
@@ -40,13 +42,9 @@ router.get('/', async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/products → Zapisuje bieżący cennik rur
 // ──────────────────────────────────────────
-router.put('/', requireAuth, async (req, res) => {
+router.put('/', requireAuth, validateData(pricelistDataSchema), async (req, res) => {
     try {
         const arr = req.body.data;
-        if (!Array.isArray(arr)) {
-            return res.status(400).json({ error: 'Dane muszą być tablicą' });
-        }
-
         const count = await writePricelist(config.keyCurrent, arr);
         res.json({ ok: true, count });
     } catch (err: unknown) {
@@ -73,7 +71,7 @@ router.get('/default', async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/products/default → Zapisuje wartości fabryczne rur
 // ──────────────────────────────────────────
-router.put('/default', requireAuth, async (req, res) => {
+router.put('/default', requireAuth, validateData(pricelistDataSchema), async (req, res) => {
     try {
         const arr = req.body.data || [];
         const count = await writePricelist(config.keyDefault, arr);

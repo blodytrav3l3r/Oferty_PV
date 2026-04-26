@@ -2,6 +2,8 @@ import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { buildRoleWhereClause } from '../utils/roleFilter';
+import { validateData } from '../validators/authSchema';
+import { clientsBatchSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
@@ -22,7 +24,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // PUT /api/clients - Synchronizacja klientów
-router.put('/', requireAuth, async (req, res) => {
+router.put('/', requireAuth, validateData(clientsBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const arr = req.body.data || [];

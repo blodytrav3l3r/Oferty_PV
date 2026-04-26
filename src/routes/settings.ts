@@ -1,6 +1,8 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin } from '../middleware/auth';
+import { validateData } from '../validators/authSchema';
+import { yearLetterSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
@@ -20,12 +22,9 @@ router.get('/year-letter', requireAuth, async (_req, res) => {
     }
 });
 
-router.put('/year-letter', requireAuth, requireAdmin, async (req, res) => {
+router.put('/year-letter', requireAuth, requireAdmin, validateData(yearLetterSchema), async (req, res) => {
     try {
         const { letter } = req.body;
-        if (!letter || typeof letter !== 'string' || letter.length !== 1) {
-            return res.status(400).json({ error: 'Litera musi być pojedynczym znakiem' });
-        }
 
         const year = new Date().getFullYear();
         const key = 'year_letter_' + year;
