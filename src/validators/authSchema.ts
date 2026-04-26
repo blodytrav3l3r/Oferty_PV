@@ -36,8 +36,9 @@ export const validateData = (schema: z.ZodSchema<unknown>) => {
             next();
         } catch (error: unknown) {
             if (error instanceof z.ZodError) {
+                const firstError = error.issues[0];
                 return res.status(400).json({
-                    error: 'Błąd walidacji danych wejściowych',
+                    error: firstError?.message || 'Błąd walidacji danych wejściowych',
                     details: error.issues
                 });
             }

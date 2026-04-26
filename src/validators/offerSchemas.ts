@@ -92,7 +92,7 @@ export const passageConfigSchema = z.object({
  */
 export const wellDataSchema = z.object({
     id: z.string().optional(),
-    dn: z.union([z.number(), z.string()]).optional(),
+    dn: z.union([z.number(), z.string().min(1, 'Średnica DN jest wymagana')]).optional(),
     type: z.string().optional(),
     totalPrice: z.number().nonnegative().optional(),
     price: z.number().nonnegative().optional(),

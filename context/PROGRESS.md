@@ -91,6 +91,23 @@
   - `orders/production.ts`, `orders/studnieOrders.ts`, `pv_marketplace.ts`
 - **Commit:** `feat: faza 7 - walidacja runtime Zod dla wszystkich tras API`
 
+### Faza 8: Testy E2E dla Walidacji API
+- **Status:** ✅ Zakończona
+- **Plik:** `tests/apiValidation.test.ts`
+- **Testy:** 16 testów, wszystkie przechodzą ✅
+- **Pokrycie:**
+  - Walidacja ofert rur (brak clientId, nieprawidłowe items, ujemne ceny/ilości)
+  - Walidacja ofert studni (brak clientId, nieprawidłowe wells, pusty DN)
+  - Walidacja klientów (brak nazwy, nieprawidłowy email)
+  - Walidacja cenników (pusta data)
+  - Walidacja telemetryczna (brak overrideReason)
+  - Walidacja użytkowników (nieprawidłowy email, za krótkie hasło)
+  - Walidacja ustawień (za długa litera roku)
+- **Zmiany w kodzie:**
+  - Ulepszony komunikat błędu w `validateData` (pierwszy szczegółowy błąd)
+  - Walidacja `dn` w `wellDataSchema` (nie może być pusty string)
+- **Commit:** `feat: faza 8 - testy E2E walidacji API`
+
 ---
 
 ## 📊 Podsumowanie
@@ -99,10 +116,11 @@
 |---------|---------|
 | Kompilacja TypeScript | 0 błędów ✅ |
 | Testy Zod | 38/38 przeszło ✅ |
-| Tagi | `phase-1` → `phase-7` |
+| Tagi | `phase-1` → `phase-8` |
 | `any` w src/ | 0 ✅ |
 | `catch (e: any)` | 0 ✅ |
 | Walidacja Zod | 13 plików, 22 schematy ✅ |
+| Testy E2E walidacji | 16/16 przeszło ✅ |
 
 ---
 
