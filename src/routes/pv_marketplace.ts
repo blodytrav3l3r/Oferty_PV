@@ -2,13 +2,15 @@ import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { validateData } from '../validators/authSchema';
+import { marketplaceSearchSchema, marketplaceModerateSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
 /**
  * SZUKAJ: Wyszukiwanie ofert
  */
-router.post('/search', async (req, res) => {
+router.post('/search', validateData(marketplaceSearchSchema), async (req, res) => {
     const {
         query,
         category: _category,
@@ -69,7 +71,7 @@ router.post('/search', async (req, res) => {
 /**
  * MODERACJA: Akcje administratora
  */
-router.post('/moderate/:offerId', requireAuth, requireAdmin, async (req, res) => {
+router.post('/moderate/:offerId', requireAuth, requireAdmin, validateData(marketplaceModerateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user?.role !== 'admin') {
         return res.status(403).json({ error: 'Tylko administratorzy mogą moderować oferty' });

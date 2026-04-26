@@ -5,6 +5,8 @@ import {
     validateManhole
 } from '../services/antygrawity';
 import { requireAuth } from '../middleware/auth';
+import { validateData } from '../validators/authSchema';
+import { autoSelectConfigSchema, validateComponentsSchema } from '../validators/offerSchemas';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
@@ -24,11 +26,11 @@ const router = express.Router();
  *   hasPierscienOdciazajacy: boolean (opcjonalnie, domyślnie: false)
  * }
  */
-router.post('/auto-select', requireAuth, async (req, res) => {
+router.post('/auto-select', requireAuth, validateData(autoSelectConfigSchema), async (req, res) => {
     try {
         const config = req.body;
 
-        // Walidacja
+        // Dodatkowa walidacja logiczna
         if (!config.targetDn) {
             return res.status(400).json({ error: 'Wymagane pole: targetDn' });
         }
@@ -85,13 +87,9 @@ router.get('/available-components/:dn', requireAuth, async (req, res) => {
  *   config: object
  * }
  */
-router.post('/validate', requireAuth, async (req, res) => {
+router.post('/validate', requireAuth, validateData(validateComponentsSchema), async (req, res) => {
     try {
         const { components, config } = req.body;
-
-        if (!components || !Array.isArray(components)) {
-            return res.status(400).json({ error: 'Wymagana tablica komponentów' });
-        }
 
         const validation = validateManhole(components, config);
         res.json(validation);

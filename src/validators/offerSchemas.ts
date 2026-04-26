@@ -235,3 +235,120 @@ export const userUpdateSchema = z.object({
 });
 
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
+
+// =============================================================================
+// ZAMÓWIENIA
+// =============================================================================
+
+/**
+ * Schemat pozycji zamówienia produkcyjnego (batch)
+ */
+export const productionOrderItemSchema = z.object({
+    id: z.string().optional(),
+    userId: z.string().optional(),
+    orderId: z.string().optional(),
+    wellId: z.string().optional(),
+    elementIndex: z.number().int().optional()
+});
+
+/**
+ * Schemat batcha zamówień produkcyjnych (PUT /)
+ */
+export const productionOrdersBatchSchema = z.object({
+    data: z.array(productionOrderItemSchema)
+});
+
+/**
+ * Schemat tworzenia zamówienia produkcyjnego (POST /)
+ */
+export const productionOrderCreateSchema = z.object({
+    wellId: z.string().min(1, 'ID studni jest wymagane'),
+    orderId: z.string().optional(),
+    userId: z.string().optional(),
+    elementIndex: z.number().int().optional()
+});
+
+/**
+ * Schemat pozycji zamówienia studni (batch)
+ */
+export const studnieOrderItemSchema = z.object({
+    id: z.string().optional(),
+    offerStudnieId: z.string().optional(),
+    status: z.string().optional()
+});
+
+/**
+ * Schemat batcha zamówień studni (PUT /)
+ */
+export const studnieOrdersBatchSchema = z.object({
+    data: z.array(studnieOrderItemSchema)
+});
+
+/**
+ * Schemat aktualizacji zamówienia studni (PATCH /:id)
+ */
+export const studnieOrderUpdateSchema = z.object({
+    status: z.string().optional(),
+    userId: z.string().optional(),
+    data: z.record(z.string(), z.unknown()).optional()
+});
+
+export type ProductionOrderItemInput = z.infer<typeof productionOrderItemSchema>;
+export type ProductionOrdersBatchInput = z.infer<typeof productionOrdersBatchSchema>;
+export type ProductionOrderCreateInput = z.infer<typeof productionOrderCreateSchema>;
+export type StudnieOrderItemInput = z.infer<typeof studnieOrderItemSchema>;
+export type StudnieOrdersBatchInput = z.infer<typeof studnieOrdersBatchSchema>;
+export type StudnieOrderUpdateInput = z.infer<typeof studnieOrderUpdateSchema>;
+
+// =============================================================================
+// AUTOMATYCZNY DOBÓR STUDNI
+// =============================================================================
+
+/**
+ * Schemat konfiguracji automatycznego doboru studni
+ */
+export const autoSelectConfigSchema = z.object({
+    targetDn: z.string().min(1, 'Średnica DN jest wymagana'),
+    targetHeight: z.number().positive('Wysokość musi być dodatnia').optional(),
+    hasZewnatrzna: z.boolean().optional(),
+    hasZweinczenie: z.boolean().optional(),
+    hasZasuw: z.boolean().optional(),
+    hasPierscienOdciazajacy: z.boolean().optional()
+});
+
+/**
+ * Schemat walidacji komponentów studni
+ */
+export const validateComponentsSchema = z.object({
+    components: z.array(z.record(z.string(), z.unknown())).min(1, 'Wymagana tablica komponentów'),
+    config: z.record(z.string(), z.unknown()).optional()
+});
+
+// =============================================================================
+// MARKETPLACE
+// =============================================================================
+
+/**
+ * Schemat wyszukiwania ofert w marketplace
+ */
+export const marketplaceSearchSchema = z.object({
+    query: z.string().optional(),
+    category: z.string().optional(),
+    minPrice: z.number().min(0).optional(),
+    maxPrice: z.number().min(0).optional(),
+    limit: z.number().int().min(1).max(100).default(50),
+    skip: z.number().int().min(0).default(0)
+});
+
+/**
+ * Schemat moderacji oferty
+ */
+export const marketplaceModerateSchema = z.object({
+    action: z.enum(['approve', 'reject', 'hide'], 'Nieprawidłowa akcja moderacji'),
+    reason: z.string().optional()
+});
+
+export type AutoSelectConfigInput = z.infer<typeof autoSelectConfigSchema>;
+export type ValidateComponentsInput = z.infer<typeof validateComponentsSchema>;
+export type MarketplaceSearchInput = z.infer<typeof marketplaceSearchSchema>;
+export type MarketplaceModerateInput = z.infer<typeof marketplaceModerateSchema>;

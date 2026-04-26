@@ -4,6 +4,8 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField } from '../../helpers';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
+import { validateData } from '../../validators/authSchema';
+import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
 
@@ -37,7 +39,7 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-router.put('/', requireAuth, async (req, res) => {
+router.put('/', requireAuth, validateData(studnieOrdersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -136,7 +138,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/:id', requireAuth, async (req, res) => {
+router.patch('/:id', requireAuth, validateData(studnieOrderUpdateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;

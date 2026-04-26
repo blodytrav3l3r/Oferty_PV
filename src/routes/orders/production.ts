@@ -5,6 +5,8 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField } from '../../helpers';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
+import { validateData } from '../../validators/authSchema';
+import { productionOrdersBatchSchema, productionOrderCreateSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
 
@@ -71,7 +73,7 @@ router.get('/registry', requireAuth, async (req, res) => {
     }
 });
 
-router.put('/', requireAuth, async (req, res) => {
+router.put('/', requireAuth, validateData(productionOrdersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -145,11 +147,10 @@ router.put('/', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, validateData(productionOrderCreateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const o = req.body;
-        if (!o || !o.wellId) return res.status(400).json({ error: 'Nieprawidłowe dane zlecenia' });
 
         let docId = o.id;
         if (!docId) {
