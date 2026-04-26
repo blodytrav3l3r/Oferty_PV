@@ -1,6 +1,6 @@
 # Postępy Refaktoryzacji Oferty_PV - 26.04.2026
 
-## ✅ Zakończone Fazy (5/5)
+## ✅ Zakończone Fazy (6/6)
 
 ### Faza 1: Interfejsy Domenowe
 - **Status:** ✅ Zakończona
@@ -54,6 +54,25 @@
   - Integracja schematów (2 testy)
 - **Commit:** `test: faza 5 - testy jednostkowe dla schematów Zod`
 
+### Faza 6: Migracja Dat w Prisma (String → DateTime)
+- **Status:** ✅ Zakończona
+- **Plik:** `prisma/schema.prisma`
+- **Zmiany:**
+  - `ai_telemetry_logs.createdAt`: String → DateTime
+  - `audit_logs.createdAt`: String → DateTime
+  - `clients_rel.createdAt/updatedAt`: String → DateTime
+  - `offers_rel.createdAt/updatedAt`: String → DateTime
+  - `offers_studnie_rel.createdAt/updatedAt`: String → DateTime
+  - `orders_studnie_rel.createdAt`: String → DateTime
+  - `production_orders_rel.createdAt/updatedAt`: String → DateTime
+  - `users.createdAt`: String → DateTime
+- **Poprawki w kodzie:**
+  - `src/routes/offers/crud.ts`: `.toISOString()` dla dat ofert
+  - `src/services/docx/ruryDocx.ts`: `.toISOString()` dla dat ofert
+  - `src/services/pdfGenerator.ts`: `.toISOString()` dla dat ofert
+  - `src/helpers.ts`: `UserDoc.createdAt` → `Date | string | null`
+- **Commit:** `refactor: faza 6 - migracja dat String → DateTime w Prisma`
+
 ---
 
 ## 📊 Podsumowanie
@@ -62,7 +81,7 @@
 |---------|---------|
 | Kompilacja TypeScript | 0 błędów ✅ |
 | Testy Zod | 38/38 przeszło ✅ |
-| Tagi | `phase-1` → `phase-5` |
+| Tagi | `phase-1` → `phase-6` |
 | `any` w src/ | 0 ✅ |
 | `catch (e: any)` | 0 ✅ |
 
