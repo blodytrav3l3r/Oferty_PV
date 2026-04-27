@@ -597,11 +597,15 @@ router.delete('/studnie/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
+        logger.info('Offers', 'DELETE /studnie/:id start', { id, userId: authReq.user?.id });
 
         const offer = await prisma.offers_studnie_rel.findUnique({
             where: { id }
         });
-        if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
+        if (!offer) {
+            logger.warn('Offers', 'Oferta studni nie istnieje', { id });
+            return res.status(404).json({ error: 'Oferta studni nie istnieje' });
+        }
 
         if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
@@ -612,16 +616,17 @@ router.delete('/studnie/:id', requireAuth, async (req, res) => {
         try {
             oldData = JSON.parse(offer.data || '{}');
         } catch (_e) {}
-        logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
+        logAudit('studnia_oferta', req.params.id, authReq.user?.id || '', 'delete', null, oldData);
 
         await prisma.offers_studnie_rel.delete({
-            where: { id }
+            where: { id: req.params.id }
         });
 
-        logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
+        logger.info('Offers', `Oferta studnie ${req.params.id} usunięta przez ${authReq.user?.username}`);
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Offers', `Błąd DELETE /studnie/:id (${req.params.id})`, message);
         res.status(500).json({ error: message });
     }
 });
