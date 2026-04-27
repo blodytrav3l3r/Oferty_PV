@@ -16,7 +16,7 @@ export async function selectDennica(
     magazynField: string,
     formaStdField: string
 ): Promise<WellComponent | null> {
-    const dennice = await (prisma as any).products_studnie_rel.findMany({
+    const dennice = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             componentType: 'dennica',
             dn: dn,
@@ -37,7 +37,7 @@ export async function selectKragByDn(
     formaStdField: string,
     _targetHeight?: number
 ): Promise<WellComponent | null> {
-    const krags = await (prisma as any).products_studnie_rel.findMany({
+    const krags = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             componentType: 'krag',
             dn: dn,
@@ -60,7 +60,7 @@ export async function selectZakonczenie(
 ): Promise<WellComponent | null> {
     const componentType = type === 'plyta_din' ? 'plyta_din' : 'konus';
 
-    const items = await (prisma as any).products_studnie_rel.findMany({
+    const items = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             componentType,
             dn: dn,
@@ -81,7 +81,7 @@ export async function selectPlytaRedukcyjna(
     magazynField: string,
     formaStdField: string
 ): Promise<WellComponent | null> {
-    const plates = await (prisma as any).products_studnie_rel.findMany({
+    const plates = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             componentType: 'plyta_redukcyjna',
             dn: fromDn,
@@ -91,7 +91,8 @@ export async function selectPlytaRedukcyjna(
     });
 
     for (const plate of plates) {
-        if (plate.name?.includes(`DN${toDn}`) || plate.id?.includes(`${toDn}`)) {
+        const p = plate as { name?: string; id?: string };
+        if (p.name?.includes(`DN${toDn}`) || p.id?.includes(`${toDn}`)) {
             return plate;
         }
     }
@@ -111,7 +112,7 @@ export async function selectKragiNadbudowy(
     const selected: WellComponent[] = [];
     let remainingHeight = totalHeight;
 
-    const availableRings = await (prisma as any).products_studnie_rel.findMany({
+    const availableRings = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             componentType: 'krag',
             dn: dn,
@@ -161,7 +162,7 @@ export async function selectKragOt(
     magazynField: string,
     formaStdField: string
 ): Promise<WellComponent | null> {
-    const otRings = await (prisma as any).products_studnie_rel.findMany({
+    const otRings = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             componentType: 'krag_ot',
             dn: dn,
@@ -183,7 +184,7 @@ export async function getAvailableComponents(
     const magazynField = `magazyn${magazyn}`;
     const formaStdField = `formaStandardowa${magazyn}`;
 
-    const components = await (prisma as any).products_studnie_rel.findMany({
+    const components = await (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Array<Record<string, unknown>>> }>)['products_studnie_rel'].findMany({
         where: {
             dn: dn,
             [magazynField]: 1

@@ -5,9 +5,17 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField } from '../../helpers';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
+import { createRateLimiter } from '../../middleware/rateLimiter';
 import { productionOrdersBatchSchema, productionOrderCreateSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
+
+// Rate limiter dla operacji na zleceniach produkcyjnych (60 zapytań na minutę)
+const writeProductionLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 60,
+    message: 'Zbyt wiele operacji na zleceniach produkcyjnych. Odczekaj minutę.'
+});
 
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
 
@@ -113,7 +121,7 @@ router.get('/registry', requireAuth, async (req, res) => {
     }
 });
 
-router.put('/', requireAuth, validateData(productionOrdersBatchSchema), async (req, res) => {
+router.put('/', requireAuth, writeProductionLimiter, validateData(productionOrdersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -187,7 +195,7 @@ router.put('/', requireAuth, validateData(productionOrdersBatchSchema), async (r
     }
 });
 
-router.post('/', requireAuth, validateData(productionOrderCreateSchema), async (req, res) => {
+router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrderCreateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const o = req.body;
@@ -317,7 +325,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 });
 
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;

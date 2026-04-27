@@ -2,6 +2,7 @@ import express from 'express';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
+import { createRateLimiter } from '../middleware/rateLimiter';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import {
     migrateFromLegacyIfNeeded,
@@ -11,6 +12,13 @@ import {
 } from '../services/pricelistService';
 
 const router = express.Router();
+
+// Rate limiter dla operacji na cennikach studni (30 zapytań na minutę)
+const writePricelistLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 30,
+    message: 'Zbyt wiele operacji na cennikach studni. Odczekaj minutę.'
+});
 
 /* ===== CENNIK STUDNI — zapis/odczyt z tabeli settings (JSON) ===== */
 
@@ -42,7 +50,7 @@ router.get('/', async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/products-studnie → Zapisuje bieżący cennik studni
 // ──────────────────────────────────────────
-router.put('/', requireAuth, validateData(pricelistDataSchema), async (req, res) => {
+router.put('/', requireAuth, writePricelistLimiter, validateData(pricelistDataSchema), async (req, res) => {
     try {
         const arr = req.body.data;
         const count = await writePricelist(config.keyCurrent, arr);
@@ -71,7 +79,7 @@ router.get('/default', async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/products-studnie/default → Zapisuje wartości fabryczne studni
 // ──────────────────────────────────────────
-router.put('/default', requireAuth, validateData(pricelistDataSchema), async (req, res) => {
+router.put('/default', requireAuth, writePricelistLimiter, validateData(pricelistDataSchema), async (req, res) => {
     try {
         const arr = req.body.data || [];
         const count = await writePricelist(config.keyDefault, arr);

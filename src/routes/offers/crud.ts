@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
+import { createRateLimiter } from '../../middleware/rateLimiter';
 import {
     OfferMapped
 } from '../../types/models';
@@ -16,6 +17,13 @@ import {
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
+
+// Rate limiter dla operacji zapisu ofert (60 zapytań na minutę)
+const writeOffersLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 60,
+    message: 'Zbyt wiele operacji na ofertach. Odczekaj minutę.'
+});
 
 /* ===== OFERTY RURY — GET ===== */
 
@@ -302,7 +310,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
 
 /* ===== OFERTY RURY — POST (pojedyncza) ===== */
 
-router.post('/', requireAuth, validateData(offersBatchSchema), async (req, res) => {
+router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -431,7 +439,7 @@ router.post('/', requireAuth, validateData(offersBatchSchema), async (req, res) 
 
 /* ===== OFERTY STUDNIE — POST (pojedyncza) ===== */
 
-router.post('/studnie', requireAuth, validateData(offersStudnieBatchSchema), async (req, res) => {
+router.post('/studnie', requireAuth, writeOffersLimiter, validateData(offersStudnieBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [req.body];
@@ -521,7 +529,7 @@ router.post('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asy
 
 /* ===== OFERTY RURY — PUT (zbiorczo) ===== */
 
-router.put('/', requireAuth, validateData(offersBatchSchema), async (req, res) => {
+router.put('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -592,7 +600,7 @@ router.put('/', requireAuth, validateData(offersBatchSchema), async (req, res) =
 
 /* ===== OFERTY STUDNIE — PUT (zbiorczo) ===== */
 
-router.put('/studnie', requireAuth, validateData(offersStudnieBatchSchema), async (req, res) => {
+router.put('/studnie', requireAuth, writeOffersLimiter, validateData(offersStudnieBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -643,7 +651,7 @@ router.put('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asyn
 
 /* ===== DELETE ===== */
 
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -722,7 +730,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     }
 });
 
-router.delete('/studnie/:id', requireAuth, async (req, res) => {
+router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;

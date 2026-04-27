@@ -14,9 +14,15 @@ import {
     WidthType,
     AlignmentType,
     BorderStyle,
-    ShadingType
+    ShadingType,
+    IRunOptions
 } from 'docx';
 import { UserContactInfo } from '../../pdfGenerator';
+
+// Helper type for TextRun with break property (docx types may not include it)
+interface TextRunWithBreak extends IRunOptions {
+    break?: number;
+}
 import {
     FONT,
     COLOR_GRAY_HEADER,
@@ -136,7 +142,7 @@ export function buildClientInvestTable(
     const buildCell = (label: string, lines: TextRun[]): TableCell => {
         const runs: TextRun[] = [
             new TextRun({ text: label, size: SZ_INFO_LABEL, font: FONT, color: COLOR_LABEL }),
-            new TextRun({ break: 1 } as any),
+            new TextRun({ break: 1 } as TextRunWithBreak),
             ...lines
         ];
         return new TableCell({
@@ -168,17 +174,17 @@ function buildClientRuns(name: string, address: string, nip: string, contact: st
         new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' })
     ];
     if (address) {
-        runs.push(new TextRun({ break: 1 } as any));
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
     }
     if (nip) {
-        runs.push(new TextRun({ break: 1 } as any));
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(
             new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: '000000' })
         );
     }
     if (contact) {
-        runs.push(new TextRun({ break: 1 } as any));
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(
             new TextRun({
                 text: `Kontakt: ${contact}`,
@@ -214,7 +220,7 @@ function buildInvestRuns(
         runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: '000000' }));
     }
     if (investAddress) {
-        runs.push(new TextRun({ break: 1 } as any));
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(
             new TextRun({
                 text: 'Adres: ',
@@ -229,7 +235,7 @@ function buildInvestRuns(
         );
     }
     if (investContractor) {
-        runs.push(new TextRun({ break: 1 } as any));
+        runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(
             new TextRun({
                 text: 'Wykonawca: ',
@@ -372,15 +378,15 @@ export function buildContactSection(
                 font: FONT,
                 color: COLOR_GRAY_HEADER
             }),
-            new TextRun({ break: 1 } as any),
+            new TextRun({ break: 1 } as TextRunWithBreak),
             new TextRun({ text: u.name, bold: true, size: SZ_TABLE_BODY, font: FONT })
         ];
         if (u.email) {
-            runs.push(new TextRun({ break: 1 } as any));
+            runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
             runs.push(new TextRun({ text: `Email: ${u.email}`, size: SZ_TABLE_BODY, font: FONT }));
         }
         if (u.phone) {
-            runs.push(new TextRun({ break: 1 } as any));
+            runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
             runs.push(
                 new TextRun({ text: `Telefon: ${u.phone}`, size: SZ_TABLE_BODY, font: FONT })
             );

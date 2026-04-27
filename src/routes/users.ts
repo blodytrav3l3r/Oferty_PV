@@ -3,9 +3,17 @@ import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { validateData } from '../validators/authSchema';
+import { createRateLimiter } from '../middleware/rateLimiter';
 import { userUpdateSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
+
+// Rate limiter dla operacji admina na użytkownikach (30 zapytań na minutę)
+const adminUsersLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 30,
+    message: 'Zbyt wiele operacji na użytkownikach. Odczekaj minutę.'
+});
 
 /**
  * POMOCNICZE: Pobieranie licznika zamówień
@@ -69,7 +77,7 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
 });
 
 // PUT /api/users/:id (tylko administrator)
-router.put('/:id', requireAuth, requireAdmin, validateData(userUpdateSchema), async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, adminUsersLimiter, validateData(userUpdateSchema), async (req, res) => {
     const {
         username,
         password,
@@ -152,7 +160,7 @@ router.put('/:id', requireAuth, requireAdmin, validateData(userUpdateSchema), as
 });
 
 // DELETE /api/users/:id (tylko administrator)
-router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (req.params.id === authReq.user?.id)
         return res.status(400).json({ error: 'Nie możesz usunąć siebie' });

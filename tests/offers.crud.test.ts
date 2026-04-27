@@ -22,7 +22,8 @@ jest.mock('../src/utils/logger', () => ({
     logger: {
         info: jest.fn(),
         error: jest.fn(),
-        warn: jest.fn()
+        warn: jest.fn(),
+        debug: jest.fn()
     }
 }));
 
@@ -45,7 +46,10 @@ jest.mock('../src/prismaClient', () => ({
             findMany: jest.fn(),
             deleteMany: jest.fn(),
             create: jest.fn()
-        }
+        },
+        // Raw SQL methods used in crud.ts
+        $queryRawUnsafe: jest.fn(),
+        $executeRawUnsafe: jest.fn()
     }
 }));
 
@@ -97,6 +101,10 @@ describe('Offers CRUD Routes', () => {
         app.use('/api/offers', crudRoutes);
     });
 
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
     describe('GET /api/offers', () => {
         it('powinien pobrać listy ofert rury i je przemapować', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([mockOfferRury]);
@@ -117,7 +125,17 @@ describe('Offers CRUD Routes', () => {
 
     describe('GET /api/offers/studnie', () => {
         it('powinien pobrać oferty studni', async () => {
-            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([mockOfferStudnie]);
+            // Mock raw SQL query - returns array of objects from DB
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([{
+                id: 's-1',
+                userId: 'user-id',
+                offer_number: 'S1',
+                state: 'draft',
+                data: JSON.stringify({ totalPrice: 500 }),
+                history: '[]',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }]);
 
             const res = await request(app).get('/api/offers/studnie');
             expect(res.statusCode).toBe(200);
@@ -189,8 +207,9 @@ describe('Offers CRUD Routes', () => {
 
     describe('PUT /api/offers/studnie i DELETE', () => {
         it('powinien usunąć ofertę studni', async () => {
-            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferStudnie);
-            (prisma.offers_studnie_rel.delete as jest.Mock).mockResolvedValue({});
+            // Mock raw SQL for GET (find) and DELETE
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([mockOfferStudnie]);
+            (prisma.$executeRawUnsafe as jest.Mock).mockResolvedValue(1);
 
             const res = await request(app)
                 .delete('/api/offers/studnie/s-1')
@@ -201,7 +220,7 @@ describe('Offers CRUD Routes', () => {
             expect(res.body.ok).toBe(true);
         });
         
-        // usunięte z powodu brakująciej potrzeby, >80% pokrycia już jest
+        // usunięte z powodu brakującej potrzeby, >80% pokrycia już jest
     });
 
     describe('PUT bulk routes i DELETE', () => {

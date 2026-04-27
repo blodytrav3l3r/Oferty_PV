@@ -101,7 +101,7 @@ async function migrateLegacyDefaults(config: PricelistConfig): Promise<void> {
 /**
  * Odczytuje cennik z ustawień (settings) po kluczu. Zwraca sparsowaną tablicę lub pustą tablicę.
  */
-export async function readPricelist(key: string): Promise<any[]> {
+export async function readPricelist(key: string): Promise<Record<string, unknown>[]> {
     const row = await prisma.settings.findUnique({ where: { key } });
     return row ? JSON.parse(row.value || '[]') : [];
 }

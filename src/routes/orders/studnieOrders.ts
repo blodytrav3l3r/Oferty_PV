@@ -4,9 +4,17 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
+import { createRateLimiter } from '../../middleware/rateLimiter';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
+
+// Rate limiter dla operacji na zamówieniach (60 zapytań na minutę)
+const writeOrdersLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 60,
+    message: 'Zbyt wiele operacji na zamówieniach. Odczekaj minutę.'
+});
 
 /* ===== ZAMÓWIENIA STUDNIE ===== */
 
@@ -59,7 +67,7 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-router.put('/', requireAuth, validateData(studnieOrdersBatchSchema), async (req, res) => {
+router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const incoming = req.body.data || [];
@@ -179,7 +187,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/:id', requireAuth, validateData(studnieOrderUpdateSchema), async (req, res) => {
+router.patch('/:id', requireAuth, writeOrdersLimiter, validateData(studnieOrderUpdateSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;
@@ -224,7 +232,7 @@ router.patch('/:id', requireAuth, validateData(studnieOrderUpdateSchema), async 
     }
 });
 
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;

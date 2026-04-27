@@ -3,9 +3,17 @@ import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { buildRoleWhereClause } from '../utils/roleFilter';
 import { validateData } from '../validators/authSchema';
+import { createRateLimiter } from '../middleware/rateLimiter';
 import { clientsBatchSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
+
+// Rate limiter dla operacji na klientach (60 zapytań na minutę)
+const writeClientsLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 60,
+    message: 'Zbyt wiele operacji na klientach. Odczekaj minutę.'
+});
 
 // GET /api/clients - Pobiera klientów z bazy użytkownika
 router.get('/', requireAuth, async (req, res) => {
@@ -24,7 +32,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // PUT /api/clients - Synchronizacja klientów
-router.put('/', requireAuth, validateData(clientsBatchSchema), async (req, res) => {
+router.put('/', requireAuth, writeClientsLimiter, validateData(clientsBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const arr = req.body.data || [];

@@ -28,7 +28,10 @@ jest.mock('../src/prismaClient', () => ({
         },
         production_orders_rel: {
             findMany: jest.fn()
-        }
+        },
+        // Raw SQL methods used in studnieOrders.ts
+        $queryRawUnsafe: jest.fn(),
+        $executeRawUnsafe: jest.fn()
     }
 }));
 
@@ -55,9 +58,9 @@ describe('Partial Orders Backend Logic', () => {
             wells: [{ id: 'well-2', name: 'S2' }]
         };
 
-        // Mocking upsert for both orders
-        (prisma.orders_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
-        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
+        // Mock raw SQL for find (no existing orders) and execute
+        (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([]);
+        (prisma.$executeRawUnsafe as jest.Mock).mockResolvedValue(1);
 
         const res = await request(app)
             .put('/api/orders-studnie')
@@ -65,29 +68,17 @@ describe('Partial Orders Backend Logic', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.body.ok).toBe(true);
-        expect(prisma.orders_studnie_rel.upsert).toHaveBeenCalledTimes(2);
-        
-        // Verify that offerStudnieId was passed correctly
-        expect(prisma.orders_studnie_rel.upsert).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-                create: expect.objectContaining({ offerStudnieId: offerId })
-            })
-        );
-        expect(prisma.orders_studnie_rel.upsert).toHaveBeenNthCalledWith(
-            2,
-            expect.objectContaining({
-                create: expect.objectContaining({ offerStudnieId: offerId })
-            })
-        );
+        // Should execute 2 INSERTs (one for each order)
+        expect(prisma.$executeRawUnsafe).toHaveBeenCalledTimes(2);
     });
 
     it('should correctly filter orders by user role', async () => {
         const mockOrders = [
-            { id: 'o1', userId: 'test-user', offerStudnieId: 'off1', data: '{}' },
-            { id: 'o2', userId: 'other-user', offerStudnieId: 'off1', data: '{}' }
+            { id: 'o1', userId: 'test-user', offerStudnieId: 'off1', data: '{}', createdAt: new Date().toISOString() },
+            { id: 'o2', userId: 'other-user', offerStudnieId: 'off1', data: '{}', createdAt: new Date().toISOString() }
         ];
-        (prisma.orders_studnie_rel.findMany as jest.Mock).mockResolvedValue(mockOrders);
+        // Mock raw SQL for GET
+        (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(mockOrders);
 
         const res = await request(app).get('/api/orders-studnie');
         

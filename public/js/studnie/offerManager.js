@@ -671,8 +671,11 @@ async function loadOffersStudnie() {
         const res = await fetch('/api/offers-studnie', { headers: authHeaders() });
         const json = await res.json();
         const rawOffers = json.data || [];
+        console.log('[loadOffersStudnie] API response:', { count: rawOffers.length, ids: rawOffers.map(o => o.id) });
         // Normalizuj każdą ofertę, aby spłaszczyć właściwości .data (numer, data, studnie itp.)
-        return rawOffers.map((o) => normalizeOfferData(o));
+        const normalized = rawOffers.map((o) => normalizeOfferData(o));
+        console.log('[loadOffersStudnie] Normalized:', { count: normalized.length, ids: normalized.map(o => o.id) });
+        return normalized;
     } catch (e) {
         console.error('Błąd ładowania ofert:', e);
         return [];

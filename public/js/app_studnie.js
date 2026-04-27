@@ -122,11 +122,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } else if (editId) {
         // offersStudnie is already loaded above — find the offer directly
+        console.log('[AppStudnie] Szukanie oferty:', { editId, offersCount: offersStudnie.length, offersIds: offersStudnie.map(o => o.id) });
         const doc = offersStudnie.find((o) => String(o.id) === String(editId));
         const restoreIdx = urlParams.get('restore');
 
         if (!doc) {
-            console.error('[AppStudnie] Nie znaleziono oferty o ID:', editId);
+            console.error('[AppStudnie] Nie znaleziono oferty o ID:', editId, 'w', offersStudnie.length, 'ofertach');
             showToast('Nie znaleziono oferty do edycji.', 'error');
             showSection('builder');
         } else {
