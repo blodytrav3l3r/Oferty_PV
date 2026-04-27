@@ -92,10 +92,12 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 updatedAt: string | null;
             }>
         >(`SELECT id, "userId", "offer_number", state, data, history,
-            CASE WHEN "createdAt" ~ '^\\d+$' THEN TO_TIMESTAMP(CAST("createdAt" AS BIGINT)/1000)::TEXT
-                 ELSE "createdAt"::TEXT END as "createdAt",
-            CASE WHEN "updatedAt" ~ '^\\d+$' THEN TO_TIMESTAMP(CAST("updatedAt" AS BIGINT)/1000)::TEXT
-                 ELSE "updatedAt"::TEXT END as "updatedAt"
+            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "createdAt" END as "createdAt",
+            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "updatedAt" END as "updatedAt"
          FROM offers_studnie_rel ${whereSql}`);
 
         const mapped = offers.map((offer) => {
