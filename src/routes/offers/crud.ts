@@ -139,6 +139,59 @@ router.get('/:id', requireAuth, async (req, res) => {
         // Unikaj kolizji z sub-ścieżkami (np. /studnie)
         if (id === 'studnie') return res.status(400).json({ error: 'Nieprawidłowe ID oferty' });
 
+        // Jeśli ID zaczyna się od 'offer_studnie_', to oferta studni
+        if (id.startsWith('offer_studnie_')) {
+            // Użyj raw query aby obsłużyć błędne daty w bazie
+            const offers = await prisma.$queryRawUnsafe<
+                Array<{
+                    id: string;
+                    userId: string | null;
+                    offer_number: string | null;
+                    state: string | null;
+                    data: string | null;
+                    history: string | null;
+                    createdAt: string | null;
+                    updatedAt: string | null;
+                }>
+            >(`SELECT id, "userId", "offer_number", state, data, history,
+                CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                    THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                    ELSE "createdAt" END as "createdAt",
+                CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                    THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                    ELSE "updatedAt" END as "updatedAt"
+             FROM offers_studnie_rel WHERE id = '${id}'`);
+            const offer = offers[0];
+            if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
+
+            // Weryfikacja uprawnień odczytu
+            if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+                return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
+            }
+
+            let parsedData: Record<string, unknown> = {};
+            try {
+                if (offer.data) parsedData = JSON.parse(offer.data);
+            } catch (_e) {}
+
+            return res.json({
+                data: {
+                    id: offer.id,
+                    type: 'studnia_oferta',
+                    userId: offer.userId,
+                    title: `Oferta Studnia ${offer.offer_number || offer.id}`,
+                    price: (parsedData.totalPrice as number) || 0,
+                    status: offer.state === 'final' ? 'active' : 'draft',
+                    createdAt: offer.createdAt || new Date().toISOString(),
+                    updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
+                    lastEditedBy: offer.userId,
+                    data: parsedData,
+                    history: JSON.parse(offer.history || '[]')
+                }
+            });
+        }
+
+        // Standardowa oferta rur
         const offer = await prisma.offers_rel.findUnique({
             where: { id }
         });
@@ -592,6 +645,39 @@ router.delete('/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Jeśli ID zaczyna się od 'offer_studnie_', to oferta studni
+        if (id.startsWith('offer_studnie_')) {
+            logger.info('Offers', 'DELETE /:id (studnie) start', { id, userId: authReq.user?.id });
+
+            // Użyj raw query aby obsłużyć błędne daty w bazie
+            const offers = await prisma.$queryRawUnsafe<
+                Array<{ id: string; userId: string | null; data: string | null }>
+            >(`SELECT id, "userId", data FROM offers_studnie_rel WHERE id = '${id}'`);
+            const offer = offers[0];
+            if (!offer) {
+                logger.warn('Offers', 'Oferta studni nie istnieje', { id });
+                return res.status(404).json({ error: 'Oferta studni nie istnieje' });
+            }
+
+            if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+                return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
+            }
+
+            // Audyt
+            let oldData: Record<string, unknown> = {};
+            try {
+                oldData = JSON.parse(offer.data || '{}');
+            } catch (_e) {}
+            logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
+
+            // Użyj raw query aby obsłużyć błędne daty w bazie
+            await prisma.$executeRawUnsafe(`DELETE FROM offers_studnie_rel WHERE id = '${id}'`);
+
+            logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
+            return res.json({ ok: true });
+        }
+
+        // Standardowa oferta rur
         const offer = await prisma.offers_rel.findUnique({
             where: { id }
         });
