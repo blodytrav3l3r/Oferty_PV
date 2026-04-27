@@ -3,7 +3,6 @@ import prisma from '../../prismaClient';
 import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField } from '../../helpers';
-import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { productionOrdersBatchSchema, productionOrderCreateSchema } from '../../validators/offerSchemas';
@@ -12,13 +11,39 @@ const router = express.Router();
 
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
 
+// Buduje SQL WHERE clause na podstawie roli użytkownika
+function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[] }): string {
+    if (user.role === 'admin') return '';
+    if (user.role === 'pro') {
+        const allowedIds = [user.id, ...(user.subUsers || [])].map(id => `'${id}'`).join(',');
+        return `WHERE "userId" IN (${allowedIds})`;
+    }
+    return `WHERE "userId" = '${user.id}'`;
+}
+
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
-        const orders = await prisma.production_orders_rel.findMany({
-            where: roleClause
-        });
+        const whereSql = authReq.user ? buildRoleWhereSql(authReq.user) : '';
+        const orders = await prisma.$queryRawUnsafe<
+            Array<{
+                id: string;
+                userId: string | null;
+                orderId: string | null;
+                wellId: string | null;
+                elementIndex: number | null;
+                createdAt: string | null;
+                updatedAt: string | null;
+                data: string | null;
+            }>
+        >(`SELECT id, "userId", "orderId", "wellId", "elementIndex", data,
+            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "createdAt" END as "createdAt",
+            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "updatedAt" END as "updatedAt"
+         FROM production_orders_rel ${whereSql}`);
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
@@ -45,11 +70,26 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/registry', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
-        const orders = await prisma.production_orders_rel.findMany({
-            where: roleClause,
-            orderBy: { createdAt: 'desc' }
-        });
+        const whereSql = authReq.user ? buildRoleWhereSql(authReq.user) : '';
+        const orders = await prisma.$queryRawUnsafe<
+            Array<{
+                id: string;
+                userId: string | null;
+                orderId: string | null;
+                wellId: string | null;
+                elementIndex: number | null;
+                createdAt: string | null;
+                updatedAt: string | null;
+                data: string | null;
+            }>
+        >(`SELECT id, "userId", "orderId", "wellId", "elementIndex", data,
+            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "createdAt" END as "createdAt",
+            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "updatedAt" END as "updatedAt"
+         FROM production_orders_rel ${whereSql} ORDER BY "createdAt" DESC`);
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
@@ -164,16 +204,31 @@ router.post('/', requireAuth, validateData(productionOrderCreateSchema), async (
             orderId,
             wellId,
             elementIndex,
-            createdAt,
-            updatedAt,
+            createdAt: createdAtRaw,
+            updatedAt: updatedAtRaw,
             ...rest
         } = o;
-        const dataStr = JSON.stringify(rest);
+        const dataStr = JSON.stringify(rest).replace(/'/g, "''");
 
-        const old = await prisma.production_orders_rel.findUnique({
-            where: { id: docId },
-            select: { data: true }
-        });
+        // Konwersja dat z timestamp na ISO string
+        const convertDate = (raw: unknown): string => {
+            if (typeof raw === 'number') return new Date(raw).toISOString();
+            if (raw instanceof Date) return raw.toISOString();
+            if (typeof raw === 'string') {
+                if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
+                return raw;
+            }
+            return new Date().toISOString();
+        };
+        const createdAt = convertDate(createdAtRaw);
+        const updatedAt = convertDate(updatedAtRaw);
+
+        // Użyj raw query dla find (obsługa błędnych dat w bazie)
+        const oldRows = await prisma.$queryRawUnsafe<
+            Array<{ data: string | null }>
+        >(`SELECT data FROM production_orders_rel WHERE id = '${docId}'`);
+        const old = oldRows[0];
+
         if (old) {
             logAudit(
                 'production_order',
@@ -187,30 +242,21 @@ router.post('/', requireAuth, validateData(productionOrderCreateSchema), async (
             logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
         }
 
-        await prisma.production_orders_rel.upsert({
-            where: { id: docId },
-            create: {
-                id: docId,
-                userId: userId || authReq.user?.id,
-                creatorId: authReq.user?.id,
-                orderId: orderId || '',
-                wellId: wellId || '',
-                elementIndex: elementIndex || 0,
-                createdAt: createdAt || new Date().toISOString(),
-                updatedAt: updatedAt || new Date().toISOString(),
-                data: dataStr
-            },
-            update: {
-                userId: userId || authReq.user?.id,
-                creatorId: authReq.user?.id,
-                orderId: orderId || '',
-                wellId: wellId || '',
-                elementIndex: elementIndex || 0,
-                createdAt: createdAt || new Date().toISOString(),
-                updatedAt: updatedAt || new Date().toISOString(),
-                data: dataStr
-            }
-        });
+        // Użyj raw query dla INSERT/UPDATE
+        const updateResult = await prisma.$executeRawUnsafe(
+            `UPDATE production_orders_rel SET "userId" = '${userId || authReq.user?.id || ''}', ` +
+            `"creatorId" = '${authReq.user?.id || ''}', "orderId" = '${orderId || ''}', ` +
+            `"wellId" = '${wellId || ''}', "elementIndex" = ${elementIndex || 0}, ` +
+            `"updatedAt" = '${updatedAt}', data = '${dataStr}' WHERE id = '${docId}'`
+        );
+        if (updateResult === 0) {
+            await prisma.$executeRawUnsafe(
+                `INSERT INTO production_orders_rel (id, "userId", "creatorId", "orderId", "wellId", ` +
+                `"elementIndex", "createdAt", "updatedAt", data) VALUES ` +
+                `('${docId}', '${userId || authReq.user?.id || ''}', '${authReq.user?.id || ''}', ` +
+                `'${orderId || ''}', '${wellId || ''}', ${elementIndex || 0}, '${createdAt}', '${updatedAt}', '${dataStr}')`
+            );
+        }
 
         res.json({ ok: true, id: docId });
     } catch (e: unknown) {
@@ -225,9 +271,27 @@ router.get('/:id', requireAuth, async (req, res) => {
     try {
         const docId = req.params.id;
 
-        const order = await prisma.production_orders_rel.findUnique({
-            where: { id: docId }
-        });
+        // Użyj raw query aby obsłużyć błędne daty w bazie
+        const orders = await prisma.$queryRawUnsafe<
+            Array<{
+                id: string;
+                userId: string | null;
+                orderId: string | null;
+                wellId: string | null;
+                elementIndex: number | null;
+                createdAt: string | null;
+                updatedAt: string | null;
+                data: string | null;
+            }>
+        >(`SELECT id, "userId", "orderId", "wellId", "elementIndex", data,
+            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "createdAt" END as "createdAt",
+            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE "updatedAt" END as "updatedAt"
+         FROM production_orders_rel WHERE id = '${docId}'`);
+        const order = orders[0];
         if (!order || (authReq.user?.role !== 'admin' && order.userId !== authReq.user?.id)) {
             return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         }
@@ -258,9 +322,11 @@ router.delete('/:id', requireAuth, async (req, res) => {
     try {
         const docId = req.params.id;
 
-        const existing = await prisma.production_orders_rel.findUnique({
-            where: { id: docId }
-        });
+        // Użyj raw query aby obsłużyć błędne daty w bazie
+        const existingRows = await prisma.$queryRawUnsafe<
+            Array<{ id: string; userId: string | null; data: string | null }>
+        >(`SELECT id, "userId", data FROM production_orders_rel WHERE id = '${docId}'`);
+        const existing = existingRows[0];
         if (!existing) return res.json({ ok: true });
 
         const oldData = parseJsonField<Record<string, unknown>>(existing.data, {});
@@ -282,33 +348,20 @@ router.delete('/:id', requireAuth, async (req, res) => {
                 const yearShort = parseInt(parts[3], 10);
                 const fullYear = 2000 + yearShort;
                 if (seqNumber > 0) {
-                    await prisma.recycled_production_numbers.upsert({
-                        where: {
-                            userId_year_seqNumber: {
-                                userId: existing.userId || '',
-                                year: fullYear,
-                                seqNumber
-                            }
-                        },
-                        create: {
-                            userId: existing.userId || '',
-                            year: fullYear,
-                            seqNumber
-                        },
-                        update: {}
-                    });
+                    await prisma.$executeRawUnsafe(
+                        `INSERT INTO recycled_production_numbers ("userId", year, seqNumber) ` +
+                        `VALUES ('${existing.userId || ''}', ${fullYear}, ${seqNumber}) ` +
+                        `ON CONFLICT ("userId", year, seqNumber) DO NOTHING`
+                    );
                 }
             }
         }
 
+        // Użyj raw query dla delete
         if (authReq.user?.role === 'admin') {
-            await prisma.production_orders_rel.delete({
-                where: { id: docId }
-            });
+            await prisma.$executeRawUnsafe(`DELETE FROM production_orders_rel WHERE id = '${docId}'`);
         } else {
-            await prisma.production_orders_rel.deleteMany({
-                where: { id: docId, userId: authReq.user?.id }
-            });
+            await prisma.$executeRawUnsafe(`DELETE FROM production_orders_rel WHERE id = '${docId}' AND "userId" = '${authReq.user?.id}'`);
         }
         res.json({ ok: true });
     } catch (e: unknown) {

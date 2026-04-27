@@ -104,42 +104,34 @@ async function logUpdateWithDebounce(
 
     const cutoff = new Date(new Date(now).getTime() - DEBOUNCE_SECONDS * 1000).toISOString();
 
-    const recent = await prisma.audit_logs.findFirst({
-        where: {
-            entityType,
-            entityId,
-            userId,
-            action: 'update',
-            createdAt: { gt: cutoff }
-        },
-        orderBy: { createdAt: 'desc' }
-    });
+    // Użyj raw query dla find (obsługa błędnych dat w bazie)
+    const recentRows = await prisma.$queryRawUnsafe<
+        Array<{ id: string }>
+    >(
+        `SELECT id FROM audit_logs WHERE entityType = '${entityType}' AND entityId = '${entityId}' ` +
+        `AND userId = '${userId}' AND action = 'update' AND createdAt > '${cutoff}' ` +
+        `ORDER BY createdAt DESC LIMIT 1`
+    );
+    const recent = recentRows[0];
+
+    const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true }).replace(/'/g, "''");
 
     if (recent) {
         // Nadpisz istniejący wpis
-        await prisma.audit_logs.update({
-            where: { id: recent.id },
-            data: {
-                newData: JSON.stringify({ ...diff.changed, _diffMode: true }),
-                createdAt: now
-            }
-        });
+        await prisma.$executeRawUnsafe(
+            `UPDATE audit_logs SET newData = '${newDataStr}', createdAt = '${now}' WHERE id = '${recent.id}'`
+        );
         return;
     }
 
     // Nowy wpis z diffem
-    await prisma.audit_logs.create({
-        data: {
-            id: generateAuditId(),
-            entityType,
-            entityId,
-            userId,
-            action: 'update',
-            oldData: JSON.stringify({ ...diff.old, _diffMode: true }),
-            newData: JSON.stringify({ ...diff.changed, _diffMode: true }),
-            createdAt: now
-        }
-    });
+    const auditId = generateAuditId();
+    const oldDataStr = JSON.stringify({ ...diff.old, _diffMode: true }).replace(/'/g, "''");
+    await prisma.$executeRawUnsafe(
+        `INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt) ` +
+        `VALUES ('${auditId}', '${entityType}', '${entityId}', '${userId}', 'update', ` +
+        `'${oldDataStr}', '${newDataStr}', '${now}')`
+    );
 }
 
 // ─── Czyszczenie logów (Retention Cleanup) ──────────────────────────
