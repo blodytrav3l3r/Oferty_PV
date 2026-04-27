@@ -124,7 +124,12 @@ app.use('/api/products-studnie', productStudnieAutoRoutes);
 app.use('/api/offers-rury', offerRoutes);
 
 // Oferty Studnie - alias dla /api/offers-rury/studnie
-app.use('/api/offers-studnie', offerRoutes);
+// Dodajemy /studnie do URL aby trafić na właściwy route
+app.use('/api/offers-studnie', (req, res, next) => {
+    // Przekieruj /api/offers-studnie -> /api/offers-rury/studnie
+    req.url = '/studnie' + req.url;
+    offerRoutes(req, res, next);
+});
 
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
 app.use('/api/clients', apiLimiter, clientRoutes);
