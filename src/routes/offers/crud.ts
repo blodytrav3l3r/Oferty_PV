@@ -69,10 +69,34 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const whereClause = authReq.user?.role === 'admin' ? {} : (authReq.user ? buildRoleWhereClause(authReq.user) : { userId: '' });
-        const offers = await prisma.offers_studnie_rel.findMany({
-            where: whereClause || undefined
-        });
+        // Użyj raw query aby obsłużyć błędne daty w bazie
+        let whereSql = '';
+        if (authReq.user?.role !== 'admin' && authReq.user) {
+            if (authReq.user.role === 'pro') {
+                const allowedIds = [authReq.user.id, ...(authReq.user.subUsers || [])].map(id => `'${id}'`).join(',');
+                whereSql = `WHERE "userId" IN (${allowedIds})`;
+            } else {
+                whereSql = `WHERE "userId" = '${authReq.user.id}'`;
+            }
+        }
+
+        const offers = await prisma.$queryRawUnsafe<
+            Array<{
+                id: string;
+                userId: string | null;
+                offer_number: string | null;
+                state: string | null;
+                data: string | null;
+                history: string | null;
+                createdAt: string | null;
+                updatedAt: string | null;
+            }>
+        >(`SELECT id, "userId", "offer_number", state, data, history,
+            CASE WHEN "createdAt" ~ '^\\d+$' THEN TO_TIMESTAMP(CAST("createdAt" AS BIGINT)/1000)::TEXT
+                 ELSE "createdAt"::TEXT END as "createdAt",
+            CASE WHEN "updatedAt" ~ '^\\d+$' THEN TO_TIMESTAMP(CAST("updatedAt" AS BIGINT)/1000)::TEXT
+                 ELSE "updatedAt"::TEXT END as "updatedAt"
+         FROM offers_studnie_rel ${whereSql}`);
 
         const mapped = offers.map((offer) => {
             let parsedData: Record<string, unknown> = {};
@@ -87,8 +111,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
                 price: parsedData.totalPrice || 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
-                createdAt: offer.createdAt?.toISOString() || new Date().toISOString(),
-                updatedAt: offer.updatedAt?.toISOString() || offer.createdAt?.toISOString() || new Date().toISOString(),
+                createdAt: offer.createdAt || new Date().toISOString(),
+                updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 data: parsedData,
                 history: JSON.parse(offer.history || '[]')
