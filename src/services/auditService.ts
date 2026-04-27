@@ -72,18 +72,15 @@ export async function logAudit(
         }
 
         // Dla 'create' / 'delete': pełna migawka (snapshot)
-        await prisma.audit_logs.create({
-            data: {
-                id: generateAuditId(),
-                entityType,
-                entityId,
-                userId,
-                action,
-                oldData: oldData ? JSON.stringify(oldData) : null,
-                newData: newData ? JSON.stringify(newData) : null,
-                createdAt: now
-            }
-        });
+        // Użyj raw query aby uniknąć problemów z konwersją dat
+        const auditId = generateAuditId();
+        const oldDataStr = oldData ? JSON.stringify(oldData).replace(/'/g, "''") : null;
+        const newDataStr = newData ? JSON.stringify(newData).replace(/'/g, "''") : null;
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt) ` +
+            `VALUES ('${auditId}', '${entityType}', '${entityId}', '${userId}', '${action}', ` +
+            `${oldDataStr ? `'${oldDataStr}'` : 'NULL'}, ${newDataStr ? `'${newDataStr}'` : 'NULL'}, '${now}')`
+        );
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('AuditLog', 'Błąd zapisu logu', message);

@@ -423,34 +423,31 @@ router.post('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asy
                 if (raw instanceof Date) return raw.toISOString();
                 if (typeof raw === 'string') {
                     if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                    return raw; // już ISO string
+                    if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString(); // dowolna liczba
+                    return raw;
                 }
                 return new Date().toISOString();
             })();
             const updated = new Date().toISOString();
             const offerNumber = o.number || o.offer_number || '';
+            const userId = o.userId || authReq.user?.id || '';
+            const dataStr = JSON.stringify(o).replace(/'/g, "''");
+            const historyStr = JSON.stringify(newHistory).replace(/'/g, "''");
 
-            await prisma.offers_studnie_rel.upsert({
-                where: { id: docId },
-                create: {
-                    id: docId,
-                    userId: o.userId || authReq.user?.id,
-                    offer_number: offerNumber,
-                    state: state,
-                    createdAt: created,
-                    updatedAt: updated,
-                    data: JSON.stringify(o),
-                    history: JSON.stringify(newHistory)
-                },
-                update: {
-                    userId: o.userId || authReq.user?.id,
-                    offer_number: offerNumber,
-                    state: state,
-                    updatedAt: updated,
-                    data: JSON.stringify(o),
-                    history: JSON.stringify(newHistory)
-                }
-            });
+            // Użyj raw query aby obsłużyć błędne daty w bazie
+            // Najpierw spróbuj UPDATE, potem INSERT jeśli nie istnieje
+            const updateResult = await prisma.$executeRawUnsafe(
+                `UPDATE offers_studnie_rel SET "userId" = '${userId}', "offer_number" = '${offerNumber}', ` +
+                `state = '${state}', "updatedAt" = '${updated}', data = '${dataStr}', history = '${historyStr}' ` +
+                `WHERE id = '${docId}'`
+            );
+            // Jeśli nic nie zaktualizowano (brak rekordu), to INSERT
+            if (updateResult === 0) {
+                await prisma.$executeRawUnsafe(
+                    `INSERT INTO offers_studnie_rel (id, "userId", "offer_number", state, "createdAt", "updatedAt", data, history) ` +
+                    `VALUES ('${docId}', '${userId}', '${offerNumber}', '${state}', '${created}', '${updated}', '${dataStr}', '${historyStr}')`
+                );
+            }
             results.push({ id: docId, ok: true });
         }
 
@@ -663,9 +660,8 @@ router.delete('/studnie/:id', requireAuth, async (req, res) => {
         } catch (_e) {}
         logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
-        await prisma.offers_studnie_rel.delete({
-            where: { id }
-        });
+        // Użyj raw query aby obsłużyć błędne daty w bazie
+        await prisma.$executeRawUnsafe(`DELETE FROM offers_studnie_rel WHERE id = '${id}'`);
 
         logger.info('Offers', `Oferta studnie ${req.params.id} usunięta przez ${authReq.user?.username}`);
         res.json({ ok: true });
