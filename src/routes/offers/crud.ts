@@ -80,6 +80,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
             }
         }
 
+        logger.debug('Offers', 'GET /studnie', { userId: authReq.user?.id, role: authReq.user?.role, whereSql });
+
         const offers = await prisma.$queryRawUnsafe<
             Array<{
                 id: string;
@@ -121,6 +123,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
             };
         });
 
+        logger.debug('Offers', 'GET /studnie wynik', { count: mapped.length, ids: mapped.map(o => o.id) });
         res.json({ data: mapped });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
