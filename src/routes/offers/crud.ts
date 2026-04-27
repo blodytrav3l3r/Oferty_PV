@@ -285,11 +285,17 @@ router.post('/', requireAuth, validateData(offersBatchSchema), async (req, res) 
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
-            const createdRaw = o.createdAt || new Date().toISOString();
-            const created = /^\d{13}$/.test(String(createdRaw))
-                ? new Date(Number(createdRaw)).toISOString()
-                : createdRaw;
+            // Konwersja createdAt - obsługa: timestamp number/string, Date object, ISO string
+            const created = (() => {
+                const raw = o.createdAt;
+                if (typeof raw === 'number') return new Date(raw).toISOString();
+                if (raw instanceof Date) return raw.toISOString();
+                if (typeof raw === 'string') {
+                    if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
+                    return raw;
+                }
+                return new Date().toISOString();
+            })();
             const updated = new Date().toISOString();
             const offerNumber = o.offer_number || o.number || '';
 
@@ -391,11 +397,17 @@ router.post('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asy
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
-            const createdRaw = o.createdAt || new Date().toISOString();
-            const created = /^\d{13}$/.test(String(createdRaw))
-                ? new Date(Number(createdRaw)).toISOString()
-                : createdRaw;
+            // Konwersja createdAt - obsługa: timestamp number/string, Date object, ISO string
+            const created = (() => {
+                const raw = o.createdAt;
+                if (typeof raw === 'number') return new Date(raw).toISOString();
+                if (raw instanceof Date) return raw.toISOString();
+                if (typeof raw === 'string') {
+                    if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
+                    return raw; // już ISO string
+                }
+                return new Date().toISOString();
+            })();
             const updated = new Date().toISOString();
             const offerNumber = o.number || o.offer_number || '';
 
@@ -449,11 +461,17 @@ router.put('/', requireAuth, validateData(offersBatchSchema), async (req, res) =
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
-            const createdRaw = o.createdAt || new Date().toISOString();
-            const created = /^\d{13}$/.test(String(createdRaw))
-                ? new Date(Number(createdRaw)).toISOString()
-                : createdRaw;
+            // Konwersja createdAt - obsługa: timestamp number/string, Date object, ISO string
+            const created = (() => {
+                const raw = o.createdAt;
+                if (typeof raw === 'number') return new Date(raw).toISOString();
+                if (raw instanceof Date) return raw.toISOString();
+                if (typeof raw === 'string') {
+                    if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
+                    return raw;
+                }
+                return new Date().toISOString();
+            })();
 
             await prisma.offers_rel.upsert({
                 where: { id: docId },
@@ -514,11 +532,17 @@ router.put('/studnie', requireAuth, validateData(offersStudnieBatchSchema), asyn
             }
 
             const state = o.status === 'active' ? 'final' : 'draft';
-            // Konwersja createdAt - może być timestamp (string liczby) lub ISO string
-            const createdRaw = o.createdAt || new Date().toISOString();
-            const created = /^\d{13}$/.test(String(createdRaw))
-                ? new Date(Number(createdRaw)).toISOString()
-                : createdRaw;
+            // Konwersja createdAt - obsługa: timestamp number/string, Date object, ISO string
+            const created = (() => {
+                const raw = o.createdAt;
+                if (typeof raw === 'number') return new Date(raw).toISOString();
+                if (raw instanceof Date) return raw.toISOString();
+                if (typeof raw === 'string') {
+                    if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
+                    return raw;
+                }
+                return new Date().toISOString();
+            })();
 
             await prisma.offers_studnie_rel.upsert({
                 where: { id: docId },
