@@ -443,7 +443,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     well.przejscia = sorted.map((s) => s.item);
 
     let totalPrice = 0;
-    let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem;">';
+    let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem; overflow-x:auto; padding-bottom:0.5rem;">';
 
     let prevAssignedIndex = -999;
     let filteredCount = 0;
@@ -460,6 +460,37 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             mmFromBottom,
             configMap
         );
+
+        // Calculate drilling price for this transition
+        let drillingBasePrice = 0;
+        let bestDrillProd = null;
+        const p = findProduct(item.productId);
+        if (p) {
+            const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
+            if (!isInsitu && assignedEntry && (assignedEntry.componentType === 'krag' || assignedEntry.componentType === 'krag_ot')) {
+                const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
+                if (trDn > 0) {
+                    const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                    let bestDnDiff = Infinity;
+                    drillingProducts.forEach(drill => {
+                        let drillDn = parseInt(drill.dn);
+                        if (isNaN(drillDn)) {
+                            const match = drill.id.match(/Wiercenie-(\d+)/i);
+                            if (match) drillDn = parseInt(match[1]);
+                        }
+                        if (!isNaN(drillDn) && drillDn >= trDn) {
+                            if (drillDn - trDn < bestDnDiff) {
+                                bestDnDiff = drillDn - trDn;
+                                bestDrillProd = drill;
+                            }
+                        }
+                    });
+                    if (bestDrillProd) {
+                        drillingBasePrice = bestDrillProd.price || 0;
+                    }
+                }
+            }
+        }
 
         // Skip transitions not assigned to this element when filtering
         if (filterElementIndex != null && assignedIndex !== filterElementIndex) return;
@@ -483,9 +514,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             prevAssignedIndex = assignedIndex;
         }
 
-        const p = findProduct(item.productId);
         const price = p ? p.price : 0;
-        totalPrice += price;
+        totalPrice += price + drillingBasePrice;
 
         const heightMm = computeHeightFromElement(mmFromBottom, configMap);
 
@@ -517,7 +547,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     : 360 - editPrzejscieState.angle;
             const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
-            html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.8) 0%, rgba(30,41,59,0.95) 100%); border:1px solid rgba(96,165,250,0.5); border-left:4px solid #3b82f6; border-radius:8px; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(96,165,250,0.15); margin-bottom:0.3rem;">
+            html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.8) 0%, rgba(30,41,59,0.95) 100%); border:1px solid rgba(96,165,250,0.5); border-left:4px solid #3b82f6; border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(96,165,250,0.15); margin-bottom:0.3rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <div style="display:flex; align-items:center; gap:0.4rem;">
                   <div style="display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.2); padding:0.2rem 0.4rem; border-radius:4px;">
@@ -592,7 +622,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             showDeleteBtn: true,
             showPrice: true,
             enableDragDrop: true,
-            assignedCfgIndex: assignedIndex
+            assignedCfgIndex: assignedIndex,
+            drillingBasePrice: drillingBasePrice,
+            drillingProd: bestDrillProd
         });
     });
 
@@ -605,7 +637,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             : `Suma wszystkich przejść (${well.przejscia.length} szt.)`;
     html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(99,102,241,0.08); border-radius:6px; border:1px solid rgba(99,102,241,0.2);">
       <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${countLabel}</span>
-      <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmtInt(totalPrice)} PLN</span>
+      <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmt(totalPrice)} PLN</span>
     </div>`;
 
     container.innerHTML = html;

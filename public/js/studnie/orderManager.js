@@ -75,6 +75,13 @@ window.getOfferOrderProgress = getOfferOrderProgress;
 window.getOrderForWellId = getOrderForWellId;
 
 async function createOrderFromOffer() {
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        if (typeof showToast === 'function') {
+            showToast('Tworzenie nowego zamówienia jest niedostępne w trybie edycji zamówienia.', 'error');
+        }
+        return;
+    }
+
     // Zapobiegaj wyścigom w UI, jeśli użytkownik kliknął dwukrotnie lub kliknął Zamówienie podczas trwania zapisu
     if (isSavingOffer) {
         showToast('Trwa zapisywanie...', 'info');
@@ -359,13 +366,63 @@ function freezeWellPrices(wellsArr) {
         }
         const mult = 1 - discNadbudowa / 100;
 
+        const configMap = typeof buildConfigMap !== 'undefined' ? buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true) : [];
+
         (well.przejscia || []).forEach((item) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
-            const bP = p.price || 0;
+
+            let drillingBasePrice = 0;
+            let drillProdName = '';
+            let drillProdDn = '';
+            const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
+
+            if (!isInsitu && configMap.length > 0) {
+                let rzDna = parseFloat(well.rzednaDna) || 0;
+                let pel = parseFloat(item.rzednaWlaczenia);
+                if (isNaN(pel)) pel = rzDna;
+                let mmFromBottom = (pel - rzDna) * 1000;
+
+                if (typeof findAssignedElement === 'function') {
+                    const assigned = findAssignedElement(mmFromBottom, configMap);
+                    if (assigned && assigned.entry && (assigned.entry.componentType === 'krag' || assigned.entry.componentType === 'krag_ot')) {
+                        const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
+                        if (trDn > 0) {
+                            const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                            let bestDrill = null;
+                            let bestDnDiff = Infinity;
+                            drillingProducts.forEach(drill => {
+                                let drillDn = parseInt(drill.dn);
+                                if (isNaN(drillDn)) {
+                                    const match = drill.id.match(/Wiercenie-(\d+)/i);
+                                    if (match) drillDn = parseInt(match[1]);
+                                }
+                                if (!isNaN(drillDn) && drillDn >= trDn) {
+                                    if (drillDn - trDn < bestDnDiff) {
+                                        bestDnDiff = drillDn - trDn;
+                                        bestDrill = drill;
+                                    }
+                                }
+                            });
+                            if (bestDrill) {
+                                drillingBasePrice = bestDrill.price || 0;
+                                drillProdName = bestDrill.name;
+                                drillProdDn = bestDrill.dn || '';
+                            }
+                        }
+                    }
+                }
+            }
+
+            const transPriceBase = p.price || 0;
+            const bP = transPriceBase + drillingBasePrice;
             item.frozenPrice = bP * mult;
             item.frozenPriceBase = bP;
             item.frozenName = p.name || p.category;
+            item.frozenTransitionPrice = transPriceBase * mult;
+            item.frozenDrillingPrice = drillingBasePrice * mult;
+            item.frozenDrillingName = drillProdName;
+            item.frozenDrillingDn = drillProdDn;
         });
     });
 }
@@ -501,6 +558,7 @@ function getOrderChanges(order) {
                 return JSON.stringify({
                     productId: p.productId,
                     rzednaWlaczenia: rz,
+                    doplata: parseFloat(p.doplata) || 0, // Zmiana dopłaty przejścia = zmiana ceny studni
                     notes: p.notes || '' // Normalizuj undefined/null do '' aby uniknąć false positive
                 });
             });
@@ -545,6 +603,9 @@ function getOrderChanges(order) {
         
         if (!eqNum(o.rzednaWlazu, c.rzednaWlazu)) diffs.push('rzednaWlazu');
         if (!eqNum(o.rzednaDna, c.rzednaDna)) diffs.push('rzednaDna');
+
+        // Zmiana dopłaty studni = zmiana ceny (dopłata wpływa na cenę dennicy)
+        if (!eqNum(o.doplata, c.doplata)) diffs.push('doplata');
 
         if (diffs.length > 0) {
             changes[i] = { type: 'modified', fields: diffs };
@@ -783,10 +844,19 @@ function renderOrderModeBanner() {
         centerCol.insertBefore(banner, centerCol.firstChild);
     }
 
+    const saveSidebarBtn = document.getElementById('btn-save-studnie-sidebar');
+    const saveOfferBtn = document.getElementById('btn-save-studnie-offer');
+
     if (!orderEditMode) {
         banner.style.display = 'none';
+        if (saveSidebarBtn) saveSidebarBtn.style.display = 'flex';
+        if (saveOfferBtn) saveOfferBtn.style.display = 'inline-block';
         return;
     }
+
+    banner.style.display = '';
+    if (saveSidebarBtn) saveSidebarBtn.style.display = 'none';
+    if (saveOfferBtn) saveOfferBtn.style.display = 'none';
 
     const order = orderEditMode.order;
     // Oblicz zmiany w stosunku do bieżących studni
@@ -1035,6 +1105,8 @@ function buildEtykietaElementsSnapshot(well) {
     return items;
 }
 
+let wellsSnapshotBeforeZlecenia = null;
+
 function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null) {
     console.log('[openZleceniaProdukcyjne] Initializing modal...', {
         targetWellId,
@@ -1047,6 +1119,10 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
         showToast('Najpierw dodaj studnie lub wczytaj ofertę/zamówienie!', 'error');
         return;
     }
+
+    // TWORZYMY MIGAWKĘ STANU STUDNI
+    wellsSnapshotBeforeZlecenia = JSON.parse(JSON.stringify(wells));
+
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.add('active');
 
@@ -1095,6 +1171,7 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
 }
 
 async function closeZleceniaModal() {
+    let savedNow = false;
     // Zapytaj użytkownika czy zapisać zmiany przed zamknięciem
     if (zleceniaSelectedIdx >= 0 && zleceniaElementsList[zleceniaSelectedIdx]) {
         const shouldSave = await appConfirm('Czy zapisać zmiany przed zamknięciem?', {
@@ -1105,8 +1182,21 @@ async function closeZleceniaModal() {
         });
         if (shouldSave) {
             await saveProductionOrder();
+            savedNow = true;
         }
     }
+
+    // Jeśli użytkownik zrezygnował z zapisu, przywracamy stan studni sprzed otwarcia modalu
+    if (!savedNow && wellsSnapshotBeforeZlecenia) {
+        wells.length = 0;
+        wells.push(...JSON.parse(JSON.stringify(wellsSnapshotBeforeZlecenia)));
+        
+        if (typeof renderWellsList === 'function') renderWellsList();
+        if (typeof updateSummary === 'function') updateSummary();
+        if (typeof refreshAll === 'function') refreshAll();
+    }
+    
+    wellsSnapshotBeforeZlecenia = null;
 
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.remove('active');
@@ -1766,6 +1856,29 @@ function populateZleceniaForm(el) {
         `;
     }
 
+    // Dynamiczne obliczanie błędów konfiguracji studni (jak w konfiguratorze)
+    recalculateWellErrors(well);
+    const liveErrors = well.configErrors || [];
+    let errorsHtml = '';
+    if (liveErrors.length > 0) {
+        errorsHtml = `
+            <div style="
+                margin-bottom: 0.5rem;
+                padding: 0.4rem 0.6rem;
+                background: rgba(239, 68, 68, 0.08);
+                border: 1px solid rgba(239, 68, 68, 0.3);
+                border-radius: 6px;
+                color: #ef4444;
+                font-size: 0.75rem;
+                font-weight: 600;
+                line-height: 1.4;
+            ">
+                <i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>
+                ${liveErrors.map(e => `• ${e}`).join('<br>')}
+            </div>
+        `;
+    }
+
     // Zachowaj stany widoczności przed nadpisaniem
     let przejsciaAppVisible = false;
     const existingPrzejsciaContainer = document.getElementById('zl-inline-przejscia-app-container');
@@ -1787,6 +1900,7 @@ function populateZleceniaForm(el) {
 
     container.innerHTML = `
     ${bannerHtml}
+    ${errorsHtml}
     <!-- Dane zlecenia -->
     <div class="card card-compact" style="margin-bottom:0.5rem;">
         <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
@@ -2425,6 +2539,11 @@ async function saveProductionOrder() {
         const syncResult = await syncSourceData();
         const extraMsg = syncResult ? ' + ' + syncResult : '';
 
+        // AKTUALIZACJA MIGAWKI - zapisano zmiany na studni, więc stają się nowym punktem odniesienia
+        if (wellsSnapshotBeforeZlecenia) {
+            wellsSnapshotBeforeZlecenia = JSON.parse(JSON.stringify(wells));
+        }
+
         renderZleceniaList();
         renderZleceniaWellConfig();
         if (zleceniaSelectedIdx >= 0 && zleceniaElementsList[zleceniaSelectedIdx]) {
@@ -2607,6 +2726,556 @@ async function revokeProductionOrder() {
     showToast('<i data-lucide="unlock"></i> Akceptacja cofnięta — studnia odblokowana', 'info');
 }
 
+/* ===== HURTOWE GENEROWANIE ZLECEŃ PRODUKCYJNYCH ===== */
+
+/**
+ * Zbiera wspólne dane z formularza oferty/zamówienia (nie z formularza zlecenia).
+ * Używane przez hurtowe generowanie, aby nie polegać na DOM zlecenia.
+ */
+function collectSharedFormData() {
+    const userName = currentUser
+        ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() ||
+          currentUser.username
+        : '';
+    const targetUserId =
+        typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId
+            ? editingOfferAssignedUserId
+            : currentUser
+              ? currentUser.id
+              : null;
+    return {
+        obiekt: document.getElementById('invest-name')?.value || '',
+        adres: document.getElementById('invest-address')?.value || '',
+        wykonawca: document.getElementById('invest-contractor')?.value || '',
+        fakturowane: document.getElementById('client-name')?.value || '',
+        nazwisko: userName,
+        dataProdukcji: '',
+        userId: targetUserId
+    };
+}
+
+/**
+ * Buduje obiekt zlecenia produkcyjnego programowo (bez DOM).
+ * Replikuje logikę z populateZleceniaForm + saveProductionOrder.
+ */
+function buildAutoOrderData(el, sharedData) {
+    const { well, product, elementIndex, wellIndex } = el;
+    const parsed = parseWysokoscGlebokosc(product.name);
+    const findProductFn = (id) =>
+        typeof studnieProducts !== 'undefined' ? studnieProducts.find((pr) => pr.id === id) : null;
+
+    // Oblicz wartości wyświetlania
+    let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
+    let displayGlebokosc = parsed.glebokosc || '—';
+    let displayWysokosc = parsed.wysokosc || product.height || 0;
+    let dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
+    let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
+
+    // Dennica na dennicy / psia buda
+    let actualNextProduct = null;
+    for (let i = elementIndex + 1; i < well.config.length; i++) {
+        const _p = findProductFn(well.config[i].productId);
+        if (_p && _p.componentType !== 'uszczelka') {
+            actualNextProduct = _p;
+            break;
+        }
+    }
+    const shouldReduce =
+        product.componentType === 'dennica' &&
+        ((actualNextProduct && actualNextProduct.componentType === 'dennica') ||
+            (well.psiaBuda && !actualNextProduct));
+
+    if (shouldReduce) {
+        const reducedH = (product.height || 0) - 100;
+        displayWysokosc = reducedH;
+        displayGlebokosc = reducedH;
+        displayDnoKineta = 0;
+    }
+
+    if (well.dn === 'styczna') {
+        const dnMatch = (product.name || '').match(/DN\s*(\d+)/i);
+        if (dnMatch) displayDN = `Styczna DN${dnMatch[1]}`;
+        displayGlebokosc = product.height || '—';
+        displayWysokosc = parsed.wysokosc || displayWysokosc;
+        displayDnoKineta =
+            parsed.wysokosc > 0 && parsed.glebokosc > 0 ? parsed.wysokosc - parsed.glebokosc : '—';
+    }
+
+    // Wartości domyślne parametrów
+    const isKragOt = product && product.componentType === 'krag_ot';
+    const shouldForceBrak = shouldReduce || isKragOt;
+
+    let domyslnyRodzajStudni =
+        product.componentType === 'dennica'
+            ? well.dennicaMaterial === 'zelbetowa'
+                ? 'zelbet'
+                : 'beton'
+            : well.nadbudowa === 'zelbetowa'
+              ? 'zelbet'
+              : 'beton';
+
+    // Dziedziczenie kąta stopni z dennicy (jeśli już wygenerowano)
+    let baseKatStopni = '';
+    let baseRodzajStopni = '';
+    const dennicaConfigIdx = well.config.findIndex((c) => {
+        const p = findProductFn(c.productId);
+        return p && p.componentType === 'dennica';
+    });
+    if (dennicaConfigIdx >= 0 && elementIndex !== dennicaConfigIdx) {
+        const dennicaPo = (productionOrders || []).find(
+            (po) => po.wellId === well.id && po.elementIndex === dennicaConfigIdx
+        );
+        if (dennicaPo) {
+            if (dennicaPo.katStopni) baseKatStopni = dennicaPo.katStopni;
+            if (dennicaPo.rodzajStopni) baseRodzajStopni = dennicaPo.rodzajStopni;
+        }
+    }
+    const katStopni = baseKatStopni || '';
+    const wykonanie = katStopni ? calcStopnieExecution(katStopni) : '';
+
+    // Auto-uwagi
+    const autoUwagi = [];
+    if (well.agresjaChemiczna === 'XA2' || well.agresjaChemiczna === 'XA3')
+        autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
+    if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
+        autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
+    if (well.wkladka === '3mm' || well.wkladka === '4mm')
+        autoUwagi.push('Wkładka PEHD ' + well.wkladka);
+    if (well.malowanieW && well.malowanieW !== 'brak') {
+        let malWDesc = '';
+        if (well.malowanieW === 'kineta') malWDesc = 'Kineta';
+        else if (well.malowanieW === 'kineta_dennica') malWDesc = 'Kineta+denn.';
+        else if (well.malowanieW === 'cale') malWDesc = 'Całość';
+        if (malWDesc)
+            autoUwagi.push(
+                'Malowanie wew. ' + malWDesc + (well.powlokaNameW ? ' ' + well.powlokaNameW : '')
+            );
+    }
+    if (well.malowanieZ === 'zewnatrz')
+        autoUwagi.push(
+            'Malowanie zew. Zewnątrz' + (well.powlokaNameZ ? ' ' + well.powlokaNameZ : '')
+        );
+    if (well.dn === 'styczna') autoUwagi.push('STYCZNA');
+    if (well.klasaNosnosci_korpus === 'E600' || well.klasaNosnosci_korpus === 'F900')
+        autoUwagi.push('Kl. nośn. ' + well.klasaNosnosci_korpus);
+    if (well.psiaBuda && !actualNextProduct) autoUwagi.push('UWAGA ! PSIA BUDA');
+    if (
+        product.componentType === 'dennica' &&
+        actualNextProduct &&
+        actualNextProduct.componentType === 'dennica'
+    )
+        autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
+
+    // Snapshot przejść przypisanych do tego elementu
+    const rzDna = parseFloat(well.rzednaDna) || 0;
+    const configMap =
+        typeof buildConfigMap !== 'undefined' ? buildConfigMap(well, findProductFn, true) : [];
+    const allPrzejscia = well.przejscia || [];
+    const assignedPrzejscia =
+        configMap.length > 0
+            ? allPrzejscia.filter((p) => {
+                  let pel = parseFloat(p.rzednaWlaczenia);
+                  if (isNaN(pel)) pel = rzDna;
+                  const mmFromBottom = (pel - rzDna) * 1000;
+                  const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
+                  return assignedIndex === elementIndex;
+              })
+            : allPrzejscia;
+
+    const przejsciaSnapshot = assignedPrzejscia.map((p) => {
+        const clone = JSON.parse(JSON.stringify(p));
+        const prod = findProductFn(p.productId);
+        if (prod) {
+            clone.productCategory = prod.category || '';
+            clone.productDn = prod.dn || '';
+        }
+        return clone;
+    });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    return {
+        id: 'prodorder_' + Date.now() + '_' + wellIndex + '_' + elementIndex,
+        productionOrderNumber: '',
+        userId: sharedData.userId || null,
+        wellId: well.id,
+        wellName: well.name,
+        offerId: typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '',
+        salesOrderNumber:
+            typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            typeof currentOrder !== 'undefined' &&
+            currentOrder
+                ? currentOrder.number
+                : '',
+        elementIndex: elementIndex,
+        productName: product.name,
+        productId: product.id,
+        dn: well.dn,
+        obiekt: sharedData.obiekt || '',
+        data: todayStr,
+        adres: sharedData.adres || '',
+        nazwisko: sharedData.nazwisko || '',
+        wykonawca: sharedData.wykonawca || '',
+        dataProdukcji: sharedData.dataProdukcji || '',
+        fakturowane: sharedData.fakturowane || '',
+        snr: well.numer || '',
+        srednica: displayDN,
+        wysokosc: String(displayWysokosc),
+        glebokosc: String(displayGlebokosc),
+        dnoKineta: String(displayDnoKineta),
+        rodzajStudni: domyslnyRodzajStudni,
+        przejscia: przejsciaSnapshot,
+        etykietaElementy: buildEtykietaElementsSnapshot(well),
+        uwagi: autoUwagi.join(', '),
+        redukcjaKinety: shouldForceBrak ? 'nie' : (well.redukcjaKinety ?? ''),
+        spocznikH: shouldForceBrak ? 'brak' : (well.spocznikH ?? ''),
+        din: getStudniaDIN(well.dn),
+        rodzajStopni: baseRodzajStopni || '',
+        stopnieInne: '',
+        katStopni: katStopni,
+        wykonanie: wykonanie ? wykonanie + '°' : '',
+        usytuowanie: well.usytuowanie ?? '',
+        kineta: shouldForceBrak ? 'brak' : (well.kineta ?? ''),
+        spocznik: shouldForceBrak ? 'brak' : (well.spocznik ?? ''),
+        klasaBetonu: well.klasaBetonu ?? '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'draft'
+    };
+}
+
+/**
+ * Pobiera numer zlecenia produkcyjnego i zapisuje zlecenie przez API.
+ * Zwraca zapisany obiekt zlecenia z przydzielonym numerem.
+ */
+async function claimAndSaveSingleOrder(orderData, userId) {
+    if (!orderData.productionOrderNumber && userId) {
+        const claimResp = await fetch(
+            '/api/orders-studnie/claim-production-number/' + userId,
+            { method: 'POST', headers: authHeaders() }
+        );
+        if (claimResp.ok) {
+            const claimData = await claimResp.json();
+            if (claimData.number) orderData.productionOrderNumber = claimData.number;
+        }
+    }
+    const res = await fetch('/api/orders-studnie/production', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(orderData)
+    });
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Server error');
+    return orderData;
+}
+
+
+
+/**
+ * Otwiera popup z drag & drop listą studni do ustalenia kolejności generowania.
+ */
+function openBulkOrderSequencePopup() {
+    if (wells.length === 0) {
+        showToast('Brak studni do wygenerowania zleceń', 'error');
+        return;
+    }
+    buildZleceniaWellList();
+
+    // Grupuj elementy po wellIndex
+    const wellGroups = {};
+    zleceniaElementsList.forEach((el) => {
+        if (!wellGroups[el.wellIndex]) {
+            wellGroups[el.wellIndex] = {
+                wellIndex: el.wellIndex,
+                wellName: el.well.name,
+                wellDn: el.well.dn,
+                totalCount: 0,
+                openCount: 0
+            };
+        }
+        wellGroups[el.wellIndex].totalCount++;
+        if (getElementStatus(el) === 'open') wellGroups[el.wellIndex].openCount++;
+    });
+
+    const groupList = Object.values(wellGroups);
+    const hasAnyOpen = groupList.some((g) => g.openCount > 0);
+    if (!hasAnyOpen) {
+        showToast('Wszystkie elementy mają już zlecenia produkcyjne', 'info');
+        return;
+    }
+
+    // Zbuduj HTML popupu
+    let itemsHtml = groupList
+        .map((g) => {
+            const disabled = g.openCount === 0;
+            const dnLabel = g.wellDn === 'styczna' ? 'Styczna' : 'DN' + g.wellDn;
+            return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}"
+                    draggable="${!disabled}" data-well-index="${g.wellIndex}"
+                    style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
+                    background:${disabled ? 'rgba(255,255,255,0.02)' : 'rgba(139,92,246,0.08)'};
+                    border:1px solid ${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(139,92,246,0.25)'};
+                    border-radius:8px; cursor:${disabled ? 'default' : 'grab'};
+                    opacity:${disabled ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;">
+                <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled ? 'disabled' : ''} value=""
+                    onfocus="this.dataset.old = this.value; this.value = '';"
+                    onblur="reorderBulkSeqList(this)"
+                    onkeydown="if(event.key === 'Enter') this.blur();"
+                    style="width:72px; height:28px; text-align:center; padding:0;
+                    background:${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(139,92,246,0.15)'}; 
+                    border:1px solid ${disabled ? 'transparent' : 'rgba(139,92,246,0.4)'}; border-radius:6px;
+                    font-size:0.75rem; font-weight:800; color:${disabled ? 'var(--text-muted)' : '#c4b5fd'}; outline:none;">
+                <span style="font-size:1rem; color:${disabled ? 'var(--text-muted)' : '#a78bfa'}; cursor:grab;">⠿</span>
+                <div style="flex:1;">
+                    <div style="font-weight:700; font-size:0.8rem; color:var(--text-primary);">${g.wellName}</div>
+                    <div style="font-size:0.65rem; color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
+                </div>
+                ${!disabled ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:#f87171; padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
+                    <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+                </button>` : ''}
+            </div>`;
+        })
+        .join('');
+
+    // Utwórz overlay
+    let overlay = document.getElementById('bulk-seq-overlay');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.id = 'bulk-seq-overlay';
+    overlay.style.cssText =
+        'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
+    overlay.innerHTML = `
+        <div style="background:var(--bg-secondary); border:1px solid rgba(139,92,246,0.3); border-radius:14px; padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                <div>
+                    <div style="font-size:1rem; font-weight:800; color:#a78bfa;"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted);">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
+                </div>
+                <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:0.3rem 0.6rem;">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
+            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(139,92,246,0.2); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
+                <i data-lucide="zap"></i> Generuj w tej kolejności
+            </button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Aktualizuj numery kolejności
+    updateBulkSeqNumbers();
+
+    // Drag & drop na liście
+    const list = document.getElementById('bulk-seq-list');
+    let dragEl = null;
+    list.addEventListener('dragstart', (e) => {
+        dragEl = e.target.closest('.bulk-seq-item');
+        if (dragEl) dragEl.style.opacity = '0.4';
+    });
+    list.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const target = e.target.closest('.bulk-seq-item');
+        if (target && target !== dragEl && !target.classList.contains('bulk-seq-disabled')) {
+            const rect = target.getBoundingClientRect();
+            const after = e.clientY > rect.top + rect.height / 2;
+            if (after) target.after(dragEl);
+            else target.before(dragEl);
+        }
+    });
+    list.addEventListener('dragend', () => {
+        if (dragEl) dragEl.style.opacity = '1';
+        dragEl = null;
+        updateBulkSeqNumbers();
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+/** Aktualizuje widoczne numery kolejności w popupie drag & drop */
+function updateBulkSeqNumbers() {
+    const items = document.querySelectorAll('#bulk-seq-list .bulk-seq-item');
+    let counter = 1;
+    items.forEach((item) => {
+        const numEl = item.querySelector('.bulk-seq-num');
+        if (!numEl) return;
+        if (item.classList.contains('bulk-seq-disabled') || item.classList.contains('bulk-seq-excluded')) {
+            numEl.value = '';
+            numEl.placeholder = '—';
+        } else {
+            numEl.value = counter;
+            counter++;
+        }
+    });
+}
+
+/** Przestawia element na liście na podstawie wpisanego numeru */
+function reorderBulkSeqList(inputEl) {
+    const newVal = parseInt(inputEl.value, 10);
+    if (isNaN(newVal) || newVal < 1) {
+        if (inputEl.dataset.old) {
+            inputEl.value = inputEl.dataset.old;
+        }
+        updateBulkSeqNumbers();
+        return;
+    }
+    
+    const item = inputEl.closest('.bulk-seq-item');
+    if (!item) return;
+    
+    const list = document.getElementById('bulk-seq-list');
+    const items = Array.from(list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'));
+    
+    const oldIndex = items.indexOf(item);
+    let newIndex = newVal - 1;
+    
+    if (newIndex >= items.length) newIndex = items.length - 1;
+    if (newIndex < 0) newIndex = 0;
+    
+    if (oldIndex === newIndex) {
+        updateBulkSeqNumbers();
+        return;
+    }
+    
+    items.splice(oldIndex, 1);
+    items.splice(newIndex, 0, item);
+    
+    const excludedItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-excluded'));
+    const disabledItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-disabled'));
+    
+    items.forEach(el => list.appendChild(el));
+    excludedItems.forEach(el => list.appendChild(el));
+    disabledItems.forEach(el => list.appendChild(el));
+    
+    updateBulkSeqNumbers();
+}
+
+/** Wyklucza/przywraca element z kolejki generowania */
+function toggleBulkSeqItem(btn) {
+    const item = btn.closest('.bulk-seq-item');
+    if (!item) return;
+
+    const isExcluded = item.classList.contains('bulk-seq-excluded');
+    
+    if (isExcluded) {
+        item.classList.remove('bulk-seq-excluded');
+        item.style.opacity = '1';
+        item.setAttribute('draggable', 'true');
+        
+        const input = item.querySelector('.bulk-seq-num');
+        input.removeAttribute('disabled');
+        input.style.background = 'rgba(139,92,246,0.15)';
+        
+        btn.innerHTML = '<i data-lucide="trash-2" style="width:16px; height:16px;"></i>';
+        btn.style.color = '#f87171';
+        btn.title = "Pomiń studnię";
+    } else {
+        item.classList.add('bulk-seq-excluded');
+        item.style.opacity = '0.4';
+        item.setAttribute('draggable', 'false');
+        
+        const input = item.querySelector('.bulk-seq-num');
+        input.setAttribute('disabled', 'true');
+        input.value = '';
+        input.placeholder = '—';
+        input.style.background = 'rgba(255,255,255,0.05)';
+        
+        btn.innerHTML = '<i data-lucide="plus" style="width:16px; height:16px;"></i>';
+        btn.style.color = '#34d399';
+        btn.title = "Przywróć studnię";
+    }
+    
+    if (window.lucide) window.lucide.createIcons();
+    
+    const list = document.getElementById('bulk-seq-list');
+    const activeItems = Array.from(list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'));
+    const excludedItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-excluded'));
+    const disabledItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-disabled'));
+    
+    activeItems.forEach(el => list.appendChild(el));
+    excludedItems.forEach(el => list.appendChild(el));
+    disabledItems.forEach(el => list.appendChild(el));
+
+    updateBulkSeqNumbers();
+}
+
+function closeBulkOrderPopup() {
+    const overlay = document.getElementById('bulk-seq-overlay');
+    if (overlay) overlay.remove();
+}
+
+/**
+ * Wywołane z popupu kolejności — odczytuje kolejność studni z DOM i generuje.
+ */
+async function executeBulkFromPopup() {
+    const items = document.querySelectorAll('#bulk-seq-list .bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)');
+    const orderedIndexes = Array.from(items).map((el) => parseInt(el.dataset.wellIndex, 10));
+
+    closeBulkOrderPopup();
+
+    // Filtruj niezapisane elementy w podanej kolejności studni
+    buildZleceniaWellList();
+    const unsaved = [];
+    orderedIndexes.forEach((wIdx) => {
+        zleceniaElementsList
+            .filter((el) => el.wellIndex === wIdx && getElementStatus(el) === 'open')
+            .forEach((el) => unsaved.push(el));
+    });
+
+    if (unsaved.length === 0) {
+        showToast('Brak elementów do wygenerowania', 'info');
+        return;
+    }
+
+    const msg = `Wygenerować zlecenia dla ${unsaved.length} elementów w wybranej kolejności?`;
+    if (!(await appConfirm(msg, { title: 'Generuj w kolejności', type: 'warning', okText: 'Generuj' })))
+        return;
+
+    await executeBulkGeneration(unsaved);
+}
+
+/**
+ * Wspólna pętla generowania zleceń hurtowo dla podanej listy elementów.
+ */
+async function executeBulkGeneration(elements) {
+    const sharedData = collectSharedFormData();
+    const newOrders = [];
+    let errorCount = 0;
+
+    for (const el of elements) {
+        try {
+            const orderData = buildAutoOrderData(el, sharedData);
+            const saved = await claimAndSaveSingleOrder(orderData, sharedData.userId);
+            productionOrders.push(saved);
+            newOrders.push(saved);
+        } catch (e) {
+            console.error('Błąd generowania zlecenia dla', el.product.name, ':', e);
+            errorCount++;
+        }
+    }
+
+    // Synchronizuj źródło danych
+    await syncSourceData();
+
+    // Odśwież UI
+    buildZleceniaWellList();
+    renderZleceniaList();
+    if (zleceniaSelectedIdx >= 0 && zleceniaElementsList[zleceniaSelectedIdx]) {
+        populateZleceniaForm(zleceniaElementsList[zleceniaSelectedIdx]);
+    }
+    refreshGlobalMetrics();
+
+    if (wellsSnapshotBeforeZlecenia) {
+        wellsSnapshotBeforeZlecenia = JSON.parse(JSON.stringify(wells));
+    }
+
+    const errMsg = errorCount > 0 ? ` (${errorCount} błędów)` : '';
+    showToast(
+        `<i data-lucide="zap"></i> Wygenerowano ${newOrders.length} zleceń produkcyjnych${errMsg}`,
+        newOrders.length > 0 ? 'success' : 'error'
+    );
+}
+
 window.openZleceniaProdukcyjne = openZleceniaProdukcyjne;
 window.closeZleceniaModal = closeZleceniaModal;
 window.selectZleceniaElement = selectZleceniaElement;
@@ -2617,6 +3286,11 @@ window.acceptProductionOrder = acceptProductionOrder;
 window.revokeProductionOrder = revokeProductionOrder;
 window.onZleceniaStopnieChange = onZleceniaStopnieChange;
 window.onZleceniaKatChange = onZleceniaKatChange;
+window.openBulkOrderSequencePopup = openBulkOrderSequencePopup;
+window.closeBulkOrderPopup = closeBulkOrderPopup;
+window.executeBulkFromPopup = executeBulkFromPopup;
+window.reorderBulkSeqList = reorderBulkSeqList;
+window.toggleBulkSeqItem = toggleBulkSeqItem;
 
 /** Usuwa zlecenie produkcyjne dla aktualnie wybranego elementu */
 async function deleteSelectedProductionOrder() {

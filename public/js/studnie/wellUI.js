@@ -627,6 +627,13 @@ window.renderWellsList = function renderWellsList() {
     let html = '';
     const dktCap = [1000, 1200, 1500, 2000, 2500, 'styczna'];
 
+    // Oblicz mapę transportu dla wszystkich studni (proporcjonalnie do wagi)
+    let transportMap = new Map();
+    if (typeof calculateWellTransportMap === 'function') {
+        const result = calculateWellTransportMap(wells);
+        transportMap = result.map;
+    }
+
     // Sprawdź zmiany w zamówieniu, jeśli w trybie edycji
     let orderChanges = {};
     if (orderEditMode) {
@@ -725,7 +732,7 @@ window.renderWellsList = function renderWellsList() {
                 const colorHex = isNeg ? '#ef4444' : '#10b981';
                 const bgRgba = isNeg ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)';
                 const borderRgba = isNeg ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)';
-                doplataBadge = `<span title="${badgeLabel}: ${fmtInt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
+                doplataBadge = `<span title="${badgeLabel}: ${fmt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
             }
 
             // Automatyczne sprawdzenie w locie dla wszystkich kart
@@ -737,23 +744,28 @@ window.renderWellsList = function renderWellsList() {
             const errorNameStyle = hasErrors
                 ? 'color:#ef4444 !important; font-weight:700 !important;'
                 : '';
+            
+            const hasBadges = wellLockBadge || sourceBadge || statusBadge || changeBadge || doplataBadge;
+            const badgesHtml = hasBadges ? `
+              <div style="display:flex; align-items:center; gap:0.15rem; flex-wrap:wrap; margin-bottom:0.3rem; margin-top:-0.1rem;">
+                 ${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}${doplataBadge}
+              </div>` : '';
+
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
-              <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem;">
-                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}">${w.name}</div>
-                <div style="display:flex; align-items:center; gap:0.15rem; flex-shrink:0;">
-                   ${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}${doplataBadge}
-                </div>
+              <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
+                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${w.name}">${w.name}</div>
                 <div class="well-list-actions">
                   <button class="well-list-action" title="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list"></i></button>
                   <button class="well-list-action del" title="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x"></i></button>
                 </div>
               </div>
+              ${badgesHtml}
               <div class="well-list-meta">
                 <div style="display:flex; gap:0.6rem;">
                   <span>Elementy: <strong>${(w.config || []).length}</strong></span>
                   <span>Przejścia: <strong>${w.przejscia ? w.przejscia.length : 0}</strong></span>
                 </div>
-                <span class="well-list-price">${fmtInt(stats.price)} PLN</span>
+                <span class="well-list-price">${fmtInt(stats.price + (transportMap.get(w) || 0))} PLN</span>
               </div>
               ${
                   hasElevations
@@ -807,8 +819,17 @@ window.updateSummary = function updateSummary() {
     }
     const stats = calcWellStats(well);
 
+    let wellTransportCost = 0;
+    if (typeof calculateOfferTotals === 'function') {
+        const totals = calculateOfferTotals();
+        if (totals && totals.globalWeight > 0 && totals.totalTransportCost > 0) {
+            wellTransportCost = totals.totalTransportCost * (stats.weight / totals.globalWeight);
+        }
+    }
+    const finalPrice = stats.price + wellTransportCost;
+
     // Dolny pasek
-    document.getElementById('sum-price').textContent = fmtInt(stats.price) + ' PLN';
+    document.getElementById('sum-price').textContent = fmt(finalPrice) + ' PLN';
     document.getElementById('sum-weight').textContent = fmtInt(stats.weight) + ' kg';
     document.getElementById('sum-height').textContent = fmtInt(stats.height) + ' mm';
     document.getElementById('sum-area-int').textContent = fmt(stats.areaInt) + ' m²';
@@ -853,8 +874,16 @@ window.updateSummary = function updateSummary() {
         wsDiff.textContent = diffMmText;
         wsDiff.style.color = diffColor;
     }
-    if (wsPrice) wsPrice.textContent = fmtInt(stats.price);
+    if (wsPrice) wsPrice.textContent = fmt(finalPrice);
 
     // Height indicator
     updateHeightIndicator();
+
+    // Odśwież panel boczny z cenami studni (aby cena była zawsze aktualna)
+    // Guard: pomijaj jeśli renderWellsList jest już w trakcie (np. z refreshAll)
+    if (typeof renderWellsList === 'function' && !window._renderingWellsList) {
+        window._renderingWellsList = true;
+        renderWellsList();
+        window._renderingWellsList = false;
+    }
 }

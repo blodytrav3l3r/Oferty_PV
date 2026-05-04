@@ -100,11 +100,11 @@ interface TermEntry {
 
 const COMMERCIAL_TERMS: TermEntry[] = [
     {
-        text: 'Transport rur w średnicach DN 300 – DN 1600 odbywa się na jednorazowych podkładach drewnianych jako „Zabezpieczenie transportu". Koszt podkładów zostanie zafakturowany na fakturze VAT wg poniższego zestawienia (wartości w tabeli podają cenę Zabezpieczenia transportu do jednej sztuki rury).',
+        text: 'Transport rur w średnicach DN 300 – DN 2200 odbywa się na jednorazowych podkładach drewnianych jako „Zabezpieczenie transportu". Koszt podkładów zostanie zafakturowany na fakturze VAT wg poniższego zestawienia (wartości w tabeli podają cenę Zabezpieczenia transportu do jednej sztuki rury).',
         afterTable: 'transport_security'
     },
     {
-        text: 'Rozładunek studni w średnicach DN 1000 – DN 2000 i kręgów DN 1500 - DN 2000 odbywa się za pomocą pętli transportowych zgodnie z instrukcją montażu PV.',
+        text: 'Rozładunek studni w średnicach DN 1000 – DN 2500 i kręgów DN 1500 - DN 2500 odbywa się za pomocą pętli transportowych zgodnie z instrukcją montażu PV.',
         afterTable: 'transport_loops'
     },
     {
@@ -171,7 +171,9 @@ const TRANSPORT_SECURITY_DATA: [string, string][] = [
     ['DN 1500', '90,00'],
     ['DN 1600', '90,00'],
     ['DN 1800', '230,00'],
-    ['DN 2000', '310,00']
+    ['DN 2000', '310,00'],
+    ['DN 2200', '310,00'],
+    ['WPUST ULICZNY', '14,00']
 ];
 
 function buildTransportSecurityTable(): Table {
@@ -195,30 +197,28 @@ function buildTransportSecurityTable(): Table {
         })
     ];
 
-    for (let i = 0; i < 6; i++) {
+    const half = 7;
+    for (let i = 0; i < half; i++) {
         const left = TRANSPORT_SECURITY_DATA[i];
-        const right = TRANSPORT_SECURITY_DATA[i + 6];
+        const right = i + half < TRANSPORT_SECURITY_DATA.length
+            ? TRANSPORT_SECURITY_DATA[i + half]
+            : null;
+
+        const rightLabel = right
+            ? `Zabezpieczenie transportu ${right[0]}`
+            : '';
+
         rows.push(
             new TableRow({
                 children: [
                     textCell(`Zabezpieczenie transportu ${left[0]}`, { ...tdStyle }),
                     textCell(left[1], { ...tdcStyle }),
-                    textCell(right ? `Zabezpieczenie transportu ${right[0]}` : '', { ...tdStyle }),
+                    textCell(rightLabel, { ...tdStyle }),
                     textCell(right ? right[1] : '', { ...tdcStyle })
                 ]
             })
         );
     }
-
-    rows.push(
-        new TableRow({
-            children: [
-                textCell('Zabezpieczenie transportu WPUST ULICZNY', { ...tdStyle }),
-                textCell('14,00', { ...tdcStyle }),
-                textCell('', { ...tdStyle, columnSpan: 2 })
-            ]
-        })
-    );
 
     return new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
 }
@@ -229,8 +229,10 @@ const TRANSPORT_LOOPS_DATA: [string, string, string, string, string][] = [
     ['Pętle transportowe dla studni DN1200', 'RD18', '70,00', '3', '210,00'],
     ['Pętle transportowe dla studni DN1500', 'RD24', '80,00', '4', '320,00'],
     ['Pętle transportowe dla studni DN2000', 'RD36', '135,00', '4', '540,00'],
+    ['Pętle transportowe dla studni DN2500', 'RD36', '135,00', '4', '540,00'],
     ['Pętle transportowe dla kręgów DN1500', 'RD16', '65,00', '3', '195,00'],
-    ['Pętle transportowe dla kręgów DN2000', 'RD16', '65,00', '3', '195,00']
+    ['Pętle transportowe dla kręgów DN2000', 'RD16', '65,00', '3', '195,00'],
+    ['Pętle transportowe dla kręgów DN2500', 'RD16', '65,00', '3', '195,00']
 ];
 
 function buildTransportLoopsTable(): Table {

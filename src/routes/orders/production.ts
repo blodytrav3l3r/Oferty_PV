@@ -24,9 +24,9 @@ function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[]
     if (user.role === 'admin') return '';
     if (user.role === 'pro') {
         const allowedIds = [user.id, ...(user.subUsers || [])].map(id => `'${id}'`).join(',');
-        return `WHERE "userId" IN (${allowedIds})`;
+        return `WHERE production_orders_rel."userId" IN (${allowedIds})`;
     }
-    return `WHERE "userId" = '${user.id}'`;
+    return `WHERE production_orders_rel."userId" = '${user.id}'`;
 }
 
 router.get('/', requireAuth, async (req, res) => {
@@ -43,18 +43,38 @@ router.get('/', requireAuth, async (req, res) => {
                 createdAt: string | null;
                 updatedAt: string | null;
                 data: string | null;
+                handlerFirstName: string | null;
+                handlerLastName: string | null;
+                handlerUsername: string | null;
+                creatorFirstName: string | null;
+                creatorLastName: string | null;
+                creatorUsername: string | null;
             }>
-        >(`SELECT id, "userId", "orderId", "wellId", "elementIndex", data,
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt",
-            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "updatedAt" END as "updatedAt"
-         FROM production_orders_rel ${whereSql}`);
+        >(`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel.data,
+            CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE production_orders_rel."createdAt" END as "createdAt",
+            CASE WHEN production_orders_rel."updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST(production_orders_rel."updatedAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE production_orders_rel."updatedAt" END as "updatedAt",
+            u1."firstName" as handlerFirstName, u1."lastName" as handlerLastName, u1.username as handlerUsername,
+            u2."firstName" as creatorFirstName, u2."lastName" as creatorLastName, u2.username as creatorUsername
+         FROM production_orders_rel 
+         LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
+         LEFT JOIN users u2 ON production_orders_rel."creatorId" = u2.id
+         ${whereSql}`);
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
+            
+            const handlerName = o.handlerFirstName || o.handlerLastName 
+                ? `${o.handlerFirstName || ''} ${o.handlerLastName || ''}`.trim() 
+                : o.handlerUsername || '';
+                
+            const creatorName = o.creatorFirstName || o.creatorLastName 
+                ? `${o.creatorFirstName || ''} ${o.creatorLastName || ''}`.trim() 
+                : o.creatorUsername || '';
+
             return {
                 id: o.id,
                 type: 'production_order',
@@ -64,6 +84,8 @@ router.get('/', requireAuth, async (req, res) => {
                 elementIndex: o.elementIndex,
                 createdAt: o.createdAt,
                 updatedAt: o.updatedAt,
+                handlerName: handlerName || undefined,
+                creatorName: creatorName || undefined,
                 ...parsedData
             };
         });
@@ -89,18 +111,38 @@ router.get('/registry', requireAuth, async (req, res) => {
                 createdAt: string | null;
                 updatedAt: string | null;
                 data: string | null;
+                handlerFirstName: string | null;
+                handlerLastName: string | null;
+                handlerUsername: string | null;
+                creatorFirstName: string | null;
+                creatorLastName: string | null;
+                creatorUsername: string | null;
             }>
-        >(`SELECT id, "userId", "orderId", "wellId", "elementIndex", data,
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt",
-            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "updatedAt" END as "updatedAt"
-         FROM production_orders_rel ${whereSql} ORDER BY "createdAt" DESC`);
+        >(`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel.data,
+            CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE production_orders_rel."createdAt" END as "createdAt",
+            CASE WHEN production_orders_rel."updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                THEN datetime(CAST(production_orders_rel."updatedAt" AS INTEGER)/1000, 'unixepoch')
+                ELSE production_orders_rel."updatedAt" END as "updatedAt",
+            u1."firstName" as handlerFirstName, u1."lastName" as handlerLastName, u1.username as handlerUsername,
+            u2."firstName" as creatorFirstName, u2."lastName" as creatorLastName, u2.username as creatorUsername
+         FROM production_orders_rel 
+         LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
+         LEFT JOIN users u2 ON production_orders_rel."creatorId" = u2.id
+         ${whereSql} ORDER BY production_orders_rel."createdAt" DESC`);
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
+            
+            const handlerName = o.handlerFirstName || o.handlerLastName 
+                ? `${o.handlerFirstName || ''} ${o.handlerLastName || ''}`.trim() 
+                : o.handlerUsername || '';
+                
+            const creatorName = o.creatorFirstName || o.creatorLastName 
+                ? `${o.creatorFirstName || ''} ${o.creatorLastName || ''}`.trim() 
+                : o.creatorUsername || '';
+
             return {
                 id: o.id,
                 type: 'production_order',
@@ -110,6 +152,8 @@ router.get('/registry', requireAuth, async (req, res) => {
                 elementIndex: o.elementIndex,
                 createdAt: o.createdAt,
                 updatedAt: o.updatedAt,
+                handlerName: handlerName || undefined,
+                creatorName: creatorName || undefined,
                 ...parsedData
             };
         });

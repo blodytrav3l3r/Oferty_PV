@@ -125,11 +125,16 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         actionsHTML += `</div>`;
     }
 
-    // Kolumna ceny
+    let priceSubInfo = '';
+    if (opts.drillingBasePrice > 0 && opts.drillingProd) {
+        priceSubInfo = `<div style="font-size:0.55rem; color:#f97316; text-align:right; white-space:nowrap; line-height:1; position:absolute; bottom:-8px; right:6px;" title="${opts.drillingProd.name}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
+    }
+
     const priceHTML = showPrice
-        ? `<div style="width:90px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end;">
+        ? `<div style="width:95px; flex-shrink:0; height:44px; position:relative; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end;">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Cena</div>
-             <div style="font-size:1.0rem; font-weight:800; color:var(--success); font-family:'Inter'; margin-top:2px; padding:0.15rem 0.4rem;">${typeof fmtInt === 'function' ? fmtInt(price) : price} <span style="font-size:0.6rem;">PLN</span></div>
+             <div style="font-size:1.0rem; font-weight:800; color:var(--success); font-family:'Inter'; margin-top:2px; padding:0.15rem 0.4rem;">${typeof fmt === 'function' ? fmt(price) : price} <span style="font-size:0.6rem;">PLN</span></div>
+             ${priceSubInfo}
            </div>`
         : '';
 
@@ -138,7 +143,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const doplataHTML = showPrice
         ? `<div style="width:90px; flex-shrink:0; height:44px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
-             <div data-qe-id="${item.id}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" style="font-size:1.0rem; font-weight:800; color:#fbbf24; font-family:'Inter'; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; margin-top:2px;" onmouseenter="this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.background='rgba(255,255,255,0.03)';">${typeof fmtInt === 'function' ? fmtInt(doplataVal) : doplataVal} <span style="font-size:0.6rem;">PLN</span></div>
+             <div data-qe-id="${item.id}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" style="font-size:1.0rem; font-weight:800; color:#fbbf24; font-family:'Inter'; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; margin-top:2px;" onmouseenter="this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.background='rgba(255,255,255,0.03)';">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span style="font-size:0.6rem;">PLN</span></div>
            </div>`
         : '';
 
@@ -148,7 +153,8 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const clockIdx = getClockIndex(item, opts);
     const numDisplay = clockIdx !== '' && clockIdx !== undefined ? `<div title="Oznaczenie zegarowe" style="position:absolute; top:-6px; right:-6px; background:#1e293b; border:1px solid ${flow.border}; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:${flow.color}; box-shadow:0 1px 3px rgba(0,0,0,0.5);">${clockIdx}</div>` : '';
 
-    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; height:54px; padding:0 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
+    const extraPadding = (opts.drillingBasePrice > 0 && opts.drillingProd) ? '0.85rem' : '0.4rem';
+    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:54px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
       <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:55px; min-width:55px; transition:all 0.2s;">
         ${numDisplay}
@@ -248,7 +254,7 @@ function buildConfigMap(well, findProductFn, includeName = false) {
         } else {
             h = (p.height || 0) * cItem.quantity;
         }
-        const entry = { index: j, start: currY, end: currY + h };
+        const entry = { index: j, start: currY, end: currY + h, componentType: p.componentType, productId: p.id };
         if (includeName) {
             const badge = typeBadge[p.componentType] || { bg: '#333333' };
             entry.name = p.name;

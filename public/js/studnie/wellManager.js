@@ -96,13 +96,13 @@ function createNewWell(name, dn = 1000) {
 // OFFER_LOCKED_MSG i WELL_LOCKED_MSG przeniesione do wellUI.js
 
 /**
- * Oferta jako całość nie jest już blokowana.
- * Blokada działa per-studnia (isWellLocked).
- * Zwraca false aby zachować dotychczasowy interfejs API.
+ * Sprawdza czy aktualna studnia jest zablokowana.
+ * Blokada działa per-studnia - studnie dodane do zamówienia
+ * lub z zaakceptowanym zleceniem produkcyjnym są nieedytowalne.
  */
 function isOfferLocked() {
     if (orderEditMode) return false;
-    return false;
+    return isWellLocked();
 }
 
 function isWellLocked(wellIdx) {
@@ -127,10 +127,6 @@ function isWellLocked(wellIdx) {
 
 
 function addNewWell(dn = 1000) {
-    if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
-        return;
-    }
     if (dn === 'styczna') {
         showStycznaPopup('add');
         return;
@@ -148,10 +144,6 @@ function addNewWell(dn = 1000) {
 }
 
 function duplicateWell(index) {
-    if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
-        return;
-    }
     const src = wells[index];
     if (!src) return;
     wellCounter++;
@@ -165,10 +157,6 @@ function duplicateWell(index) {
 }
 
 async function removeWell(index) {
-    if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
-        return;
-    }
     if (isWellLocked(index)) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
@@ -193,8 +181,8 @@ function selectWell(index) {
 }
 
 function renameWell(index) {
-    if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
+    if (isWellLocked(index)) {
+        showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     const well = wells[index];
@@ -382,7 +370,7 @@ function refreshAll(skipSummary = false) {
 /* ===== PARAMETRY OGÓLNE (KAFELKI) — przeniesione do wellUI.js ===== */
 
 async function updateWellParam(paramKey, value) {
-    if (isOfferLocked()) {
+    if (isWellLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
@@ -571,10 +559,6 @@ async function confirmApp(message, callback, cancelCallback) {
 }
 
 function updateDiscount(dn, type, value) {
-    if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
-        return;
-    }
 
     const newValue = parseFloat(value) || 0;
     const oldDisc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
@@ -819,9 +803,56 @@ function calcWellStats(well) {
         }
         const mult = 1 - discNadbudowa / 100;
 
+        // Budowa configMap do sprawdzania, czy przejście jest w kręgu
+        let configMap = [];
+        if (typeof buildConfigMap === 'function') {
+            configMap = buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true);
+        }
+
         well.przejscia.forEach((item) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
+
+            // Wyliczanie opłaty za wiercenie, jeśli przejście znajduje się w kręgu
+            let drillingBasePrice = 0;
+            const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
+
+            if (!isInsitu && configMap.length > 0) {
+                let rzDna = parseFloat(well.rzednaDna) || 0;
+                let pel = parseFloat(item.rzednaWlaczenia);
+                if (isNaN(pel)) pel = rzDna;
+                let mmFromBottom = (pel - rzDna) * 1000;
+
+                if (typeof findAssignedElement === 'function') {
+                    const assigned = findAssignedElement(mmFromBottom, configMap);
+                    if (assigned && assigned.entry && (assigned.entry.componentType === 'krag' || assigned.entry.componentType === 'krag_ot')) {
+                        const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
+                        if (trDn > 0) {
+                            const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                            let bestDrill = null;
+                            let bestDnDiff = Infinity;
+
+                            drillingProducts.forEach(drill => {
+                                let drillDn = parseInt(drill.dn);
+                                if (isNaN(drillDn)) {
+                                    const match = drill.id.match(/Wiercenie-(\d+)/i);
+                                    if (match) drillDn = parseInt(match[1]);
+                                }
+                                if (!isNaN(drillDn) && drillDn >= trDn) {
+                                    if (drillDn - trDn < bestDnDiff) {
+                                        bestDnDiff = drillDn - trDn;
+                                        bestDrill = drill;
+                                    }
+                                }
+                            });
+
+                            if (bestDrill) {
+                                drillingBasePrice = bestDrill.price || 0;
+                            }
+                        }
+                    }
+                }
+            }
 
             // Użyj zamrożonej ceny, jeśli jest dostępna (tryb zamówienia)
             let bP, dP;
@@ -829,7 +860,7 @@ function calcWellStats(well) {
                 dP = item.frozenPrice;
                 bP = item.frozenPriceBase != null ? item.frozenPriceBase : item.frozenPrice;
             } else {
-                bP = p.price || 0;
+                bP = (p.price || 0) + drillingBasePrice;
                 dP = bP * mult;
             }
 

@@ -1503,6 +1503,22 @@
 
                             <!-- CENTER: Config area -->
                             <div>
+                                <!-- Błędy konfiguracji studni -->
+                                <div
+                                    id="well-config-errors-container"
+                                    style="
+                                        display: none;
+                                        margin-bottom: 0.4rem;
+                                        padding: 0.4rem 0.6rem;
+                                        background: rgba(239, 68, 68, 0.08);
+                                        border: 1px solid rgba(239, 68, 68, 0.3);
+                                        border-radius: 6px;
+                                        color: #ef4444;
+                                        font-size: 0.75rem;
+                                        font-weight: 600;
+                                        line-height: 1.4;
+                                    "
+                                ></div>
                                 <!-- Toolbar: DN + Elevations + Height + Controls -->
                                 <div class="well-info-card" style="padding: 0.6rem 0.8rem">
                                     <!-- Row 1: Title -->
@@ -1700,21 +1716,7 @@
                                             />
                                         </div>
                                     </div>
-                                    <div
-                                        id="well-config-errors-container"
-                                        style="
-                                            display: none;
-                                            margin-bottom: 0.4rem;
-                                            padding: 0.4rem 0.6rem;
-                                            background: rgba(239, 68, 68, 0.08);
-                                            border: 1px solid rgba(239, 68, 68, 0.3);
-                                            border-radius: 6px;
-                                            color: #ef4444;
-                                            font-size: 0.75rem;
-                                            font-weight: 600;
-                                            line-height: 1.4;
-                                        "
-                                    ></div>
+
                                     <!-- Row 2: DN selector + controls -->
                                     <div
                                         style="
@@ -3178,6 +3180,18 @@
                             <i data-lucide="factory"></i> Zlecenie Produkcyjne
                         </div>
                         <div style="display: flex; gap: 0.4rem">
+                            <button
+                                id="zl-btn-generate-ordered"
+                                class="btn btn-sm zlecenia-header-btn"
+                                onclick="openBulkOrderSequencePopup()"
+                                style="
+                                    background: rgba(139, 92, 246, 0.15);
+                                    border: 1px solid rgba(139, 92, 246, 0.4);
+                                    color: #a78bfa;
+                                "
+                            >
+                                <i data-lucide="list-ordered"></i> Generuj w kolejności
+                            </button>
                             <button
                                 id="zl-btn-accept"
                                 class="btn btn-sm zlecenia-header-btn"

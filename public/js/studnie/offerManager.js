@@ -335,32 +335,81 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
 function calculateAssignedPrzejscia(well) {
     const assigned = {};
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const configMap = [];
-    let currY = 0;
-    let dennicaCount = 0;
     
-    // Budujemy mapę wysokości elementów (od dołu)
-    for (let j = well.config.length - 1; j >= 0; j--) {
-        const p = studnieProducts.find(x => x.id === well.config[j].productId);
-        if (!p) continue;
-        let h = 0;
-        if (p.componentType === 'dennica') {
-            dennicaCount++;
-            h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
-        } else {
-            h = (p.height || 0) * (well.config[j].quantity || 1);
+    let configMap = [];
+    if (typeof buildConfigMap === 'function') {
+        configMap = buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true);
+    } else {
+        let currY = 0;
+        let dennicaCount = 0;
+        // Budujemy mapę wysokości elementów (od dołu)
+        for (let j = well.config.length - 1; j >= 0; j--) {
+            const p = studnieProducts.find(x => x.id === well.config[j].productId);
+            if (!p) continue;
+            let h = 0;
+            if (p.componentType === 'dennica') {
+                dennicaCount++;
+                h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
+            } else {
+                h = (p.height || 0) * (well.config[j].quantity || 1);
+            }
+            configMap.push({ index: j, start: currY, end: currY + h, componentType: p.componentType });
+            currY += h;
         }
-        configMap.push({ index: j, start: currY, end: currY + h });
-        currY += h;
     }
 
     if (well.przejscia) {
         well.przejscia.forEach(pr => {
             const mmFromBottom = (parseFloat(pr.rzednaWlaczenia || rzDna) - rzDna) * 1000;
-            const target = configMap.find(cm => mmFromBottom >= cm.start && mmFromBottom < cm.end);
-            const idx = target ? target.index : well.config.length - 1;
+            
+            let idx = well.config.length - 1;
+            let target = null;
+            
+            if (typeof findAssignedElement === 'function') {
+                const fae = findAssignedElement(mmFromBottom, configMap);
+                if (fae && fae.entry) {
+                    idx = fae.assignedIndex;
+                    target = fae.entry;
+                }
+            } else {
+                target = configMap.find(cm => mmFromBottom >= cm.start && mmFromBottom < cm.end);
+                idx = target ? target.index : well.config.length - 1;
+            }
+            
             if (!assigned[idx]) assigned[idx] = [];
-            assigned[idx].push(pr);
+            
+            // Kalkulacja opłaty za wiercenie dla widoku oferty
+            let drillingBasePrice = 0;
+            let bestDrillProd = null;
+            const p = studnieProducts.find((x) => x.id === pr.productId);
+            if (p) {
+                const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
+                if (!isInsitu && target && (target.componentType === 'krag' || target.componentType === 'krag_ot')) {
+                    const trDn = parseInt(pr.dn) || parseInt(p.dn) || 0;
+                    if (trDn > 0) {
+                        const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                        let bestDnDiff = Infinity;
+                        drillingProducts.forEach(drill => {
+                            let drillDn = parseInt(drill.dn);
+                            if (isNaN(drillDn)) {
+                                const match = drill.id.match(/Wiercenie-(\d+)/i);
+                                if (match) drillDn = parseInt(match[1]);
+                            }
+                            if (!isNaN(drillDn) && drillDn >= trDn) {
+                                if (drillDn - trDn < bestDnDiff) {
+                                    bestDnDiff = drillDn - trDn;
+                                    bestDrillProd = drill;
+                                }
+                            }
+                        });
+                        if (bestDrillProd) {
+                            drillingBasePrice = bestDrillProd.price || 0;
+                        }
+                    }
+                }
+            }
+            
+            assigned[idx].push({ ...pr, _drillingBasePrice: drillingBasePrice, _drillingProd: bestDrillProd });
         });
     }
     return assigned;
@@ -373,7 +422,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
     if (isBase && well.doplata) {
         html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--success);">
             <td colspan="3" style="padding-left:1.5rem;">↳ + Dopłata indywidualna</td>
-            <td class="text-right">${fmtInt(well.doplata)} PLN</td>
+            <td class="text-right">${fmt(well.doplata)} PLN</td>
         </tr>`;
     }
 
@@ -381,12 +430,46 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
         itemPrzejscia.forEach(pr => {
             const prProd = studnieProducts.find(x => x.id === pr.productId);
             if (!prProd) return;
-            let prPrice = (prProd.price || 0) * nadbudowaMult;
-            if (pr.doplata) prPrice += pr.doplata;
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
-                <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${prProd.category} ${prProd.dn} (${pr.angle}°)</td>
-                <td class="text-right">${fmt(prPrice)} PLN</td>
-            </tr>`;
+            
+            if (pr.frozenTransitionPrice != null) {
+                // TRYB ZAMÓWIENIA (zamrożone ceny)
+                html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
+                    <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${pr.frozenName || prProd.category} ${prProd.dn || ''} (${pr.angle}°)</td>
+                    <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
+                </tr>`;
+                if (pr.doplata) {
+                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:#fbbf24;">
+                        <td colspan="3" style="padding-left:2.0rem;">↳ + Dopłata indywidualna do przejścia</td>
+                        <td class="text-right">${fmt(pr.doplata)} PLN</td>
+                    </tr>`;
+                }
+                if (pr.frozenDrillingPrice > 0) {
+                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f97316;">
+                        <td colspan="3" style="padding-left:1.5rem;">↳ + ${pr.frozenDrillingName || 'Wiercenie'} ${pr.frozenDrillingDn || ''}</td>
+                        <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
+                    </tr>`;
+                }
+            } else {
+                // TRYB OFERTY (dynamiczne ceny)
+                let prPrice = (prProd.price || 0) * nadbudowaMult;
+                html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
+                    <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${prProd.category} ${prProd.dn} (${pr.angle}°)</td>
+                    <td class="text-right">${fmt(prPrice)} PLN</td>
+                </tr>`;
+                if (pr.doplata) {
+                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:#fbbf24;">
+                        <td colspan="3" style="padding-left:2.0rem;">↳ + Dopłata indywidualna do przejścia</td>
+                        <td class="text-right">${fmt(pr.doplata)} PLN</td>
+                    </tr>`;
+                }
+                if (pr._drillingBasePrice > 0 && pr._drillingProd) {
+                    const drillPrice = pr._drillingBasePrice * nadbudowaMult;
+                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f97316;">
+                        <td colspan="3" style="padding-left:1.5rem;">↳ + ${pr._drillingProd.name} ${pr._drillingProd.dn || ''}</td>
+                        <td class="text-right">${fmt(drillPrice)} PLN</td>
+                    </tr>`;
+                }
+            }
         });
     }
 
@@ -435,7 +518,14 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaM
         itemPrzejscia.forEach(pr => {
             const prProd = studnieProducts.find(x => x.id === pr.productId);
             if (prProd) {
-                totalLinePrice += ((prProd.price || 0) * nadbudowaMult) + (pr.doplata || 0);
+                if (pr.frozenTransitionPrice != null) {
+                    totalLinePrice += pr.frozenTransitionPrice + (pr.doplata || 0) + (pr.frozenDrillingPrice || 0);
+                } else {
+                    totalLinePrice += ((prProd.price || 0) * nadbudowaMult) + (pr.doplata || 0);
+                    if (pr._drillingBasePrice > 0) {
+                        totalLinePrice += (pr._drillingBasePrice * nadbudowaMult);
+                    }
+                }
                 totalLineWeight += prProd.weight || 0;
             }
         });
@@ -814,12 +904,15 @@ async function changeOfferUserFromListStudnie(offerId) {
 }
 
 async function saveOfferStudnie() {
-    if (isSavingOffer) return false;
-
-    if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        if (typeof showToast === 'function') {
+            showToast('Zapisywanie oferty jest zablokowane w trybie edycji zamówienia.', 'error');
+        }
         return false;
     }
+
+    if (isSavingOffer) return false;
+
     const number = document.getElementById('offer-number').value.trim();
     if (!number) {
         showToast('Wprowadź numer oferty', 'error');
