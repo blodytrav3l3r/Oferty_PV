@@ -172,21 +172,21 @@ function renderInlinePrzejsciaApp(containerId) {
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Rzędna [m]</div>
                     <input type="number" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
-                           onfocus="this.select()"
+                           onfocus="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
                            value="${(well && (well.rzednaDna !== null && well.rzednaDna !== undefined)) ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
                            placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Kąt [°]</div>
-                    <input type="number" class="form-input" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onfocus="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; color:#818cf8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onfocus="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; color:#818cf8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
-                    <div class="ui-text-muted-sm">Spadek w kinecie [mm]</div>
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onfocus="this.select()" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <div class="ui-text-muted-sm">Spadek w kinecie [%]</div>
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onfocus="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
-                    <div class="ui-text-muted-sm">Spadek w mufie [mm]</div>
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onfocus="this.select()" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <div class="ui-text-muted-sm">Spadek w mufie [%]</div>
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onfocus="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
 
                 <div style="text-align:center;">
@@ -211,7 +211,13 @@ function renderInlinePrzejsciaApp(containerId) {
         }
     `;
 
-    if (inlinePrzejsciaState.dnId) window.inlineUpdateAngles(containerId || 'main');
+    if (inlinePrzejsciaState.dnId) {
+        window.inlineUpdateAngles(containerId || 'main');
+        setTimeout(() => {
+            const angleInput = document.getElementById(`inl-angle-${containerId || 'main'}`);
+            if (angleInput) angleInput.focus();
+        }, 10);
+    }
 }
 
 window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
@@ -366,9 +372,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     well.przejscia[index].doplata = isNaN(numVal) ? 0 : parseFloat(numVal);
                 }
 
+                if (field === 'rzednaWlaczenia' || field === 'heightMm') {
+                    const isNowOsadnik = typeof isSettlingWell === 'function' ? isSettlingWell(well) : false;
+                    if (!isNowOsadnik && well.wkladkaOsadnikPreco === 'tak') {
+                        well.wkladkaOsadnikPreco = 'brak';
+                        if (window.showToast) window.showToast('Studnia przestała być osadnikiem. Wyłączono wkładkę.', 'info');
+                    }
+                }
+
                 renderWellPrzejscia();
                 renderWellDiagram();
                 updateSummary();
+                if (typeof renderWellConfig === 'function') renderWellConfig();
+                if (typeof renderWellParams === 'function') renderWellParams();
                 if (typeof window.refreshZleceniaModalIfActive === 'function') {
                     window.refreshZleceniaModalIfActive();
                 }
@@ -590,11 +606,11 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                   <input type="number" class="form-input" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size:0.75rem; color:#818cf8; font-weight:800; text-align:center;">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w kinecie [mm]</label>
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w kinecie [%]</label>
                   <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w mufie [mm]</label>
+                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w mufie [%]</label>
                   <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
                 </div>
               </div>

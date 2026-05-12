@@ -10,3 +10,4 @@ export { default as telemetryRoutes } from './telemetry';
 export { default as userRoutes } from './users';
 export { default as offerRoutes } from './offers';
 export { default as orderRoutes } from './orders';
+export { default as precoPricingRoutes } from './precoPricing';

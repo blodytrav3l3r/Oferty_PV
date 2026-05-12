@@ -100,9 +100,11 @@ function renderOfferLockBanner() {
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) ===== */
 function setupParamTiles() {
-    document.querySelectorAll('.param-group').forEach((group) => {
+    document.querySelectorAll('#wizard-step-2 .param-group').forEach((group) => {
         const paramName = group.getAttribute('data-param');
         group.querySelectorAll('.param-tile').forEach((btn) => {
+            if (btn.dataset.listenerBound === 'true') return;
+            btn.dataset.listenerBound = 'true';
             btn.addEventListener('click', async () => {
                 const val = btn.getAttribute('data-val');
                 const well = getCurrentWell();
@@ -111,17 +113,46 @@ function setupParamTiles() {
                 group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
 
+                // Domyślne "Nie" dla wkładki na całą wysokość przy wyborze PRECO
+                if (paramName === 'kineta' && (val === 'preco' || val === 'precotop')) {
+                    const precoHeightGroup = document.querySelector('.param-group[data-param="precoFullHeight"]');
+                    if (precoHeightGroup && !precoHeightGroup.querySelector('.param-tile.active')) {
+                        const nieBtn = precoHeightGroup.querySelector('.param-tile[data-val="nie"]');
+                        if (nieBtn) {
+                            nieBtn.click();
+                        }
+                    }
+                }
+
+                // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
+                if (paramName === 'kineta') {
+                    const spocznikGroup = document.querySelector('.param-group[data-param="spocznik"]');
+                    if (spocznikGroup) {
+                        const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+                        if (syncValues.includes(val)) {
+                            const targetBtn = spocznikGroup.querySelector(`.param-tile[data-val="${val}"]`);
+                            if (targetBtn && !targetBtn.classList.contains('active')) {
+                                targetBtn.click();
+                            }
+                        }
+                    }
+                }
+
                 // Jeśli studnia istnieje, zastosuj parametr + odśwież renderowanie
                 if (well) {
                     well[paramName] = val;
                     enforceLoadClassRules(well, paramName);
                     updateParamTilesUI();
                     updateAutoLockUI();
+                    if (typeof updateConfigToMatchParams === 'function') {
+                        updateConfigToMatchParams(well);
+                    }
                     await autoSelectComponents(true);
                     refreshAll();
                 } else {
                     // Wymuś zasady klas obciążenia nawet w kreatorze (brak studni)
                     enforceLoadClassRulesWizard(paramName, val);
+                    updateParamTilesUI();
                 }
 
                 // Śledzenie kreatora (zawsze)
@@ -159,11 +190,24 @@ function updateParamTilesUI() {
     // Pokaż/ukryj pola nazw powłok w zależności od bieżącego stanu kafelków (działa ze studnią lub bez niej)
     const malowanieWVal = getActiveTileValue('malowanieW');
     const malowanieZVal = getActiveTileValue('malowanieZ');
+    const kinetaVal = getActiveTileValue('kineta');
 
     const powlokaWGroup = document.getElementById('powloka-name-w-group');
     if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
     const powlokaZGroup = document.getElementById('powloka-name-z-group');
     if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
+
+    // Show/hide precoFullHeight param group based on kineta
+    const precoGroupWizard = document.getElementById('preco-full-height-wizard-group');
+    if (precoGroupWizard) {
+        precoGroupWizard.style.display = (kinetaVal === 'preco' || kinetaVal === 'precotop') ? 'flex' : 'none';
+    }
+    document.querySelectorAll('.param-group[data-param="precoFullHeight"]').forEach(el => {
+        const wrapper = el.closest('.wizard-param-group') || el.parentElement;
+        if (wrapper && !wrapper.id) { // Not the wizard one, it's the individual well one
+             wrapper.style.display = (kinetaVal === 'preco' || kinetaVal === 'precotop') ? 'block' : 'none';
+        }
+    });
 
     if (malowanieWVal === 'brak') {
         const pwWInput = document.getElementById('powloka-name-w');
@@ -196,8 +240,26 @@ const WELL_PARAM_DEFS = [
         ]
     },
     {
-        key: 'wkladka',
-        label: 'Wkładka PEHD',
+        key: 'wkladkaDennica',
+        label: 'Wkładka PEHD (Dennica)',
+        options: [
+            ['brak', 'Brak'],
+            ['3mm', '3mm'],
+            ['4mm', '4mm']
+        ]
+    },
+    {
+        key: 'wkladkaNadbudowa',
+        label: 'Wkładka PEHD (Nadb.)',
+        options: [
+            ['brak', 'Brak'],
+            ['3mm', '3mm'],
+            ['4mm', '4mm']
+        ]
+    },
+    {
+        key: 'wkladkaZwienczenie',
+        label: 'Wkładka PEHD (Zwieńcz.)',
         options: [
             ['brak', 'Brak'],
             ['3mm', '3mm'],
@@ -280,7 +342,17 @@ const WELL_PARAM_DEFS = [
             ['klinkier', 'Klinkier'],
             ['preco', 'Preco'],
             ['precotop', 'PrecoTop'],
-            ['unolith', 'UnoLith']
+            ['unolith', 'UnoLith'],
+            ['predl', 'Predl'],
+            ['kamionka', 'Kamionka']
+        ]
+    },
+    {
+        key: 'precoFullHeight',
+        label: 'Wkładka cała wys.',
+        options: [
+            ['tak', 'Tak'],
+            ['nie', 'Nie']
         ]
     },
     {
@@ -354,6 +426,14 @@ const WELL_PARAM_DEFS = [
             ['Kluczbork', 'Kluczbork'],
             ['Włocławek', 'Włocławek']
         ]
+    },
+    {
+        key: 'wkladkaOsadnikPreco',
+        label: 'Wkładka PRECO osadnik',
+        options: [
+            ['brak', 'Brak'],
+            ['tak', 'Tak']
+        ]
     }
 ];
 
@@ -369,11 +449,29 @@ function renderWellParams() {
 
     let html = `<div style="display:flex; flex-direction:column; gap:0.55rem;">`;
 
+    const isOsadnik = typeof isSettlingWell === 'function' && isSettlingWell(well);
+
     WELL_PARAM_DEFS.forEach((def) => {
+        if (def.key === 'precoFullHeight') {
+            if (well.kineta !== 'preco' && well.kineta !== 'precotop') {
+                return;
+            }
+        }
+        // Wkładka PRECO osadnik — wyszarzona jeśli to nie osadnik
+        let isGreyedOut = false;
+        if (def.key === 'wkladkaOsadnikPreco' && !isOsadnik) {
+            isGreyedOut = true;
+        }
+        // Gdy wkładka osadnikowa aktywna — kineta i spocznik zablokowane na 'brak'
+        if (well.wkladkaOsadnikPreco === 'tak') {
+            if (def.key === 'kineta' || def.key === 'spocznik') {
+                return; // ukryj — wymuszamy 'brak'
+            }
+        }
         const currentVal = well[def.key] || '';
 
-        html += `<div style="display:flex; align-items:center; gap:0.2rem;">`;
-        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:125px; text-align:left;">${def.label}</span>`;
+        html += `<div style="display:flex; align-items:center; gap:0.2rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
+        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">${def.label}</span>`;
         html += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.35rem; flex:1;">`;
         def.options.forEach(([val, lbl]) => {
             const isActive = val === currentVal;
@@ -390,29 +488,39 @@ function renderWellParams() {
             >${lbl}</button>`;
         });
         html += `</div></div>`;
+
+        // Pola dodatkowe renderowane bezpośrednio pod odpowiadającym kafelkiem
+        if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
+            html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
+            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. wew.</span>`;
+            html += `<input type="text" value="${well.powlokaNameW || ''}" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `</div>`;
+            html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
+            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. wew.</span>`;
+            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `</div>`;
+        }
+
+        if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
+            html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
+            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. zew.</span>`;
+            html += `<input type="text" value="${well.powlokaNameZ || ''}" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `</div>`;
+            html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
+            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. zew.</span>`;
+            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `</div>`;
+        }
+
+        if (def.key === 'wkladkaOsadnikPreco' && well.wkladkaOsadnikPreco === 'tak') {
+            html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
+            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Wys. wkładki osadnik</span>`;
+            html += `<div style="display:flex; align-items:center; gap:0.5rem;">`;
+            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<span style="font-size:0.8rem; color:var(--text-muted);">mm</span>`;
+            html += `</div></div>`;
+        }
     });
-
-    if (well.malowanieW && well.malowanieW !== 'brak') {
-        html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:125px; text-align:left;">Nazwa p. wew.</span>`;
-        html += `<input type="text" value="${well.powlokaNameW || ''}" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
-        html += `</div>`;
-        html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:125px; text-align:left;">Koszt p. wew.</span>`;
-        html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
-        html += `</div>`;
-    }
-
-    if (well.malowanieZ && well.malowanieZ !== 'brak') {
-        html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:125px; text-align:left;">Nazwa p. zew.</span>`;
-        html += `<input type="text" value="${well.powlokaNameZ || ''}" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
-        html += `</div>`;
-        html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:125px; text-align:left;">Koszt p. zew.</span>`;
-        html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
-        html += `</div>`;
-    }
 
     html += `</div>`;
     html += `<div style="display:flex; gap:0.4rem; margin-top:1rem; justify-content:flex-end;">`;
@@ -477,6 +585,8 @@ function renderDiscountPanel() {
 
     activeDNs.forEach((dn) => {
         const groupWells = wells.filter((w) => w.dn === dn);
+        // Mapowanie dn na klucz rabatów (styczna -> styczne)
+        const discountDn = dn === 'styczna' ? 'styczne' : dn;
         let dennicaBaseSum = 0,
             nadbudowaBaseSum = 0;
         let dennicaAfterSum = 0,
@@ -490,7 +600,7 @@ function renderDiscountPanel() {
         });
         const totalDN = dennicaBaseSum + nadbudowaBaseSum;
 
-        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
+        const disc = wellDiscounts[discountDn] || { dennica: 0, nadbudowa: 0, preco: 0 };
         const totalAfter = dennicaAfterSum + nadbudowaAfterSum;
 
         grandDennica += dennicaBaseSum;
@@ -499,6 +609,7 @@ function renderDiscountPanel() {
         grandDiscounted += totalAfter;
 
         const dnLabel = dn === 'styczna' ? 'Studnia Styczna' : `DN${dn}`;
+        const hasPrecoInGroup = groupWells.some(w => w.kineta === 'preco' || w.kineta === 'precotop');
 
         html += `<div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(255,255,255,0.05);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
@@ -509,21 +620,30 @@ function renderDiscountPanel() {
             <span class="ui-text-mute" style="text-align:left;">Dennica / Baza</span>
             <div style="display:flex; align-items:center; gap:0.2rem;">
               <input type="number" min="0" max="100" step="0.5" value="${disc.dennica || 0}"
-                id="disc-${dn}-dennica"
+                id="disc-${discountDn}-dennica"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:5px; color:#fff;"
                 onfocus="this.select()"
-                onchange="updateDiscount('${dn}','dennica',this.value)">
+                onchange="updateDiscount('${discountDn}','dennica',this.value)">
               <span class="ui-text-mute">%</span>
             </div>
             <span class="ui-text-mute" style="text-align:left;">Nadbudowa</span>
             <div style="display:flex; align-items:center; gap:0.2rem;">
               <input type="number" min="0" max="100" step="0.5" value="${disc.nadbudowa || 0}"
-                id="disc-${dn}-nadbudowa"
+                id="disc-${discountDn}-nadbudowa"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:5px; color:#fff;"
                 onfocus="this.select()"
-                onchange="updateDiscount('${dn}','nadbudowa',this.value)">
+                onchange="updateDiscount('${discountDn}','nadbudowa',this.value)">
               <span class="ui-text-mute">%</span>
             </div>
+            ${hasPrecoInGroup ? `<span class="ui-text-mute" style="text-align:left; color:#ef4444;">Wkładka PRECO</span>
+            <div style="display:flex; align-items:center; gap:0.2rem;">
+              <input type="number" min="0" max="100" step="0.5" value="${disc.preco || 0}"
+                id="disc-${discountDn}-preco"
+                style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:5px; color:#ef4444;"
+                onfocus="this.select()"
+                onchange="updateDiscount('${discountDn}','preco',this.value)">
+              <span class="ui-text-mute" style="color:#ef4444;">%</span>
+            </div>` : ''}
           </div>
           <div style="display:flex; justify-content:space-between; margin-top:0.4rem; padding-top:0.35rem; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="font-size:0.78rem; color:var(--text-muted); text-align:left;">Po rabacie:</span>
@@ -829,7 +949,19 @@ window.updateSummary = function updateSummary() {
     const finalPrice = stats.price + wellTransportCost;
 
     // Dolny pasek
-    document.getElementById('sum-price').textContent = fmt(finalPrice) + ' PLN';
+    const priceEl = document.getElementById('sum-price');
+    if (stats.error) {
+        if (priceEl) {
+            priceEl.textContent = 'BŁĄD';
+            priceEl.style.color = 'var(--danger, #ef4444)';
+        }
+    } else {
+        if (priceEl) {
+            priceEl.textContent = fmt(finalPrice) + ' PLN';
+            priceEl.style.color = '';
+        }
+    }
+
     document.getElementById('sum-weight').textContent = fmtInt(stats.weight) + ' kg';
     document.getElementById('sum-height').textContent = fmtInt(stats.height) + ' mm';
     document.getElementById('sum-area-int').textContent = fmt(stats.areaInt) + ' m²';
@@ -874,7 +1006,15 @@ window.updateSummary = function updateSummary() {
         wsDiff.textContent = diffMmText;
         wsDiff.style.color = diffColor;
     }
-    if (wsPrice) wsPrice.textContent = fmt(finalPrice);
+    if (wsPrice) {
+        if (stats.error) {
+            wsPrice.textContent = 'BŁĄD';
+            wsPrice.style.color = 'var(--danger, #ef4444)';
+        } else {
+            wsPrice.textContent = fmt(finalPrice);
+            wsPrice.style.color = '';
+        }
+    }
 
     // Height indicator
     updateHeightIndicator();

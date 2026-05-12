@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.warn('Błąd ładowania zleceń:', e);
         }
         clientsDb = await loadClientsDb();
+        await loadPrecoPricing();
     } catch (err) {
         console.error('[AppStudnie] Krytyczny błąd ładowania danych:', err);
         showToast('Błąd inicjalizacji modułu.', 'error');

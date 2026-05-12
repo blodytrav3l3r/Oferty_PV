@@ -352,8 +352,8 @@ function freezeWellPrices(wellsArr) {
         (well.config || []).forEach((item) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
-            item.frozenPrice = getItemAssessedPrice(well, p, true);
-            item.frozenPriceBase = getItemAssessedPrice(well, p, false);
+            item.frozenPrice = getItemAssessedPrice(well, p, true, item);
+            item.frozenPriceBase = getItemAssessedPrice(well, p, false, item);
             item.frozenName = p.name;
         });
 
@@ -573,7 +573,9 @@ function getOrderChanges(order) {
         const paramKeys = [
             'nadbudowa',
             'dennicaMaterial',
-            'wkladka',
+            'wkladkaDennica',
+            'wkladkaNadbudowa',
+            'wkladkaZwienczenie',
             'klasaBetonu',
             'agresjaChemiczna',
             'agresjaMrozowa',
@@ -1704,6 +1706,17 @@ function populateZleceniaForm(el) {
         }
     }
 
+    // Mapowanie ogólnych parametrów studni jeśli brak wartości dziedziczonej
+    if (!baseRodzajStopni) {
+        if (well.stopnie === 'drabinka') {
+            baseRodzajStopni = 'drabinka_a_stalowa';
+        } else if (well.stopnie === 'nierdzewna') {
+            baseRodzajStopni = 'drabinka_a_szlachetna';
+        } else if (well.stopnie === 'brak') {
+            baseRodzajStopni = '';
+        }
+    }
+
     const katStopni = existing?.katStopni || baseKatStopni || '';
     const wykonanie = katStopni ? calcStopnieExecution(katStopni) : '';
     // Wybór stopni — wyprowadź bieżącą wartość z uwzględnieniem dziedziczenia
@@ -1759,7 +1772,9 @@ function populateZleceniaForm(el) {
         ['klinkier', 'Klinkier'],
         ['preco', 'Preco'],
         ['precotop', 'PrecoTop'],
-        ['unolith', 'UnoLith']
+        ['unolith', 'UnoLith'],
+        ['predl', 'Predl'],
+        ['kamionka', 'Kamionka']
     ];
     const spocznikOptions = [
         ['1/2', '1/2'],
@@ -1801,8 +1816,11 @@ function populateZleceniaForm(el) {
         autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
 
     // 4. Wkładka PEHD
-    if (well.wkladka === '3mm' || well.wkladka === '4mm')
-        autoUwagi.push('Wkładka PEHD ' + well.wkladka);
+    let wklUwagi = [];
+    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') wklUwagi.push('Dennica ' + well.wkladkaDennica);
+    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') wklUwagi.push('Nadbudowa ' + well.wkladkaNadbudowa);
+    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') wklUwagi.push('Zwieńczenie ' + well.wkladkaZwienczenie);
+    if (wklUwagi.length > 0) autoUwagi.push('PEHD: ' + wklUwagi.join(', '));
 
     // 5. Malowanie wewnętrzne
     if (well.malowanieW && well.malowanieW !== 'brak') {
@@ -2212,9 +2230,12 @@ async function selectZleceniaTile(btn, targetId, val) {
 
     if (targetId === 'zl-rodzaj-stopni') {
         onZleceniaStopnieChange();
-    } else if (
+    }
+
+    if (
         [
             'zl-rodzaj-studni',
+            'zl-rodzaj-stopni',
             'zl-red-kinety',
             'zl-spocznik-h',
             'zl-usytuowanie',
@@ -2256,12 +2277,52 @@ async function selectZleceniaTile(btn, targetId, val) {
                 } else if (targetId === 'zl-kineta') {
                     el.well.kineta = val;
                     if (existing) existing.kineta = val;
+
+                    // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
+                    const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+                    if (syncValues.includes(val)) {
+                        const spocznikInput = document.getElementById('zl-spocznik');
+                        if (spocznikInput) {
+                            const group = spocznikInput.closest('.form-group-sm');
+                            if (group) {
+                                const targetBtn = group.querySelector(`.param-tile[onclick*="'zl-spocznik', '${val}'"]`);
+                                if (targetBtn && !targetBtn.classList.contains('active')) {
+                                    targetBtn.click();
+                                }
+                            }
+                        }
+                    }
                 } else if (targetId === 'zl-spocznik') {
                     el.well.spocznik = val;
                     if (existing) existing.spocznik = val;
                 } else if (targetId === 'zl-klasa-betonu') {
                     el.well.klasaBetonu = val;
                     if (existing) existing.klasaBetonu = val;
+                } else if (targetId === 'zl-rodzaj-stopni') {
+                    // Mapowanie rodzaju stopni na parametr studni well.stopnie
+                    // Typ A/B nie zmienia indeksu (oba to ten sam produkt)
+                    // 'inne' nie zmienia indeksu — zostawia oryginalny wybór użytkownika
+                    let newStopnie = null;
+                    if (val === '' || val === 'brak') {
+                        newStopnie = 'brak';
+                    } else if (val.includes('szlachetna')) {
+                        newStopnie = 'nierdzewna';
+                    } else if (val.includes('stalowa')) {
+                        newStopnie = 'drabinka';
+                    }
+                    // 'inne' → newStopnie = null → brak zmiany indeksów
+
+                    const stopnieIndexChanged = newStopnie !== null && newStopnie !== el.well.stopnie;
+                    if (stopnieIndexChanged) {
+                        el.well.stopnie = newStopnie;
+                    }
+                    if (existing) existing.rodzajStopni = val;
+
+                    // Jeśli indeks się nie zmienił (przełączenie A↔B lub 'inne'),
+                    // nie przeładowuj formularza — kafelki i hidden input już ustawione
+                    if (!stopnieIndexChanged) {
+                        return;
+                    }
                 }
 
                 // Synchronizuj kafelki parametrów głównego ekranu
@@ -2271,11 +2332,11 @@ async function selectZleceniaTile(btn, targetId, val) {
                 const oldCat = el.product.category;
                 const oldElementIndex = el.elementIndex;
 
-                if (targetId === 'zl-rodzaj-studni') {
+                if (targetId === 'zl-rodzaj-studni' || targetId === 'zl-rodzaj-stopni') {
                     if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
 
-                    // 1. Zaktualizowanie komponentów by dobrać wyrobienie Żelbet/Beton (i uaktualnić ich ceny)
-                    // Zamiast niszczyć konfigurację przez autoSelectComponents, w Zleceniach po prostu podmieniamy produkty 1:1.
+                    // Zaktualizowanie komponentów by dobrać odpowiednie indeksy produktów
+                    // Dla rodzaju studni: Żelbet/Beton, dla stopni: -D/-N-D/-B
                     if (typeof window.updateConfigToMatchParams === 'function') {
                         window.updateConfigToMatchParams(el.well);
                     }
@@ -2839,8 +2900,11 @@ function buildAutoOrderData(el, sharedData) {
         autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
     if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
         autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
-    if (well.wkladka === '3mm' || well.wkladka === '4mm')
-        autoUwagi.push('Wkładka PEHD ' + well.wkladka);
+    let wklUwagi2 = [];
+    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') wklUwagi2.push('Dennica ' + well.wkladkaDennica);
+    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') wklUwagi2.push('Nadbudowa ' + well.wkladkaNadbudowa);
+    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') wklUwagi2.push('Zwieńczenie ' + well.wkladkaZwienczenie);
+    if (wklUwagi2.length > 0) autoUwagi.push('PEHD: ' + wklUwagi2.join(', '));
     if (well.malowanieW && well.malowanieW !== 'brak') {
         let malWDesc = '';
         if (well.malowanieW === 'kineta') malWDesc = 'Kineta';

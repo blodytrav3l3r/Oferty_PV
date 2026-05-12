@@ -7,7 +7,8 @@ let currentCennikTab = 'dn1000';
 let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
 let wellCounter = 1;
-var wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0 }, ... }
+var wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0, preco: 0 }, ... }
+var precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
 
 // Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
 let offerDefaultZakonczenie = null; // ID produktu lub null (=konus)

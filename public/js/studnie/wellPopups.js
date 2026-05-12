@@ -55,8 +55,9 @@ function openZakonczeniePopup() {
             errorDn +
             '</div>';
     } else {
-        // Domyślny kafel "Auto (Konus)"
         const isAutoActive = !currentZak;
+        const wkladkaPEHDZwienczenieActive = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+
         tilesHtml += `<div onclick="selectZakonczenie(null)" style="
             padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
@@ -64,15 +65,31 @@ function openZakonczeniePopup() {
             ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
         " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
            onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Konus)</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Domyślny konus dla DN ${effectiveDn}</div>
+            <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Zależnie od warunków)</div>
+            <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Automatyczny dobór zakończenia studni</div>
         </div>`;
 
         candidates.forEach((p) => {
             const isActive = currentZak === p.id;
+            const isKonus = p.componentType === 'konus';
+            const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
             const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
             const typeLabel = typeLabels[p.componentType] || p.componentType;
-            tilesHtml += `<div onclick="selectZakonczenie('${p.id}')" style="
+            
+            if (isDisabled) {
+                tilesHtml += `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
+                    padding:0.6rem 0.8rem; border-radius:8px; cursor:not-allowed; opacity:0.5;
+                    border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
+                ">
+                    <div class="ui-flex-between">
+                        <div style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</div>
+                        <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle"></i> ZABLOKOWANE</span>
+                    </div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.15rem;">${p.name}</div>
+                    <div style="font-size:0.6rem; color:var(--warning); margin-top:0.3rem;">Brak możliwości wykonania wkładki PEHD</div>
+                </div>`;
+            } else {
+                tilesHtml += `<div onclick="selectZakonczenie('${p.id}')" style="
                 padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
                 border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
                 background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
@@ -90,6 +107,7 @@ function openZakonczeniePopup() {
                     <span style="color:var(--success);">${fmtInt(p.price)} PLN</span>
                 </div>
             </div>`;
+            }
         });
     }
 
@@ -281,12 +299,32 @@ function openRedukcjaZakonczeniePopup() {
     };
 
     const currentZak = well.redukcjaZakonczenie;
+    const wkladkaPEHDZwienczenieActive = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
 
     const renderTile = (p, overrideLabel = null) => {
         if (!p) return '';
+        const isKonus = p.componentType === 'konus';
+        const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
         const isActive = currentZak === p.id;
         const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
         const typeLabel = overrideLabel || typeLabels[p.componentType] || p.componentType;
+        
+        if (isDisabled) {
+            return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
+                padding:0.6rem 0.8rem; border-radius:8px; cursor:not-allowed; opacity:0.5;
+                border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
+                display:flex; flex-direction:column; justify-content:space-between;
+            ">
+                <div class="ui-flex-between">
+                    <div style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</div>
+                    <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle"></i> BLOKADA</span>
+                </div>
+                <div style="flex-grow:1;"></div>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.3rem;">${p.name}</div>
+                <div style="font-size:0.6rem; color:var(--warning); margin-top:0.3rem;">Brak możliwości wkładki PEHD</div>
+            </div>`;
+        }
+
         return `<div onclick="selectRedukcjaZakonczenie('${p.id}')" style="
             padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
@@ -471,6 +509,84 @@ function handleStycznaProductChoice(productId, mode) {
         doSelectDN('styczna');
     }
 }
+
+/* ===== OBSŁUGA POPUPÓW WYBORU ELEMENTÓW ===== */
+
+window.showKonusPehdResolverModal = function(wellIndex, callback) {
+    const well = wells[wellIndex];
+    if (!well) return;
+
+    // Usuwamy stary popup jeśli istnieje
+    const oldOverlay = document.getElementById('pehd-konus-resolver');
+    if (oldOverlay) oldOverlay.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'pehd-konus-resolver';
+    
+    let html = `
+    <div style="background:var(--bg-secondary, #1e293b); padding:2.2rem; border-radius:16px; max-width:600px; width:100%; border:1px solid rgba(248,113,113,0.25); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+        <h3 style="margin-top:0; color:#f87171; display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size:1.25rem; font-weight:700;">
+            <i data-lucide="alert-circle" style="width:24px;height:24px;"></i> Niezgodność technologiczna: Konus + PEHD
+        </h3>
+        <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:1.8rem; line-height:1.6; font-family:Inter,sans-serif;">
+            <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>
+            Wybierz alternatywne zakończenie dla studni <strong style="color:var(--text-primary);">${well.name || 'Bieżąca studnia'}</strong>:
+        </p>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
+            <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" style="background:rgba(255,255,255,0.03); border:2px solid rgba(255,255,255,0.06); border-radius:12px; padding:1.5rem; cursor:pointer; text-align:center; transition:all 0.2s ease; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='rgba(99,102,241,0.05)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateY(0)';">
+                <div style="font-weight:700; color:#e2e8f0; margin-bottom:0.4rem; font-size:1.15rem;">Płyta DIN</div>
+                <div style="font-size:0.8rem; color:#64748b; line-height:1.4;">Standardowa płyta nastudzienna.</div>
+            </div>
+            
+            <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" style="background:rgba(255,255,255,0.03); border:2px solid rgba(255,255,255,0.06); border-radius:12px; padding:1.5rem; cursor:pointer; text-align:center; transition:all 0.2s ease; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='rgba(99,102,241,0.05)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='translateY(0)';">
+                <div style="font-weight:700; color:#e2e8f0; margin-bottom:0.4rem; font-size:1.15rem;">Płyta + Pierścień</div>
+                <div style="font-size:0.8rem; color:#64748b; line-height:1.4;">Płyta zamykająca i pierścień odciążający.</div>
+            </div>
+        </div>
+        
+        <div style="margin-top:1.8rem; text-align:right;">
+            <button onclick="document.getElementById('pehd-konus-resolver').remove(); if(window.konusResolverCallback) window.konusResolverCallback();" style="padding:0.6rem 1.2rem; background:transparent; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#cbd5e1; cursor:pointer; font-family:Inter,sans-serif; font-size:0.9rem; transition:all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#cbd5e1';">Zostaw domyślne (Płyta DIN)</button>
+        </div>
+    </div>
+    `;
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons({ root: overlay });
+    window.konusResolverCallback = callback;
+};
+
+window.resolveKonusPehd = async function(wellIndex, type) {
+    const well = wells[wellIndex];
+    if (!well) return;
+    
+    let dn = well.dn === 'styczna' ? 1000 : well.dn;
+    if (well.redukcjaDN1000) dn = well.redukcjaTargetDN || 1000;
+    
+    const mag = well.magazyn === 'Włocławek' ? 'WL' : 'KLB';
+    const avail = studnieProducts.filter(p => p.dn === dn && p.componentType === type && ((mag === 'WL' && p.magazynWL === 1) || (mag !== 'WL' && p.magazynKLB === 1)));
+    
+    if (avail.length > 0) {
+        if (well.redukcjaDN1000) {
+            well.redukcjaZakonczenie = avail[0].id;
+        } else {
+            well.zakonczenie = avail[0].id;
+        }
+        
+        document.getElementById('pehd-konus-resolver').remove();
+        
+        // Jeśli jesteśmy w trakcie edycji studni (Krok 3) i wywołano to przez updateWellParam:
+        if (currentWizardStep === 3) {
+            await autoSelectComponents(true);
+            refreshAll();
+        }
+        
+        if (window.konusResolverCallback) window.konusResolverCallback();
+    } else {
+        showToast('Brak elementu dla wybranego typu w cenniku (DN' + dn + ').', 'error');
+    }
+};
 
 /* ===== GLOBAL RECALCULATOR ===== */
 window.openGlobalRecalcModal = function () {

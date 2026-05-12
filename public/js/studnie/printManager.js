@@ -190,9 +190,65 @@ function ensureDisplayIndices(przejscia) {
 }
 
 /**
+ * Znajduje przejścia w kręgu z otworem (krag_ot) lub drugiej dennicy powyżej,
+ * dla których w pierwszej dennicy nie istnieje przejście na tym samym kącie.
+ * Zwraca listę obiektów przejść wymagających ślepej kinety na zleceniu dennicy.
+ *
+ * @param {Object}   well                - Obiekt studni.
+ * @param {number}   dennicaElementIndex  - Indeks dennicy w well.config.
+ * @param {Array}    configMap            - Mapa konfiguracji z buildConfigMap().
+ * @param {number}   rzDna                - Rzędna dna studni.
+ * @returns {Array}  Lista przejść wymagających ślepej kinety.
+ */
+function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna) {
+    const allPrzejscia = well.przejscia || [];
+    if (allPrzejscia.length === 0) return [];
+
+    // Przejścia przypisane do dennicy
+    const dennicaAngles = new Set();
+    allPrzejscia.forEach(item => {
+        let pel = parseFloat(item.rzednaWlaczenia);
+        if (isNaN(pel)) pel = rzDna;
+        const mm = (pel - rzDna) * 1000;
+        const { assignedIndex } = findAssignedElement(mm, configMap);
+        if (assignedIndex === dennicaElementIndex) {
+            dennicaAngles.add(parseFloat(item.angle) || 0);
+        }
+    });
+
+    // Przejścia w elementach powyżej dennicy (krag_ot lub inna dennica)
+    const blindEntries = [];
+    const seenAngles = new Set();
+
+    allPrzejscia.forEach(item => {
+        let pel = parseFloat(item.rzednaWlaczenia);
+        if (isNaN(pel)) pel = rzDna;
+        const mm = (pel - rzDna) * 1000;
+        const { assignedIndex, entry } = findAssignedElement(mm, configMap);
+
+        if (assignedIndex === dennicaElementIndex) return;
+        if (!entry) return;
+        if (entry.componentType !== 'krag_ot' && entry.componentType !== 'dennica') return;
+
+        const angle = parseFloat(item.angle) || 0;
+        if (dennicaAngles.has(angle)) return;
+        if (seenAngles.has(angle)) return;
+
+        seenAngles.add(angle);
+        blindEntries.push(item);
+    });
+
+    return blindEntries;
+}
+
+/**
  * Buduje wiersze przejść dla wydruku Zlecenia.
  * Iteruje po displayIndex od 0 do max, zostawiając puste wiersze dla luk.
  * Etykiety (Wlot/Wylot) odpowiadają rzeczywistemu flowType przejścia.
+ *
+ * Jeśli element to dennica i w kręgu z otworem (lub drugiej dennicy) powyżej
+ * istnieje przejście na kącie, którego dennica nie ma — automatycznie dodaje
+ * wiersz "Ślepa kineta" na tym kącie.
  */
 function buildPrzejsciaRows(data) {
     const well = data.well;
@@ -212,8 +268,21 @@ function buildPrzejsciaRows(data) {
         return assignedIndex === data.elementIndex;
     });
 
-    const maxIdx = assignedPrzejscia.length > 0
-        ? Math.max(...assignedPrzejscia.map(p => p.displayIndex))
+    // Ślepe kinety — tylko gdy element to dennica
+    let blindEntries = [];
+    const isDennica = data.product && data.product.componentType === 'dennica';
+    if (isDennica) {
+        blindEntries = findBlindKinetaEntries(well, data.elementIndex, configMap, rzDna);
+    }
+
+    // Uwzględnij displayIndex ślepych kinet przy obliczaniu maxIdx
+    const allDisplayIndices = [
+        ...assignedPrzejscia.map(p => p.displayIndex),
+        ...blindEntries.map(p => p.displayIndex)
+    ].filter(idx => idx !== undefined && idx !== null);
+
+    const maxIdx = allDisplayIndices.length > 0
+        ? Math.max(...allDisplayIndices)
         : -1;
     const totalSlots = Math.max(maxIdx + 1, 4);
 
@@ -223,20 +292,28 @@ function buildPrzejsciaRows(data) {
         if (p) {
             const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
             rows.push(formatPrzejscieRow(`${prefix} ${i}`, p, findProductFn, rzDna));
-        } else {
-            const label = i === 0 ? 'Wylot 0' : `Wlot ${i}`;
-            rows.push({
-                label,
-                rodzaj: '',
-                srednica: '',
-                spadekKineta: '',
-                spadekMufa: '',
-                katStopien: '',
-                uwagi: '',
-                katGon: '',
-                katWykonania: ''
-            });
+            continue;
         }
+
+        // Sprawdź czy na tym displayIndex jest ślepa kineta
+        const blind = blindEntries.find(t => t.displayIndex === i);
+        if (blind) {
+            rows.push(formatBlindKinetaRow(`Wlot ${i}`, blind, findProductFn));
+            continue;
+        }
+
+        const label = i === 0 ? 'Wylot 0' : `Wlot ${i}`;
+        rows.push({
+            label,
+            rodzaj: '',
+            srednica: '',
+            spadekKineta: '',
+            spadekMufa: '',
+            katStopien: '',
+            uwagi: '',
+            katGon: '',
+            katWykonania: ''
+        });
     }
     return rows;
 }
@@ -263,10 +340,35 @@ function formatPrzejscieRow(label, p, findProductFn, rzDna) {
         label,
         rodzaj,
         srednica,
-        spadekKineta: spadekKineta ? Math.round(parseFloat(spadekKineta)) + ' mm' : '',
-        spadekMufa: spadekMufa ? Math.round(parseFloat(spadekMufa)) + ' mm' : '',
+        spadekKineta: spadekKineta && parseFloat(spadekKineta) !== 0 ? Math.round(parseFloat(spadekKineta)) + ' %' : '',
+        spadekMufa: spadekMufa && parseFloat(spadekMufa) !== 0 ? Math.round(parseFloat(spadekMufa)) + ' %' : '',
         katStopien: angle + '°',
         uwagi,
+        katGon: katGon,
+        katWykonania: katWyk + '°'
+    };
+}
+
+/**
+ * Formatuje wiersz ślepej kinety do wydruku.
+ * Ślepa kineta = kanał w dennicy bez otworu, prowadzący do przejścia w kręgu OT powyżej.
+ */
+function formatBlindKinetaRow(label, p, findProductFn) {
+    const product = findProductFn ? findProductFn(p.productId) : null;
+    const srednica = product ? product.dn : '';
+    const angle = parseFloat(p.angle) || 0;
+
+    const katGon = p.angleGony || ((angle * 400) / 360).toFixed(2);
+    const katWyk = p.angleExecution !== undefined ? p.angleExecution : 360 - angle;
+
+    return {
+        label,
+        rodzaj: 'Ślepa kineta',
+        srednica,
+        spadekKineta: '',
+        spadekMufa: '',
+        katStopien: angle + '°',
+        uwagi: 'Ślepa',
         katGon: katGon,
         katWykonania: katWyk + '°'
     };
@@ -323,6 +425,7 @@ function generateWellSvg(data) {
     const rzDna = parseFloat(well.rzednaDna) || 0;
 
     // Filtruj przejścia według przypisanego elementu, jeśli podano elementIndex
+    let blindKinetaPrzejscia = [];
     if (
         data.elementIndex !== undefined &&
         typeof buildConfigMap !== 'undefined' &&
@@ -341,10 +444,16 @@ function generateWellSvg(data) {
                 const { assignedIndex } = findAssignedElement(mmFromBottom, configMap);
                 return assignedIndex === data.elementIndex;
             });
+
+            // Dla dennicy: dodaj ślepe kinety do grafiki SVG
+            const isDennica = data.product && data.product.componentType === 'dennica';
+            if (isDennica) {
+                blindKinetaPrzejscia = findBlindKinetaEntries(well, data.elementIndex, configMap, rzDna);
+            }
         }
     }
 
-    if (przejscia.length === 0) return '';
+    if (przejscia.length === 0 && blindKinetaPrzejscia.length === 0) return '';
 
     // Zoptymalizowany obszar roboczy (viewBox), by powiększyć studnię
     const size = 400;
@@ -395,15 +504,25 @@ function generateWellSvg(data) {
 
     const wylot = przejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
     ensureDisplayIndices(przejscia);
+
+    // Nadaj displayIndex ślepym kinetom (zachowują oryginalny displayIndex z well.przejscia)
+    if (blindKinetaPrzejscia.length > 0) {
+        ensureDisplayIndices(well.przejscia || []);
+    }
+
     const labelsMap = new Map();
     przejscia.forEach(p => {
         const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
         labelsMap.set(p, `${prefix} ${p.displayIndex}`);
     });
+    blindKinetaPrzejscia.forEach(p => {
+        labelsMap.set(p, `Ślepa ${p.displayIndex}`);
+    });
 
     const labels = [];
 
-    przejscia.forEach((p) => {
+    // Funkcja rysująca linię i etykietę dla przejścia (zwykłego lub ślepego)
+    function drawTransitionSvg(p, isBlind) {
         const baseAngle = parseFloat(p.angle) || 0;
         let angleDeg = baseAngle;
         if (useKatWykonania) {
@@ -416,17 +535,22 @@ function generateWellSvg(data) {
         const y = center + radius * Math.cos(rad);
 
         const isWylot = p === wylot;
-        svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`);
+        if (isBlind) {
+            // Ślepa kineta — linia przerywana, szary kolor
+            svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" />`);
+        } else {
+            svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`);
+        }
 
         const product =
             typeof studnieProducts !== 'undefined'
                 ? studnieProducts.find((pr) => pr.id === p.productId)
                 : null;
-        const rodzaj = product ? product.category : '';
+        const rodzaj = isBlind ? 'ŚLEPA' : (product ? product.category : '');
         const dn = product ? product.dn : '';
         const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
         const hMm = Math.round((pel - rzDna) * 1000);
-        const uwagiText = hMm > 0 ? `+${hMm}mm` : '';
+        const uwagiText = isBlind ? 'ślepa' : (hMm > 0 ? `+${hMm}mm` : '');
 
         const labelRadius = radius + 40;
         const lx = center - labelRadius * Math.sin(rad);
@@ -463,9 +587,13 @@ function generateWellSvg(data) {
             anchor, offsetX,
             isRight: (lx >= center),
             lines,
-            textAngle: `${angleDeg}°${uwagiText ? ' (' + uwagiText + ')' : ''}`
+            textAngle: `${angleDeg}°${uwagiText ? ' (' + uwagiText + ')' : ''}`,
+            isBlind: isBlind
         });
-    });
+    }
+
+    przejscia.forEach((p) => drawTransitionSvg(p, false));
+    blindKinetaPrzejscia.forEach((p) => drawTransitionSvg(p, true));
     const leftLabels = labels.filter(l => !l.isRight).sort((a, b) => a.ly - b.ly);
     const rightLabels = labels.filter(l => l.isRight).sort((a, b) => a.ly - b.ly);
 
@@ -517,11 +645,13 @@ function generateWellSvg(data) {
             const lineDist = (l.ly > l.origY) ? -8 : 8;
             svgParts.push(`<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`);
         }
-        let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" fill="#000">`;
+        const textFill = l.isBlind ? '#999' : '#000';
+        const subFill = l.isBlind ? '#aaa' : '#444';
+        let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" fill="${textFill}">`;
         l.lines.forEach((line, li) => {
-            textSvg += `<tspan x="${l.lx + l.offsetX}" dy="${li === 0 ? '0' : '1.1em'}" fill="#000">${line}</tspan>`;
+            textSvg += `<tspan x="${l.lx + l.offsetX}" dy="${li === 0 ? '0' : '1.1em'}" fill="${textFill}">${line}</tspan>`;
         });
-        textSvg += `<tspan x="${l.lx + l.offsetX}" dy="1.1em" font-size="${angleFontSize}" font-weight="normal" fill="#444">${l.textAngle}</tspan>`;
+        textSvg += `<tspan x="${l.lx + l.offsetX}" dy="1.1em" font-size="${angleFontSize}" font-weight="normal" fill="${subFill}">${l.textAngle}</tspan>`;
         textSvg += `</text>`;
         svgParts.push(textSvg);
     });
@@ -604,6 +734,15 @@ function buildZlecenieHtml(template, data) {
         angleTypeTitle = "Kąt wykonania";
     }
 
+    let finalUwagi = data.uwagi || '';
+    if (data.well && data.well.wkladkaOsadnikPreco === 'tak' && data.product && (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')) {
+        const osadnikNote = `<strong style="color:#f59e0b; font-size:1.1em; display:block; margin-top:5px;">UWAGA: OSADNIK - WKŁADKA PRECO (Dno + Ściany ${data.well.wkladkaOsadnikH || 0} mm)</strong>`;
+        finalUwagi = finalUwagi ? finalUwagi + '<br>' + osadnikNote : osadnikNote;
+    } else if (data.well && (data.well.precoFullHeight === 'tak' || data.well.precoFullHeight === true) && data.product && (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')) {
+        const fullHeightNote = '<strong style="color:red; font-size:1.1em; display:block; margin-top:5px;">UWAGA: WKŁADKA PRECO NA CAŁEJ WYSOKOŚCI DENNICY!</strong>';
+        finalUwagi = finalUwagi ? finalUwagi + '<br>' + fullHeightNote : fullHeightNote;
+    }
+
     // Zbudowanie dużego płaskiego obiektu z wartościami dla {{ZMIENNYCH}}
     const payload = {
         NR_ZLECENIA: data.productionOrderNumber || '',
@@ -617,7 +756,7 @@ function buildZlecenieHtml(template, data) {
         WYSOKOSC: data.wysokosc || '',
         GLEBOKOSC: data.glebokosc || '',
         DNO_KINETA: data.dnoKineta || '',
-        UWAGI: data.uwagi || '',
+        UWAGI: finalUwagi,
         // Odwołania do powiązanych elementów (dennica ↔ kręgi) dodawane poniżej
         DATA: data.data || '',
         NAZWISKO: data.nazwisko || '',

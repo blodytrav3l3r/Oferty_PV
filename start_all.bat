@@ -24,6 +24,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
+for /f "tokens=2" %%v in ('python --version 2^>nul') do set "PY_VER=%%v"
+for /f "tokens=1 delims=." %%m in ("%PY_VER%") do set "PY_MAJOR=%%m"
+if "%PY_MAJOR%"=="3" (
+    for /f "tokens=2 delims=." %%n in ("%PY_VER%") do (
+        if %%n GEQ 13 (
+            echo.
+            echo [BLAD] Wykryto Python %PY_VER%.
+            echo        Ta wersja moze powodowac problemy z instalacja pakietow.
+            echo        Zalecana wersja: Python 3.11 lub 3.12.
+            echo        Pobierz z: https://www.python.org/downloads/release/python-3119/
+            pause
+            exit /b 1
+        )
+    )
+)
+
 if not exist "well_configurator_backend" (
     echo [UWAGA] Folder well_configurator_backend nie znaleziony.
     echo         Tylko serwer Node.js zostanie uruchomiony.
@@ -62,6 +78,71 @@ if "!PYTHON_AVAILABLE!"=="1" (
 )
 
 echo.
+
+if not exist "node_modules" (
+    if exist "vendor\node_modules.tar.gz" (
+        echo [INFO] Rozpakowywanie node_modules z archiwum offline...
+        tar -xzf vendor\node_modules.tar.gz
+        if errorlevel 1 (
+            echo [BLAD] Rozpakowanie node_modules nie powiodlo sie.
+            pause
+            exit /b 1
+        )
+        echo [OK] node_modules rozpakowane z vendor\node_modules.tar.gz
+        echo.
+    ) else (
+        echo [INFO] Brak folderu node_modules. Instalowanie zaleznosci Node.js...
+        call npm install
+        if errorlevel 1 (
+            echo [BLAD] npm install nie powiodlo sie.
+            pause
+            exit /b 1
+        )
+        echo [OK] Zaleznosci Node.js zainstalowane.
+        echo.
+    )
+)
+
+if "!PYTHON_AVAILABLE!"=="1" (
+    if not exist "well_configurator_backend\venv" (
+        echo [INFO] Tworzenie venv dla Python backend...
+        cd well_configurator_backend
+        python -m venv venv
+        if errorlevel 1 (
+            echo [BLAD] Blad tworzenia venv.
+            pause
+            exit /b 1
+        )
+        echo [OK] venv utworzone.
+        cd ..
+        echo.
+    )
+
+    echo [INFO] Sprawdzanie zaleznosci Python...
+    call well_configurator_backend\venv\Scripts\python -c "import sqlalchemy" >nul 2>&1
+    if errorlevel 1 (
+        echo [INFO] Instalowanie zaleznosci Python...
+        if exist "vendor\python_wheels" (
+            echo        (tryb offline — lokalne pliki .whl)
+            call well_configurator_backend\venv\Scripts\python -m pip install --no-index --find-links vendor\python_wheels\ -r well_configurator_backend\requirements.txt
+        ) else (
+            echo        (tryb online — pobieranie z internetu)
+            call well_configurator_backend\venv\Scripts\python -m pip install -r well_configurator_backend\requirements.txt
+        )
+        if errorlevel 1 (
+            echo [BLAD] Instalacja zaleznosci Python nie powiodla sie.
+            echo        Moze to byc spowodowane niezgodnoscia z wersja Pythona.
+            echo        Upewnij sie, ze masz Python 3.11 lub 3.12.
+            pause
+            exit /b 1
+        )
+        echo [OK] Zaleznosci Python zainstalowane.
+    ) else (
+        echo [OK] Zaleznosci Python sa aktualne.
+    )
+    echo.
+)
+
 echo ========================================
 echo  Uruchamianie serwerow...
 echo ========================================

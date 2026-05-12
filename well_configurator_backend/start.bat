@@ -16,19 +16,39 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "tokens=*" %%v in ('python --version 2^>nul') do set "PY_VERSION=%%v"
+for /f "tokens=2" %%v in ('python --version 2^>nul') do set "PY_VERSION=%%v"
 echo [OK] Python: !PY_VERSION!
 echo.
 
+for /f "tokens=1 delims=." %%m in ("!PY_VERSION!") do set "PY_MAJOR=%%m"
+if "!PY_MAJOR!"=="3" (
+    for /f "tokens=2 delims=." %%n in ("!PY_VERSION!") do (
+        if %%n GEQ 13 (
+            echo [BLAD] Python !PY_VERSION! nie jest wspierany.
+            echo        Pakiety takie jak lightgbm, ortools, experta moga nie miec
+            echo        gotowych instalatorow dla tej wersji Pythona.
+            echo.
+            echo        Rozwiazanie:
+            echo        1. Odinstaluj Python !PY_VERSION!
+            echo        2. Zainstaluj Python 3.11 lub 3.12
+            echo           https://www.python.org/downloads/release/python-3119/
+            echo        3. Upewnij sie, ze dodales Python do PATH podczas instalacji
+            pause
+            exit /b 1
+        )
+    )
+)
+
 if not exist "venv" (
-    echo [BLAD] Folder venv nie istnieje.
-    echo        Uruchom install.bat z katalogu glownego aplikacji.
-    echo        Lub zainstaluj zaleonosci recznie:
-    echo        python -m venv venv
-    echo        venv\Scripts\activate.bat
-    echo        pip install -r requirements.txt
-    pause
-    exit /b 1
+    echo [INFO] Folder venv nie istnieje. Tworzenie...
+    python -m venv venv
+    if errorlevel 1 (
+        echo [BLAD] Blad tworzenia venv.
+        pause
+        exit /b 1
+    )
+    echo [OK] venv utworzone.
+    echo.
 )
 
 if not exist "venv\Scripts\activate.bat" (
@@ -38,9 +58,6 @@ if not exist "venv\Scripts\activate.bat" (
     pause
     exit /b 1
 )
-
-echo [OK] Srodowisko wirtualne znalezione
-echo.
 
 call venv\Scripts\activate.bat
 if errorlevel 1 (
@@ -55,19 +72,41 @@ echo.
 
 if exist "requirements.txt" (
     echo ---------- Sprawdzanie zaleznosci ----------
-    pip show requests >nul 2>&1
+    pip show sqlalchemy >nul 2>&1
     if errorlevel 1 (
-        echo [UWAGA] Brakuje zaleznosci z requirements.txt
-        echo         Instalowanie...
-        pip install -r requirements.txt
+        echo [INFO] Brakuje pakietow Python. Instalowanie...
+        if exist "..\vendor\python_wheels" (
+            echo        (tryb offline — lokalne pliki .whl)
+            pip install --no-index --find-links ..\vendor\python_wheels\ -r requirements.txt
+        ) else (
+            echo        (tryb online — pobieranie z internetu)
+            pip install -r requirements.txt
+        )
         if errorlevel 1 (
             echo.
             echo [BLAD] Instalacja zaleznosci nie powiodla sie.
+            echo        Moze to byc spowodowane niezgodnoscia z wersja Pythona.
+            echo        Upewnij sie, ze masz Python 3.11 lub 3.12.
             pause
             exit /b 1
         )
+        echo [OK] Zaleznosci Python zainstalowane.
+    ) else (
+        echo [OK] Zaleznosci Python sa aktualne.
     )
     echo.
+)
+
+python -c "import sqlalchemy" >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo [BLAD] Pakiety Python sa zainstalowane, ale nie mozna ich zaimportowac.
+    echo        Moze to oznaczac niezgodnosc z wersja Pythona.
+    echo.
+    echo        Sprawdz czy masz Python 3.11 lub 3.12.
+    echo        Obecna wersja: !PY_VERSION!
+    pause
+    exit /b 1
 )
 
 echo ---------- Uruchamianie serwera ----------

@@ -121,9 +121,11 @@ def validate_transitions(segments: List[Dict], transitions: List[TransitionInput
                 bottom_clearance = hole_bottom - seg['start']
                 top_clearance = seg['end'] - hole_top
 
-                is_pipe_at_bottom = is_bottom_most and bottom_clearance < 1
-                eff_z_dol = -9999.0 if is_pipe_at_bottom else z_dol
-                eff_z_dol_min = -9999.0 if is_pipe_at_bottom else z_dol_min
+                # Rura blisko dna — jeśli odległość od dna jest mniejsza
+                # niż wymagany zapas dolny, ignoruj zapas dolny (studnia osadnikowa)
+                is_pipe_near_bottom = is_bottom_most and bottom_clearance < z_dol
+                eff_z_dol = -9999.0 if is_pipe_near_bottom else z_dol
+                eff_z_dol_min = -9999.0 if is_pipe_near_bottom else z_dol_min
 
                 if bottom_clearance >= eff_z_dol and top_clearance >= z_gora:
                     hole_valid = True

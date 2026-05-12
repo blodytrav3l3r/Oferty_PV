@@ -101,6 +101,8 @@ function getReductionPlate(products, dn, useReduction, targetDn = 1000) {
 function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
     const ff = getFormaField(warehouse);
     const dn = parseInt(topDn);
+    // Przekazany fallbackToDin z reguły oznacza wkładkę PEHD. Użyjmy go jako flagi do całkowitej blokady Konusa, bo PEHD tego wymaga.
+    const blockKonus = fallbackToDin;
 
     // 1. Wymuszony przez użytkownika
     if (forcedId && !fallbackToDin) {
@@ -111,7 +113,7 @@ function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
     }
 
     // Kandydaci
-    const konusy = products
+    const konusy = blockKonus ? [] : products
         .filter((p) => p.componentType === 'konus' && parseInt(p.dn) === dn)
         .sort((a, b) => (parseInt(b[ff]) || 0) - (parseInt(a[ff]) || 0));
 
@@ -119,10 +121,10 @@ function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
         .filter((p) => p.componentType === 'plyta_din' && parseInt(p.dn) === dn)
         .sort((a, b) => (parseInt(b[ff]) || 0) - (parseInt(a[ff]) || 0));
 
-    // 2. Fallback do DIN (kolizja z konusem)
+    // 2. Fallback do DIN (kolizja z konusem lub wymuszony PEHD)
     if (fallbackToDin) {
         if (dinPlates.length > 0) return dinPlates[0];
-        if (konusy.length > 0) return konusy[0];
+        if (konusy.length > 0) return konusy[0]; // Jeżeli blockKonus zadziałał to będzie puste
         return null;
     }
 

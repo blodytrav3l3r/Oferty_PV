@@ -825,6 +825,16 @@
                                                     "
                                                     class="param-group"
                                                     data-param="wkladka"
+                                                    onclick="setTimeout(() => { 
+                                                        const active = this.querySelector('.param-tile.active');
+                                                        const subOptions = document.getElementById('wkladka-sub-options');
+                                                        if (active && active.getAttribute('data-val') !== 'brak') {
+                                                            subOptions.style.display = 'block';
+                                                        } else {
+                                                            subOptions.style.display = 'none';
+                                                        }
+                                                        if (typeof validateWizardStep2 === 'function') validateWizardStep2();
+                                                    }, 50)"
                                                 >
                                                     <button class="param-tile" data-val="brak">
                                                         Brak
@@ -835,6 +845,20 @@
                                                     <button class="param-tile" data-val="4mm">
                                                         4mm
                                                     </button>
+                                                </div>
+                                                <div id="wkladka-sub-options" style="display: none; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                                    <div style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 8px;">Wybierz elementy, w których ma być wkładka:</div>
+                                                    <div style="display: flex; gap: 15px;">
+                                                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #d4d4d8; font-size: 0.85rem;">
+                                                            <input type="checkbox" id="pehd-dennica" checked style="accent-color: #6366f1; width: 16px; height: 16px;" onchange="validateWizardStep2()"> Dennica
+                                                        </label>
+                                                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #d4d4d8; font-size: 0.85rem;">
+                                                            <input type="checkbox" id="pehd-nadbudowa" checked style="accent-color: #6366f1; width: 16px; height: 16px;" onchange="validateWizardStep2()"> Nadbudowa
+                                                        </label>
+                                                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #d4d4d8; font-size: 0.85rem;">
+                                                            <input type="checkbox" id="pehd-zwienczenie" checked style="accent-color: #6366f1; width: 16px; height: 16px;" onchange="validateWizardStep2()"> Zwieńczenie
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1118,6 +1142,39 @@
                                                     <button class="param-tile" data-val="unolith">
                                                         UnoLith
                                                     </button>
+                                                    <button class="param-tile" data-val="predl">
+                                                        Predl
+                                                    </button>
+                                                    <button class="param-tile" data-val="kamionka">
+                                                        Kamionka
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                class="wizard-param-group needs-selection"
+                                                data-wizard-param="precoFullHeight"
+                                                id="preco-full-height-wizard-group"
+                                                style="display: none;"
+                                            >
+                                                <div class="wizard-param-label" style="color: #f43f5e;">
+                                                    Wkładka cała wys. <span class="status-icon"><i data-lucide="alert-triangle"></i></span>
+                                                </div>
+                                                <div
+                                                    style="
+                                                        display: flex;
+                                                        gap: 0.25rem;
+                                                        flex-wrap: wrap;
+                                                    "
+                                                    class="param-group"
+                                                    data-param="precoFullHeight"
+                                                >
+                                                    <button class="param-tile" data-val="tak">
+                                                        Tak
+                                                    </button>
+                                                    <button class="param-tile" data-val="nie">
+                                                        Nie
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -1359,6 +1416,8 @@
                                                         SDV PO
                                                     </button>
                                                     <button class="param-tile" data-val="NBR">
+                                                        NBR
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -2770,9 +2829,10 @@
                             margin: 0 auto;
                             max-width: 1536px;
                             display: grid;
-                            grid-template-columns: repeat(4, 1fr);
-                            gap: 1rem;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 0.5rem;
                             align-items: stretch;
+                            justify-items: center;
                             text-align: center;
                         "
                     >
@@ -2790,7 +2850,6 @@
                                 border-left: 1px solid var(--border-glass);
                                 cursor: pointer;
                                 transition: background 0.2s;
-                                min-width: 250px;
                             "
                             onmouseover="this.style.background='rgba(255,255,255,0.05)'"
                             onmouseout="this.style.background='transparent'"
@@ -2833,7 +2892,6 @@
                                 border-right: 1px solid var(--border-glass);
                                 cursor: pointer;
                                 transition: background 0.2s;
-                                min-width: 530px;
                             "
                             onmouseover="this.style.background='rgba(255,255,255,0.05)'"
                             onmouseout="this.style.background='transparent'"
@@ -2870,6 +2928,7 @@
                                 display: flex;
                                 flex-direction: column;
                                 justify-content: center;
+                                align-items: center;
                                 position: relative;
                             "
                         >
@@ -3033,6 +3092,13 @@
                     >
                         <span class="cennik-tab-icon" style="background: #8b5cf6"></span> Kinety
                     </button>
+                    <button
+                        class="cennik-tab"
+                        data-tab="preco"
+                        onclick="selectCennikTab('preco')"
+                    >
+                        <span class="cennik-tab-icon" style="background: #f43f5e"></span> Wkładki PRECO
+                    </button>
                 </div>
                 <div class="card">
                     <div id="studnie-pricelist-body"></div>
@@ -3042,19 +3108,19 @@
 
         <!-- ===== OFFER DISCOUNTS MODAL ===== -->
         <div id="offer-discounts-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 700px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div style="font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem; color: #6366f1;">
-                        <i data-lucide="percent" style="width: 14px; height: 14px;"></i> Zarządzanie Rabatami Oferty
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 16px; width: 95%; max-width: 820px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1.2rem; background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.08) 100%); border-bottom: 1px solid var(--border-glass);">
+                    <div style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; color: #a5b4fc;">
+                        <i data-lucide="percent" style="width: 16px; height: 16px;"></i> Zarządzanie Rabatami Oferty
                     </div>
-                    <button class="btn btn-icon" onclick="closeOfferDiscountsPopup()" style="color: var(--text-muted);"><i data-lucide="x"></i></button>
+                    <button class="btn btn-icon" onclick="closeOfferDiscountsPopup()" style="color: var(--text-muted); width: 28px; height: 28px;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
                 </div>
-                <div id="offer-discounts-modal-body" style="padding: 0.75rem 1rem; max-height: 65vh; overflow-y: auto;">
+                <div id="offer-discounts-modal-body" style="padding: 0.75rem 1.2rem; max-height: 75vh; overflow-y: auto;">
                     <!-- Zawartość wstrzykiwana przez JS -->
                 </div>
-                <div style="padding: 0.75rem 1rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.5rem;">
-                    <button class="btn btn-secondary" onclick="handleOfferDiscountsCancel()" style="font-size: 0.6rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
-                    <button class="btn btn-primary" onclick="handleOfferDiscountsSave()" style="font-size: 0.6rem; padding: 0.4rem 1.25rem; font-weight: 800;"><i data-lucide="check" style="width: 10px; height: 10px; margin-right: 0.25rem;"></i> Zastosuj</button>
+                <div style="padding: 0.6rem 1.2rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.6rem;">
+                    <button class="btn btn-secondary" onclick="handleOfferDiscountsCancel()" style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleOfferDiscountsSave()" style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800;"><i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem;"></i> Zastosuj</button>
                 </div>
             </div>
         </div>
@@ -3073,38 +3139,38 @@
             }
         </style>
         <div id="offer-transport-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 12px; width: 95%; max-width: 700px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 16px; width: 95%; max-width: 820px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div style="font-weight: 800; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem; color: #eab308;">
-                        <i data-lucide="truck" style="width: 24px; height: 24px;"></i> Koszty Transportu
+                    <div style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem; color: #eab308;">
+                        <i data-lucide="truck" style="width: 16px; height: 16px;"></i> Koszty Transportu
                     </div>
                     <button class="btn btn-icon" onclick="handleOfferTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
                 </div>
                 <div style="padding: 2rem 1.5rem;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 1.1rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.72rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
                     <div style="display: flex; gap: 1.5rem; align-items: flex-end;">
                         <div class="form-group" style="flex: 1; margin: 0;">
-                            <label style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
-                            <input type="number" id="transport-modal-km" class="input-modern" style="width: 100%; font-size: 1.4rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
+                            <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
+                            <input type="number" id="transport-modal-km" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
                         </div>
                         <div class="form-group" style="flex: 1; margin: 0;">
-                            <label style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
-                            <input type="number" id="transport-modal-rate" class="input-modern" style="width: 100%; font-size: 1.4rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
+                            <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
+                            <input type="number" id="transport-modal-rate" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
                         </div>
                     </div>
-                    <div id="transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+                    <div id="transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.65rem; color: var(--text-muted);">
                         <!-- ilość transportów -->
                     </div>
                     <div style="margin-top: 1.75rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 1rem; border-radius: 12px;">
-                        <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
-                        <div id="transport-modal-total-val" style="font-size: 2rem; font-weight: 800; color: var(--success); letter-spacing: -1px;">
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
+                        <div id="transport-modal-total-val" style="font-size: 1.05rem; font-weight: 900; color: var(--success); letter-spacing: -1px;">
                             0 PLN
                         </div>
                     </div>
                 </div>
                 <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.75rem;">
-                    <button class="btn btn-secondary" onclick="handleOfferTransportCancel()" style="font-size: 0.6rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
-                    <button class="btn btn-primary" onclick="handleOfferTransportSave()" style="font-size: 0.6rem; padding: 0.4rem 1.25rem; font-weight: 800;"><i data-lucide="check" style="width: 10px; height: 10px; margin-right: 0.25rem;"></i> Zastosuj</button>
+                    <button class="btn btn-secondary" onclick="handleOfferTransportCancel()" style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleOfferTransportSave()" style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800;"><i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem;"></i> Zastosuj</button>
                 </div>
             </div>
         </div>

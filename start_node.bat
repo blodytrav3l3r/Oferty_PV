@@ -23,6 +23,32 @@ if errorlevel 1 (
     exit /b 1
 )
 
+if not exist "node_modules" (
+    if exist "vendor\node_modules.tar.gz" (
+        echo.
+        echo [INFO] Rozpakowywanie node_modules z archiwum offline...
+        tar -xzf vendor\node_modules.tar.gz
+        if errorlevel 1 (
+            echo [BLAD] Rozpakowanie node_modules nie powiodlo sie.
+            pause
+            exit /b 1
+        )
+        echo [OK] node_modules rozpakowane z vendor\node_modules.tar.gz
+        echo.
+    ) else (
+        echo.
+        echo [INFO] Brak folderu node_modules. Instalowanie zaleznosci...
+        call npm install
+        if errorlevel 1 (
+            echo [BLAD] npm install nie powiodlo sie.
+            pause
+            exit /b 1
+        )
+        echo [OK] Zaleznosci Node.js zainstalowane.
+        echo.
+    )
+)
+
 echo ---------- Sprawdzanie portu ----------
 
 call :check_port 3000

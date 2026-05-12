@@ -185,7 +185,11 @@ function updateWizardSummaryBar() {
         if (well) {
             const nadbudowa = well.nadbudowa === 'zelbetowa' ? 'Żelbet' : 'Beton';
             const denMat = well.dennicaMaterial === 'zelbetowa' ? 'Żelbet' : 'Beton';
-            const wkl = well.wkladka === 'brak' ? '' : ` | PEHD ${well.wkladka}`;
+            let wklArr = [];
+            if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') wklArr.push(`D:${well.wkladkaDennica}`);
+            if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') wklArr.push(`N:${well.wkladkaNadbudowa}`);
+            if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') wklArr.push(`Z:${well.wkladkaZwienczenie}`);
+            const wkl = wklArr.length > 0 ? ` | PEHD [${wklArr.join(', ')}]` : '';
             wsbParams.textContent = `Nadb: ${nadbudowa} | Den: ${denMat}${wkl}`;
         } else {
             wsbParams.textContent = '—';
@@ -371,5 +375,177 @@ async function checkBackendStatus() {
 }
 checkBackendStatus(); // Sprawdź natychmiast po załadowaniu
 setInterval(checkBackendStatus, 15000); // Sprawdź co 15 sekund
+
+/* ===== CENNIK PRECO — load / save / defaults ===== */
+
+/**
+ * Zwraca domyślny cennik PRECO (hardcoded z Excela).
+ * Struktura: { [dnStudni]: { kinety, spadekKineta, spadekMufa, uniesienie, redukcja, skrzynkaWlazowa } }
+ */
+function getDefaultPrecoPricing() {
+    // Grupy DN rury do wyszukiwania w tabelach zakresowych
+    // Wspólna tabela kinet (cena prosta + dopływ) — per DN studni
+    const kinetyDn = {
+        1000: [
+            { dn: 150, prosta: 920, dodWlot: 300 },
+            { dn: 200, prosta: 1100, dodWlot: 350 },
+            { dn: 250, prosta: 1350, dodWlot: 400 },
+            { dn: 300, prosta: 1750, dodWlot: 500 },
+            { dn: 400, prosta: 2500, dodWlot: 700 },
+            { dn: 500, prosta: 4000, dodWlot: 1000 },
+            { dn: 600, prosta: 5200, dodWlot: 1300 }
+        ],
+        1200: [
+            { dn: 150, prosta: 1050, dodWlot: 350 },
+            { dn: 200, prosta: 1250, dodWlot: 400 },
+            { dn: 250, prosta: 1550, dodWlot: 450 },
+            { dn: 300, prosta: 2000, dodWlot: 550 },
+            { dn: 400, prosta: 2900, dodWlot: 800 },
+            { dn: 500, prosta: 4500, dodWlot: 1100 },
+            { dn: 600, prosta: 5800, dodWlot: 1400 }
+        ],
+        1500: [
+            { dn: 150, prosta: 1250, dodWlot: 400 },
+            { dn: 200, prosta: 1500, dodWlot: 450 },
+            { dn: 250, prosta: 1800, dodWlot: 550 },
+            { dn: 300, prosta: 2400, dodWlot: 650 },
+            { dn: 400, prosta: 3500, dodWlot: 950 },
+            { dn: 500, prosta: 5200, dodWlot: 1300 },
+            { dn: 600, prosta: 6800, dodWlot: 1700 }
+        ],
+        2000: [
+            { dn: 150, prosta: 1700, dodWlot: 550 },
+            { dn: 200, prosta: 2000, dodWlot: 600 },
+            { dn: 250, prosta: 2400, dodWlot: 700 },
+            { dn: 300, prosta: 3100, dodWlot: 850 },
+            { dn: 400, prosta: 4500, dodWlot: 1200 },
+            { dn: 500, prosta: 6500, dodWlot: 1600 },
+            { dn: 600, prosta: 8500, dodWlot: 2100 }
+        ],
+        2500: [
+            { dn: 150, prosta: 2200, dodWlot: 700 },
+            { dn: 200, prosta: 2600, dodWlot: 800 },
+            { dn: 250, prosta: 3100, dodWlot: 900 },
+            { dn: 300, prosta: 4000, dodWlot: 1100 },
+            { dn: 400, prosta: 5800, dodWlot: 1500 },
+            { dn: 500, prosta: 8500, dodWlot: 2100 },
+            { dn: 600, prosta: 11000, dodWlot: 2700 }
+        ]
+    };
+
+    // Spadek w kinecie — zakresy procentowe → dopłata per grupa DN rury
+    const spadekKineta = [
+        { min: 2, max: 4, grupy: { '150-200': 200, '250-300': 250, '400-600': 350 } },
+        { min: 5, max: 7, grupy: { '150-200': 300, '250-300': 380, '400-600': 500 } },
+        { min: 8, max: 10, grupy: { '150-200': 460, '250-300': 550, '400-600': 700 } }
+    ];
+
+    // Spadek w mufie — takie same zakresy
+    const spadekMufa = [
+        { min: 2, max: 4, grupy: { '150-200': 150, '250-300': 200, '400-600': 300 } },
+        { min: 5, max: 7, grupy: { '150-200': 250, '250-300': 320, '400-600': 450 } },
+        { min: 8, max: 10, grupy: { '150-200': 380, '250-300': 460, '400-600': 600 } }
+    ];
+
+    // Uniesienie kinety — zakresy mm → dopłata per grupa DN rury głównej
+    const uniesienie = [
+        { min: 0, max: 100, grupy: { '150-300': 150, '400-600': 200 } },
+        { min: 101, max: 200, grupy: { '150-300': 250, '400-600': 350 } },
+        { min: 201, max: 400, grupy: { '150-300': 400, '400-600': 550 } },
+        { min: 401, max: 600, grupy: { '150-300': 550, '400-600': 750 } }
+    ];
+
+    // Redukcja kinety — zakresy mm → dopłata per grupa DN
+    const redukcja = [
+        { min: 0, max: 50, grupy: { '150-300': 340, '400-600': 500 } },
+        { min: 51, max: 100, grupy: { '150-300': 500, '400-600': 700 } }
+    ];
+
+    // Skrzynka włazowa — cena per DN studni (null = brak)
+    const skrzynkaWlazowa = {
+        1000: 400,
+        1200: 450,
+        1500: 500,
+        2000: 600,
+        2500: 750
+    };
+
+    // Cena za 1 mb wkładki do pełnej wysokości per DN studni
+    const cenaPelnaWysMB = {
+        1000: 1000,
+        1200: 1200,
+        1500: 1500,
+        2000: 2000,
+        2500: 2500
+    };
+
+    // Cena za samo dno osadnika per DN studni
+    const cenaDnoOsadnika = {
+        1000: 800,
+        1200: 1000,
+        1500: 1400,
+        2000: 2000,
+        2500: 2800
+    };
+
+    const result = {};
+    [1000, 1200, 1500, 2000, 2500].forEach(dn => {
+        result[dn] = {
+            kinety: kinetyDn[dn] || [],
+            spadekKineta,
+            spadekMufa,
+            uniesienie,
+            redukcja,
+            skrzynkaWlazowa: skrzynkaWlazowa[dn] || null,
+            cenaPelnaWysMB: cenaPelnaWysMB[dn] || 0,
+            cenaDnoOsadnika: cenaDnoOsadnika[dn] || 0
+        };
+    });
+    return result;
+}
+
+/**
+ * Ładuje cennik PRECO z backendu, z fallbackiem do domyślnych wartości.
+ */
+async function loadPrecoPricing() {
+    try {
+        const res = await fetch('/api/preco-pricing');
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+            precoPricing = json.data[0];
+            console.log('[PRECO] Załadowano cennik z bazy');
+            return;
+        }
+    } catch (e) {
+        console.warn('[PRECO] Błąd pobierania cennika z API:', e);
+    }
+    precoPricing = getDefaultPrecoPricing();
+    console.log('[PRECO] Użyto domyślnego cennika');
+}
+
+/**
+ * Zapisuje cennik PRECO do backendu.
+ */
+async function savePrecoPricing(data) {
+    try {
+        const res = await fetch('/api/preco-pricing', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ data })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('[PRECO] Błąd zapisu:', res.status, err);
+            showToast('Błąd zapisu cennika PRECO: ' + (err.error || res.status), 'error');
+            return false;
+        }
+        showToast('Cennik PRECO zapisany', 'success');
+        return true;
+    } catch (err) {
+        console.error('[PRECO] Błąd sieci:', err);
+        showToast('Błąd sieci przy zapisie cennika PRECO', 'error');
+        return false;
+    }
+}
 
 // DOMContentLoaded

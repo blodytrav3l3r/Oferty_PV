@@ -988,13 +988,16 @@ class ConfigurationGenerator:
             z_dol_min = float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else defaults[2]
             z_gora_min = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else defaults[3]
 
-            # Rura przy samym dnie (dolna krawędź ~ 0) → ignoruj zapas dolny
+            # Rura przy samym dnie lub nieznacznie podniesiona → ignoruj zapas dolny
+            # Dla studni osadnikowych wyloty bywają podniesione o 5-50mm,
+            # a wymagany zapas dolny (100-300mm) nigdy nie zostanie spełniony.
+            # Próg: bottom_clearance < zapasDol → traktuj jako "przy dnie"
             bottom_clearance = hc_invert
             top_clearance = dennica.height - (hc_invert + dn_val)
             
-            is_at_bottom = bottom_clearance < 1
-            eff_z_dol = -9999.0 if is_at_bottom else z_dol
-            eff_z_dol_min = -9999.0 if is_at_bottom else z_dol_min
+            is_near_bottom = bottom_clearance < z_dol
+            eff_z_dol = -9999.0 if is_near_bottom else z_dol
+            eff_z_dol_min = -9999.0 if is_near_bottom else z_dol_min
 
             if clearance_mode == "standard":
                 if bottom_clearance < eff_z_dol or top_clearance < z_gora:

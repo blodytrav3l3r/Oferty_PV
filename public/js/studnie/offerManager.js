@@ -184,7 +184,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             }
         }
 
-        html += renderWellHeaderRow(well, originalIndex, stats, orderChanges[originalIndex], orderedWellIds.has(well.id), showOrderSelection, displayIndex + 1, offerPrice);
+        html += renderWellHeaderRow(well, originalIndex, stats, orderChanges[originalIndex], orderedWellIds.has(well.id), showOrderSelection, displayIndex + 1, offerPrice, showPriceComparison);
         html += renderWellDetailsRow(well, originalIndex, orderChanges[originalIndex], wellTransportCost);
     });
 
@@ -193,7 +193,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
     return html;
 }
 
-function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection, lp, offerPrice) {
+function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelection, lp, offerPrice, showPriceComparison) {
     const isExpanded = expandedWellIndices.has(i);
     const rowStyle = getWellRowStyle(change, isOrdered);
     const badges = getWellBadges(change, isOrdered, well);
@@ -215,6 +215,10 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
         const diffSign = priceDiff > 0 ? '+' : '';
         offerPriceCell = `<td class="text-right" style="font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(offerPrice)} PLN</td>`;
         priceDiffCell = `<td class="text-right" style="font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
+    } else if (showPriceComparison) {
+        // Puste komórki dla zachowania wyrównania kolumn (studnia NOWA bez ceny z oferty)
+        offerPriceCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
+        priceDiffCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
     }
 
     return `<tr class="well-row-header" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
@@ -273,7 +277,9 @@ function renderWellDetailsRow(well, i, change, wellTransportCost) {
     if (!isExpanded) return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="12"></td></tr>`;
 
     const stats = calcWellStats(well);
-    const disc = wellDiscounts[well.dn] || { dennica: 0, nadbudowa: 0 };
+    // Mapowanie dn na klucz rabatów (styczna -> styczne)
+    const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+    const disc = wellDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
     const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
     
     let detailsHtml = `<tr class="well-details-row"><td colspan="12">
@@ -317,17 +323,32 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         if (!p || p.componentType === 'kineta') return;
 
         const discStr = getDiscountStr(p, disc);
-        let { totalLinePrice, totalLineWeight } = calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, assignedPrzejscia[index]);
+        let { totalLinePrice, totalLineWeight } = calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, assignedPrzejscia[index], index);
+
+        let badgesHtml = '';
+        const precoAlloc = typeof calculatePrecoAllocationForItem === 'function' ? calculatePrecoAllocationForItem(well, index) : null;
+        if (precoAlloc && precoAlloc.hasPreco && (precoAlloc.isBottomMostDennica || precoAlloc.fraction > 0) && !item.disablePreco) {
+            badgesHtml += ' <span style="font-size:0.55rem; color:#f43f5e; border:1px solid rgba(244,63,94,0.4); padding:1px 4px; border-radius:4px; background:rgba(244,63,94,0.1); margin-left:4px; font-weight:700;">PRECO</span>';
+        }
+        
+        let pehdType = null;
+        if (['dennica', 'styczna'].includes(p.componentType)) pehdType = well.wkladkaDennica;
+        else if (['plyta', 'plyta_redukcyjna', 'plyta_nastudzienna', 'stozek', 'zwienczenie', 'konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType)) pehdType = well.wkladkaZwienczenie;
+        else if (['krag', 'krag_ot', 'rura'].includes(p.componentType)) pehdType = well.wkladkaNadbudowa;
+        
+        if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
+            badgesHtml += ' <span style="font-size:0.55rem; color:#0ea5e9; border:1px solid rgba(14,165,233,0.4); padding:1px 4px; border-radius:4px; background:rgba(14,165,233,0.1); margin-left:4px; font-weight:700;">PEHD</span>';
+        }
 
         html += `<tr style="opacity:0.8;">
-            <td style="color:var(--text-secondary);">↳ ${p.name}${discStr}</td>
+            <td style="color:var(--text-secondary);">↳ ${p.name}${badgesHtml}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
             <td style="width:100px;" class="text-right">${fmtInt(totalLineWeight)} kg</td>
             <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
         </tr>`;
 
         // Renderowanie szczegółów dopłaty, przejść i kinety (jako sub-elementy w skróconej tabeli)
-        html += renderComponentSubItems(well, p, item, assignedPrzejscia[index], disc, nadbudowaMult, wellTransportCost);
+        html += renderComponentSubItems(well, p, item, assignedPrzejscia[index], disc, nadbudowaMult, wellTransportCost, index);
     });
     return html;
 }
@@ -415,7 +436,7 @@ function calculateAssignedPrzejscia(well) {
     return assigned;
 }
 
-function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMult, wellTransportCost) {
+function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMult, wellTransportCost, itemIndex) {
     let html = '';
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
     
@@ -423,6 +444,14 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
         html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--success);">
             <td colspan="3" style="padding-left:1.5rem;">↳ + Dopłata indywidualna</td>
             <td class="text-right">${fmt(well.doplata)} PLN</td>
+        </tr>`;
+    }
+
+    if (item._osadnikCost > 0) {
+        // Zgodnie z nową logiką osadnika ta część zwykle jest ukryta, bo _osadnikCost zostało usunięte
+        html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f59e0b;">
+            <td colspan="3" style="padding-left:1.5rem;">↳ + Wkładka osadnika (przestarzałe)</td>
+            <td class="text-right">${fmt(item._osadnikCost)} PLN</td>
         </tr>`;
     }
 
@@ -478,12 +507,62 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
         if (kineta) {
             const kp = studnieProducts.find(x => x.id === kineta.productId);
             // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
-            const kPrice = (kineta.frozenPrice != null ? kineta.frozenPrice : getItemAssessedPrice(well, kp, true)) * (kineta.quantity || 1);
+            const kPrice = (kineta.frozenPrice != null ? kineta.frozenPrice : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ + ${kp ? kp.name : 'Kineta'}</td>
                 <td class="text-right">${fmt(kPrice)} PLN</td>
             </tr>`;
         }
+    }
+
+    const precoAlloc = calculatePrecoAllocationForItem(well, itemIndex);
+    if (precoAlloc.hasPreco) {
+        if (precoAlloc.allocatedCost > 0) {
+            const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+            const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+            const precoMult = 1 - discPreco / 100;
+            const precoCost = precoAlloc.allocatedCost * precoMult;
+                const fracPerc = precoAlloc.fraction > 0 && precoAlloc.fraction < 1 ? Math.round(precoAlloc.fraction*100) : 0;
+                if (well.wkladkaOsadnikPreco === 'tak') {
+                    let h = well.wkladkaOsadnikH || 1000;
+                    if (!well.wkladkaOsadnikH) {
+                        let dennicaH = 0;
+                        if (well.config) {
+                            well.config.forEach(c => {
+                                const prod = studnieProducts.find(pr => pr.id === c.productId);
+                                if (prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna')) {
+                                    dennicaH += (prod.height || 0) * (c.quantity || 1);
+                                }
+                            });
+                        }
+                        h = dennicaH || 1000;
+                    }
+                    if (precoAlloc.isBottomMostDennica) {
+                        kinetaLabel = `osadnika (Dno + ${fracPerc ? fracPerc + '% ścian z ' : 'Ściany '}${h} mm)`;
+                    } else {
+                        kinetaLabel = `osadnika (${fracPerc ? fracPerc + '% ścian z ' : 'Ściany '}${h} mm)`;
+                    }
+                } else {
+                    const baseName = well.kineta === 'precotop' ? 'PrecoTop' : 'Preco';
+                    if (precoAlloc.isBottomMostDennica) {
+                        kinetaLabel = baseName + (fracPerc ? ` (Baza + ${fracPerc}% uzupełnienia)` : '');
+                    } else {
+                        kinetaLabel = baseName + ` (${fracPerc ? fracPerc + '% uzupełnienia' : 'Wkładka uzupełniająca'})`;
+                    }
+                }
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#ef4444;">
+                <td colspan="3" style="padding-left:1.5rem;">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size:0.6rem; color:#10b981;">(-' + discPreco + '%)</span>' : ''}</td>
+                <td class="text-right">${fmt(precoCost)} PLN</td>
+            </tr>`;
+        } else if (precoAlloc.error && precoAlloc.isBottomMostDennica) {
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#ef4444;">
+                <td colspan="3" style="padding-left:1.5rem;">↳ ⚠ Wkładka PRECO — ${precoAlloc.error}</td>
+                <td class="text-right">—</td>
+            </tr>`;
+        }
+    }
+
+    if (isBase) {
         if (wellTransportCost > 0) {
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#a855f7;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ <i data-lucide="truck"></i> Udział w transporcie</td>
@@ -494,9 +573,77 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
     return html;
 }
 
-function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, itemPrzejscia) {
+function calculatePrecoAllocationForItem(well, itemIndex) {
+    let allocatedCost = 0;
+    let fraction = 0;
+    let isBottomMostDennica = false;
+    let error = null;
+    let hasPreco = false;
+
+    if ((well.kineta === 'preco' || well.kineta === 'precotop' || well.wkladkaOsadnikPreco === 'tak') && typeof calcPrecoPricing === 'function') {
+        const precoCalc = calcPrecoPricing(well);
+        if (precoCalc.error) {
+            error = precoCalc.error;
+            hasPreco = true;
+        } else if (precoCalc.suma > 0) {
+            hasPreco = true;
+            let configMap = [];
+            if (typeof buildConfigMap === 'function') {
+                configMap = buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true);
+            } else {
+                let currY = 0;
+                let dennicaCount = 0;
+                for (let j = well.config.length - 1; j >= 0; j--) {
+                    const p = studnieProducts.find(x => x.id === well.config[j].productId);
+                    if (!p) continue;
+                    let h = 0;
+                    if (p.componentType === 'dennica') {
+                        dennicaCount++;
+                        h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
+                    } else {
+                        h = (p.height || 0) * (well.config[j].quantity || 1);
+                    }
+                    configMap.push({ index: j, start: currY, end: currY + h, componentType: p.componentType });
+                    currY += h;
+                }
+            }
+            
+            const targetCm = configMap.find(cm => cm.index === itemIndex);
+            if (targetCm) {
+                const bottomDennicaCm = configMap.find(cm => cm.componentType === 'dennica' || cm.componentType === 'styczna');
+                isBottomMostDennica = bottomDennicaCm && bottomDennicaCm.index === itemIndex;
+                
+                if (isBottomMostDennica) {
+                    allocatedCost += (precoCalc.bazowa || 0);
+                    allocatedCost += (precoCalc.skrzynki?.suma || 0);
+                    allocatedCost += (precoCalc.spadekKineta || 0);
+                    allocatedCost += (precoCalc.spadekMufa || 0);
+                    allocatedCost += (precoCalc.uniesienie || 0);
+                    allocatedCost += (precoCalc.redukcja || 0);
+                    allocatedCost += (precoCalc.dodWloty || []).reduce((s, d) => s + d.cena, 0);
+                }
+                
+                if (precoCalc.pelnaWysokosc) {
+                    const startZ = precoCalc.pelnaWysokosc.startZ || 0;
+                    const endZ = precoCalc.pelnaWysokosc.endZ || 0;
+                    if (endZ > startZ) {
+                        const overlap = Math.max(0, Math.min(endZ, targetCm.end) - Math.max(startZ, targetCm.start));
+                        if (overlap > 0) {
+                            fraction = overlap / (endZ - startZ);
+                            allocatedCost += (precoCalc.pelnaWysokosc.cena * fraction);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return { hasPreco, error, allocatedCost, fraction, isBottomMostDennica };
+}
+
+function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, itemPrzejscia, itemIndex) {
     // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
-    const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p, true));
+    const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
     let totalLinePrice = itemPrice * item.quantity;
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
@@ -506,12 +653,20 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaM
             const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
             if (kinetaProd) {
                 // W zamówieniu użyj zamrożonej ceny kinety; w ofercie przelicz na nowo
-                const kinetaPrice = (kinetaItem.frozenPrice != null ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true));
+                const kinetaPrice = (kinetaItem.frozenPrice != null ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true, kinetaItem));
                 totalLinePrice += kinetaPrice * (kinetaItem.quantity || 1);
             }
         }
         totalLinePrice += wellTransportCost;
         if (well.doplata) totalLinePrice += well.doplata;
+    }
+
+    const precoAlloc = calculatePrecoAllocationForItem(well, itemIndex);
+    if (precoAlloc.hasPreco && precoAlloc.allocatedCost > 0) {
+        const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+        const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+        const precoMult = 1 - discPreco / 100;
+        totalLinePrice += precoAlloc.allocatedCost * precoMult;
     }
 
     if (itemPrzejscia) {
@@ -676,14 +831,15 @@ function updateOfferSummaryUI(totals) {
         
         diameters.forEach(dn => {
             const d = activeDiscounts[dn];
-            if (d && (d.dennica > 0 || d.nadbudowa > 0)) {
+            if (d && (d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0)) {
                 hasAnyDiscount = true;
                 const dnName = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
                 let details = [];
                 if (d.dennica > 0) details.push(`D:${d.dennica}%`);
                 if (d.nadbudowa > 0) details.push(`N:${d.nadbudowa}%`);
+                const precoTag = d.preco > 0 ? ` <span style="color:#f87171;">P:${d.preco}%</span>` : '';
                 const dnNameCompact = dn === 'styczne' ? 'Stycz' : dn;
-                badgesHtml += `<span style="background: rgba(99, 102, 241, 0.12); color: #818cf8; padding: 4px 6px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(99, 102, 241, 0.3); font-size: 0.68rem; white-space: nowrap; text-align: center; width: 100%; display: inline-block; letter-spacing: -0.2px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${dnNameCompact} ${details.join(' ')}</span>`;
+                badgesHtml += `<span style="background: rgba(99, 102, 241, 0.12); color: #818cf8; padding: 4px 6px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(99, 102, 241, 0.3); font-size: 0.68rem; white-space: nowrap; text-align: center; width: 100%; display: inline-block; letter-spacing: -0.2px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${dnNameCompact} ${details.join(' ')}${precoTag}</span>`;
             }
         });
         
@@ -1487,6 +1643,30 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
                 }
             }
         });
+
+        // Obsługa wkładki sub-opcji przy wczytywaniu
+        const wklVal = [firstWell.wkladkaDennica, firstWell.wkladkaNadbudowa, firstWell.wkladkaZwienczenie].find(v => v && v !== 'brak');
+        if (wklVal) {
+            const group = document.querySelector(`.param-group[data-param="wkladka"]`);
+            if (group) {
+                group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
+                const targetTile = group.querySelector(`.param-tile[data-val="${wklVal}"]`);
+                if (targetTile) targetTile.classList.add('active');
+            }
+            if (document.getElementById('wkladka-sub-options')) document.getElementById('wkladka-sub-options').style.display = 'block';
+            if (document.getElementById('pehd-dennica')) document.getElementById('pehd-dennica').checked = (firstWell.wkladkaDennica === wklVal);
+            if (document.getElementById('pehd-nadbudowa')) document.getElementById('pehd-nadbudowa').checked = (firstWell.wkladkaNadbudowa === wklVal);
+            if (document.getElementById('pehd-zwienczenie')) document.getElementById('pehd-zwienczenie').checked = (firstWell.wkladkaZwienczenie === wklVal);
+        } else {
+            const group = document.querySelector(`.param-group[data-param="wkladka"]`);
+            if (group) {
+                group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
+                const targetTile = group.querySelector(`.param-tile[data-val="brak"]`);
+                if (targetTile) targetTile.classList.add('active');
+            }
+            if (document.getElementById('wkladka-sub-options')) document.getElementById('wkladka-sub-options').style.display = 'none';
+        }
+
         if(document.getElementById('powloka-name-w')) document.getElementById('powloka-name-w').value = firstWell.powlokaNameW || '';
         if(document.getElementById('malowanie-wew-cena')) document.getElementById('malowanie-wew-cena').value = firstWell.malowanieWewCena || '';
         if(document.getElementById('powloka-name-z')) document.getElementById('powloka-name-z').value = firstWell.powlokaNameZ || '';
@@ -1494,7 +1674,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
         
         if (typeof wizardConfirmedParams !== 'undefined') {
             ['nadbudowa', 'dennicaMaterial', 'wkladka', 'malowanieW', 'malowanieZ', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie'].forEach(param => {
-                if(firstWell[param]) wizardConfirmedParams.add(param);
+                if(firstWell[param] || (param === 'wkladka' && wklVal)) wizardConfirmedParams.add(param);
             });
         }
         if (typeof validateWizardStep2 === 'function') {
@@ -2130,8 +2310,8 @@ function closeOfferDiscountsPopup() {
 }
 
 async function handleOfferDiscountsSave() {
-    const shouldSave = await window.appConfirm('<div style="font-size: 1.8rem; line-height: 1.4; padding: 1rem 0;">Czy na pewno chcesz zapisać zmienione rabaty na stałe do bazy?</div>', {
-        title: '<div style="font-size: 2.2rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację cenową</div>',
+    const shouldSave = await window.appConfirm('<div style="font-size: 0.9rem; line-height: 1.4; padding: 0.5rem 0;">Czy na pewno chcesz zapisać zmienione rabaty na stałe do bazy?</div>', {
+        title: '<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację cenową</div>',
         type: 'info',
         allowHtml: true,
         okText: '<i data-lucide="save"></i> Zapisz ofertę',
@@ -2154,8 +2334,8 @@ async function handleOfferDiscountsCancel() {
     const initialSnapshot = JSON.stringify(initialOfferDiscountsSnapshot || {});
     
     if (currentSnapshot !== initialSnapshot) {
-        const confirmExit = await window.appConfirm('<div style="font-size: 1.8rem; line-height: 1.4; padding: 1rem 0;">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: 1.4rem;">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>', {
-            title: '<div style="font-size: 2.2rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Niezapisane zmiany rabatów</div>',
+        const confirmExit = await window.appConfirm('<div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: 0.7rem;">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>', {
+            title: '<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Niezapisane zmiany rabatów</div>',
             type: 'warning',
             allowHtml: true,
             okText: '<i data-lucide="x-circle"></i> Tak, odrzuć zmiany',
@@ -2170,10 +2350,11 @@ async function handleOfferDiscountsCancel() {
         // Push rolled back state up to underlying elements
         const diameters = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
         diameters.forEach(dn => {
-            const disc = window.wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
+            const disc = window.wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0 };
             if (typeof window.applyDiscount === 'function') {
                 window.applyDiscount(dn, 'dennica', disc.dennica);
                 window.applyDiscount(dn, 'nadbudowa', disc.nadbudowa);
+                window.applyDiscount(dn, 'preco', disc.preco || 0);
             }
         });
         
@@ -2190,7 +2371,7 @@ function handleOfferDiscountChange(dn, type, value) {
     if (typeof applyDiscount === 'function') {
         applyDiscount(dn, type, value); // Obejmuje renderDiscountPanel() i updateSummary() (ale ukrytego)
     } else {
-        if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0 };
+        if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0 };
         wellDiscounts[dn][type] = parseFloat(value) || 0;
         if (typeof renderDiscountPanel === 'function') renderDiscountPanel();
         if (typeof updateSummary === 'function') updateSummary();
@@ -2261,7 +2442,8 @@ function renderOfferDiscountsPopupContent() {
             -moz-appearance: textfield;
         }
     </style>
-    <div style="display: flex; flex-direction: column; gap: 0.5rem;">`;
+    <p style="color: var(--text-muted); margin: 0 0 0.5rem 0; font-size: 0.72rem; line-height: 1.4;">Ustaw procentowe rabaty dla poszczególnych średnic. Zmiany widoczne na żywo.</p>
+    <div style="display: flex; flex-direction: column; gap: 0.35rem;">`;
     
     let totalOverallNetto = 0;
 
@@ -2276,6 +2458,21 @@ function renderOfferDiscountsPopupContent() {
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
 
+    /** Buduje pojedynczy blok input rabatowy z etykietą nad polem */
+    const buildInputBlock = (dn, label, type, value, accentColor, borderColor) => `
+        <div style="display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 100px;">
+            <span style="font-size: 0.5rem; font-weight: 700; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.4px;">${label}</span>
+            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid ${borderColor}; background: rgba(0,0,0,0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
+                <input type="number" class="text-center offer-discount-input" 
+                       value="${value}" 
+                       onfocus="this.dataset.oldValue=this.value; this.value='';"
+                       onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', '${type}', this.value);}"
+                       onkeydown="if(event.key==='Enter') this.blur();"
+                       style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: ${accentColor}; background: transparent; border: none; outline: none; box-shadow: none; text-align: center;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: ${borderColor}; padding-right: 0.4rem; pointer-events: none;">%</span>
+            </div>
+        </div>`;
+
     diameters.forEach(dn => {
         let sumNettoDN = 0;
         wells.filter(w => (dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn)).forEach(w => {
@@ -2287,72 +2484,41 @@ function renderOfferDiscountsPopupContent() {
             sumNettoDN += stats.price + transportCost;
         });
 
-        // Ukryj puste średnice, nie ma ich w ofercie
         if (sumNettoDN === 0) return;
 
         totalOverallNetto += sumNettoDN;
 
-        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
+        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0 };
         const displayDn = dn === 'styczne' ? 'Styczne' : `DN${dn}`;
-        const dnColor = 'var(--accent)';
-        
+        const hasPrecoInGroup = wells.filter(w => (dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn)).some(w => w.kineta === 'preco' || w.kineta === 'precotop');
+
         html += `
-        <div style="display: grid; grid-template-columns: 2fr 3fr 3fr 2fr; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 0.5rem; gap: 1rem; opacity: 1;">
-            
-            <!-- 1. Średnica -->
-            <div style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
-                <span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${dnColor};"></span>
-                ${displayDn}
-            </div>
-
-            <!-- 2. Rabat Dennica -->
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.5rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Dennica/Kineta:</span>
-                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(0,0,0,0.4); height: 30px; overflow: hidden; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#6366f1'" onfocusout="this.style.borderColor='rgba(99,102,241,0.3)'">
-                    <input type="number" class="text-center offer-discount-input" 
-                           value="${disc.dennica}" 
-                           onfocus="this.dataset.oldValue=this.value; this.value='';"
-                           onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', 'dennica', this.value);}"
-                           onkeydown="if(event.key==='Enter') this.blur();"
-                           style="min-width:0; flex:1; font-size: 1.1rem; font-weight: 900; color: #818cf8; background: transparent; border: none; outline: none; box-shadow: none;">
-                    <span style="font-size: 0.8rem; font-weight: 800; color: rgba(165,180,252,0.6); padding-right: 0.4rem; pointer-events: none;">%</span>
+        <div style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(99,102,241,0.2)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6366f1; box-shadow: 0 0 6px rgba(99,102,241,0.4);"></span>
+                    <span style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${displayDn}</span>
                 </div>
+                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
-
-            <!-- 3. Rabat Nadbudowa -->
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.5rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Nadbudowa:</span>
-                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(99,102,241,0.3); background: rgba(0,0,0,0.4); height: 30px; overflow: hidden; transition: border-color 0.2s;" onfocusin="this.style.borderColor='#6366f1'" onfocusout="this.style.borderColor='rgba(99,102,241,0.3)'">
-                    <input type="number" class="text-center offer-discount-input" 
-                           value="${disc.nadbudowa}" 
-                           onfocus="this.dataset.oldValue=this.value; this.value='';"
-                           onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', 'nadbudowa', this.value);}"
-                           onkeydown="if(event.key==='Enter') this.blur();"
-                           style="min-width:0; flex:1; font-size: 1.1rem; font-weight: 900; color: #818cf8; background: transparent; border: none; outline: none; box-shadow: none;">
-                    <span style="font-size: 0.8rem; font-weight: 800; color: rgba(165,180,252,0.6); padding-right: 0.4rem; pointer-events: none;">%</span>
-                </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, '#818cf8', 'rgba(99,102,241,0.3)')}
+                ${buildInputBlock(dn, 'Nadbudowa', 'nadbudowa', disc.nadbudowa, '#818cf8', 'rgba(99,102,241,0.3)')}
+                ${hasPrecoInGroup ? buildInputBlock(dn, 'Wkładka PRECO', 'preco', disc.preco || 0, '#f87171', 'rgba(239,68,68,0.3)') : ''}
             </div>
-
-            <!-- 4. Wartość netto -->
-            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
-                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.9rem;">${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN</div>
-            </div>
-
         </div>`;
     });
 
     html += `</div>`;
     
-    // SUMA PODSUMOWANIE NA DOLE
     if (totalOverallNetto > 0) {
         html += `
-        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 2px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Łączna Suma Netto:</span>
-            <span id="offer-total-popup-price" style="font-size: 1.1rem; font-weight: 900; color: var(--success);">${typeof fmtInt === 'function' ? fmtInt(totalOverallNetto) : totalOverallNetto} PLN</span>
-        </div>
-        `;
+        <div style="margin-top: 0.5rem; background: rgba(0,0,0,0.25); border: 1px dashed rgba(255,255,255,0.1); padding: 0.5rem 0.9rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Łączna Suma Netto</span>
+            <span id="offer-total-popup-price" style="font-size: 1.05rem; font-weight: 900; color: var(--success);">${typeof fmtInt === 'function' ? fmtInt(totalOverallNetto) : totalOverallNetto} PLN</span>
+        </div>`;
     } else {
-        html += `<div style="text-align:center; padding: 1rem; color: var(--text-muted); font-size: 0.6rem;">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>`;
+        html += `<div style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.75rem;">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>`;
     }
 
     body.innerHTML = html;
@@ -2403,8 +2569,8 @@ window.handleOfferTransportCancel = async function() {
     if (modalKm !== initialTransportSnapshot.km || modalRate !== initialTransportSnapshot.rate) {
         if(typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
-                `<div style="font-size: 2.2rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
-                 <div style="font-size: 1.8rem; line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
+                `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
+                 <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
                 { allowHtml: true, okText: 'Odrzuć zmiany', cancelText: 'Zostań' }
             );
             
@@ -2428,8 +2594,8 @@ window.handleOfferTransportCancel = async function() {
 window.handleOfferTransportSave = async function() {
     if(typeof window.appConfirm === 'function') {
         const confirmed = await window.appConfirm(
-            `<div style="font-size: 2.2rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację transportu</div>
-             <div style="font-size: 1.8rem; line-height: 1.4; padding: 1rem 0;">Czy na pewno chcesz zapisać te parametry przewozu do dokumentu oferty?</div>`,
+            `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację transportu</div>
+             <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Czy na pewno chcesz zapisać te parametry przewozu do dokumentu oferty?</div>`,
             { allowHtml: true, okText: 'Zapisz Ofertę', cancelText: 'Anuluj' }
         );
         

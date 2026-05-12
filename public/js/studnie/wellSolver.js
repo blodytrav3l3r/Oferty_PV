@@ -183,6 +183,7 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
             forced_top_closure_id: well.redukcjaDN1000
                 ? well.redukcjaZakonczenie || null
                 : well.zakonczenie || null,
+            wkladkaZwienczenie: well.wkladkaZwienczenie || 'brak',
             available_products: availProducts.map((p) => ({
                 id: p.id || '',
                 name: p.name || '',
@@ -359,6 +360,24 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         renderWellConfig();
         renderWellDiagram();
         updateSummary();
+
+        // Jeśli auto-dobór (bez wymuszonego zakończenia) zastosował Płytę DIN jako fallback z powodu wkładki PEHD,
+        // pokażmy modal, aby użytkownik miał świadomość i wybór.
+        if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+            const forcedZak = well.redukcjaDN1000 ? well.redukcjaZakonczenie : well.zakonczenie;
+            if (!forcedZak) { // Tylko jeśli to system automatycznie wrzucił Płytę (fallback z konusa)
+                const hasDinPlate = newConfig.some(item => {
+                    const p = studnieProducts.find(pr => pr.id === item.productId);
+                    return p && p.componentType === 'plyta_din';
+                });
+                if (hasDinPlate && typeof window.showKonusPehdResolverModal === 'function') {
+                    // Pozwól UI odświeżyć się najpierw
+                    setTimeout(() => {
+                        window.showKonusPehdResolverModal(currentWellIndex);
+                    }, 100);
+                }
+            }
+        }
     }
 
     // Jeżeli API uznało że budowa jest NIEMOŻLIWA:
@@ -449,9 +468,10 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
     // KROK 2: Zakończenie
     const forcedZak = well.zakonczenie || null;
+    const isWkladkaZwienczenie = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
     let topProd = getTopClosure(
         availProducts.filter((p) => filterByWellParams(p, well)),
-        effectiveDn, forcedZak, false, mag
+        effectiveDn, forcedZak, isWkladkaZwienczenie, mag
     );
 
     if (!topProd && forcedZak) {
@@ -887,7 +907,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 ? redTopProducts.find((p) => p.id === well.redukcjaZakonczenie)
                 : getTopClosure(
                       redTargetProducts.filter((p) => filterByWellParams(p, well)),
-                      targetDn, null, false, mag
+                      targetDn, null, isWkladkaZwienczenie, mag
                   );
             if (rZak) {
                 topRedItems.push({ productId: rZak.id, quantity: 1 });
@@ -1324,8 +1344,11 @@ function recalculateWellErrors(well) {
 
                         const isBottomMostDennica =
                             seg.start === 0 && (seg.type === 'dennica' || seg.type === 'styczna');
-                        const isDdd = seg.product.id.toLowerCase().includes('ddd');
-                        const applyingZdReq = isBottomMostDennica && isDdd ? 0 : zd_req;
+                        // Dla studni osadnikowych: rura podniesiona np. o 20mm
+                        // przy wymaganym zapasDol 100mm — ignoruj zapas dolny
+                        // gdy rura jest w najniższej dennicy i blisko dna
+                        const isNearBottom = isBottomMostDennica && distToBottom < zd_req;
+                        const applyingZdReq = isNearBottom ? 0 : zd_req;
 
                         if (distToBottom < applyingZdReq && distToBottom >= 0) {
                             const errStr = `Błąd zapasu dolnego w "${seg.name}" dla przejścia ${displayType} (jest ${Math.round(distToBottom)}mm, wymagane ${applyingZdReq}mm z cennika)`;

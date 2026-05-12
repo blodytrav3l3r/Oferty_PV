@@ -89,8 +89,11 @@ class RuleEngine:
                 z_g_min = float(pprod.zapasGoraMin or 0) if (pprod and pprod.zapasGoraMin) else defaults[3]
                 z_d_min = float(pprod.zapasDolMin or 0) if (pprod and pprod.zapasDolMin) else defaults[2]
 
-                eff_z_d = -9999.0 if hc_invert < 1 else z_d
-                eff_z_d_min = -9999.0 if hc_invert < 1 else z_d_min
+                # Próg: jeśli rura jest poniżej wymaganego zapasu dolnego,
+                # traktuj ją jako "przy dnie" (ignoruj zapas dolny).
+                # Dotyczy studni osadnikowych z wylotami podniesionymi o 5-50mm.
+                eff_z_d = -9999.0 if hc_invert < z_d else z_d
+                eff_z_d_min = -9999.0 if hc_invert < z_d_min else z_d_min
 
                 bottom_clearance = hc_invert
                 top_clearance = d.height - (hc_invert + dn_val)
@@ -146,7 +149,14 @@ class RuleEngine:
         """
         Dobór zakończenia. Zawsze próbuje Konus. Jeśli wymuszone w config, to używa wymuszonego.
         Jeżeli fallback_to_din == True (bo przechodzi np. otwór), wymusza Płytę DIN.
+        ZASADA: Jeśli zwieńczenie ma wkładkę PEHD, konus jest zablokowany.
         """
+        block_konus = False
+        if getattr(self.config, "wkladkaZwienczenie", "brak") not in [None, "brak", ""]:
+            fallback_to_din = True
+            block_konus = True
+
+
         if self.config.dn == "styczna":
             top_dn = 1000
         elif is_reduced:
@@ -170,7 +180,7 @@ class RuleEngine:
             else "formaStandardowaKLB"
         )
 
-        candidates_konus = [
+        candidates_konus = [] if block_konus else [
             p for p in self.products if p.componentType == "konus" and p.dn == top_dn
         ]
         candidates_din = [

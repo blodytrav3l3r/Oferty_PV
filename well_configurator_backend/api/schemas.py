@@ -36,6 +36,8 @@ class WellConfigInput(BaseModel):
     
     # Zakończenie (domyślnie konus)
     forced_top_closure_id: Optional[str] = None
+    wkladkaZwienczenie: Optional[str] = "brak"
+
     
     # Magazyn kontekstowy ("WL" lub "KLB")
     warehouse: str = "KLB"

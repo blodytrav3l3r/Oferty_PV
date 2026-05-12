@@ -108,6 +108,7 @@ import pvMarketplaceRoutes from './src/routes/pv_marketplace';
 import auditRoutes from './src/routes/audit';
 import settingsRoutes from './src/routes/settings';
 import telemetryRoutes from './src/routes/telemetry';
+import precoPricingRoutes from './src/routes/precoPricing';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -137,6 +138,7 @@ app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
 app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);
+app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
