@@ -1,5 +1,15 @@
 /* ===== Extracted to wellTransitions.js ===== */
 
+function getMaxPipeDn(wellDn) {
+    if (!wellDn || wellDn === 'styczna') return 9999;
+    const dn = parseInt(wellDn);
+    if (dn === 1000) return 600;
+    if (dn === 1200) return 800;
+    if (dn === 1500) return 1000;
+    if (dn === 2000) return 1600;
+    if (dn === 2500) return 2200;
+    return 9999;
+}
 let editPrzejscieIdx = -1;
 let editPrzejscieState = {
     type: null,
@@ -96,9 +106,19 @@ function renderInlinePrzejsciaApp(containerId) {
         return;
     }
 
+    const maxPipeDn = well ? getMaxPipeDn(well.dn) : 9999;
     const dnList = inlinePrzejsciaState.type
         ? przejsciaProducts
               .filter((p) => p.category === inlinePrzejsciaState.type)
+              .filter((p) => {
+                  let pDn = 160;
+                  if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                      pDn = parseFloat(p.dn.split('/')[1]) || 160;
+                  } else {
+                      pDn = parseFloat(p.dn) || 160;
+                  }
+                  return pDn <= maxPipeDn;
+              })
               .sort((a, b) => a.dn - b.dn)
         : [];
     const selectedProduct = inlinePrzejsciaState.dnId
@@ -554,8 +574,18 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 editPrzejscieState.spadekMufa = item.spadekMufa || '';
             }
 
+            const maxPipeDn = well ? getMaxPipeDn(well.dn) : 9999;
             const currentTypeDNs = przejsciaProducts
                 .filter((pr) => pr.category === editPrzejscieState.type || pr.id === item.productId)
+                .filter((pr) => {
+                    let pDn = 160;
+                    if (typeof pr.dn === 'string' && pr.dn.includes('/')) {
+                        pDn = parseFloat(pr.dn.split('/')[1]) || 160;
+                    } else {
+                        pDn = parseFloat(pr.dn) || 160;
+                    }
+                    return pDn <= maxPipeDn || pr.id === item.productId;
+                })
                 .sort((a, b) => a.dn - b.dn);
             const execAngle =
                 editPrzejscieState.angle === 0 || editPrzejscieState.angle === 360

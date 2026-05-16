@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnChangeUser.style.display = 'inline-block';
     }
 
+    // Pokaż przycisk ML Dashboard dla admin/pro
+    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
+        document.querySelectorAll('.ml-dashboard-btn').forEach(btn => {
+            btn.style.display = 'flex';
+        });
+    }
+
     // Załadowanie danych z backendu
     try {
         studnieProducts = await loadStudnieProducts();

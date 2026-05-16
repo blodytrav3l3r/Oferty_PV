@@ -9,25 +9,7 @@ logger = logging.getLogger("AI_RULES")
 # Używane jako PODPOWIEDŹ (hint) — system preferuje konfiguracje
 # spełniające te zapasy, ale NIE odrzuca konfiguracji twardym błędem.
 # Klucz = max DN rury, wartość = (zapasDol, zapasGora, zapasDolMin, zapasGoraMin)
-DEFAULT_CLEARANCES = {
-    200:  (100, 100, 50, 50),
-    400:  (150, 150, 100, 100),
-    600:  (200, 150, 150, 100),
-    800:  (200, 200, 150, 100),
-    1000: (250, 250, 200, 150),
-    9999: (300, 300, 250, 200),
-}
 
-
-def get_default_clearance(pipe_dn: float) -> Tuple[float, float, float, float]:
-    """
-    Zwraca domyślne zapasy (zapasDol, zapasGora, zapasDolMin, zapasGoraMin) dla danego DN rury.
-    Wartości traktowane jako PODPOWIEDŹ — preferowane, ale nie obligatoryjne.
-    """
-    for max_dn, clearances in sorted(DEFAULT_CLEARANCES.items()):
-        if pipe_dn <= max_dn:
-            return clearances
-    return (300, 300, 250, 200)
 
 
 
@@ -83,26 +65,29 @@ class RuleEngine:
 
                 pprod = self._get_transition_product(t.id)
                 dn_val = float(pprod.dn) if pprod and pprod.dn else 160.0
-                defaults = get_default_clearance(dn_val)
-                z_g = float(pprod.zapasGora or 0) if (pprod and pprod.zapasGora) else defaults[1]
-                z_d = float(pprod.zapasDol or 0) if (pprod and pprod.zapasDol) else defaults[0]
-                z_g_min = float(pprod.zapasGoraMin or 0) if (pprod and pprod.zapasGoraMin) else defaults[3]
-                z_d_min = float(pprod.zapasDolMin or 0) if (pprod and pprod.zapasDolMin) else defaults[2]
+                z_g = float(pprod.zapasGora or 300) if (pprod and pprod.zapasGora) else 300.0
+                z_d = float(pprod.zapasDol or 300) if (pprod and pprod.zapasDol) else 300.0
+                z_g_min = float(pprod.zapasGoraMin or 300) if (pprod and pprod.zapasGoraMin) else 300.0
+                z_d_min = float(pprod.zapasDolMin or 300) if (pprod and pprod.zapasDolMin) else 300.0
 
                 # Próg: jeśli rura jest poniżej wymaganego zapasu dolnego,
                 # traktuj ją jako "przy dnie" (ignoruj zapas dolny).
                 # Dotyczy studni osadnikowych z wylotami podniesionymi o 5-50mm.
-                eff_z_d = -9999.0 if hc_invert < z_d else z_d
-                eff_z_d_min = -9999.0 if hc_invert < z_d_min else z_d_min
+                eff_z_d = -9999.0 if hc_invert <= 0 else z_d
+                eff_z_d_min = -9999.0 if hc_invert <= 0 else z_d_min
 
                 bottom_clearance = hc_invert
                 top_clearance = d.height - (hc_invert + dn_val)
+                SAFETY = 15.0
 
                 if mode == "standard":
-                    if bottom_clearance < eff_z_d or top_clearance < z_g:
+                    if bottom_clearance < (eff_z_d + SAFETY) or top_clearance < (z_g + SAFETY):
                         return False
                 elif mode == "minimal":
-                    if bottom_clearance < eff_z_d_min or top_clearance < z_g_min:
+                    if bottom_clearance < (eff_z_d_min + SAFETY) or top_clearance < (z_g_min + SAFETY):
+                        return False
+                elif mode == "physical":
+                    if top_clearance < 0:
                         return False
             return True
 
@@ -116,10 +101,13 @@ class RuleEngine:
             if check_dennica_internal(d, "minimal"):
                 return d, ["Zastosowano luzy minimalne w dennicy."]
 
-        # 3. Fallback: najniższa dostępna (rury powyżej pójdą do kręgów OT)
-        return available_dennicy[0], [
-            "Dennica dobrana jako najniższa. Rury powyżej w kręgach OT."
-        ]
+        # 3. Najniższa dennica w której rury fizycznie się mieszczą (bez kolizji ze złączem)
+        for d in available_dennicy:
+            if check_dennica_internal(d, "physical"):
+                return d, ["Wymuszone rury w dennicy (brak zachowanych luzów z cennika)."]
+
+        # 4. Fallback absolutny: najwyższa dennica, żeby maksymalizować szansę
+        return available_dennicy[-1], ["Dennica zbyt niska by zmieścić rury, kolizja na złączu."]
 
     def get_reduction_plate(self) -> Optional[ProductModel]:
         """Szuka płyty redukcyjnej (z DN studni na target_dn)"""
@@ -265,16 +253,6 @@ class RuleEngine:
         kregi.sort(key=lambda x: (-(getattr(x, attr_forma) or 0), -(x.height or 0)))
         return kregi
 
-    def get_avr_list(self) -> List[ProductModel]:
-        """Wylistuj pierścienie wyrównawcze (AVR)"""
-        candidates = [
-            p for p in self.products
-            if p.componentType == "avr"
-        ]
-        # Sortuj rosnąco wg wysokości
-        candidates.sort(key=lambda x: x.height)
-        return candidates
-
     def get_konus_plus(self, dn: Any) -> Optional[ProductModel]:
         """Szuka Konus+ (H~850mm) dla danego DN."""
         candidates = [
@@ -355,8 +333,11 @@ class RuleEngine:
         """
         top_dn = 1000 if is_reduced or self.config.dn == "styczna" else self.config.dn
         
+        # ZASADA: Wkładka PEHD blokuje Konus (spójne z get_top_closure)
+        block_konus = getattr(self.config, "wkladkaZwienczenie", "brak") not in [None, "brak", ""]
+        
         # Zbierz kandydatów
-        konus_candidates = [
+        konus_candidates = [] if block_konus else [
             p for p in self.products
             if p.componentType == "konus" and p.dn == top_dn
         ]

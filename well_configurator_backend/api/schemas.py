@@ -38,6 +38,9 @@ class WellConfigInput(BaseModel):
     forced_top_closure_id: Optional[str] = None
     wkladkaZwienczenie: Optional[str] = "brak"
 
+    # Psia buda (dennica + dennica — zakładka 100mm)
+    psia_buda: bool = False
+
     
     # Magazyn kontekstowy ("WL" lub "KLB")
     warehouse: str = "KLB"
@@ -61,6 +64,7 @@ class WellConfigResult(BaseModel):
     has_minimal_clearance: bool = False
     score: float = 0.0
     stage: str = ""
+    score_reasons: List[str] = []  # Wyjaśnienia scoringu (explainability)
 
 class SyncItem(BaseModel):
     item_id: str

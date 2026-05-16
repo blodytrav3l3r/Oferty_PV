@@ -38,6 +38,44 @@ function renderOfferSummary() {
     
     // Aktualizacja wskaźników zewnętrznych (stopka)
     updateOfferSummaryUI(totals);
+
+    // Synchronizacja przycisku zapisu w podsumowaniu z trybem zamówienia
+    const saveBtn = document.getElementById('btn-save-studnie-offer');
+    const createOrderBtn = document.getElementById('btn-create-order-offer');
+    const newOfferBtn = document.getElementById('btn-new-offer-studnie');
+    
+    if (saveBtn) {
+        if (orderEditMode) {
+            saveBtn.innerHTML = `<i data-lucide="save"></i> Zapisz zmiany w zamówieniu`;
+            saveBtn.onclick = () => {
+                if (typeof saveCurrentOrder === 'function') saveCurrentOrder();
+            };
+            saveBtn.classList.remove('btn-primary');
+            saveBtn.classList.add('btn-order-save');
+            // Usuwamy ręczne style z poprzedniej iteracji, aby klasa przejęła kontrolę
+            saveBtn.style.background = '';
+            saveBtn.style.borderColor = '';
+            
+            // Ukryj przyciski ofertowe w trybie zamówienia
+            if (createOrderBtn) createOrderBtn.style.display = 'none';
+            if (newOfferBtn) newOfferBtn.style.display = 'none';
+        } else {
+            saveBtn.innerHTML = `<i data-lucide="save"></i> Zapisz ofertę`;
+            saveBtn.onclick = () => {
+                if (typeof saveOfferStudnie === 'function') saveOfferStudnie();
+            };
+            saveBtn.classList.remove('btn-primary');
+            saveBtn.classList.add('btn-order-save');
+            saveBtn.style.background = ''; 
+            saveBtn.style.borderColor = '';
+            
+            // Pokaż przycisk "Utwórz zamówienie" w trybie oferty
+            if (createOrderBtn) createOrderBtn.style.display = 'flex';
+            // Ukrywamy "Nowa Oferta" zgodnie z prośbą
+            if (newOfferBtn) newOfferBtn.style.display = 'none';
+        }
+        if (window.lucide) window.lucide.createIcons({ root: saveBtn });
+    }
 }
 
 function calculateOfferTotals() {
@@ -225,7 +263,7 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:var(--text-primary);">${well.name}</td>
+        <td style="font-weight:700; color:${well.doplata < 0 ? '#ef4444' : (well.doplata > 0 ? '#10b981' : 'var(--text-primary)')};">${well.name}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
@@ -279,7 +317,8 @@ function renderWellDetailsRow(well, i, change, wellTransportCost) {
     const stats = calcWellStats(well);
     // Mapowanie dn na klucz rabatów (styczna -> styczne)
     const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-    const disc = wellDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
+    const activeDiscounts = typeof getWellActiveDiscounts === 'function' ? getWellActiveDiscounts(well) : wellDiscounts;
+    const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
     const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
     
     let detailsHtml = `<tr class="well-details-row"><td colspan="12">
@@ -338,6 +377,16 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         
         if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
             badgesHtml += ' <span style="font-size:0.55rem; color:#0ea5e9; border:1px solid rgba(14,165,233,0.4); padding:1px 4px; border-radius:4px; background:rgba(14,165,233,0.1); margin-left:4px; font-weight:700;">PEHD</span>';
+        }
+        
+        if (well.nadbudowa === 'zelbetowa' && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
+            badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+        }
+        if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica') {
+            badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+        }
+        if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag' || p.componentType === 'krag_ot' || p.componentType === 'konus')) {
+            badgesHtml += ' <span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
         }
 
         html += `<tr style="opacity:0.8;">
@@ -441,8 +490,10 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
     
     if (isBase && well.doplata) {
-        html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--success);">
-            <td colspan="3" style="padding-left:1.5rem;">↳ + Dopłata indywidualna</td>
+        const doplataWellColor = well.doplata > 0 ? '#10b981' : '#ef4444';
+        const doplataWellSign = well.doplata > 0 ? '+' : '';
+        html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplataWellColor};">
+            <td colspan="3" style="padding-left:1.5rem;">↳ ${doplataWellSign} Dopłata indywidualna</td>
             <td class="text-right">${fmt(well.doplata)} PLN</td>
         </tr>`;
     }
@@ -467,8 +518,10 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
-                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:#fbbf24;">
-                        <td colspan="3" style="padding-left:2.0rem;">↳ + Dopłata indywidualna do przejścia</td>
+                    const doplPrColor = pr.doplata > 0 ? '#10b981' : '#ef4444';
+                    const doplPrSign = pr.doplata > 0 ? '+' : '';
+                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplPrColor};">
+                        <td colspan="3" style="padding-left:2.0rem;">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
                         <td class="text-right">${fmt(pr.doplata)} PLN</td>
                     </tr>`;
                 }
@@ -486,8 +539,10 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
-                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:#fbbf24;">
-                        <td colspan="3" style="padding-left:2.0rem;">↳ + Dopłata indywidualna do przejścia</td>
+                    const doplPrColor2 = pr.doplata > 0 ? '#10b981' : '#ef4444';
+                    const doplPrSign2 = pr.doplata > 0 ? '+' : '';
+                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplPrColor2};">
+                        <td colspan="3" style="padding-left:2.0rem;">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
                         <td class="text-right">${fmt(pr.doplata)} PLN</td>
                     </tr>`;
                 }
@@ -824,30 +879,83 @@ function updateOfferSummaryUI(totals) {
     
     const discountsInfoEl = document.getElementById('offer-active-discounts-info');
     if (discountsInfoEl) {
-        let badgesHtml = '';
         const activeDiscounts = typeof wellDiscounts !== 'undefined' ? wellDiscounts : {};
-        const diameters = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
-        let hasAnyDiscount = false;
-        
-        diameters.forEach(dn => {
-            const d = activeDiscounts[dn];
-            if (d && (d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0)) {
-                hasAnyDiscount = true;
-                const dnName = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
-                let details = [];
-                if (d.dennica > 0) details.push(`D:${d.dennica}%`);
-                if (d.nadbudowa > 0) details.push(`N:${d.nadbudowa}%`);
-                const precoTag = d.preco > 0 ? ` <span style="color:#f87171;">P:${d.preco}%</span>` : '';
-                const dnNameCompact = dn === 'styczne' ? 'Stycz' : dn;
-                badgesHtml += `<span style="background: rgba(99, 102, 241, 0.12); color: #818cf8; padding: 4px 6px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(99, 102, 241, 0.3); font-size: 0.68rem; white-space: nowrap; text-align: center; width: 100%; display: inline-block; letter-spacing: -0.2px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${dnNameCompact} ${details.join(' ')}${precoTag}</span>`;
+        const wellsList = typeof wells !== 'undefined' ? wells : [];
+
+        // Fixed grid layout: 4 columns × 2 rows
+        // Row 1: DN1000, DN1500, DN2500, PEHD
+        // Row 2: DN1200, DN2000, Styczna, Malowanie
+        const tileBase = 'padding:4px 6px; border-radius:6px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0;';
+        const labelStyle = 'font-size:0.85rem; font-weight:800; line-height:1.2;';
+        const detailStyle = 'font-size:0.75rem; font-weight:600; line-height:1.2;';
+        const dimVal = 'opacity:0.3;';
+        const disabledTile = `${tileBase} background:rgba(255,255,255,0.02); color:rgba(100,116,139,0.35); border:1px solid rgba(255,255,255,0.04);`;
+
+        /** Formats a single discount value — active or dimmed */
+        const fmtDisc = (prefix, val, color) => {
+            const v = Number(val || 0).toFixed(2);
+            if (val > 0) return color ? `<span style="color:${color};">${prefix}${v}%</span>` : `${prefix}${v}%`;
+            return `<span style="${dimVal}">${prefix}${v}%</span>`;
+        };
+
+        /** Builds a diameter tile — always shows D, N, P */
+        const buildDnTile = (dn) => {
+            const label = dn === 'styczne' ? 'Stycz' : `DN${dn}`;
+            const hasWells = wellsList.some(w => dn === 'styczne' ? (w.type === 'styczna' || w.dn === 'styczna') : w.dn == dn);
+            if (!hasWells) return `<div style="${disabledTile}"><span style="${labelStyle}">${label}</span></div>`;
+
+            const d = activeDiscounts[dn] || {};
+            const hasDisc = (d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0);
+            const bg = hasDisc ? 'background:rgba(99,102,241,0.12); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3);' : 'background:rgba(99,102,241,0.06); color:rgba(165,180,252,0.5); border:1px solid rgba(99,102,241,0.12);';
+            const details = `${fmtDisc('D:', d.dennica)} ${fmtDisc('N:', d.nadbudowa)} ${fmtDisc('P:', d.preco, d.preco > 0 ? '#f87171' : null)}`;
+            return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span></div>`;
+        };
+
+        /** Builds the PEHD tile */
+        const buildPehdTile = () => {
+            const anyPehd = wellsList.some(w => (w.wkladkaDennica && w.wkladkaDennica !== 'brak') || (w.wkladkaNadbudowa && w.wkladkaNadbudowa !== 'brak') || (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak'));
+            if (!anyPehd) return `<div style="${disabledTile}"><span style="${labelStyle}">PEHD</span></div>`;
+
+            const pehdDisc = (wellsList[0] && wellsList[0].pehdDiscount) ? wellsList[0].pehdDiscount : 0;
+            let basePrice = 0;
+            if (typeof studnieProducts !== 'undefined') {
+                for (const p of studnieProducts) {
+                    if (p.area > 0 && p.doplataPEHD > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta') {
+                        basePrice = Math.round(p.doplataPEHD / p.area);
+                        break;
+                    }
+                }
             }
-        });
-        
-        if (hasAnyDiscount) {
-            discountsInfoEl.innerHTML = badgesHtml;
-        } else {
-            discountsInfoEl.innerHTML = '<span style="grid-column: 1 / -1; text-align: center; opacity: 0.5;">Brak aktywnych rabatów</span>';
-        }
+            const afterPrice = basePrice * (1 - pehdDisc / 100);
+            const discDetail = pehdDisc > 0 ? `${afterPrice.toFixed(0)} zł/m² (-${Number(pehdDisc).toFixed(2)}%)` : `${afterPrice.toFixed(0)} zł/m²`;
+            return `<div style="${tileBase} background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3);"><span style="${labelStyle}"><i data-lucide="shield" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:2px;"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
+        };
+
+        /** Builds the Painting tile */
+        const buildMalTile = () => {
+            const anyW = wellsList.some(w => w.malowanieW && w.malowanieW !== 'brak');
+            const anyZ = wellsList.some(w => w.malowanieZ && w.malowanieZ !== 'brak');
+            if (!anyW && !anyZ) return `<div style="${disabledTile}"><span style="${labelStyle}">Malowanie</span></div>`;
+
+            const ref = wellsList[0] || {};
+            let parts = [];
+            if (anyW) parts.push(`W:${ref.malowanieWewCena || 0}`);
+            if (anyZ) parts.push(`Z:${ref.malowanieZewCena || 0}`);
+            return `<div style="${tileBase} background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.3);"><span style="${labelStyle}"><i data-lucide="paintbrush" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:2px;"></i>Malowanie</span><span style="${detailStyle}">${parts.join(' ')} zł/m²</span></div>`;
+        };
+
+        discountsInfoEl.innerHTML = `
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; width:100%;">
+                ${buildDnTile('1000')}
+                ${buildDnTile('1500')}
+                ${buildDnTile('2500')}
+                ${buildPehdTile()}
+                ${buildDnTile('1200')}
+                ${buildDnTile('2000')}
+                ${buildDnTile('styczne')}
+                ${buildMalTile()}
+            </div>`;
+        if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({root: discountsInfoEl});
     }
 }
 
@@ -1112,13 +1220,23 @@ async function saveOfferStudnie() {
 
             // Wyślij log telemetryczny na CITO w tle do nowej tabeli SQLite
             try {
-                await fetch('/api/telemetry/override', {
+                await fetch(`http://${window.location.hostname}:8000/api/v1/telemetry/override`, {
                     method: 'POST',
-                    headers: authHeaders(),
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         originalConfig: unjustifiedWell.originalAutoConfig,
                         finalConfig: unjustifiedWell.config,
-                        overrideReason: reason
+                        overrideReason: reason,
+                        wellParams: {
+                            dn: unjustifiedWell.dn,
+                            target_height_mm: unjustifiedWell.rzednaWlazu && unjustifiedWell.rzednaDna != null
+                                ? Math.round((unjustifiedWell.rzednaWlazu - (unjustifiedWell.rzednaDna || 0)) * 1000)
+                                : 0,
+                            use_reduction: unjustifiedWell.redukcjaDN1000 || false,
+                            psia_buda: unjustifiedWell.psiaBuda || false,
+                            warehouse: unjustifiedWell.magazyn === 'Włocławek' ? 'WL' : 'KLB',
+                            transition_count: (unjustifiedWell.przejscia || []).length
+                        }
                     })
                 });
             } catch (e) {
@@ -1290,6 +1408,10 @@ async function saveOfferStudnie() {
         else offersStudnie.push(updatedOffer);
 
         renderSavedOffersStudnie();
+
+        // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI)
+        _sendAcceptanceTelemetry(wells, 'OFFER_SAVE');
+
         return true;
     } catch (err) {
         console.error('[OfferManager] Save error:', err);
@@ -1297,6 +1419,42 @@ async function saveOfferStudnie() {
         return false;
     } finally {
         isSavingOffer = false;
+    }
+}
+
+/**
+ * Pasywne uczenie — wysyła konfiguracje studni do backendu ML.
+ * Fire-and-forget: nie blokuje UI, nie wymaga interakcji użytkownika.
+ * @param {Array} wellsArr - tablica studni
+ * @param {string} signalType - 'OFFER_SAVE' lub 'ORDER_CONFIRM'
+ */
+function _sendAcceptanceTelemetry(wellsArr, signalType) {
+    try {
+        const payload = {
+            signalType: signalType,
+            wells: (wellsArr || []).map(w => {
+                const rzDna = w.rzednaDna != null ? w.rzednaDna : 0;
+                const targetH = w.rzednaWlazu != null && w.rzednaWlazu > rzDna
+                    ? Math.round((w.rzednaWlazu - rzDna) * 1000)
+                    : 0;
+                return {
+                    dn: w.dn,
+                    targetHeightMm: targetH,
+                    configSource: w.configSource || 'MANUAL',
+                    config: w.config || []
+                };
+            }).filter(w => w.config.length > 0)
+        };
+
+        if (payload.wells.length === 0) return;
+
+        fetch(`http://${window.location.hostname}:8000/api/v1/telemetry/acceptance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(() => {}); // Cichy błąd — nie przeszkadzamy użytkownikowi
+    } catch (e) {
+        // Nigdy nie powinno wstrzymać UI
     }
 }
 
@@ -1535,7 +1693,7 @@ function migrateWellData(wellsArr) {
     return wellsArr;
 }
 
-async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
+async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preventStepOverride) {
     const sectionToShow = targetSection || 'offer';
     let offer;
     if (typeof id_or_doc === 'object') {
@@ -1682,10 +1840,17 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection) {
         }
     }
 
-    // Pomiń kreatora dla wczytanych ofert — przejdź bezpośrednio do widoku oferty
-    if (typeof skipWizardToStep3 === 'function') skipWizardToStep3();
+    // Pomiń kreatora dla wczytanych ofert — przejdź bezpośrednio do widoku oferty (chyba że zablokowano)
+    if (!preventStepOverride) {
+        if (typeof skipWizardToStep3 === 'function') skipWizardToStep3();
+    } else {
+        if (typeof wizardConfirmedParams !== 'undefined') {
+            wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
+        }
+    }
+    
     showSection(sectionToShow);
-    showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
+    showToast('Wczytano ofertę: ' + (normalized.number || offer.id), 'info');
 
     // Aktualizacja UI (nagłówki i przyciski)
     const titleEl = document.getElementById('offer-form-title-studnie');
@@ -2350,11 +2515,12 @@ async function handleOfferDiscountsCancel() {
         // Push rolled back state up to underlying elements
         const diameters = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
         diameters.forEach(dn => {
-            const disc = window.wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0 };
+            const disc = window.wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
             if (typeof window.applyDiscount === 'function') {
                 window.applyDiscount(dn, 'dennica', disc.dennica);
                 window.applyDiscount(dn, 'nadbudowa', disc.nadbudowa);
                 window.applyDiscount(dn, 'preco', disc.preco || 0);
+                window.applyDiscount(dn, 'pehd', disc.pehd || 0);
             }
         });
         
@@ -2371,7 +2537,7 @@ function handleOfferDiscountChange(dn, type, value) {
     if (typeof applyDiscount === 'function') {
         applyDiscount(dn, type, value); // Obejmuje renderDiscountPanel() i updateSummary() (ale ukrytego)
     } else {
-        if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0 };
+        if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         wellDiscounts[dn][type] = parseFloat(value) || 0;
         if (typeof renderDiscountPanel === 'function') renderDiscountPanel();
         if (typeof updateSummary === 'function') updateSummary();
@@ -2488,7 +2654,7 @@ function renderOfferDiscountsPopupContent() {
 
         totalOverallNetto += sumNettoDN;
 
-        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0 };
+        const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         const displayDn = dn === 'styczne' ? 'Styczne' : `DN${dn}`;
         const hasPrecoInGroup = wells.filter(w => (dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn)).some(w => w.kineta === 'preco' || w.kineta === 'precotop');
 
@@ -2510,7 +2676,106 @@ function renderOfferDiscountsPopupContent() {
     });
 
     html += `</div>`;
-    
+
+    // Sekcja kosztu wkładki PEHD (globalna)
+    const anyPehd = wells.some(w => (w.wkladkaDennica && w.wkladkaDennica !== 'brak') || (w.wkladkaNadbudowa && w.wkladkaNadbudowa !== 'brak') || (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak'));
+    if (anyPehd) {
+        let currentPehdPrice = 0;
+        for (const p of studnieProducts) {
+            if (p.area > 0 && p.doplataPEHD > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta') {
+                currentPehdPrice = Math.round(p.doplataPEHD / p.area);
+                break;
+            }
+        }
+        
+        const pehdDiscountValue = (wells[0] && wells[0].pehdDiscount) ? wells[0].pehdDiscount : 0;
+        const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
+        
+        html += `
+        <div style="margin-top: 0.5rem; background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #0ea5e9; box-shadow: 0 0 6px rgba(14,165,233,0.4);"></span>
+                    <span style="font-weight: 800; font-size: 0.8rem; color: #38bdf8;">Wkładka PEHD <span style="font-size:0.65rem; font-weight:600; opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
+                </div>
+                <div style="color: #38bdf8; font-weight: 800; font-size: 0.8rem;"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <div style="flex:1; min-width:120px;">
+                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #0ea5e9; margin-bottom: 0.15rem;">Globalny Rabat na Wkładkę</div>
+                    <div style="display: flex; align-items: center; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                        <input type="number" min="0" step="1" value="${pehdDiscountValue}"
+                            id="offer-pehd-discount"
+                            class="text-center offer-discount-input"
+                            onfocus="this.select()"
+                            oninput="handleOfferPehdDiscountChange(this.value)"
+                            onkeydown="if(event.key==='Enter') this.blur();"
+                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #38bdf8; background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(14,165,233,0.5); padding-right: 0.4rem;">%</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // Sekcja kosztów malowania (globalna)
+    const anyMalW = wells.some(w => w.malowanieW && w.malowanieW !== 'brak');
+    const anyMalZ = wells.some(w => w.malowanieZ && w.malowanieZ !== 'brak');
+
+    if (anyMalW || anyMalZ) {
+        const refW = wells[0] || {};
+        const malWC = refW.malowanieWewCena || '';
+        const malZC = refW.malowanieZewCena || '';
+
+        html += `
+        <div style="margin-top: 0.5rem; background: rgba(168,85,247,0.06); border: 1px solid rgba(168,85,247,0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #a855f7; box-shadow: 0 0 6px rgba(168,85,247,0.4);"></span>
+                    <span style="font-weight: 800; font-size: 0.8rem; color: #c084fc;">Koszt malowania</span>
+                </div>
+                <span style="font-size: 0.6rem; color: var(--text-muted);">PLN / m²</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">`;
+
+        if (anyMalW) {
+            html += `
+                <div style="flex:1; min-width:120px;">
+                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #a855f7; margin-bottom: 0.15rem;">Wewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                        <input type="number" min="0" step="0.01" value="${malWC}"
+                            id="offer-mal-wew-cena"
+                            class="text-center offer-discount-input"
+                            onfocus="this.select()"
+                            oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
+                            onkeydown="if(event.key==='Enter') this.blur();"
+                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
+                    </div>
+                </div>`;
+        }
+
+        if (anyMalZ) {
+            html += `
+                <div style="flex:1; min-width:120px;">
+                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #a855f7; margin-bottom: 0.15rem;">Zewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                        <input type="number" min="0" step="0.01" value="${malZC}"
+                            id="offer-mal-zew-cena"
+                            class="text-center offer-discount-input"
+                            onfocus="this.select()"
+                            oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
+                            onkeydown="if(event.key==='Enter') this.blur();"
+                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
+                    </div>
+                </div>`;
+        }
+
+        html += `</div>
+        </div>`;
+    }
+
     if (totalOverallNetto > 0) {
         html += `
         <div style="margin-top: 0.5rem; background: rgba(0,0,0,0.25); border: 1px dashed rgba(255,255,255,0.1); padding: 0.5rem 0.9rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -2524,10 +2789,24 @@ function renderOfferDiscountsPopupContent() {
     body.innerHTML = html;
 }
 
+window.handleOfferPaintingCostChange = function(field, value) {
+    if (typeof updateGlobalPaintingCost === 'function') {
+        updateGlobalPaintingCost(field, value);
+    }
+}
+
+window.handleOfferPehdDiscountChange = function(value) {
+    if (typeof updateGlobalPehdDiscount === 'function') {
+        updateGlobalPehdDiscount(value);
+    }
+}
+
 // Eksport dla UI HTML (studnie.html)
 window.openOfferDiscountsPopup = openOfferDiscountsPopup;
 window.closeOfferDiscountsPopup = closeOfferDiscountsPopup;
 window.handleOfferDiscountChange = handleOfferDiscountChange;
+window.handleOfferPaintingCostChange = handleOfferPaintingCostChange;
+window.handleOfferPehdDiscountChange = handleOfferPehdDiscountChange;
 window.handleOfferDiscountsSave = handleOfferDiscountsSave;
 window.handleOfferDiscountsCancel = handleOfferDiscountsCancel;
 

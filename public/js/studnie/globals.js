@@ -45,6 +45,7 @@ const WIZARD_REQUIRED_PARAMS = [
     'stopnie',
     'spocznikH',
     'usytuowanie',
+    'uszczelka',
     'magazyn'
 ];
 
@@ -80,6 +81,7 @@ function showSection(id) {
         renderOfferSummary();
     }
 }
+
 
 function syncOfferClientSummary() {
     const v = (id) => document.getElementById(id)?.value || '—';

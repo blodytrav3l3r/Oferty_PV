@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, r'g:\GitHub\Oferty_PV\well_configurator_backend')
 
 from api.schemas import WellConfigInput, AvailableProduct
-from rule_engine.rules import RuleEngine, get_default_clearance
+from rule_engine.rules import RuleEngine
 
 # Mock product
 class MockProd:

@@ -293,6 +293,11 @@ async function createOrderFromOffer() {
         'success'
     );
 
+    // Pasywne uczenie — ORDER_CONFIRM = najsilniejszy sygnał (3× waga)
+    if (typeof _sendAcceptanceTelemetry === 'function') {
+        _sendAcceptanceTelemetry(selectedWellsCopy, 'ORDER_CONFIRM');
+    }
+
     // Otwórz zamówienie w tym samym oknie (używa głównego edytora studni w trybie zamówienia)
     window.location.href = '/studnie?order=' + order.id;
 }
@@ -701,8 +706,18 @@ async function enterOrderEditMode(orderId) {
 
         console.log('[enterOrderEditMode] fields filled, calling skipWizardToStep3...');
 
-        // Pomiń kreatora → przejdź do kroku 3 (konfiguracja)
-        skipWizardToStep3();
+        // Pomiń kreatora → przejdź bezpośrednio do kroku 4 (Zamówienie)
+        wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
+        currentWizardStep = 4;
+        document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
+        const target = document.getElementById('wizard-step-3'); // Step 4 reuses step 3's UI panel
+        if (target) target.classList.add('active');
+        if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
+        if (typeof updateWizardSummaryBar === 'function') updateWizardSummaryBar();
+        
+        const layout = document.querySelector('.well-app-layout');
+        if (layout) layout.classList.remove('intro-mode');
+
         showSection('builder');
 
         console.log('[enterOrderEditMode] calling refreshAll...');
@@ -710,8 +725,8 @@ async function enterOrderEditMode(orderId) {
         refreshAll();
 
         console.log('[enterOrderEditMode] calling renderOrderModeBanner...');
-        // Pokaż baner trybu zamówienia
         renderOrderModeBanner();
+        if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
 
         // Aktualizuj tytuł strony
         document.title = `📦 Zamówienie: ${order.number || orderId}`;
@@ -847,18 +862,26 @@ function renderOrderModeBanner() {
     }
 
     const saveSidebarBtn = document.getElementById('btn-save-studnie-sidebar');
-    const saveOfferBtn = document.getElementById('btn-save-studnie-offer');
+    const saveZamowienieSidebarBtn = document.getElementById('btn-save-zamowienie-sidebar');
+    const zleceniaSidebarBtn = document.getElementById('btn-zlecenia-sidebar');
 
     if (!orderEditMode) {
         banner.style.display = 'none';
         if (saveSidebarBtn) saveSidebarBtn.style.display = 'flex';
-        if (saveOfferBtn) saveOfferBtn.style.display = 'inline-block';
+        if (saveZamowienieSidebarBtn) saveZamowienieSidebarBtn.style.display = 'none';
+        if (zleceniaSidebarBtn) zleceniaSidebarBtn.style.display = 'none';
+        // Przywróć wskaźnik kreatora do kroku 3 (Oferta)
+        if (typeof currentWizardStep !== 'undefined' && currentWizardStep === 4) {
+            currentWizardStep = 3;
+            if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
+        }
         return;
     }
 
     banner.style.display = '';
     if (saveSidebarBtn) saveSidebarBtn.style.display = 'none';
-    if (saveOfferBtn) saveOfferBtn.style.display = 'none';
+    if (saveZamowienieSidebarBtn) saveZamowienieSidebarBtn.style.display = 'flex';
+    if (zleceniaSidebarBtn) zleceniaSidebarBtn.style.display = 'flex';
 
     const order = orderEditMode.order;
     // Oblicz zmiany w stosunku do bieżących studni
@@ -869,28 +892,25 @@ function renderOrderModeBanner() {
 
     banner.style.cssText = `
         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-        padding:0.6rem 1rem; margin-bottom:0.6rem; border-radius:10px;
+        padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
         background: ${hasChanges ? 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06))' : 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06))'};
-        border: 1px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'};
+        border: 2px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'};
     `;
 
     banner.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:1.2rem;"><i data-lucide="package"></i></span>
+            <span style="font-size:1.3rem;"><i data-lucide="package"></i></span>
             <div>
-                <div style="font-size:0.78rem; font-weight:800; color:${hasChanges ? '#f87171' : '#34d399'};">
+                <div style="font-size:0.82rem; font-weight:800; color:${hasChanges ? '#f87171' : '#34d399'};">
                     TRYB ZAMÓWIENIA — ${order.number || ''}
                 </div>
-                <div style="font-size:0.62rem; color:var(--text-muted);">
+                <div style="font-size:0.65rem; color:var(--text-muted);">
                     ${hasChanges ? `<i data-lucide="alert-triangle"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>
             </div>
         </div>
         <div style="display:flex; gap:0.4rem; align-items:center;">
-            <button class="btn btn-sm" onclick="saveCurrentOrder()" style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.7rem; font-weight:700; padding:0.3rem 0.7rem;">
-                <i data-lucide="save"></i> Zapisz zamówienie
-            </button>
         </div>
     `;
 }
@@ -1708,7 +1728,10 @@ function populateZleceniaForm(el) {
 
     // Mapowanie ogólnych parametrów studni jeśli brak wartości dziedziczonej
     if (!baseRodzajStopni) {
-        if (well.stopnie === 'drabinka') {
+        // Najpierw sprawdź czy użytkownik wybrał konkretny wariant (Typ A/B) w tym zleceniu
+        if (well._selectedRodzajStopni) {
+            baseRodzajStopni = well._selectedRodzajStopni;
+        } else if (well.stopnie === 'drabinka') {
             baseRodzajStopni = 'drabinka_a_stalowa';
         } else if (well.stopnie === 'nierdzewna') {
             baseRodzajStopni = 'drabinka_a_szlachetna';
@@ -2305,10 +2328,15 @@ async function selectZleceniaTile(btn, targetId, val) {
                     let newStopnie = null;
                     if (val === '' || val === 'brak') {
                         newStopnie = 'brak';
+                        el.well._selectedRodzajStopni = '';
                     } else if (val.includes('szlachetna')) {
                         newStopnie = 'nierdzewna';
+                        el.well._selectedRodzajStopni = val;
                     } else if (val.includes('stalowa')) {
                         newStopnie = 'drabinka';
+                        el.well._selectedRodzajStopni = val;
+                    } else if (val === 'inne') {
+                        el.well._selectedRodzajStopni = val;
                     }
                     // 'inne' → newStopnie = null → brak zmiany indeksów
 

@@ -166,6 +166,7 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
             target_dn: well.redukcjaDN1000 ? (well.redukcjaTargetDN || 1000) : null,
             redukcja_min_h_mm: well.redukcjaMinH || 0,
             warehouse: well.magazyn === 'Włocławek' ? 'WL' : 'KLB',
+            psia_buda: well.psiaBuda || false,
             transitions: (well.przejscia || []).map((p, idx) => {
                 let prDN = 160;
                 let prod = availProducts.find((x) => x.id === p.productId);
@@ -462,7 +463,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // KROK 1: Dennica
     const dennica = getLowestDennica(
         availProducts.filter((p) => filterByWellParams(p, well)),
-        dn, mag
+        dn, mag, well.przejscia, well.rzednaDna
     );
     if (!dennica) return { error: 'Brak dennic w magazynie.' };
 
@@ -594,6 +595,10 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         if (reqHMin > maxReqHMin) maxReqHMin = reqHMin;
     });
 
+    if (requiredMm < maxReqHMin) {
+        return { error: `Wymagana wysokość studni (${requiredMm}mm) jest mniejsza niż wymagana wysokość dla przejść (${maxReqHMin}mm).` };
+    }
+
     // KROK 4: Listy kręgów i redukcja
     const dennicy = availProducts
         .filter((p) => {
@@ -670,7 +675,17 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     const upperDn = canReduce ? targetDn : effectiveDn;
 
     // KROK 5: DP Ring Optimizer
-    function fillKregiDP(target, kList, tolBelow, tolAbove) {
+    // Przygotuj przejścia w formacie backend (height_from_bottom_mm) do walidacji kolizji
+    const transitionsForDP = (well.przejscia || []).map(p => {
+        const pel = parseFloat(p.rzednaWlaczenia);
+        return {
+            id: p.productId,
+            productId: p.productId,
+            height_from_bottom_mm: isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000)
+        };
+    }).filter(t => t.height_from_bottom_mm > 0);
+
+    function fillKregiDP(target, kList, tolBelow, tolAbove, fixedBelowHeight = 0) {
         if (target <= 0) return { kItems: [], filled: 0 };
 
         console.log('[fillKregiDP] target=', target, 'kList.length=', kList.length, 'dn=', dn, 'mag=', mag);
@@ -679,7 +694,10 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             return fillKregiGreedy(target, kList);
         }
 
-        const dpResult = optimizeRingsForDistance(target, kList, tolBelow, tolAbove);
+        const dpResult = optimizeRingsForDistance(
+            target, kList, tolBelow, tolAbove,
+            transitionsForDP, availProducts, fixedBelowHeight
+        );
         console.log('[fillKregiDP] dpResult.success=', dpResult.success, 'selectedRings=', dpResult.selectedRings?.length);
         
         if (dpResult.success && dpResult.selectedRings.length > 0) {
@@ -711,6 +729,45 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             }
         }
         return { kItems, filled };
+    }
+
+    /**
+     * Szuka optymalnej kombinacji pierścieni AVR (backtracking).
+     * Wydzialone z solve() — DRY (używane w 2 miejscach).
+     * @returns {{ avrItems: Array, avrH: number }}
+     */
+    function findBestAvrFill(deficit, maxAvr) {
+        let bestAvrCombo = [];
+        let bestAvrDiff = deficit;
+        let bestAvrH = 0;
+
+        function backtrack(combo, sum, idx) {
+            const d = Math.abs(deficit - sum);
+            if (d < bestAvrDiff) {
+                bestAvrDiff = d;
+                bestAvrCombo = [...combo];
+                bestAvrH = sum;
+            } else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) {
+                bestAvrCombo = [...combo];
+                bestAvrH = sum;
+            }
+            for (let i = idx; i < avrRings.length; i++) {
+                if (sum + avrRings[i].height <= maxAvr) {
+                    combo.push(avrRings[i]);
+                    backtrack(combo, sum + avrRings[i].height, i);
+                    combo.pop();
+                }
+            }
+        }
+
+        if (deficit >= 30) backtrack([], 0, 0); // min 30mm — spójne z generator.py:1043
+
+        const cMap = {};
+        for (const a of bestAvrCombo) cMap[a.id] = (cMap[a.id] || 0) + 1;
+        const avrItems = [];
+        for (const id in cMap) avrItems.push({ productId: id, quantity: cMap[id] });
+
+        return { avrItems, avrH: bestAvrH };
     }
 
     // KROK 6: Walidacja przejść
@@ -770,11 +827,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             let strictValid = true;
             let minValid = true;
 
+            const SAFETY_MARGIN = 15; // mm — spójne z validator.py:85
             for (let s of segs) {
-                if (s.type !== 'dennica' || true) {
-                    if (s.end >= resBot && s.end <= resTop) strictValid = false;
-                    if (s.end >= resBotMin && s.end <= resTopMin) minValid = false;
-                }
+                // Sprawdzaj kolizje łączeń dla wszystkich segmentów
+                if (s.end >= (resBot - SAFETY_MARGIN) && s.end <= (resTop + SAFETY_MARGIN)) strictValid = false;
+                if (s.end >= (resBotMin - SAFETY_MARGIN) && s.end <= (resTopMin + SAFETY_MARGIN)) minValid = false;
 
                 const isForbidden = [
                     'konus', 'plyta_din', 'plyta_redukcyjna', 'pierscien_odciazajacy'
@@ -787,7 +844,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     }
                 }
                 if (s.type === 'plyta_redukcyjna') {
-                    if (hBot >= s.start) {
+                    // Środek rury powyżej spodu płyty = kolizja (spójne z validator.py:98)
+                    const holeCenter = hBot + h.ruraDz / 2;
+                    if (holeCenter >= s.start) {
                         strictValid = false;
                         minValid = false;
                         errors.push(`Przejście nie może być powyżej płyty redukcyjnej`);
@@ -815,7 +874,6 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
         for (const topCfg of topConfigs) {
             for (const dennicaItem of dennicy) {
-                if (dennicaItem.height < maxReqHMin) continue;
                 let denIsMin = dennicaItem.height < maxReqH;
 
                 let effDenH = dennicaItem.height;
@@ -824,41 +882,14 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 const targetBody = requiredMm - topCfg.height - effDenH;
                 if (targetBody < 0) continue;
 
-                const { kItems, filled } = fillKregiDP(targetBody, kregi, tolBelow, tolAbove);
+                const { kItems, filled } = fillKregiDP(targetBody, kregi, tolBelow, tolAbove, dennicaItem.height);
 
                 const deficit = requiredMm - (dennicaItem.height + topCfg.height + filled);
                 if (deficit > maxAvr || deficit < -tolAbove) continue;
 
-                let avrItems = [];
-                let avrH = 0;
-
-                let bestAvrCombo = [];
-                let bestAvrDiff = deficit;
-                function bcktrAvr(combo, sum, idx) {
-                    let d = Math.abs(deficit - sum);
-                    if (d < bestAvrDiff) {
-                        bestAvrDiff = d;
-                        bestAvrCombo = [...combo];
-                        avrH = sum;
-                    } else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) {
-                        bestAvrCombo = [...combo];
-                        avrH = sum;
-                    }
-                    for (let i = idx; i < avrRings.length; i++) {
-                        if (sum + avrRings[i].height <= maxAvr) {
-                            combo.push(avrRings[i]);
-                            bcktrAvr(combo, sum + avrRings[i].height, i);
-                            combo.pop();
-                        }
-                    }
-                }
-                if (deficit > 0) bcktrAvr([], 0, 0);
-
-                let cMap = {};
-                for (let a of bestAvrCombo) cMap[a.id] = (cMap[a.id] || 0) + 1;
-                for (let id in cMap) avrItems.push({ productId: id, quantity: cMap[id] });
-                const diff = dennicaItem.height + topCfg.height + filled + avrH - requiredMm;
-                const isOutOfBounds = diff < -50 || diff > 20;
+                const { avrItems, avrH } = findBestAvrFill(deficit, maxAvr);
+                const diff = effDenH + topCfg.height + filled + avrH - requiredMm;
+                const isOutOfBounds = diff < -90 || diff > 20;
 
                 const conf = checkConflicts(kItems, dennicaItem.height, 0, topCfg.items);
                 if (!conf.valid && !skipHolesValid) continue;
@@ -868,6 +899,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 if (isOutOfBounds) score += 20000;
                 if (conf.isMinimal || denIsMin) score += 50000;
                 if (topCfg.label.includes('zamiennik')) score += 100000;
+
+                // WYMUSZENIE REDUKCJI: Jeśli użytkownik zaznaczył redukcję, ukarz konfiguracje standardowe
+                if (well.redukcjaDN1000) {
+                    score += 5000000; // 5M kary dla braku redukcji
+                }
 
                 if (score < bestScore) {
                     bestScore = score;
@@ -884,7 +920,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         })),
                         dennica: { productId: dennicaItem.id, quantity: 1 },
                         avrItems: avrItems,
-                        totalHeight: dennicaItem.height + topCfg.height + filled + avrH,
+                        totalHeight: effDenH + topCfg.height + filled + avrH,
                         diff: diff,
                         topLabel: topCfg.label,
                         errors: runErrors,
@@ -930,25 +966,40 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 }
             }
 
+            // --- Dodanie włazu do konfiguracji z redukcją ---
+            let wlazItem = well.config.find(
+                (c) => studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
+            );
+            if (!wlazItem) {
+                const wlaz150 = studnieProducts.find((p) => p.id === 'WLAZ-150');
+                if (wlaz150) wlazItem = { productId: wlaz150.id, quantity: 1 };
+            }
+            if (wlazItem) {
+                const wlazProd = studnieProducts.find((p) => p.id === wlazItem.productId);
+                if (wlazProd) {
+                    topRedItems.unshift(wlazItem);
+                    topRedH += wlazProd.height * wlazItem.quantity;
+                }
+            }
+            // ------------------------------------------------
+
             let maxHoleTop = 0;
             if (well.przejscia && well.przejscia.length > 0) {
                 const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
                 for (const pr of well.przejscia) {
                     let pel = parseFloat(pr.rzednaWlaczenia);
                     if (!isNaN(pel)) {
-                        const holeCenter = (pel - rzDna) * 1000;
+                        const holeBottom = (pel - rzDna) * 1000; // rzednaWlaczenia = dolna krawędź rury
                         const pprod = studnieProducts.find((x) => x.id === pr.productId);
                         if (pprod) {
                             let prDN =
                                 typeof pprod.dn === 'string' && pprod.dn.includes('/')
                                     ? parseFloat(pprod.dn.split('/')[1]) || 160
                                     : parseFloat(pprod.dn) || 160;
-                            const zapasGora = parseFloat(
-                                pprod.zapasGora !== undefined
-                                    ? pprod.zapasGora
-                                    : pprod.zapasGoraMin || 0
-                            );
-                            const holeTop = holeCenter + prDN / 2 + zapasGora;
+                            // Preferuj zapas standardowy, fallback do minimalnego, potem domyślne 100mm
+                            const zapasGora = parseFloat(pprod.zapasGora || 0) ||
+                                parseFloat(pprod.zapasGoraMin || 0) || 100;
+                            const holeTop = holeBottom + prDN + zapasGora; // pełna średnica + zapas
                             if (holeTop > maxHoleTop) maxHoleTop = holeTop;
                         }
                     }
@@ -958,53 +1009,27 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             let minLowerTotal = Math.max(well.redukcjaMinH || 0, maxHoleTop);
             let dynamicMinBottom = minLowerTotal;
             let lift = 0;
-            while (lift < 15) {
+            while (lift < 40) { // Zwiększono z 15 do 40, aby obsłużyć studnie do 12m+
                 for (const dennicaItem of dennicy) {
-                    if (dennicaItem.height < maxReqHMin) continue;
                     let bottomNeed = Math.max(dynamicMinBottom - dennicaItem.height, 0);
 
-                    const bKregi = fillKregiDP(bottomNeed, kregi, tolBelow, tolAbove);
+                    // Wymuszamy tolBelow=0 dla dolnej części, aby zachować twardy limit minLowerTotal (redukcjaMinH)
+                    const bKregi = fillKregiDP(bottomNeed, kregi, 0, tolAbove + 60, dennicaItem.height);
                     const bSec = dennicaItem.height + bKregi.filled;
 
                     const targetBodyNeed = requiredMm - bSec - reductionPlate.height - topRedH;
                     if (targetBodyNeed < 0) continue;
 
-                    const tTarget = fillKregiDP(targetBodyNeed, targetDnKregi, tolBelow, tolAbove);
+                    // Górna sekcja: fixedBelowHeight = dennica + kręgi dolne + płyta redukcyjna
+                    const tTarget = fillKregiDP(targetBodyNeed, targetDnKregi, tolBelow, tolAbove, bSec + reductionPlate.height);
                     const currentTotal = bSec + reductionPlate.height + topRedH + tTarget.filled;
 
                     const deficit = requiredMm - currentTotal;
                     if (deficit > maxAvr || deficit < -tolAbove) continue;
-                    let avrItems = [];
-                    let avrH = 0;
-
-                    let bestAvrCombo = [];
-                    let bestAvrDiff = deficit;
-                    function bcktrAvr(combo, sum, idx) {
-                        let d = Math.abs(deficit - sum);
-                        if (d < bestAvrDiff) {
-                            bestAvrDiff = d;
-                            bestAvrCombo = [...combo];
-                            avrH = sum;
-                        } else if (d === bestAvrDiff && combo.length < bestAvrCombo.length) {
-                            bestAvrCombo = [...combo];
-                            avrH = sum;
-                        }
-                        for (let i = idx; i < avrRings.length; i++) {
-                            if (sum + avrRings[i].height <= maxAvr) {
-                                combo.push(avrRings[i]);
-                                bcktrAvr(combo, sum + avrRings[i].height, i);
-                                combo.pop();
-                            }
-                        }
-                    }
-                    if (deficit > 0) bcktrAvr([], 0, 0);
-
-                    let cMap = {};
-                    for (let a of bestAvrCombo) cMap[a.id] = (cMap[a.id] || 0) + 1;
-                    for (let id in cMap) avrItems.push({ productId: id, quantity: cMap[id] });
+                    const { avrItems, avrH } = findBestAvrFill(deficit, maxAvr);
 
                     const diff = currentTotal + avrH - requiredMm;
-                    const isOutOfBounds = diff < -50 || diff > 20;
+                    const isOutOfBounds = diff < -90 || diff > 20;
 
                     let redKItems = [];
                     bKregi.kItems.forEach((k) => redKItems.push(k));
@@ -1075,20 +1100,36 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         return best;
     }
 
-    let solution = solve(280, 20, 280, false);
+    const STAGES = [
+        { tolBelow: 60,  tolAbove: 20, maxAvr: 260, skip: false, name: 'Standard' },
+        { tolBelow: 200, tolAbove: 20, maxAvr: 260, skip: false, name: 'Optymalny' },
+        { tolBelow: 260, tolAbove: 20, maxAvr: 260, skip: false, name: 'Ratunkowy' },
+        { tolBelow: 260, tolAbove: 500, maxAvr: 260, skip: false, name: 'Poszerzony (+500mm)' },
+        { tolBelow: 260, tolAbove: 1000, maxAvr: 260, skip: false, name: 'Ekstremalny (+1000mm)' },
+        { tolBelow: 260, tolAbove: 20, maxAvr: 260, skip: true,  name: 'Awaryjny (kolizje pominięto)' },
+    ];
+
+    let solution = null;
     let fallback = false;
     let fallbackReason = '';
-    if (!solution) {
-        solution = solve(280, 20, 280, true);
+
+    for (const stage of STAGES) {
+        solution = solve(stage.tolBelow, stage.tolAbove, stage.maxAvr, stage.skip);
         if (solution) {
-            fallback = true;
-            fallbackReason = 'kolizje przejść ominięte awaryjnie';
+            if (stage.name !== 'Standard') {
+                fallback = true;
+                fallbackReason = `tryb ${stage.name}`;
+            }
+            if (stage.skip) {
+                fallbackReason = 'kolizje przejść ominięte awaryjnie';
+            }
+            break;
         }
     }
 
     if (!solution) {
         return {
-            error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 28cm).`
+            error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 26cm).`
         };
     }
 
@@ -1180,7 +1221,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     for (const pr of well.przejscia || []) {
         let pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
-        const holeCenter = (pel - (well.rzednaDna || 0)) * 1000;
+        const holeBottom = (pel - (well.rzednaDna || 0)) * 1000;
         const pprod = studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
         let prDN =
@@ -1193,8 +1234,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         const zapasDol = parseFloat(
             pprod.zapasDol !== undefined ? pprod.zapasDol : pprod.zapasDolMin || 0
         );
-        const holeBottom = holeCenter - prDN / 2 - zapasDol;
-        const holeTop = holeCenter + prDN / 2 + zapasGora;
+        const holeTop = holeBottom + prDN + zapasGora;
 
         for (const seg of segmentsReverse) {
             if (
@@ -1289,19 +1329,7 @@ function recalculateWellErrors(well) {
                 }
             }
 
-            // Domyślna logika luzów
-            const getDefaultC = (dn) => {
-                const table = [
-                    { max: 200, z: [100, 100, 50, 50] },
-                    { max: 400, z: [150, 150, 100, 100] },
-                    { max: 600, z: [200, 150, 150, 100] },
-                    { max: 800, z: [200, 200, 150, 100] },
-                    { max: 1000, z: [250, 250, 200, 150] },
-                    { max: 9999, z: [300, 300, 250, 200] }
-                ];
-                for (let r of table) if (dn <= r.max) return r.z;
-                return [300, 300, 250, 200];
-            };
+
 
             const przZegarowe = well.przejscia
                 .map((pr, idx) => ({ pr, origIdx: idx }))
@@ -1323,14 +1351,13 @@ function recalculateWellErrors(well) {
                     dn_val = parseFloat(pprod.dn) || 160;
                 }
 
-                const defs = getDefaultC(dn_val);
                 const parseClearance = (val, defVal) => {
                     if (val === undefined || val === null || val === '') return defVal;
                     const p = parseFloat(val);
                     return isNaN(p) ? defVal : p;
                 };
-                const zg_req = parseClearance(pprod.zapasGora, defs[1]);
-                const zd_req = parseClearance(pprod.zapasDol, defs[0]);
+                const zg_req = parseClearance(pprod.zapasGora, 300.0);
+                const zd_req = parseClearance(pprod.zapasDol, 300.0);
                 const hc_invert = (pel - rzDna) * 1000;
                 const top_pos = hc_invert + dn_val;
 

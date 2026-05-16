@@ -1,10 +1,30 @@
 /* ===== KREATOR ===== */
 function goToWizardStep(step) {
+    if (step <= 3 && typeof orderEditMode !== 'undefined' && orderEditMode) {
+        // Jeśli wracamy do kroku 1, 2 lub 3 z kroku 4, musimy wyjść z trybu zamówienia
+        // Przekazujemy krok docelowy, aby po załadowaniu poprawnie go ustawić
+        exitWizardOrderMode(step);
+        return; // exitWizardOrderMode wywoła goToWizardStep ponownie
+    }
+
     currentWizardStep = step;
     document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
+    updateWizardIndicator();
+
+    if (step === 4) {
+        // Krok 4 (Zamówienie) — wejdź w tryb edycji zamówienia w builderze
+        enterWizardOrderMode();
+        return;
+    }
+
+    // Dla kroków 1-3 upewnij się, że jesteśmy w sekcji builder
+    const builderSection = document.getElementById('section-builder');
+    if (builderSection && !builderSection.classList.contains('active')) {
+        showSection('builder');
+    }
+
     const target = document.getElementById('wizard-step-' + step);
     if (target) target.classList.add('active');
-    updateWizardIndicator();
     if (step === 3) updateWizardSummaryBar();
     if (step === 2) validateWizardStep2();
 
@@ -18,6 +38,72 @@ function goToWizardStep(step) {
     }
 }
 
+/**
+ * Wejście w tryb zamówienia z poziomu kreatora (krok 4).
+ * Szuka zamówienia powiązanego z bieżącą ofertą i ładuje je do edycji.
+ */
+function enterWizardOrderMode() {
+    // Jeśli już jesteśmy w trybie zamówienia — zostań w builderze
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        const builderSection = document.getElementById('section-builder');
+        if (builderSection && !builderSection.classList.contains('active')) {
+            showSection('builder');
+        }
+        // Aktywuj wizard-step-3 (builder) bo krok 4 nie ma własnego panelu
+        const target = document.getElementById('wizard-step-3');
+        if (target) target.classList.add('active');
+        return;
+    }
+
+    // Znajdź zamówienie dla bieżącej oferty
+    if (!editingOfferIdStudnie) {
+        showToast('Najpierw zapisz ofertę, aby móc przejść do zamówienia', 'error');
+        currentWizardStep = 3;
+        updateWizardIndicator();
+        return;
+    }
+
+    const oId = typeof normalizeId === 'function' ? normalizeId(editingOfferIdStudnie) : editingOfferIdStudnie;
+    const order = (typeof ordersStudnie !== 'undefined' && ordersStudnie)
+        ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
+        : null;
+
+    if (order) {
+        // Wczytaj zamówienie do edycji
+        if (typeof enterOrderEditMode === 'function') {
+            enterOrderEditMode(order.id);
+        }
+    } else {
+        showToast('Brak zamówienia dla tej oferty. Utwórz zamówienie z poziomu podsumowania oferty.', 'info');
+        currentWizardStep = 3;
+        updateWizardIndicator();
+    }
+}
+
+/**
+ * Wyjście z trybu zamówienia i powrót do trybu oferty.
+ */
+async function exitWizardOrderMode(targetStep = 3) {
+    orderEditMode = null;
+    if (typeof renderOrderModeBanner === 'function') renderOrderModeBanner();
+    
+    if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
+        if (typeof loadSavedOfferStudnie === 'function') {
+            await loadSavedOfferStudnie(editingOfferIdStudnie, null, 'builder', true);
+        }
+    }
+    
+    if (typeof refreshAll === 'function') refreshAll();
+    
+    // Teraz po załadowaniu przejdź do docelowego kroku
+    if (targetStep) {
+        goToWizardStep(targetStep);
+    }
+    
+    showToast('<i data-lucide="bar-chart-2"></i> Powrót do edycji oferty', 'info');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 function wizardNext() {
     wizardNavStep(currentWizardStep + 1);
 }
@@ -27,7 +113,7 @@ function wizardPrev() {
 }
 
 function wizardNavStep(targetStep) {
-    if (targetStep === currentWizardStep || targetStep < 1 || targetStep > 3) return;
+    if (targetStep === currentWizardStep || targetStep < 1 || targetStep > 4) return;
 
     // Pozwól na dowolną nawigację wstecz
     if (targetStep < currentWizardStep) {
@@ -42,7 +128,7 @@ function wizardNavStep(targetStep) {
         // Zawsze waliduj przed zezwoleniem na nawigację do kroku 3
         if (!validateWizardStep2()) {
             showToast(
-                'Wybierz opcję w każdej grupie parametrów przed przejściem do konfiguracji',
+                'Wybierz opcję w każdej grupie parametrów przed przejściem do oferty',
                 'error'
             );
             // Jeśli użytkownik próbował przeskoczyć z kroku 1 bezpośrednio do 3, zabierz go zamiast tego do kroku 2
@@ -50,6 +136,9 @@ function wizardNavStep(targetStep) {
             return;
         }
         goToWizardStep(3);
+    } else if (targetStep === 4) {
+        // Krok 4 — Zamówienie (przełącza na widok podsumowania oferty/zamówienia)
+        goToWizardStep(4);
     }
 }
 
@@ -159,8 +248,10 @@ function updateWizardIndicator() {
     });
     const line1 = document.getElementById('wizard-line-1');
     const line2 = document.getElementById('wizard-line-2');
+    const line3 = document.getElementById('wizard-line-3');
     if (line1) line1.classList.toggle('completed', currentWizardStep > 1);
     if (line2) line2.classList.toggle('completed', currentWizardStep > 2);
+    if (line3) line3.classList.toggle('completed', currentWizardStep > 3);
 }
 
 function updateWizardSummaryBar() {

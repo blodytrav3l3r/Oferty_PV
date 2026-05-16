@@ -129,7 +129,7 @@ function renderStudniePriceList() {
 
     let html = `<div class="table-wrap">
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
-        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary" onclick="recalculatePEHD()" style="font-size:0.8rem; padding:0.3rem 0.6rem;" title="Przelicz dopłatę PEHD dla wszystkich elementów w oparciu o powierzchnię wewnętrzną"><i data-lucide="calculator"></i> Przelicz PEHD</button></div>` : ''}
+        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" onchange="recalculatePEHD()" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"></div>` : ''}
         ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj kategorię</button>`}
         <button class="btn btn-secondary" onclick="addStudnieElement()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj element</button>
         ${isKinety ? `<button class="btn btn-secondary" onclick="generateDefaultKinety()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plug"></i> Generuj puste Kinety</button>` : ''}
@@ -296,10 +296,6 @@ window.recalculatePEHD = async function() {
     const price = parseFloat(input?.value);
     if (isNaN(price) || price <= 0) {
         showToast('Podaj prawidłową cenę za m²', 'error');
-        return;
-    }
-    
-    if (!(await appConfirm(`Czy na pewno chcesz przeliczyć dopłatę PEHD dla wszystkich elementów o zdefiniowanej powierzchni wewnętrznej po cenie ${price} PLN/m²? Zostaną nadpisane dotychczasowe wartości w całym cenniku.`, {title: 'Przeliczanie PEHD', type: 'info'}))) {
         return;
     }
     
@@ -1604,12 +1600,17 @@ function renderPrecoPriceList() {
         const data = precoPricing[dn];
         if (!data) return;
 
+        window.openPrecoAccordions = window.openPrecoAccordions || new Set();
+        const isOpen = window.openPrecoAccordions.has(dn);
+        const displayStyle = isOpen ? 'block' : 'none';
+        const iconName = isOpen ? 'chevron-down' : 'chevron-right';
+
         html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius:8px; overflow:hidden;">`;
-        html += `<div onclick="togglePrecoAccordion(this)" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(244,63,94,0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:#f43f5e;">`;
-        html += `<span><i data-lucide="chevron-right" style="width:14px;height:14px;"></i> DN${dn}</span>`;
+        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(244,63,94,0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:#f43f5e;">`;
+        html += `<span><i data-lucide="${iconName}" style="width:14px;height:14px;"></i> DN${dn}</span>`;
         html += `<span style="font-size:0.7rem; color:var(--text-muted);">${data.kinety.length} pozycji</span>`;
         html += `</div>`;
-        html += `<div class="preco-accordion-body" style="display:none; padding:0.5rem 0.8rem;">`;
+        html += `<div class="preco-accordion-body" style="display:${displayStyle}; padding:0.5rem 0.8rem;">`;
 
         // Tabela kinet
         html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">`;
@@ -1690,27 +1691,41 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
     html += `</div>`;
     
     html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>`;
-    html += `<th style="width:20%;">Zakres min-max</th>`;
+    html += `<th style="width:25%; padding-left:0.5rem;">Zakres min-max</th>`;
     grupyKeys.forEach(g => {
-        html += `<th class="text-right">DN ${g}</th>`;
+        html += `<th style="padding:0.2rem 0.5rem;">
+            <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
+                <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
+                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${g}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', '${g}', this.value)" title="Edytuj nazwę grupy">
+                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${g}')" title="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>
+            </div>
+        </th>`;
     });
-    html += `<th class="text-center" style="width:10%;">Akcje</th>`;
+    html += `<th class="text-center" style="width:15%;">
+        <div style="display:flex; justify-content:center; align-items:center; gap:0.3rem;">
+            <button class="btn btn-secondary btn-sm" onclick="addPrecoGrupaCol(${dn}, '${fieldBase}')" style="padding:0.1rem 0.3rem;" title="Dodaj grupę DN"><i data-lucide="plus" style="width:12px;height:12px;"></i></button>
+            <span>Akcje</span>
+        </div>
+    </th>`;
     html += `</tr></thead><tbody>`;
 
     if (table && table.length > 0) {
         table.forEach((row, ri) => {
-            html += `<tr><td style="font-weight:600; color:#818cf8; display:flex; gap:0.2rem; align-items:center;">
-                <input type="number" class="edit-input" style="width:70px;" value="${row.min}" data-preco-field="${fieldBase}.${ri}.min" data-preco-dn="${dn}"> – 
-                <input type="number" class="edit-input" style="width:70px;" value="${row.max}" data-preco-field="${fieldBase}.${ri}.max" data-preco-dn="${dn}">
+            html += `<tr><td style="font-weight:600; color:#818cf8; padding-left:0.5rem;">
+                <div style="display:flex; gap:0.5rem; align-items:center; justify-content:flex-start;">
+                    <input type="number" class="edit-input" style="width:70px; text-align:center; padding:0.2rem;" value="${row.min}" data-preco-field="${fieldBase}.${ri}.min" data-preco-dn="${dn}">
+                    <span style="color:var(--text-muted); font-weight:normal;">–</span> 
+                    <input type="number" class="edit-input" style="width:70px; text-align:center; padding:0.2rem;" value="${row.max}" data-preco-field="${fieldBase}.${ri}.max" data-preco-dn="${dn}">
+                </div>
             </td>`;
             grupyKeys.forEach(g => {
-                html += `<td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${g}" data-preco-dn="${dn}"></td>`;
+                html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${g}" data-preco-dn="${dn}"></td>`;
             });
             html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td>`;
             html += `</tr>`;
         });
     } else {
-        html += `<tr><td colspan="${grupyKeys.length + 2}" class="text-center" style="color:var(--text-muted);">Brak zakresów</td></tr>`;
+        html += `<tr><td colspan="${grupyKeys.length + 2}" class="text-center" style="color:var(--text-muted); padding:1rem;">Brak zakresów</td></tr>`;
     }
 
     html += `</tbody></table>`;
@@ -1761,12 +1776,59 @@ function removePrecoRangeRow(dn, fieldBase, index) {
     renderPrecoPriceList();
 }
 
+function updatePrecoGrupaKey(dn, fieldBase, oldKey, newKey) {
+    if (!newKey || oldKey === newKey) return;
+    precoPricing = collectPrecoFromUI();
+    if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
+    
+    precoPricing[dn][fieldBase].forEach(row => {
+        if (row.grupy && row.grupy[oldKey] !== undefined) {
+            row.grupy[newKey] = row.grupy[oldKey];
+            delete row.grupy[oldKey];
+        }
+    });
+    renderPrecoPriceList();
+}
+
+function addPrecoGrupaCol(dn, fieldBase) {
+    const newDn = prompt("Podaj nazwę nowej grupy DN (np. '800-1000'):");
+    if (!newDn) return;
+    precoPricing = collectPrecoFromUI();
+    if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
+    
+    precoPricing[dn][fieldBase].forEach(row => {
+        if (!row.grupy) row.grupy = {};
+        row.grupy[newDn] = 0;
+    });
+    renderPrecoPriceList();
+}
+
+function removePrecoGrupaCol(dn, fieldBase, g) {
+    if (!confirm(`Usunąć grupę DN ${g}?`)) return;
+    precoPricing = collectPrecoFromUI();
+    if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
+    
+    precoPricing[dn][fieldBase].forEach(row => {
+        if (row.grupy && row.grupy[g] !== undefined) {
+            delete row.grupy[g];
+        }
+    });
+    renderPrecoPriceList();
+}
+
 /** Toggle accordion PRECO */
-function togglePrecoAccordion(headerEl) {
+function togglePrecoAccordion(headerEl, dn) {
     const body = headerEl.nextElementSibling;
     if (!body) return;
     const isOpen = body.style.display !== 'none';
     body.style.display = isOpen ? 'none' : 'block';
+    
+    window.openPrecoAccordions = window.openPrecoAccordions || new Set();
+    if (dn) {
+        if (isOpen) window.openPrecoAccordions.delete(dn);
+        else window.openPrecoAccordions.add(dn);
+    }
+
     const icon = headerEl.querySelector('[data-lucide]');
     if (icon) {
         icon.setAttribute('data-lucide', isOpen ? 'chevron-right' : 'chevron-down');

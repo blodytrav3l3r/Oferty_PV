@@ -245,18 +245,16 @@ function calculateWellTransportMap(wellsList) {
 }
 
 /**
- * Główna funkcja — generuje i drukuje ofertę studni.
+ * Główna funkcja — generuje kod HTML oferty studni.
  */
-async function printOfferStudnie() {
+async function generateOfferHtml() {
     if (!wells || wells.length === 0) {
         showToast('Brak studni w ofercie', 'error');
-        return;
+        return null;
     }
 
-    showToast('Generowanie wydruku oferty...', 'info');
-
     const template = await getTemplate('templates/oferta_studnie.html');
-    if (!template) return;
+    if (!template) return null;
 
     // Dane oferty
     const offerNumber = document.getElementById('offer-number')?.value || '—';
@@ -388,8 +386,173 @@ async function printOfferStudnie() {
     };
 
     const finalHtml = renderTemplate(template, payload);
-    silentPrint(finalHtml);
+    return finalHtml;
 }
+
+/**
+ * Zapisuje ofertę do pliku Word (.doc)
+ */
+async function exportOfferToWord() {
+    const finalHtml = await generateOfferHtml();
+    if (!finalHtml) return;
+
+    showToast('Generowanie pliku Word...', 'info');
+
+    // Dodanie nagłówków specyficznych dla Worda by wymusić formatowanie z HTML
+    const wordHtml = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+            <meta charset='utf-8'>
+            <title>Oferta</title>
+        </head>
+        <body>
+            ${finalHtml}
+        </body>
+        </html>
+    `;
+
+    const offerNumber = document.getElementById('offer-number')?.value || 'BrakNumeru';
+    const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `OFERTA_STUDNIE_${offerNumber.replace(/[^A-Za-z0-9]/g, '_')}.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Drukuje ofertę do PDF (wykorzystując systemowy dialog druku)
+ */
+async function printOfferStudnie() {
+    showToast('Generowanie wydruku oferty...', 'info');
+    const finalHtml = await generateOfferHtml();
+    if (finalHtml) {
+        silentPrint(finalHtml);
+    }
+}
+
+/**
+ * Pokazuje modal wyboru formatu eksportu oferty
+ */
+window.showOfferExportChoice = function() {
+    const modalHtml = `
+    <div id="offer-export-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px);">
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 350px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Wydruk Oferty</h3>
+            <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 1.5rem;">Do jakiego formatu chcesz wyeksportować tę ofertę?</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
+                <button onclick="exportOfferToPDF_action()" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                    <span style="font-size: 2rem;"><i data-lucide="file-text"></i></span> PDF
+                </button>
+                <button onclick="exportOfferToWord_action()" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                    <span style="font-size: 2rem;"><i data-lucide="edit"></i></span> Word
+                </button>
+            </div>
+            <button style="padding: 0.5rem 1rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); cursor: pointer;" onclick="document.getElementById('offer-export-modal').remove()">Anuluj</button>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    if(typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+window.exportOfferToPDF_action = async function() {
+    document.getElementById('offer-export-modal').remove();
+    
+    if (typeof showToast === 'function') {
+        showToast('Zapisywanie oferty przed eksportem...', 'info');
+    }
+    
+    const savedOk = await saveOfferStudnie();
+    if (!savedOk && !editingOfferIdStudnie) {
+        if (typeof showToast === 'function') {
+            showToast('Eksport przerwany - nie udało się zapisać oferty.', 'error');
+        }
+        return;
+    }
+
+    if (typeof showToast === 'function') {
+        showToast('Generowanie pliku PDF...', 'info');
+    }
+
+    fetch(`/api/offers-studnie/${editingOfferIdStudnie}/export-pdf`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `oferta_studnie_${editingOfferIdStudnie}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        if (typeof showToast === 'function') {
+            showToast('Wyeksportowano ofertę do PDF', 'success');
+        }
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        if (typeof showToast === 'function') {
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        }
+    });
+};
+
+window.exportOfferToWord_action = async function() {
+    document.getElementById('offer-export-modal').remove();
+    
+    if (typeof showToast === 'function') {
+        showToast('Zapisywanie oferty przed eksportem...', 'info');
+    }
+    
+    const savedOk = await saveOfferStudnie();
+    if (!savedOk && !editingOfferIdStudnie) {
+        if (typeof showToast === 'function') {
+            showToast('Eksport przerwany - nie udało się zapisać oferty.', 'error');
+        }
+        return;
+    }
+
+    if (typeof showToast === 'function') {
+        showToast('Generowanie pliku DOCX...', 'info');
+    }
+
+    fetch(`/api/offers-studnie/${editingOfferIdStudnie}/export-docx`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `oferta_studnie_${editingOfferIdStudnie}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        if (typeof showToast === 'function') {
+            showToast('Wyeksportowano ofertę do DOCX', 'success');
+        }
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        if (typeof showToast === 'function') {
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        }
+    });
+};
 
 // ===== GLOBAL EXPORTS =====
 window.printOfferStudnie = printOfferStudnie;
+

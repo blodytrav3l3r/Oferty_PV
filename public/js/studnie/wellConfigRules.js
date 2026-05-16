@@ -163,11 +163,11 @@ window.updateConfigToMatchParams = function (well) {
         const isDrilled = p.componentType === 'krag_ot' || p.id.endsWith('_OT');
 
         if (!filterByWellParams(p, well)) {
-            // Znajdź zamiennik
+            // Znajdź zamiennik — użyj String() dla porównania DN (może być number lub string)
             const substitute = availProducts.find(
                 (cand) =>
                     cand.componentType === p.componentType &&
-                    cand.dn === p.dn &&
+                    String(cand.dn) === String(p.dn) &&
                     parseFloat(cand.height) === parseFloat(p.height)
             );
             if (substitute) {
@@ -181,7 +181,7 @@ window.updateConfigToMatchParams = function (well) {
                     const baseSub = availProducts.find(
                         (cand) =>
                             cand.componentType === 'krag' &&
-                            cand.dn === baseProd.dn &&
+                            String(cand.dn) === String(baseProd.dn) &&
                             parseFloat(cand.height) === parseFloat(baseProd.height)
                     );
                     if (baseSub) {
@@ -256,6 +256,74 @@ window.ensureReliefRingPair = function (well) {
             showToast('Automatycznie dodano pierścień odciążający do kompletu', 'info');
         }
     }
+};
+
+/* ===== ROZWIĄZYWANIE POPRAWNEGO WARIANTU PRODUKTU ===== */
+
+/**
+ * Zwraca poprawny wariant produktu dla bieżących parametrów studni.
+ * Jeśli produkt w konfiguracji nie pasuje do aktualnych parametrów (np. KDB zamiast KDZ po zmianie na żelbet),
+ * szuka zamiennika w cenniku i opcjonalnie aktualizuje item.productId.
+ *
+ * @param {Object} well - obiekt studni
+ * @param {string} productId - ID produktu z konfiguracji
+ * @param {Object} [configItem] - element konfiguracji (jeśli podany, auto-koryguje productId)
+ * @returns {Object|null} poprawny produkt
+ */
+window.resolveEffectiveProduct = function (well, productId, configItem) {
+    const p = studnieProducts.find((pr) => pr.id === productId);
+    if (!p) return null;
+
+    // Produkt pasuje do parametrów — zwróć bez zmian
+    if (filterByWellParams(p, well)) return p;
+
+    // Znajdź poprawny zamiennik
+    const availProducts = getAvailableProducts(well).filter((ap) => filterByWellParams(ap, well));
+    const isDrilled = p.componentType === 'krag_ot' || p.id.endsWith('_OT');
+
+    // Szukaj bezpośredniego zamiennika (ten sam typ, DN, wysokość)
+    const substitute = availProducts.find(
+        (cand) =>
+            cand.componentType === p.componentType &&
+            String(cand.dn) === String(p.dn) &&
+            parseFloat(cand.height) === parseFloat(p.height)
+    );
+
+    if (substitute) {
+        if (configItem) configItem.productId = substitute.id;
+        return substitute;
+    }
+
+    // Dla kręgów wierconych (_OT) — szukaj zamiennika bazowego kręgu i dodaj _OT
+    if (isDrilled) {
+        const baseId = p.id.replace('_OT', '');
+        const baseProd = studnieProducts.find((pr) => pr.id === baseId);
+        if (baseProd) {
+            const baseSub = availProducts.find(
+                (cand) =>
+                    cand.componentType === 'krag' &&
+                    String(cand.dn) === String(baseProd.dn) &&
+                    parseFloat(cand.height) === parseFloat(baseProd.height)
+            );
+            if (baseSub) {
+                const dynamicOtId = baseSub.id + '_OT';
+                let dynamicProd = studnieProducts.find((pr) => pr.id === dynamicOtId);
+                if (!dynamicProd) {
+                    dynamicProd = JSON.parse(JSON.stringify(baseSub));
+                    dynamicProd.id = dynamicOtId;
+                    dynamicProd.componentType = 'krag_ot';
+                    if (!dynamicProd.name.endsWith(' z otworem'))
+                        dynamicProd.name += ' z otworem';
+                    studnieProducts.push(dynamicProd);
+                }
+                if (configItem) configItem.productId = dynamicOtId;
+                return dynamicProd;
+            }
+        }
+    }
+
+    // Nie znaleziono zamiennika — zwróć oryginalny
+    return p;
 };
 
 // Eksportuj do window

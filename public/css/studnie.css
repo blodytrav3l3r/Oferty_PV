@@ -1,4 +1,4 @@
-﻿/* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
+/* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
 .well-app-layout {
     display: grid;
     grid-template-columns: 350px 1fr 350px;
@@ -903,6 +903,10 @@
     gap: 0;
     margin-bottom: 0.6rem;
     padding: 0.3rem 0;
+}
+
+.well-app-layout:not(.intro-mode) .wizard-indicator {
+    margin-top: 0.8rem;
 }
 
 .wizard-step-dot {

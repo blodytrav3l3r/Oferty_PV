@@ -140,10 +140,11 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     // Kolumna dopłata (non-discountable)
     const doplataVal = item.doplata != null ? item.doplata : 0;
+    const doplataColor = doplataVal > 0 ? '#10b981' : (doplataVal < 0 ? '#ef4444' : '#fbbf24');
     const doplataHTML = showPrice
         ? `<div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
-             <div data-qe-id="${item.id}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" style="font-size:1.0rem; font-weight:800; color:#fbbf24; font-family:'Inter'; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; margin-top:2px;" onmouseenter="this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.background='rgba(255,255,255,0.03)';">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span style="font-size:0.6rem;">PLN</span></div>
+             <div data-qe-id="${item.id}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" style="font-size:1.0rem; font-weight:800; color:${doplataColor}; font-family:'Inter'; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:all 0.2s; margin-top:2px;" onmouseenter="this.style.background='rgba(255,255,255,0.1)';" onmouseleave="this.style.background='rgba(255,255,255,0.03)';">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span style="font-size:0.6rem;">PLN</span></div>
            </div>`
         : '';
 

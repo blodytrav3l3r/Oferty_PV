@@ -2,7 +2,7 @@ from ortools.sat.python import cp_model
 from typing import List, Tuple, Dict, Optional, Any
 from database.tables import ProductModel
 from api.schemas import TransitionInput, AvailableProduct
-from rule_engine.rules import get_default_clearance
+
 import logging
 
 logger = logging.getLogger("AI_OPTIMIZER")
@@ -40,16 +40,14 @@ def _classify_transitions_for_ring(
         hole_center = hc_invert + (dn_val / 2.0)
         
         if ring_start_mm <= hole_center < ring_end_mm:
-            # Użyj zapasów z cennika, a jeśli brak → domyślne wg DN
-            defaults = get_default_clearance(dn_val)
             result.append(
                 {
                     "rel_invert": hc_invert - ring_start_mm,
                     "dn": dn_val,
-                    "z_dol": float(pprod.zapasDol) if (pprod and pprod.zapasDol) else defaults[0],
-                    "z_gora": float(pprod.zapasGora) if (pprod and pprod.zapasGora) else defaults[1],
-                    "z_dol_min": float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else defaults[2],
-                    "z_gora_min": float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else defaults[3],
+                    "z_dol": float(pprod.zapasDol) if (pprod and pprod.zapasDol) else 300.0,
+                    "z_gora": float(pprod.zapasGora) if (pprod and pprod.zapasGora) else 300.0,
+                    "z_dol_min": float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else 300.0,
+                    "z_gora_min": float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else 300.0,
                 }
             )
     return result
@@ -160,12 +158,11 @@ def optimize_rings_for_distance(
             pprod = _get_transition_product(t.id, available_products)
             dn_val = float(pprod.dn) if pprod and pprod.dn else 160.0
             
-            defaults = get_default_clearance(dn_val)
-            z_dol = float(pprod.zapasDol) if pprod and pprod.zapasDol else defaults[0]
-            z_gora = float(pprod.zapasGora) if pprod and pprod.zapasGora else defaults[1]
+            z_dol = float(pprod.zapasDol) if pprod and pprod.zapasDol else 300.0
+            z_gora = float(pprod.zapasGora) if pprod and pprod.zapasGora else 300.0
             if mode != "standard":
-                z_dol = float(pprod.zapasDolMin) if pprod and pprod.zapasDolMin else defaults[2]
-                z_gora = float(pprod.zapasGoraMin) if pprod and pprod.zapasGoraMin else defaults[3]
+                z_dol = float(pprod.zapasDolMin) if pprod and pprod.zapasDolMin else 300.0
+                z_gora = float(pprod.zapasGoraMin) if pprod and pprod.zapasGoraMin else 300.0
 
             # Rzędna rury WZGLĘDEM KRĘGÓW (zero w tym solverze to "fixed_below_height" w generatorze)
             # Parametr height_from_bottom_mm liczy się od całego dna, więc musimy odjąć fixed_below.

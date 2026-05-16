@@ -19,12 +19,18 @@ function getFormaField(warehouse) {
  *
  * Port z: Logika/rules.py → RuleEngine.get_lowest_dennica()
  *
+ * Walidacja przejść (opcjonalna): Gdy podano transitions,
+ * sprawdza zapasy rur WEWNĄTRZ dennicy (rury powyżej → kręgi OT).
+ * Port z: rules.py:75-107 → check_dennica_internal()
+ *
  * @param {Array} products - lista wszystkich dostępnych produktów
  * @param {number} dn - średnica studni
  * @param {string} warehouse - 'Kluczbork' lub 'Włocławek'
+ * @param {Array} [transitions] - przejścia [{rzednaWlaczenia, productId}] (opcjonalne)
+ * @param {number} [rzDna] - rzędna dna studni (opcjonalne, potrzebne z transitions)
  * @returns {Object|null} najlepsza dennica lub null
  */
-function getLowestDennica(products, dn, warehouse) {
+function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
     const ff = getFormaField(warehouse);
 
     const dennicy = products.filter((p) => {
@@ -36,15 +42,86 @@ function getLowestDennica(products, dn, warehouse) {
 
     if (dennicy.length === 0) return null;
 
-    // Sortowanie: (-forma_std, height) — standardowe formy na górze, potem najniższa
+    // Sortowanie: (height, -forma_std) — najniższa dennica PRIORYTET, potem forma standardowa
+    // Spójne z backend: rules.py → get_lowest_dennica() linia 73
     dennicy.sort((a, b) => {
+        const hA = parseFloat(a.height) || 0;
+        const hB = parseFloat(b.height) || 0;
+        if (hA !== hB) return hA - hB; // najniższa najpierw
         const fA = parseInt(a[ff]) || 0;
         const fB = parseInt(b[ff]) || 0;
-        if (fA !== fB) return fB - fA; // malejąco forma
-        return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0); // rosnąco wysokość
+        return fB - fA; // potem forma malejąco
     });
 
-    return dennicy[0];
+    // Bez przejść — zwróć najniższą (zachowanie wsteczne)
+    if (!transitions || transitions.length === 0) {
+        return dennicy[0];
+    }
+
+    // Z przejściami — sprawdź zapasy wewnątrz dennicy
+    const checkDennicaInternal = (d, mode) => {
+        for (const pr of transitions) {
+            const pel = parseFloat(pr.rzednaWlaczenia);
+            if (isNaN(pel)) continue;
+            const hcInvert = (pel - (rzDna || 0)) * 1000; // mm od dna
+
+            // Rura powyżej dennicy → trafi do kręgu OT, nie sprawdzaj
+            if (hcInvert >= d.height) continue;
+
+            const pprod = typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find(x => x.id === pr.productId)
+                : products.find(x => x.id === pr.productId);
+            if (!pprod) continue;
+
+            let dnVal = 160;
+            if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
+                dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
+            } else if (pprod.dn) {
+                dnVal = parseFloat(pprod.dn) || 160;
+            }
+
+            const zDol = parseFloat(pprod.zapasDol) || 300;
+            const zGora = parseFloat(pprod.zapasGora) || 300;
+            const zDolMin = parseFloat(pprod.zapasDolMin) || 300;
+            const zGoraMin = parseFloat(pprod.zapasGoraMin) || 300;
+
+            // Próg: rura blisko dna → ignoruj zapas dolny (studnie osadnikowe)
+            const isNearBottom = hcInvert <= 0; // Jeśli Z=0 to nie wymagaj zapasu z dołu
+            const effZDol = isNearBottom ? -9999 : zDol;
+            const effZDolMin = isNearBottom ? -9999 : zDolMin;
+
+            const bottomClearance = hcInvert;
+            const topClearance = d.height - (hcInvert + dnVal);
+            const SAFETY = 15; // mm (zbieżne z checkConflicts i validator.py)
+
+            if (mode === 'standard') {
+                if (bottomClearance < (effZDol + SAFETY) || topClearance < (zGora + SAFETY)) return false;
+            } else if (mode === 'minimal') {
+                if (bottomClearance < (effZDolMin + SAFETY) || topClearance < (zGoraMin + SAFETY)) return false;
+            } else if (mode === 'physical') {
+                if (topClearance < 0) return false;
+            }
+        }
+        return true;
+    };
+
+    // 1. Najniższa dennica z zapasami standardowymi
+    for (const d of dennicy) {
+        if (checkDennicaInternal(d, 'standard')) return d;
+    }
+
+    // 2. Najniższa dennica z zapasami minimalnymi
+    for (const d of dennicy) {
+        if (checkDennicaInternal(d, 'minimal')) return d;
+    }
+
+    // 3. Najniższa dennica, w której rury fizycznie się mieszczą (nawet bez zapasów)
+    for (const d of dennicy) {
+        if (checkDennicaInternal(d, 'physical')) return d;
+    }
+
+    // 4. Fallback absolutny: najwyższa dostępna dennica (aby zminimalizować kolizję)
+    return dennicy[dennicy.length - 1];
 }
 
 /**

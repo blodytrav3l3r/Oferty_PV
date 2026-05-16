@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 from api.schemas import WellConfigInput, TransitionInput, AvailableProduct
-from rule_engine.rules import get_default_clearance
+
 import logging
 
 logger = logging.getLogger("AI_VALIDATOR")
@@ -22,7 +22,7 @@ def get_product_for_transition(transition_id: str, available_products: List[Avai
             return p
     return None
 
-def validate_transitions(segments: List[Dict], transitions: List[TransitionInput], available_products: List[AvailableProduct]) -> ValidationResult:
+def validate_transitions(segments: List[Dict], transitions: List[TransitionInput], available_products: List[AvailableProduct], well_dn: Optional[Any] = None) -> ValidationResult:
     """
     Sprawdza, czy przejścia nie wpadają w strefy zakazane oraz czy zapasy (góra/dół) są zachowane.
     KATEGORYCZNY ZAKAZ: Przejście na łączeniu elementów → is_valid=False
@@ -45,11 +45,11 @@ def validate_transitions(segments: List[Dict], transitions: List[TransitionInput
     # Unikalne, posortowane
     joints = sorted(set(joints))
 
-    # Pozycja płyty redukcyjnej
-    reduction_top_mm = None
+    # Pozycja SPODU płyty redukcyjnej — otwory powyżej = kolizja
+    reduction_bottom_mm = None
     for seg in segments:
         if seg['type'] in ['plyta_redukcyjna', 'reduction']:
-            reduction_top_mm = seg['start']
+            reduction_bottom_mm = seg['start']
             break
 
     forbidden_zones = ['plyta_din', 'plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy', 'plyta_redukcyjna', 'reduction']
@@ -67,17 +67,36 @@ def validate_transitions(segments: List[Dict], transitions: List[TransitionInput
         if pprod:
             if pprod.dn:
                 pr_dn_num = float(pprod.dn)
-            # Użyj zapasów z cennika, a jeśli brak (0) → domyślne wg DN
-            defaults = get_default_clearance(pr_dn_num)
-            z_gora = float(pprod.zapasGora or 0) if pprod.zapasGora else defaults[1]
-            z_dol = float(pprod.zapasDol or 0) if pprod.zapasDol else defaults[0]
-            z_gora_min = float(pprod.zapasGoraMin or 0) if pprod.zapasGoraMin else defaults[3]
-            z_dol_min = float(pprod.zapasDolMin or 0) if pprod.zapasDolMin else defaults[2]
+            z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else 300.0
+            z_dol = float(pprod.zapasDol) if (pprod and pprod.zapasDol) else 300.0
+            z_gora_min = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else 300.0
+            z_dol_min = float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else 300.0
             pr_name = f"{pprod.name} DN{int(pr_dn_num)}"
 
         hole_bottom = hole_invert
         hole_top = hole_invert + pr_dn_num
         hole_center = hole_invert + (pr_dn_num / 2.0)
+
+        # ═══════════════════════════════════════════════════════════════
+        # KATEGORYCZNY ZAKAZ: Limit maksymalnej średnicy rury
+        # ═══════════════════════════════════════════════════════════════
+        if well_dn is not None and str(well_dn).lower() != "styczna":
+            try:
+                wdn_str = str(well_dn).upper().replace("DN", "").strip()
+                wdn = int(float(wdn_str))
+                max_pipe_dn = 9999
+                if wdn == 1000: max_pipe_dn = 600
+                elif wdn == 1200: max_pipe_dn = 800
+                elif wdn == 1500: max_pipe_dn = 1000
+                elif wdn == 2000: max_pipe_dn = 1600
+                elif wdn == 2500: max_pipe_dn = 2200
+
+                if pr_dn_num > max_pipe_dn:
+                    errors.append(f"Przejście [{pr_name}]: NIEDOZWOLONA ŚREDNICA RURY! Dla studni DN{wdn} maksymalna rura to DN{max_pipe_dn} (próba wstawienia DN{int(pr_dn_num)}).")
+                    critical_conflict = True
+                    logger.warning(f"PIPE SIZE CONFLICT: {pr_name} exceeds max {max_pipe_dn} for well DN{wdn}")
+            except ValueError:
+                pass
 
         # ═══════════════════════════════════════════════════════════════
         # KATEGORYCZNY ZAKAZ: Sprawdzenie kolizji rury z łączeniami
@@ -95,7 +114,7 @@ def validate_transitions(segments: List[Dict], transitions: List[TransitionInput
                 logger.warning(f"JOINT COLLISION: {pr_name} vs joint@{joint_h}mm (hole {hole_bottom:.0f}-{hole_top:.0f}mm)")
 
         # Sprawdzenie strefy redukcji
-        if reduction_top_mm is not None and hole_center >= reduction_top_mm:
+        if reduction_bottom_mm is not None and hole_center >= reduction_bottom_mm:
             errors.append(f"Przejście [{pr_name}]: BŁĄD — otwór w strefie redukcji")
             reduction_conflict = True
 

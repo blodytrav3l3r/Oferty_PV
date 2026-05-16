@@ -653,8 +653,8 @@ window.openGlobalRecalcModal = function () {
                 </label>
                 <div id="recalc-red-box-${dn}" style="display:none; margin-top:0.5rem; padding-left:1rem; border-left:2px solid var(--border);">
                     <div style="display:grid; grid-template-columns:1fr; gap:0.4rem; margin-bottom:0.5rem;">
-                        <label class="form-label" style="font-size:0.65rem;">Min. wys. komory roboczej (mm)</label>
-                        <input type="number" id="recalc-red-minh-${dn}" class="form-input" value="2500" style="padding:0.3rem 0.5rem; width:120px;" />
+                        <label class="form-label" style="font-size:0.65rem;">Min. wys. komory roboczej (m)</label>
+                        <input type="number" id="recalc-red-minh-${dn}" class="form-input" value="2.5" step="0.1" style="padding:0.3rem 0.5rem; width:120px;" />
                     </div>
                     <div style="font-size:0.65rem; margin-bottom:0.3rem; color:var(--text-muted);">Zakończenie komina DN1000:</div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:0.3rem;" id="recalc-red-tiles-${dn}">
@@ -939,3 +939,403 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
     return true;
 }
 
+
+
+/* ===== TRANSITION MANAGER (MENEDŻER PRZEJŚĆ) ===== */
+let tmSelectedWells = new Set();
+let tmCurrentFilters = { sourceMaterial: '', dn: '' };
+let tmWellData = [];
+
+window.openTransitionManagerModal = function () {
+    if (!wells || wells.length === 0) {
+        showToast('Brak studni w ofercie', 'error');
+        return;
+    }
+
+    const transitionProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
+    const categories = [...new Set(transitionProducts.map(p => p.category))].sort();
+
+    if (categories.length === 0) {
+        showToast('Brak przejść w cenniku', 'error');
+        return;
+    }
+
+    tmRefreshWellData();
+    tmSelectedWells.clear();
+    tmCurrentFilters = { sourceMaterial: '', dn: '' };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'transition-manager-modal';
+
+    const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    
+    let allMaterials = new Set();
+    let allDNs = new Set();
+    
+    tmWellData.forEach(w => {
+        w.transitions.forEach(tr => {
+            if (tr.material !== 'Nieznany') allMaterials.add(tr.material);
+            allDNs.add(tr.dnRaw);
+        });
+    });
+    
+    const filterMaterialOpts = [...allMaterials].sort().map(m => `<option value="${m}">${m}</option>`).join('');
+    const filterDNOpts = [...allDNs].sort((a,b) => parseFloat(a) - parseFloat(b)).map(dn => `<option value="${dn}">${dn}</option>`).join('');
+
+    overlay.innerHTML = `
+    <div class="modal" style="width:90vw; max-width:95vw; height:90vh; display:flex; flex-direction:column; background:#111827; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
+      
+      <!-- Nagłówek -->
+      <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
+        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><i data-lucide="list"></i> Menedżer Przejść</h3>
+        <button class="btn-icon" onclick="window.closeTransitionManagerModal()"><i data-lucide="x"></i></button>
+      </div>
+      
+      <!-- Sekcja filtrów (Co chcemy zamienić) -->
+      <div style="padding:1rem; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); flex-shrink:0; display:flex; gap:1rem; align-items:flex-end;">
+         <div class="form-group" style="margin:0; width:220px;">
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Kategoria źródłowa (Z czego):</label>
+            <select id="tm-filter-material" onchange="tmApplyFilters()" class="form-input" style="width:100%; padding:0.4rem; font-size:0.8rem;">
+                <option value="">-- Dowolna kategoria --</option>
+                ${filterMaterialOpts}
+            </select>
+         </div>
+         <div class="form-group" style="margin:0; width:150px;">
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Filtruj po DN przejścia:</label>
+            <select id="tm-filter-dn" onchange="tmApplyFilters()" class="form-input" style="width:100%; padding:0.4rem; font-size:0.8rem;">
+                <option value="">-- Dowolne DN --</option>
+                ${filterDNOpts}
+            </select>
+         </div>
+         <div style="margin-left:auto; font-size:0.8rem; color:var(--text-muted);">
+            Widoczne studnie: <strong id="tm-visible-count">0</strong> | Zaznaczone: <strong id="tm-selected-count">0</strong>
+         </div>
+      </div>
+
+      <!-- Tabela z przewijaniem -->
+      <div style="flex-grow:1; overflow-y:auto; overflow-x:auto; padding:0; background:rgba(255,255,255,0.02);">
+         <table class="table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+            <thead style="position:sticky; top:0; background:#1e293b; z-index:10; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
+                <tr>
+                    <th style="width:40px; text-align:center; padding:0.5rem;"><input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()"></th>
+                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">Studnia</th>
+                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">DN Studni</th>
+                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">Rzędna Dna [m]</th>
+                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">Cena [PLN]</th>
+                    <th style="padding:0.5rem; text-align:left;">Przejścia (Materiał | Średnica | Rzędna | Kąt)</th>
+                </tr>
+            </thead>
+            <tbody id="tm-table-body">
+                <!-- Generowane dynamicznie -->
+            </tbody>
+         </table>
+      </div>
+
+      <!-- Panel Akcji (Na co zamieniamy) -->
+      <div style="padding:1rem; border-top:1px solid var(--border); background:#1e293b; flex-shrink:0; display:flex; gap:1rem; align-items:flex-end;">
+         <div style="flex-grow:1;">
+             <label style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-bottom:0.2rem;">Docelowa Kategoria (Na co zamienić):</label>
+             <select id="tm-target-cat" class="form-input" style="width:100%; max-width:300px; padding:0.5rem;">
+                <option value="">-- Wybierz docelową --</option>
+                ${categoryOptions}
+             </select>
+         </div>
+         <div>
+            <button class="btn btn-primary" onclick="tmApplyChanges()" style="background:#6366f1; border:none; padding:0.6rem 1.2rem; display:flex; align-items:center; gap:0.4rem;">
+                <i data-lucide="zap"></i> Zastosuj w zaznaczonych studniach
+            </button>
+         </div>
+      </div>
+
+    </div>`;
+
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons({ root: overlay });
+    
+    tmRenderTable();
+};
+
+window.closeTransitionManagerModal = function () {
+    const el = document.getElementById('transition-manager-modal');
+    if (el) el.remove();
+};
+
+window.tmRefreshWellData = function() {
+    tmWellData = [];
+    for (let i = 0; i < wells.length; i++) {
+        const well = wells[i];
+        
+        let trList = [];
+        if (well.przejscia && well.przejscia.length > 0) {
+            trList = well.przejscia.map((tr, trIdx) => {
+                const p = studnieProducts.find(prod => prod.id === tr.productId);
+                return {
+                    trIndex: trIdx,
+                    angle: tr.angle || 0,
+                    rzedna: tr.rzednaWlaczenia !== undefined && tr.rzednaWlaczenia !== null ? tr.rzednaWlaczenia : well.rzednaDna,
+                    productId: tr.productId,
+                    material: p ? p.category : 'Nieznany',
+                    dnRaw: p ? p.dn : '?'
+                };
+            });
+        }
+
+        let wellPrice = 0;
+        if (typeof calcWellStats === 'function') {
+            const stats = calcWellStats(well);
+            let transportCost = 0;
+            if (typeof calculateOfferTotals === 'function') {
+                const totals = calculateOfferTotals();
+                if (totals && totals.globalWeight > 0 && totals.totalTransportCost > 0) {
+                    transportCost = totals.totalTransportCost * (stats.weight / totals.globalWeight);
+                }
+            }
+            wellPrice = stats.price + transportCost;
+        }
+
+        tmWellData.push({
+            wellIndex: i,
+            uid: `well_${i}`,
+            wellName: well.nazwaWlasna || `Studnia ${i+1}`,
+            wellDn: well.dn,
+            rzednaDna: well.rzednaDna || '0.000',
+            price: wellPrice,
+            transitions: trList
+        });
+    }
+};
+
+window.tmApplyFilters = function() {
+    tmCurrentFilters.sourceMaterial = document.getElementById('tm-filter-material').value;
+    tmCurrentFilters.dn = document.getElementById('tm-filter-dn').value;
+    tmRenderTable();
+};
+
+window.tmRenderTable = function() {
+    const tbody = document.getElementById('tm-table-body');
+    if (!tbody) return;
+
+    let html = '';
+    let visibleCount = 0;
+
+    tmWellData.forEach(w => {
+        let hasMatchingTransition = false;
+
+        if (w.transitions.length === 0) {
+            if (tmCurrentFilters.sourceMaterial || tmCurrentFilters.dn) {
+                return; 
+            } else {
+                hasMatchingTransition = true;
+            }
+        } else {
+            hasMatchingTransition = w.transitions.some(tr => {
+                let matchMat = true;
+                let matchDn = true;
+                if (tmCurrentFilters.sourceMaterial && tr.material !== tmCurrentFilters.sourceMaterial) matchMat = false;
+                if (tmCurrentFilters.dn && String(tr.dnRaw) !== tmCurrentFilters.dn) matchDn = false;
+                return matchMat && matchDn;
+            });
+        }
+
+        if (!hasMatchingTransition && (tmCurrentFilters.sourceMaterial || tmCurrentFilters.dn)) {
+            return;
+        }
+
+        visibleCount++;
+        const isSelected = tmSelectedWells.has(w.uid);
+
+        let transitionsHtml = '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; max-width:100%;">';
+        if (w.transitions.length === 0) {
+            transitionsHtml += '<span style="color:var(--text-muted); font-size:0.7rem; font-style:italic;">Brak przejść</span>';
+        } else {
+            w.transitions.forEach(tr => {
+                let isTargetMatch = true;
+                if (tmCurrentFilters.sourceMaterial && tr.material !== tmCurrentFilters.sourceMaterial) isTargetMatch = false;
+                if (tmCurrentFilters.dn && String(tr.dnRaw) !== tmCurrentFilters.dn) isTargetMatch = false;
+
+                const bgCol = isTargetMatch ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.02)';
+                const brCol = isTargetMatch ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.05)';
+                const txtCol = isTargetMatch ? '#a5b4fc' : 'var(--text-secondary)';
+
+                transitionsHtml += `
+                <div style="background:${bgCol}; border:1px solid ${brCol}; border-radius:6px; padding:0.2rem 0.35rem; display:flex; gap:0.3rem; align-items:center; width:fit-content; font-size:0.7rem;">
+                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; color:${txtCol}; white-space:nowrap; max-width:130px; overflow:hidden; text-overflow:ellipsis;" title="${tr.material}">${tr.material}</div>
+                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; color:#4ade80; font-weight:800; white-space:nowrap;">DN${tr.dnRaw}</div>
+                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; color:var(--text-muted); white-space:nowrap;">Rz: ${tr.rzedna}</div>
+                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; color:#fcd34d; white-space:nowrap;">${tr.angle}°</div>
+                </div>`;
+            });
+        }
+        transitionsHtml += '</div>';
+
+        html += `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:${isSelected ? 'rgba(99,102,241,0.15)' : 'transparent'}; transition:background 0.2s;" class="tm-row" data-uid="${w.uid}">
+            <td style="text-align:center; padding:0.5rem; vertical-align:middle;"><input type="checkbox" class="tm-row-cb" value="${w.uid}" ${isSelected ? 'checked' : ''} onchange="tmToggleRow('${w.uid}', this.checked)"></td>
+            <td style="padding:0.5rem; color:var(--text-primary); font-weight:600; vertical-align:middle; white-space:nowrap; text-align:left;">${w.wellName}</td>
+            <td style="padding:0.5rem; text-align:left; color:var(--text-muted); font-weight:600; vertical-align:middle;">DN${w.wellDn}</td>
+            <td style="padding:0.5rem; text-align:left; color:var(--text-muted); vertical-align:middle;">${w.rzednaDna}</td>
+            <td style="padding:0.5rem; text-align:left; color:var(--success, #34d399); font-weight:700; vertical-align:middle;">${fmtInt(w.price)}</td>
+            <td style="padding:0.5rem; vertical-align:middle;">${transitionsHtml}</td>
+        </tr>`;
+    });
+
+    if (visibleCount === 0) {
+        html = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Brak studni spełniających kryteria wyszukiwania.</td></tr>`;
+    }
+
+    tbody.innerHTML = html;
+    document.getElementById('tm-visible-count').textContent = visibleCount;
+    tmUpdateSelectedCount();
+    
+    const selectAllCb = document.getElementById('tm-select-all');
+    if (selectAllCb) {
+        if (visibleCount === 0) {
+            selectAllCb.checked = false;
+            selectAllCb.disabled = true;
+        } else {
+            selectAllCb.disabled = false;
+            const visibleRows = document.querySelectorAll('.tm-row-cb');
+            let allChecked = true;
+            visibleRows.forEach(cb => { if(!cb.checked) allChecked = false; });
+            selectAllCb.checked = allChecked;
+        }
+    }
+};
+
+window.tmToggleRow = function(uid, isChecked) {
+    if (isChecked) tmSelectedWells.add(uid);
+    else tmSelectedWells.delete(uid);
+    
+    const row = document.querySelector(`.tm-row[data-uid="${uid}"]`);
+    if (row) row.style.background = isChecked ? 'rgba(99,102,241,0.15)' : 'transparent';
+    
+    tmUpdateSelectedCount();
+    
+    const visibleRows = document.querySelectorAll('.tm-row-cb');
+    let allChecked = true;
+    visibleRows.forEach(cb => { if(!cb.checked) allChecked = false; });
+    const selectAllCb = document.getElementById('tm-select-all');
+    if(selectAllCb) selectAllCb.checked = allChecked;
+};
+
+window.tmToggleSelectAll = function() {
+    const isChecked = document.getElementById('tm-select-all').checked;
+    const visibleRows = document.querySelectorAll('.tm-row-cb');
+    
+    visibleRows.forEach(cb => {
+        cb.checked = isChecked;
+        const uid = cb.value;
+        if (isChecked) tmSelectedWells.add(uid);
+        else tmSelectedWells.delete(uid);
+        
+        const row = document.querySelector(`.tm-row[data-uid="${uid}"]`);
+        if (row) row.style.background = isChecked ? 'rgba(99,102,241,0.15)' : 'transparent';
+    });
+    
+    tmUpdateSelectedCount();
+};
+
+window.tmUpdateSelectedCount = function() {
+    const countEl = document.getElementById('tm-selected-count');
+    if (countEl) countEl.textContent = tmSelectedWells.size;
+};
+
+window.tmApplyChanges = async function() {
+    if (tmSelectedWells.size === 0) {
+        showToast('Zaznacz co najmniej jedną studnię', 'warning');
+        return;
+    }
+    
+    const targetCat = document.getElementById('tm-target-cat').value;
+    const filterMat = tmCurrentFilters.sourceMaterial;
+    const filterDn = tmCurrentFilters.dn;
+
+    if (!targetCat) {
+        showToast('Wybierz docelową kategorię przejść', 'error');
+        return;
+    }
+
+    let replacedCount = 0;
+    let skippedCount = 0;
+    let modifiedWellsIndices = new Set();
+
+    tmSelectedWells.forEach(uid => {
+        const wData = tmWellData.find(w => w.uid === uid);
+        if (!wData) return;
+
+        const well = wells[wData.wellIndex];
+        
+        wData.transitions.forEach((trData, trIdx) => {
+            if (filterMat && trData.material !== filterMat) return;
+            if (filterDn && String(trData.dnRaw) !== filterDn) return;
+            if (trData.material === targetCat) return;
+
+            const replacement = studnieProducts.find(p => 
+                p.componentType === 'przejscie' && 
+                p.category === targetCat && 
+                p.active !== 0 &&
+                p.dn === trData.dnRaw
+            );
+
+            if (replacement) {
+                well.przejscia[trIdx].productId = replacement.id;
+                replacedCount++;
+                modifiedWellsIndices.add(wData.wellIndex);
+            } else {
+                skippedCount++;
+            }
+        });
+    });
+
+    if (replacedCount === 0) {
+        if (skippedCount > 0) {
+            showToast(`Nie zamieniono przejść. Brak średnic docelowych dla ${skippedCount} elementów.`, 'error');
+        } else {
+            showToast('Nie znaleziono pasujących przejść do zamiany.', 'info');
+        }
+        return;
+    }
+
+    showToast(`Trwa przeliczanie zmodyfikowanych studni (${modifiedWellsIndices.size})...`, 'info');
+
+    for (const wellIdx of modifiedWellsIndices) {
+        const originalIndex = currentWellIndex;
+        currentWellIndex = wellIdx;
+        await autoSelectComponents(true);
+        currentWellIndex = originalIndex;
+    }
+
+    refreshAll();
+    
+    let msg = `Zakończono. Zamieniono ${replacedCount} przejść w ${modifiedWellsIndices.size} studniach.`;
+    if (skippedCount > 0) {
+        msg += ` Pominięto ${skippedCount} (brak odpowiedniej średnicy w docelowej kategorii).`;
+    }
+    showToast(msg, 'success');
+    
+    tmSelectedWells.clear();
+    tmRefreshWellData();
+    
+    tmCurrentFilters = { sourceMaterial: '', dn: '' };
+    
+    let allMaterials = new Set();
+    let allDNs = new Set();
+    tmWellData.forEach(w => {
+        w.transitions.forEach(tr => {
+            if (tr.material !== 'Nieznany') allMaterials.add(tr.material);
+            allDNs.add(tr.dnRaw);
+        });
+    });
+    
+    const filterMaterialOpts = [...allMaterials].sort().map(m => `<option value="${m}">${m}</option>`).join('');
+    const filterDNOpts = [...allDNs].sort((a,b) => parseFloat(a) - parseFloat(b)).map(dn => `<option value="${dn}">${dn}</option>`).join('');
+    
+    const matSelect = document.getElementById('tm-filter-material');
+    if (matSelect) matSelect.innerHTML = `<option value="">-- Dowolna kategoria --</option>` + filterMaterialOpts;
+    
+    const dnSelect = document.getElementById('tm-filter-dn');
+    if (dnSelect) dnSelect.innerHTML = `<option value="">-- Dowolne DN --</option>` + filterDNOpts;
+    
+    tmRenderTable();
+};

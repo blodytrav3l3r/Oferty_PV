@@ -7,9 +7,12 @@ const OFFER_LOCKED_MSG =
 const WELL_LOCKED_MSG = '<i data-lucide="lock"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 
 function renderOfferLockBanner() {
-    // Usuń baner trybu zamówienia, jeśli jest obecny (nie jesteśmy w trybie zamówienia)
-    const orderBanner = document.getElementById('order-mode-banner');
-    if (orderBanner) orderBanner.style.display = 'none';
+    // Jeśli jesteśmy w trybie zamówienia, baner blokady z oferty nie powinien się wyświetlać
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        let lockBanner = document.getElementById('offer-lock-banner');
+        if (lockBanner) lockBanner.style.display = 'none';
+        return;
+    }
 
     let lockBanner = document.getElementById('offer-lock-banner');
     if (!lockBanner) {
@@ -48,7 +51,7 @@ function renderOfferLockBanner() {
 
         lockBanner.style.cssText = `
             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-            padding:0.7rem 1rem; margin-bottom:0.6rem; border-radius:10px;
+            padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
             background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(245,158,11,0.08));
             border: 2px solid rgba(239,68,68,0.3);
         `;
@@ -69,7 +72,7 @@ function renderOfferLockBanner() {
             </div>
             <div style="display:flex; gap:0.4rem; align-items:center;">
                 ${wellOrder
-                    ? `<button class="btn btn-sm" onclick="window.location.href='/studnie?order=${wellOrder.id}'" style="background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.7rem; font-weight:700; padding:0.3rem 0.7rem;">
+                    ? `<button class="btn btn-sm" onclick="window.location.href='/studnie?order=${wellOrder.id}'" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="package"></i> Edytuj zamówienie
                     </button>`
                     : ''
@@ -80,7 +83,7 @@ function renderOfferLockBanner() {
         // Oferta ma zamówienia, ale bieżąca studnia jest wolna
         lockBanner.style.cssText = `
             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-            padding:0.5rem 1rem; margin-bottom:0.6rem; border-radius:10px;
+            padding:0.5rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
             background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05));
             border: 1px solid rgba(16,185,129,0.25);
         `;
@@ -133,6 +136,17 @@ function setupParamTiles() {
                             const targetBtn = spocznikGroup.querySelector(`.param-tile[data-val="${val}"]`);
                             if (targetBtn && !targetBtn.classList.contains('active')) {
                                 targetBtn.click();
+                            }
+                        }
+                    }
+
+                    // PRECO / PrecoTop → wymuszenie spocznikH = '1/1'
+                    if (val === 'preco' || val === 'precotop') {
+                        const spocznikHGroup = document.querySelector('.param-group[data-param="spocznikH"]');
+                        if (spocznikHGroup) {
+                            const hBtn = spocznikHGroup.querySelector('.param-tile[data-val="1/1"]');
+                            if (hBtn && !hBtn.classList.contains('active')) {
+                                hBtn.click();
                             }
                         }
                     }
@@ -462,6 +476,10 @@ function renderWellParams() {
         if (def.key === 'wkladkaOsadnikPreco' && !isOsadnik) {
             isGreyedOut = true;
         }
+        // Gdy kineta = preco/precotop → spocznikH zablokowany na 1/1
+        if (def.key === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop')) {
+            isGreyedOut = true;
+        }
         // Gdy wkładka osadnikowa aktywna — kineta i spocznik zablokowane na 'brak'
         if (well.wkladkaOsadnikPreco === 'tak') {
             if (def.key === 'kineta' || def.key === 'spocznik') {
@@ -493,22 +511,22 @@ function renderWellParams() {
         if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. wew.</span>`;
-            html += `<input type="text" value="${well.powlokaNameW || ''}" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="text" value="${well.powlokaNameW || ''}" onfocus="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. wew.</span>`;
-            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onfocus="this.select()" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
         }
 
         if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. zew.</span>`;
-            html += `<input type="text" value="${well.powlokaNameZ || ''}" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="text" value="${well.powlokaNameZ || ''}" onfocus="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. zew.</span>`;
-            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onfocus="this.select()" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
         }
 
@@ -516,7 +534,7 @@ function renderWellParams() {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Wys. wkładki osadnik</span>`;
             html += `<div style="display:flex; align-items:center; gap:0.5rem;">`;
-            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onfocus="this.select()" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `<span style="font-size:0.8rem; color:var(--text-muted);">mm</span>`;
             html += `</div></div>`;
         }
@@ -600,7 +618,7 @@ function renderDiscountPanel() {
         });
         const totalDN = dennicaBaseSum + nadbudowaBaseSum;
 
-        const disc = wellDiscounts[discountDn] || { dennica: 0, nadbudowa: 0, preco: 0 };
+        const disc = wellDiscounts[discountDn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         const totalAfter = dennicaAfterSum + nadbudowaAfterSum;
 
         grandDennica += dennicaBaseSum;
@@ -651,6 +669,87 @@ function renderDiscountPanel() {
           </div>
         </div>`;
     });
+
+    // Sekcja wkładki PEHD (globalna dla wszystkich studni)
+    const anyPehd = wells.some(w => (w.wkladkaDennica && w.wkladkaDennica !== 'brak') || (w.wkladkaNadbudowa && w.wkladkaNadbudowa !== 'brak') || (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak'));
+    if (anyPehd) {
+        const pehdDiscountValue = (wells[0] && wells[0].pehdDiscount) ? wells[0].pehdDiscount : 0;
+        let currentPehdPrice = 0;
+        for (const p of studnieProducts) {
+            if (p.area > 0 && p.doplataPEHD > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta') {
+                currentPehdPrice = Math.round(p.doplataPEHD / p.area);
+                break;
+            }
+        }
+        const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
+
+        html += `<div style="background:rgba(14,165,233,0.06); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(14,165,233,0.15);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.4rem;">
+            <div style="display:flex; flex-direction:column; gap:0.1rem;">
+                <span style="font-size:0.82rem; font-weight:700; color:#38bdf8; display:flex; align-items:center; gap:0.3rem;"><i data-lucide="shield" style="width:14px; height:14px;"></i> Wkładka PEHD</span>
+                <span style="font-size:0.65rem; color:var(--text-muted);">(Bazowo: ${currentPehdPrice} PLN/m²)</span>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:0.85rem; color:#38bdf8; font-weight:800; white-space:nowrap;" id="sidebar-pehd-price-after">${currentPehdPriceAfter.toFixed(2)} PLN/m²</span>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr auto; gap:0.25rem 0.45rem; font-size:0.78rem; align-items:center;">
+            <span class="ui-text-mute" style="text-align:left;">Globalny Rabat</span>
+            <div style="display:flex; align-items:center; gap:0.2rem;">
+              <input type="number" min="0" step="1" value="${pehdDiscountValue}"
+                id="disc-global-pehd"
+                style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(14,165,233,0.1); border:1px solid rgba(14,165,233,0.3); border-radius:5px; color:#38bdf8;"
+                onfocus="this.select()"
+                onchange="updateGlobalPehdDiscount(this.value)">
+              <span class="ui-text-mute" style="color:#38bdf8;">%</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Sekcja kosztów malowania (globalna dla wszystkich studni)
+    const anyMalowanieW = wells.some(w => w.malowanieW && w.malowanieW !== 'brak');
+    const anyMalowanieZ = wells.some(w => w.malowanieZ && w.malowanieZ !== 'brak');
+
+    if (anyMalowanieW || anyMalowanieZ) {
+        const refWell = wells[0] || {};
+        const malWCena = refWell.malowanieWewCena || '';
+        const malZCena = refWell.malowanieZewCena || '';
+
+        html += `<div style="background:rgba(168,85,247,0.06); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(168,85,247,0.15);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+            <span style="font-size:0.82rem; font-weight:700; color:#c084fc;"><i data-lucide="paintbrush"></i> Koszt malowania</span>
+            <span style="font-size:0.6rem; color:var(--text-muted);">PLN / m²</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr auto; gap:0.25rem 0.45rem; font-size:0.78rem; align-items:center;">`;
+
+        if (anyMalowanieW) {
+            html += `<span class="ui-text-mute" style="text-align:left;">Wewnętrzne</span>
+            <div style="display:flex; align-items:center; gap:0.2rem;">
+              <input type="number" min="0" step="0.01" value="${malWCena}"
+                id="disc-mal-wew-cena"
+                style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:5px; color:#c084fc;"
+                onfocus="this.select()"
+                onchange="updateGlobalPaintingCost('malowanieWewCena', this.value)">
+              <span class="ui-text-mute" style="color:#c084fc;">zł</span>
+            </div>`;
+        }
+
+        if (anyMalowanieZ) {
+            html += `<span class="ui-text-mute" style="text-align:left;">Zewnętrzne</span>
+            <div style="display:flex; align-items:center; gap:0.2rem;">
+              <input type="number" min="0" step="0.01" value="${malZCena}"
+                id="disc-mal-zew-cena"
+                style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:5px; color:#c084fc;"
+                onfocus="this.select()"
+                onchange="updateGlobalPaintingCost('malowanieZewCena', this.value)">
+              <span class="ui-text-mute" style="color:#c084fc;">zł</span>
+            </div>`;
+        }
+
+        html += `</div>
+        </div>`;
+    }
 
     // Suma całkowita
     const hasDiscount = grandDiscounted < grandTotal;

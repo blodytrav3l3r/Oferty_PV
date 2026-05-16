@@ -145,10 +145,32 @@ function updateWellNumer() {
     checkWellNumerDuplicate(newNumer, numerInput);
 
     well.numer = newNumer;
-    well.name = well.numer || 'Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')';
+    if (typeof autoUpdateWellName === 'function') {
+        autoUpdateWellName(well, currentWellIndex);
+    } else {
+        well.name = well.numer || 'Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')';
+    }
     renderWellsList();
     updateSummary();
 }
+
+window.autoUpdateWellName = function(well, index) {
+    if (!well) return;
+    
+    let baseName = well.numer || ('Studnia ' + (well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn) + ' (#' + (index + 1) + ')');
+    
+    // Remove existing suffix if present so we don't append multiple times
+    baseName = baseName.replace(/ (PRE|UTH)$/, '');
+    
+    let suffix = '';
+    if (well.kineta === 'preco' || well.kineta === 'precotop') {
+        suffix = ' PRE';
+    } else if (well.kineta === 'unolith') {
+        suffix = ' UTH';
+    }
+    
+    well.name = baseName + suffix;
+};
 
 function checkWellNumerDuplicate(newNumer, inputEl) {
     if (!inputEl) return false;
@@ -764,10 +786,13 @@ function renderTiles() {
                 ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
                 : '';
 
-            // Oblicz cenę z dopłatą, jeśli wybrano drabinę nierdzewną
+            // Oblicz cenę z dopłatą
             let displayPrice = p.price || 0;
-            if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
+            if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag_ot' || p.componentType === 'dennica') && p.doplataDrabNierdzewna) {
                 displayPrice += parseFloat(p.doplataDrabNierdzewna);
+            }
+            if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica' && p.doplataZelbet) {
+                displayPrice += parseFloat(p.doplataZelbet);
             }
 
             html += `<div class="tile ${activeClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
@@ -893,6 +918,11 @@ function renderTiles() {
                     items = filterSealsByWellType(items, well);
                 }
 
+                // Dodano sortowanie dla sekcji redukcji, analogicznie do głównej sekcji
+                if (g.types.includes('dennica') || g.types.includes('krag') || g.types.includes('krag_ot')) {
+                    items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
+                }
+
                 if (items.length > 0) {
                     html += `<div class="tiles-section">
                         <div class="tiles-section-title">${g.title}</div>
@@ -993,7 +1023,10 @@ function renderWellConfig() {
 
     let html = '';
     well.config.forEach((item, index) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        // Rozwiąż poprawny wariant produktu wg parametrów studni (auto-korekta productId)
+        const p = typeof resolveEffectiveProduct === 'function'
+            ? resolveEffectiveProduct(well, item.productId, item)
+            : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         // W zamówieniu użyj zamrożonej ceny jeśli dostępna; w ofercie przelicz na nowo
         const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
@@ -1093,6 +1126,17 @@ function renderWellConfig() {
                             const pehdText = isPehdDisabled ? `<del>PEHD</del>` : `PEHD`;
                             
                             badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'pehd')" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
+                        }
+
+                        // Żelbet i Drabinka Nierdzewna
+                        if (well.nadbudowa === 'zelbetowa' && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
+                            badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                        }
+                        if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica') {
+                            badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                        }
+                        if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag' || p.componentType === 'krag_ot' || p.componentType === 'konus' || p.componentType === 'dennica')) {
+                            badgesHtml += ' <span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
                         }
 
                         return badgesHtml;

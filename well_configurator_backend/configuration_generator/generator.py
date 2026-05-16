@@ -2,7 +2,7 @@ from typing import List, Dict, Optional, Tuple
 from pydantic import BaseModel
 from database.tables import ProductModel
 from api.schemas import WellConfigInput, WellConfigResult, ItemDetail
-from rule_engine.rules import RuleEngine, get_default_clearance
+from rule_engine.rules import RuleEngine
 from optimizer.cp_optimizer import optimize_rings_for_distance
 from validator.validator import validate_transitions, substitute_ot_rings
 import logging
@@ -95,8 +95,24 @@ class ConfigurationGenerator:
             },
             {
                 "name": "Ratunkowy",
-                "tolerance_below": 500,
+                "tolerance_below": 260,
                 "tolerance_above": 20,
+                "clearance_mode": "minimal",
+                "allow_ot_rings": True,
+                "allow_fallback_dennica": True,
+            },
+            {
+                "name": "Poszerzony (+500mm)",
+                "tolerance_below": 260,
+                "tolerance_above": 500,
+                "clearance_mode": "minimal",
+                "allow_ot_rings": True,
+                "allow_fallback_dennica": True,
+            },
+            {
+                "name": "Ekstremalny (+1000mm)",
+                "tolerance_below": 260,
+                "tolerance_above": 1000,
                 "clearance_mode": "minimal",
                 "allow_ot_rings": True,
                 "allow_fallback_dennica": True,
@@ -179,11 +195,10 @@ class ConfigurationGenerator:
             dn = float(pprod.dn or 160.0) if pprod else 160.0
             
             # Pobierz zapasy dla rury
-            defaults = get_default_clearance(dn)
             if clearance_mode == "standard":
-                z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else defaults[1]
+                z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else 300.0
             else:
-                z_gora = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else defaults[3]
+                z_gora = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else 300.0
             
             # Górna krawędź "strefy bezpieczeństwa" rury (rzędna włączenia + DN + zapas)
             top_safety_edge = float(t.height_from_bottom_mm) + dn + z_gora
@@ -214,8 +229,11 @@ class ConfigurationGenerator:
         - Automatyczna zamiana Właz 150 → Właz 110 gdy brak miejsca
         """
         # ─── Krok 1: Oblicz dostępną przestrzeń nad dennicą ───
+        # Dedukcja wysokości dla psiej budy (zakładka dennica-dennica = 100mm)
+        overlap = 100 if getattr(self.config, 'psia_buda', False) else 0
+        effective_dennica_h = dennica.height - overlap
         reduction_height = plate.height if (is_reduced and plate) else 0
-        available_above_dennica = self.config.target_height_mm - dennica.height - reduction_height
+        available_above_dennica = self.config.target_height_mm - effective_dennica_h - reduction_height
 
         if available_above_dennica < 0:
             return WellConfigResult(
@@ -255,7 +273,7 @@ class ConfigurationGenerator:
         hatch_height = hatch.height if hatch else 0
 
         # ─── Krok 3: Oblicz cel dla kręgów ───
-        fixed_height = dennica.height + reduction_height + top.height + hatch_height
+        fixed_height = effective_dennica_h + reduction_height + top.height + hatch_height
         target_kregi_h = self.config.target_height_mm - fixed_height
 
         # UWAGA: Nie negocjujemy na mniejszy właz (110mm) automatycznie.
@@ -450,7 +468,7 @@ class ConfigurationGenerator:
 
         # ─── Walidacja przejść ───
         validation = validate_transitions(
-            segments, self.config.transitions, self.config.available_products
+            segments, self.config.transitions, self.config.available_products, well_dn=self.config.dn
         )
 
         # ─── Budowa listy elementów ───
@@ -483,9 +501,14 @@ class ConfigurationGenerator:
             self.config.available_products,
         )
         
-        # UWAGA: NIE stosujemy automatycznej zamiany Konus 625 + Krąg 250 → Konus+
-        # Konus standardowy (625mm) ma PRIORYTET — Konus+ jest dobierany
-        # wyłącznie gdy system nie może znaleźć dobrej konfiguracji z Konusem 625.
+        # ─── ZASADA: Konus + Krąg 250 -> Konus+ (spójne z _build_reduced_well) ───
+        if mock_out_kregi and mock_out_kregi[-1].height_mm == 250 and not mock_out_kregi[-1].is_ot:
+            if top.component_type == "konus" and top.height <= 650:
+                konus_plus = self.engine.get_konus_plus(self.config.dn)
+                if konus_plus:
+                    removed_krag = mock_out_kregi.pop()
+                    top = konus_plus
+                    logger.info(f"Konus+ {top.name} zastąpił Konus 625 + Krąg 250")
 
         out_items.extend(mock_out_kregi)
 
@@ -517,8 +540,14 @@ class ConfigurationGenerator:
         if validation.has_minimal_clearance:
             all_errors.append("Zastosowano luzy minimalne.")
 
+        diff = cy - self.config.target_height_mm
+        is_valid = validation.is_valid
+        if diff < -90 or diff > 20:
+            is_valid = False
+            all_errors.append(f"Nie osiągnięto wymaganej wysokości (błąd {diff}mm, dopuszczalne od -90mm do +20mm)")
+
         return WellConfigResult(
-            is_valid=validation.is_valid,
+            is_valid=is_valid,
             total_height_mm=cy,
             items=out_items,
             errors=all_errors,
@@ -573,17 +602,21 @@ class ConfigurationGenerator:
         min_kregi_1000_h = min((int(k.height) for k in kregi_1000), default=250)
         estimated_above_reduction = min_kregi_1000_h
 
-        # Preferowany podział: zostawiamy min_kregi_1000_h na górę, reszta na dół
-        target_below_reduction = total_target_kregi_h - estimated_above_reduction
+        # OPTYMALIZACJA: Minimalizujemy dół (droższe kręgi o większej średnicy).
+        # Płyta redukcyjna powinna być tak nisko, jak pozwalają na to zapasy nad przejśćiami i parametr redukcjaMinH.
+        target_below_reduction = rings_below_min_h
         
         # KOREKTA: jeśli preferowany podział sprawia, że komora jest za niska -> powiększ dół
-        if target_below_reduction < rings_below_min_h:
+        # UWAGA: Ustawiamy tolerance_below=0, aby wymusić TWARDY limit minimalnej wysokości komory (user_min_h)
+        tol_below_main = stage["tolerance_below"]
+        if target_below_reduction <= rings_below_min_h:
             target_below_reduction = rings_below_min_h
+            tol_below_main = 0
 
         success_below, rings_below, warnings_below = optimize_rings_for_distance(
             target_distance=target_below_reduction,
             available_rings=kregi_main,
-            tolerance_below=stage["tolerance_below"],
+            tolerance_below=tol_below_main,
             tolerance_above=stage["tolerance_above"],
             transitions=transitions_above_dennica,
             available_products=self.config.available_products,
@@ -731,7 +764,7 @@ class ConfigurationGenerator:
 
         # ─── Walidacja przejść ───
         validation = validate_transitions(
-            segments, self.config.transitions, self.config.available_products
+            segments, self.config.transitions, self.config.available_products, well_dn=self.config.dn
         )
 
         # ─── Budowa listy elementów ───
@@ -835,8 +868,14 @@ class ConfigurationGenerator:
         if validation.has_minimal_clearance:
             all_errors.append("Zastosowano luzy minimalne.")
 
+        diff = cy - self.config.target_height_mm
+        is_valid = validation.is_valid
+        if diff < -90 or diff > 20:
+            is_valid = False
+            all_errors.append(f"Nie osiągnięto wymaganej wysokości (błąd {diff}mm, dopuszczalne od -90mm do +20mm)")
+
         return WellConfigResult(
-            is_valid=validation.is_valid,
+            is_valid=is_valid,
             total_height_mm=cy,
             items=out_items,
             errors=all_errors,
@@ -903,7 +942,7 @@ class ConfigurationGenerator:
 
         # ─── Walidacja przejść ───
         validation = validate_transitions(
-            segments, self.config.transitions, self.config.available_products
+            segments, self.config.transitions, self.config.available_products, well_dn=self.config.dn
         )
 
         # ─── Budowa listy elementów ───
@@ -944,13 +983,19 @@ class ConfigurationGenerator:
         if validation.has_minimal_clearance:
             all_errors.append("Zastosowano luzy minimalne.")
 
+        diff = cy - self.config.target_height_mm
+        is_valid = validation.is_valid
+        if diff < -90 or diff > 20:
+            is_valid = False
+            all_errors.append(f"Nie osiągnięto wymaganej wysokości (błąd {diff}mm, dopuszczalne od -90mm do +20mm)")
+
         logger.info(
             f"Studnia płytka zbudowana: {cy}mm "
             f"(dennica={dennica.height} + {top.name}={top.height} + AVR={sum(a.height_mm for a in avr_to_add)} + właz={hatch_h})"
         )
 
         return WellConfigResult(
-            is_valid=validation.is_valid,
+            is_valid=is_valid,
             total_height_mm=cy,
             items=out_items,
             errors=all_errors,
@@ -981,12 +1026,10 @@ class ConfigurationGenerator:
             if pprod and pprod.dn:
                 dn_val = float(pprod.dn)
 
-            # Użyj zapasów z cennika, a jeśli brak (0) → domyślne wg DN
-            defaults = get_default_clearance(dn_val)
-            z_dol = float(pprod.zapasDol) if (pprod and pprod.zapasDol) else defaults[0]
-            z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else defaults[1]
-            z_dol_min = float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else defaults[2]
-            z_gora_min = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else defaults[3]
+            z_gora = float(pprod.zapasGora or 300) if (pprod and pprod.zapasGora) else 300.0
+            z_dol = float(pprod.zapasDol or 300) if (pprod and pprod.zapasDol) else 300.0
+            z_gora_min = float(pprod.zapasGoraMin or 300) if (pprod and pprod.zapasGoraMin) else 300.0
+            z_dol_min = float(pprod.zapasDolMin or 300) if (pprod and pprod.zapasDolMin) else 300.0
 
             # Rura przy samym dnie lub nieznacznie podniesiona → ignoruj zapas dolny
             # Dla studni osadnikowych wyloty bywają podniesione o 5-50mm,
@@ -1040,7 +1083,7 @@ class ConfigurationGenerator:
                 return
             for i in range(start_idx, len(avr_list)):
                 avr = avr_list[i]
-                if current_sum + avr.height <= deficit + 20:
+                if current_sum + avr.height <= deficit + 20 and current_sum + avr.height <= 260:
                     combo.append(avr)
                     backtrack(combo, current_sum + avr.height, i)
                     combo.pop()

@@ -13,6 +13,41 @@ logger = logging.getLogger(__name__)
 JS_FILE_PATH = r"g:\GitHub\Oferty_PV\public\js\pricelist_studnie.js"
 POLL_INTERVAL = 3.0
 
+# Regex: dopasowuje niecudzysłowione klucze obiektów JS (np. `id:`, `dn:`)
+_RE_UNQUOTED_KEY = re.compile(r'(?<=[{,\n\r])\s*([a-zA-Z_][a-zA-Z_0-9]*)\s*:')
+_RE_TRAILING_COMMA = re.compile(r',\s*([}\]])')
+
+
+def _normalize_js_to_json(js_text: str) -> str:
+    """Konwertuje tekst JS (niecudzysłowione klucze, apostrofy) na poprawny JSON."""
+    result = _RE_UNQUOTED_KEY.sub(r' "\1":', js_text)
+    result = result.replace("'", '"')
+    result = _RE_TRAILING_COMMA.sub(r'\1', result)
+    return result
+
+
+def _fallback_parse_items(array_str: str) -> list:
+    """Zapasowy parser rozdzielający obiekty JS po nawiasach."""
+    items = []
+    raw_items = re.split(r'\},?\s*\{', array_str[1:-1])
+    for it in raw_items:
+        it_clean = it.strip()
+        if not it_clean.startswith('{'):
+            it_clean = '{' + it_clean
+        if not it_clean.endswith('}'):
+            it_clean = it_clean + '}'
+
+        it_clean = _RE_UNQUOTED_KEY.sub(r' "\1":', it_clean)
+        it_clean = it_clean.replace("'", '"')
+        it_clean = _RE_TRAILING_COMMA.sub(r'\1', it_clean)
+        try:
+            parsed = json.loads(it_clean)
+            items.append(parsed)
+        except json.JSONDecodeError:
+            pass
+    return items
+
+
 def parse_js_pricelist() -> List[Dict[str, Any]]:
     if not os.path.exists(JS_FILE_PATH):
         logger.error(f"JS file not found: {JS_FILE_PATH}")
@@ -61,29 +96,14 @@ def parse_js_pricelist() -> List[Dict[str, Any]]:
                         
         if end != -1:
             array_str = text[start:end]
+            # Plik JS używa niecudzysłowionych kluczy — pre-procesuj do poprawnego JSON
+            json_str = _normalize_js_to_json(array_str)
             try:
-                data = json.loads(array_str)
+                data = json.loads(json_str)
                 return data
             except json.JSONDecodeError as decode_err:
-                logger.error(f"JSON Decode Error in JS file: {decode_err}")
-                items = []
-                raw_items = re.split(r'\},?\s*\{', array_str[1:-1])
-                for it in raw_items:
-                    it_clean = it.strip()
-                    if not it_clean.startswith('{'):
-                        it_clean = '{' + it_clean
-                    if not it_clean.endswith('}'):
-                        it_clean = it_clean + '}'
-                    
-                    it_clean = re.sub(r'([{,]\s*)([a-zA-Z_0-9]+)(\s*:)', r'\1"\2"\3', it_clean)
-                    it_clean = it_clean.replace("'", '"')
-                    it_clean = re.sub(r',\s*}', '}', it_clean)
-                    try:
-                        parsed = json.loads(it_clean)
-                        items.append(parsed)
-                    except:
-                        pass
-                return items
+                logger.error(f"JSON Decode Error in JS file after normalization: {decode_err}")
+                return _fallback_parse_items(array_str)
         else:
             logger.error("Could not find the end of the JSON array.")
             return []

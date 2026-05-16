@@ -347,7 +347,12 @@
                             <div class="wizard-step-line" id="wizard-line-2"></div>
                             <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
                                 <div class="wizard-dot-number">3</div>
-                                <div class="wizard-dot-label">Konfiguracja</div>
+                                <div class="wizard-dot-label">Oferta</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-3"></div>
+                            <div class="wizard-step-dot" data-step="4" onclick="wizardNavStep(4)">
+                                <div class="wizard-dot-number">4</div>
+                                <div class="wizard-dot-label">Zamówienie</div>
                             </div>
                         </div>
 
@@ -2315,8 +2320,9 @@
                                 <!-- Main Action Buttons at the very top -->
                                 <div
                                     style="
-                                        display: flex;
-                                        gap: 0.2rem;
+                                        display: grid;
+                                        grid-template-columns: 1fr 1fr;
+                                        gap: 0.3rem;
                                         padding-bottom: 0.4rem;
                                         border-bottom: 1px solid #1a2233;
                                     "
@@ -2351,6 +2357,35 @@
                                         >
                                     </button>
                                     <button
+                                        class="btn btn-secondary btn-sm"
+                                        style="
+                                            height: 46px;
+                                            padding: 0;
+                                            font-size: 0.65rem;
+                                            flex: 1;
+                                            background: rgba(139, 92, 246, 0.15);
+                                            color: #c4b5fd;
+                                            border-color: rgba(139, 92, 246, 0.3);
+                                            display: flex;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            justify-content: center;
+                                            line-height: 1.2;
+                                        "
+                                        onclick="openTransitionManagerModal()"
+                                    >
+                                        <span style="font-size: 1rem"><i data-lucide="droplets"></i></span>
+                                        <span
+                                            style="
+                                                font-size: 0.55rem;
+                                                font-weight: 800;
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.2px;
+                                            "
+                                            >M. Przejść</span
+                                        >
+                                    </button>
+                                    <button
                                         class="btn btn-success btn-sm"
                                         id="btn-save-studnie-sidebar"
                                         style="
@@ -2378,8 +2413,68 @@
                                         >
                                     </button>
                                     <button
+                                        class="btn btn-success btn-sm"
+                                        id="btn-save-zamowienie-sidebar"
+                                        style="
+                                            display: none;
+                                            height: 46px;
+                                            padding: 0;
+                                            font-size: 0.65rem;
+                                            flex: 1;
+                                            background: rgba(16, 185, 129, 0.2);
+                                            border-color: rgba(16, 185, 129, 0.4);
+                                            color: #34d399;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            justify-content: center;
+                                            line-height: 1.2;
+                                        "
+                                        onclick="saveCurrentOrder()"
+                                    >
+                                        <span style="font-size: 1rem"><i data-lucide="save"></i></span>
+                                        <span
+                                            style="
+                                                font-size: 0.55rem;
+                                                font-weight: 800;
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.2px;
+                                            "
+                                            >Zapisz</span
+                                        >
+                                    </button>
+                                    <button
                                         class="btn btn-sm"
                                         style="
+                                            height: 46px;
+                                            padding: 0;
+                                            font-size: 0.65rem;
+                                            flex: 1;
+                                            background: rgba(220, 38, 38, 0.12);
+                                            border: 1px solid rgba(220, 38, 38, 0.3);
+                                            color: #f87171;
+                                            display: flex;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            justify-content: center;
+                                            line-height: 1.2;
+                                        "
+                                        onclick="showOfferExportChoice()"
+                                    >
+                                        <span style="font-size: 1rem"><i data-lucide="printer"></i></span>
+                                        <span
+                                            style="
+                                                font-size: 0.55rem;
+                                                font-weight: 800;
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.2px;
+                                            "
+                                            >Wydruk</span
+                                        >
+                                    </button>
+                                    <button
+                                        class="btn btn-sm"
+                                        style="
+                                            display: none !important;
                                             height: 46px;
                                             padding: 0;
                                             font-size: 0.65rem;
@@ -2387,7 +2482,6 @@
                                             background: #0f3328;
                                             border: 1px solid #0d2a20;
                                             color: #34d399;
-                                            display: flex;
                                             flex-direction: column;
                                             align-items: center;
                                             justify-content: center;
@@ -2407,16 +2501,17 @@
                                         >
                                     </button>
                                     <button
+                                        id="btn-zlecenia-sidebar"
                                         class="btn btn-sm"
                                         style="
+                                            display: none;
                                             height: 46px;
                                             padding: 0;
                                             font-size: 0.65rem;
-                                            flex: 1;
+                                            grid-column: span 2;
                                             background: #2d1a08;
                                             border: 1px solid #5a3010;
                                             color: #f97316;
-                                            display: flex;
                                             flex-direction: column;
                                             align-items: center;
                                             justify-content: center;
@@ -2433,35 +2528,6 @@
                                                 letter-spacing: 0.2px;
                                             "
                                             >Zlecenia</span
-                                        >
-                                    </button>
-                                    <button
-                                        class="btn btn-sm"
-                                        style="
-                                            height: 46px;
-                                            padding: 0;
-                                            font-size: 0.65rem;
-                                            flex: 1;
-                                            background: rgba(220, 38, 38, 0.12);
-                                            border: 1px solid rgba(220, 38, 38, 0.3);
-                                            color: #f87171;
-                                            display: flex;
-                                            flex-direction: column;
-                                            align-items: center;
-                                            justify-content: center;
-                                            line-height: 1.2;
-                                        "
-                                        onclick="printOfferStudnie()"
-                                    >
-                                        <span style="font-size: 1rem"><i data-lucide="file-text"></i></span>
-                                        <span
-                                            style="
-                                                font-size: 0.55rem;
-                                                font-weight: 800;
-                                                text-transform: uppercase;
-                                                letter-spacing: 0.2px;
-                                            "
-                                            >Oferta</span
                                         >
                                     </button>
                                 </div>
@@ -2692,8 +2758,9 @@
                         <div style="display: flex; gap: 0.4rem">
                             <button
                                 class="btn btn-secondary btn-sm"
+                                id="btn-new-offer-studnie"
                                 onclick="clearOfferForm()"
-                                style="padding: 0.2rem 0.5rem; font-size: 0.7rem"
+                                style="height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0; font-size: 0.75rem;"
                             >
                                 <i data-lucide="refresh-cw"></i> Nowa Oferta
                             </button>
@@ -2701,19 +2768,20 @@
                                 class="btn btn-primary btn-sm"
                                 id="btn-save-studnie-offer"
                                 onclick="saveOfferStudnie()"
-                                style="padding: 0.2rem 0.5rem; font-size: 0.7rem"
+                                style="height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0; font-size: 0.75rem;"
                             >
                                 <i data-lucide="save"></i> Zapisz ofertę
                             </button>
                             <button
                                 class="btn btn-sm"
+                                id="btn-create-order-offer"
                                 onclick="createOrderFromOffer()"
                                 style="
-                                    padding: 0.2rem 0.5rem;
-                                    font-size: 0.7rem;
+                                    height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0 1rem; font-size: 0.75rem;
                                     background: #0f3328;
                                     border: 1px solid #0d2a20;
                                     color: #34d399;
+                                    white-space: nowrap;
                                 "
                             >
                                 <i data-lucide="package"></i> Utwórz zamówienie
@@ -2722,6 +2790,7 @@
                                 class="btn btn-sm"
                                 onclick="openZleceniaProdukcyjne()"
                                 style="
+                                    display: none !important;
                                     padding: 0.2rem 0.5rem;
                                     font-size: 0.7rem;
                                     background: #2d1a08;
@@ -2733,16 +2802,28 @@
                             </button>
                             <button
                                 class="btn btn-sm"
-                                onclick="printOfferStudnie()"
+                                onclick="showOfferExportChoice()"
                                 style="
-                                    padding: 0.2rem 0.5rem;
-                                    font-size: 0.7rem;
+                                    height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0; font-size: 0.75rem;
                                     background: rgba(220, 38, 38, 0.12);
                                     border: 1px solid rgba(220, 38, 38, 0.3);
                                     color: #f87171;
                                 "
                             >
-                                <i data-lucide="file-text"></i> Wydruk oferty
+                                <i data-lucide="file-text"></i> Wydruk
+                            </button>
+                            <button
+                                class="btn btn-sm ml-dashboard-btn"
+                                onclick="showMLDashboard()"
+                                style="
+                                    height: 48px; min-width: 48px; display: none; align-items: center; justify-content: center; gap: 0.4rem; padding: 0 0.6rem; font-size: 0.75rem;
+                                    background: rgba(99, 102, 241, 0.12);
+                                    border: 1px solid rgba(99, 102, 241, 0.3);
+                                    color: #a5b4fc;
+                                "
+                                title="Dashboard AI — statystyki systemu uczenia"
+                            >
+                                <i data-lucide="brain"></i>
                             </button>
                         </div>
                     </div>
@@ -2829,66 +2910,24 @@
                             margin: 0 auto;
                             max-width: 1536px;
                             display: grid;
-                            grid-template-columns: repeat(3, 1fr);
-                            gap: 0.5rem;
+                            grid-template-columns: minmax(220px, 1.2fr) 2.5fr minmax(220px, 1.2fr);
+                            gap: 0;
                             align-items: stretch;
-                            justify-items: center;
                             text-align: center;
                         "
                     >
+                        <!-- TRANSPORT -->
                         <div
                             class="summary-card"
                             onclick="openTransportPopup()"
                             style="
-                                padding: 1rem;
+                                padding: 0.6rem 1rem;
                                 height: 100%;
                                 display: flex;
                                 flex-direction: column;
                                 justify-content: center;
                                 align-items: center;
                                 text-align: center;
-                                border-left: 1px solid var(--border-glass);
-                                cursor: pointer;
-                                transition: background 0.2s;
-                            "
-                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                            onmouseout="this.style.background='transparent'"
-                        >
-                            <div
-                                class="label"
-                                style="
-                                    font-size: 0.9rem;
-                                    text-transform: uppercase;
-                                    margin-bottom: 0.5rem;
-                                    width: 100%;
-                                "
-                            >
-                                Koszt transportu
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; width: 100%;">
-                                <div
-                                    class="value"
-                                    id="sum-transport-cost"
-                                    style="color: var(--warn); font-size: 1.25rem; margin: 0; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 0.4rem;"
-                                >
-                                    <i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0 PLN
-                                </div>
-                                <div id="offer-active-transport-info" style="font-size: 0.75rem; color: #94a3b8; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.3; text-align: left;">
-                                    <!-- info o transporcie wg. JS -->
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="summary-card"
-                            onclick="openOfferDiscountsPopup()"
-                            style="
-                                padding: 1rem;
-                                height: 100%;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: center;
-                                border-left: 1px solid var(--border-glass);
                                 border-right: 1px solid var(--border-glass);
                                 cursor: pointer;
                                 transition: background 0.2s;
@@ -2901,35 +2940,60 @@
                                 style="
                                     font-size: 0.9rem;
                                     text-transform: uppercase;
-                                    margin-bottom: 0.5rem;
+                                    margin-bottom: 0.3rem;
                                     width: 100%;
-                                    text-align: center;
                                 "
                             >
-                                Zarządzanie Rabatami
+                                Koszt transportu
                             </div>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; width: 100%;">
-                                <div
-                                    class="value"
-                                    style="color: #6366f1; font-size: 1.25rem; margin: 0; display: flex; align-items: center; gap: 0.4rem; font-weight: 700; white-space: nowrap;"
-                                >
-                                    <i data-lucide="percent" style="width: 20px; height: 20px;"></i> Edytuj
-                                </div>
-                                <div id="offer-active-discounts-info" style="flex: 1; font-size: 0.85rem; color: #94a3b8; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; gap: 0.2rem;">
-                                    <!-- Puste lub zastąpione przez updateOfferSummaryUI -->
-                                </div>
+                            <div
+                                class="value"
+                                id="sum-transport-cost"
+                                style="color: var(--warn); font-size: 1.4rem; margin: 0; font-weight: 700; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 0.4rem;"
+                            >
+                                <i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0 PLN
+                            </div>
+                            <div id="offer-active-transport-info" style="font-size: 0.72rem; color: #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; text-align: center; margin-top: 0.15rem;">
+                                <!-- info o transporcie wg. JS -->
                             </div>
                         </div>
+                        <!-- RABATY -->
+                        <div
+                            class="summary-card"
+                            onclick="openOfferDiscountsPopup()"
+                            style="
+                                padding: 0.6rem 1rem;
+                                height: 100%;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: stretch;
+                                border-right: 1px solid var(--border-glass);
+                                cursor: pointer;
+                                transition: background 0.2s;
+                            "
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='transparent'"
+                        >
+                            <!-- Header: Title -->
+                            <div style="text-align: center; margin-bottom: 0.35rem;">
+                                <span class="label" style="font-size: 0.9rem; text-transform: uppercase; margin: 0;">Zarządzanie Rabatami</span>
+                            </div>
+                            <!-- Body: Badges container -->
+                            <div id="offer-active-discounts-info" style="width: 100%; min-height: 22px;">
+                                <!-- Populated by updateOfferSummaryUI -->
+                            </div>
+                        </div>
+                        <!-- RAZEM NETTO -->
                         <div
                             class="summary-card"
                             style="
-                                padding: 1rem;
+                                padding: 0.6rem 1rem;
                                 height: 100%;
                                 display: flex;
                                 flex-direction: column;
                                 justify-content: center;
                                 align-items: center;
-                                position: relative;
                             "
                         >
                             <div
@@ -2937,7 +3001,7 @@
                                 style="
                                     font-size: 0.9rem;
                                     text-transform: uppercase;
-                                    margin-bottom: 0.2rem;
+                                    margin-bottom: 0.3rem;
                                 "
                             >
                                 RAZEM Netto
@@ -2946,7 +3010,7 @@
                                 class="value success"
                                 id="sum-total-netto"
                                 style="
-                                    font-size: 1.6rem;
+                                    font-size: 1.4rem;
                                     font-weight: 800;
                                     color: var(--success);
                                     margin: 0;
@@ -2958,9 +3022,9 @@
                                 class="summary-sub"
                                 id="sum-brutto-details"
                                 style="
-                                    font-size: 0.8rem;
+                                    font-size: 0.72rem;
                                     color: var(--text-muted);
-                                    margin-top: 0.2rem;
+                                    margin-top: 0.15rem;
                                 "
                             >
                                 Brutto: 0,00 PLN
@@ -3013,6 +3077,7 @@
                             accept=".xlsx,.xls"
                             onchange="importStudnieFromExcel(event)"
                         />
+
                         <button class="btn btn-secondary" onclick="resetStudniePriceList()">
                             <i data-lucide="refresh-cw"></i> Reset
                         </button>
@@ -3432,6 +3497,7 @@
         <script src="js/studnie/ringOptimizer.js?v=3.0"></script>
         <script src="js/studnie/wellDiagram.js?v=3.0"></script>
         <script src="js/studnie/offerManager.js?v=3.0"></script>
+        <script src="js/studnie/mlDashboard.js?v=1.0"></script>
         <script src="js/studnie/orderManager.js?v=3.0"></script>
         <script src="js/studnie/printManager.js?v=3.0"></script>
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>

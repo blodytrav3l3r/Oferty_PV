@@ -127,6 +127,11 @@ function createNewWell(name, dn = 1000) {
         }
     }
 
+    if (typeof autoUpdateWellName === 'function') {
+        // wellCounter - 1 to make it 0-indexed for the index argument
+        autoUpdateWellName(well, wellCounter - 1);
+    }
+
     return well;
 }
 
@@ -235,7 +240,12 @@ function renameWell(index) {
     if (!well) return;
     const name = prompt('Nazwa studni:', well.name);
     if (name && name.trim()) {
-        well.name = name.trim();
+        well.numer = name.trim().replace(/ (PRE|UTH)$/, '');
+        if (typeof autoUpdateWellName === 'function') {
+            autoUpdateWellName(well, index);
+        } else {
+            well.name = name.trim();
+        }
         renderWellsList();
         renderOfferSummary();
     }
@@ -925,6 +935,8 @@ async function updateWellParam(paramKey, value) {
         if (oldParamVal !== 'preco' && oldParamVal !== 'precotop') {
             well.precoFullHeight = 'nie';
         }
+        // Wkładka PRECO → kineta zawsze 1/1
+        well.spocznikH = '1/1';
     }
 
     // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
@@ -933,6 +945,18 @@ async function updateWellParam(paramKey, value) {
         if (syncValues.includes(value)) {
             well.spocznik = value;
         }
+        if (typeof autoUpdateWellName === 'function') {
+            const idx = wells.indexOf(well);
+            autoUpdateWellName(well, idx);
+            // Wywołaj renderWellsList by zaktualizować na liście po lewej stronie
+            renderWellsList();
+        }
+    }
+
+    // PRECO / PrecoTop → nie pozwalaj na zmianę spocznikH (wymuszenie 1/1)
+    if (paramKey === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop')) {
+        well.spocznikH = '1/1';
+        showToast('Przy wkładce PRECO kineta musi być 1/1', 'warning');
     }
 
     // Sprawdzenie konusa dla wkładki na zwieńczenie
@@ -1117,7 +1141,7 @@ async function confirmApp(message, callback, cancelCallback) {
 function updateDiscount(dn, type, value) {
 
     const newValue = parseFloat(value) || 0;
-    const oldDisc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0 };
+    const oldDisc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
     const oldValue = oldDisc[type] || 0;
 
     // Sprawdź, czy potrzebny jest popup (tylko dla bazy stycznej i jeśli wartość faktycznie zmieniła się na > 0)
@@ -1139,7 +1163,7 @@ function updateDiscount(dn, type, value) {
 }
 
 function applyDiscount(dn, type, value) {
-    if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0 };
+    if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
     wellDiscounts[dn][type] = value;
 
     // W trybie zamówienia: zamrożone ceny blokują przeliczanie rabatu,
@@ -1156,6 +1180,120 @@ function applyDiscount(dn, type, value) {
     renderWellConfig();
 }
 
+/**
+ * Aktualizuje cenę malowania globalnie we wszystkich studniach.
+ * Wywoływane z panelu rabatów (sekcja "Koszt malowania").
+ *
+ * @param {string} field - 'malowanieWewCena' lub 'malowanieZewCena'
+ * @param {string} value - nowa cena za m²
+ */
+function updateGlobalPaintingCost(field, value) {
+    const numVal = parseFloat(value) || 0;
+    wells.forEach(w => {
+        w[field] = numVal;
+
+        // Jeśli zmieniamy wewnętrzną, a zewnętrzna nie była ręcznie modyfikowana, zaktualizuj też zewnętrzną
+        if (field === 'malowanieWewCena' && !w.malowanieZewManual) {
+            w.malowanieZewCena = numVal;
+        }
+
+        // Jeśli użytkownik zmienia zewnętrzną ręcznie, oznacz to by przestać automatycznie przepisywać
+        if (field === 'malowanieZewCena') {
+            w.malowanieZewManual = true;
+        }
+    });
+
+    // Brak toasta podczas szybkiego wpisywania w modalu by nie spamować (chyba że zmiana z konfiguratora bocznego)
+    const offerModal = document.getElementById('offer-discounts-modal');
+    const isOfferModalOpen = offerModal && offerModal.style.display === 'flex';
+    
+    if (!isOfferModalOpen) {
+        showToast(`Zaktualizowano cenę malowania (${numVal} PLN/m²) we wszystkich studniach`, 'info');
+    }
+
+    // W trybie zamówienia: zamrożone ceny blokują przeliczanie wyceny,
+    // musimy zaktualizować "zamrożone" ceny o nowe koszty malowania
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        if (typeof freezeWellPrices === 'function') {
+            freezeWellPrices(wells);
+        }
+    }
+
+    renderDiscountPanel();
+    updateSummary();
+    renderOfferSummary();
+    if (typeof renderWellConfig === 'function') renderWellConfig();
+    if (typeof renderWellParams === 'function') renderWellParams();
+
+    // Odśwież też w "Zarządzanie Rabatami Oferty" jeśli okno jest otwarte (bez utraty focusa!)
+    if (isOfferModalOpen) {
+        if (typeof updateOfferDiscountsPopupPrices === 'function') {
+            updateOfferDiscountsPopupPrices();
+        }
+        
+        // Na żywo zaktualizuj też wizualnie pole zewnętrzne jeśli przypisywano automatycznie
+        if (field === 'malowanieWewCena' && document.getElementById('offer-mal-zew-cena')) {
+            const zewInput = document.getElementById('offer-mal-zew-cena');
+            const refW = wells[0];
+            if (refW && !refW.malowanieZewManual) {
+                zewInput.value = numVal;
+            }
+        }
+    }
+}
+
+/**
+ * Aktualizuje globalny rabat na wkładkę PEHD we wszystkich studniach.
+ * Wywoływane z panelu rabatów (sekcja "Wkładka PEHD").
+ *
+ * @param {string} value - nowa wartość procentowa rabatu
+ */
+function updateGlobalPehdDiscount(value) {
+    const numVal = parseFloat(value) || 0;
+    wells.forEach(w => {
+        w.pehdDiscount = numVal;
+    });
+
+    const offerModal = document.getElementById('offer-discounts-modal');
+    const isOfferModalOpen = offerModal && offerModal.style.display === 'flex';
+    
+    if (!isOfferModalOpen) {
+        showToast(`Zaktualizowano rabat PEHD (${numVal}%) we wszystkich studniach`, 'info');
+    }
+
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        if (typeof freezeWellPrices === 'function') {
+            freezeWellPrices(wells);
+        }
+    }
+
+    renderDiscountPanel();
+    updateSummary();
+    renderOfferSummary();
+    if (typeof renderWellConfig === 'function') renderWellConfig();
+    if (typeof renderWellParams === 'function') renderWellParams();
+
+    if (isOfferModalOpen) {
+        if (typeof updateOfferDiscountsPopupPrices === 'function') {
+            updateOfferDiscountsPopupPrices();
+        }
+        
+        // Zaktualizuj pole z ceną po rabacie, jeśli istnieje
+        const priceAfterDiscountSpan = document.getElementById('offer-pehd-price-after-discount');
+        if (priceAfterDiscountSpan) {
+            let currentPehdPrice = 0;
+            for (const p of studnieProducts) {
+                if (p.area > 0 && p.doplataPEHD > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta') {
+                    currentPehdPrice = Math.round(p.doplataPEHD / p.area);
+                    break;
+                }
+            }
+            const priceAfterDiscount = currentPehdPrice * (1 - numVal / 100);
+            priceAfterDiscountSpan.innerText = priceAfterDiscount.toFixed(2);
+        }
+    }
+}
+
 function getDiscountedTotal() {
     let grandTotal = 0;
     wells.forEach((w) => {
@@ -1167,7 +1305,215 @@ function getDiscountedTotal() {
 
 // renderDiscountPanel() przeniesiona do wellUI.js
 
+/* ===== OBLICZANIE POWIERZCHNI MALOWANIA KINETY ===== */
+
+/**
+ * Zbiera geometrię rur z przejść studni.
+ * @param {Object} well - obiekt studni
+ * @returns {Array<{dnMm: number, angle: number}>}
+ */
+function collectPipeGeometry(well) {
+    if (!well.przejscia || well.przejscia.length === 0) return [];
+
+    return well.przejscia.map(pr => {
+        const prod = studnieProducts.find(p => p.id === pr.productId);
+        let dnMm = parseInt(pr.dn) || 0;
+        if (!dnMm && prod) dnMm = parseInt(prod.dn) || 0;
+        if (dnMm <= 0) return null;
+
+        return {
+            dnMm,
+            angle: parseFloat(pr.angle) || 0
+        };
+    }).filter(Boolean);
+}
+
+/**
+ * Konwertuje string spocznikH ('1/2', '2/3', '3/4', '1/1') na ułamek.
+ * @param {string} spocznikH
+ * @returns {number}
+ */
+function parseSpocznikFraction(spocznikH) {
+    const fractions = { '1/2': 0.5, '2/3': 0.667, '3/4': 0.75, '1/1': 1.0 };
+    return fractions[spocznikH] || 0.5;
+}
+
+/**
+ * Identyfikuje kinetę główną (wylot + przelot) i dopływy.
+ * Reużywa algorytm z calcPrecoPricing:
+ * - Główna = max DN, potem najbliżej kąta 0°
+ * - Przelot = max DN z reszty, potem najbliżej 180°
+ * - Pozostałe = dopływy
+ *
+ * @param {Array} pipes - wynik collectPipeGeometry()
+ * @returns {{ mainPair: Array, tributaries: Array }}
+ */
+function identifyMainChannelAndTributaries(pipes) {
+    if (pipes.length === 0) return { mainPair: [], tributaries: [] };
+    if (pipes.length === 1) return { mainPair: [pipes[0]], tributaries: [] };
+
+    const candidates = [...pipes];
+
+    // GŁÓWNA (WYLOT): max DN, potem najbliżej kąta 0°
+    const getZeroScore = (kat) => Math.min(Math.abs(kat), Math.abs(kat - 360));
+    candidates.sort((a, b) => {
+        if (b.dnMm !== a.dnMm) return b.dnMm - a.dnMm;
+        return getZeroScore(a.angle) - getZeroScore(b.angle);
+    });
+    const glowne = candidates.shift();
+
+    // PRZELOT: max DN z reszty, potem najbliżej 180°
+    const get180Score = (kat) => Math.abs(kat - 180);
+    candidates.sort((a, b) => {
+        if (b.dnMm !== a.dnMm) return b.dnMm - a.dnMm;
+        return get180Score(a.angle) - get180Score(b.angle);
+    });
+    const przelot = candidates.shift();
+
+    return {
+        mainPair: [glowne, przelot],
+        tributaries: candidates
+    };
+}
+
+/**
+ * Oblicza powierzchnię malowania standardowej kinety [m²].
+ * Składniki: korytka kanałów + spocznik płaski + ścianka pionowa spocznika.
+ *
+ * @param {Object} well - obiekt studni
+ * @param {number} R - promień studni [m]
+ * @returns {number} powierzchnia [m²]
+ */
+function calcStandardKinetaPaintingArea(well, R) {
+    const pipes = collectPipeGeometry(well);
+
+    // Brak przejść → dno + ścianki dennicy (cylinder)
+    if (pipes.length === 0) {
+        let dennicaH = 0;
+        if (well.config) {
+            well.config.forEach(item => {
+                const pr = studnieProducts.find(x => x.id === item.productId);
+                if (pr && (pr.componentType === 'dennica' || pr.componentType === 'styczna')) {
+                    dennicaH = Math.max(dennicaH, pr.height || 0);
+                }
+            });
+        }
+        const H = dennicaH / 1000; // [m]
+        const floorArea = Math.PI * R * R;
+        const wallArea = 2 * Math.PI * R * H;
+        return floorArea + wallArea;
+    }
+
+    const spocznikFrac = parseSpocznikFraction(well.spocznikH);
+    const { mainPair, tributaries } = identifyMainChannelAndTributaries(pipes);
+
+    // Największa rura wyznacza głębokość koryta
+    const maxPipeDn = Math.max(...pipes.map(p => p.dnMm));
+    const channelDepth = (maxPipeDn / 2) / 1000; // [m]
+    const spocznikHeight = channelDepth * spocznikFrac; // wys. ścianki nad kanałem [m]
+
+    let channelArea = 0;
+    let channelFootprint = 0;
+
+    // Kanał główny — przebiega przez całą studnię (2R)
+    const mainR = (mainPair[0] ? mainPair[0].dnMm : 0) / 2000;
+    if (mainPair.length >= 2 && mainPair[1]) {
+        // Para: kanał ciągły, użyj większego promienia
+        const przelotR = mainPair[1].dnMm / 2000;
+        const bigR = Math.max(mainR, przelotR);
+        const channelLen = 2 * R;
+        channelArea += Math.PI * bigR * channelLen;
+        channelFootprint += 2 * bigR * channelLen;
+    } else if (mainPair[0]) {
+        // Pojedyncza rura — kanał od ściany do osi
+        const channelLen = R;
+        channelArea += Math.PI * mainR * channelLen;
+        channelFootprint += 2 * mainR * channelLen;
+    }
+
+    // Dopływy — od ściany do kanału głównego (≈ R)
+    tributaries.forEach(trib => {
+        const r = trib.dnMm / 2000;
+        const channelLen = R;
+        channelArea += Math.PI * r * channelLen;
+        channelFootprint += 2 * r * channelLen;
+    });
+
+    // Spocznik płaski (dno koła minus rzuty korytek)
+    const totalFloor = Math.PI * R * R;
+    const spocznikFlat = Math.max(0, totalFloor - channelFootprint);
+
+    // Ścianka pionowa spocznika
+    const totalPipeWidth = pipes.reduce((sum, p) => sum + p.dnMm / 1000, 0);
+    const wallPerimeter = Math.max(0, 2 * Math.PI * R - totalPipeWidth);
+    const wallArea = wallPerimeter * spocznikHeight;
+
+    return channelArea + spocznikFlat + wallArea;
+}
+
+/**
+ * Oblicza powierzchnię malowania osadnika [m²].
+ * Składniki: dno płaskie + ścianki cylindryczne - otwory rur.
+ *
+ * @param {Object} well - obiekt studni
+ * @param {number} R - promień studni [m]
+ * @returns {number} powierzchnia [m²]
+ */
+function calcOsadnikPaintingArea(well, R) {
+    const heightMm = parseFloat(well.wkladkaOsadnikH) || 0;
+    if (heightMm <= 0) return Math.PI * R * R;
+
+    const H = heightMm / 1000; // [m]
+    const floorArea = Math.PI * R * R;
+    const wallArea = 2 * Math.PI * R * H;
+
+    // Odjęcie otworów rur (pół-elipsy w ściance)
+    const pipes = collectPipeGeometry(well);
+    let holeArea = 0;
+    pipes.forEach(pipe => {
+        const r = pipe.dnMm / 2000;
+        holeArea += (Math.PI * r * r) / 2;
+    });
+
+    return floorArea + Math.max(0, wallArea - holeArea);
+}
+
+/**
+ * Oblicza rzeczywistą powierzchnię wewnętrzną kinety do malowania [m²].
+ * Uwzględnia: DN studni, przejścia (DN, kąty), wysokość spocznika, typ osadnikowy.
+ *
+ * @param {Object} well - obiekt studni
+ * @returns {number} powierzchnia [m²]
+ */
+function calcKinetaPaintingArea(well) {
+    const dnStudni = parseInt(well.dn);
+    if (!dnStudni || isNaN(dnStudni)) return 0;
+
+    const R = dnStudni / 2000; // promień studni [m]
+
+    if (well.wkladkaOsadnikPreco === 'tak') {
+        return calcOsadnikPaintingArea(well, R);
+    }
+
+    return calcStandardKinetaPaintingArea(well, R);
+}
+
 /* ===== STATYSTYKI STUDNI ===== */
+
+function getWellActiveDiscounts(well) {
+    let activeDiscounts = wellDiscounts;
+    // Jeśli studnia jest w zamówieniu (Zablokowana), użyj rabatów z momentu utworzenia zamówienia (z migawki)
+    if (typeof isWellOrdered === 'function' && isWellOrdered(well)) {
+        const currentOfferId = typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : null;
+        if (currentOfferId && typeof getOrderForWellId === 'function') {
+            const order = getOrderForWellId(well.id, currentOfferId);
+            if (order && order.originalSnapshot && order.originalSnapshot.wellDiscounts) {
+                activeDiscounts = order.originalSnapshot.wellDiscounts;
+            }
+        }
+    }
+    return activeDiscounts;
+}
 
 function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     let itemPrice = p.price || 0;
@@ -1176,7 +1522,9 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     if (applyDiscount && well.dn) {
         // Mapowanie dn na klucz rabatów (styczna -> styczne)
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        const disc = wellDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
+        
+        const activeDiscounts = getWellActiveDiscounts(well);
+        const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
         if (
             p.componentType === 'dennica' ||
             p.componentType === 'kineta' ||
@@ -1219,9 +1567,11 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         itemPrice = kinetaBase * mult;
 
         // Dodaj malowanie do kinety przed wczesnym wyjściem
+        // Dynamiczna powierzchnia — obliczona z geometrii rur, kątów i spocznika
         if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
             if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
-                itemPrice += (p.area || 0) * well.malowanieWewCena;
+                const kinetaArea = calcKinetaPaintingArea(well);
+                itemPrice += kinetaArea * well.malowanieWewCena;
             }
         } else if (well.malowanieW && well.malowanieW !== 'brak' && !well.malowanieWewCena && p.malowanieWewnetrzne) {
             // Legacy malowanie wewnątrz (fixed-price) — kineta
@@ -1256,21 +1606,32 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
 
     if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
         if (!item || !item.disablePehd) {
-            itemPrice += parseFloat(p.doplataPEHD);
+            let pehdSurcharge = parseFloat(p.doplataPEHD);
+            if (applyDiscount && well.pehdDiscount) {
+                pehdSurcharge *= (1 - well.pehdDiscount / 100);
+            }
+            itemPrice += pehdSurcharge;
         }
     }
 
     // Malowanie wewnątrz (z ceny za m2)
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
         if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
-            itemPrice += (p.area || 0) * well.malowanieWewCena;
+            // Pominięte — calcKinetaPaintingArea() na kinecie już obejmuje
+            // pełne wnętrze dennicy (dno + ścianki + korytka).
+            // Dodanie p.area dennicy spowodowałoby podwójne liczenie.
         } else if (well.malowanieW === 'cale') {
-            itemPrice += (p.area || 0) * well.malowanieWewCena;
+            if (p.componentType === 'dennica' || p.componentType === 'styczna') {
+                // Pominięte — j.w., kineta pokrywa wnętrze dennicy
+            } else {
+                itemPrice += (p.area || 0) * well.malowanieWewCena;
+            }
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
-        if (well.malowanieW === 'cale' || (p.componentType === 'dennica' && well.malowanieW !== 'kineta')) {
+        if (well.malowanieW === 'cale' && p.componentType !== 'dennica' && p.componentType !== 'styczna') {
             itemPrice += parseFloat(p.malowanieWewnetrzne);
         }
+        // Pominięte: dennica przy kineta_dennica i cale — kineta już obejmuje wnętrze dennicy
     }
 
     // Malowanie zewnątrz (z ceny za m2 i stara opcja)
@@ -1280,7 +1641,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         itemPrice += parseFloat(p.malowanieZewnetrzne);
     }
 
-    // Żelbet (dopłata dla dennicy)
+    // Żelbet (dopłata dla dennicy) - zachowane, jeśli używane dla specyficznych dennic, choć DU/DUZ ma własne ceny
     if (
         (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
         p.componentType === 'dennica' &&
@@ -1289,17 +1650,8 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         itemPrice += parseFloat(p.doplataZelbet);
     }
 
-    // Żelbet (dopłata dla kręgów nadbudowy)
-    if (
-        well.nadbudowa === 'zelbetowa' &&
-        (p.componentType === 'krag' || p.componentType === 'krag_ot') &&
-        p.doplataZelbet
-    ) {
-        itemPrice += parseFloat(p.doplataZelbet);
-    }
-
-    // Drabinka nierdzewna
-    if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
+    // Drabinka nierdzewna (dla kręgów z otworami i dennic)
+    if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag_ot' || p.componentType === 'dennica') && p.doplataDrabNierdzewna) {
         itemPrice += parseFloat(p.doplataDrabNierdzewna);
     }
 
@@ -1324,7 +1676,10 @@ function calcWellStats(well) {
     const configReversed = [...(well.config || [])].reverse();
 
     configReversed.forEach((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        // Rozwiąż poprawny wariant produktu wg parametrów studni (auto-korekta productId)
+        const p = typeof resolveEffectiveProduct === 'function'
+            ? resolveEffectiveProduct(well, item.productId, item)
+            : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
         // Ceny bazowe (bez rabatu)
@@ -1379,8 +1734,9 @@ function calcWellStats(well) {
         let discNadbudowa = 0;
         // Mapowanie dn na klucz rabatów (styczna -> styczne)
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        if (discountKey && wellDiscounts[discountKey]) {
-            discNadbudowa = wellDiscounts[discountKey].nadbudowa || 0;
+        const activeDiscounts = getWellActiveDiscounts(well);
+        if (discountKey && activeDiscounts[discountKey]) {
+            discNadbudowa = activeDiscounts[discountKey].nadbudowa || 0;
         }
         const mult = 1 - discNadbudowa / 100;
 
@@ -1476,7 +1832,8 @@ function calcWellStats(well) {
             errorMessage = precoResult.error;
         } else {
             const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-            const discPreco = (wellDiscounts[discountKey] || {}).preco || 0;
+            const activeDiscounts = getWellActiveDiscounts(well);
+            const discPreco = (activeDiscounts[discountKey] || {}).preco || 0;
             const precoMult = 1 - discPreco / 100;
             const precoCost = precoResult.suma * precoMult;
             price += precoCost;
