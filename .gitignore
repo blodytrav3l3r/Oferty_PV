@@ -68,3 +68,12 @@ coverage/
 *.temp
 order_data.json
 everything-claude-code
+
+# Graphify auto-generated cache (knowledge graph - rebuild from source)
+graphify-out/
+
+# Kilo Agent Manager worktrees (each contains own node_modules/ + assets)
+.kilo/worktrees/
+
+# Embedded git repos (ECC submodule content on disk, not tracked)
+ECC/
