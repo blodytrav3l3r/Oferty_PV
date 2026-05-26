@@ -108,6 +108,35 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 - Testy w katalogu `tests/`
 - Coverage wymagany: brak oficjalnego progu, ale staraj się utrzymywać
 
+## Git Workflow
+
+### Konwencje commitów
+- `fix:` — bug fix (np. `fix: poprawa walidacji dat w ofertach studni`)
+- `feat:` — nowa funkcjonalność (np. `feat: dodanie karty budowy do wydruku`)
+- `chore:` — narzędzia, config, refactor (np. `chore: aktualizacja .gitignore`)
+- `docs:` — zmiany w dokumentacji
+- `test:` — nowe testy lub poprawa istniejących
+- `style:` — formatowanie, brak zmian w logice
+- Komentarze pisane po polsku
+- Długość: max 72 znaków w tytule, opis w commit body jeśli potrzeba
+
+### Gałęzie
+- `main` — stabilna, produkcyjna
+- Nazwy gałęzi: `kebab-case` (np. `fix-date-validation`, `add-karta-budowy`)
+- PR do `main` po zakończeniu pracy nad gałęzią
+
+### .gitignore — czego NIE wysyłać na GitHub
+- `node_modules/`, `.kilo/worktrees/`, `vendor/node_modules.tar.gz`, `vendor/python_wheels/`
+- `well_configurator_backend/venv/`, `__pycache__/`, `*.pyc`
+- `graphify-out/` — auto-generowany cache (odtwarzany z kodu)
+- `ECC/` — embedded repo (tylko gitlink, nie zawartość)
+- `*.db`, `*.sqlite`, `.env`, `dist/`, `build/`, `coverage/`
+
+### Przed pushem
+- Uruchom `npm test` i `npm run lint`
+- Upewnij się, że `graphify-out/` nie jest przypadkowo stage'owane (gitignorowane)
+- Nie pushuj dużych plików binarnych (>50 MB) — GitHub odrzuci >100 MB
+
 ## Baza danych
 
 - SQLite przez Prisma ORM
