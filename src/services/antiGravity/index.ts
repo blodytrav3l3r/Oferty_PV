@@ -4,7 +4,7 @@
  * Automatycznie dobiera elementy studni dla średnic DN1000, DN1200, DN1500, DN2000, DN2500
  * z obsługą płyt redukcyjnych, konusów, płyt DIN, pierścieni odciążających i przejść szczelnych.
  *
- * @module antygrawity
+ * @module antiGravity
  */
 
 import { WellComponent } from '../../types';

@@ -3,7 +3,7 @@ import {
     selectManholeComponents,
     getAvailableComponents,
     validateManhole
-} from '../services/antygrawity';
+} from '../services/antiGravity';
 import { requireAuth } from '../middleware/auth';
 import { validateData } from '../validators/authSchema';
 import { autoSelectConfigSchema, validateComponentsSchema } from '../validators/offerSchemas';
