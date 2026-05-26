@@ -56,7 +56,7 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
 }
 
 /**
- * Generuje PDF oferty studni używając szablonu oferta_studnie.html.
+ * Generuje PDF oferty studni używając szablonu ofertaStudnie.html.
  *
  * Oferty studni przechowują dane w polu JSON `data`, w tym:
  * - `wellsExport` - studnie z obliczonymi cenami (priorytet)
@@ -579,7 +579,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     const validityString = data.validity || '30 dni';
 
     // Załaduj szablon
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'oferta_studnie.html');
+    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaStudnie.html');
     const template = fs.readFileSync(templatePath, 'utf-8');
 
     // Załaduj obrazy nagłówka i stopki jako URI danych base64
@@ -812,7 +812,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
 
     const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
 
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'karta_budowy.html');
+    const templatePath = path.join(process.cwd(), 'public', 'templates', 'kartaBudowy.html');
     let html = fs.readFileSync(templatePath, 'utf-8');
 
     const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');

@@ -249,7 +249,7 @@ async function generateOfferHtml() {
         return null;
     }
 
-    const template = await getTemplate('templates/oferta_studnie.html');
+    const template = await getTemplate('templates/ofertaStudnie.html');
     if (!template) return null;
 
     // Dane oferty
