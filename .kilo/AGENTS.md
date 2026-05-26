@@ -88,6 +88,21 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 - try-catch w każdym async handlerze
 - Konwencja nazw: camelCase dla zmiennych/funkcji, PascalCase dla klas/type'ów
 
+## Nazewnictwo plików i folderów
+
+| Typ | Konwencja | Przykład |
+|-----|-----------|----------|
+| JS/TS pliki | `camelCase` | `wellManager.ts`, `pvMarketplace.ts` |
+| CSS pliki | `lowercase` | `style.css`, `studnie.css` |
+| HTML pliki | `lowercase` | `index.html`, `kartaBudowy.html` |
+| Katalogi | `lowercase` | `src/routes/`, `public/js/sales/` |
+| Testy | `*.test.ts`, nazwa bazowa camelCase | `pvMarketplace.test.ts` |
+| Python | `snake_case` (PEP8) | `rule_engine/` |
+
+- Te same reguły dotyczą plików w katalogach `public/`, `src/`, `tests/`, `scripts/`
+- Nie używaj myślników, kropek (poza `.test.ts`) ani podkreśleń w nazwach JS/TS/HTML/CSS
+- Nazwy w języku angielskim, z wyjątkiem dziedzinowych pojęć branżowych (studnie, rury, zlecenia)
+
 ## Uruchamianie
 
 | Komenda | Opis |
