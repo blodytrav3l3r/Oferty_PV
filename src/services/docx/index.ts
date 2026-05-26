@@ -6,3 +6,4 @@
  */
 export { generateOfferRuryDOCX } from './ruryDocx';
 export { generateOfferStudnieDOCX } from './studnie';
+export { generateKartaBudowyDOCX } from './studnie/kartaBudowy';

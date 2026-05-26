@@ -20,13 +20,19 @@ const writeProductionLimiter = createRateLimiter({
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
 
 // Buduje SQL WHERE clause na podstawie roli użytkownika
+// Wszystkie wartości pochodzą z sesji auth (zaufane), ale dla bezpieczeństwa walidujemy
 function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[] }): string {
     if (user.role === 'admin') return '';
+    const isValidId = (id: string): boolean => typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
     if (user.role === 'pro') {
-        const allowedIds = [user.id, ...(user.subUsers || [])].map(id => `'${id}'`).join(',');
+        const allowedIds = [user.id, ...(user.subUsers || [])]
+            .filter(isValidId)
+            .map(id => `'${id.replace(/'/g, "''")}'`)
+            .join(',');
         return `WHERE production_orders_rel."userId" IN (${allowedIds})`;
     }
-    return `WHERE production_orders_rel."userId" = '${user.id}'`;
+    const safeId = isValidId(user.id) ? user.id.replace(/'/g, "''") : '__invalid__';
+    return `WHERE production_orders_rel."userId" = '${safeId}'`;
 }
 
 router.get('/', requireAuth, async (req, res) => {
@@ -260,7 +266,7 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
             updatedAt: updatedAtRaw,
             ...rest
         } = o;
-        const dataStr = JSON.stringify(rest).replace(/'/g, "''");
+        const dataStr = JSON.stringify(rest);
 
         // Konwersja dat z timestamp na ISO string
         const convertDate = (raw: unknown): string => {
@@ -275,11 +281,10 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
         const createdAt = convertDate(createdAtRaw);
         const updatedAt = convertDate(updatedAtRaw);
 
-        // Użyj raw query dla find (obsługa błędnych dat w bazie)
-        const oldRows = await prisma.$queryRawUnsafe<
-            Array<{ data: string | null }>
-        >(`SELECT data FROM production_orders_rel WHERE id = '${docId}'`);
-        const old = oldRows[0];
+        const old = await prisma.production_orders_rel.findUnique({
+            where: { id: docId },
+            select: { data: true }
+        });
 
         if (old) {
             logAudit(
@@ -294,21 +299,29 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
             logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
         }
 
-        // Użyj raw query dla INSERT/UPDATE
-        const updateResult = await prisma.$executeRawUnsafe(
-            `UPDATE production_orders_rel SET "userId" = '${userId || authReq.user?.id || ''}', ` +
-            `"creatorId" = '${authReq.user?.id || ''}', "orderId" = '${orderId || ''}', ` +
-            `"wellId" = '${wellId || ''}', "elementIndex" = ${elementIndex || 0}, ` +
-            `"updatedAt" = '${updatedAt}', data = '${dataStr}' WHERE id = '${docId}'`
-        );
-        if (updateResult === 0) {
-            await prisma.$executeRawUnsafe(
-                `INSERT INTO production_orders_rel (id, "userId", "creatorId", "orderId", "wellId", ` +
-                `"elementIndex", "createdAt", "updatedAt", data) VALUES ` +
-                `('${docId}', '${userId || authReq.user?.id || ''}', '${authReq.user?.id || ''}', ` +
-                `'${orderId || ''}', '${wellId || ''}', ${elementIndex || 0}, '${createdAt}', '${updatedAt}', '${dataStr}')`
-            );
-        }
+        await prisma.production_orders_rel.upsert({
+            where: { id: docId },
+            create: {
+                id: docId,
+                userId: userId || authReq.user?.id || '',
+                creatorId: authReq.user?.id || '',
+                orderId: orderId || '',
+                wellId: wellId || '',
+                elementIndex: elementIndex || 0,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                data: dataStr
+            },
+            update: {
+                userId: userId || authReq.user?.id || '',
+                creatorId: authReq.user?.id || '',
+                orderId: orderId || '',
+                wellId: wellId || '',
+                elementIndex: elementIndex || 0,
+                updatedAt: updatedAt,
+                data: dataStr
+            }
+        });
 
         res.json({ ok: true, id: docId });
     } catch (e: unknown) {
@@ -323,27 +336,9 @@ router.get('/:id', requireAuth, async (req, res) => {
     try {
         const docId = req.params.id;
 
-        // Użyj raw query aby obsłużyć błędne daty w bazie
-        const orders = await prisma.$queryRawUnsafe<
-            Array<{
-                id: string;
-                userId: string | null;
-                orderId: string | null;
-                wellId: string | null;
-                elementIndex: number | null;
-                createdAt: string | null;
-                updatedAt: string | null;
-                data: string | null;
-            }>
-        >(`SELECT id, "userId", "orderId", "wellId", "elementIndex", data,
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt",
-            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "updatedAt" END as "updatedAt"
-         FROM production_orders_rel WHERE id = '${docId}'`);
-        const order = orders[0];
+        const order = await prisma.production_orders_rel.findUnique({
+            where: { id: docId }
+        });
         if (!order || (authReq.user?.role !== 'admin' && order.userId !== authReq.user?.id)) {
             return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         }
@@ -374,11 +369,10 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
     try {
         const docId = req.params.id;
 
-        // Użyj raw query aby obsłużyć błędne daty w bazie
-        const existingRows = await prisma.$queryRawUnsafe<
-            Array<{ id: string; userId: string | null; data: string | null }>
-        >(`SELECT id, "userId", data FROM production_orders_rel WHERE id = '${docId}'`);
-        const existing = existingRows[0];
+        const existing = await prisma.production_orders_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true, data: true }
+        });
         if (!existing) return res.json({ ok: true });
 
         const oldData = parseJsonField<Record<string, unknown>>(existing.data, {});
@@ -400,20 +394,21 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                 const yearShort = parseInt(parts[3], 10);
                 const fullYear = 2000 + yearShort;
                 if (seqNumber > 0) {
-                    await prisma.$executeRawUnsafe(
-                        `INSERT INTO recycled_production_numbers ("userId", year, seqNumber) ` +
-                        `VALUES ('${existing.userId || ''}', ${fullYear}, ${seqNumber}) ` +
-                        `ON CONFLICT ("userId", year, seqNumber) DO NOTHING`
-                    );
+                    await prisma.$executeRaw`
+                        INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
+                        VALUES (${existing.userId || ''}, ${fullYear}, ${seqNumber})
+                        ON CONFLICT ("userId", year, seqNumber) DO NOTHING
+                    `;
                 }
             }
         }
 
-        // Użyj raw query dla delete
         if (authReq.user?.role === 'admin') {
-            await prisma.$executeRawUnsafe(`DELETE FROM production_orders_rel WHERE id = '${docId}'`);
+            await prisma.$executeRaw`DELETE FROM production_orders_rel WHERE id = ${docId}`;
         } else {
-            await prisma.$executeRawUnsafe(`DELETE FROM production_orders_rel WHERE id = '${docId}' AND "userId" = '${authReq.user?.id}'`);
+            await prisma.production_orders_rel.deleteMany({
+                where: { id: docId, userId: authReq.user?.id }
+            });
         }
         res.json({ ok: true });
     } catch (e: unknown) {

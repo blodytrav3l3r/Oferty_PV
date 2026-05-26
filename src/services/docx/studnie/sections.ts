@@ -28,8 +28,6 @@ import {
     COLOR_GRAY_HEADER,
     COLOR_WHITE,
     COLOR_LABEL,
-    COLOR_BG_NOTE,
-    COLOR_NOTE_BORDER,
     NO_BORDERS,
     CELL_BORDERS,
     SZ_TITLE,
@@ -100,30 +98,44 @@ export function buildDateParagraphs(offerDate: string, validity: string): Paragr
 // ─── Uwagi (Notes) ──────────────────────────────────────────────────
 
 export function buildNotesParagraph(notes: string): Paragraph {
+    const lines = notes.split('\n');
+    const children: TextRun[] = [];
+
+    lines.forEach((line, idx) => {
+        if (idx > 0) {
+            children.push(new TextRun({ text: '', break: 1 } as TextRunWithBreak));
+        }
+        children.push(new TextRun({ text: line, size: SZ_TABLE_BODY, font: FONT }));
+    });
+
     return new Paragraph({
-        children: [
-            new TextRun({ text: 'Uwagi: ', bold: true, size: SZ_TABLE_BODY, font: FONT }),
-            new TextRun({ text: notes, size: SZ_TABLE_BODY, font: FONT })
-        ],
-        spacing: { before: 120, after: 60 },
-        shading: { type: ShadingType.SOLID, color: COLOR_BG_NOTE, fill: COLOR_BG_NOTE },
-        border: { left: { style: BorderStyle.SINGLE, size: 6, color: COLOR_NOTE_BORDER } }
+        children,
+        spacing: { before: 120, after: 60 }
     });
 }
 
 // ─── Warunki płatności (Payment Terms) ──────────────────────────────
 
 export function buildPaymentTermsParagraph(paymentTerms: string): Paragraph {
+    const lines = paymentTerms.split('\n');
+    const children: TextRun[] = [
+        new TextRun({
+            text: 'Warunki płatności: ',
+            bold: true,
+            size: SZ_TABLE_BODY,
+            font: FONT
+        })
+    ];
+
+    lines.forEach((line, idx) => {
+        if (idx > 0) {
+            children.push(new TextRun({ text: '', break: 1 } as TextRunWithBreak));
+        }
+        children.push(new TextRun({ text: line, size: SZ_TABLE_BODY, font: FONT }));
+    });
+
     return new Paragraph({
-        children: [
-            new TextRun({
-                text: 'Warunki płatności: ',
-                bold: true,
-                size: SZ_TABLE_BODY,
-                font: FONT
-            }),
-            new TextRun({ text: paymentTerms, size: SZ_TABLE_BODY, font: FONT })
-        ],
+        children,
         spacing: { before: 60, after: 20 }
     });
 }

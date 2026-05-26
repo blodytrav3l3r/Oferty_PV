@@ -22,11 +22,35 @@
 /* ===== KRĘGI WIERCONE (OT) ===== */
 
 /**
+ * Buduje tablicę segmentów z konfiguracji (odwróconej).
+ */
+function buildConfigSegments(configItems, psiaBuda) {
+    let y = 0;
+    let lastWasD = !!psiaBuda;
+    return configItems.map((item) => {
+        const prod = studnieProducts.find((p) => p.id === item.productId);
+        let h = prod ? parseFloat(prod.height) || 0 : 0;
+        if (prod && prod.componentType === 'dennica' && lastWasD) {
+            h -= 100;
+        }
+        const seg = {
+            itemBase: item,
+            start: y,
+            end: y + h,
+            type: prod ? prod.componentType : ''
+        };
+        y += h;
+        lastWasD = prod && prod.componentType === 'dennica';
+        return seg;
+    });
+}
+
+/**
  * Po zbudowaniu segmentów, sprawdza czy przejście (otwór) jest WEWNĄTRZ kręgu
  * i zamienia zwykły krag na krag_ot (wiercony) w odpowiednim segmencie.
  *
  * ZASADY:
- * 1. Otwór OT tylko gdy przejście faktycznie jest WEWNĄTRZ tego kręgu (cały otwór mieści się w segmencie)
+ * 1. Otwór OT tylko gdy przejście faktycznie jest WEWNĄTRZ tego kręgu (środek otworu)
  * 2. Zamiana na OT musi zachować tę samą wysokość kręgu (nie zmienia totalnej wysokości)
  * 3. Jeśli otwór wychodzi na łączenie dennicy i kręgu → zwraca flagę needsTallerDennica
  *
@@ -34,7 +58,11 @@
  */
 function applyDrilledRings(kregItems, segments, well, availProducts) {
     const result = { items: kregItems, needsTallerDennica: false };
-    if (!well.przejscia || well.przejscia.length === 0) return result;
+    if (!well.przejscia || well.przejscia.length === 0) {
+        // Zwróć KLON aby caller mógł bezpiecznie zrobić splice na oryginalnej tablicy
+        result.items = JSON.parse(JSON.stringify(kregItems));
+        return result;
+    }
     const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
     const newItems = JSON.parse(JSON.stringify(kregItems));
     const usedSegIndices = new Set();
@@ -156,8 +184,11 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     return result;
 }
 
-/* ===== ZAPYTANIE DO BACKENDU (OFFLINE-FIRST) ===== */
+/* ===== ZAPYTANIE DO BACKENDU (AI-FIRST) ===== */
 async function fetchConfigFromBackend(well, requiredMm, availProducts) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
     try {
         const payload = {
             dn: well.dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : well.dn,
@@ -207,18 +238,87 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
         if (!response.ok) return null;
         const data = await response.json();
         return data.length > 0 ? data[0] : null;
-    } catch {
-        return null; // Fallback do lokalnego kodu gdy serwer nie działa
+    } catch (err) {
+        return null;
+    } finally {
+        clearTimeout(timeoutId);
     }
 }
 
+function buildConfigFromBackendResult(backendResult) {
+    const newConfig = [];
+    const reversedItems = [...backendResult.items].reverse();
+    for (const bItem of reversedItems) {
+        let product = studnieProducts.find((p) => p.id === bItem.product_id);
+        if (!product) {
+            if (bItem.product_id.endsWith('_OT')) {
+                const baseId = bItem.product_id.replace('_OT', '');
+                product = studnieProducts.find((p) => p.id === baseId);
+            }
+            if (!product) {
+                product = {
+                    id: bItem.product_id,
+                    name: bItem.name || 'Produkt z AI',
+                    componentType: bItem.component_type || 'krag',
+                    height: 0, weight: 0, area: 0
+                };
+                studnieProducts.push(product);
+            } else {
+                const dynamicProd = JSON.parse(JSON.stringify(product));
+                dynamicProd.id = bItem.product_id;
+                dynamicProd.name = bItem.name;
+                dynamicProd.componentType = bItem.component_type || product.componentType;
+                studnieProducts.push(dynamicProd);
+                product = dynamicProd;
+            }
+        }
+        const qty = bItem.quantity || 1;
+        for (let i = 0; i < qty; i++) {
+            newConfig.push({ productId: bItem.product_id, quantity: 1 });
+        }
+    }
+    return newConfig;
+}
+
+function findDennicaInConfig(config) {
+    // Konfiguracja jest top-to-bottom: wlaz, avr, top closure, kregi, dennica
+    // Szukamy ostatniego elementu z componentType === 'dennica' lub 'styczna'
+    for (let i = config.length - 1; i >= 0; i--) {
+        const p = studnieProducts.find(pr => pr.id === config[i].productId);
+        if (p && (p.componentType === 'dennica' || p.componentType === 'styczna')) {
+            return p;
+        }
+    }
+    return null;
+}
+
 /* ===== GŁÓWNY PUNKT WEJŚCIA AUTO-DOBORU ===== */
+let isAutoSelectRunning = false;
+window.__autoSelectCallCount = 0;
+const __MAX_AUTO_SELECT_CALLS = 10;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
+    window.__autoSelectCallCount++;
+    if (window.__autoSelectCallCount > __MAX_AUTO_SELECT_CALLS) {
+        console.error('========================================');
+        console.error('DETEKCJA NIESKOŃCZONEJ PĘTLI autoSelectComponents!');
+        console.error('Licznik wywołań:', window.__autoSelectCallCount);
+        console.error('Stack trace:', new Error().stack);
+        console.error('========================================');
+        window.__autoSelectCallCount = 0;
+        return;
+    }
+    if (isAutoSelectRunning) {
+        console.warn('[AutoSelect] Pomijam — już trwa auto-dobór');
+        return;
+    }
+    isAutoSelectRunning = true;
+    try {
     const well = getCurrentWell();
     if (!well) {
         if (!autoTriggered) showToast('Najpierw dodaj studnię', 'error');
@@ -248,181 +348,75 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         return;
     }
 
-    // --- Filtruj produkty wg dostępności w magazynie i parametrów studni ---
+    if (!studnieProducts || studnieProducts.length === 0) {
+        if (!autoTriggered) showToast('Dane produktów jeszcze się ładują...', 'info');
+        return;
+    }
+
+    // --- Pokaż loading w UI ---
+    well.configStatus = 'LOADING';
+    if (typeof refreshAll === 'function') refreshAll();
+
     const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
-    // --- INTEGRACJA Z NOWYM BACKENDEM ---
-    console.log('Próba integracji z backendem OR-Tools...');
+    // === KROK 1: Backend AI (OR-Tools, 10s timeout) ===
+    console.log('[AutoSelect] Wywołanie backendu OR-Tools...');
     const backendResult = await fetchConfigFromBackend(well, requiredMm, availProducts);
+
     if (backendResult && backendResult.is_valid && backendResult.items.length > 0) {
-        console.log('Otrzymano pomyślny model z API:', backendResult);
-        const newConfig = [];
-        const reversedItems = [...backendResult.items].reverse();
+        const newConfig = buildConfigFromBackendResult(backendResult);
 
-        for (const bItem of reversedItems) {
-            let product = studnieProducts.find((p) => p.id === bItem.product_id);
-            if (!product) {
-                if (bItem.product_id.endsWith('_OT')) {
-                    const baseId = bItem.product_id.replace('_OT', '');
-                    product = studnieProducts.find((p) => p.id === baseId);
-                }
-                if (!product) {
-                    product = {
-                        id: bItem.product_id,
-                        name: bItem.name || 'Produkt z AI',
-                        componentType: bItem.component_type || 'krag',
-                        height: 0, weight: 0, area: 0
-                    };
-                    studnieProducts.push(product);
-                } else {
-                    const dynamicProd = JSON.parse(JSON.stringify(product));
-                    dynamicProd.id = bItem.product_id;
-                    dynamicProd.name = bItem.name;
-                    dynamicProd.componentType = bItem.component_type || product.componentType;
-                    studnieProducts.push(dynamicProd);
-                    product = dynamicProd;
-                }
-            }
-
-            const qty = bItem.quantity || 1;
-            for (let i = 0; i < qty; i++) {
-                newConfig.push({ productId: bItem.product_id, quantity: 1 });
-            }
+        // === WERYFIKACJA DENNICY ===
+        const dnProducts = availProducts.filter((p) => filterByWellParams(p, well));
+        const correctDennica = getLowestDennicaHybrid(dnProducts, dn, well.magazyn || 'Kluczbork', well.przejscia, well.rzednaDna).dennica;
+        const configDennica = findDennicaInConfig(newConfig);
+        const dennicaWrong = correctDennica && configDennica && configDennica.id !== correctDennica.id;
+        if (dennicaWrong) {
+            console.warn(`[AutoSelect] AI wybrało złą dennicę ${configDennica.id} (h=${configDennica.height}). Wymagana: ${correctDennica.id} (h=${correctDennica.height}). Fallback do JS.`);
         }
 
-        // --- DODATKOWA WALIDACJA: Średnica redukcji ---
-        if (well.redukcjaDN1000) {
+        // Walidacja redukcji
+        const redukcjaOk = !well.redukcjaDN1000 || (() => {
             const targetDn = well.redukcjaTargetDN || 1000;
-            const hasWrongDn = newConfig.some(item => {
+            return !newConfig.some(item => {
                 const p = studnieProducts.find(pr => pr.id === item.productId);
-                // Sprawdzamy czy elementy "górne" (zakończenia, kręgi powyżej płyty) mają dobre DN
                 if (p && (p.componentType === 'konus' || p.componentType === 'plyta_din' || p.componentType === 'krag' || p.componentType === 'krag_ot')) {
-                    // Ignorujemy elementy bazy (one mają DN studni)
                     if (parseInt(p.dn) !== targetDn && parseInt(p.dn) !== parseInt(well.dn)) {
                         return true;
                     }
                 }
                 return false;
             });
-            
-            if (hasWrongDn) {
-                console.warn(`Backend zwrócił elementy o złym DN (oczekiwano redukcji na DN${targetDn}). Spadek do lokalnego solvera.`);
-                // Pozwalamy na spadek do runJsAutoSelection poniżej
-            } else {
-                // Konfiguracja jest OK
-                well.config = newConfig;
-                well.originalAutoConfig = JSON.parse(JSON.stringify(newConfig));
-                well.overrideReason = null;
-                // ... reszta logiki sukcesu (wlaz, toast, etc.)
-                finalizeSuccess(well, backendResult, autoTriggered);
-                return;
-            }
-        } else {
-            // Brak redukcji, używamy wyniku z backendu
-            well.config = newConfig;
-            well.originalAutoConfig = JSON.parse(JSON.stringify(newConfig));
-            well.overrideReason = null;
-            finalizeSuccess(well, backendResult, autoTriggered);
+        })();
+
+        if (!dennicaWrong && redukcjaOk) {
+            applyBackendConfig(well, newConfig, backendResult, autoTriggered);
             return;
         }
     }
 
-    // Funkcja pomocnicza do finalizacji sukcesu
-    function finalizeSuccess(well, backendResult, autoTriggered) {
-        const newConfig = well.config;
-        // Upewnij się, że studnia ma właz
-        const hasWlaz = newConfig.some(
-            (item) => studnieProducts.find((p) => p.id === item.productId)?.componentType === 'wlaz'
-        );
-        if (!hasWlaz) {
-            const defaultWlaz = studnieProducts.find((p) => p.id === 'WLAZ-150');
-            if (defaultWlaz) newConfig.unshift({ productId: defaultWlaz.id, quantity: 1 });
-        }
-
-        well.config = newConfig;
-        well.originalAutoConfig = JSON.parse(JSON.stringify(newConfig));
-        well.overrideReason = null;
-
-        if (backendResult.errors && backendResult.errors.length > 0) {
-            backendResult.errors.forEach((e) => showToast(e, 'error'));
-        } else if (!autoTriggered) {
-            showToast('Zoptymalizowano matematycznie (serwer OR-Tools) pomyślnie!', 'success');
-        }
-
-        well.configSource = 'AUTO_AI';
-
-        if (backendResult.has_minimal_clearance) {
-            showToast('Zastosowano minimalne zapasy przejść rur.', 'warning');
-        }
-
-        sortWellConfigByOrder();
-        if (typeof recalcGaskets === 'function') recalcGaskets(well);
-        if (typeof syncKineta === 'function') syncKineta(well);
-        renderWellConfig();
-        renderWellDiagram();
-        updateSummary();
-
-        // Jeśli auto-dobór (bez wymuszonego zakończenia) zastosował Płytę DIN jako fallback z powodu wkładki PEHD,
-        // pokażmy modal, aby użytkownik miał świadomość i wybór.
-        if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
-            const forcedZak = well.redukcjaDN1000 ? well.redukcjaZakonczenie : well.zakonczenie;
-            if (!forcedZak) { // Tylko jeśli to system automatycznie wrzucił Płytę (fallback z konusa)
-                const hasDinPlate = newConfig.some(item => {
-                    const p = studnieProducts.find(pr => pr.id === item.productId);
-                    return p && p.componentType === 'plyta_din';
-                });
-                if (hasDinPlate && typeof window.showKonusPehdResolverModal === 'function') {
-                    // Pozwól UI odświeżyć się najpierw
-                    setTimeout(() => {
-                        window.showKonusPehdResolverModal(currentWellIndex);
-                    }, 100);
-                }
-            }
-        }
-    }
-
-    // Jeżeli API uznało że budowa jest NIEMOŻLIWA:
-    if (backendResult && !backendResult.is_valid) {
-        console.warn('Backend OR-Tools odrzucił układ:', backendResult.errors);
-
-        const apiErrors =
-            backendResult.errors && backendResult.errors.length > 0
-                ? backendResult.errors
-                : ['Algorytm AI nie odnalazł ułożenia spełniającego wymogi rygorów wysokości lub kolizji.'];
-
-        if (!autoTriggered) {
-            apiErrors.forEach((e) => showToast(e, 'error'));
-        }
-
-        well.configSource = 'AUTO_AI';
+    // === KROK 2: Fallback do JS solvera ===
+    console.warn('[AutoSelect] Backend niedostępny lub odrzucił. Fallback do JS solvera.');
+    const jsResult = runJsAutoSelection(well, requiredMm, availProducts);
+    if (jsResult.error) {
+        showToast(jsResult.error, 'error');
         well.configStatus = 'ERROR';
-        well.configErrors = apiErrors;
-        well.config = [];
-
+        well.configErrors = [jsResult.error];
         refreshAll();
         return;
     }
+    console.log('[AutoSelect] JS solver OK. config.length=', jsResult.config?.length, 'totalHeight=', jsResult.totalHeight, 'diff=', jsResult.diff, 'topLabel=', jsResult.topLabel, 'fallback=', jsResult.fallback);
+    if (jsResult.config) console.log('[AutoSelect] config[0]=', JSON.stringify(jsResult.config[0]));
 
-    // FALLBACK — brak łączności z backendem
-    console.warn('Backend niedostępny. Spadek do lokalnego kodu awaryjnego JS.');
-    const result = runJsAutoSelection(well, requiredMm, availProducts);
-    if (result.error) {
-        if (!autoTriggered) showToast(result.error, 'error');
-        well.configStatus = 'ERROR';
-        well.configErrors = [result.error];
-        refreshAll();
-        return;
-    }
-    well.config = result.config;
-
-    const errors = result.errors || [];
-    if (result.fallback)
+    well.config = jsResult.config;
+    const errors = [...(jsResult.errors || [])];
+    if (jsResult.fallback)
         errors.push(
-            result.fallbackReason
-                ? `Zastosowana rozszerzona tolerancja - ${result.fallbackReason}`
+            jsResult.fallbackReason
+                ? `Zastosowana rozszerzona tolerancja - ${jsResult.fallbackReason}`
                 : 'Zastosowana rozszerzona tolerancja'
         );
-    if (errors.length > 0 && result.isMinimal) {
+    if (errors.length > 0 && jsResult.isMinimal) {
         well.configStatus = 'WARNING';
     } else if (errors.length > 0) {
         well.configStatus = 'WARNING';
@@ -432,10 +426,24 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     well.configErrors = errors;
     well.configSource = 'AUTO_JS';
 
-    refreshAll();
-    const diffStr = result.diff >= 0 ? `+${result.diff}mm` : `${result.diff}mm`;
-    const redLabel = result.reductionUsed ? ` + Redukcja DN${result.targetDn || 1000}` : '';
-    const fallbackLabel = result.fallback
+    try {
+        sortWellConfigByOrder();
+        if (typeof recalcGaskets === 'function') recalcGaskets(well);
+        if (typeof syncKineta === 'function') syncKineta(well);
+        console.log('[AutoSelect] Przed render. config.length=', well.config?.length);
+        renderWellConfig();
+        renderWellDiagram();
+        updateSummary();
+        refreshAll();
+        console.log('[AutoSelect] Render OK.');
+    } catch (renderErr) {
+        console.error('[AutoSelect] Błąd renderowania:', renderErr);
+        console.error('[AutoSelect] Stack:', renderErr.stack);
+    }
+
+    const diffStr = jsResult.diff >= 0 ? `+${jsResult.diff}mm` : `${jsResult.diff}mm`;
+    const redLabel = jsResult.reductionUsed ? ` + Redukcja DN${jsResult.targetDn || 1000}` : '';
+    const fallbackLabel = jsResult.fallback
         ? ' <i data-lucide="alert-triangle"></i> (rozszerzona tolerancja)'
         : '';
     let statusIcon = '<i data-lucide="check-circle-2"></i>';
@@ -443,10 +451,66 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     if (well.configStatus === 'ERROR') statusIcon = '<i data-lucide="alert-circle"></i>';
     if (!autoTriggered) {
         showToast(
-            `${statusIcon} Auto-dobór: ${fmtInt(result.totalHeight)} mm (${diffStr}) | ${result.topLabel}${redLabel}${fallbackLabel}`,
+            `${statusIcon} Auto-dobór (JS): ${fmtInt(jsResult.totalHeight)} mm (${diffStr}) | ${jsResult.topLabel}${redLabel}${fallbackLabel}`,
             well.configStatus === 'OK' ? 'success' : 'warning'
         );
     }
+} finally {
+    isAutoSelectRunning = false;
+    if (window.__autoSelectCallCount > 0) window.__autoSelectCallCount--;
+}
+};
+
+function applyBackendConfig(well, newConfig, backendResult, autoTriggered) {
+    well.config = newConfig;
+    well.originalAutoConfig = JSON.parse(JSON.stringify(newConfig));
+    well.overrideReason = null;
+
+    // Upewnij się, że studnia ma właz
+    const hasWlaz = newConfig.some(
+        item => studnieProducts.find(p => p.id === item.productId)?.componentType === 'wlaz'
+    );
+    if (!hasWlaz) {
+        const defaultWlaz = studnieProducts.find(p => p.id === 'WLAZ-150');
+        if (defaultWlaz) well.config.unshift({ productId: defaultWlaz.id, quantity: 1 });
+    }
+
+    if (backendResult.errors && backendResult.errors.length > 0) {
+        backendResult.errors.forEach(e => showToast(e, 'error'));
+        well.configStatus = 'WARNING';
+    } else {
+        well.configStatus = 'OK';
+        if (!autoTriggered) showToast('Zoptymalizowano matematycznie (serwer OR-Tools) pomyślnie!', 'success');
+    }
+
+    well.configSource = 'AUTO_AI';
+
+    if (backendResult.has_minimal_clearance) {
+        showToast('Zastosowano minimalne zapasy przejść rur.', 'warning');
+    }
+
+    sortWellConfigByOrder();
+    if (typeof recalcGaskets === 'function') recalcGaskets(well);
+    if (typeof syncKineta === 'function') syncKineta(well);
+    renderWellConfig();
+    renderWellDiagram();
+    updateSummary();
+
+    // PEHD resolver
+    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+        const forcedZak = well.redukcjaDN1000 ? well.redukcjaZakonczenie : well.zakonczenie;
+        if (!forcedZak) {
+            const hasDinPlate = newConfig.some(item => {
+                const p = studnieProducts.find(pr => pr.id === item.productId);
+                return p && p.componentType === 'plyta_din';
+            });
+            if (hasDinPlate && typeof window.showKonusPehdResolverModal === 'function') {
+                setTimeout(() => window.showKonusPehdResolverModal(currentWellIndex), 100);
+            }
+        }
+    }
+
+    if (typeof refreshAll === 'function') refreshAll();
 }
 
 /* ===== LOKALNY SOLVER JS (FALLBACK) ===== */
@@ -461,10 +525,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     const allProducts = availProducts;
 
     // KROK 1: Dennica
-    const dennica = getLowestDennica(
+    const dnResult = getLowestDennicaHybrid(
         availProducts.filter((p) => filterByWellParams(p, well)),
         dn, mag, well.przejscia, well.rzednaDna
     );
+    const dennica = dnResult.dennica;
     if (!dennica) return { error: 'Brak dennic w magazynie.' };
 
     // KROK 2: Zakończenie
@@ -570,19 +635,19 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         let bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
         let center = bottomEdge + prDN / 2;
 
-        const parseHoleClearance = (val) => {
-            if (val === undefined || val === null || val === '') return 0;
+        const parseHoleClearance = (val, fallback = 300) => {
+            if (val === undefined || val === null || val === '') return fallback;
             const p = parseFloat(val);
-            return isNaN(p) ? 0 : p;
+            return isNaN(p) ? fallback : p;
         };
 
         return {
             z: center - prDN / 2,
             ruraDz: prDN,
-            zdD: prod ? parseHoleClearance(prod.zapasDol) : 0,
-            zdDM: prod ? parseHoleClearance(prod.zapasDolMin) : 0,
-            zdG: prod ? parseHoleClearance(prod.zapasGora) : 0,
-            zdGM: prod ? parseHoleClearance(prod.zapasGoraMin) : 0
+            zdD: prod ? parseHoleClearance(prod.zapasDol, 300) : 0,
+            zdDM: prod ? parseHoleClearance(prod.zapasDolMin, 150) : 0,
+            zdG: prod ? parseHoleClearance(prod.zapasGora, 300) : 0,
+            zdGM: prod ? parseHoleClearance(prod.zapasGoraMin, 150) : 0
         };
     });
 
@@ -596,11 +661,12 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     });
 
     if (requiredMm < maxReqHMin) {
-        return { error: `Wymagana wysokość studni (${requiredMm}mm) jest mniejsza niż wymagana wysokość dla przejść (${maxReqHMin}mm).` };
+        const fn = typeof fmtInt === 'function' ? fmtInt : (v) => v;
+        return { error: `Wymagana wysokość studni (${fn(requiredMm)}mm) jest za mała. Minimum dla przejść: ${fn(maxReqHMin)}mm, zalecane: ${fn(maxReqH)}mm. Zwiększ rzędną włazu o co najmniej ${fn(maxReqHMin - requiredMm)}mm.` };
     }
 
     // KROK 4: Listy kręgów i redukcja
-    const dennicy = availProducts
+    let dennicy = availProducts
         .filter((p) => {
             if (dn === 'styczna') {
                 return (
@@ -621,6 +687,15 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             return a.height - b.height;
         });
     if (dennicy.length === 0) return { error: 'Brak dennic w magazynie.' };
+
+    // Phase 5: Użyj pre-selected dennica jako minimum — solver nie próbuje niższych
+    const minDenH = dennica ? (parseFloat(dennica.height) || 0) : 0;
+    if (minDenH > 0) {
+        dennicy = dennicy.filter(d => parseFloat(d.height || 0) >= minDenH);
+        if (dennicy.length === 0) {
+            return { error: 'Brak dennic spełniających wymagania wysokości.' };
+        }
+    }
 
     const avrRings = allProducts
         .filter((p) => p.componentType === 'avr')
@@ -720,11 +795,13 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             let left = target;
             for (const k of kList) {
                 if (left <= 0) break;
-                const qty = Math.floor(left / k.height);
+                const h = parseFloat(k.height);
+                if (!h || h <= 0) continue;
+                const qty = Math.floor(left / h);
                 for (let i = 0; i < qty; i++) {
-                    kItems.push({ productId: k.id, quantity: 1, _h: k.height });
-                    filled += k.height;
-                    left -= k.height;
+                    kItems.push({ productId: k.id, quantity: 1, _h: h });
+                    filled += h;
+                    left -= h;
                 }
             }
         }
@@ -828,10 +905,19 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             let minValid = true;
 
             const SAFETY_MARGIN = 15; // mm — spójne z validator.py:85
-            for (let s of segs) {
-                // Sprawdzaj kolizje łączeń dla wszystkich segmentów
-                if (s.end >= (resBot - SAFETY_MARGIN) && s.end <= (resTop + SAFETY_MARGIN)) strictValid = false;
-                if (s.end >= (resBotMin - SAFETY_MARGIN) && s.end <= (resTopMin + SAFETY_MARGIN)) minValid = false;
+            for (let i = 0; i < segs.length; i++) {
+                const s = segs[i];
+                const nextSeg = segs[i + 1];
+                const jointInBody = hBot < s.end && s.end <= hTop;
+                const hasOTAbove = nextSeg && nextSeg.type === 'krag_ot';
+
+                // Joint na dole krag_ot + rura przechodzi przez to połączenie → OK (ring wiercony)
+                if (hasOTAbove && jointInBody) {
+                    // Pomijamy walidację — rura przechodzi przez krag_ot
+                } else {
+                    if (s.end >= (resBot - SAFETY_MARGIN) && s.end <= (resTop + SAFETY_MARGIN)) strictValid = false;
+                    if (s.end >= (resBotMin - SAFETY_MARGIN) && s.end <= (resTopMin + SAFETY_MARGIN)) minValid = false;
+                }
 
                 const isForbidden = [
                     'konus', 'plyta_din', 'plyta_redukcyjna', 'pierscien_odciazajacy'
@@ -884,6 +970,10 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
                 const { kItems, filled } = fillKregiDP(targetBody, kregi, tolBelow, tolAbove, dennicaItem.height);
 
+                // Phase 3: Osadź OT warianty w layoutach zamiast późnej łatki
+                const otLayout = buildCandidateLayouts(dennicaItem, kItems, well, availProducts);
+                const otKItems = otLayout.rings;
+
                 const deficit = requiredMm - (dennicaItem.height + topCfg.height + filled);
                 if (deficit > maxAvr || deficit < -tolAbove) continue;
 
@@ -891,19 +981,24 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 const diff = effDenH + topCfg.height + filled + avrH - requiredMm;
                 const isOutOfBounds = diff < -90 || diff > 20;
 
-                const conf = checkConflicts(kItems, dennicaItem.height, 0, topCfg.items);
+                const conf = checkConflicts(otKItems, dennicaItem.height, 0, topCfg.items);
                 if (!conf.valid && !skipHolesValid) continue;
 
-                let score = dennicaItem.height * 1000 + kItems.length * 10;
-                if (diff !== 0) score += Math.abs(diff) * 5;
-                if (isOutOfBounds) score += 20000;
-                if (conf.isMinimal || denIsMin) score += 50000;
-                if (topCfg.label.includes('zamiennik')) score += 100000;
-
-                // WYMUSZENIE REDUKCJI: Jeśli użytkownik zaznaczył redukcję, ukarz konfiguracje standardowe
-                if (well.redukcjaDN1000) {
-                    score += 5000000; // 5M kary dla braku redukcji
-                }
+                const otCount = otKItems.filter(ki =>
+                    ki.productId && String(ki.productId).endsWith('_OT')
+                ).length;
+                const scoreResult = scoreLayout({
+                    ringCount: otKItems.length,
+                    diff,
+                    isOutOfBounds,
+                    isMinimal: conf.isMinimal || denIsMin,
+                    isFallbackClosure: topCfg.label.includes('zamiennik'),
+                    reductionForced: !!well.redukcjaDN1000,
+                    hasReduction: false,
+                    otCount
+                });
+                let score = scoreResult.score;
+                score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
                 if (score < bestScore) {
                     bestScore = score;
@@ -914,7 +1009,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         );
                     best = {
                         topItems: [...topCfg.items],
-                        kregItems: kItems.map((ki) => ({
+                        kregItems: otKItems.map((ki) => ({
                             productId: ki.productId,
                             quantity: ki.quantity
                         })),
@@ -924,7 +1019,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         diff: diff,
                         topLabel: topCfg.label,
                         errors: runErrors,
-                        isMinimal: conf.isMinimal || denIsMin
+                        isMinimal: conf.isMinimal || denIsMin,
+                        _scoreBreakdown: scoreResult.breakdown,
+                        _scoreReason: scoreResult.reason
                     };
                 }
             }
@@ -996,10 +1093,10 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                                 typeof pprod.dn === 'string' && pprod.dn.includes('/')
                                     ? parseFloat(pprod.dn.split('/')[1]) || 160
                                     : parseFloat(pprod.dn) || 160;
-                            // Preferuj zapas standardowy, fallback do minimalnego, potem domyślne 100mm
+                            // Wartości z cennika, domyślnie 300
                             const zapasGora = parseFloat(pprod.zapasGora || 0) ||
-                                parseFloat(pprod.zapasGoraMin || 0) || 100;
-                            const holeTop = holeBottom + prDN + zapasGora; // pełna średnica + zapas
+                                parseFloat(pprod.zapasGoraMin || 0) || 300;
+                            const holeTop = holeBottom + prDN + zapasGora;
                             if (holeTop > maxHoleTop) maxHoleTop = holeTop;
                         }
                     }
@@ -1040,7 +1137,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     });
                     tTarget.kItems.forEach((k) => redKItems.push(k));
 
-                    const conf = checkConflicts(redKItems, dennicaItem.height, bSec, topRedItems);
+                    // Phase 3: Osadź OT warianty
+                    const redOt = buildCandidateLayouts(dennicaItem, redKItems, well, availProducts);
+                    const redOtItems = redOt.rings;
+
+                    const conf = checkConflicts(redOtItems, dennicaItem.height, bSec, topRedItems);
 
                     if (!conf.valid && !skipHolesValid) {
                         if (conf.errors.some((e) => e.includes('redukcyjnej') || e.includes('konus'))) {
@@ -1049,18 +1150,24 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         continue;
                     }
 
-                    let score =
-                        dennicaItem.height * 1000 +
-                        (bKregi.kItems.length + tTarget.kItems.length) * 10;
-                    const dnFactor = (parseInt(dn) || 1200) / 400;
-                    score += bSec * dnFactor;
-                    const oversizedBottom = bSec - minLowerTotal;
-                    if (oversizedBottom > 0) {
-                        score += oversizedBottom * 50;
-                    }
-                    if (diff !== 0) score += Math.abs(diff) * 15;
-                    if (isOutOfBounds) score += 50000;
-                    if (conf.isMinimal) score += 50000;
+                    const redOtCount = redOtItems.filter(ki =>
+                        ki.productId && String(ki.productId).endsWith('_OT')
+                    ).length;
+                    const scoreResult = scoreLayout({
+                        ringCount: bKregi.kItems.length + tTarget.kItems.length,
+                        diff,
+                        isOutOfBounds,
+                        isMinimal: conf.isMinimal,
+                        isFallbackClosure: false,
+                        reductionForced: false,
+                        hasReduction: true,
+                        bottomSectionH: bSec,
+                        minBottomTotal: minLowerTotal,
+                        dn: parseInt(dn) || 1200,
+                        otCount: redOtCount
+                    });
+                    let score = scoreResult.score;
+                    score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
                     if (score < bestScore) {
                         bestScore = score;
@@ -1069,18 +1176,20 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                             runErrors.push(
                                 `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
                             );
+                        // Phase 3: Użyj OT-embedded ring items zamiast oryginalnych
+                        const otStack = [...redOtItems].map(ki => ({
+                            productId: ki.productId, quantity: ki.quantity
+                        }));
+                        // Rozdziel na top/bottom (płyta redukcyjna jest markerem)
+                        const plateIdx = otStack.findIndex(ki => ki.productId === reductionPlate.id);
+                        const otTop = plateIdx >= 0 ? otStack.slice(0, plateIdx).reverse() : [];
+                        const otBottom = plateIdx >= 0 ? otStack.slice(plateIdx + 1).reverse() : [];
+                        const otPlate = plateIdx >= 0 ? [otStack[plateIdx]] : [];
+
                         best = {
                             reductionUsed: true,
                             topItems: [...topRedItems],
-                            kregItems: [
-                                ...tTarget.kItems
-                                    .map((ki) => ({ productId: ki.productId, quantity: ki.quantity }))
-                                    .reverse(),
-                                { productId: reductionPlate.id, quantity: 1 },
-                                ...bKregi.kItems
-                                    .map((ki) => ({ productId: ki.productId, quantity: ki.quantity }))
-                                    .reverse()
-                            ],
+                            kregItems: [...otTop, ...otPlate, ...otBottom],
                             dennica: { productId: dennicaItem.id, quantity: 1 },
                             avrItems: avrItems,
                             totalHeight: currentTotal + avrH,
@@ -1088,7 +1197,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                             topLabel: `Redukcja DN${targetDn}`,
                             targetDn: targetDn,
                             errors: runErrors,
-                            isMinimal: conf.isMinimal || dennicaItem.height < maxReqH
+                            isMinimal: conf.isMinimal || dennicaItem.height < maxReqH,
+                            _scoreBreakdown: scoreResult.breakdown,
+                            _scoreReason: scoreResult.reason
                         };
                     }
                 }
@@ -1106,7 +1217,6 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         { tolBelow: 260, tolAbove: 20, maxAvr: 260, skip: false, name: 'Ratunkowy' },
         { tolBelow: 260, tolAbove: 500, maxAvr: 260, skip: false, name: 'Poszerzony (+500mm)' },
         { tolBelow: 260, tolAbove: 1000, maxAvr: 260, skip: false, name: 'Ekstremalny (+1000mm)' },
-        { tolBelow: 260, tolAbove: 20, maxAvr: 260, skip: true,  name: 'Awaryjny (kolizje pominięto)' },
     ];
 
     let solution = null;
@@ -1116,6 +1226,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     for (const stage of STAGES) {
         solution = solve(stage.tolBelow, stage.tolAbove, stage.maxAvr, stage.skip);
         if (solution) {
+            console.log('[AutoSelect] Rozwiązanie znalezione w stage:', stage.name, 'items:', solution.kregItems?.length, 'dennica:', solution.dennica?.productId);
             if (stage.name !== 'Standard') {
                 fallback = true;
                 fallbackReason = `tryb ${stage.name}`;
@@ -1198,81 +1309,10 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         }
     }
 
-    // --- KRĘGI Z OTWOREM (DRILLED RINGS) ---
-    let revY = 0;
-    let lastWasD = !!well.psiaBuda;
-    const segmentsReverse = [...newConfig].reverse().map((item) => {
-        const prod = studnieProducts.find((p) => p.id === item.productId);
-        let h = prod ? parseFloat(prod.height) || 0 : 0;
-        if (prod && prod.componentType === 'dennica' && lastWasD) {
-            h -= 100;
-        }
-        const seg = {
-            itemBase: item,
-            start: revY,
-            end: revY + h,
-            type: prod ? prod.componentType : ''
-        };
-        revY += h;
-        lastWasD = prod && prod.componentType === 'dennica';
-        return seg;
-    });
-
-    for (const pr of well.przejscia || []) {
-        let pel = parseFloat(pr.rzednaWlaczenia);
-        if (isNaN(pel)) continue;
-        const holeBottom = (pel - (well.rzednaDna || 0)) * 1000;
-        const pprod = studnieProducts.find((x) => x.id === pr.productId);
-        if (!pprod) continue;
-        let prDN =
-            typeof pprod.dn === 'string' && pprod.dn.includes('/')
-                ? parseFloat(pprod.dn.split('/')[1]) || 160
-                : parseFloat(pprod.dn) || 160;
-        const zapasGora = parseFloat(
-            pprod.zapasGora !== undefined ? pprod.zapasGora : pprod.zapasGoraMin || 0
-        );
-        const zapasDol = parseFloat(
-            pprod.zapasDol !== undefined ? pprod.zapasDol : pprod.zapasDolMin || 0
-        );
-        const holeTop = holeBottom + prDN + zapasGora;
-
-        for (const seg of segmentsReverse) {
-            if (
-                (seg.type === 'krag' || seg.type === 'krag_ot') &&
-                Math.max(seg.start, holeBottom) < Math.min(seg.end, holeTop)
-            ) {
-                const itemProd = studnieProducts.find((p) => p.id === seg.itemBase.productId);
-                if (itemProd && itemProd.componentType !== 'krag_ot') {
-                    const isDrilledRingObj = (p) =>
-                        p.componentType === 'krag_ot' ||
-                        (p.id && String(p.id).toLowerCase().endsWith('ot')) ||
-                        (p.name && String(p.name).toLowerCase().includes('z otworem'));
-                    const otProd = availProducts.find(
-                        (p) =>
-                            isDrilledRingObj(p) &&
-                            p.dn === itemProd.dn &&
-                            p.height === itemProd.height
-                    );
-                    if (otProd) {
-                        seg.itemBase.productId = otProd.id;
-                        seg.type = 'krag_ot';
-                    } else {
-                        const dynamicOtId = itemProd.id + '_OT';
-                        if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-                            const dynamicProd = JSON.parse(JSON.stringify(itemProd));
-                            dynamicProd.id = dynamicOtId;
-                            dynamicProd.componentType = 'krag_ot';
-                            if (!dynamicProd.name.endsWith(' z otworem'))
-                                dynamicProd.name += ' z otworem';
-                            studnieProducts.push(dynamicProd);
-                        }
-                        seg.itemBase.productId = dynamicOtId;
-                        seg.type = 'krag_ot';
-                    }
-                }
-            }
-        }
+    if (solution.errors && solution.errors.length > 0) {
+        console.warn('[AutoSelect] Uwagi:', solution.errors.join('; '));
     }
+    console.log('[AutoSelect] runJsAutoSelection zwraca config.length=', newConfig.length, 'pierwszy=', newConfig[0]?.productId);
 
     return {
         config: newConfig,
@@ -1356,35 +1396,47 @@ function recalculateWellErrors(well) {
                     const p = parseFloat(val);
                     return isNaN(p) ? defVal : p;
                 };
-                const zg_req = parseClearance(pprod.zapasGora, 300.0);
-                const zd_req = parseClearance(pprod.zapasDol, 300.0);
-                const hc_invert = (pel - rzDna) * 1000;
-                const top_pos = hc_invert + dn_val;
+                const zg_req = parseClearance(pprod.zapasGora, 300);
+                const zd_req = parseClearance(pprod.zapasDol, 300);
+                const zd_req_min = parseClearance(pprod.zapasDolMin, 150);
+                const zg_req_min = parseClearance(pprod.zapasGoraMin, 150);
+                const hc_invert = (pel - rzDna) * 1000;  // hole bottom
+                const hole_center = hc_invert + dn_val / 2;  // Python: hole_center
+                const hole_top = hc_invert + dn_val;  // Python: hole_top
 
                 const typStr = pr.flowType === 'wylot' ? 'wylot' : 'dolot';
                 const displayType = `nr ${porzadekIdx + 1} (${typStr} DN${dn_val}, rodzaj: ${pprod.name})`;
 
-                for (const seg of segments) {
-                    if (hc_invert >= seg.start && hc_invert < seg.end) {
-                        const distToBottom = hc_invert - seg.start;
-                        const distToTop = seg.end - top_pos;
+                // Python: używa hole_center do znalezienia segmentu, nie hole_bottom
+                for (let segIdx = 0; segIdx < segments.length; segIdx++) {
+                    const seg = segments[segIdx];
+                    if (hole_center >= seg.start && hole_center < seg.end) {
+                        const bottomClearance = hc_invert - seg.start;  // Python: bottom_clearance
+                        const topClearance = seg.end - hole_top;  // Python: top_clearance
 
-                        const isBottomMostDennica =
-                            seg.start === 0 && (seg.type === 'dennica' || seg.type === 'styczna');
-                        // Dla studni osadnikowych: rura podniesiona np. o 20mm
-                        // przy wymaganym zapasDol 100mm — ignoruj zapas dolny
-                        // gdy rura jest w najniższej dennicy i blisko dna
-                        const isNearBottom = isBottomMostDennica && distToBottom < zd_req;
-                        const applyingZdReq = isNearBottom ? 0 : zd_req;
+                        // Python: is_bottom_most = (idx == 0)
+                        const isBottomMost = segIdx === 0;
+                        // Python: is_pipe_near_bottom = is_bottom_most and bottom_clearance < z_dol
+                        const isNearBottom = isBottomMost && bottomClearance < zd_req;
+                        // Python: eff_z_dol = -9999.0 if is_pipe_near_bottom else z_dol
+                        const effZdReq = isNearBottom ? -9999 : zd_req;
+                        const effZdReqMin = isNearBottom ? -9999 : zd_req_min;
 
-                        if (distToBottom < applyingZdReq && distToBottom >= 0) {
-                            const errStr = `Błąd zapasu dolnego w "${seg.name}" dla przejścia ${displayType} (jest ${Math.round(distToBottom)}mm, wymagane ${applyingZdReq}mm z cennika)`;
+                        // Python: if bottom_clearance >= eff_z_dol and top_clearance >= z_gora → OK
+                        const standardOk = bottomClearance >= effZdReq && topClearance >= zg_req;
+                        // Python: elif bottom_clearance >= eff_z_dol_min and top_clearance >= z_gora_min → minimal
+                        const minimalOk = !standardOk && bottomClearance >= effZdReqMin && topClearance >= zg_req_min;
+
+                        if (!standardOk && !minimalOk) {
+                            // Python: errors.append — ZA MAŁY ZAPAS
+                            const errStr = `Błąd zapasu w "${seg.name}" dla przejścia ${displayType} (wymagane: dół≥${effZdReq}mm góra≥${zg_req}mm, aktualne: dół=${Math.round(bottomClearance)}mm góra=${Math.round(topClearance)}mm)`;
                             if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
+                        } else if (minimalOk) {
+                            // Python: used_minimal → append "zastosowano luzy minimalne"
+                            const noteStr = `Przejście ${displayType} w "${seg.name}": zastosowano luzy minimalne (dół=${Math.round(bottomClearance)}mm, góra=${Math.round(topClearance)}mm)`;
+                            if (!liveErrors.includes(noteStr)) liveErrors.push(noteStr);
                         }
-                        if (distToTop < zg_req) {
-                            const errStr = `Błąd zapasu górnego w "${seg.name}" dla przejścia ${displayType} (zostało ${Math.round(distToTop)}mm, wymagane ${zg_req}mm z cennika)`;
-                            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
-                        }
+                        break;
                     }
                 }
             });

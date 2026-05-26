@@ -36,7 +36,10 @@
         'circle-check': ['<circle cx="12" cy="12" r="10"/>','<path d="m9 12 2 2 4-4"/>'],
         'circle-dot': ['<circle cx="12" cy="12" r="10"/>','<circle cx="12" cy="12" r="1"/>'],
         'circle-x': ['<circle cx="12" cy="12" r="10"/>','<path d="m15 9-6 6"/>','<path d="m9 9 6 6"/>'],
+        'clipboard': ['<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>','<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>'],
         'clipboard-list': ['<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>','<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>','<path d="M12 11h4"/>','<path d="M12 16h4"/>','<path d="M8 11h.01"/>','<path d="M8 16h.01"/>'],
+        'clock': ['<circle cx="12" cy="12" r="10"/>','<polyline points="12 6 12 12 16 14"/>'],
+        'copy': ['<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>','<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'],
         'cylinder': ['<ellipse cx="12" cy="5" rx="9" ry="3"/>','<path d="M3 5v14a9 3 0 0 0 18 0V5"/>'],
         'diamond': ['<path d="M2.7 10.3a2.41 2.41 0 0 0 0 3.41l7.59 7.59a2.41 2.41 0 0 0 3.41 0l7.59-7.59a2.41 2.41 0 0 0 0-3.41l-7.59-7.59a2.41 2.41 0 0 0-3.41 0Z"/>'],
         'dog': ['<path d="M11.25 16.25h1.5L12 17z"/>','<path d="M16 14v.5"/>','<path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/>','<path d="M8 14v.5"/>','<path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/>'],
@@ -152,6 +155,7 @@
     // Ekspozycja API (kompatybilna z window.lucide)
     global.lucide = {
         createIcons: createIcons,
+        replace: createIcons,
         icons: ICONS
     };
 
@@ -195,7 +199,9 @@
             observer.observe(document.body, { childList: true, subtree: true });
         } else {
             document.addEventListener('DOMContentLoaded', function() {
-                observer.observe(document.body, { childList: true, subtree: true });
+                if (document.body) {
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
             });
         }
     }

@@ -1,7 +1,7 @@
 /* ===== ZAMÓWIENIA STUDNI ===== */
 async function loadOrdersStudnie() {
     try {
-        const res = await fetch('/api/orders-studnie', { headers: authHeaders() });
+        const res = await fetchWithTimeout('/api/orders-studnie', { headers: authHeaders() });
         const json = await res.json();
         return json.data || [];
     } catch (err) {
@@ -28,7 +28,7 @@ async function saveOrdersDataStudnie(data) {
 function getOrdersForOffer(offerId) {
     if (!ordersStudnie || !offerId) return [];
     const nId = normalizeId(offerId);
-    return ordersStudnie.filter((o) => normalizeId(o.offerId) === nId);
+    return ordersStudnie.filter((o) => normalizeId(o.offerId || o.offerStudnieId) === nId);
 }
 
 /** Zwraca Set<string> z ID studni, które są już zamówione dla danej oferty */
@@ -150,6 +150,1111 @@ async function createOrderFromOffer() {
     )
         return;
 
+    // Krok 4.1 — Karta budowy zamiast popupu
+    if (!ordersStudnie) {
+        ordersStudnie = await loadOrdersStudnie();
+    }
+    const existingOrdersForOffer = getOrdersForOffer(offer.id);
+    pendingOrderCreationData = {
+        offer,
+        selectedWells,
+        kartaBudowyTemplateOrders: existingOrdersForOffer
+    };
+    initKartaBudowyStep4(offer.number);
+    
+    // Przejdź do kroku 4
+    if (typeof goToWizardStep === 'function') {
+        goToWizardStep(4);
+    } else {
+        currentWizardStep = 4;
+        if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
+    }
+}
+
+/**
+ * Zmienna przechowująca dane do utworzenia zamówienia w trakcie kroku Karta Budowy
+ */
+let pendingOrderCreationData = null;
+
+/**
+ * Inicjalizuje formularz Karty Budowy w Kroku 4.
+ * Może załadować dane nowej oferty lub istniejącego zamówienia.
+ */
+function initKartaBudowyStep4(primaryOfferNumber) {
+    _przejsciaInitialized = false;
+    const emailFakturaInput = document.getElementById('step4-email-faktura');
+    const emailEfakturaInput = document.getElementById('step4-email-efaktura');
+    const offerInput = document.getElementById('step4-offer-nr-input');
+    const adresWysylkiInput = document.getElementById('step4-adres-wysylki');
+    const warunkiPlatnosciInput = document.getElementById('step4-warunki-platnosci');
+    const iloscDniInput = document.getElementById('step4-ilosc-dni');
+    const ubezpieczenieInput = document.getElementById('step4-ubezpieczenie');
+    const osobaKontaktInput = document.getElementById('step4-osoba-kontakt');
+    const zabezpieczenieTransportuInput = document.getElementById('step4-zabezpieczenie-transportu');
+    const rodzajTransportuInput = document.getElementById('step4-rodzaj-transportu');
+    const wyliczonyTransportInput = document.getElementById('step4-wyliczony-transport');
+    const rodzajStopniInput = document.getElementById('step4-rodzaj-stopni');
+    const rodzajStopniInneInput = document.getElementById('step4-rodzaj-stopni-inne');
+    const rodzajStudniInput = document.getElementById('step4-rodzaj-studni');
+    const uszczelkaStudniInput = document.getElementById('step4-uszczelka-studni');
+    const uszczelkaStudniInneInput = document.getElementById('step4-uszczelka-studni-inne');
+    const kinetaInput = document.getElementById('step4-kineta');
+    const kinetaInneInput = document.getElementById('step4-kineta-inne');
+    const wysokoscSpocznikaInput = document.getElementById('step4-wysokosc-spocznika');
+    const usytuowanieInput = document.getElementById('step4-usytuowanie');
+    const kaskadaInput = document.getElementById('step4-kaskada');
+    const kaskadaUwagiInput = document.getElementById('step4-kaskada-uwagi');
+    const slepaKinetaInput = document.getElementById('step4-slepa-kineta');
+    const slepaKinetaUwagiInput = document.getElementById('step4-slepa-kineta-uwagi');
+    const redukcjaKinetyInput = document.getElementById('step4-redukcja-kinety');
+    const przejsciaTulejoweInput = document.getElementById('step4-przejscia-tulejowe');
+    const przejsciaSzczelneInput = document.getElementById('step4-przejscia-szczelne');
+    const wlasciwosciBetonuInput = document.getElementById('step4-wlasciwosci-betonu');
+    const pozostaleWlasciwosciInput = document.getElementById('step4-pozostale-wlasciwosci');
+    const przejsciaZamowioneInput = document.getElementById('step4-przejscia-zamowione');
+    const dataZamowieniaInput = document.getElementById('step4-data-zamowienia');
+    
+    if (emailFakturaInput) emailFakturaInput.value = '';
+    if (emailEfakturaInput) emailEfakturaInput.value = '';
+    if (offerInput) offerInput.value = '';
+    if (adresWysylkiInput) adresWysylkiInput.value = '';
+    if (warunkiPlatnosciInput) warunkiPlatnosciInput.value = 'przelew';
+    if (iloscDniInput) iloscDniInput.value = '';
+    if (ubezpieczenieInput) ubezpieczenieInput.value = '';
+    if (osobaKontaktInput) osobaKontaktInput.value = '';
+    if (zabezpieczenieTransportuInput) zabezpieczenieTransportuInput.value = 'Nie dotyczy';
+    if (rodzajTransportuInput) rodzajTransportuInput.value = 'Transport P.V.';
+    if (rodzajStopniInneInput) {
+        rodzajStopniInneInput.value = '';
+        const wrap = document.getElementById('step4-rodzaj-stopni-inne-wrap');
+        if (wrap) wrap.style.display = 'none';
+    }
+    if (uszczelkaStudniInneInput) {
+        uszczelkaStudniInneInput.value = '';
+        const wrap = document.getElementById('step4-uszczelka-studni-inne-wrap');
+        if (wrap) wrap.style.display = 'none';
+    }
+    if (kinetaInneInput) {
+        kinetaInneInput.value = '';
+        const wrap = document.getElementById('step4-kineta-inne-wrap');
+        if (wrap) wrap.style.display = 'none';
+    }
+    
+    // Oblicz i wyświetl dane o transporcie (podział na pełne + niepełne kursy)
+    let tCost = 0;
+    let tWeight = 0;
+    let costPerTrip = 0;
+    
+    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
+        const o = orderEditMode.order;
+        tWeight = o.totalWeight || 0;
+        let wNetto = 0;
+        if (o.wells) {
+            o.wells.forEach(w => wNetto += (typeof calcWellStats === 'function' ? calcWellStats(w).price : 0));
+        }
+        tCost = o.totalNetto - wNetto;
+        costPerTrip = (parseFloat(o.transportKm) || 0) * (parseFloat(o.transportRate) || 0);
+    } else if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
+        const off = pendingOrderCreationData.offer;
+        const sel = pendingOrderCreationData.selectedWells;
+        if (sel) {
+            sel.forEach(w => tWeight += (typeof calcWellStats === 'function' ? calcWellStats(w).weight : 0));
+        }
+        const gWeight = off.totalWeight || 0;
+        const gKm = parseFloat(off.transportKm) || 0;
+        const gRate = parseFloat(off.transportRate) || 0;
+        const gCost = (gKm > 0 && gRate > 0) ? Math.ceil(gWeight / 24000) * gKm * gRate : 0;
+        if (gWeight > 0 && tWeight > 0) {
+            tCost = gCost * (tWeight / gWeight);
+        }
+        costPerTrip = gKm * gRate;
+    }
+    
+    if (wyliczonyTransportInput) {
+        const t = Math.max(0, tCost);
+        if (t > 0 && costPerTrip > 0) {
+            const full = Math.floor(t / costPerTrip);
+            const part = t - full * costPerTrip;
+            const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            if (full > 0 && part > 0.01) {
+                wyliczonyTransportInput.value = `${full} x ${fmt(costPerTrip)} zł + ${fmt(part)} zł`;
+            } else if (full > 0) {
+                wyliczonyTransportInput.value = `${full} x ${fmt(costPerTrip)} zł`;
+            } else {
+                wyliczonyTransportInput.value = `${fmt(part)} zł`;
+            }
+        } else if (t > 0) {
+            const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            wyliczonyTransportInput.value = `${fmt(t)} zł`;
+        } else {
+            wyliczonyTransportInput.value = 'Brak transportu';
+        }
+    }
+    
+    // Auto-detect Rodzaj stopni, Rodzaj studni, i Kineta
+    let detectedStopnie = 'Nie dotyczy';
+    let detectedRodzajStudni = 'Nie dotyczy';
+    let detectedKineta = 'Brak';
+    let detectedWysokoscSpocznika = 'Nie dotyczy';
+    let detectedPozostale = [];
+    const wellsToDetect = (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) ? orderEditMode.order.wells : ((typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) ? pendingOrderCreationData.selectedWells : []);
+    
+    if (wellsToDetect && wellsToDetect.length > 0) {
+        let hasNierdzewna = false;
+        let hasDrabinka = false;
+        let hasBrak = false;
+        
+        let hasZelbet = false;
+        let hasBetonStudnia = false;
+        
+        let hasPrecoTop = false;
+        let hasPreco = false;
+        let hasBetonKineta = false;
+        
+        let spocznikHFound = null;
+        
+        wellsToDetect.forEach(w => {
+            // Stopnie
+            if (w.stopnie === 'nierdzewna') hasNierdzewna = true;
+            else if (w.stopnie === 'drabinka') hasDrabinka = true;
+            else if (w.stopnie === 'brak') hasBrak = true;
+            
+            // Rodzaj studni
+            if (w.dennicaMaterial === 'zelbetowa' || w.nadbudowa === 'zelbetowa' || w.material === 'zelbetowa') hasZelbet = true;
+            else if (w.dennicaMaterial === 'betonowa' || w.nadbudowa === 'betonowa' || w.material === 'betonowa') hasBetonStudnia = true;
+            
+            // Kineta
+            if (w.kineta === 'precotop') hasPrecoTop = true;
+            else if (w.kineta === 'preco') hasPreco = true;
+            else if (w.kineta === 'beton') hasBetonKineta = true;
+            
+            // Wysokość spocznika
+            if (w.spocznikH && w.spocznikH !== 'brak') {
+                spocznikHFound = w.spocznikH;
+            }
+
+            // Agresja
+            if (w.agresjaChemiczna && w.agresjaChemiczna !== 'brak' && !detectedPozostale.includes(w.agresjaChemiczna)) {
+                detectedPozostale.push(w.agresjaChemiczna);
+            }
+            if (w.agresjaMrozowa && w.agresjaMrozowa !== 'brak' && !detectedPozostale.includes(w.agresjaMrozowa)) {
+                detectedPozostale.push(w.agresjaMrozowa);
+            }
+        });
+        
+        if (hasNierdzewna) detectedStopnie = 'Drabinka nierdzewna';
+        else if (hasDrabinka) detectedStopnie = 'Drabinka';
+        else if (hasBrak) detectedStopnie = 'Brak';
+        
+        if (hasZelbet) detectedRodzajStudni = 'Żelbet';
+        else if (hasBetonStudnia) detectedRodzajStudni = 'Beton';
+        
+        if (hasPrecoTop) detectedKineta = 'PrecoTop';
+        else if (hasPreco) detectedKineta = 'Preco';
+        else if (hasBetonKineta) detectedKineta = 'Beton';
+        
+        if (spocznikHFound) detectedWysokoscSpocznika = spocznikHFound;
+    }
+    if (rodzajStopniInput) rodzajStopniInput.value = detectedStopnie;
+    if (rodzajStudniInput) rodzajStudniInput.value = detectedRodzajStudni;
+    if (uszczelkaStudniInput) uszczelkaStudniInput.value = 'Brak';
+    if (kinetaInput) kinetaInput.value = detectedKineta;
+    if (wysokoscSpocznikaInput) wysokoscSpocznikaInput.value = detectedWysokoscSpocznika;
+    if (usytuowanieInput) usytuowanieInput.value = 'Linia dolna';
+    if (kaskadaInput) kaskadaInput.value = 'Nie dotyczy';
+    if (kaskadaUwagiInput) kaskadaUwagiInput.value = '';
+    if (slepaKinetaInput) slepaKinetaInput.value = 'Nie dotyczy';
+    if (slepaKinetaUwagiInput) slepaKinetaUwagiInput.value = '';
+    if (redukcjaKinetyInput) redukcjaKinetyInput.value = 'Nie dotyczy';
+    if (przejsciaTulejoweInput) przejsciaTulejoweInput.value = 'Nie dotyczy';
+    if (przejsciaSzczelneInput) przejsciaSzczelneInput.value = 'Nie dotyczy';
+    if (wlasciwosciBetonuInput) wlasciwosciBetonuInput.value = 'C40/50';
+    if (pozostaleWlasciwosciInput) pozostaleWlasciwosciInput.value = detectedPozostale ? detectedPozostale.join(', ') : '';
+    if (przejsciaZamowioneInput) przejsciaZamowioneInput.value = 'Nie dotyczy';
+    if (dataZamowieniaInput) dataZamowieniaInput.value = '';
+    
+    let existingData = null;
+    
+    // Jeśli edytujemy zamówienie, wczytaj jego dane
+    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.kartaBudowy) {
+        existingData = orderEditMode.order.kartaBudowy;
+    }
+
+    if (!existingData && typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData && pendingOrderCreationData.kartaBudowyTemplate) {
+        existingData = pendingOrderCreationData.kartaBudowyTemplate;
+    }
+    
+    if (existingData) {
+        if (emailFakturaInput) emailFakturaInput.value = existingData.emailFaktura || '';
+        if (emailEfakturaInput) emailEfakturaInput.value = existingData.emailEfaktura || '';
+        if (adresWysylkiInput) adresWysylkiInput.value = existingData.adresWysylki || '';
+        if (warunkiPlatnosciInput && existingData.warunkiPlatnosci) warunkiPlatnosciInput.value = existingData.warunkiPlatnosci;
+        if (iloscDniInput) iloscDniInput.value = existingData.iloscDni || '';
+        if (ubezpieczenieInput) ubezpieczenieInput.value = existingData.ubezpieczenie || '';
+        if (osobaKontaktInput) osobaKontaktInput.value = existingData.osobaKontakt || '';
+        if (zabezpieczenieTransportuInput && existingData.zabezpieczenieTransportu) zabezpieczenieTransportuInput.value = existingData.zabezpieczenieTransportu;
+        if (rodzajTransportuInput && existingData.rodzajTransportu) rodzajTransportuInput.value = existingData.rodzajTransportu;
+        if (rodzajStopniInput && existingData.rodzajStopni) {
+            rodzajStopniInput.value = existingData.rodzajStopni;
+            if (existingData.rodzajStopni === 'Inne') {
+                const wrap = document.getElementById('step4-rodzaj-stopni-inne-wrap');
+                if (wrap) wrap.style.display = 'block';
+                if (rodzajStopniInneInput) rodzajStopniInneInput.value = existingData.rodzajStopniInne || '';
+            }
+        }
+        if (rodzajStudniInput && existingData.rodzajStudni) {
+            rodzajStudniInput.value = existingData.rodzajStudni;
+        }
+        if (uszczelkaStudniInput && existingData.uszczelkaStudni) {
+            uszczelkaStudniInput.value = existingData.uszczelkaStudni;
+            if (existingData.uszczelkaStudni === 'Inne') {
+                const wrap = document.getElementById('step4-uszczelka-studni-inne-wrap');
+                if (wrap) wrap.style.display = 'block';
+                if (uszczelkaStudniInneInput) uszczelkaStudniInneInput.value = existingData.uszczelkaStudniInne || '';
+            }
+        }
+        if (kinetaInput && existingData.kineta) {
+            kinetaInput.value = existingData.kineta;
+            if (existingData.kineta === 'Inne') {
+                const wrap = document.getElementById('step4-kineta-inne-wrap');
+                if (wrap) wrap.style.display = 'block';
+                if (kinetaInneInput) kinetaInneInput.value = existingData.kinetaInne || '';
+            }
+        }
+        if (wysokoscSpocznikaInput && existingData.wysokoscSpocznika) {
+            wysokoscSpocznikaInput.value = existingData.wysokoscSpocznika;
+        }
+        if (usytuowanieInput && existingData.usytuowanie) {
+            usytuowanieInput.value = existingData.usytuowanie;
+        }
+        if (kaskadaInput && existingData.kaskada) {
+            kaskadaInput.value = existingData.kaskada;
+        }
+        if (kaskadaUwagiInput && existingData.kaskadaUwagi) {
+            kaskadaUwagiInput.value = existingData.kaskadaUwagi;
+        }
+        if (slepaKinetaInput && existingData.slepaKineta) {
+            slepaKinetaInput.value = existingData.slepaKineta;
+        }
+        if (slepaKinetaUwagiInput && existingData.slepaKinetaUwagi) {
+            slepaKinetaUwagiInput.value = existingData.slepaKinetaUwagi;
+        }
+        if (redukcjaKinetyInput && existingData.redukcjaKinety) {
+            redukcjaKinetyInput.value = existingData.redukcjaKinety;
+        }
+        if (przejsciaTulejoweInput && existingData.przejsciaTulejowe) {
+            przejsciaTulejoweInput.value = existingData.przejsciaTulejowe;
+        }
+        if (przejsciaSzczelneInput && existingData.przejsciaSzczelne) {
+            przejsciaSzczelneInput.value = existingData.przejsciaSzczelne;
+        }
+        if (wlasciwosciBetonuInput && existingData.wlasciwosciBetonu) {
+            wlasciwosciBetonuInput.value = existingData.wlasciwosciBetonu;
+        }
+        if (pozostaleWlasciwosciInput && existingData.pozostaleWlasciwosci) {
+            pozostaleWlasciwosciInput.value = existingData.pozostaleWlasciwosci;
+        }
+        if (przejsciaZamowioneInput && existingData.przejsciaZamowione) {
+            przejsciaZamowioneInput.value = existingData.przejsciaZamowione;
+        }
+        if (dataZamowieniaInput && existingData.dataZamowienia) {
+            dataZamowieniaInput.value = existingData.dataZamowienia;
+        }
+        
+        if (existingData.offerNumbers && existingData.offerNumbers.length > 0) {
+            if (offerInput) offerInput.value = existingData.offerNumbers.join(', ');
+        } else if (primaryOfferNumber) {
+            if (offerInput) offerInput.value = primaryOfferNumber;
+        }
+    } else {
+        if (primaryOfferNumber && offerInput) {
+            offerInput.value = primaryOfferNumber;
+        }
+    }
+
+    if (typeof renderKartaBudowyCopyOptions === 'function') {
+        renderKartaBudowyCopyOptions();
+    }
+
+    // Renderuj szczegóły przejść szczelnych
+    renderPrzejsciaDetailsTable(existingData ? existingData.przejsciaDetails : null);
+
+    const uwagiEl = document.getElementById('step4-uwagi-ogolne');
+    
+    if (existingData) {
+        if (uwagiEl) uwagiEl.value = existingData.uwagiOgolne || '';
+    }
+    
+    if (uwagiEl && (!existingData || !existingData.uwagiOgolne)) {
+        const selectedWells = pendingOrderCreationData ? pendingOrderCreationData.selectedWells : (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order ? orderEditMode.order.wells : []);
+        if (selectedWells.length > 0 && typeof wellDiscounts !== 'undefined') {
+            let lines = [];
+            let precoDiscounts = new Set();
+            let pehdDiscounts = new Set();
+            let paintingLines = new Set();
+
+            const uniqueDns = [...new Set(selectedWells.map(w => w.dn))];
+            uniqueDns.forEach(dn => {
+                const discountKey = dn === 'styczna' ? 'styczne' : dn;
+                const d = wellDiscounts[discountKey];
+                if (d) {
+                    const den = parseFloat(d.dennica || 0);
+                    const nad = parseFloat(d.nadbudowa || 0);
+                    const pre = parseFloat(d.preco || 0);
+                    const pehd = parseFloat(d.pehd || 0);
+                    
+                    let parts = [];
+                    if (den > 0) parts.push(`Dennica: ${den.toFixed(2).replace('.', ',')}%`);
+                    if (nad > 0) parts.push(`Nadbudowa: ${nad.toFixed(2).replace('.', ',')}%`);
+                    
+                    if (parts.length > 0) {
+                        const label = dn === 'styczna' ? 'Styczne' : `DN${dn}`;
+                        lines.push(`${label} ${parts.join(', ')}`);
+                    }
+                    if (pre > 0) precoDiscounts.add(pre);
+                    if (pehd > 0) pehdDiscounts.add(pehd);
+                }
+            });
+            
+            selectedWells.forEach(w => {
+                if (w.malowanieW && w.malowanieW !== 'brak') {
+                    const price = parseFloat(w.malowanieWewCena || 0).toFixed(2).replace('.', ',');
+                    paintingLines.add(`Malowanie wewnątrz (${w.malowanieW}): ${price} PLN/m²`);
+                }
+                if (w.malowanieZ && w.malowanieZ !== 'brak') {
+                    const price = parseFloat(w.malowanieZewCena || 0).toFixed(2).replace('.', ',');
+                    paintingLines.add(`Malowanie zewnątrz (${w.malowanieZ}): ${price} PLN/m²`);
+                }
+            });
+            
+            precoDiscounts.forEach(pre => lines.push(`Preco: ${pre.toFixed(2).replace('.', ',')}%`));
+            pehdDiscounts.forEach(pehd => lines.push(`Wkładka PEHD: ${pehd.toFixed(2).replace('.', ',')}%`));
+            paintingLines.forEach(pl => lines.push(pl));
+
+            if (lines.length > 0) {
+                uwagiEl.value = lines.join('\n');
+            }
+        }
+    }
+}
+
+async function step4NextAction() {
+    const kartaData = collectKartaBudowyDataStep4();
+
+    // Scenariusz 1: Edycja istniejącego zamówienia — zapisz kartę i przejdź do kroku 5
+    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
+        orderEditMode.order.kartaBudowy = kartaData;
+        goToWizardStep(5);
+        return;
+    }
+
+    // Scenariusz 2: Tworzenie nowego zamówienia — finalizuj z zebranymi danymi
+    if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
+        const { offer, selectedWells } = pendingOrderCreationData;
+        pendingOrderCreationData = null;
+        await finalizeOrderFromOffer(offer, selectedWells, kartaData);
+        return;
+    }
+
+    // Scenariusz 3: Fallback — po prostu przejdź do kroku 5
+    goToWizardStep(5);
+}
+
+function getKartaBudowyCopyOrders() {
+    if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
+        return pendingOrderCreationData.kartaBudowyTemplateOrders || [];
+    }
+    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
+        const offerId = orderEditMode.order.offerId || orderEditMode.order.offerStudnieId || editingOfferIdStudnie;
+        return getOrdersForOffer(offerId).filter((order) => String(order.id) !== String(orderEditMode.order.id));
+    }
+    return [];
+}
+
+async function showKartaBudowyCopyPicker() {
+    if (!ordersStudnie) {
+        ordersStudnie = await loadOrdersStudnie();
+    }
+
+    renderKartaBudowyCopyOptions();
+
+    const copySelect = document.getElementById('step4-copy-order-select');
+    const orders = getKartaBudowyCopyOrders();
+
+    if (!orders.some((order) => order.kartaBudowy)) {
+        if (typeof showToast === 'function') {
+            showToast('Brak zamówień z zapisaną Kartą Budowy dla tej oferty.', 'info');
+        }
+        return;
+    }
+
+    if (copySelect) copySelect.focus();
+}
+
+function renderKartaBudowyCopyOptions() {
+    const copySelect = document.getElementById('step4-copy-order-select');
+    const copyButton = document.getElementById('step4-copy-toggle-btn');
+    const helpText = document.getElementById('step4-copy-order-help');
+    const orders =
+        typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData
+            ? pendingOrderCreationData.kartaBudowyTemplateOrders || []
+            : getKartaBudowyCopyOrders();
+
+    if (!copySelect) return;
+
+    if (!orders || orders.length === 0) {
+        copySelect.innerHTML = '<option>Brak zamówień do kopiowania</option>';
+        copySelect.disabled = true;
+        if (copyButton) copyButton.disabled = true;
+        if (helpText) helpText.textContent = 'Brak wcześniejszych zamówień powiązanych z tą ofertą.';
+        return;
+    }
+
+    const optionsHtml = [`<option value="">Wybierz kartę budowy do skopiowania</option>`].concat(
+        orders.map((order) => {
+            const label = order.orderNumber ? order.orderNumber : order.id ? order.id.substring(0, 8) : 'Brak numeru';
+            const suffix = order.kartaBudowy ? '' : ' (brak karty budowy)';
+            return `<option value="${order.id}"${order.kartaBudowy ? '' : ' disabled'}>${label}${suffix}</option>`;
+        })
+    );
+
+    copySelect.innerHTML = optionsHtml.join('');
+    copySelect.disabled = false;
+    if (copyButton) copyButton.disabled = !orders.some((order) => order.kartaBudowy);
+    if (helpText) helpText.textContent = 'Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.';
+}
+
+function copyKartaBudowyFromOrder() {
+    const copySelect = document.getElementById('step4-copy-order-select');
+    if (!copySelect) return;
+
+    const orderId = copySelect.value;
+    if (!orderId) {
+        if (typeof showToast === 'function') {
+            showToast('Wybierz zamówienie do skopiowania.', 'error');
+        }
+        return;
+    }
+
+    const orders =
+        typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData
+            ? pendingOrderCreationData.kartaBudowyTemplateOrders || []
+            : getKartaBudowyCopyOrders();
+    const sourceOrder = orders.find((order) => String(order.id) === String(orderId));
+
+    if (!sourceOrder) {
+        if (typeof showToast === 'function') {
+            showToast('Nie znaleziono wybranego zamówienia.', 'error');
+        }
+        return;
+    }
+
+    if (!sourceOrder.kartaBudowy) {
+        if (typeof showToast === 'function') {
+            showToast('Wybrane zamówienie nie ma zapisanych danych Karty Budowy.', 'error');
+        }
+        return;
+    }
+
+    applyCopiedKartaBudowyData(sourceOrder.kartaBudowy);
+
+    if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
+        pendingOrderCreationData.kartaBudowyTemplate = collectKartaBudowyDataStep4();
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(`Skopiowano dane Karty Budowy z zamówienia ${sourceOrder.orderNumber || sourceOrder.id.substring(0, 8)}.`, 'success');
+    }
+}
+
+function applyCopiedKartaBudowyData(sourceData) {
+    if (!sourceData) return;
+
+    const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el || value === undefined || value === null) return;
+        el.value = value;
+    };
+    const setSelect = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el || value === undefined || value === null || value === '') return;
+        el.value = value;
+    };
+
+    setValue('step4-email-faktura', sourceData.emailFaktura || '');
+    setValue('step4-email-efaktura', sourceData.emailEfaktura || '');
+    if (Array.isArray(sourceData.offerNumbers) && sourceData.offerNumbers.length > 0) {
+        setValue('step4-offer-nr-input', sourceData.offerNumbers.join(', '));
+    }
+    setValue('step4-adres-wysylki', sourceData.adresWysylki || '');
+    setSelect('step4-warunki-platnosci', sourceData.warunkiPlatnosci);
+    setValue('step4-ilosc-dni', sourceData.iloscDni || '');
+    setValue('step4-ubezpieczenie', sourceData.ubezpieczenie || '');
+    setValue('step4-osoba-kontakt', sourceData.osobaKontakt || '');
+    setSelect('step4-zabezpieczenie-transportu', sourceData.zabezpieczenieTransportu);
+    setSelect('step4-rodzaj-transportu', sourceData.rodzajTransportu);
+    setSelect('step4-rodzaj-stopni', sourceData.rodzajStopni);
+    setValue('step4-rodzaj-stopni-inne', sourceData.rodzajStopniInne || '');
+    setSelect('step4-rodzaj-studni', sourceData.rodzajStudni);
+    setSelect('step4-uszczelka-studni', sourceData.uszczelkaStudni);
+    setValue('step4-uszczelka-studni-inne', sourceData.uszczelkaStudniInne || '');
+    setSelect('step4-kineta', sourceData.kineta);
+    setValue('step4-kineta-inne', sourceData.kinetaInne || '');
+    setSelect('step4-wysokosc-spocznika', sourceData.wysokoscSpocznika);
+    setSelect('step4-usytuowanie', sourceData.usytuowanie);
+    setSelect('step4-kaskada', sourceData.kaskada);
+    setValue('step4-kaskada-uwagi', sourceData.kaskadaUwagi || '');
+    setSelect('step4-slepa-kineta', sourceData.slepaKineta);
+    setValue('step4-slepa-kineta-uwagi', sourceData.slepaKinetaUwagi || '');
+    setSelect('step4-redukcja-kinety', sourceData.redukcjaKinety);
+    setSelect('step4-przejscia-tulejowe', sourceData.przejsciaTulejowe);
+    setSelect('step4-przejscia-szczelne', sourceData.przejsciaSzczelne);
+    setSelect('step4-wlasciwosci-betonu', sourceData.wlasciwosciBetonu);
+    setValue('step4-pozostale-wlasciwosci', sourceData.pozostaleWlasciwosci || '');
+    setSelect('step4-przejscia-zamowione', sourceData.przejsciaZamowione);
+    setValue('step4-data-zamowienia', sourceData.dataZamowienia || '');
+    setValue('step4-uwagi-ogolne', sourceData.uwagiOgolne || '');
+
+    const toggleOther = (selectId, wrapId) => {
+        const select = document.getElementById(selectId);
+        const wrap = document.getElementById(wrapId);
+        if (select && wrap) wrap.style.display = select.value === 'Inne' ? 'block' : 'none';
+    };
+    toggleOther('step4-rodzaj-stopni', 'step4-rodzaj-stopni-inne-wrap');
+    toggleOther('step4-uszczelka-studni', 'step4-uszczelka-studni-inne-wrap');
+    toggleOther('step4-kineta', 'step4-kineta-inne-wrap');
+
+    mergeCopiedCustomPrzejscia(sourceData.przejsciaDetails);
+}
+
+function mergeCopiedCustomPrzejscia(sourceDetails) {
+    if (!Array.isArray(sourceDetails)) return;
+
+    _syncCustomRowsFromDOM();
+    const copiedCustomRows = sourceDetails
+        .filter((row) => row && row.source !== 'offer' && row.rodzaj)
+        .map((row) => ({
+            rodzaj: row.rodzaj || '',
+            dnOd: row.dnOd ?? '',
+            dnDo: row.dnDo ?? '',
+            uwagi: row.uwagi || '',
+            czyPrzejscie: row.czyPrzejscie || 'TAK',
+            source: 'custom'
+        }));
+
+    copiedCustomRows.forEach((row) => {
+        const exists = _customPrzejscieRows.some(
+            (current) =>
+                String(current.rodzaj || '') === String(row.rodzaj || '') &&
+                String(current.dnOd || '') === String(row.dnOd || '') &&
+                String(current.dnDo || '') === String(row.dnDo || '') &&
+                String(current.uwagi || '') === String(row.uwagi || '')
+        );
+        if (!exists) _customPrzejscieRows.push(row);
+    });
+
+    renderPrzejsciaDetailsTable(null);
+}
+
+/** Zbiera dane z formularza Kroku 4 */
+function collectKartaBudowyDataStep4() {
+    const emailFaktura = (document.getElementById('step4-email-faktura')?.value || '').trim();
+    const emailEfaktura = (document.getElementById('step4-email-efaktura')?.value || '').trim();
+    const offerInput = document.getElementById('step4-offer-nr-input')?.value || '';
+    const uwagiOgolne = (document.getElementById('step4-uwagi-ogolne')?.value || '').trim();
+    const adresWysylki = (document.getElementById('step4-adres-wysylki')?.value || '').trim();
+    const warunkiPlatnosci = (document.getElementById('step4-warunki-platnosci')?.value || 'przelew').trim();
+    const iloscDni = (document.getElementById('step4-ilosc-dni')?.value || '').trim();
+    const ubezpieczenie = (document.getElementById('step4-ubezpieczenie')?.value || '').trim();
+    const osobaKontakt = (document.getElementById('step4-osoba-kontakt')?.value || '').trim();
+    const zabezpieczenieTransportu = (document.getElementById('step4-zabezpieczenie-transportu')?.value || 'Nie dotyczy').trim();
+    const rodzajTransportu = (document.getElementById('step4-rodzaj-transportu')?.value || 'Transport P.V.').trim();
+    const rodzajStopni = (document.getElementById('step4-rodzaj-stopni')?.value || 'Nie dotyczy').trim();
+    const rodzajStopniInne = (document.getElementById('step4-rodzaj-stopni-inne')?.value || '').trim();
+    const rodzajStudni = (document.getElementById('step4-rodzaj-studni')?.value || 'Nie dotyczy').trim();
+    const uszczelkaStudni = (document.getElementById('step4-uszczelka-studni')?.value || 'Brak').trim();
+    const uszczelkaStudniInne = (document.getElementById('step4-uszczelka-studni-inne')?.value || '').trim();
+    const kineta = (document.getElementById('step4-kineta')?.value || 'Brak').trim();
+    const kinetaInne = (document.getElementById('step4-kineta-inne')?.value || '').trim();
+    const wysokoscSpocznika = (document.getElementById('step4-wysokosc-spocznika')?.value || 'Nie dotyczy').trim();
+    const usytuowanie = (document.getElementById('step4-usytuowanie')?.value || 'Linia dolna').trim();
+    const kaskada = (document.getElementById('step4-kaskada')?.value || 'Nie dotyczy').trim();
+    const kaskadaUwagi = (document.getElementById('step4-kaskada-uwagi')?.value || '').trim();
+    const slepaKineta = (document.getElementById('step4-slepa-kineta')?.value || 'Nie dotyczy').trim();
+    const slepaKinetaUwagi = (document.getElementById('step4-slepa-kineta-uwagi')?.value || '').trim();
+    const redukcjaKinety = (document.getElementById('step4-redukcja-kinety')?.value || 'Nie dotyczy').trim();
+    const przejsciaTulejowe = (document.getElementById('step4-przejscia-tulejowe')?.value || 'Nie dotyczy').trim();
+    const przejsciaSzczelne = (document.getElementById('step4-przejscia-szczelne')?.value || 'Nie dotyczy').trim();
+    const wlasciwosciBetonu = (document.getElementById('step4-wlasciwosci-betonu')?.value || 'C40/50').trim();
+    const pozostaleWlasciwosci = (document.getElementById('step4-pozostale-wlasciwosci')?.value || '').trim();
+    const wyliczonyTransport = (document.getElementById('step4-wyliczony-transport')?.value || '').trim();
+    const przejsciaZamowione = (document.getElementById('step4-przejscia-zamowione')?.value || 'Nie dotyczy').trim();
+    const dataZamowienia = (document.getElementById('step4-data-zamowienia')?.value || '').trim();
+    
+    const offerNumbers = offerInput.split(',').map(n => n.trim()).filter(n => n);
+    
+    return {
+        emailFaktura,
+        emailEfaktura,
+        offerNumbers,
+        adresWysylki,
+        warunkiPlatnosci,
+        iloscDni,
+        ubezpieczenie,
+        osobaKontakt,
+        zabezpieczenieTransportu,
+        rodzajTransportu,
+        wyliczonyTransport,
+        rodzajStopni,
+        rodzajStopniInne,
+        rodzajStudni,
+        uszczelkaStudni,
+        uszczelkaStudniInne,
+        kineta,
+        kinetaInne,
+        wysokoscSpocznika,
+        usytuowanie,
+        kaskada,
+        kaskadaUwagi,
+        slepaKineta,
+        slepaKinetaUwagi,
+        redukcjaKinety,
+        przejsciaTulejowe,
+        przejsciaSzczelne,
+        wlasciwosciBetonu,
+        pozostaleWlasciwosci,
+        przejsciaZamowione,
+        dataZamowienia,
+        przejsciaDetails: collectPrzejsciaDetailsFromTable(),
+        uwagiOgolne: uwagiOgolne,
+        createdAt: new Date().toISOString()
+    };
+}
+
+function handlePrzejsciaZamowioneChange(selectElement) {
+    const dataInput = document.getElementById('step4-data-zamowienia');
+    if (!dataInput) return;
+    
+    if (selectElement.value === 'Tak') {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dataInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+}
+
+/* ===== SEKCJA PRZEJŚĆ SZCZELNYCH — SZCZEGÓŁY Z OFERTY ===== */
+
+/** Tymczasowa tablica ręcznie dodanych wierszy niestandardowych przejść */
+let _customPrzejscieRows = [];
+let _offerPrzejscieRows = [];
+let _przejsciaInitialized = false;
+
+/**
+ * Buduje listę typów przejść z cennika (studnieProducts).
+ * Zwraca tablicę: [{ rodzaj, dnOd, dnDo, source: 'offer' }]
+ */
+function buildOfferPrzejsciaTypes() {
+    const usedProductIds = new Set();
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        wells.forEach((w) => {
+            if (w.przejscia && Array.isArray(w.przejscia)) {
+                w.przejscia.forEach((pr) => {
+                    if (pr.productId) {
+                        usedProductIds.add(pr.productId);
+                    }
+                });
+            }
+        });
+    }
+
+    const przejsciaProducts = studnieProducts.filter(
+        (p) => p.componentType === 'przejscie' && p.active !== 0 && usedProductIds.has(p.id)
+    );
+    const typeMap = new Map();
+
+    przejsciaProducts.forEach((p) => {
+        const cat = p.category;
+        if (!cat) return;
+        let dn = 0;
+        if (typeof p.dn === 'string' && p.dn.includes('/')) {
+            dn = parseFloat(p.dn.split('/')[1]) || parseFloat(p.dn.split('/')[0]) || 0;
+        } else {
+            dn = parseFloat(p.dn) || 0;
+        }
+        if (!typeMap.has(cat)) {
+            typeMap.set(cat, { dnMin: dn, dnMax: dn });
+        } else {
+            const entry = typeMap.get(cat);
+            if (dn < entry.dnMin) entry.dnMin = dn;
+            if (dn > entry.dnMax) entry.dnMax = dn;
+        }
+    });
+
+    const result = [];
+    typeMap.forEach((val, key) => {
+        result.push({
+            rodzaj: key,
+            dnOd: val.dnMin,
+            dnDo: val.dnMax,
+            ilosc: 1,
+            uwagi: '',
+            czyPrzejscie: 'TAK',
+            source: 'offer'
+        });
+    });
+    return result.sort((a, b) => a.rodzaj.localeCompare(b.rodzaj));
+}
+
+/**
+ * Renderuje tabelę szczegółów przejść szczelnych w Karcie budowy (Step 4).
+ * @param {Array|null} existingData — zapisane dane z kartaBudowy.przejsciaDetails
+ */
+function renderPrzejsciaDetailsTable(existingData) {
+    const container = document.getElementById('step4-przejscia-details-table');
+    if (!container) return;
+
+    if (!_przejsciaInitialized || existingData) {
+        _offerPrzejscieRows = buildOfferPrzejsciaTypes();
+        _customPrzejscieRows = [];
+        if (existingData && Array.isArray(existingData)) {
+            _customPrzejscieRows = existingData.filter((r) => r.source === 'custom');
+            const savedOffers = existingData.filter((r) => r.source === 'offer');
+            if (savedOffers.length > 0) {
+                _offerPrzejscieRows = savedOffers;
+            } else {
+                _offerPrzejscieRows.forEach((ot) => {
+                    const saved = existingData.find((s) => s.source === 'offer' && s.rodzaj === ot.rodzaj);
+                    if (saved) {
+                        ot.dnOd = saved.dnOd ?? ot.dnOd;
+                        ot.dnDo = saved.dnDo ?? ot.dnDo;
+                        ot.ilosc = saved.ilosc || 1;
+                        ot.uwagi = saved.uwagi || '';
+                        ot.czyPrzejscie = saved.czyPrzejscie || 'TAK';
+                    }
+                });
+            }
+        }
+        _przejsciaInitialized = true;
+    }
+
+    // Przywróć dane jeśli istnieją
+    if (false && existingData && Array.isArray(existingData)) {
+        _customPrzejscieRows = existingData.filter((r) => r.source === 'custom');
+
+        // Nadpisz wartości z zapisanych danych do typów z oferty
+        offerTypes.forEach((ot) => {
+            const saved = existingData.find((s) => s.source === 'offer' && s.rodzaj === ot.rodzaj);
+            if (saved) {
+                ot.dnOd = saved.dnOd ?? ot.dnOd;
+                ot.dnDo = saved.dnDo ?? ot.dnDo;
+                ot.ilosc = saved.ilosc || 1;
+                ot.uwagi = saved.uwagi || '';
+                ot.czyPrzejscie = saved.czyPrzejscie || 'TAK';
+            }
+        });
+    }
+
+    const allRows = [..._offerPrzejscieRows, ..._customPrzejscieRows];
+
+    if (allRows.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.72rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przejść szczelnych w cenniku. Dodaj niestandardowe przejście przyciskiem powyżej.</div>';
+        return;
+    }
+
+    let html = `<div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+            <thead>
+                <tr style="border-bottom:1px solid rgba(139,92,246,0.2);">
+                    <th style="text-align:left; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Rodzaj</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN od</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN do</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Ilość</th>
+                    <th style="text-align:left; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Uwagi</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Czy przejście?</th>
+                    <th style="width:36px;"></th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    // Wiersze z oferty
+    _offerPrzejscieRows.forEach((row, idx) => {
+        html += buildPrzejscieRowHTML(row, idx, 'offer');
+    });
+
+    // Wiersze niestandardowe
+    _customPrzejscieRows.forEach((row, idx) => {
+        html += buildPrzejscieRowHTML(row, idx, 'custom');
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+
+    if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+    }
+}
+
+/**
+ * Buduje HTML wiersza tabeli przejścia szczelnego.
+ * @param {Object} row — dane wiersza
+ * @param {number} idx — indeks w swojej grupie
+ * @param {'offer'|'custom'} source — źródło wiersza
+ */
+
+/** Aktualizuje opcje DN w zależności od wybranego rodzaju przejścia */
+function updatePrzejscieDnOptions(prefix, category) {
+    const dns = new Set();
+    if (typeof studnieProducts !== 'undefined') {
+        studnieProducts.forEach(p => {
+            if (p.componentType === 'przejscie' && p.active !== 0 && (!category || category === 'Inne' || p.category === category)) {
+                if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                    dns.add(parseFloat(p.dn.split('/')[1]) || parseFloat(p.dn.split('/')[0]) || 0);
+                } else if (p.dn) {
+                    dns.add(parseFloat(p.dn) || 0);
+                }
+            }
+        });
+    }
+    const dnOptions = Array.from(dns).filter(d => !isNaN(d) && d > 0).sort((a,b)=>a-b);
+    
+    ['dnod', 'dndo'].forEach(type => {
+        const select = document.getElementById(`${prefix}-${type}-select`);
+        const input = document.getElementById(`${prefix}-${type}`);
+        if (!select || !input) return;
+        
+        const currVal = input.value;
+        const forceInne = (category === 'Inne');
+        const isCurrInne = forceInne || (currVal && !dnOptions.includes(parseFloat(currVal)));
+        
+        let html = `<option value="" ${!currVal && !forceInne ? 'selected' : ''}>—</option>`;
+        html += dnOptions.map(d => `<option value="${d}" ${!forceInne && parseFloat(currVal) === d ? 'selected' : ''}>${d}</option>`).join('');
+        html += `<option value="Inne" ${isCurrInne ? 'selected' : ''}>Inne</option>`;
+        
+        select.innerHTML = html;
+        if (isCurrInne) {
+            select.value = 'Inne';
+            input.style.display = 'block';
+        } else if (currVal && dnOptions.includes(parseFloat(currVal))) {
+            select.value = parseFloat(currVal);
+            input.style.display = 'none';
+        } else {
+            select.value = '';
+            input.value = '';
+            input.style.display = 'none';
+        }
+    });
+}
+
+function buildPrzejscieRowHTML(row, idx, source) {
+    const prefix = `step4-psz-${source}-${idx}`;
+    const rowBg = source === 'custom' ? 'rgba(245,158,11,0.04)' : 'transparent';
+    const borderLeft = source === 'custom' ? '2px solid rgba(245,158,11,0.3)' : 'none';
+
+    const cats = new Set();
+    const dns = new Set();
+    if (typeof studnieProducts !== 'undefined') {
+        studnieProducts.forEach(p => {
+            if (p.componentType === 'przejscie' && p.active !== 0) {
+                if (p.category) cats.add(p.category);
+                if (!row.rodzaj || row.rodzaj === 'Inne' || p.category === row.rodzaj) {
+                    if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                        dns.add(parseFloat(p.dn.split('/')[1]) || parseFloat(p.dn.split('/')[0]) || 0);
+                    } else if (p.dn) {
+                        dns.add(parseFloat(p.dn) || 0);
+                    }
+                }
+            }
+        });
+    }
+    
+    const catOptions = Array.from(cats).sort();
+    const dnOptions = Array.from(dns).filter(d => !isNaN(d) && d > 0).sort((a,b)=>a-b);
+    
+    const isRodzajInne = row.rodzaj && !catOptions.includes(row.rodzaj);
+    const isDnOdInne = row.dnOd && !dnOptions.includes(parseFloat(row.dnOd));
+    const isDnDoInne = row.dnDo && !dnOptions.includes(parseFloat(row.dnDo));
+    
+    const warnScript = source === 'offer' ? "if(!this.dataset.warned) { appConfirm('Zmieniasz przejście przepisane z oferty!', { title: 'Ostrzeżenie', type: 'warning', okText: 'Rozumiem', cancelText: 'OK' }); this.dataset.warned = '1'; }" : "";
+
+    const rodzajCell = `
+        <div style="display:flex; gap:0.4rem; flex-direction:column;">
+            <select id="${prefix}-rodzaj-select" class="form-input" style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
+                <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
+                ${catOptions.map(c => `<option value="${c}" ${row.rodzaj === c ? 'selected' : ''}>${c}</option>`).join('')}
+                <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
+            </select>
+            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
+        </div>`;
+
+    const dnOdCell = `
+        <div style="display:flex; gap:0.4rem; flex-direction:column;">
+            <select id="${prefix}-dnod-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
+                <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
+                ${dnOptions.map(d => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
+                <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
+            </select>
+            <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnOdInne ? 'block' : 'none'};" onchange="${warnScript}">
+        </div>`;
+
+    const dnDoCell = `
+        <div style="display:flex; gap:0.4rem; flex-direction:column;">
+            <select id="${prefix}-dndo-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
+                <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
+                ${dnOptions.map(d => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
+                <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
+            </select>
+            <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnDoInne ? 'block' : 'none'};" onchange="${warnScript}">
+        </div>`;
+
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); background:${rowBg}; border-left:${borderLeft};" data-psz-source="${source}" data-psz-idx="${idx}">
+        <td style="padding:0.4rem 0.5rem; white-space:nowrap; vertical-align:top;">${rodzajCell}</td>
+        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">${dnOdCell}</td>
+        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">${dnDoCell}</td>
+        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">
+            <input type="number" id="${prefix}-ilosc" class="form-input" value="${row.ilosc || 1}" placeholder="1" min="1" style="width:56px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700;" onchange="${warnScript}">
+        </td>
+        <td style="padding:0.4rem 0.5rem; vertical-align:top;">
+            <input type="text" id="${prefix}-uwagi" class="form-input" value="${(row.uwagi || '').toString().replace(/"/g, '&quot;')}" placeholder="Uwagi..." style="width:100%; font-size:0.75rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript}">
+        </td>
+        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">
+            <select id="${prefix}-czy" class="form-input" style="width:80px; font-size:0.75rem; padding:0.3rem; text-align:center; font-weight:700; border-radius:4px; ${row.czyPrzejscie === 'TAK' ? 'color:#4ade80; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3);' : 'color:#f87171; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">
+                <option value="TAK"${row.czyPrzejscie === 'TAK' ? ' selected' : ''}>TAK</option>
+                <option value="NIE"${row.czyPrzejscie === 'NIE' ? ' selected' : ''}>NIE</option>
+            </select>
+        </td>
+        <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
+            <button type="button" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; width:26px; height:26px; border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s;" onmouseenter="this.style.background='rgba(239,68,68,0.25)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+        </td>
+    </tr>`;
+}
+
+/** Aktualizuje styl selecta TAK/NIE po zmianie wartości */
+function updatePrzejscieSelectStyle(selectEl) {
+    if (selectEl.value === 'TAK') {
+        selectEl.style.color = '#4ade80';
+        selectEl.style.background = 'rgba(34,197,94,0.1)';
+        selectEl.style.border = '1px solid rgba(34,197,94,0.3)';
+    } else {
+        selectEl.style.color = 'var(--danger-hover)';
+        selectEl.style.background = 'rgba(239,68,68,0.1)';
+        selectEl.style.border = '1px solid rgba(239,68,68,0.3)';
+    }
+}
+
+/** Dodaje nowy wiersz niestandardowego przejścia */
+function addCustomPrzejscieRow() {
+    // Zbierz aktualny stan z DOM przed dodaniem nowego
+    _syncCustomRowsFromDOM();
+
+    _customPrzejscieRows.push({
+        rodzaj: '',
+        dnOd: '',
+        dnDo: '',
+        ilosc: 1,
+        uwagi: '',
+        czyPrzejscie: 'TAK',
+        source: 'custom'
+    });
+
+    renderPrzejsciaDetailsTable(null);
+    // Ustaw fokus na nowym wierszu
+    setTimeout(() => {
+        const newIdx = _customPrzejscieRows.length - 1;
+        const rodzajInput = document.getElementById(`step4-psz-custom-${newIdx}-rodzaj`);
+        if (rodzajInput) rodzajInput.focus();
+    }, 50);
+}
+
+/** Usuwa wiersz niestandardowego przejścia */
+
+/** Usuwa wiersz przejścia szczelnego */
+async function removePrzejscieRow(source, idx) {
+    _syncCustomRowsFromDOM();
+    if (source === 'offer') {
+        if (!(await appConfirm('Usuwasz przejście przepisane z oferty. Czy na pewno chcesz to zrobić?', { title: 'Potwierdzenie', type: 'warning' }))) return;
+        _offerPrzejscieRows.splice(idx, 1);
+    } else {
+        _customPrzejscieRows.splice(idx, 1);
+    }
+    renderPrzejsciaDetailsTable(null);
+}
+
+
+/**
+ * Synchronizuje dane wierszy niestandardowych z DOM do pamięci,
+ * aby nie stracić wpisanych wartości przy dodawaniu/usuwaniu wiersza.
+ */
+function _syncCustomRowsFromDOM() {
+    const rows = document.querySelectorAll('tr[data-psz-source]');
+    rows.forEach(tr => {
+        const source = tr.dataset.pszSource;
+        const idx = parseInt(tr.dataset.pszIdx);
+        const prefix = `step4-psz-${source}-${idx}`;
+        
+        const rodzajEl = document.getElementById(`${prefix}-rodzaj`);
+        const dnOdEl = document.getElementById(`${prefix}-dnod`);
+        const dnDoEl = document.getElementById(`${prefix}-dndo`);
+        const iloscEl = document.getElementById(`${prefix}-ilosc`);
+        const uwagiEl = document.getElementById(`${prefix}-uwagi`);
+        const czyEl = document.getElementById(`${prefix}-czy`);
+        
+        if (!rodzajEl) return;
+        
+        const data = {
+            rodzaj: rodzajEl.value.trim(),
+            dnOd: dnOdEl.value ? parseFloat(dnOdEl.value) : '',
+            dnDo: dnDoEl.value ? parseFloat(dnDoEl.value) : '',
+            ilosc: iloscEl ? parseInt(iloscEl.value) || 1 : 1,
+            uwagi: uwagiEl ? uwagiEl.value.trim() : '',
+            czyPrzejscie: czyEl ? czyEl.value : 'TAK',
+            source: source
+        };
+        
+        if (source === 'custom') {
+            _customPrzejscieRows[idx] = data;
+        } else if (source === 'offer') {
+            _offerPrzejscieRows[idx] = data;
+        }
+    });
+}
+
+/** Zbiera informacje o przejściach szczelnych z tabeli */
+function collectPrzejsciaDetailsFromTable() {
+    _syncCustomRowsFromDOM();
+    const result = [];
+    _offerPrzejscieRows.forEach(r => {
+        if (r.rodzaj && r.rodzaj.trim() !== '') {
+            result.push({
+                rodzaj: r.rodzaj.trim(),
+                dnOd: r.dnOd !== '' ? parseFloat(r.dnOd) : 0,
+                dnDo: r.dnDo !== '' ? parseFloat(r.dnDo) : 0,
+                ilosc: r.ilosc || 1,
+                uwagi: r.uwagi || '',
+                czyPrzejscie: r.czyPrzejscie || 'TAK',
+                source: 'offer'
+            });
+        }
+    });
+    _customPrzejscieRows.forEach(r => {
+        if (r.rodzaj && r.rodzaj.trim() !== '') {
+            result.push({
+                rodzaj: r.rodzaj.trim(),
+                dnOd: r.dnOd !== '' ? parseFloat(r.dnOd) : 0,
+                dnDo: r.dnDo !== '' ? parseFloat(r.dnDo) : 0,
+                ilosc: r.ilosc || 1,
+                uwagi: r.uwagi || '',
+                czyPrzejscie: r.czyPrzejscie || 'TAK',
+                source: 'custom'
+            });
+        }
+    });
+    return result;
+}
+
+/** Druga część tworzenia zamówienia wywoływana z kroku 4 */
+async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     // Określ przypisanego użytkownika dla numeracji zamówienia — domyślnie opiekun oferty
     let assignedUserId = offer.userId || (currentUser ? currentUser.id : null);
     let assignedUserName =
@@ -237,6 +1342,7 @@ async function createOrderFromOffer() {
         },
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
+        kartaBudowy: kartaBudowyData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: currentUser ? currentUser.username : ''
@@ -259,7 +1365,9 @@ async function createOrderFromOffer() {
     // Oblicz transport dla zamówienia (proporcjonalnie do wagi wybranych studni)
     let orderTransportCost = 0;
     const globalOfferWeight = offer.totalWeight || 0;
-    const globalOfferTransport = offer.totalTransportCost || 0;
+    const gKm = parseFloat(offer.transportKm) || 0;
+    const gRate = parseFloat(offer.transportRate) || 0;
+    const globalOfferTransport = (gKm > 0 && gRate > 0) ? Math.ceil(globalOfferWeight / 24000) * gKm * gRate : 0;
     if (globalOfferWeight > 0 && totalWeight > 0) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
@@ -298,8 +1406,12 @@ async function createOrderFromOffer() {
         _sendAcceptanceTelemetry(selectedWellsCopy, 'ORDER_CONFIRM');
     }
 
+    // Ustaw krok na 4.2 (Zamówienie) przed przekierowaniem
+    currentWizardStep = 5;
+    if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
+
     // Otwórz zamówienie w tym samym oknie (używa głównego edytora studni w trybie zamówienia)
-    window.location.href = '/studnie?order=' + order.id;
+    window.location.href = 'studnie.html?order=' + order.id;
 }
 
 /** Zbiera indeksy zaznaczonych studni z checkboxów w podsumowaniu oferty */
@@ -634,7 +1746,7 @@ function getCurrentOfferOrder() {
 async function enterOrderEditMode(orderId) {
     try {
         console.log('[enterOrderEditMode] START orderId=', orderId);
-        const res = await fetch(`/api/orders-studnie/${orderId}`, { headers: authHeaders() });
+        const res = await fetchWithTimeout(`/api/orders-studnie/${orderId}`, { headers: authHeaders() }, 15000);
         if (!res.ok) {
             showToast('Zamówienie nie znalezione', 'error');
             return;
@@ -653,6 +1765,7 @@ async function enterOrderEditMode(orderId) {
 
         orderEditMode = { orderId: order.id, order: order };
         editingOfferIdStudnie = order.offerId || null;
+        window.isPreviewMode = false;
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
 
@@ -706,11 +1819,11 @@ async function enterOrderEditMode(orderId) {
 
         console.log('[enterOrderEditMode] fields filled, calling skipWizardToStep3...');
 
-        // Pomiń kreatora → przejdź bezpośrednio do kroku 4 (Zamówienie)
+        // Pomiń kreatora → przejdź bezpośrednio do kroku 5 (Zamówienie = 4.2)
         wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
-        currentWizardStep = 4;
+        currentWizardStep = 5;
         document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
-        const target = document.getElementById('wizard-step-3'); // Step 4 reuses step 3's UI panel
+        const target = document.getElementById('wizard-step-3'); // Step 4.2 reuses step 3's UI panel
         if (target) target.classList.add('active');
         if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
         if (typeof updateWizardSummaryBar === 'function') updateWizardSummaryBar();
@@ -871,7 +1984,7 @@ function renderOrderModeBanner() {
         if (saveZamowienieSidebarBtn) saveZamowienieSidebarBtn.style.display = 'none';
         if (zleceniaSidebarBtn) zleceniaSidebarBtn.style.display = 'none';
         // Przywróć wskaźnik kreatora do kroku 3 (Oferta)
-        if (typeof currentWizardStep !== 'undefined' && currentWizardStep === 4) {
+        if (typeof currentWizardStep !== 'undefined' && currentWizardStep === 5) {
             currentWizardStep = 3;
             if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
         }
@@ -954,6 +2067,7 @@ async function saveCurrentOrder() {
             body: JSON.stringify({
                 wells: order.wells,
                 wellDiscounts: order.wellDiscounts,
+                kartaBudowy: order.kartaBudowy,
                 updatedAt: order.updatedAt,
                 totalWeight: order.totalWeight,
                 totalNetto: order.totalNetto,
@@ -1026,7 +2140,7 @@ function setZleceniaFilter(filter) {
 
 async function loadProductionOrders() {
     try {
-        const resp = await fetch('/api/orders-studnie/production', { headers: authHeaders() });
+        const resp = await fetchWithTimeout('/api/orders-studnie/production', { headers: authHeaders() });
         if (resp.ok) {
             const json = await resp.json();
             productionOrders = json.data || [];
@@ -2047,9 +3161,9 @@ function populateZleceniaForm(el) {
                     style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
                     onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
                     <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
-                    <span id="zl-przejscia-app-icon" style="font-size:0.75rem;">${przejsciaAppVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
+                    <span id="zl-przejscia-app-icon" style="font-size:0.75rem;"><i data-lucide="chevron-up"></i></span>
                 </div>
-                <div id="zl-inline-przejscia-app-container" class="card-content" style="margin-top:0.5rem; display:${przejsciaAppVisible ? 'block' : 'none'};">
+                <div id="zl-inline-przejscia-app-container" class="card-content" style="margin-top:0.5rem; display:block;">
                     <div id="zl-inline-przejscia-app"></div>
                 </div>
             </div>
@@ -3259,7 +4373,7 @@ function toggleBulkSeqItem(btn) {
         input.style.background = 'rgba(139,92,246,0.15)';
         
         btn.innerHTML = '<i data-lucide="trash-2" style="width:16px; height:16px;"></i>';
-        btn.style.color = '#f87171';
+        btn.style.color = 'var(--danger-hover)';
         btn.title = "Pomiń studnię";
     } else {
         item.classList.add('bulk-seq-excluded');
@@ -3428,3 +4542,84 @@ document.addEventListener('DOMContentLoaded', () => {
         loadProductionOrders();
     }, 500);
 });
+
+window.showKartaBudowyExportChoice = function() {
+    if (!orderEditMode || !orderEditMode.orderId) {
+        showToast('Brak aktywnego zamówienia', 'error');
+        return;
+    }
+    const orderId = orderEditMode.orderId;
+    const modalHtml = `
+    <div id="karta-export-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px);">
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 350px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Wydruk Karty Budowy</h3>
+            <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 1.5rem;">Wybierz format eksportu karty budowy zamówienia</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
+                <button onclick="exportKartaToPDF_action('${orderId}')" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                    <span style="font-size: 2rem;"><i data-lucide="file-text"></i></span> PDF
+                </button>
+                <button onclick="exportKartaToWord_action('${orderId}')" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                    <span style="font-size: 2rem;"><i data-lucide="edit"></i></span> Word
+                </button>
+            </div>
+            <button style="padding: 0.5rem 1rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); cursor: pointer;" onclick="document.getElementById('karta-export-modal').remove()">Anuluj</button>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    if(typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+window.exportKartaToPDF_action = async function(orderId) {
+    document.getElementById('karta-export-modal').remove();
+    showToast('Generowanie Karty Budowy (PDF)...', 'info');
+    fetch(`/api/orders-studnie/${orderId}/export-karta-pdf`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `karta_budowy_${orderId.substring(0,8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('Pobrano Kartę Budowy w PDF', 'success');
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        showToast('Błąd eksportu: ' + err.message, 'error');
+    });
+};
+
+window.exportKartaToWord_action = async function(orderId) {
+    document.getElementById('karta-export-modal').remove();
+    showToast('Generowanie Karty Budowy (DOCX)...', 'info');
+    fetch(`/api/orders-studnie/${orderId}/export-karta-docx`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `karta_budowy_${orderId.substring(0,8)}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast('Pobrano Kartę Budowy w DOCX', 'success');
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        showToast('Błąd eksportu: ' + err.message, 'error');
+    });
+};

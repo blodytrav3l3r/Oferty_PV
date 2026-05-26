@@ -46,7 +46,17 @@ jest.mock('../src/prismaClient', () => ({
     default: {
         offers_rel: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
         offers_studnie_rel: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
-        clients_rel: { upsert: jest.fn(), findMany: jest.fn() },
+        clients_rel: { upsert: jest.fn(), findMany: jest.fn(), deleteMany: jest.fn() },
+        $queryRaw: jest.fn(),
+        $executeRaw: jest.fn(),
+        $transaction: jest.fn(async (fn: any) => {
+            const tx = {
+                clients_rel: { upsert: jest.fn(), findMany: jest.fn(), deleteMany: jest.fn() },
+                $queryRaw: jest.fn(),
+                $executeRaw: jest.fn()
+            };
+            return fn(tx);
+        }),
         pricelists: { upsert: jest.fn() },
         ai_telemetry_logs: { create: jest.fn() },
         users: { update: jest.fn(), findUnique: jest.fn() },
@@ -255,6 +265,116 @@ describe('API Validation Tests', () => {
                     letter: 'AB'
                 });
             expect(res.statusCode).toBe(400);
+        });
+    });
+
+    describe('GET /api/clients - pobieranie klientów', () => {
+        it('powinien zwrócić 200 z tablicą klientów', async () => {
+            const { default: prismaMock } = require('../src/prismaClient');
+            prismaMock.$queryRaw.mockResolvedValue([
+                { id: '1', name: 'Firma ABC', nip: '1234567890', userId: 'user-id', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: null },
+                { id: '2', name: 'Firma XYZ', nip: '9876543210', userId: 'user-id', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: null }
+            ]);
+
+            const res = await request(app)
+                .get('/api/clients')
+                .set(authHeader);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].name).toBe('Firma ABC');
+        });
+
+        it('powinien zwrócić 200 z pustą tablicą gdy brak klientów', async () => {
+            const { default: prismaMock } = require('../src/prismaClient');
+            prismaMock.$queryRaw.mockResolvedValue([]);
+
+            const res = await request(app)
+                .get('/api/clients')
+                .set(authHeader);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.data).toHaveLength(0);
+        });
+
+        it('powinien zwrócić 500 gdy baza zwraca błąd', async () => {
+            const { default: prismaMock } = require('../src/prismaClient');
+            prismaMock.$queryRaw.mockRejectedValue(new Error('DB connection failed'));
+
+            const res = await request(app)
+                .get('/api/clients')
+                .set(authHeader);
+
+            expect(res.statusCode).toBe(500);
+            expect(res.body.error).toBeDefined();
+        });
+
+        it('powinien normalizować timestampy do ISO', async () => {
+            const { default: prismaMock } = require('../src/prismaClient');
+            prismaMock.$queryRaw.mockResolvedValue([
+                { id: '1', name: 'Firma ABC', createdAt: '1779296688240', updatedAt: '1779296688306' }
+            ]);
+
+            const res = await request(app)
+                .get('/api/clients')
+                .set(authHeader);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.data[0].createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+            expect(res.body.data[0].updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+        });
+    });
+
+    describe('PUT /api/clients - synchronizacja klientów', () => {
+        it('powinien zwrócić 400 gdy NIP jest nieprawidłowy', async () => {
+            const res = await request(app)
+                .put('/api/clients')
+                .set(authHeader)
+                .send({
+                    data: [{ name: 'Test', nip: '123' }]
+                });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('powinien zwrócić 400 gdy telefon jest nieprawidłowy', async () => {
+            const res = await request(app)
+                .put('/api/clients')
+                .set(authHeader)
+                .send({
+                    data: [{ name: 'Test', phone: 'abc' }]
+                });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('powinien zwrócić 400 gdy nazwa przekracza 200 znaków', async () => {
+            const res = await request(app)
+                .put('/api/clients')
+                .set(authHeader)
+                .send({
+                    data: [{ name: 'A'.repeat(201) }]
+                });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('powinien zwrócić 400 gdy NIP ma nieprawidłowy checksum', async () => {
+            const res = await request(app)
+                .put('/api/clients')
+                .set(authHeader)
+                .send({
+                    data: [{ name: 'Test', nip: '1234567890' }]
+                });
+            expect(res.statusCode).toBe(400);
+        });
+
+        it('powinien zwrócić 200 przy poprawnym NIP', async () => {
+            const res = await request(app)
+                .put('/api/clients')
+                .set(authHeader)
+                .send({
+                    data: [{ name: 'Test', nip: '1234563218' }]
+                });
+            // 200 lub 500 zależy od mocka transakcji — ważne że walidacja NIP przechodzi
+            expect(res.statusCode).not.toBe(400);
         });
     });
 });

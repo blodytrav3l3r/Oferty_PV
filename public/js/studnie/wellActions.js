@@ -1,5 +1,7 @@
 /* ===== Extracted to wellActions.js ===== */
 
+let elevationDebounceTimer = null;
+
 function updateElevations() {
     if (isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
@@ -22,7 +24,12 @@ function updateElevations() {
 
     updateHeightIndicator();
     renderWellsList();
-    autoSelectComponents(true);
+
+    if (elevationDebounceTimer) clearTimeout(elevationDebounceTimer);
+    elevationDebounceTimer = setTimeout(() => {
+        elevationDebounceTimer = null;
+        autoSelectComponents(true);
+    }, 300);
 }
 
 function syncElevationInputs() {
@@ -50,10 +57,10 @@ function syncElevationInputs() {
 
         // Positive -> Green, Negative -> Red, Zero -> Default
         if (dVal > 0) {
-            doplataInput.style.color = '#10b981';
+            doplataInput.style.color = 'var(--success)';
             doplataInput.style.fontWeight = '700';
         } else if (dVal < 0) {
-            doplataInput.style.color = '#ef4444';
+            doplataInput.style.color = 'var(--danger)';
             doplataInput.style.fontWeight = '700';
         } else {
             doplataInput.style.color = '#a78bfa';
@@ -182,8 +189,8 @@ function checkWellNumerDuplicate(newNumer, inputEl) {
                 w.numer.toLowerCase() === newNumer.toLowerCase()
         );
         if (isDuplicate) {
-            inputEl.style.borderColor = '#ef4444';
-            inputEl.style.color = '#ef4444';
+            inputEl.style.borderColor = 'var(--danger)';
+            inputEl.style.color = 'var(--danger)';
             inputEl.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.2)';
             showToast(
                 `<i data-lucide="alert-triangle"></i> Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
@@ -215,10 +222,10 @@ function updateDoplata() {
 
     // Apply color immediately
     if (dVal > 0) {
-        domEl.style.color = '#10b981';
+        domEl.style.color = 'var(--success)';
         domEl.style.fontWeight = '700';
     } else if (dVal < 0) {
-        domEl.style.color = '#ef4444';
+        domEl.style.color = 'var(--danger)';
         domEl.style.fontWeight = '700';
     } else {
         domEl.style.color = '#a78bfa';
@@ -1028,8 +1035,8 @@ function renderWellConfig() {
             ? resolveEffectiveProduct(well, item.productId, item)
             : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
-        // W zamówieniu użyj zamrożonej ceny jeśli dostępna; w ofercie przelicz na nowo
-        const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
+        // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
+        const itemPrice = (item.frozenPrice != null && window.isPreviewMode ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
         let totalPrice = itemPrice * item.quantity;
 
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -1040,8 +1047,8 @@ function renderWellConfig() {
             if (kinetaItem) {
                 const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                 if (kinetaProd) {
-                    // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
-                    const rawKinetaPrice = (kinetaItem.frozenPrice != null ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true, kinetaItem));
+                    // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
+                    const rawKinetaPrice = (kinetaItem.frozenPrice != null && window.isPreviewMode ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true, kinetaItem));
                     totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
                 }
             }
@@ -1471,7 +1478,7 @@ function updateStyczna1200Button() {
         if (well.stycznaNadbudowa1200) {
             btn.innerHTML = 'Nadbudowa DN1200';
             btn.style.borderColor = 'rgba(99,102,241,0.5)';
-            btn.style.color = '#a5b4fc';
+            btn.style.color = 'var(--accent-text)';
             btn.style.backgroundColor = 'rgba(99,102,241,0.15)';
         } else {
             btn.innerHTML = 'Nadbudowa DN1200';

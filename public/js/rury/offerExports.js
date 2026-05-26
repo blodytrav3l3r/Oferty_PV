@@ -120,7 +120,7 @@ function exportOfferPDF(id) {
     .letterhead-header { width: 100%; object-fit: contain; margin-bottom: 20px; display: block; }
     .letterhead-footer { width: 100%; object-fit: contain; margin-top: 20px; display: block; page-break-inside: avoid; }
   </style></head><body>
-  <img src="${window.location.origin}/templates/naglowek.png" class="letterhead-header" onload="window._hLoaded=true" onerror="window._hLoaded=true" />
+  <img src="${window.location.origin}/images/letterhead-header.png" class="letterhead-header" onload="window._hLoaded=true" onerror="window._hLoaded=true" />
   <div class="header-line" style="margin-top:20px;">
     <h1>OFERTA HANDLOWA</h1>
     <div style="display:flex;justify-content:space-between">
@@ -173,7 +173,7 @@ function exportOfferPDF(id) {
     <strong>Warunki płatności:</strong> ${offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.'}<br>
     <strong>Data ważności oferty:</strong> ${offer.validity || '7 dni'}
   </div>
-  <img src="${window.location.origin}/templates/stopka.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
+  <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
   <div class="footer">Oferta wygenerowana automatycznie • WITROS</div>
   </body></html>`);
     printWin.document.close();

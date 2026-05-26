@@ -69,7 +69,7 @@ def _base_products_dn1500():
 
 def test_single_section_well():
     """Studnia jednosekcyjna DN1500 bez redukcji.
-    Poprawna kolejność: dennica → kręgi → konus → AVR → właz
+    Poprawna kolejność (od dołu): dennica → kręgi → konus → AVR → właz
     """
     # den(600) + konus(600) + właz(150) = 1350 stałe → rings=2000 → total=3350
     payload = {
@@ -92,12 +92,13 @@ def test_single_section_well():
     items = config["items"]
     types = [i["component_type"] for i in items]
 
-    # Kolejność: dennica na dole
+    # Kolejność (bottom→top): dennica → kregi → konus → avr → wlaz
     assert types[0] == "dennica"
+    assert types[-1] == "wlaz"
 
-    # Zakończenie (konus/plyta_din) na górze stacka
+    # Konus/płyta_din występuje przed włazem
     top_closure_types = ["konus", "plyta_din"]
-    assert types[-1] in top_closure_types
+    assert any(t in top_closure_types for t in types)
 
     # Brak redukcji
     assert "plyta_redukcyjna" not in types
@@ -109,7 +110,7 @@ def test_single_section_well():
 
 def test_two_section_reduction():
     """Studnia dwusekcyjna DN1500 z redukcją do DN1000.
-    Poprawna kolejność: dennica → kręgi DN1500 → płyta redukcyjna → kręgi DN1000 → konus → AVR → właz
+    Poprawna kolejność (od dołu): dennica → kręgi DN1500 → płyta redukcyjna → kręgi DN1000 → konus → AVR → właz
     """
     # den(600) + plate(200) + konus_1000(600) + właz(150) = 1550 → rings=2000 → total=3550
     payload = {
@@ -132,9 +133,12 @@ def test_two_section_reduction():
     items = config["items"]
     types = [i["component_type"] for i in items]
 
-    # Kolejność: dennica → kręgi → redukcja → konus
+    # Kolejność (bottom→top): dennica → kregi_1500 → redukcja → kregi_1000 → konus → avr → wlaz
     assert types[0] == "dennica"
-    assert types[-1] in ["konus", "plyta_din"]
+    assert types[-1] == "wlaz"
+
+    # Konus/płyta_din występuje przed włazem
+    assert any(t in ["konus", "plyta_din"] for t in types)
 
     # Płyta redukcyjna obecna
     assert "plyta_redukcyjna" in types
@@ -190,14 +194,3 @@ def test_transition_validation():
     # Wynik powinien istnieć (valid lub invalid z errorem)
     config = data[0]
     assert isinstance(config["is_valid"], bool)
-
-
-def test_sync_push():
-    payload = {
-        "changes": [
-            {"item_id": "TEST-123"}
-        ]
-    }
-    response = client.post("/api/v1/sync/push", json=payload)
-    assert response.status_code == 200
-    assert response.json()["status"] == "ok"

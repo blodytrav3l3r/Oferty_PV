@@ -69,8 +69,8 @@ function validateRingJoints(selectedRings, transitions, availableProducts, fixed
             zDol = parseFloat(pprod.zapasDol) || 300;
             zGora = parseFloat(pprod.zapasGora) || 300;
         } else {
-            zDol = parseFloat(pprod.zapasDolMin) || 300;
-            zGora = parseFloat(pprod.zapasGoraMin) || 300;
+            zDol = parseFloat(pprod.zapasDolMin) || 150;
+            zGora = parseFloat(pprod.zapasGoraMin) || 150;
         }
 
         // Strefa niebezpieczna: od (dolna krawędź rury - zapas dolny) do (górna krawędź rury + zapas górny)

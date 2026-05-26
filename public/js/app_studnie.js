@@ -3,6 +3,8 @@
    app_studnie.js  (Orchestrator - Entry Point)
    ============================ */
 
+window.__STUDNIE_APP_ORCHESTRATOR__ = true;
+
 /**
  * Zdarzenie DOMContentLoaded do inicjalizacji całej aplikacji.
  * UWAGA: Logika i główne zmienne znajdują się teraz w osobnych plikach w `public/js/studnie/`
@@ -15,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     try {
-        const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
+        const authRes = await fetchWithTimeout('/api/auth/me', { headers: authHeaders() });
         const authData = await authRes.json();
         if (!authData.user) {
             window.location.href = 'index.html';
@@ -44,11 +46,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentUser.role === 'admin' ? 'ADMIN' : currentUser.role === 'pro' ? 'PRO' : 'USER';
         if (currentUser.role === 'admin') {
             roleEl.style.background = 'rgba(245,158,11,0.15)';
-            roleEl.style.color = '#f59e0b';
+            roleEl.style.color = 'var(--warn)';
             roleEl.style.borderColor = 'rgba(245,158,11,0.3)';
         } else if (currentUser.role === 'pro') {
             roleEl.style.background = 'rgba(16,185,129,0.15)';
-            roleEl.style.color = '#10b981';
+            roleEl.style.color = 'var(--success)';
             roleEl.style.borderColor = 'rgba(16,185,129,0.3)';
         }
     }
@@ -70,57 +72,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Załadowanie danych z backendu
-    try {
-        studnieProducts = await loadStudnieProducts();
-        offersStudnie = await loadOffersStudnie();
-        ordersStudnie = await loadOrdersStudnie();
-        try {
-            productionOrders = await loadProductionOrders();
-        } catch (e) {
-            console.warn('Błąd ładowania zleceń:', e);
-        }
-        clientsDb = await loadClientsDb();
-        await loadPrecoPricing();
-    } catch (err) {
-        console.error('[AppStudnie] Krytyczny błąd ładowania danych:', err);
-        showToast('Błąd inicjalizacji modułu.', 'error');
-    }
-
-    // Inicjalizacja UI
-    if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
-    if (typeof renderSavedOffersStudnie === 'function') renderSavedOffersStudnie();
-    checkBackendStatus();
-
-    // Twórz domyślną studnię tylko gdy NIE edytujemy istniejącej oferty
+    // URL params
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
     const orderId = urlParams.get('order');
+    const tab = urlParams.get('tab');
 
+    // NOWA OFERTA: twórz studnię i UI NATYCHMIAST, dane ładuj w tle
     if (!editId && !orderId) {
+        showSection(tab || 'builder');
+
+        // Inicjalizacja UI (bez danych — będą gotowe za chwilę)
+        if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
+        if (typeof renderSavedOffersStudnie === 'function') renderSavedOffersStudnie();
+        checkBackendStatus();
+
+        // Auto-uzupełnienie daty i numeru oferty w kroku 1
+        const dateEl = document.getElementById('offer-date');
+        if (dateEl) dateEl.value = new Date().toISOString().slice(0, 10);
+        const nrEl = document.getElementById('offer-number');
+        if (nrEl && typeof generateOfferNumberStudnie === 'function') nrEl.value = generateOfferNumberStudnie();
+
         createNewWell(1000);
         renderWellsList();
         selectWell(0);
+        document.documentElement.classList.remove('wizard-loading-state');
+
+        // Dane ładuj w tle — nie blokuje UI
+        loadDataInBackground();
+        return;
     }
 
-    // Nawigacja i Auto-ładowanie
-    const tab = urlParams.get('tab');
+    // EDYCJA / ZAMÓWIENIE: najpierw dane, potem UI
+    showSection(tab || 'builder');
+    await loadDataInBackground();
+    document.documentElement.classList.remove('wizard-loading-state');
 
-    if (tab) {
-        showSection(tab);
-    } else if (orderId) {
-        showSection('builder');
-        // Wczytaj zamówienie do edycji
+    if (orderId) {
+        if (ordersStudnie.length === 0) {
+            console.warn('[AppStudnie] Zamówienia nie załadowały się za pierwszym razem, ponawiam...');
+            ordersStudnie = await loadOrdersStudnie();
+        }
         if (typeof enterOrderEditMode === 'function') {
             await enterOrderEditMode(orderId);
-
-            // Auto-otwarcie Zlecenia Produkcyjne po wczytaniu zamówienia
             if (urlParams.get('autoopen') === 'zlecenia') {
                 const targetWellId = urlParams.get('wellId') || null;
                 const targetElementIndex = urlParams.get('elementIndex') || null;
                 if (typeof openZleceniaProdukcyjne === 'function') {
-                    // enterOrderEditMode jest await — dane wells[] są już załadowane
-                    // Czekamy tylko na DOM settle (requestAnimationFrame)
                     await waitForWellsAndOpen(targetWellId, targetElementIndex);
                 }
             }
@@ -129,9 +127,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('Błąd: nie można otworzyć zamówienia', 'error');
         }
     } else if (editId) {
-        // offersStudnie is already loaded above — find the offer directly
-        console.log('[AppStudnie] Szukanie oferty:', { editId, offersCount: offersStudnie.length, offersIds: offersStudnie.map(o => o.id) });
-        const doc = offersStudnie.find((o) => String(o.id) === String(editId));
+        let doc = offersStudnie.find((o) => String(o.id) === String(editId));
+        if (!doc && offersStudnie.length === 0) {
+            console.warn('[AppStudnie] Oferty nie załadowały się za pierwszym razem, ponawiam...');
+            offersStudnie = await loadOffersStudnie();
+            doc = offersStudnie.find((o) => String(o.id) === String(editId));
+        }
         const restoreIdx = urlParams.get('restore');
 
         if (!doc) {
@@ -140,25 +141,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             showSection('builder');
         } else {
             if (restoreIdx !== null && doc.history && doc.history[restoreIdx]) {
-                console.log('[AppStudnie] Przywracanie wersji historycznej:', restoreIdx);
                 window.loadSavedOfferStudnie(doc.history[restoreIdx], editId, 'builder');
                 showToast('Wersja historyczna Studni załadowana');
             } else if (typeof window.loadSavedOfferStudnie === 'function') {
                 window.loadSavedOfferStudnie(doc, editId, 'builder');
                 showToast('Oferta Studni załadowana');
-
                 if (urlParams.get('autoopen') === 'zlecenia') {
                     const targetWellId = urlParams.get('wellId') || null;
                     const targetElementIndex = urlParams.get('elementIndex') || null;
                     if (typeof openZleceniaProdukcyjne === 'function') {
-                        // loadSavedOfferStudnie jest synchroniczne — wells[] jest gotowe
                         await waitForWellsAndOpen(targetWellId, targetElementIndex);
                     }
                 }
             }
         }
-    } else {
-        showSection('builder');
     }
 });
 
@@ -200,4 +196,58 @@ function waitForWellsAndOpen(targetWellId, targetElementIndex) {
 
         tryOpen();
     });
+}
+
+/**
+ * Ładuje dane w tle (produkty, oferty, zamówienia, klienci, cennik).
+ * Każde load* ma wewnątrz fetchWithTimeout + fallback — ZAWSZE zwraca dane, nigdy nie wisi.
+ */
+async function loadDataInBackground() {
+    const [productsP, offersP, ordersP, prodOrdersP, clientsP, precoP] = await Promise.allSettled([
+        loadStudnieProducts(),
+        loadOffersStudnie(),
+        loadOrdersStudnie(),
+        loadProductionOrders(),
+        loadClientsDb(),
+        loadPrecoPricing(),
+    ]);
+
+    if (productsP.status === 'fulfilled') { studnieProducts = productsP.value; }
+    else { console.error('[AppStudnie] Błąd produktów:', productsP.reason); }
+
+    if (offersP.status === 'fulfilled') { offersStudnie = offersP.value; }
+    else { console.error('[AppStudnie] Błąd ofert:', offersP.reason); }
+
+    if (ordersP.status === 'fulfilled') { ordersStudnie = ordersP.value; }
+    else { console.error('[AppStudnie] Błąd zamówień:', ordersP.reason); }
+
+    if (prodOrdersP.status === 'fulfilled') { productionOrders = prodOrdersP.value; }
+    else { console.warn('[AppStudnie] Błąd zleceń produkcyjnych:', prodOrdersP.reason); }
+
+    if (clientsP.status === 'fulfilled') { AppState.clientsDb = clientsP.value; }
+    else { console.warn('[AppStudnie] Błąd klientów:', clientsP.reason); }
+
+    if (precoP.status === 'fulfilled') { /* ustawione wewnątrz loadPrecoPricing */ }
+    else { console.warn('[AppStudnie] Błąd cennika PRECO:', precoP.reason); }
+
+    // Odśwież UI z nowymi danymi
+    if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
+    if (typeof renderSavedOffersStudnie === 'function') renderSavedOffersStudnie();
+
+    // Aktualizuj numer oferty po załadowaniu rzeczywistej liczby ofert
+    if (typeof generateOfferNumberStudnie === 'function') {
+        const nrEl = document.getElementById('offer-number');
+        if (nrEl) nrEl.value = generateOfferNumberStudnie();
+    }
+
+    // Jeśli studnia ma już ustawione rzędne, ale config jest pusty → auto-dobór
+    if (typeof getCurrentWell === 'function') {
+        const w = getCurrentWell();
+        if (w && w.rzednaWlazu != null && w.rzednaDna != null && (!w.config || w.config.length === 0) && studnieProducts.length > 0) {
+            console.log('[AppStudnie] Dane załadowane — uruchamiam auto-dobór dla istniejącej studni.');
+            if (typeof autoSelectComponents === 'function') autoSelectComponents(true);
+        }
+    }
+    if (typeof refreshAll === 'function') refreshAll();
+    console.log('[AppStudnie] Dane załadowane, UI odświeżone.');
 }

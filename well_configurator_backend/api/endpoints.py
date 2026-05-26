@@ -15,7 +15,6 @@ from ml.passive_learner import (
     record_acceptance, ensure_passive_tables,
     analyze_and_save_usage_preferences, get_acceptance_stats
 )
-from sync.sync_manager import SyncManager
 from optimizer.cache import cache
 
 logger = logging.getLogger("AI_ENDPOINTS")
@@ -29,6 +28,11 @@ try:
     ensure_passive_tables()
 except Exception as e:
     logger.warning(f"Nie udało się zainicjalizować tabel ML: {e}")
+
+
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 
 @router.post("/configure", response_model=List[WellConfigResult])
@@ -94,26 +98,6 @@ def configure_well(config: WellConfigInput, db: Session = Depends(get_db)):
     cache.put(cache_key_data, [r.model_dump() for r in ranked_results])
 
     return ranked_results
-
-
-@router.post("/sync/push")
-def sync_push(db: Session = Depends(get_db)):
-    """
-    Wypchnięcie lokalnych zmian do Master Server
-    """
-    manager = SyncManager(db)
-    result = manager.sync_push()
-    return result
-
-
-@router.get("/sync/pull")
-def sync_pull(db: Session = Depends(get_db)):
-    """
-    Pobranie aktualizacji z Master Server
-    """
-    manager = SyncManager(db)
-    result = manager.sync_pull()
-    return result
 
 @router.post("/telemetry/override")
 def telemetry_override(payload: dict):

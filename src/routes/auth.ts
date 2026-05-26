@@ -124,7 +124,7 @@ router.post(
                     subUsers: subUsersString,
                     orderStartNumber: parseInt(orderStartNumber) || 1,
                     productionOrderStartNumber: parseInt(productionOrderStartNumber) || 1,
-                    createdAt: new Date().toISOString() as string
+                    createdAt: new Date().toISOString()
                 }
             });
 

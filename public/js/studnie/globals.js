@@ -23,11 +23,13 @@ let editingOfferIdStudnie = null;
 let isSavingOffer = false;
 let orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
 let expandedWellIndices = new Set();
-let clientsDb = [];
+// clientsDb jest zarządzane przez AppState (shared/appState.js)
+// Używać AppState.clientsDb zamiast lokalnej zmiennej
 
 // Stan kreatora
 let currentWizardStep = 1;
 let wizardConfirmedParams = new Set();
+let studnieViewTransitionTimer = null;
 const WIZARD_REQUIRED_PARAMS = [
     'nadbudowa',
     'dennicaMaterial',
@@ -69,7 +71,18 @@ function toggleCard(contentId, iconId) {
 }
 
 /* ===== NAWIGACJA ===== */
+function startStudnieViewTransition(duration = 180) {
+    const main = document.querySelector('main.main') || document.body;
+    if (!main) return;
+    window.clearTimeout(studnieViewTransitionTimer);
+    main.classList.add('studnie-view-transitioning');
+    studnieViewTransitionTimer = window.setTimeout(() => {
+        main.classList.remove('studnie-view-transitioning');
+    }, duration);
+}
+
 function showSection(id) {
+    startStudnieViewTransition();
     document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
     document.getElementById('section-' + id)?.classList.add('active');

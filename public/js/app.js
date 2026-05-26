@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     products = await loadProducts();
     offers = await loadOffers();
-    clientsDb = await loadClientsDb();
+    AppState.clientsDb = await loadClientsDb();
 
     setupNavigation();
     renderPriceList();

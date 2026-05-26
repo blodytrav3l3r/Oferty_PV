@@ -16,6 +16,8 @@ const SpaRouter = (() => {
     // ── State ──
     let currentModule = null;
     const iframes = {};
+    let transitionToken = 0;
+    let transitionTimer = null;
 
     // ── Config ──
     const MODULES = {
@@ -131,6 +133,88 @@ const SpaRouter = (() => {
         if (el) el.style.display = module === 'studnie' ? 'flex' : 'none';
     }
 
+    function getTransitionLayer() {
+        const main = document.getElementById('spa-main');
+        if (!main) return null;
+
+        let layer = document.getElementById('spa-transition-layer');
+        if (!layer) {
+            layer = document.createElement('div');
+            layer.id = 'spa-transition-layer';
+            layer.className = 'spa-transition-layer';
+            layer.setAttribute('aria-hidden', 'true');
+            layer.innerHTML = `
+                <div class="spa-transition-box">
+                    <span class="spa-transition-spinner"></span>
+                    <span>Wczytywanie widoku</span>
+                </div>
+            `;
+            main.appendChild(layer);
+        }
+        return layer;
+    }
+
+    function startViewTransition() {
+        const token = ++transitionToken;
+        const layer = getTransitionLayer();
+        window.clearTimeout(transitionTimer);
+        document.body.classList.add('spa-view-loading');
+        if (layer) {
+            layer.classList.add('is-visible');
+        }
+        return token;
+    }
+
+    function finishViewTransition(token, delay = 180) {
+        if (token !== transitionToken) return;
+        const layer = getTransitionLayer();
+        window.clearTimeout(transitionTimer);
+        transitionTimer = window.setTimeout(() => {
+            if (token !== transitionToken) return;
+            document.body.classList.remove('spa-view-loading');
+            if (layer) layer.classList.remove('is-visible');
+        }, delay);
+    }
+
+    function waitForIframeReady(iframe, timeout = 1200) {
+        return new Promise((resolve) => {
+            let done = false;
+            const complete = () => {
+                if (done) return;
+                done = true;
+                iframe.removeEventListener('load', complete);
+                resolve();
+            };
+
+            try {
+                if (iframe.contentDocument?.readyState === 'complete') {
+                    window.setTimeout(complete, 120);
+                    return;
+                }
+            } catch (e) {
+                // Same-origin iframe is expected, but keep navigation resilient.
+            }
+
+            iframe.addEventListener('load', complete);
+            window.setTimeout(complete, timeout);
+        });
+    }
+
+    function waitForNextIframeLoad(iframe, timeout = 1800) {
+        return new Promise((resolve) => {
+            let done = false;
+            const complete = () => {
+                if (done) return;
+                done = true;
+                iframe.removeEventListener('load', complete);
+                resolve();
+            };
+
+            iframe.addEventListener('load', complete);
+            window.setTimeout(complete, timeout);
+        });
+    }
+
     /** Create or get an iframe for a module */
     function getOrCreateIframe(module) {
         if (iframes[module]) return iframes[module];
@@ -209,6 +293,8 @@ const SpaRouter = (() => {
             return;
         }
 
+        const transition = startViewTransition();
+
         // Update header
         updateAppNav(module);
         toggleBackendIndicator(module);
@@ -225,6 +311,7 @@ const SpaRouter = (() => {
 
         // Show or create the target iframe
         const iframe = getOrCreateIframe(module);
+        let readyPromise = waitForIframeReady(iframe);
 
         // Force reload if editing or opening an order, to guarantee clean state
         if (params.edit || params.order) {
@@ -233,6 +320,7 @@ const SpaRouter = (() => {
                 newSrc += (newSrc.includes('?') ? '&' : '?') + `${k}=${v}`;
             });
             newSrc += (newSrc.includes('?') ? '&' : '?') + 'v=' + Date.now(); // Wymuszenie pominięcia cache
+            readyPromise = waitForNextIframeLoad(iframe, 1800);
             iframe.src = newSrc;
         }
 
@@ -247,7 +335,11 @@ const SpaRouter = (() => {
         }
 
         // Skip default section navigation when editing/ordering — the iframe handles it
-        if (params.edit || params.order) return;
+        if (params.edit || params.order) {
+            await readyPromise;
+            finishViewTransition(transition);
+            return;
+        }
 
         // Determine which section to show (default to first section if no tab param)
         let tabToShow = params.tab;
@@ -270,6 +362,9 @@ const SpaRouter = (() => {
                 );
             }
         }
+
+        await readyPromise;
+        finishViewTransition(transition);
     }
 
     async function init() {

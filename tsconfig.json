@@ -23,5 +23,5 @@
         "types": ["jest", "node", "supertest"]
     },
     "include": ["src/**/*.ts", "server.ts", "scripts/**/*.ts", "tests/**/*.ts"],
-    "exclude": ["node_modules", "dist", "public", "data", "*.sqlite"]
+    "exclude": ["node_modules", "dist", "public", "data", "*.sqlite", "scripts/archive"]
 }

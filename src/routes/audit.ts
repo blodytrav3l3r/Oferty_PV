@@ -15,18 +15,30 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT);
         const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
-        // Całkowita liczba
         const total = await prisma.audit_logs.count({
             where: { entityType, entityId }
         });
 
-        // Pobierz stronę wyników
         const logs = await prisma.audit_logs.findMany({
             where: { entityType, entityId },
             orderBy: { createdAt: 'desc' },
             take: limit,
             skip: offset
         });
+
+        const userIds = [...new Set(logs.map((l) => l.userId).filter(Boolean) as string[])];
+        const users = userIds.length
+            ? await prisma.users.findMany({
+                  where: { id: { in: userIds } },
+                  select: { id: true, username: true, firstName: true, lastName: true }
+              })
+            : [];
+        const usersById = new Map(
+            users.map((u) => [
+                u.id,
+                [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username
+            ])
+        );
 
         const mapped = logs.map((l) => {
             let oldData: unknown = null;
@@ -46,7 +58,7 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
                 entityType: l.entityType,
                 entityId: l.entityId,
                 userId: l.userId,
-                userName: null, // Wymagałoby dołączenia tabeli użytkowników
+                userName: l.userId ? usersById.get(l.userId) || l.userId : 'System',
                 action: l.action,
                 oldData,
                 newData,
@@ -66,14 +78,12 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
     try {
         const { entityType, entityId, logId } = req.params;
 
-        // 1. Pobierz docelowy log
         const targetLog = await prisma.audit_logs.findFirst({
             where: { id: logId, entityType, entityId }
         });
         if (!targetLog)
             return res.status(404).json({ error: 'Nie znaleziono wpisu historycznego.' });
 
-        // 2. Znajdź migawkę bazową (pełny rekord sprzed lub z czasu docelowego logu)
         const baseLogs = await prisma.audit_logs.findMany({
             where: {
                 entityType,
@@ -97,7 +107,6 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
                         break;
                     }
                 } catch (_e) {
-                    // Jeśli parsowanie JSON się nie powiedzie, potraktuj jako pełną migawkę
                     baseLogRow = log;
                     break;
                 }
@@ -107,10 +116,9 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
         if (!baseLogRow) {
             return res
                 .status(404)
-                .json({ error: 'Brak wczesnego pełnego zapisu, aby zrekonstruować ofertę.' });
+                .json({ error: 'Brak wczesnego pelnego zapisu, aby zrekonstruowac dokument.' });
         }
 
-        // 3. Rozpocznij od stanu bazowego
         let currentState: Record<string, unknown> = {};
         try {
             if (baseLogRow.action === 'delete' && baseLogRow.oldData) {
@@ -119,14 +127,13 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
                 currentState = JSON.parse(baseLogRow.newData);
             }
         } catch (_e) {
-            return res.status(500).json({ error: 'Błąd deserializacji zapisu bazowego.' });
+            return res.status(500).json({ error: 'Blad deserializacji zapisu bazowego.' });
         }
 
         if (baseLogRow.id === targetLog.id) {
             return res.json({ data: currentState });
         }
 
-        // 4. Pobierz wszystkie logi różnicowe (diff) między bazą a celem
         const forwardLogs = await prisma.audit_logs.findMany({
             where: {
                 entityType,
@@ -139,7 +146,6 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             orderBy: { createdAt: 'asc' }
         });
 
-        // 5. Zastosuj poprawki chronologicznie
         for (const log of forwardLogs) {
             if (!log.newData) continue;
             try {
@@ -147,14 +153,14 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
                 delete patch._diffMode;
                 currentState = { ...currentState, ...patch };
             } catch (_e) {
-                logger.warn('AuditRebuild', `Pominięto uszkodzony JSON w logu: ${log.id}`);
+                logger.warn('AuditRebuild', `Pominieto uszkodzony JSON w logu: ${log.id}`);
             }
         }
 
         res.json({ data: currentState });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        logger.error('AuditRebuild', 'Błąd', e);
+        logger.error('AuditRebuild', 'Blad', e);
         res.status(500).json({ error: message });
     }
 });

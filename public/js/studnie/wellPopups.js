@@ -942,8 +942,8 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
 
 
 /* ===== TRANSITION MANAGER (MENEDŻER PRZEJŚĆ) ===== */
-let tmSelectedWells = new Set();
-let tmCurrentFilters = { sourceMaterial: '', dn: '' };
+let tmSelectedTransitions = new Set();
+let tmCurrentFilters = { sourceMaterial: [], dn: [], search: '' };
 let tmWellData = [];
 
 window.openTransitionManagerModal = function () {
@@ -961,15 +961,13 @@ window.openTransitionManagerModal = function () {
     }
 
     tmRefreshWellData();
-    tmSelectedWells.clear();
-    tmCurrentFilters = { sourceMaterial: '', dn: '' };
+    tmSelectedTransitions.clear();
+    tmCurrentFilters = { sourceMaterial: [], dn: [], search: '' };
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'transition-manager-modal';
 
-    const categoryOptions = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-    
     let allMaterials = new Set();
     let allDNs = new Set();
     
@@ -980,9 +978,6 @@ window.openTransitionManagerModal = function () {
         });
     });
     
-    const filterMaterialOpts = [...allMaterials].sort().map(m => `<option value="${m}">${m}</option>`).join('');
-    const filterDNOpts = [...allDNs].sort((a,b) => parseFloat(a) - parseFloat(b)).map(dn => `<option value="${dn}">${dn}</option>`).join('');
-
     overlay.innerHTML = `
     <div class="modal" style="width:90vw; max-width:95vw; height:90vh; display:flex; flex-direction:column; background:#111827; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
       
@@ -992,59 +987,90 @@ window.openTransitionManagerModal = function () {
         <button class="btn-icon" onclick="window.closeTransitionManagerModal()"><i data-lucide="x"></i></button>
       </div>
       
-      <!-- Sekcja filtrów (Co chcemy zamienić) -->
-      <div style="padding:1rem; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); flex-shrink:0; display:flex; gap:1rem; align-items:flex-end;">
-         <div class="form-group" style="margin:0; width:220px;">
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Kategoria źródłowa (Z czego):</label>
-            <select id="tm-filter-material" onchange="tmApplyFilters()" class="form-input" style="width:100%; padding:0.4rem; font-size:0.8rem;">
-                <option value="">-- Dowolna kategoria --</option>
-                ${filterMaterialOpts}
-            </select>
+      <!-- Sekcja filtrów -->
+      <div style="padding:0.6rem 0.75rem; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); flex-shrink:0; display:flex; gap:0.6rem; align-items:flex-start; flex-wrap:wrap;">
+         <div style="min-width:140px; flex:1;">
+            <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Kategoria źródłowa</div>
+            <div id="tm-filter-material-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
+               <div data-val="" onclick="tmSelectFilterMaterial('')"
+                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
+                    onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">Dowolna</div>
+               ${[...allMaterials].sort().map(m => {
+                 const safe = m.replace(/'/g,"\\'");
+                 return `<div data-val="${safe}" onclick="tmSelectFilterMaterial('${safe}')"
+                      style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
+                      onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${m}</div>`;
+               }).join('')}
+            </div>
          </div>
-         <div class="form-group" style="margin:0; width:150px;">
-            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Filtruj po DN przejścia:</label>
-            <select id="tm-filter-dn" onchange="tmApplyFilters()" class="form-input" style="width:100%; padding:0.4rem; font-size:0.8rem;">
-                <option value="">-- Dowolne DN --</option>
-                ${filterDNOpts}
-            </select>
+         <div style="min-width:90px;">
+            <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Średnica DN</div>
+            <div id="tm-filter-dn-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
+               <div data-val="" onclick="tmSelectFilterDn('')"
+                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
+                    onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">Dowolne</div>
+               ${[...allDNs].sort((a,b) => parseFloat(a) - parseFloat(b)).map(dn => {
+                 const safe = String(dn).replace(/'/g,"\\'");
+                 return `<div data-val="${safe}" onclick="tmSelectFilterDn('${safe}')"
+                      style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
+                      onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${dn}</div>`;
+               }).join('')}
+            </div>
          </div>
-         <div style="margin-left:auto; font-size:0.8rem; color:var(--text-muted);">
-            Widoczne studnie: <strong id="tm-visible-count">0</strong> | Zaznaczone: <strong id="tm-selected-count">0</strong>
+         <div style="min-width:160px; flex:1;">
+            <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Szukaj</div>
+            <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters()" style="width:100%; padding:0.25rem 0.4rem; font-size:0.65rem; background:#1a2536; border:1.5px solid rgba(255,255,255,0.06); border-radius:4px; color:var(--text-primary); outline:none; transition:all 0.12s;" onfocus="this.style.borderColor='rgba(16,185,129,0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.06)'">
          </div>
       </div>
 
-      <!-- Tabela z przewijaniem -->
-      <div style="flex-grow:1; overflow-y:auto; overflow-x:auto; padding:0; background:rgba(255,255,255,0.02);">
-         <table class="table" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
-            <thead style="position:sticky; top:0; background:#1e293b; z-index:10; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
-                <tr>
-                    <th style="width:40px; text-align:center; padding:0.5rem;"><input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()"></th>
-                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">Studnia</th>
-                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">DN Studni</th>
-                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">Rzędna Dna [m]</th>
-                    <th style="padding:0.5rem; text-align:left; white-space:nowrap; width:1px;">Cena [PLN]</th>
-                    <th style="padding:0.5rem; text-align:left;">Przejścia (Materiał | Średnica | Rzędna | Kąt)</th>
-                </tr>
-            </thead>
-            <tbody id="tm-table-body">
-                <!-- Generowane dynamicznie -->
-            </tbody>
-         </table>
-      </div>
-
-      <!-- Panel Akcji (Na co zamieniamy) -->
-      <div style="padding:1rem; border-top:1px solid var(--border); background:#1e293b; flex-shrink:0; display:flex; gap:1rem; align-items:flex-end;">
-         <div style="flex-grow:1;">
-             <label style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-bottom:0.2rem;">Docelowa Kategoria (Na co zamienić):</label>
-             <select id="tm-target-cat" class="form-input" style="width:100%; max-width:300px; padding:0.5rem;">
-                <option value="">-- Wybierz docelową --</option>
-                ${categoryOptions}
-             </select>
-         </div>
-         <div>
-            <button class="btn btn-primary" onclick="tmApplyChanges()" style="background:#6366f1; border:none; padding:0.6rem 1.2rem; display:flex; align-items:center; gap:0.4rem;">
-                <i data-lucide="zap"></i> Zastosuj w zaznaczonych studniach
+      <!-- Pasek narzędzi -->
+      <div style="flex-shrink:0; display:flex; align-items:center; gap:0.75rem; padding:0.45rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.04); background:rgba(0,0,0,0.12); font-size:0.78rem; color:var(--text-muted);">
+         <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; padding:0.2rem 0.5rem; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); border-radius:6px; color:var(--text-primary);">
+            <input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()" style="width:15px; height:15px; cursor:pointer;">
+            <span style="font-weight:500;">Zaznacz wszystko</span>
+         </label>
+         <span style="opacity:0.2;">|</span>
+         <span>Widoczne: <strong id="tm-visible-count" style="color:var(--text-primary);">0</strong></span>
+         <span>Zaznaczone: <strong id="tm-selected-count" style="color:var(--accent);">0</strong></span>
+         <div style="margin-left:auto; display:flex; align-items:center; gap:0.3rem;">
+            <button onclick="tmSortBy('wellName')" style="background:none; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:0.25rem 0.5rem; color:var(--text-muted); cursor:pointer; font-size:0.72rem; display:flex; align-items:center; gap:0.3rem; transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)';this.style.color='var(--text-primary)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--text-muted)'">
+               <span>↕</span> Sortuj A–Z
             </button>
+         </div>
+      </div>
+
+      <!-- Karty studni -->
+      <div style="flex-grow:1; overflow-y:auto; overflow-x:hidden; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.1);">
+         <div id="tm-table-body"></div>
+      </div>
+
+      <!-- Panel podglądu przed apply -->
+      <div id="tm-preview-panel" style="display:none; padding:0.6rem 1rem; border-top:1px solid var(--border); background:rgba(16,185,129,0.05); flex-shrink:0;">
+         <div id="tm-preview-content"></div>
+      </div>
+
+      <!-- Panel Akcji -->
+      <div style="padding:0.6rem 0.75rem; border-top:1px solid var(--border); background:#1e293b; flex-shrink:0;">
+         <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+               <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Docelowa kategoria (na co zamienić)</div>
+               <div id="tm-target-cat-tiles" style="display:flex; flex-wrap:wrap; gap:0.2rem;">
+                  <div data-val="" onclick="tmSelectTargetCat('')"
+                       style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
+                       onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">— Wybierz —</div>
+                  ${categories.map(cat => {
+                    const safe = cat.replace(/'/g,"\\'");
+                    return `<div data-val="${safe}" onclick="tmSelectTargetCat('${safe}')"
+                         style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
+                         onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${cat}</div>`;
+                  }).join('')}
+               </div>
+            </div>
+            <div style="flex-shrink:0;">
+               <button onclick="tmApplyChanges()" style="background:rgba(16,185,129,0.15); border:1.5px solid rgba(16,185,129,0.4); border-radius:5px; padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:#6ee7b7; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(16,185,129,0.25)'" onmouseleave="this.style.background='rgba(16,185,129,0.15)'">
+                  <i data-lucide="zap"></i> Zastosuj
+               </button>
+            </div>
          </div>
       </div>
 
@@ -1076,7 +1102,8 @@ window.tmRefreshWellData = function() {
                     rzedna: tr.rzednaWlaczenia !== undefined && tr.rzednaWlaczenia !== null ? tr.rzednaWlaczenia : well.rzednaDna,
                     productId: tr.productId,
                     material: p ? p.category : 'Nieznany',
-                    dnRaw: p ? p.dn : '?'
+                    dnRaw: p ? p.dn : '?',
+                    flowType: tr.flowType || 'wlot'
                 };
             });
         }
@@ -1097,7 +1124,7 @@ window.tmRefreshWellData = function() {
         tmWellData.push({
             wellIndex: i,
             uid: `well_${i}`,
-            wellName: well.nazwaWlasna || `Studnia ${i+1}`,
+            wellName: well.nazwaWlasna || well.name || `Studnia ${i+1}`,
             wellDn: well.dn,
             rzednaDna: well.rzednaDna || '0.000',
             price: wellPrice,
@@ -1106,150 +1133,470 @@ window.tmRefreshWellData = function() {
     }
 };
 
-window.tmApplyFilters = function() {
-    tmCurrentFilters.sourceMaterial = document.getElementById('tm-filter-material').value;
-    tmCurrentFilters.dn = document.getElementById('tm-filter-dn').value;
+let tmSortState = { column: null, asc: true };
+let tmTargetCat = '';
+
+window.tmSortBy = function(column) {
+    if (tmSortState.column === column) {
+        tmSortState.asc = !tmSortState.asc;
+    } else {
+        tmSortState.column = column;
+        tmSortState.asc = true;
+    }
     tmRenderTable();
 };
 
+window.tmApplyFilters = function() {
+    tmCurrentFilters.search = (document.getElementById('tm-filter-search')?.value || '').toLowerCase();
+    tmRenderTable();
+};
+
+function tmHighlightTiles(containerId, selectedVal) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.querySelectorAll('[data-val]').forEach(d => {
+        const isSel = d.dataset.val === selectedVal;
+        d.style.background = isSel ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)';
+        d.style.borderColor = isSel ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)';
+        d.style.color = isSel ? '#a7f3d0' : 'var(--text-primary)';
+    });
+}
+
+function tmHighlightTilesMulti(containerId, selectedVals) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.querySelectorAll('[data-val]').forEach(d => {
+        const isSel = selectedVals.length === 0 ? d.dataset.val === '' : d.dataset.val !== '' && selectedVals.includes(d.dataset.val);
+        d.style.background = isSel ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)';
+        d.style.borderColor = isSel ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)';
+        d.style.color = isSel ? '#a7f3d0' : 'var(--text-primary)';
+    });
+}
+
+window.tmSelectFilterMaterial = function(val) {
+    if (val === '') {
+        tmCurrentFilters.sourceMaterial = [];
+    } else {
+        const idx = tmCurrentFilters.sourceMaterial.indexOf(val);
+        if (idx >= 0) tmCurrentFilters.sourceMaterial.splice(idx, 1);
+        else tmCurrentFilters.sourceMaterial.push(val);
+    }
+    tmHighlightTilesMulti('tm-filter-material-tiles', tmCurrentFilters.sourceMaterial);
+    tmApplyFilters();
+};
+
+window.tmSelectFilterDn = function(val) {
+    if (val === '') {
+        tmCurrentFilters.dn = [];
+    } else {
+        const idx = tmCurrentFilters.dn.indexOf(val);
+        if (idx >= 0) tmCurrentFilters.dn.splice(idx, 1);
+        else tmCurrentFilters.dn.push(val);
+    }
+    tmHighlightTilesMulti('tm-filter-dn-tiles', tmCurrentFilters.dn);
+    tmApplyFilters();
+};
+
+window.tmSelectTargetCat = function(val) {
+    tmTargetCat = val;
+    tmHighlightTiles('tm-target-cat-tiles', val);
+    tmUpdatePreview();
+};
+
 window.tmRenderTable = function() {
-    const tbody = document.getElementById('tm-table-body');
-    if (!tbody) return;
+    const container = document.getElementById('tm-table-body');
+    if (!container) return;
+
+    // Sort wells if needed
+    let sortedWells = [...tmWellData];
+    if (tmSortState.column === 'wellName') {
+        sortedWells.sort((a, b) => {
+            const va = a.wellName.toLowerCase();
+            const vb = b.wellName.toLowerCase();
+            return tmSortState.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+        });
+    }
 
     let html = '';
     let visibleCount = 0;
+    let allChecked = true;
+    let anyChecked = false;
 
-    tmWellData.forEach(w => {
-        let hasMatchingTransition = false;
-
-        if (w.transitions.length === 0) {
-            if (tmCurrentFilters.sourceMaterial || tmCurrentFilters.dn) {
-                return; 
-            } else {
-                hasMatchingTransition = true;
+    sortedWells.forEach(w => {
+        let matchingTrs = [];
+        w.transitions.forEach(tr => {
+            let matchMat = true, matchDn = true, matchSearch = true;
+            if (tmCurrentFilters.sourceMaterial.length > 0 && !tmCurrentFilters.sourceMaterial.includes(tr.material)) matchMat = false;
+            if (tmCurrentFilters.dn.length > 0 && !tmCurrentFilters.dn.includes(String(tr.dnRaw))) matchDn = false;
+            if (tmCurrentFilters.search) {
+                const s = tmCurrentFilters.search;
+                matchSearch = w.wellName.toLowerCase().includes(s) ||
+                    tr.material.toLowerCase().includes(s) ||
+                    String(tr.dnRaw).includes(s);
             }
-        } else {
-            hasMatchingTransition = w.transitions.some(tr => {
-                let matchMat = true;
-                let matchDn = true;
-                if (tmCurrentFilters.sourceMaterial && tr.material !== tmCurrentFilters.sourceMaterial) matchMat = false;
-                if (tmCurrentFilters.dn && String(tr.dnRaw) !== tmCurrentFilters.dn) matchDn = false;
-                return matchMat && matchDn;
-            });
-        }
-
-        if (!hasMatchingTransition && (tmCurrentFilters.sourceMaterial || tmCurrentFilters.dn)) {
-            return;
-        }
-
+            if (matchMat && matchDn && matchSearch) matchingTrs.push(tr);
+        });
+        if (matchingTrs.length === 0) return;
         visibleCount++;
-        const isSelected = tmSelectedWells.has(w.uid);
 
-        let transitionsHtml = '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; max-width:100%;">';
-        if (w.transitions.length === 0) {
-            transitionsHtml += '<span style="color:var(--text-muted); font-size:0.7rem; font-style:italic;">Brak przejść</span>';
-        } else {
-            w.transitions.forEach(tr => {
-                let isTargetMatch = true;
-                if (tmCurrentFilters.sourceMaterial && tr.material !== tmCurrentFilters.sourceMaterial) isTargetMatch = false;
-                if (tmCurrentFilters.dn && String(tr.dnRaw) !== tmCurrentFilters.dn) isTargetMatch = false;
+        const wellSelCount = matchingTrs.filter(tr => tmSelectedTransitions.has(`${w.wellIndex}:${tr.trIndex}`)).length;
+        const wellAllSel = wellSelCount === matchingTrs.length;
+        const wellSomeSel = wellSelCount > 0;
+        if (!wellAllSel) allChecked = false;
+        if (wellSomeSel) anyChecked = true;
 
-                const bgCol = isTargetMatch ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.02)';
-                const brCol = isTargetMatch ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.05)';
-                const txtCol = isTargetMatch ? '#a5b4fc' : 'var(--text-secondary)';
+        const tilesHtml = matchingTrs.map(tr => {
+            const key = `${w.wellIndex}:${tr.trIndex}`;
+            const isSel = tmSelectedTransitions.has(key);
+            const safeMaterial = tr.material.replace(/'/g, "\\'");
+            const locked = isWellLocked(w.wellIndex);
+            return `
+            <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
+                  style="background:${isSel ? 'rgba(16,185,129,0.15)' : '#1a2536'};
+                         border:1px solid ${isSel ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'};
+                         border-radius:8px; padding:0.4rem 0.45rem; ${locked ? 'cursor:default;' : 'cursor:pointer;'}
+                         transition:all 0.2s; display:flex; flex-direction:column; gap:0.1rem;"
+                  ${locked ? '' : `onmouseenter="this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'"`}
+                  ${locked ? '' : `onmouseleave="this.style.borderColor='${isSel ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'}';this.style.transform='none';this.style.boxShadow='none'"`}>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:0.3rem;">
+                <div style="display:flex; align-items:center; gap:0.3rem; min-width:0; flex:1;">
+                  <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''}
+                         onclick="event.stopPropagation(); tmToggleTransition('${key}', this.checked)"
+                         style="width:14px; height:14px; cursor:pointer; margin:0; flex-shrink:0;" ${locked ? 'disabled' : ''}>
+                  <span style="font-size:0.76rem; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeMaterial}">${tr.material}</span>
+                  <span style="font-size:0.82rem; font-weight:800; color:#4ade80; flex-shrink:0;">DN${tr.dnRaw}</span>
+                </div>
+                ${locked ? '' : `
+                <button onclick="event.stopPropagation(); tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"
+                        style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.2); border-radius:4px; cursor:pointer; padding:0.05rem 0.3rem; color:#34d399; font-size:0.6rem; line-height:1.3; flex-shrink:0; transition:all 0.15s;"
+                        onmouseenter="this.style.background='rgba(16,185,129,0.25)'"
+                        onmouseleave="this.style.background='rgba(16,185,129,0.12)'">
+                  ✎
+                </button>`}
+              </div>
+              <div style="display:flex; gap:0.3rem; align-items:center; font-size:0.65rem; color:var(--text-muted);">
+                <span>${tr.rzedna != null ? parseFloat(tr.rzedna).toFixed(2)+'m' : '—'}</span>
+                <span style="opacity:0.3;">·</span>
+                <span style="color:#fcd34d; font-weight:600;">${tr.angle}°</span>
+                <span style="opacity:0.3;">·</span>
+                <span style="background:${tr.flowType === 'wlot' ? 'rgba(52,211,153,0.18)' : 'rgba(251,191,36,0.18)'}; color:${tr.flowType === 'wlot' ? '#34d399' : '#fbbf24'}; padding:0.02rem 0.3rem; border-radius:3px; font-size:0.6rem; font-weight:700;">${tr.flowType === 'wlot' ? 'WLOT' : 'WYLOT'}</span>
+              </div>
+            </div>`;
+        }).join('');
 
-                transitionsHtml += `
-                <div style="background:${bgCol}; border:1px solid ${brCol}; border-radius:6px; padding:0.2rem 0.35rem; display:flex; gap:0.3rem; align-items:center; width:fit-content; font-size:0.7rem;">
-                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; color:${txtCol}; white-space:nowrap; max-width:130px; overflow:hidden; text-overflow:ellipsis;" title="${tr.material}">${tr.material}</div>
-                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; color:#4ade80; font-weight:800; white-space:nowrap;">DN${tr.dnRaw}</div>
-                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; color:var(--text-muted); white-space:nowrap;">Rz: ${tr.rzedna}</div>
-                    <div style="text-align:center; background:rgba(0,0,0,0.2); padding:0.15rem 0.4rem; border-radius:4px; color:#fcd34d; white-space:nowrap;">${tr.angle}°</div>
-                </div>`;
-            });
-        }
-        transitionsHtml += '</div>';
-
+        const wellLocked = isWellLocked(w.wellIndex);
         html += `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:${isSelected ? 'rgba(99,102,241,0.15)' : 'transparent'}; transition:background 0.2s;" class="tm-row" data-uid="${w.uid}">
-            <td style="text-align:center; padding:0.5rem; vertical-align:middle;"><input type="checkbox" class="tm-row-cb" value="${w.uid}" ${isSelected ? 'checked' : ''} onchange="tmToggleRow('${w.uid}', this.checked)"></td>
-            <td style="padding:0.5rem; color:var(--text-primary); font-weight:600; vertical-align:middle; white-space:nowrap; text-align:left;">${w.wellName}</td>
-            <td style="padding:0.5rem; text-align:left; color:var(--text-muted); font-weight:600; vertical-align:middle;">DN${w.wellDn}</td>
-            <td style="padding:0.5rem; text-align:left; color:var(--text-muted); vertical-align:middle;">${w.rzednaDna}</td>
-            <td style="padding:0.5rem; text-align:left; color:var(--success, #34d399); font-weight:700; vertical-align:middle;">${fmtInt(w.price)}</td>
-            <td style="padding:0.5rem; vertical-align:middle;">${transitionsHtml}</td>
-        </tr>`;
+        <div style="background:#111827; border:1px solid ${wellLocked ? 'rgba(239,68,68,0.2)' : (wellSomeSel ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)')}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
+          <div style="display:flex; align-items:center; padding:0.55rem 0.75rem; background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.05);">
+            <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)"
+                   style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
+            <div style="flex:1; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+              <span style="font-weight:700; color:var(--text-primary); font-size:0.85rem;">${w.wellName}</span>
+              ${wellLocked ? '<span style="color:#f87171; font-size:0.68rem; display:flex; align-items:center; gap:0.2rem;"><i data-lucide="lock" style="width:12px;height:12px;"></i>Zablokowana</span>' : ''}
+              <span style="color:var(--text-muted); font-size:0.72rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); padding:0.1rem 0.45rem; border-radius:5px; font-weight:600;">DN${w.wellDn}</span>
+              <span style="color:var(--text-muted); font-size:0.72rem;">Rzędna: ${w.rzednaDna}</span>
+              <span style="color:#34d399; font-weight:700; font-size:0.8rem;">${fmtInt(w.price)} PLN</span>
+            </div>
+            <span style="color:var(--text-muted); font-size:0.68rem; background:rgba(16,185,129,0.1); padding:0.15rem 0.55rem; border-radius:12px; white-space:nowrap; font-weight:500; border:1px solid rgba(16,185,129,0.15);">
+              ${wellSelCount}/${matchingTrs.length}
+            </span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:0.45rem; padding:0.55rem;">
+            ${tilesHtml}
+          </div>
+        </div>`;
     });
 
     if (visibleCount === 0) {
-        html = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Brak studni spełniających kryteria wyszukiwania.</td></tr>`;
+        html = `<div style="text-align:center; padding:3rem 1rem; color:var(--text-muted); font-size:0.9rem;">
+                  <div style="font-size:2.5rem; margin-bottom:0.5rem; opacity:0.2;">⊘</div>
+                  Brak przejść spełniających kryteria.
+                </div>`;
     }
 
-    tbody.innerHTML = html;
-    document.getElementById('tm-visible-count').textContent = visibleCount;
+    container.innerHTML = html;
+
+    const visEl = document.getElementById('tm-visible-count');
+    if (visEl) visEl.textContent = visibleCount;
     tmUpdateSelectedCount();
-    
+
     const selectAllCb = document.getElementById('tm-select-all');
     if (selectAllCb) {
-        if (visibleCount === 0) {
-            selectAllCb.checked = false;
-            selectAllCb.disabled = true;
-        } else {
-            selectAllCb.disabled = false;
-            const visibleRows = document.querySelectorAll('.tm-row-cb');
-            let allChecked = true;
-            visibleRows.forEach(cb => { if(!cb.checked) allChecked = false; });
-            selectAllCb.checked = allChecked;
-        }
+        selectAllCb.disabled = visibleCount === 0;
+        selectAllCb.checked = visibleCount > 0 && allChecked && anyChecked;
     }
+
+    tmUpdatePreview();
 };
 
-window.tmToggleRow = function(uid, isChecked) {
-    if (isChecked) tmSelectedWells.add(uid);
-    else tmSelectedWells.delete(uid);
-    
-    const row = document.querySelector(`.tm-row[data-uid="${uid}"]`);
-    if (row) row.style.background = isChecked ? 'rgba(99,102,241,0.15)' : 'transparent';
-    
-    tmUpdateSelectedCount();
-    
-    const visibleRows = document.querySelectorAll('.tm-row-cb');
-    let allChecked = true;
-    visibleRows.forEach(cb => { if(!cb.checked) allChecked = false; });
-    const selectAllCb = document.getElementById('tm-select-all');
-    if(selectAllCb) selectAllCb.checked = allChecked;
+window.tmToggleWell = function(wellIdx, isChecked) {
+    if (isWellLocked(wellIdx)) return;
+    const wData = tmWellData.find(w => w.wellIndex === wellIdx);
+    if (!wData) return;
+    wData.transitions.forEach(tr => {
+        const key = `${wellIdx}:${tr.trIndex}`;
+        if (isChecked) tmSelectedTransitions.add(key);
+        else tmSelectedTransitions.delete(key);
+    });
+    tmRenderTable();
+};
+
+window.tmToggleTransition = function(key, isChecked) {
+    if (isChecked) tmSelectedTransitions.add(key);
+    else tmSelectedTransitions.delete(key);
+    tmRenderTable();
 };
 
 window.tmToggleSelectAll = function() {
     const isChecked = document.getElementById('tm-select-all').checked;
-    const visibleRows = document.querySelectorAll('.tm-row-cb');
+    const visibleCbs = document.querySelectorAll('.tm-row-cb');
     
-    visibleRows.forEach(cb => {
-        cb.checked = isChecked;
-        const uid = cb.value;
-        if (isChecked) tmSelectedWells.add(uid);
-        else tmSelectedWells.delete(uid);
-        
-        const row = document.querySelector(`.tm-row[data-uid="${uid}"]`);
-        if (row) row.style.background = isChecked ? 'rgba(99,102,241,0.15)' : 'transparent';
+    visibleCbs.forEach(cb => {
+        const key = cb.value;
+        const wellIdx = parseInt(key.split(':')[0], 10);
+        if (isChecked && isWellLocked(wellIdx)) return;
+        if (isChecked) tmSelectedTransitions.add(key);
+        else tmSelectedTransitions.delete(key);
     });
     
-    tmUpdateSelectedCount();
+    tmRenderTable();
 };
+
+let tmEditSelectedCat = null;
+let tmEditSelectedDn = null;
+
+window.tmOpenEditTransitionPopup = function(wellIdx, trIdx, event) {
+    event.stopPropagation();
+    if (isWellLocked(wellIdx)) {
+        showToast('<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zaakceptowane zlecenie produkcyjne.', 'error');
+        return;
+    }
+    const existing = document.getElementById('tm-edit-popup');
+    if (existing) existing.remove();
+    tmEditSelectedCat = null;
+    tmEditSelectedDn = null;
+
+    const well = wells[wellIdx];
+    if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
+    const tr = well.przejscia[trIdx];
+    const currentP = studnieProducts.find(p => p.id === tr.productId);
+
+    const allProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
+    const categories = [...new Set(allProducts.map(p => p.category))].sort();
+    const allDNs = [...new Set(allProducts.map(p => p.dn))].sort((a,b) => parseFloat(a) - parseFloat(b));
+
+    const currentCat = currentP ? currentP.category : '';
+    const currentDn = currentP ? currentP.dn : '';
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const popupW = 340;
+    let left = Math.min(rect.left, window.innerWidth - popupW - 16);
+    if (left < 8) left = 8;
+    const top = rect.bottom + 4;
+    const maxH = Math.min(400, window.innerHeight - top - 20);
+
+    const popup = document.createElement('div');
+    popup.id = 'tm-edit-popup';
+    popup.style.cssText = `position:fixed;z-index:100000;background:#1e293b;border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:0.6rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);width:${popupW}px;top:${top}px;left:${left}px;animation:fadeIn 0.1s ease;`;
+    if (maxH > 120) { popup.style.maxHeight = maxH + 'px'; popup.style.overflowY = 'auto'; }
+
+    const currentLabel = currentP ? `${currentP.category} DN${currentP.dn}` : 'Nieznane';
+
+    popup.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0.1rem 0.4rem;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:0.45rem;">
+        <div><div style="font-weight:700;color:var(--text-primary);font-size:0.8rem;">Zmień przejście</div><div style="font-size:0.64rem;color:var(--text-muted);">Aktualnie: ${currentLabel}</div></div>
+        <button onclick="this.closest('#tm-edit-popup').remove()" style="background:rgba(255,255,255,0.05);border:none;border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:0.85rem;padding:0.1rem 0.35rem;line-height:1.3;">✕</button>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.25rem;">Typ</div>
+          <div id="tm-edit-type-list" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-right:0.15rem;">
+            ${categories.map(cat => {
+              const isCur = cat === currentCat;
+              return `<div data-cat="${cat}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
+                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:${isCur ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#a7f3d0' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(16,185,129,0.15);' : ''}"
+                   onmouseenter="this.style.borderColor='rgba(16,185,129,0.35)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'}'">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}${cat}</div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.25rem;">Średnica</div>
+          <div id="tm-edit-dn-list" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-right:0.15rem;">
+            ${allDNs.map(dn => {
+              const isCur = dn === currentDn;
+              return `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
+                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${isCur ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#6ee7b7' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(52,211,153,0.15);' : ''}"
+                   onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'}'">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}DN${dn}</div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+      <div id="tm-edit-result" style="margin-top:0.45rem;padding:0.35rem 0.45rem;background:rgba(0,0,0,0.2);border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:var(--text-muted);font-size:0.7rem;">Wybierz typ i średnicę</span>
+        <button id="tm-edit-apply-btn" style="display:none;background:#6366f1;border:none;border-radius:5px;padding:0.28rem 0.55rem;color:#fff;font-size:0.7rem;font-weight:600;cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>
+      </div>`;
+
+    document.body.appendChild(popup);
+
+    const closeHandler = function(e) {
+        if (!popup.contains(e.target)) { popup.remove(); document.removeEventListener('click', closeHandler); }
+    };
+    setTimeout(() => document.addEventListener('click', closeHandler), 10);
+};
+
+function tmEditSelectType(el, wellIdx, trIdx) {
+    const list = document.getElementById('tm-edit-type-list');
+    list.querySelectorAll('[data-cat]').forEach(div => { div.style.background = 'rgba(255,255,255,0.03)'; div.style.borderColor = 'rgba(255,255,255,0.06)'; div.style.color = 'var(--text-primary)'; div.style.boxShadow = 'none'; const dot = div.querySelector('span'); if (dot) dot.innerHTML = '◆'; dot.style.color = 'transparent'; });
+    el.style.background = 'rgba(16,185,129,0.2)'; el.style.borderColor = 'rgba(16,185,129,0.55)'; el.style.color = '#a7f3d0'; el.style.boxShadow = '0 0 8px rgba(16,185,129,0.15)'; const dot = el.querySelector('span'); if (dot) dot.style.color = '#34d399';
+
+    tmEditSelectedCat = el.dataset.cat;
+    tmEditSelectedDn = null;
+
+    const products = studnieProducts.filter(p => p.componentType === 'przejscie' && p.category === tmEditSelectedCat);
+    const dns = [...new Set(products.map(p => p.dn))].sort((a,b) => parseFloat(a) - parseFloat(b));
+
+    const dnList = document.getElementById('tm-edit-dn-list');
+    dnList.innerHTML = dns.map(dn => `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'"><span style="color:transparent;font-size:0.75rem;">◆</span>DN${dn}</div>`).join('');
+
+    const resultSpan = document.querySelector('#tm-edit-result span');
+    if (resultSpan) resultSpan.textContent = 'Wybierz średnicę';
+    const applyBtn = document.getElementById('tm-edit-apply-btn');
+    if (applyBtn) applyBtn.style.display = 'none';
+
+    const currentP = studnieProducts.find(p => p.id === wells[wellIdx]?.przejscia?.[trIdx]?.productId);
+    if (currentP && currentP.category === tmEditSelectedCat) {
+        dnList.querySelectorAll('[data-dn]').forEach(div => { if (div.dataset.dn === currentP.dn) tmEditSelectDN(div, wellIdx, trIdx); });
+    }
+}
+
+function tmEditSelectDN(el, wellIdx, trIdx) {
+    const list = document.getElementById('tm-edit-dn-list');
+    list.querySelectorAll('[data-dn]').forEach(div => { div.style.background = 'rgba(255,255,255,0.03)'; div.style.borderColor = 'rgba(255,255,255,0.06)'; div.style.color = 'var(--text-primary)'; div.style.boxShadow = 'none'; const dot = div.querySelector('span'); if (dot) dot.style.color = 'transparent'; });
+    el.style.background = 'rgba(52,211,153,0.2)'; el.style.borderColor = 'rgba(52,211,153,0.55)'; el.style.color = '#6ee7b7'; el.style.boxShadow = '0 0 8px rgba(52,211,153,0.15)'; const dot = el.querySelector('span'); if (dot) dot.style.color = '#34d399';
+
+    tmEditSelectedDn = el.dataset.dn;
+
+    if (tmEditSelectedCat && tmEditSelectedDn) {
+        const product = studnieProducts.find(p => p.componentType === 'przejscie' && p.category === tmEditSelectedCat && String(p.dn) === tmEditSelectedDn);
+        if (product) {
+            const resultDiv = document.getElementById('tm-edit-result');
+            resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size:0.73rem;font-weight:600;">${product.category} DN${product.dn}</span><span style="color:#34d399;font-weight:700;margin-left:0.5rem;font-size:0.7rem;">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
+              <button style="background:#6366f1;border:none;border-radius:5px;padding:0.28rem 0.55rem;color:#fff;font-size:0.7rem;font-weight:600;cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>`;
+        }
+    }
+}
+
+async function tmEditApply(wellIdx, trIdx) {
+    if (!tmEditSelectedCat || !tmEditSelectedDn) return;
+    if (isWellLocked(wellIdx)) {
+        document.getElementById('tm-edit-popup')?.remove();
+        showToast('<i data-lucide="lock"></i> Studnia zablokowana.', 'error');
+        return;
+    }
+    const product = studnieProducts.find(p => p.componentType === 'przejscie' && p.category === tmEditSelectedCat && String(p.dn) === tmEditSelectedDn);
+    if (!product) { showToast('Nie znaleziono produktu', 'error'); return; }
+
+    const tr = wells[wellIdx]?.przejscia?.[trIdx];
+    if (!tr) return;
+    tr.productId = product.id;
+
+    document.getElementById('tm-edit-popup')?.remove();
+    tmEditSelectedCat = null; tmEditSelectedDn = null;
+
+    try {
+        currentWellIndex = wellIdx;
+        await autoSelectComponents(true);
+        refreshAll();
+    } catch (e) {
+        console.error('tmEditApply error:', e);
+    }
+    tmRefreshWellData();
+    tmRenderTable();
+    showToast(`Zmieniono na ${product.category} DN${product.dn}`, 'success');
+}
 
 window.tmUpdateSelectedCount = function() {
     const countEl = document.getElementById('tm-selected-count');
-    if (countEl) countEl.textContent = tmSelectedWells.size;
+    if (countEl) countEl.textContent = tmSelectedTransitions.size;
+};
+
+window.tmUpdatePreview = function() {
+    const panel = document.getElementById('tm-preview-panel');
+    const content = document.getElementById('tm-preview-content');
+    if (!panel || !content) return;
+
+    const targetCat = tmTargetCat;
+    if (!targetCat || tmSelectedTransitions.size === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    let replaceList = [];
+    let skipList = [];
+
+    tmSelectedTransitions.forEach(key => {
+        const [wellIdxStr, trIdxStr] = key.split(':');
+        const wellIdx = parseInt(wellIdxStr, 10);
+        const trIdx = parseInt(trIdxStr, 10);
+        const well = wells[wellIdx];
+        if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
+        const tr = well.przejscia[trIdx];
+        const p = studnieProducts.find(prod => prod.id === tr.productId);
+        if (!p || p.category === targetCat) return;
+
+        const replacement = studnieProducts.find(pr =>
+            pr.componentType === 'przejscie' &&
+            pr.category === targetCat &&
+            pr.active !== 0 &&
+            pr.dn === p.dn
+        );
+
+        const label = `${well.name || `Studnia ${wellIdx+1}`} — ${p.category} DN${p.dn}`;
+        if (replacement) {
+            replaceList.push(label);
+        } else {
+            skipList.push(label);
+        }
+    });
+
+    if (replaceList.length === 0 && skipList.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    let html = '';
+    if (replaceList.length > 0) {
+        html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:#34d399; font-weight:800;">✅ Zostanie zamienione: ${replaceList.length}</span></div>`;
+        html += `<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">`;
+        replaceList.forEach(l => {
+            html += `<span style="background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.2); color:#34d399; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${l}</span>`;
+        });
+        html += `</div>`;
+    }
+    if (skipList.length > 0) {
+        html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:#f87171; font-weight:800;">⚠️ Brak odpowiednika w ${targetCat}: ${skipList.length}</span></div>`;
+        html += `<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">`;
+        skipList.forEach(l => {
+            html += `<span style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${l}</span>`;
+        });
+        html += `</div>`;
+    }
+
+    content.innerHTML = html;
+    panel.style.display = 'block';
+};
+
+window.activatePreviewPanel = function() {
+    setTimeout(tmUpdatePreview, 100);
 };
 
 window.tmApplyChanges = async function() {
-    if (tmSelectedWells.size === 0) {
-        showToast('Zaznacz co najmniej jedną studnię', 'warning');
+    if (tmSelectedTransitions.size === 0) {
+        showToast('Zaznacz co najmniej jedno przejście', 'warning');
         return;
     }
     
-    const targetCat = document.getElementById('tm-target-cat').value;
-    const filterMat = tmCurrentFilters.sourceMaterial;
-    const filterDn = tmCurrentFilters.dn;
+    const targetCat = tmTargetCat;
 
     if (!targetCat) {
         showToast('Wybierz docelową kategorię przejść', 'error');
@@ -1257,40 +1604,58 @@ window.tmApplyChanges = async function() {
     }
 
     let replacedCount = 0;
-    let skippedCount = 0;
+    let skippedDetails = [];
+    let skippedLocked = new Set();
     let modifiedWellsIndices = new Set();
 
-    tmSelectedWells.forEach(uid => {
-        const wData = tmWellData.find(w => w.uid === uid);
-        if (!wData) return;
+    tmSelectedTransitions.forEach(key => {
+        const [wellIdxStr, trIdxStr] = key.split(':');
+        const wellIdx = parseInt(wellIdxStr, 10);
+        const trIdx = parseInt(trIdxStr, 10);
+        const well = wells[wellIdx];
 
-        const well = wells[wData.wellIndex];
-        
-        wData.transitions.forEach((trData, trIdx) => {
-            if (filterMat && trData.material !== filterMat) return;
-            if (filterDn && String(trData.dnRaw) !== filterDn) return;
-            if (trData.material === targetCat) return;
+        if (isWellLocked(wellIdx)) {
+            skippedLocked.add(wellIdx);
+            return;
+        }
 
-            const replacement = studnieProducts.find(p => 
-                p.componentType === 'przejscie' && 
-                p.category === targetCat && 
-                p.active !== 0 &&
-                p.dn === trData.dnRaw
-            );
+        if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
 
-            if (replacement) {
-                well.przejscia[trIdx].productId = replacement.id;
-                replacedCount++;
-                modifiedWellsIndices.add(wData.wellIndex);
-            } else {
-                skippedCount++;
-            }
-        });
+        const tr = well.przejscia[trIdx];
+        const p = studnieProducts.find(prod => prod.id === tr.productId);
+        if (!p) return;
+        if (p.category === targetCat) return;
+
+        const replacement = studnieProducts.find(pr => 
+            pr.componentType === 'przejscie' && 
+            pr.category === targetCat && 
+            pr.active !== 0 &&
+            pr.dn === p.dn
+        );
+
+        if (replacement) {
+            well.przejscia[trIdx].productId = replacement.id;
+            replacedCount++;
+            modifiedWellsIndices.add(wellIdx);
+        } else {
+            skippedDetails.push({
+                wellName: well.nazwaWlasna || well.name || `Studnia ${wellIdx+1}`,
+                material: p.category,
+                dn: p.dn,
+                targetCat: targetCat
+            });
+        }
     });
 
+    if (skippedLocked.size > 0) {
+        showToast(`Pominięto ${skippedLocked.size} zablokowaną studnię/studnie (zamówienie/zlecenie).`, 'warning');
+    }
+
     if (replacedCount === 0) {
-        if (skippedCount > 0) {
-            showToast(`Nie zamieniono przejść. Brak średnic docelowych dla ${skippedCount} elementów.`, 'error');
+        if (skippedLocked.size > 0) {
+            // already showed toast above
+        } else if (skippedDetails.length > 0) {
+            showSkippedPopup(skippedDetails, targetCat);
         } else {
             showToast('Nie znaleziono pasujących przejść do zamiany.', 'info');
         }
@@ -1308,34 +1673,67 @@ window.tmApplyChanges = async function() {
 
     refreshAll();
     
-    let msg = `Zakończono. Zamieniono ${replacedCount} przejść w ${modifiedWellsIndices.size} studniach.`;
-    if (skippedCount > 0) {
-        msg += ` Pominięto ${skippedCount} (brak odpowiedniej średnicy w docelowej kategorii).`;
+    if (skippedDetails.length > 0) {
+        showSkippedPopup(skippedDetails, targetCat);
     }
+    
+    let msg = `Zakończono. Zamieniono ${replacedCount} przejść w ${modifiedWellsIndices.size} studniach.`;
     showToast(msg, 'success');
     
-    tmSelectedWells.clear();
+    tmSelectedTransitions.clear();
     tmRefreshWellData();
-    
-    tmCurrentFilters = { sourceMaterial: '', dn: '' };
-    
-    let allMaterials = new Set();
-    let allDNs = new Set();
-    tmWellData.forEach(w => {
-        w.transitions.forEach(tr => {
-            if (tr.material !== 'Nieznany') allMaterials.add(tr.material);
-            allDNs.add(tr.dnRaw);
-        });
-    });
-    
-    const filterMaterialOpts = [...allMaterials].sort().map(m => `<option value="${m}">${m}</option>`).join('');
-    const filterDNOpts = [...allDNs].sort((a,b) => parseFloat(a) - parseFloat(b)).map(dn => `<option value="${dn}">${dn}</option>`).join('');
-    
-    const matSelect = document.getElementById('tm-filter-material');
-    if (matSelect) matSelect.innerHTML = `<option value="">-- Dowolna kategoria --</option>` + filterMaterialOpts;
-    
-    const dnSelect = document.getElementById('tm-filter-dn');
-    if (dnSelect) dnSelect.innerHTML = `<option value="">-- Dowolne DN --</option>` + filterDNOpts;
     
     tmRenderTable();
 };
+
+function showSkippedPopup(skippedDetails, targetCat) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease;';
+
+    const rowsHtml = skippedDetails.map((s, i) => `
+        <tr>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${i + 1}</td>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${s.wellName}</td>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${s.material}</td>
+            <td style="padding:0.35rem 0.6rem; text-align:center; white-space:nowrap;">${s.dn}</td>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap; color:#f87171;">Brak produktu ${s.targetCat} o średnicy ${s.dn}</td>
+        </tr>
+    `).join('');
+
+    overlay.innerHTML = `
+      <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(239,68,68,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:700px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:1rem; font-weight:800; color:#f87171;"><i data-lucide="alert-triangle"></i> Pominięte przejścia (${skippedDetails.length})</div>
+          <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x"></i></button>
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+            Poniższe przejścia nie zostały zamienione — w kategorii <strong>${targetCat}</strong> nie istnieje produkt o podanej średnicy.
+        </div>
+        <table style="width:100%; font-size:0.8rem; border-collapse:collapse;">
+            <thead style="position:sticky; top:0; background:#1e293b;">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Lp.</th>
+                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Studnia</th>
+                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Obecny typ</th>
+                    <th style="padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;">Średnica</th>
+                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Powód pominięcia</th>
+                </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.08);">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove(); window.activatePreviewPanel && window.activatePreviewPanel()" style="font-size:0.8rem; padding:0.4rem 1rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399;">
+                <i data-lucide="arrow-left"></i> Wróć do menedżera
+            </button>
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()" style="font-size:0.8rem; padding:0.4rem 1.2rem;">Zamknij</button>
+        </div>
+      </div>
+    `;
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons();
+}

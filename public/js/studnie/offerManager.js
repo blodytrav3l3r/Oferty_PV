@@ -20,22 +20,34 @@ function renderOfferSummary() {
 
     const order = orderEditMode ? getCurrentOfferOrder() : null;
     const orderChanges = orderEditMode && order ? getOrderChanges({ ...order, wells: wells }) : {};
-    
+
+    // Auto-generate offer notes
+    generateOfferNotes(false);
+
+    // Sync payment terms if empty
+    const paymentTermsTabField = document.getElementById('offer-tab-payment-terms');
+    if (paymentTermsTabField && !paymentTermsTabField.value.trim()) {
+        const originalPaymentTerms = document.getElementById('offer-payment-terms');
+        if (originalPaymentTerms) {
+            paymentTermsTabField.value = originalPaymentTerms.value;
+        }
+    }
+
     // Obliczenia globalne
     const totals = calculateOfferTotals();
-    
+
     let html = '';
     // Baner statusu zamówienia i postęp
     html += renderOrderBanners(order, orderChanges);
-    
+
     // Tabela zestawienia
     html += renderOfferSummaryTable(order, orderChanges, totals);
-    
+
     container.innerHTML = html;
-    
+
     // Inicjalizacja ikon Lucide tylko dla nowo wyrenderowanego kontenera (zapobiega miganiu całego ekranu)
     if (window.lucide) window.lucide.createIcons({ root: container });
-    
+
     // Aktualizacja wskaźników zewnętrznych (stopka)
     updateOfferSummaryUI(totals);
 
@@ -43,7 +55,7 @@ function renderOfferSummary() {
     const saveBtn = document.getElementById('btn-save-studnie-offer');
     const createOrderBtn = document.getElementById('btn-create-order-offer');
     const newOfferBtn = document.getElementById('btn-new-offer-studnie');
-    
+
     if (saveBtn) {
         if (orderEditMode) {
             saveBtn.innerHTML = `<i data-lucide="save"></i> Zapisz zmiany w zamówieniu`;
@@ -55,7 +67,7 @@ function renderOfferSummary() {
             // Usuwamy ręczne style z poprzedniej iteracji, aby klasa przejęła kontrolę
             saveBtn.style.background = '';
             saveBtn.style.borderColor = '';
-            
+
             // Ukryj przyciski ofertowe w trybie zamówienia
             if (createOrderBtn) createOrderBtn.style.display = 'none';
             if (newOfferBtn) newOfferBtn.style.display = 'none';
@@ -66,9 +78,9 @@ function renderOfferSummary() {
             };
             saveBtn.classList.remove('btn-primary');
             saveBtn.classList.add('btn-order-save');
-            saveBtn.style.background = ''; 
+            saveBtn.style.background = '';
             saveBtn.style.borderColor = '';
-            
+
             // Pokaż przycisk "Utwórz zamówienie" w trybie oferty
             if (createOrderBtn) createOrderBtn.style.display = 'flex';
             // Ukrywamy "Nowa Oferta" zgodnie z prośbą
@@ -78,13 +90,237 @@ function renderOfferSummary() {
     }
 }
 
+function generateOfferNotes(onlyIfEmpty = false) {
+    const offerNotesField = document.getElementById('offer-tab-notes');
+    if (!offerNotesField) return;
+
+    if (onlyIfEmpty && offerNotesField.value.trim() !== '') {
+        return;
+    }
+
+    let step1Notes = document.getElementById('offer-notes')?.value || '';
+    const paramIndex = step1Notes.indexOf("Parametry techniczne:");
+    if (paramIndex !== -1) {
+        step1Notes = step1Notes.substring(0, paramIndex).trim();
+    }
+    const transportIndex = step1Notes.indexOf("Cena franco budowa bez rozładunku");
+    if (transportIndex !== -1) {
+        step1Notes = step1Notes.substring(0, transportIndex).trim();
+    }
+
+    const getActiveParamLabel = (param) => {
+        const group = document.querySelector(`.param-group[data-param="${param}"]`);
+        if (!group) return null;
+        const btn = group.querySelector('button.param-tile.active');
+        if (!btn) return null;
+        let text = btn.textContent.replace(/<[^>]*>?/gm, '').trim();
+        text = text.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' ');
+        return text;
+    };
+
+    const getParamLabel = (param, value) => {
+        if (!value || value.toLowerCase() === 'brak') return null;
+        const group = document.querySelector(`.param-group[data-param="${param}"]`);
+        if (!group) return value;
+        const btn = group.querySelector(`button.param-tile[data-val="${value}"]`);
+        if (!btn) return value;
+        let text = btn.textContent.replace(/<[^>]*>?/gm, '').trim();
+        text = text.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' ');
+        return text;
+    };
+
+    const getParamSummary = (param, labelPrefix) => {
+        if (!wells || wells.length === 0) {
+            const activeVal = getActiveParamLabel(param);
+            return activeVal && activeVal.toLowerCase() !== 'brak' ? `${labelPrefix}: ${activeVal}` : null;
+        }
+
+        const values = new Set();
+        wells.forEach(well => {
+            let val = well[param];
+            if (val && val !== 'brak') {
+                const label = getParamLabel(param, val);
+                if (label && label.toLowerCase() !== 'brak') {
+                    values.add(label);
+                }
+            }
+        });
+
+        if (values.size === 0) return null;
+        return `${labelPrefix}: ${Array.from(values).join(', ')}`;
+    };
+
+    const getMaterialSummary = () => {
+        if (!wells || wells.length === 0) {
+            const materialNadbudowy = getActiveParamLabel('nadbudowa') || 'Betonowa';
+            const materialDennicy = getActiveParamLabel('dennicaMaterial') || materialNadbudowy;
+            if (materialNadbudowy === materialDennicy) {
+                return `Nadbudowa i Dennica: ${materialNadbudowy}`;
+            } else {
+                return `Nadbudowa: ${materialNadbudowy}, Dennica: ${materialDennicy}`;
+            }
+        }
+
+        const nadbudowy = new Set();
+        const dennice = new Set();
+
+        wells.forEach(well => {
+            if (well.nadbudowa) {
+                const label = getParamLabel('nadbudowa', well.nadbudowa);
+                if (label) nadbudowy.add(label);
+            }
+            if (well.dennicaMaterial) {
+                const label = getParamLabel('dennicaMaterial', well.dennicaMaterial);
+                if (label) dennice.add(label);
+            }
+        });
+
+        const nStr = Array.from(nadbudowy).filter(Boolean).join(', ') || 'Betonowa';
+        const dStr = Array.from(dennice).filter(Boolean).join(', ') || nStr;
+
+        if (nStr === dStr) {
+            return `Nadbudowa i Dennica: ${nStr}`;
+        } else {
+            return `Nadbudowa: ${nStr}, Dennica: ${dStr}`;
+        }
+    };
+
+    const getPEHDSummary = () => {
+        if (!wells || wells.length === 0) {
+            const wkladka = getActiveParamLabel('wkladka');
+            return wkladka && wkladka.toLowerCase() !== 'brak' ? `Wkładka PEHD: ${wkladka}` : null;
+        }
+
+        const PEHDTypes = new Set();
+        wells.forEach(well => {
+            if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') PEHDTypes.add(getParamLabel('wkladka', well.wkladkaDennica));
+            if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') PEHDTypes.add(getParamLabel('wkladka', well.wkladkaNadbudowa));
+            if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') PEHDTypes.add(getParamLabel('wkladka', well.wkladkaZwienczenie));
+        });
+
+        if (PEHDTypes.size === 0) return null;
+        return `Wkładka PEHD: ${Array.from(PEHDTypes).join(', ')}`;
+    };
+
+    const getNosnoscKorpusSummary = () => {
+        if (!wells || wells.length === 0) {
+            const klasaNosnosciK = getActiveParamLabel('klasaNosnosci_korpus');
+            return klasaNosnosciK && !klasaNosnosciK.includes('D400') ? `Klasa nośności (Dennica + Nadbudowa): ${klasaNosnosciK}` : null;
+        }
+        const values = new Set();
+        wells.forEach(well => {
+            if (well.klasaNosnosci_korpus && !well.klasaNosnosci_korpus.includes('D400')) {
+                const label = getParamLabel('klasaNosnosci_korpus', well.klasaNosnosci_korpus);
+                if (label) values.add(label);
+            }
+        });
+        if (values.size === 0) return null;
+        return `Klasa nośności (Dennica + Nadbudowa): ${Array.from(values).join(', ')}`;
+    };
+
+    const getNosnoscZwienczenieSummary = () => {
+        if (!wells || wells.length === 0) {
+            const klasaNosnosciZ = getActiveParamLabel('klasaNosnosci_zwienczenie');
+            return klasaNosnosciZ && !klasaNosnosciZ.includes('D400') ? `Klasa nośności Zwieńczenie: ${klasaNosnosciZ}` : null;
+        }
+        const values = new Set();
+        wells.forEach(well => {
+            if (well.klasaNosnosci_zwienczenie && !well.klasaNosnosci_zwienczenie.includes('D400')) {
+                const label = getParamLabel('klasaNosnosci_zwienczenie', well.klasaNosnosci_zwienczenie);
+                if (label) values.add(label);
+            }
+        });
+        if (values.size === 0) return null;
+        return `Klasa nośności Zwieńczenie: ${Array.from(values).join(', ')}`;
+    };
+
+    let summaryParts = [];
+
+    const matSum = getMaterialSummary();
+    if (matSum) summaryParts.push(matSum);
+
+    const betSum = getParamSummary('klasaBetonu', 'Klasa betonu');
+    if (betSum) summaryParts.push(betSum);
+
+    const pehdSum = getPEHDSummary();
+    if (pehdSum) summaryParts.push(pehdSum);
+
+    const chemSum = getParamSummary('agresjaChemiczna', 'Agresja chemiczna');
+    if (chemSum) summaryParts.push(chemSum);
+
+    const mrozSum = getParamSummary('agresjaMrozowa', 'Agresja mrozowa');
+    if (mrozSum) summaryParts.push(mrozSum);
+
+    const malWSum = getParamSummary('malowanieW', 'Malowanie wewnątrz');
+    if (malWSum) summaryParts.push(malWSum);
+
+    const malZSum = getParamSummary('malowanieZ', 'Malowanie zewnątrz');
+    if (malZSum) summaryParts.push(malZSum);
+
+    const kinSum = getParamSummary('kineta', 'Kineta');
+    if (kinSum) summaryParts.push(kinSum);
+
+    const stopSum = getParamSummary('stopnie', 'Rodzaj stopni');
+    if (stopSum) summaryParts.push(stopSum);
+
+    const uszczSum = getParamSummary('uszczelka', 'Uszczelka');
+    if (uszczSum) summaryParts.push(uszczSum);
+
+    const nosKSum = getNosnoscKorpusSummary();
+    if (nosKSum) summaryParts.push(nosKSum);
+
+    const nosZSum = getNosnoscZwienczenieSummary();
+    if (nosZSum) summaryParts.push(nosZSum);
+
+    // Zbieranie informacji o przejściach z faktycznych studni
+    let przejsciaTypes = new Set();
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        wells.forEach(well => {
+            if (well.przejscia && Array.isArray(well.przejscia)) {
+                well.przejscia.forEach(pr => {
+                    const prProd = typeof studnieProducts !== 'undefined' ? studnieProducts.find(x => x.id === pr.productId) : null;
+                    if (prProd) {
+                        let name = prProd.category || prProd.name || '';
+                        // Omijamy wiercenia
+                        if (name.toLowerCase().includes('wiercenie') || name.toLowerCase().includes('insitu')) return;
+
+                        // Zostawiamy tylko rodzaj, omijając typowe rozmiary i zbędne słowa
+                        let type = name.replace(/DN\s*\d+/i, '').replace(/fi\s*\d+/i, '').trim();
+                        if (type) {
+                            przejsciaTypes.add(type);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    if (przejsciaTypes.size > 0) {
+        const przejsciaArr = Array.from(przejsciaTypes).join(', ');
+        summaryParts.push(`Przyłącza dostudzienne: ${przejsciaArr}`);
+    }
+
+    let generatedText = step1Notes ? step1Notes + "\n\n" : "";
+
+    if (summaryParts.length > 0) {
+        generatedText += "Parametry techniczne: " + summaryParts.join(', ') + ".";
+    }
+
+    if (generatedText) {
+        generatedText += "\n";
+    }
+    generatedText += "Cena franco budowa bez rozładunku przy dostawie pełnych transportów 24t.";
+
+    offerNotesField.value = generatedText.trim();
+}
+
 function calculateOfferTotals() {
     let globalWeight = 0;
     wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
 
     const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
-    
+
     let totalTransports = 0, transportCostPerTrip = 0, totalTransportCost = 0;
     if (transportKm > 0 && transportRate > 0) {
         totalTransports = Math.ceil(globalWeight / 24000);
@@ -98,7 +334,7 @@ function calculateOfferTotals() {
 function renderOrderBanners(order, orderChanges) {
     let html = '';
     const hasChanges = Object.keys(orderChanges).length > 0;
-    
+
     if (order) {
         const changeCount = Object.keys(orderChanges).length;
         html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'}; border:1px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}; border-radius:8px;">
@@ -199,10 +435,10 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             const snap = order.originalSnapshot;
             const originalWells = Array.isArray(snap) ? snap : (snap.wells || []);
             const originalDiscounts = Array.isArray(snap) ? null : (snap.wellDiscounts || null);
-            
+
             if (originalWells[originalIndex]) {
                 const origWell = originalWells[originalIndex];
-                
+
                 // Tymczasowo podmień rabaty globalne na te z migawki dla poprawnego wyliczenia ceny historycznej
                 const currentGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? JSON.parse(JSON.stringify(wellDiscounts)) : {};
                 if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
@@ -210,7 +446,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 }
 
                 const origStats = calcWellStats(origWell);
-                
+
                 // Przywróć rabaty
                 if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
                     window.wellDiscounts = currentGlobalDiscounts;
@@ -236,10 +472,10 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
     const rowStyle = getWellRowStyle(change, isOrdered);
     const badges = getWellBadges(change, isOrdered, well);
     const displayLp = lp !== undefined ? lp : (i + 1);
-    
+
     let checkbox = '';
     if (showOrderSelection) {
-        checkbox = isOrdered 
+        checkbox = isOrdered
             ? `<td style="text-align:center;"><i data-lucide="package-check" style="width:16px; height:16px; color:#a5b4fc;"></i></td>`
             : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" style="cursor:pointer; width:16px; height:16px;"></td>`;
     }
@@ -279,8 +515,8 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
 
 function getWellRowStyle(change, isOrdered) {
     if (change) {
-        return change.type === 'added' 
-            ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);' 
+        return change.type === 'added'
+            ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);'
             : 'border-left:3px solid #ef4444; background:rgba(239,68,68,0.05);';
     }
     return isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
@@ -298,7 +534,7 @@ function getWellBadges(change, isOrdered, well) {
             ? getOrderForWellId(well.id, editingOfferIdStudnie)
             : null;
         if (wellOrder && wellOrder.orderNumber) {
-            html += `<span onclick="event.stopPropagation(); window.location.href='/studnie?order=${wellOrder.id}'"
+            html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
                 title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
                 style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.15); color:#34d399; font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package"></i> ${wellOrder.orderNumber}
@@ -320,7 +556,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost) {
     const activeDiscounts = typeof getWellActiveDiscounts === 'function' ? getWellActiveDiscounts(well) : wellDiscounts;
     const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
     const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
-    
+
     let detailsHtml = `<tr class="well-details-row"><td colspan="12">
         <div class="well-details-container">
             <div class="well-details-grid">
@@ -349,7 +585,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost) {
             </div>
         </div>
     </td></tr>`;
-    
+
     return detailsHtml;
 }
 
@@ -369,16 +605,16 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         if (precoAlloc && precoAlloc.hasPreco && (precoAlloc.isBottomMostDennica || precoAlloc.fraction > 0) && !item.disablePreco) {
             badgesHtml += ' <span style="font-size:0.55rem; color:#f43f5e; border:1px solid rgba(244,63,94,0.4); padding:1px 4px; border-radius:4px; background:rgba(244,63,94,0.1); margin-left:4px; font-weight:700;">PRECO</span>';
         }
-        
+
         let pehdType = null;
         if (['dennica', 'styczna'].includes(p.componentType)) pehdType = well.wkladkaDennica;
         else if (['plyta', 'plyta_redukcyjna', 'plyta_nastudzienna', 'stozek', 'zwienczenie', 'konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType)) pehdType = well.wkladkaZwienczenie;
         else if (['krag', 'krag_ot', 'rura'].includes(p.componentType)) pehdType = well.wkladkaNadbudowa;
-        
+
         if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
             badgesHtml += ' <span style="font-size:0.55rem; color:#0ea5e9; border:1px solid rgba(14,165,233,0.4); padding:1px 4px; border-radius:4px; background:rgba(14,165,233,0.1); margin-left:4px; font-weight:700;">PEHD</span>';
         }
-        
+
         if (well.nadbudowa === 'zelbetowa' && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
             badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
         }
@@ -405,7 +641,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
 function calculateAssignedPrzejscia(well) {
     const assigned = {};
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    
+
     let configMap = [];
     if (typeof buildConfigMap === 'function') {
         configMap = buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true);
@@ -431,10 +667,10 @@ function calculateAssignedPrzejscia(well) {
     if (well.przejscia) {
         well.przejscia.forEach(pr => {
             const mmFromBottom = (parseFloat(pr.rzednaWlaczenia || rzDna) - rzDna) * 1000;
-            
+
             let idx = well.config.length - 1;
             let target = null;
-            
+
             if (typeof findAssignedElement === 'function') {
                 const fae = findAssignedElement(mmFromBottom, configMap);
                 if (fae && fae.entry) {
@@ -445,9 +681,9 @@ function calculateAssignedPrzejscia(well) {
                 target = configMap.find(cm => mmFromBottom >= cm.start && mmFromBottom < cm.end);
                 idx = target ? target.index : well.config.length - 1;
             }
-            
+
             if (!assigned[idx]) assigned[idx] = [];
-            
+
             // Kalkulacja opłaty za wiercenie dla widoku oferty
             let drillingBasePrice = 0;
             let bestDrillProd = null;
@@ -478,7 +714,7 @@ function calculateAssignedPrzejscia(well) {
                     }
                 }
             }
-            
+
             assigned[idx].push({ ...pr, _drillingBasePrice: drillingBasePrice, _drillingProd: bestDrillProd });
         });
     }
@@ -488,7 +724,7 @@ function calculateAssignedPrzejscia(well) {
 function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMult, wellTransportCost, itemIndex) {
     let html = '';
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
-    
+
     if (isBase && well.doplata) {
         const doplataWellColor = well.doplata > 0 ? '#10b981' : '#ef4444';
         const doplataWellSign = well.doplata > 0 ? '+' : '';
@@ -510,7 +746,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
         itemPrzejscia.forEach(pr => {
             const prProd = studnieProducts.find(x => x.id === pr.productId);
             if (!prProd) return;
-            
+
             if (pr.frozenTransitionPrice != null) {
                 // TRYB ZAMÓWIENIA (zamrożone ceny)
                 html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
@@ -561,8 +797,8 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
         const kineta = well.config.find(c => studnieProducts.find(x => x.id === c.productId)?.componentType === 'kineta');
         if (kineta) {
             const kp = studnieProducts.find(x => x.id === kineta.productId);
-            // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
-            const kPrice = (kineta.frozenPrice != null ? kineta.frozenPrice : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
+            // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
+            const kPrice = (kineta.frozenPrice != null && window.isPreviewMode ? kineta.frozenPrice : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ + ${kp ? kp.name : 'Kineta'}</td>
                 <td class="text-right">${fmt(kPrice)} PLN</td>
@@ -577,34 +813,34 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
             const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
             const precoMult = 1 - discPreco / 100;
             const precoCost = precoAlloc.allocatedCost * precoMult;
-                const fracPerc = precoAlloc.fraction > 0 && precoAlloc.fraction < 1 ? Math.round(precoAlloc.fraction*100) : 0;
-                if (well.wkladkaOsadnikPreco === 'tak') {
-                    let h = well.wkladkaOsadnikH || 1000;
-                    if (!well.wkladkaOsadnikH) {
-                        let dennicaH = 0;
-                        if (well.config) {
-                            well.config.forEach(c => {
-                                const prod = studnieProducts.find(pr => pr.id === c.productId);
-                                if (prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna')) {
-                                    dennicaH += (prod.height || 0) * (c.quantity || 1);
-                                }
-                            });
-                        }
-                        h = dennicaH || 1000;
+            const fracPerc = precoAlloc.fraction > 0 && precoAlloc.fraction < 1 ? Math.round(precoAlloc.fraction * 100) : 0;
+            if (well.wkladkaOsadnikPreco === 'tak') {
+                let h = well.wkladkaOsadnikH || 1000;
+                if (!well.wkladkaOsadnikH) {
+                    let dennicaH = 0;
+                    if (well.config) {
+                        well.config.forEach(c => {
+                            const prod = studnieProducts.find(pr => pr.id === c.productId);
+                            if (prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna')) {
+                                dennicaH += (prod.height || 0) * (c.quantity || 1);
+                            }
+                        });
                     }
-                    if (precoAlloc.isBottomMostDennica) {
-                        kinetaLabel = `osadnika (Dno + ${fracPerc ? fracPerc + '% ścian z ' : 'Ściany '}${h} mm)`;
-                    } else {
-                        kinetaLabel = `osadnika (${fracPerc ? fracPerc + '% ścian z ' : 'Ściany '}${h} mm)`;
-                    }
-                } else {
-                    const baseName = well.kineta === 'precotop' ? 'PrecoTop' : 'Preco';
-                    if (precoAlloc.isBottomMostDennica) {
-                        kinetaLabel = baseName + (fracPerc ? ` (Baza + ${fracPerc}% uzupełnienia)` : '');
-                    } else {
-                        kinetaLabel = baseName + ` (${fracPerc ? fracPerc + '% uzupełnienia' : 'Wkładka uzupełniająca'})`;
-                    }
+                    h = dennicaH || 1000;
                 }
+                if (precoAlloc.isBottomMostDennica) {
+                    kinetaLabel = `osadnika (Dno + ${fracPerc ? fracPerc + '% ścian z ' : 'Ściany '}${h} mm)`;
+                } else {
+                    kinetaLabel = `osadnika (${fracPerc ? fracPerc + '% ścian z ' : 'Ściany '}${h} mm)`;
+                }
+            } else {
+                const baseName = well.kineta === 'precotop' ? 'PrecoTop' : 'Preco';
+                if (precoAlloc.isBottomMostDennica) {
+                    kinetaLabel = baseName + (fracPerc ? ` (Baza + ${fracPerc}% uzupełnienia)` : '');
+                } else {
+                    kinetaLabel = baseName + ` (${fracPerc ? fracPerc + '% uzupełnienia' : 'Wkładka uzupełniająca'})`;
+                }
+            }
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#ef4444;">
                 <td colspan="3" style="padding-left:1.5rem;">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size:0.6rem; color:#10b981;">(-' + discPreco + '%)</span>' : ''}</td>
                 <td class="text-right">${fmt(precoCost)} PLN</td>
@@ -662,12 +898,12 @@ function calculatePrecoAllocationForItem(well, itemIndex) {
                     currY += h;
                 }
             }
-            
+
             const targetCm = configMap.find(cm => cm.index === itemIndex);
             if (targetCm) {
                 const bottomDennicaCm = configMap.find(cm => cm.componentType === 'dennica' || cm.componentType === 'styczna');
                 isBottomMostDennica = bottomDennicaCm && bottomDennicaCm.index === itemIndex;
-                
+
                 if (isBottomMostDennica) {
                     allocatedCost += (precoCalc.bazowa || 0);
                     allocatedCost += (precoCalc.skrzynki?.suma || 0);
@@ -677,7 +913,7 @@ function calculatePrecoAllocationForItem(well, itemIndex) {
                     allocatedCost += (precoCalc.redukcja || 0);
                     allocatedCost += (precoCalc.dodWloty || []).reduce((s, d) => s + d.cena, 0);
                 }
-                
+
                 if (precoCalc.pelnaWysokosc) {
                     const startZ = precoCalc.pelnaWysokosc.startZ || 0;
                     const endZ = precoCalc.pelnaWysokosc.endZ || 0;
@@ -692,13 +928,13 @@ function calculatePrecoAllocationForItem(well, itemIndex) {
             }
         }
     }
-    
+
     return { hasPreco, error, allocatedCost, fraction, isBottomMostDennica };
 }
 
 function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaMult, itemPrzejscia, itemIndex) {
-    // W zamówieniu użyj zamrożonej ceny; w ofercie przelicz na nowo
-    const itemPrice = (item.frozenPrice != null ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
+    // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
+    const itemPrice = (item.frozenPrice != null && window.isPreviewMode ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
     let totalLinePrice = itemPrice * item.quantity;
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
@@ -707,8 +943,8 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaM
         if (kinetaItem) {
             const kinetaProd = studnieProducts.find(x => x.id === kinetaItem.productId);
             if (kinetaProd) {
-                // W zamówieniu użyj zamrożonej ceny kinety; w ofercie przelicz na nowo
-                const kinetaPrice = (kinetaItem.frozenPrice != null ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true, kinetaItem));
+                // W zamówieniu użyj zamrożonej ceny kinety tylko w podglądzie; w ofercie/edycji przelicz na nowo
+                const kinetaPrice = (kinetaItem.frozenPrice != null && window.isPreviewMode ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true, kinetaItem));
                 totalLinePrice += kinetaPrice * (kinetaItem.quantity || 1);
             }
         }
@@ -756,7 +992,7 @@ function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGr
     // Dodatkowe w trybie wyboru: Checkbox (1)
     let baseColspan = 5;
     if (showOrderSelection) baseColspan += 1;
-    
+
     let html = '<tfoot>';
 
     if (dnGroups && Object.keys(dnGroups).length > 0) {
@@ -770,7 +1006,7 @@ function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGr
             const g = dnGroups[dn];
             const avgPrice = g.sumPrice / g.count;
             const avgHeight = g.sumHeight / g.count;
-            
+
             // Oblicz różnicę cen dla grupy DN (jeśli w trybie porównania)
             let priceDiffCell = '';
             let offerPriceCell = '';
@@ -786,7 +1022,7 @@ function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGr
                     priceDiffCell = '<td class="text-right" style="padding:0.5rem 0.75rem;"></td>';
                 }
             }
-            
+
             html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
               <td colspan="${baseColspan}" style="padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">Podsumowanie DN${dn} — ${g.count} szt.</td>
               ${offerPriceCell}
@@ -843,7 +1079,7 @@ function updateOfferSummaryUI(totals) {
              Koszt trasy: <strong>${fmtInt(totals.transportCostPerTrip)} PLN</strong>. Łącznie transport: <strong>${fmtInt(totals.totalTransportCost)} PLN</strong>.
            </div>`;
         }
-        
+
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
             activeTransportInfo.innerHTML = `
@@ -855,7 +1091,7 @@ function updateOfferSummaryUI(totals) {
         if (transCostEl) transCostEl.innerHTML = `<i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0 PLN`;
         const transDetails = document.getElementById('transport-breakdown');
         if (transDetails) transDetails.innerHTML = '';
-        
+
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
             activeTransportInfo.innerHTML = '<span style="opacity: 0.5;">Brak transportu</span>';
@@ -873,10 +1109,10 @@ function updateOfferSummaryUI(totals) {
     if (totalEl) totalEl.textContent = fmtInt(finalNetto) + ' PLN';
     if (bruttoEl) bruttoEl.textContent = 'Brutto: ' + fmtInt(finalNetto * 1.23) + ' PLN';
     if (weightEl) weightEl.textContent = fmtInt(finalWeight) + ' kg';
-    
+
     const transportModalTotalEl = document.getElementById('transport-modal-total-val');
     if (transportModalTotalEl) transportModalTotalEl.textContent = fmtInt(finalNetto) + ' PLN';
-    
+
     const discountsInfoEl = document.getElementById('offer-active-discounts-info');
     if (discountsInfoEl) {
         const activeDiscounts = typeof wellDiscounts !== 'undefined' ? wellDiscounts : {};
@@ -955,7 +1191,7 @@ function updateOfferSummaryUI(totals) {
                 ${buildDnTile('styczne')}
                 ${buildMalTile()}
             </div>`;
-        if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({root: discountsInfoEl});
+        if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({ root: discountsInfoEl });
     }
 }
 
@@ -1022,7 +1258,7 @@ function normalizeOfferData(doc) {
 
 async function loadOffersStudnie() {
     try {
-        const res = await fetch('/api/offers-studnie', { headers: authHeaders() });
+        const res = await fetchWithTimeout('/api/offers-studnie', { headers: authHeaders() });
         const json = await res.json();
         const rawOffers = json.data || [];
         console.log('[loadOffersStudnie] API response:', { count: rawOffers.length, ids: rawOffers.map(o => o.id) });
@@ -1191,8 +1427,9 @@ async function saveOfferStudnie() {
     const investName = document.getElementById('invest-name').value.trim();
     const investAddress = document.getElementById('invest-address').value.trim();
     const investContractor = document.getElementById('invest-contractor').value.trim();
-    const notes = document.getElementById('offer-notes').value.trim();
+    const notes = document.getElementById('offer-tab-notes')?.value.trim() || document.getElementById('offer-notes')?.value.trim() || '';
     const paymentTerms =
+        document.getElementById('offer-tab-payment-terms')?.value.trim() ||
         document.getElementById('offer-payment-terms')?.value.trim() ||
         'Do uzgodnienia lub według indywidualnych warunków handlowych.';
     const validity = document.getElementById('offer-validity')?.value.trim() || '7 dni';
@@ -1452,7 +1689,7 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        }).catch(() => {}); // Cichy błąd — nie przeszkadzamy użytkownikowi
+        }).catch(() => { }); // Cichy błąd — nie przeszkadzamy użytkownikowi
     } catch (e) {
         // Nigdy nie powinno wstrzymać UI
     }
@@ -1508,9 +1745,15 @@ function clearOfferForm() {
     document.getElementById('invest-address').value = '';
     document.getElementById('invest-contractor').value = '';
     document.getElementById('offer-notes').value = '';
+    const tabNotes = document.getElementById('offer-tab-notes');
+    if (tabNotes) tabNotes.value = '';
+
     if (document.getElementById('offer-payment-terms'))
         document.getElementById('offer-payment-terms').value =
             'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+
+    const tabPayment = document.getElementById('offer-tab-payment-terms');
+    if (tabPayment) tabPayment.value = 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = '7 dni';
     document.getElementById('transport-km').value = '100';
@@ -1543,6 +1786,7 @@ function clearOfferForm() {
     refreshAll();
     showSection('builder');
     renderOfferSummary();
+    if (typeof window.updateTransportCostSummary === 'function') window.updateTransportCostSummary();
     // Reset kreatora do kroku 1
     wizardConfirmedParams = new Set();
     goToWizardStep(1);
@@ -1564,19 +1808,19 @@ function renderSavedOffersStudnie() {
         .map((o) => {
             const oId = normalizeId(o.id);
             // Oblicz postęp zamówień częściowych
-            const progress = typeof getOfferOrderProgress === 'function' 
-                ? getOfferOrderProgress(oId, o.wells) 
+            const progress = typeof getOfferOrderProgress === 'function'
+                ? getOfferOrderProgress(oId, o.wells)
                 : { ordered: 0, total: (o.wells || []).length, percent: 0 };
-            
+
             const hasOrder = progress.ordered > 0;
             const isFullyOrdered = progress.percent >= 100;
-            
+
             let orderBadge = '';
             if (hasOrder) {
                 const badgeColor = isFullyOrdered ? '#34d399' : '#60a5fa';
                 const badgeBg = isFullyOrdered ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)';
                 const badgeBorder = isFullyOrdered ? 'rgba(16,185,129,0.4)' : 'rgba(59,130,246,0.4)';
-                
+
                 orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius:6px; margin-top:0.3rem;">
                 <span style="font-size:0.85rem;"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
                 <span style="font-size:0.68rem; font-weight:800; color:${badgeColor}; text-transform:uppercase; letter-spacing:0.5px;">
@@ -1584,7 +1828,7 @@ function renderSavedOffersStudnie() {
                 </span>
                </div>`;
             }
-            
+
             return `
         <div class="offer-list-item" ${hasOrder ? `style="border-left:3px solid ${isFullyOrdered ? '#34d399' : '#60a5fa'};"` : ''}>
             <div class="offer-info" style="min-width:0;">
@@ -1601,67 +1845,67 @@ function renderSavedOffersStudnie() {
                     <span><i data-lucide="calendar"></i> <strong>${o.date}</strong></span>
                     <span><i data-lucide="folder-open"></i> <strong>${o.wells.length}</strong> studnie</span>
                     ${(() => {
-                        const resolveName = (rawName) => {
-                            if (!rawName) return '';
-                            if (window.globalUsersMap && window.globalUsersMap.has(rawName))
-                                return window.globalUsersMap.get(rawName);
-                            if (
-                                typeof currentUser !== 'undefined' &&
-                                currentUser &&
-                                (rawName === currentUser.username || rawName === currentUser.id)
-                            )
-                                return currentUser.displayName || currentUser.username || rawName;
-                            return rawName;
-                        };
-                        const creatorName = resolveName(o.createdByUserName || o.userName);
-                        const assignedName = resolveName(o.userName);
+                    const resolveName = (rawName) => {
+                        if (!rawName) return '';
+                        if (window.globalUsersMap && window.globalUsersMap.has(rawName))
+                            return window.globalUsersMap.get(rawName);
+                        if (
+                            typeof currentUser !== 'undefined' &&
+                            currentUser &&
+                            (rawName === currentUser.username || rawName === currentUser.id)
+                        )
+                            return currentUser.displayName || currentUser.username || rawName;
+                        return rawName;
+                    };
+                    const creatorName = resolveName(o.createdByUserName || o.userName);
+                    const assignedName = resolveName(o.userName);
 
-                        let html = '';
-                        if (creatorName === assignedName && creatorName) {
-                            html += `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
-                        } else {
-                            if (creatorName)
-                                html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool"></i>️ Autor: <strong>${creatorName}</strong></span>`;
-                            if (assignedName)
-                                html += `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> Opiekun: <strong>${assignedName}</strong></span>`;
-                        }
-                        return html;
-                    })()}
+                    let html = '';
+                    const isClickable = currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro');
+                    if (creatorName === assignedName && creatorName) {
+                        html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
+                    } else {
+                        if (creatorName)
+                            html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool"></i>️ Autor: <strong>${creatorName}</strong></span>`;
+                        if (assignedName)
+                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user"></i> Opiekun: <strong>${assignedName}</strong></span>`;
+                    }
+                    return html;
+                })()}
                     
                     <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size:0.65rem;">
                         <span style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3);"><i data-lucide="save"></i> Zapisano</span>
                     </div>
                 </div>
-                ${
-                    o.clientName || o.investName || o.clientContact
-                        ? `
+                ${o.clientName || o.investName || o.clientContact
+                    ? `
                 <div class="offer-client-badges">
                     ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
                     ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
                 </div>`
-                        : ''
+                    : ''
                 }
             </div>
-            <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-                <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON"><i data-lucide="save"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna"><i data-lucide="user"></i> Zmień opiekuna</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian"><i data-lucide="hourglass"></i> Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń"><i data-lucide="trash-2"></i> Usuń</button>
-                ${
-                    hasOrder
-                        ? (() => {
-                            const offerOrders = getOrdersForOffer(oId);
-                            let buttonsHtml = '';
-                            offerOrders.forEach(order => {
-                                buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.75rem; font-weight:800; padding:0.4rem 0.8rem;" onclick="window.location.href='/studnie?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package"></i> Otwórz zamówienie ${order.orderNumber || ''}</button>
-                                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i> Zamówienie ${order.orderNumber || ''}</button>
+            <div class="offer-actions">
+                <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj" style="font-size:0.72rem; padding:0.3rem 0.6rem;">Wczytaj</button>
+                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); color: #f87171; font-weight: 700;" onclick="window.showUniversalPrintModal('${oId}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer"></i> Drukuj</button>
+                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user"></i> Opiekun</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="trash-2"></i> Usuń</button>
+                ${hasOrder
+                    ? (() => {
+                        const offerOrders = getOrdersForOffer(oId);
+                        let buttonsHtml = '';
+                        offerOrders.forEach(order => {
+                            buttonsHtml += `
+                                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package"></i> Zamówienie ${order.orderNumber || ''}</button>
+                                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
                                 `;
-                            });
-                            return buttonsHtml;
-                        })()
-                        : ''
+                        });
+                        return buttonsHtml;
+                    })()
+                    : ''
                 }
             </div>
         </div>
@@ -1733,11 +1977,19 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     document.getElementById('invest-name').value = normalized.investName || '';
     document.getElementById('invest-address').value = normalized.investAddress || '';
     document.getElementById('invest-contractor').value = normalized.investContractor || '';
+
     document.getElementById('offer-notes').value = normalized.notes || '';
+    const tabNotes = document.getElementById('offer-tab-notes');
+    if (tabNotes) tabNotes.value = normalized.notes || '';
+
     if (document.getElementById('offer-payment-terms'))
         document.getElementById('offer-payment-terms').value =
             normalized.paymentTerms ||
             'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+
+    const tabPayment = document.getElementById('offer-tab-payment-terms');
+    if (tabPayment) tabPayment.value = normalized.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = normalized.validity || '7 dni';
     document.getElementById('transport-km').value = normalized.transportKm || 100;
@@ -1792,12 +2044,12 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     if (wells.length > 0) {
         const firstWell = wells[0];
         ['nadbudowa', 'dennicaMaterial', 'wkladka', 'malowanieW', 'malowanieZ', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie'].forEach(param => {
-            if(firstWell[param]) {
+            if (firstWell[param]) {
                 const group = document.querySelector(`.param-group[data-param="${param}"]`);
-                if(group) {
+                if (group) {
                     group.querySelectorAll('.param-tile').forEach(b => b.classList.remove('active'));
                     const targetTile = group.querySelector(`.param-tile[data-val="${firstWell[param]}"]`);
-                    if(targetTile) targetTile.classList.add('active');
+                    if (targetTile) targetTile.classList.add('active');
                 }
             }
         });
@@ -1825,14 +2077,14 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             if (document.getElementById('wkladka-sub-options')) document.getElementById('wkladka-sub-options').style.display = 'none';
         }
 
-        if(document.getElementById('powloka-name-w')) document.getElementById('powloka-name-w').value = firstWell.powlokaNameW || '';
-        if(document.getElementById('malowanie-wew-cena')) document.getElementById('malowanie-wew-cena').value = firstWell.malowanieWewCena || '';
-        if(document.getElementById('powloka-name-z')) document.getElementById('powloka-name-z').value = firstWell.powlokaNameZ || '';
-        if(document.getElementById('malowanie-zew-cena')) document.getElementById('malowanie-zew-cena').value = firstWell.malowanieZewCena || '';
-        
+        if (document.getElementById('powloka-name-w')) document.getElementById('powloka-name-w').value = firstWell.powlokaNameW || '';
+        if (document.getElementById('malowanie-wew-cena')) document.getElementById('malowanie-wew-cena').value = firstWell.malowanieWewCena || '';
+        if (document.getElementById('powloka-name-z')) document.getElementById('powloka-name-z').value = firstWell.powlokaNameZ || '';
+        if (document.getElementById('malowanie-zew-cena')) document.getElementById('malowanie-zew-cena').value = firstWell.malowanieZewCena || '';
+
         if (typeof wizardConfirmedParams !== 'undefined') {
             ['nadbudowa', 'dennicaMaterial', 'wkladka', 'malowanieW', 'malowanieZ', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie'].forEach(param => {
-                if(firstWell[param] || (param === 'wkladka' && wklVal)) wizardConfirmedParams.add(param);
+                if (firstWell[param] || (param === 'wkladka' && wklVal)) wizardConfirmedParams.add(param);
             });
         }
         if (typeof validateWizardStep2 === 'function') {
@@ -1848,7 +2100,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
         }
     }
-    
+
     showSection(sectionToShow);
     showToast('Wczytano ofertę: ' + (normalized.number || offer.id), 'info');
 
@@ -1874,6 +2126,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     // Pokaż baner blokady, jeśli oferta ma zamówienie
     if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
+    if (typeof window.updateTransportCostSummary === 'function') window.updateTransportCostSummary();
 }
 
 // Globalne udostępnienie
@@ -2446,7 +2699,7 @@ function toggleAllWellsForOrder(checked) {
 function updateOrderSelectionCount() {
     const count = document.querySelectorAll('.well-order-checkbox:checked').length;
     const total = document.querySelectorAll('.well-order-checkbox').length;
-    
+
     // Zaktualizuj stan nagłówkowego checkboxa
     const headerCheckbox = document.getElementById('select-all-wells-for-order');
     if (headerCheckbox) {
@@ -2482,7 +2735,7 @@ async function handleOfferDiscountsSave() {
         okText: '<i data-lucide="save"></i> Zapisz ofertę',
         cancelText: 'Anuluj'
     });
-    
+
     if (shouldSave) {
         closeOfferDiscountsPopup();
         if (typeof window.saveOfferStudnie === 'function') {
@@ -2497,7 +2750,7 @@ async function handleOfferDiscountsSave() {
 async function handleOfferDiscountsCancel() {
     const currentSnapshot = JSON.stringify(window.wellDiscounts || {});
     const initialSnapshot = JSON.stringify(initialOfferDiscountsSnapshot || {});
-    
+
     if (currentSnapshot !== initialSnapshot) {
         const confirmExit = await window.appConfirm('<div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: 0.7rem;">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>', {
             title: '<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Niezapisane zmiany rabatów</div>',
@@ -2506,12 +2759,12 @@ async function handleOfferDiscountsCancel() {
             okText: '<i data-lucide="x-circle"></i> Tak, odrzuć zmiany',
             cancelText: 'Nie, wracam do edycji'
         });
-        
+
         if (!confirmExit) return; // User chosen NOT to exit
-        
+
         // Rollback state
         window.wellDiscounts = JSON.parse(initialSnapshot);
-        
+
         // Push rolled back state up to underlying elements
         const diameters = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
         diameters.forEach(dn => {
@@ -2523,12 +2776,12 @@ async function handleOfferDiscountsCancel() {
                 window.applyDiscount(dn, 'pehd', disc.pehd || 0);
             }
         });
-        
+
         if (typeof renderDiscountPanel === 'function') renderDiscountPanel();
         if (typeof updateSummary === 'function') updateSummary();
         if (typeof renderOfferSummary === 'function') renderOfferSummary();
     }
-    
+
     closeOfferDiscountsPopup();
 }
 
@@ -2542,10 +2795,10 @@ function handleOfferDiscountChange(dn, type, value) {
         if (typeof renderDiscountPanel === 'function') renderDiscountPanel();
         if (typeof updateSummary === 'function') updateSummary();
     }
-    
+
     // Przerenderuj tylko wartości pieniężne, zamiast dekonstruować całe drzewo DOM i gubić focus!
     updateOfferDiscountsPopupPrices();
-    
+
     // Odśwież tabelę w zakładce oferta by zaaplikować nowe wartości na żywo!
     if (typeof renderOfferSummary === 'function') {
         renderOfferSummary();
@@ -2610,7 +2863,7 @@ function renderOfferDiscountsPopupContent() {
     </style>
     <p style="color: var(--text-muted); margin: 0 0 0.5rem 0; font-size: 0.72rem; line-height: 1.4;">Ustaw procentowe rabaty dla poszczególnych średnic. Zmiany widoczne na żywo.</p>
     <div style="display: flex; flex-direction: column; gap: 0.35rem;">`;
-    
+
     let totalOverallNetto = 0;
 
     let globalWeightForTransport = 0;
@@ -2687,10 +2940,10 @@ function renderOfferDiscountsPopupContent() {
                 break;
             }
         }
-        
+
         const pehdDiscountValue = (wells[0] && wells[0].pehdDiscount) ? wells[0].pehdDiscount : 0;
         const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
-        
+
         html += `
         <div style="margin-top: 0.5rem; background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
@@ -2789,13 +3042,13 @@ function renderOfferDiscountsPopupContent() {
     body.innerHTML = html;
 }
 
-window.handleOfferPaintingCostChange = function(field, value) {
+window.handleOfferPaintingCostChange = function (field, value) {
     if (typeof updateGlobalPaintingCost === 'function') {
         updateGlobalPaintingCost(field, value);
     }
 }
 
-window.handleOfferPehdDiscountChange = function(value) {
+window.handleOfferPehdDiscountChange = function (value) {
     if (typeof updateGlobalPehdDiscount === 'function') {
         updateGlobalPehdDiscount(value);
     }
@@ -2810,56 +3063,96 @@ window.handleOfferPehdDiscountChange = handleOfferPehdDiscountChange;
 window.handleOfferDiscountsSave = handleOfferDiscountsSave;
 window.handleOfferDiscountsCancel = handleOfferDiscountsCancel;
 
+window.updateTransportCostSummary = function () {
+    const input = document.getElementById('step4-wyliczony-transport');
+    if (!input) return;
+    const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
+    const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
+    let totalWeight = 0;
+    if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
+        wells.forEach(w => totalWeight += calcWellStats(w).weight);
+    }
+    if (transportKm > 0 && transportRate > 0 && totalWeight > 0) {
+        const totalTransports = Math.ceil(totalWeight / 24000);
+        const costPerTrip = transportKm * transportRate;
+        const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        input.value = `${totalTransports} x ${fmt(costPerTrip)} zł`;
+    } else {
+        input.value = 'Brak transportu';
+    }
+};
+
 // Eksport dla UI HTML - Modal Transportowy (studnie.html)
 let initialTransportSnapshot = { km: 0, rate: 0 };
 
-window.openTransportPopup = function() {
+window.updateModalTransportDetails = function () {
+    const modalKm = parseFloat(document.getElementById('transport-modal-km')?.value) || 0;
+    const modalRate = parseFloat(document.getElementById('transport-modal-rate')?.value) || 0;
+    let globalWeight = 0;
+    if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
+        wells.forEach(w => globalWeight += calcWellStats(w).weight);
+    }
+    const fmt = (v) => v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    let costPerTrip = 0;
+    let totalTransports = 0;
+    let totalTransportCost = 0;
+    if (modalKm > 0 && modalRate > 0) {
+        costPerTrip = modalKm * modalRate;
+        if (globalWeight > 0) {
+            totalTransports = Math.ceil(globalWeight / 24000);
+            totalTransportCost = totalTransports * costPerTrip;
+        }
+    }
+    const costPerTripEl = document.getElementById('transport-modal-cost-per-trip');
+    const countEl = document.getElementById('transport-modal-count');
+    const totalCostEl = document.getElementById('transport-modal-total-cost');
+    if (costPerTripEl) costPerTripEl.textContent = fmt(costPerTrip) + ' PLN';
+    if (countEl) countEl.textContent = totalTransports;
+    if (totalCostEl) totalCostEl.textContent = fmt(totalTransportCost) + ' PLN';
+    const tripsInfoEl = document.getElementById('transport-modal-trips-info');
+    if (tripsInfoEl) {
+        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? fmtInt(globalWeight) : globalWeight} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${totalTransports}</strong></span>`;
+    }
+};
+
+window.openTransportPopup = function () {
     const kmInput = document.getElementById('transport-km');
     const rateInput = document.getElementById('transport-rate');
     const modalKm = document.getElementById('transport-modal-km');
     const modalRate = document.getElementById('transport-modal-rate');
-    
+
     // Zapisujemy migawkę (snapshot) by umożliwić wyjście bez ewentualnej zmiany
     initialTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
     initialTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
-    
+
     if (kmInput && modalKm) modalKm.value = kmInput.value || 0;
     if (rateInput && modalRate) modalRate.value = rateInput.value || 0;
 
-    // Aktualizacja info o ilości transportów
-    const tripsInfoEl = document.getElementById('transport-modal-trips-info');
-    if (tripsInfoEl) {
-        let globalWeight = 0;
-        if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
-            wells.forEach(w => globalWeight += calcWellStats(w).weight);
-        }
-        const totalTransports = globalWeight > 0 ? Math.ceil(globalWeight / 24000) : 0;
-        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? fmtInt(globalWeight) : globalWeight} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${totalTransports}</strong></span>`;
-    }
+    if (typeof window.updateModalTransportDetails === 'function') window.updateModalTransportDetails();
 
     document.getElementById('offer-transport-modal').style.display = 'flex';
-    if(typeof lucide !== 'undefined') lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
-window.handleOfferTransportCancel = async function() {
+window.handleOfferTransportCancel = async function () {
     const modalKm = parseFloat(document.getElementById('transport-modal-km')?.value) || 0;
     const modalRate = parseFloat(document.getElementById('transport-modal-rate')?.value) || 0;
-    
+
     if (modalKm !== initialTransportSnapshot.km || modalRate !== initialTransportSnapshot.rate) {
-        if(typeof window.appConfirm === 'function') {
+        if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
                 `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
                  <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
                 { allowHtml: true, okText: 'Odrzuć zmiany', cancelText: 'Zostań' }
             );
-            
+
             if (confirmed) {
                 const kmInput = document.getElementById('transport-km');
                 const rateInput = document.getElementById('transport-rate');
                 if (kmInput) kmInput.value = initialTransportSnapshot.km;
                 if (rateInput) rateInput.value = initialTransportSnapshot.rate;
-                if(typeof updateSummary === 'function') updateSummary();
-                
+                if (typeof updateSummary === 'function') updateSummary();
+
                 document.getElementById('offer-transport-modal').style.display = 'none';
             }
         } else {
@@ -2870,44 +3163,36 @@ window.handleOfferTransportCancel = async function() {
     }
 };
 
-window.handleOfferTransportSave = async function() {
-    if(typeof window.appConfirm === 'function') {
+window.handleOfferTransportSave = async function () {
+    if (typeof window.appConfirm === 'function') {
         const confirmed = await window.appConfirm(
             `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację transportu</div>
              <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Czy na pewno chcesz zapisać te parametry przewozu do dokumentu oferty?</div>`,
             { allowHtml: true, okText: 'Zapisz Ofertę', cancelText: 'Anuluj' }
         );
-        
+
         if (confirmed) {
             document.getElementById('offer-transport-modal').style.display = 'none';
-            if(typeof saveOfferStudnie === 'function') saveOfferStudnie();
+            if (typeof saveOfferStudnie === 'function') saveOfferStudnie();
         }
     } else {
         document.getElementById('offer-transport-modal').style.display = 'none';
-        if(typeof saveOfferStudnie === 'function') saveOfferStudnie();
+        if (typeof saveOfferStudnie === 'function') saveOfferStudnie();
     }
 };
 
-window.syncTransportFromModal = function() {
+window.syncTransportFromModal = function () {
     const kmInput = document.getElementById('transport-km');
     const rateInput = document.getElementById('transport-rate');
     const modalKm = document.getElementById('transport-modal-km');
     const modalRate = document.getElementById('transport-modal-rate');
-    
+
     if (kmInput && modalKm) kmInput.value = modalKm.value || 0;
     if (rateInput && modalRate) rateInput.value = modalRate.value || 0;
-    
-    // Kluczowe: renderOfferSummary przelicza totals i odświeża całe UI oferty (w tym suma w modal)
-    if(typeof renderOfferSummary === 'function') renderOfferSummary();
 
-    // Aktualizacja info o ilości transportów
-    const tripsInfoEl = document.getElementById('transport-modal-trips-info');
-    if (tripsInfoEl) {
-        let globalWeight = 0;
-        if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
-            wells.forEach(w => globalWeight += calcWellStats(w).weight);
-        }
-        const totalTransports = globalWeight > 0 ? Math.ceil(globalWeight / 24000) : 0;
-        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? fmtInt(globalWeight) : globalWeight} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${totalTransports}</strong></span>`;
-    }
+    // Kluczowe: renderOfferSummary przelicza totals i odświeża całe UI oferty (w tym suma w modal)
+    if (typeof renderOfferSummary === 'function') renderOfferSummary();
+    if (typeof window.updateTransportCostSummary === 'function') window.updateTransportCostSummary();
+
+    if (typeof window.updateModalTransportDetails === 'function') window.updateModalTransportDetails();
 };

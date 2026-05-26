@@ -58,9 +58,8 @@ describe('Partial Orders Backend Logic', () => {
             wells: [{ id: 'well-2', name: 'S2' }]
         };
 
-        // Mock raw SQL for find (no existing orders) and execute
-        (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([]);
-        (prisma.$executeRawUnsafe as jest.Mock).mockResolvedValue(1);
+        (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
+        (prisma.orders_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
 
         const res = await request(app)
             .put('/api/orders-studnie')
@@ -68,8 +67,8 @@ describe('Partial Orders Backend Logic', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.body.ok).toBe(true);
-        // Should execute 2 INSERTs (one for each order)
-        expect(prisma.$executeRawUnsafe).toHaveBeenCalledTimes(2);
+        // Should execute 2 upserts (one for each order)
+        expect(prisma.orders_studnie_rel.upsert).toHaveBeenCalledTimes(2);
     });
 
     it('should correctly filter orders by user role', async () => {

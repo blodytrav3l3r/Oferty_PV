@@ -29,25 +29,15 @@ body.index-page {
         radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
         radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
     background-attachment: fixed;
-    color: #f1f5f9;
+    color: var(--text-primary);
     overflow-x: hidden;
     overflow-y: auto;
     position: relative;
 }
 
 :root {
-    --primary: #6366f1;
-    --primary-hover: #818cf8;
-    --accent: #8b5cf6;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warn: #f59e0b;
-    --glass: rgba(15, 23, 42, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --text-dim: #94a3b8;
-    --radius-lg: 24px;
     --radius-md: 16px;
-    --radius-sm: 10px;
+    --radius-lg: 24px;
 }
 
 /* ── Custom Scrollbar ── */
@@ -56,14 +46,14 @@ body.index-page ::-webkit-scrollbar {
     height: 8px;
 }
 body.index-page ::-webkit-scrollbar-track {
-    background: #0a0e1a;
+    background: var(--bg-primary);
 }
 body.index-page ::-webkit-scrollbar-thumb {
-    background: #3730a3;
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 body.index-page ::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5;
+    background: var(--scrollbar-thumb-hover);
 }
 
 /* ── Animated Background ── */
@@ -154,7 +144,7 @@ body.index-page::before {
 
 .subtitle {
     font-size: 1.05rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     font-weight: 400;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -225,7 +215,7 @@ body.index-page::before {
 }
 
 .login-box input::placeholder {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .login-btn {
@@ -269,7 +259,7 @@ body.index-page::before {
 }
 
 .login-error {
-    color: #f87171;
+    color: var(--danger-hover);
     font-size: 0.8rem;
     margin-top: 0.5rem;
     min-height: 1.2rem;
@@ -300,7 +290,7 @@ body.index-page::before {
 .user-avatar {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -328,7 +318,7 @@ body.index-page::before {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--primary-hover);
+    color: var(--accent-hover);
 }
 
 .user-actions {
@@ -344,7 +334,7 @@ body.index-page::before {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 20px;
-    color: #94a3b8;
+    color: var(--text-secondary);
     font:
         600 0.8rem 'Inter',
         sans-serif;
@@ -366,7 +356,7 @@ body.index-page::before {
 }
 
 .btn-hero.btn-accent {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none;
     color: white;
 }
@@ -390,7 +380,7 @@ body.index-page::before {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     text-decoration: none;
-    color: #f1f5f9;
+    color: var(--text-primary);
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     overflow: hidden;
     gap: 1.5rem;
@@ -424,14 +414,14 @@ body.index-page::before {
 }
 
 .launch-card.rury h2 {
-    color: #818cf8;
+    color: var(--accent-hover);
 }
 .launch-card.studnie h2 {
     color: #34d399;
 }
 
 .launch-card p {
-    color: #94a3b8;
+    color: var(--text-secondary);
     font-size: 0.85rem;
     line-height: 1.4;
     margin: 0;
@@ -492,7 +482,7 @@ body.index-page::before {
 }
 
 .card-rury::before {
-    background: linear-gradient(90deg, #6366f1, #818cf8);
+    background: linear-gradient(90deg, #6366f1, var(--accent-hover));
 }
 
 .card-studnie::before {
@@ -536,7 +526,7 @@ body.index-page::before {
 }
 
 .card-rury .card-title {
-    color: #818cf8;
+    color: var(--accent-hover);
 }
 .card-studnie .card-title {
     color: #34d399;
@@ -544,7 +534,7 @@ body.index-page::before {
 
 .card-desc {
     font-size: 0.88rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
@@ -560,7 +550,7 @@ body.index-page::before {
 
 .card-rury .card-badge {
     background: rgba(99, 102, 241, 0.1);
-    color: #818cf8;
+    color: var(--accent-hover);
     border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
@@ -597,7 +587,7 @@ body.index-page::before {
 
 .admin-title-group p {
     font-size: 0.75rem;
-    color: var(--text-dim);
+    color: var(--text-secondary);
 }
 
 .admin-card {
@@ -629,7 +619,7 @@ body.index-page::before {
 .admin-table th {
     padding: 0.6rem 1rem;
     font-size: 0.65rem;
-    color: #64748b;
+    color: var(--text-muted);
     border-bottom: 1px solid var(--glass-border);
     text-align: center;
 }
@@ -715,17 +705,17 @@ body.index-page::before {
     background: rgba(15, 23, 42, 0.4);
     border: 1px solid var(--glass-border);
     border-radius: 6px;
-    color: #f1f5f9;
+    color: var(--text-primary);
     outline: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-input::placeholder {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .glass-input:focus {
-    border-color: var(--primary);
+    border-color: var(--accent);
     background: rgba(99, 102, 241, 0.05);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
@@ -752,7 +742,7 @@ body.index-page::before {
 .sub-users-title {
     font-size: 0.65rem;
     font-weight: 800;
-    color: #94a3b8;
+    color: var(--text-secondary);
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -780,8 +770,8 @@ body.index-page::before {
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    border-left: 3px solid var(--primary);
-    border-right: 3px solid var(--primary);
+    border-left: 3px solid var(--accent);
+    border-right: 3px solid var(--accent);
     border-radius: 6px;
     margin: 0.5rem auto;
     max-width: fit-content;
@@ -806,7 +796,7 @@ body.index-page::before {
     font-size: 0.65rem !important;
     background: rgba(99, 102, 241, 0.1) !important;
     border-color: rgba(99, 102, 241, 0.2) !important;
-    color: #a5b4fc !important;
+    color: var(--accent-text) !important;
     opacity: 0.9;
 }
 

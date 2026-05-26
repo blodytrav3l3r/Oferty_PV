@@ -133,7 +133,7 @@ app.use('/api/offers-studnie', (req, res, next) => {
 });
 
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
-app.use('/api/clients', apiLimiter, clientRoutes);
+app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);
 app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
 app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);

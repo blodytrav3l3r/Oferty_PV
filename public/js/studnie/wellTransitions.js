@@ -111,6 +111,7 @@ function renderInlinePrzejsciaApp(containerId) {
         ? przejsciaProducts
               .filter((p) => p.category === inlinePrzejsciaState.type)
               .filter((p) => {
+                  if (p.category === 'Otwór KPED') return true;
                   let pDn = 160;
                   if (typeof p.dn === 'string' && p.dn.includes('/')) {
                       pDn = parseFloat(p.dn.split('/')[1]) || 160;
@@ -578,6 +579,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             const currentTypeDNs = przejsciaProducts
                 .filter((pr) => pr.category === editPrzejscieState.type || pr.id === item.productId)
                 .filter((pr) => {
+                    if (pr.category === 'Otwór KPED') return true;
                     let pDn = 160;
                     if (typeof pr.dn === 'string' && pr.dn.includes('/')) {
                         pDn = parseFloat(pr.dn.split('/')[1]) || 160;
@@ -1215,6 +1217,15 @@ window.confirmChangePrzejscieType = function (index, newType) {
         .sort((a, b) => a.dn - b.dn);
     if (available.length > 0) {
         well.przejscia[index].productId = available[0].id;
+        // Wyczyść zamrożone ceny, aby zmusić system do ponownego przeliczenia na zamówieniu
+        delete well.przejscia[index].frozenPrice;
+        delete well.przejscia[index].frozenPriceBase;
+        delete well.przejscia[index].frozenName;
+        delete well.przejscia[index].frozenTransitionPrice;
+        delete well.przejscia[index].frozenDrillingPrice;
+        delete well.przejscia[index].frozenDrillingName;
+        delete well.przejscia[index].frozenDrillingDn;
+        
         document.getElementById('change-prz-type-modal').style.display = 'none';
         refreshAll();
         autoSelectComponents(true);
@@ -1284,6 +1295,15 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
     well.przejscia[index].productId = newProductId;
+    // Wyczyść zamrożone ceny, aby zmusić system do ponownego przeliczenia na zamówieniu
+    delete well.przejscia[index].frozenPrice;
+    delete well.przejscia[index].frozenPriceBase;
+    delete well.przejscia[index].frozenName;
+    delete well.przejscia[index].frozenTransitionPrice;
+    delete well.przejscia[index].frozenDrillingPrice;
+    delete well.przejscia[index].frozenDrillingName;
+    delete well.przejscia[index].frozenDrillingDn;
+
     document.getElementById('change-prz-dn-modal').style.display = 'none';
     refreshAll();
     autoSelectComponents(true);

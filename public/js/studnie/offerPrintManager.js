@@ -157,19 +157,15 @@ function buildOfferNotesHtml(notes, paymentTerms, validity) {
 
     if (notes) {
         html += `<div class="notes-section">
-            <div class="note-box"><strong>Uwagi:</strong> ${notes}</div>
+            <div class="note-box">${notes.replace(/\\n/g, '<br>')}</div>
         </div>`;
     }
 
-    html += `<div class="conditions">`;
     if (paymentTerms) {
-        html += `<div><strong>Warunki płatności:</strong> ${paymentTerms}</div>`;
+        html += `<div class="conditions" style="margin-top: 10px;">
+            <div><strong>Warunki płatności:</strong> ${paymentTerms.replace(/\\n/g, '<br>')}</div>
+        </div>`;
     }
-    if (validity) {
-        // Przeniesiono do górnej części, więc tutaj pomijamy
-        // html += `<div><strong>Data ważności oferty:</strong> ${validity}</div>`;
-    }
-    html += `</div>`;
 
     return html;
 }
@@ -260,7 +256,7 @@ async function generateOfferHtml() {
     const offerNumber = document.getElementById('offer-number')?.value || '—';
     const offerDate =
         document.getElementById('offer-date')?.value || new Date().toISOString().slice(0, 10);
-    const notes = document.getElementById('offer-notes')?.value?.trim() || '';
+    const notes = document.getElementById('offer-tab-notes')?.value?.trim() || document.getElementById('offer-notes')?.value?.trim() || '';
     const paymentTerms = document.getElementById('offer-payment-terms')?.value?.trim() || '';
     const validity = document.getElementById('offer-validity')?.value?.trim() || '';
 
@@ -276,9 +272,8 @@ async function generateOfferHtml() {
     const summaries = [];
 
     groups.forEach((groupWells, dn) => {
-        const result = buildDiameterTableHtml(dn, groupWells, currentLp, transportMap);
+        const result = buildDiameterTableHtml(dn, groupWells, 1, transportMap);
         tablesHtml += result.html;
-        currentLp = result.nextLp;
 
         const label = dn === 'styczna' ? 'Studnie styczne' : `Studnie DN${dn}`;
         summaries.push({ label, count: result.count, totalPrice: result.totalPrice });
@@ -435,28 +430,313 @@ async function printOfferStudnie() {
 }
 
 /**
- * Pokazuje modal wyboru formatu eksportu oferty
+ * Główna funkcja wywoływana przy kliknięciu "Wydruk"
+ * Pokazuje uniwersalny modal dający wybór wydruku oferty oraz karty budowy
+ */
+window.handlePrintClick = function() {
+    window.showUniversalPrintModal();
+};
+
+/**
+ * Kompatybilność wsteczna - deleguje do uniwersalnego modala
  */
 window.showOfferExportChoice = function() {
-    const modalHtml = `
-    <div id="offer-export-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px);">
-        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 350px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Wydruk Oferty</h3>
-            <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 1.5rem;">Do jakiego formatu chcesz wyeksportować tę ofertę?</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
-                <button onclick="exportOfferToPDF_action()" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                    <span style="font-size: 2rem;"><i data-lucide="file-text"></i></span> PDF
-                </button>
-                <button onclick="exportOfferToWord_action()" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                    <span style="font-size: 2rem;"><i data-lucide="edit"></i></span> Word
-                </button>
+    window.showUniversalPrintModal();
+};
+
+/**
+ * Uniwersalny modal dający wybór wydruku oferty oraz karty budowy
+ */
+window.showUniversalPrintModal = function(offerId, orderId) {
+    let finalOfferId = offerId;
+    let finalOrderId = orderId;
+
+    if (!finalOfferId && !finalOrderId) {
+        // Kliknięcie w aktywnym edytorze
+        if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) {
+            finalOrderId = orderEditMode.orderId;
+            finalOfferId = (orderEditMode.order && orderEditMode.order.offerId) || orderEditMode.offerId || (typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '');
+        } else if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
+            finalOfferId = editingOfferIdStudnie;
+            if (typeof getOrdersForOffer === 'function') {
+                const orders = getOrdersForOffer(finalOfferId);
+                if (orders && orders.length > 0) {
+                    finalOrderId = orders[0].id;
+                }
+            }
+        }
+    }
+
+    if (!finalOfferId && !finalOrderId) {
+        if (typeof showToast === 'function') showToast('Brak aktywnego dokumentu do wydruku', 'error');
+        return;
+    }
+
+    // Pobierz powiązane zamówienia
+    let relatedOrders = [];
+    if (finalOfferId && typeof getOrdersForOffer === 'function') {
+        relatedOrders = getOrdersForOffer(finalOfferId);
+    }
+    if (finalOrderId && relatedOrders.length === 0) {
+        if (typeof ordersStudnie !== 'undefined') {
+            const currentOrder = ordersStudnie.find(o => o.id === finalOrderId);
+            if (currentOrder) relatedOrders = [currentOrder];
+        }
+        // Fallback: pobierz zamówienie z API (np. z kartoteki PV gdzie ordersStudnie jest puste)
+        if (relatedOrders.length === 0) {
+            fetch(`/api/orders-studnie/${finalOrderId}`, {
+                headers: typeof authHeaders === 'function' ? authHeaders() : {}
+            })
+            .then(res => res.ok ? res.json() : null)
+            .then(json => {
+                if (json && json.data) {
+                    window._modalRelatedOrders = [json.data];
+                    if (typeof renderOrdersSection === 'function') renderOrdersSection();
+                }
+            })
+            .catch(() => {});
+        }
+    }
+
+    // Tworzenie HTML modala
+    let ordersSectionHtml = '';
+    if (relatedOrders.length > 0) {
+        ordersSectionHtml = `
+            <div style="margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;">
+                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #34d399; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="package" style="width: 16px; height: 16px;"></i> Wydruk Karty Budowy
+                </h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Wybierz format eksportu Karty Budowy:</p>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 2px;">
+        `;
+        relatedOrders.forEach(ord => {
+            const ordNum = ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—');
+            ordersSectionHtml += `
+                <div style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.2); padding: 0.5rem 0.6rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: #e2e8f0; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; text-align: left;" title="Zlecenie/Zamówienie ${ordNum}">ZAM: ${ordNum}</span>
+                    <div style="display: flex; gap: 0.4rem; flex-shrink: 0;">
+                        <button onclick="window.exportKartaDirect_action('${ord.id}', 'pdf')" style="background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                            PDF
+                        </button>
+                        <button onclick="window.exportKartaDirect_action('${ord.id}', 'docx')" style="background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                            Word
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        ordersSectionHtml += `
+                </div>
             </div>
-            <button style="padding: 0.5rem 1rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); cursor: pointer;" onclick="document.getElementById('offer-export-modal').remove()">Anuluj</button>
+        `;
+    } else {
+        ordersSectionHtml = `
+            <div style="margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;">
+                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #64748b; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="package" style="width: 16px; height: 16px;"></i> Wydruk Karty Budowy
+                </h4>
+                <p style="font-size: 0.75rem; color: #64748b; text-align: left; font-style: italic; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); padding: 0.6rem; border-radius: 8px; line-height: 1.4;">
+                    Brak przypisanego zamówienia. Utwórz zamówienie z poziomu podglądu oferty, aby móc wyeksportować Kartę Budowy.
+                </p>
+            </div>
+        `;
+    }
+
+    // Sekcja Oferty
+    let offerSectionHtml = '';
+    if (finalOfferId) {
+        offerSectionHtml = `
+            <div>
+                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #818cf8; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Wydruk Oferty
+                </h4>
+                <p style="font-size: 0.75rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Wybierz format eksportu kalkulacji ofertowej:</p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button onclick="window.exportOfferDirect_action('${finalOfferId}', 'pdf')" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 0.8rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                        <span style="font-size: 1.5rem;"><i data-lucide="file-text"></i></span> PDF
+                    </button>
+                    <button onclick="window.exportOfferDirect_action('${finalOfferId}', 'docx')" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 0.8rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                        <span style="font-size: 1.5rem;"><i data-lucide="edit"></i></span> Word
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Usunięcie poprzedniego modala jeśli istnieje
+    const existingModal = document.getElementById('universal-print-modal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+    <div id="universal-print-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px);">
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 380px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 0.6rem;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="printer" style="width: 18px; height: 18px;"></i> Wydruk Dokumentów
+                </h3>
+                <button onclick="document.getElementById('universal-print-modal').remove()" style="background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i data-lucide="x" style="width: 18px; height: 18px;"></i></button>
+            </div>
+            
+            ${offerSectionHtml}
+            ${ordersSectionHtml}
+            
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button style="padding: 0.5rem 1.2rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'" onclick="document.getElementById('universal-print-modal').remove()">Zamknij</button>
+            </div>
         </div>
     </div>
     `;
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     if(typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+/**
+ * Przerysowuje sekcję Karty Budowy w otwartym modalu po asynchronicznym pobraniu zamówienia.
+ * Wywoływana z API fallback w showUniversalPrintModal.
+ */
+window.renderOrdersSection = function() {
+    const modal = document.getElementById('universal-print-modal');
+    if (!modal) return;
+
+    // Struktura: #universal-print-modal > div (inline styles, background:#1e293b)
+    const modalBody = modal.firstElementChild;
+    if (!modalBody) return;
+
+    // Pobierz zamówienia z globalnej zmiennej (ustawione przez fetch w showUniversalPrintModal)
+    const orders = window._modalRelatedOrders || [];
+    if (orders.length === 0) return;
+
+    // Usuń istniejącą sekcję Karty Budowy (jeśli jest)
+    const existingOrders = modalBody.querySelector('.orders-section');
+    if (existingOrders) existingOrders.remove();
+
+    const ordersSection = document.createElement('div');
+    ordersSection.className = 'orders-section';
+    ordersSection.style.cssText = 'margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;';
+
+    let innerHtml = `
+        <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #34d399; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
+            <i data-lucide="package" style="width: 16px; height: 16px;"></i> Wydruk Karty Budowy
+        </h4>
+        <p style="font-size: 0.75rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Wybierz format eksportu Karty Budowy:</p>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 2px;">
+    `;
+    orders.forEach(ord => {
+        const ordNum = ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—');
+        innerHtml += `
+            <div style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.2); padding: 0.5rem 0.6rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.75rem; color: #e2e8f0; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; text-align: left;" title="Zamówienie ${ordNum}">ZAM: ${ordNum}</span>
+                <div style="display: flex; gap: 0.4rem; flex-shrink: 0;">
+                    <button onclick="window.exportKartaDirect_action('${ord.id}', 'pdf')" style="background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800;">PDF</button>
+                    <button onclick="window.exportKartaDirect_action('${ord.id}', 'docx')" style="background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800;">Word</button>
+                </div>
+            </div>
+        `;
+    });
+    innerHtml += `</div>`;
+    ordersSection.innerHTML = innerHtml;
+
+    // Wstaw przed przycisk "Zamknij" (div z justify-content: flex-end)
+    const closeBtn = modalBody.querySelector('div[style*="justify-content: flex-end"]');
+    if (closeBtn) {
+        modalBody.insertBefore(ordersSection, closeBtn);
+    } else {
+        modalBody.appendChild(ordersSection);
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+/**
+ * Akcja pobierania oferty dla konkretnego ID
+ */
+window.exportOfferDirect_action = async function(offerId, format) {
+    // Jeśli to jest aktualnie edytowana oferta w edytorze, możemy ją najpierw zapisać
+    // W trybie edycji zamówienia (orderEditMode) oferta jest już zapisana — pomijamy zapis
+    if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie === offerId) {
+        const isInOrderEditMode = typeof orderEditMode !== 'undefined' && orderEditMode;
+        if (!isInOrderEditMode) {
+            if (typeof showToast === 'function') {
+                showToast('Zapisywanie oferty przed eksportem...', 'info');
+            }
+            const savedOk = await saveOfferStudnie();
+            if (!savedOk) {
+                if (typeof showToast === 'function') {
+                    showToast('Eksport przerwany - nie udało się zapisać oferty.', 'error');
+                }
+                return;
+            }
+        }
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(`Generowanie oferty (${format.toUpperCase()})...`, 'info');
+    }
+
+    const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
+    fetch(`/api/offers-studnie/${offerId}/${endpoint}`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `oferta_studnie_${offerId}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        if (typeof showToast === 'function') {
+            showToast(`Pobrano ofertę w ${format.toUpperCase()}`, 'success');
+        }
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        if (typeof showToast === 'function') {
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        }
+    });
+};
+
+/**
+ * Akcja pobierania karty budowy dla konkretnego ID
+ */
+window.exportKartaDirect_action = async function(orderId, format) {
+    if (typeof showToast === 'function') {
+        showToast(`Generowanie Karty Budowy (${format.toUpperCase()})...`, 'info');
+    }
+
+    const endpoint = format === 'pdf' ? 'export-karta-pdf' : 'export-karta-docx';
+    fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then((res) => {
+        if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `karta_budowy_${orderId.substring(0,8)}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        if (typeof showToast === 'function') {
+            showToast(`Pobrano Kartę Budowy w ${format.toUpperCase()}`, 'success');
+        }
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        if (typeof showToast === 'function') {
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        }
+    });
 };
 
 window.exportOfferToPDF_action = async function() {

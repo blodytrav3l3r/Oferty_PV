@@ -21,6 +21,8 @@ export type BorderDef = {
 export type CellBorders = { top: BorderDef; bottom: BorderDef; left: BorderDef; right: BorderDef };
 
 export const BORDER_THIN: BorderDef = { style: BorderStyle.SINGLE, size: 1, color: COLOR_BORDER };
+export const BORDER_DOTTED: BorderDef = { style: BorderStyle.DOTTED, size: 1, color: COLOR_BORDER };
+export const BORDER_TITLE: BorderDef = { style: BorderStyle.SINGLE, size: 4, color: COLOR_GRAY_HEADER };
 export const BORDER_NONE: BorderDef = { style: BorderStyle.NONE, size: 0, color: COLOR_WHITE };
 export const NO_BORDERS: CellBorders = {
     top: BORDER_NONE,

@@ -171,15 +171,36 @@ export type OffersStudnieBatchInput = z.infer<typeof offersStudnieBatchSchema>;
 // =============================================================================
 
 /**
+ * Walidacja polskiego NIP (10 cyfr + checksum)
+ */
+function isValidNip(nip: string): boolean {
+    const cleaned = nip.replace(/[\s-]/g, '');
+    if (!/^\d{10}$/.test(cleaned)) return false;
+    const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cleaned[i], 10) * weights[i];
+    }
+    const checksum = sum % 11;
+    return checksum === parseInt(cleaned[9], 10);
+}
+
+/**
  * Schemat pojedynczego klienta
  */
 export const clientSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(1, 'Nazwa klienta jest wymagana'),
-    nip: z.string().optional(),
-    address: z.string().optional(),
-    contact: z.string().optional(),
-    phone: z.string().optional(),
+    name: z.string().min(1, 'Nazwa klienta jest wymagana').max(200, 'Nazwa klienta nie może przekraczać 200 znaków'),
+    nip: z.string().optional().refine(
+        (val) => !val || val.trim() === '' || isValidNip(val),
+        { message: 'Nieprawidłowy format NIP (wymagane 10 cyfr z poprawną sumą kontrolną)' }
+    ),
+    address: z.string().max(500, 'Adres nie może przekraczać 500 znaków').optional(),
+    contact: z.string().max(200, 'Kontakt nie może przekraczać 200 znaków').optional(),
+    phone: z.string().optional().refine(
+        (val) => !val || val.trim() === '' || /^[\d+\-() ]{7,20}$/.test(val),
+        { message: 'Nieprawidłowy format telefonu (7-20 znaków: cyfry, +, -, (), spacje)' }
+    ),
     email: z.string().email('Nieprawidłowy format email').optional().or(z.literal(''))
 });
 
@@ -187,7 +208,7 @@ export const clientSchema = z.object({
  * Schemat synchronizacji klientów (batch)
  */
 export const clientsBatchSchema = z.object({
-    data: z.array(clientSchema).min(1, 'Wymagana co najmniej jeden klient')
+    data: z.array(clientSchema)
 });
 
 export type ClientInput = z.infer<typeof clientSchema>;

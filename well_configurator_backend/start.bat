@@ -118,12 +118,17 @@ if not exist "run.py" (
     exit /b 1
 )
 
+:restart
+echo [INFO] Uruchamianie serwera Python (run.py)...
 python run.py
-if errorlevel 1 (
-    echo.
-    echo [BLAD] Serwer Python zakonczyl sie z bledem.
+set "EXIT_CODE=!ERRORLEVEL!"
+echo.
+echo [INFO] Serwer zatrzymany (kod: !EXIT_CODE!).
+if "!EXIT_CODE!"=="0" (
+    echo [INFO] Ctrl+C — normalne zamkniecie.
     pause
-    exit /b 1
+    exit /b 0
 )
-
-pause
+echo [INFO] Restart za 3 sekundy...
+timeout /t 3 /nobreak >nul 2>&1
+goto restart

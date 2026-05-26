@@ -149,16 +149,18 @@ function isOfferLocked() {
 }
 
 function isWellLocked(wellIdx) {
-    if (orderEditMode) return false; // W trybie edycji zamówienia studnie są edytowalne
     const idx = wellIdx !== undefined ? wellIdx : currentWellIndex;
     const well = wells[idx];
     if (!well) return false;
 
-    // Sprawdź zaakceptowane zlecenia produkcyjne
+    // ZAWSZE blokuj jeśli jest zaakceptowane zlecenie produkcyjne (nawet w trybie edycji zamówienia)
     const hasAcceptedPO = (
         typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : []
     ).some((po) => po.wellId === well.id && po.status === 'accepted');
     if (hasAcceptedPO) return true;
+
+    // W trybie edycji zamówienia reszta jest edytowalna
+    if (orderEditMode) return false;
 
     // Sprawdź, czy studnia jest częścią istniejącego zamówienia
     if (typeof isWellOrdered === 'function' && isWellOrdered(well)) return true;
@@ -662,7 +664,14 @@ function calcPrecoPricing(well) {
 
     if (benchPipes.length > 0) {
         benchPipes.forEach(p => {
-            const uniesienieMm = precoInsertTop - p._goraPrzejscia;
+            let uniesienieMm = precoInsertTop - p._goraPrzejscia;
+            
+            // Ignoruj uniesienie dla mniejszej rury kinety głównej (np. przelotu),
+            // jeśli w całości mieści się ona w świetle większej rury (wylotu).
+            if ((p === glowne || p === przelot) && p._goraPrzejscia <= glowne._goraPrzejscia) {
+                uniesienieMm = 0;
+            }
+
             if (uniesienieMm > 0) {
                 const kwota = _findPrecoRange(cennik.uniesienie, uniesienieMm, p.dnRury);
                 if (kwota > 0) {
@@ -682,7 +691,8 @@ function calcPrecoPricing(well) {
     // 8. Redukcja kinety (gdy kineta główna ma inne średnice, np. DN 400 i DN 300)
     // Jeśli redukcja kinety jest wyłączona w parametrach (well.redukcjaKinety === 'nie'), pomijamy ten koszt.
     if (well.redukcjaKinety !== 'nie' && przelot && glowne.dnRury !== przelot.dnRury && cennik.redukcja) {
-        result.redukcja = _findPrecoRange(cennik.redukcja, 50, glowne.dnRury);
+        const roznicaSrednic = Math.abs(glowne.dnRury - przelot.dnRury);
+        result.redukcja = _findPrecoRange(cennik.redukcja, roznicaSrednic, Math.max(glowne.dnRury, przelot.dnRury));
         result.redukcjaOpis = `z DN${glowne.dnRury} na DN${przelot.dnRury}`;
     }
 
@@ -861,7 +871,19 @@ function enforceGlobalKonusPehdRule() {
     return false;
 }
 
+let __refreshAllDepth = 0;
+const __MAX_REFRESH_DEPTH = 5;
 function refreshAll(skipSummary = false) {
+    __refreshAllDepth++;
+    if (__refreshAllDepth > __MAX_REFRESH_DEPTH) {
+        console.error('========================================');
+        console.error('DETEKCJA NIESKOŃCZONEJ PĘTLI refreshAll!');
+        console.error('Głębokość:', __refreshAllDepth);
+        console.error('Stack trace:', new Error().stack);
+        console.error('========================================');
+        __refreshAllDepth = 0;
+        return;
+    }
     enforceGlobalKonusPehdRule();
 
     const well = getCurrentWell();
@@ -896,6 +918,7 @@ function refreshAll(skipSummary = false) {
     // Wymuszenie przetworzenia ikon tylko w zaktualizowanych kontenerach
     // globalny skan, ale szybki, bo omija te, które już stały się <svg>
     if (window.lucide) window.lucide.createIcons();
+    __refreshAllDepth--;
 }
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) — przeniesione do wellUI.js ===== */
@@ -1003,6 +1026,76 @@ function resetWellParamsToDefaults() {
 
 window.updateWellParam = updateWellParam;
 window.resetWellParamsToDefaults = resetWellParamsToDefaults;
+
+/* ===== ZASTOSUJ PARAMETRY GLOBALNE DO WSZYSTKICH STUDNI ===== */
+async function applyGlobalParamsToAllWells() {
+    const gp = getWizardGlobalParams();
+    if (wells.length === 0) {
+        showToast('Brak studni w ofercie. Dodaj studnię przed zastosowaniem parametrów.', 'info');
+        return;
+    }
+    // Podziel studnie na edytowalne i zablokowane
+    const editable = [];
+    const locked = [];
+    wells.forEach((w, i) => {
+        if (isWellLocked(i)) {
+            locked.push(w);
+        } else {
+            editable.push({ well: w, index: i });
+        }
+    });
+    if (editable.length === 0) {
+        showToast('Wszystkie studnie są zablokowane. Nie można zastosować parametrów.', 'error');
+        return;
+    }
+    let msg = `Zastosować parametry ogólne do ${editable.length} studni?`;
+    if (locked.length > 0) {
+        msg += `\n${locked.length} studni zostanie pominiętych (zablokowane).`;
+    }
+    if (!confirm(msg)) return;
+    const prevWellIndex = currentWellIndex;
+    for (const { well, index } of editable) {
+        for (const key of Object.keys(gp)) {
+            well[key] = gp[key];
+        }
+        // Kineta → spocznik i reguły PRECO
+        const kinetaVal = gp.kineta;
+        if (kinetaVal) {
+            const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+            if (syncValues.includes(kinetaVal)) {
+                well.spocznik = kinetaVal;
+            }
+            if (kinetaVal === 'preco' || kinetaVal === 'precotop') {
+                well.spocznikH = '1/1';
+                well.precoFullHeight = gp.precoFullHeight || 'nie';
+            }
+        }
+        enforceLoadClassRules(well, 'klasaNosnosci_korpus');
+        enforceLoadClassRules(well, 'nadbudowa');
+        enforceLoadClassRules(well, 'dennicaMaterial');
+        // Konus + PEHD — wyzeruj wkładkę zwieńczenia
+        if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+            const hasKonus = well.config && well.config.some(c => {
+                const p = studnieProducts.find(pr => pr.id === c.productId);
+                return p && p.componentType === 'konus';
+            });
+            if (hasKonus) well.wkladkaZwienczenie = 'brak';
+        }
+        if (typeof updateConfigToMatchParams === 'function') {
+            updateConfigToMatchParams(well);
+        }
+        currentWellIndex = index;
+        if (!well.autoLocked && well.rzednaWlazu != null && well.rzednaDna != null && well.rzednaWlazu > well.rzednaDna) {
+            await autoSelectComponents(true);
+        }
+    }
+    currentWellIndex = prevWellIndex;
+    refreshAll();
+    updateParamTilesUI();
+    updateAutoLockUI();
+    showToast(`Zastosowano parametry ogólne do ${editable.length} studni`, 'success');
+}
+window.applyGlobalParamsToAllWells = applyGlobalParamsToAllWells;
 
 /**
  * Wymuś zasady klas obciążenia na obiekcie studni:
@@ -1684,7 +1777,8 @@ function calcWellStats(well) {
 
         // Ceny bazowe (bez rabatu)
         let itemPriceDisc, itemPriceBaseVal;
-        if (item.frozenPrice != null) {
+        const useFrozenPrice = item.frozenPrice != null && window.isPreviewMode;
+        if (useFrozenPrice) {
             itemPriceDisc = item.frozenPrice;
             itemPriceBaseVal =
                 item.frozenPriceBase != null ? item.frozenPriceBase : item.frozenPrice;
@@ -1791,9 +1885,9 @@ function calcWellStats(well) {
                 }
             }
 
-            // Użyj zamrożonej ceny, jeśli jest dostępna (tryb zamówienia)
+            // Użyj zamrożonej ceny tylko w podglądzie; w edycji przelicz na nowo
             let bP, dP;
-            if (item.frozenPrice != null) {
+            if (item.frozenPrice != null && window.isPreviewMode) {
                 dP = item.frozenPrice;
                 bP = item.frozenPriceBase != null ? item.frozenPriceBase : item.frozenPrice;
             } else {

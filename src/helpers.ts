@@ -82,3 +82,37 @@ export function parseJsonField<T>(raw: string | null | undefined, fallback: T): 
         return fallback;
     }
 }
+
+/**
+ * Normalizuje wartość daty do ISO string.
+ * Obsługuje: timestamp number, Date object, ISO string, timestamp string.
+ */
+export function normalizeDate(raw: unknown): string {
+    if (typeof raw === 'number') return new Date(raw).toISOString();
+    if (raw instanceof Date) return raw.toISOString();
+    if (typeof raw === 'string') {
+        if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
+        return raw;
+    }
+    return new Date().toISOString();
+}
+
+/**
+ * Zwraca fragment SQL konwertujący kolumnę z timestamp (13-cyfrowy ms) na ISO string.
+ * Używany w raw queries dla tabel z mieszanymi formatami dat.
+ */
+export function dateConversionSql(column: string, alias?: string): string {
+    const col = column.includes('.') ? column : `"${column}"`;
+    const aliasStr = alias || column.split('.').pop()?.replace(/"/g, '') || column;
+    return `CASE WHEN ${col} GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' ` +
+        `THEN datetime(CAST(${col} AS INTEGER)/1000, 'unixepoch') ` +
+        `ELSE ${col} END as "${aliasStr}"`;
+}
+
+/**
+ * Sprawdza czy ID ma bezpieczny format (alfanumeryczny + myślniki/ podkreślenia).
+ * Używane do sanityzacji ID przed interpolacją w raw queries WHERE.
+ */
+export function isValidId(id: string): boolean {
+    return typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
+}

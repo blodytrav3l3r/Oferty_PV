@@ -159,6 +159,20 @@ function showUserSelectionPopup(users, defaultUserId) {
 window.globalUsersMap = new Map();
 
 /**
+ * Globalny fetch z timeoutem — AbortController czyści wiszące połączenia.
+ */
+window.fetchWithTimeout = async function(url, options, timeoutMs) {
+    if (timeoutMs == null) timeoutMs = 10000;
+    const controller = new AbortController();
+    const timer = setTimeout(function() { controller.abort(); }, timeoutMs);
+    try {
+        return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+    } finally {
+        clearTimeout(timer);
+    }
+};
+
+/**
  * Pobiera listę użytkowników i wypełnia globalUsersMap.
  */
 async function fetchGlobalUsers() {
@@ -167,7 +181,7 @@ async function fetchGlobalUsers() {
             typeof authHeaders === 'function'
                 ? authHeaders()
                 : { 'Content-Type': 'application/json' };
-        const response = await fetch('/api/users-for-assignment', { headers });
+        const response = await fetchWithTimeout('/api/users-for-assignment', { headers });
         if (!response.ok) return;
         const json = await response.json();
         const users = json.data || [];

@@ -158,6 +158,7 @@ if "!RUN_PYTHON!"=="1" (
 
 echo [2/2] Uruchamianie Serwera Node.js...
 start "Serwer Node.js" cmd /k "npm run dev"
+start "Graphify Watch" cmd /k "graphify watch ."
 
 echo.
 echo ========================================

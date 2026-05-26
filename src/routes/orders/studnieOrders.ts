@@ -6,6 +6,9 @@ import { parseJsonField } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
+import { logger } from '../../utils/logger';
+import { generateKartaBudowyPDF } from '../../services/pdfGenerator';
+import { generateKartaBudowyDOCX } from '../../services/docx';
 
 const router = express.Router();
 
@@ -19,13 +22,19 @@ const writeOrdersLimiter = createRateLimiter({
 /* ===== ZAMÓWIENIA STUDNIE ===== */
 
 // Buduje SQL WHERE clause na podstawie roli użytkownika
+// Wszystkie wartości pochodzą z sesji auth (zaufane), ale dla bezpieczeństwa walidujemy
 function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[] }): string {
     if (user.role === 'admin') return '';
+    const isValidId = (id: string): boolean => typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
     if (user.role === 'pro') {
-        const allowedIds = [user.id, ...(user.subUsers || [])].map(id => `'${id}'`).join(',');
+        const allowedIds = [user.id, ...(user.subUsers || [])]
+            .filter(isValidId)
+            .map(id => `'${id.replace(/'/g, "''")}'`)
+            .join(',');
         return `WHERE "userId" IN (${allowedIds})`;
     }
-    return `WHERE "userId" = '${user.id}'`;
+    const safeId = isValidId(user.id) ? user.id.replace(/'/g, "''") : '__invalid__';
+    return `WHERE "userId" = '${safeId}'`;
 }
 
 router.get('/', requireAuth, async (req, res) => {
@@ -87,7 +96,7 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatch
                 status,
                 ...rest
             } = o;
-            const dataStr = JSON.stringify(rest).replace(/'/g, "''");
+            const dataStr = JSON.stringify(rest);
 
             // Konwersja daty
             const convertDate = (raw: unknown): string => {
@@ -101,11 +110,10 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatch
             };
             const createdAt = convertDate(createdAtRaw);
 
-            // Użyj raw query dla find
-            const oldRows = await prisma.$queryRawUnsafe<
-                Array<{ data: string | null }>
-            >(`SELECT data FROM orders_studnie_rel WHERE id = '${docId}'`);
-            const old = oldRows[0];
+            const old = await prisma.orders_studnie_rel.findUnique({
+                where: { id: docId },
+                select: { data: true }
+            });
             const newData = { ...rest };
 
             if (old) {
@@ -121,24 +129,64 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatch
                 logAudit('order', docId, authReq.user?.id || '', 'create', newData);
             }
 
-            // Użyj raw query dla INSERT/UPDATE
-            const updateResult = await prisma.$executeRawUnsafe(
-                `UPDATE orders_studnie_rel SET "userId" = '${authReq.user?.id || ''}', ` +
-                `"offerStudnieId" = '${offerStudnieId || ''}', "createdAt" = '${createdAt}', ` +
-                `status = '${status || 'new'}', data = '${dataStr}' WHERE id = '${docId}'`
-            );
-            if (updateResult === 0) {
-                await prisma.$executeRawUnsafe(
-                    `INSERT INTO orders_studnie_rel (id, "userId", "offerStudnieId", "createdAt", status, data) ` +
-                    `VALUES ('${docId}', '${authReq.user?.id || ''}', '${offerStudnieId || ''}', ` +
-                    `'${createdAt}', '${status || 'new'}', '${dataStr}')`
-                );
-            }
+            await prisma.orders_studnie_rel.upsert({
+                where: { id: docId },
+                create: {
+                    id: docId,
+                    userId: authReq.user?.id || '',
+                    offerStudnieId: offerStudnieId || '',
+                    createdAt: createdAt,
+                    status: status || 'new',
+                    data: dataStr
+                },
+                update: {
+                    userId: authReq.user?.id || '',
+                    offerStudnieId: offerStudnieId || '',
+                    createdAt: createdAt,
+                    status: status || 'new',
+                    data: dataStr
+                }
+            });
         }
 
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
+    }
+});
+
+/* ===== EKSPORT KARTY BUDOWY ===== */
+
+// GET /api/orders-studnie/:id/export-karta-pdf
+router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pdfBuffer = await generateKartaBudowyPDF(id);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${id}.pdf"`);
+        res.send(pdfBuffer);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Export', 'Błąd eksportu Karty Budowy PDF', message);
+        res.status(500).json({ error: message });
+    }
+});
+
+// GET /api/orders-studnie/:id/export-karta-docx
+router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const docxBuffer = await generateKartaBudowyDOCX(id);
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+        res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${id}.docx"`);
+        res.send(docxBuffer);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Export', 'Błąd eksportu Karty Budowy DOCX', message);
         res.status(500).json({ error: message });
     }
 });
@@ -150,21 +198,9 @@ router.get('/:id', requireAuth, async (req, res) => {
     try {
         const docId = req.params.id;
 
-        const rows = await prisma.$queryRawUnsafe<
-            Array<{
-                id: string;
-                userId: string | null;
-                offerStudnieId: string | null;
-                status: string | null;
-                createdAt: string | null;
-                data: string | null;
-            }>
-        >(`SELECT id, "userId", "offerStudnieId", status, data,
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt"
-         FROM orders_studnie_rel WHERE id = '${docId}'`);
-        const o = rows[0];
+        const o = await prisma.orders_studnie_rel.findUnique({
+            where: { id: docId }
+        });
         if (!o || (authReq.user?.role !== 'admin' && o.userId !== authReq.user?.id)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
@@ -192,10 +228,10 @@ router.patch('/:id', requireAuth, writeOrdersLimiter, validateData(studnieOrderU
     try {
         const docId = req.params.id;
 
-        const rows = await prisma.$queryRawUnsafe<
-            Array<{ id: string; userId: string | null; status: string | null; data: string | null }>
-        >(`SELECT id, "userId", status, data FROM orders_studnie_rel WHERE id = '${docId}'`);
-        const o = rows[0];
+        const o = await prisma.orders_studnie_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true, status: true, data: true }
+        });
         const isOwner = o && o.userId === authReq.user?.id;
         const isProParent =
             o &&
@@ -216,12 +252,16 @@ router.patch('/:id', requireAuth, writeOrdersLimiter, validateData(studnieOrderU
 
         const newStatus = req.body.status || o.status;
         const newUserId = req.body.userId || o.userId;
-        const dataStr = JSON.stringify(updatedData).replace(/'/g, "''");
+        const dataStr = JSON.stringify(updatedData);
 
-        await prisma.$executeRawUnsafe(
-            `UPDATE orders_studnie_rel SET status = '${newStatus}', "userId" = '${newUserId}', ` +
-            `data = '${dataStr}' WHERE id = '${docId}'`
-        );
+        await prisma.orders_studnie_rel.update({
+            where: { id: docId },
+            data: {
+                status: newStatus,
+                userId: newUserId,
+                data: dataStr
+            }
+        });
 
         logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
 
@@ -237,10 +277,10 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
     try {
         const docId = req.params.id;
 
-        const rows = await prisma.$queryRawUnsafe<
-            Array<{ id: string; userId: string | null; data: string | null }>
-        >(`SELECT id, "userId", data FROM orders_studnie_rel WHERE id = '${docId}'`);
-        const existing = rows[0];
+        const existing = await prisma.orders_studnie_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true, data: true }
+        });
         if (!existing) return res.json({ ok: true });
 
         const oldData = parseJsonField<Record<string, unknown>>(existing.data, {});
@@ -249,7 +289,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
         if (offerId) {
             const allPOs = await prisma.$queryRawUnsafe<
                 Array<{ data: string | null }>
-            >(`SELECT data FROM production_orders_rel`);
+            >('SELECT data FROM production_orders_rel');
             const acceptedPOs = allPOs.filter((po) => {
                 const poData = parseJsonField<Record<string, unknown>>(po.data, {});
                 return poData.offerId === offerId && poData.status === 'accepted';
@@ -265,9 +305,11 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
         logAudit('order', docId, authReq.user?.id || '', 'delete', null, oldData);
 
         if (authReq.user?.role === 'admin') {
-            await prisma.$executeRawUnsafe(`DELETE FROM orders_studnie_rel WHERE id = '${docId}'`);
+            await prisma.$executeRaw`DELETE FROM orders_studnie_rel WHERE id = ${docId}`;
         } else {
-            await prisma.$executeRawUnsafe(`DELETE FROM orders_studnie_rel WHERE id = '${docId}' AND "userId" = '${authReq.user?.id}'`);
+            await prisma.orders_studnie_rel.deleteMany({
+                where: { id: docId, userId: authReq.user?.id }
+            });
         }
         res.json({ ok: true });
     } catch (e: unknown) {

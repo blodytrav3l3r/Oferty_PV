@@ -885,7 +885,7 @@ function getCertificationData(dn) {
 
     if ([1000, 1200].includes(numDn)) {
         return {
-            img: 'templates/ce_mark.png',
+            img: 'images/ce-mark.png',
             alt: 'CE',
             text: 'AT/2009-03-1733'
         };
@@ -893,7 +893,7 @@ function getCertificationData(dn) {
 
     // DN1500, DN2000, DN2500 — Znak budowlany B
     return {
-        img: 'templates/b_mark.png',
+        img: 'images/b-mark.png',
         alt: 'B',
         text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023'
     };

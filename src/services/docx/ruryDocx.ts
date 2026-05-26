@@ -83,7 +83,7 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
         clientAddress: client?.address || '',
         items,
         transportCost: offer.transportCost || 0,
-        createdAt: offer.createdAt?.toISOString() || new Date().toISOString()
+        createdAt: offer.createdAt || new Date().toISOString()
     });
 }
 

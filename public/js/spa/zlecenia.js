@@ -715,10 +715,10 @@ const AppZlecenia = (() => {
             const match = dnStr.match(/(\d{3,4})/);
             const numDn = match ? parseInt(match[1]) : 0;
             if ([1000, 1200].includes(numDn)) {
-                return { img: 'templates/ce_mark.png', alt: 'CE', text: 'AT/2009-03-1733' };
+                return { img: 'images/ce-mark.png', alt: 'CE', text: 'AT/2009-03-1733' };
             }
             return {
-                img: 'templates/b_mark.png',
+                img: 'images/b-mark.png',
                 alt: 'B',
                 text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023'
             };
@@ -1009,10 +1009,10 @@ setTimeout(runAllFit, 400);
             const match = dnStr.match(/(\d{3,4})/);
             const numDn = match ? parseInt(match[1]) : 0;
             if ([1000, 1200].includes(numDn)) {
-                return { img: 'templates/ce_mark.png', alt: 'CE', text: 'AT/2009-03-1733' };
+                return { img: 'images/ce-mark.png', alt: 'CE', text: 'AT/2009-03-1733' };
             }
             return {
-                img: 'templates/b_mark.png',
+                img: 'images/b-mark.png',
                 alt: 'B',
                 text: 'IBDIM KOT 2018/0195 WYD.2<br>KDWU B/73/2023'
             };

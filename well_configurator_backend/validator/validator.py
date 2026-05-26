@@ -69,8 +69,8 @@ def validate_transitions(segments: List[Dict], transitions: List[TransitionInput
                 pr_dn_num = float(pprod.dn)
             z_gora = float(pprod.zapasGora) if (pprod and pprod.zapasGora) else 300.0
             z_dol = float(pprod.zapasDol) if (pprod and pprod.zapasDol) else 300.0
-            z_gora_min = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else 300.0
-            z_dol_min = float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else 300.0
+            z_gora_min = float(pprod.zapasGoraMin) if (pprod and pprod.zapasGoraMin) else 150.0
+            z_dol_min = float(pprod.zapasDolMin) if (pprod and pprod.zapasDolMin) else 150.0
             pr_name = f"{pprod.name} DN{int(pr_dn_num)}"
 
         hole_bottom = hole_invert

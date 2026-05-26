@@ -591,7 +591,7 @@ function toggleMagazynField(el, field, id) {
     // Natychmiastowa aktualizacja UI bez pełnego re-renderu
     const newVal = product[field];
     el.textContent = newVal;
-    el.style.color = newVal === 1 ? '#34d399' : '#f87171';
+    el.style.color = newVal === 1 ? '#34d399' : 'var(--danger-hover)';
 
     saveStudnieProducts(studnieProducts);
     // Usuwamy renderStudniePriceList() tutaj, aby uniknąć mignięcia tabeli
@@ -1398,6 +1398,10 @@ function importStudnieFromExcel(event) {
 
 /* ===== INICJALIZACJA ===== */
 document.addEventListener('DOMContentLoaded', async () => {
+    if (window.__STUDNIE_APP_ORCHESTRATOR__) {
+        return;
+    }
+
     // Sprawdzenie autoryzacji
     const token = getAuthToken();
     if (!token) {
@@ -1428,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         roleEl.textContent = currentUser.role;
         roleEl.style.background =
             currentUser.role === 'admin' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)';
-        roleEl.style.color = currentUser.role === 'admin' ? '#f59e0b' : '#60a5fa';
+        roleEl.style.color = currentUser.role === 'admin' ? 'var(--warn)' : '#60a5fa';
         roleEl.style.border =
             currentUser.role === 'admin'
                 ? '1px solid rgba(245,158,11,0.3)'
@@ -1447,6 +1451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Ustawianie domyślnych parametrów oferty
     document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('offer-number').value = generateOfferNumberStudnie();
 
     // Kreator: zacznij od kroku 1
     wizardConfirmedParams = new Set();
@@ -1514,6 +1519,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('Błąd podczas inicjalizacji danych:', err);
         showToast('Wystąpił błąd podczas ładowania danych. Nawigacja jest dostępna.', 'error');
+        if (!orderEditMode) {
+            document.getElementById('offer-number').value = generateOfferNumberStudnie();
+        }
     }
 });
 /**

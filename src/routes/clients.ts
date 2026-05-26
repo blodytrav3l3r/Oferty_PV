@@ -1,10 +1,11 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
-import { buildRoleWhereClause } from '../utils/roleFilter';
+
 import { validateData } from '../validators/authSchema';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { clientsBatchSchema } from '../validators/offerSchemas';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -19,14 +20,33 @@ const writeClientsLimiter = createRateLimiter({
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
-        const clients = await prisma.clients_rel.findMany({
-            where: roleClause
-        });
+        const user = authReq.user;
+        let clients: any[];
 
-        res.json({ data: clients });
+        if (user?.role === 'admin') {
+            clients = await prisma.$queryRaw`SELECT * FROM clients_rel`;
+        } else if (user?.role === 'pro') {
+            const allowedIds = [user.id, ...(user.subUsers || [])];
+            clients = await prisma.$queryRaw`SELECT * FROM clients_rel WHERE userId IN (${allowedIds.join(',')})`;
+        } else {
+            clients = await prisma.$queryRaw`SELECT * FROM clients_rel WHERE userId = ${user?.id}`;
+        }
+
+        // Normalize date fields — convert numeric timestamps to ISO strings
+        const normalized = (clients as any[]).map((c: any) => ({
+            ...c,
+            createdAt: c.createdAt && /^\d{10,}$/.test(String(c.createdAt))
+                ? new Date(parseInt(String(c.createdAt), 10)).toISOString()
+                : c.createdAt,
+            updatedAt: c.updatedAt && /^\d{10,}$/.test(String(c.updatedAt))
+                ? new Date(parseInt(String(c.updatedAt), 10)).toISOString()
+                : c.updatedAt,
+        }));
+
+        res.json({ data: normalized });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Clients', 'GET /api/clients błąd', message);
         res.status(500).json({ error: message });
     }
 });
@@ -36,41 +56,66 @@ router.put('/', requireAuth, writeClientsLimiter, validateData(clientsBatchSchem
     const authReq = req as AuthenticatedRequest;
     try {
         const arr = req.body.data || [];
+        const userId = authReq.user?.id;
 
-        for (const c of arr) {
-            let docId = c.id;
-            if (!docId) {
-                docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+        const now = new Date().toISOString();
+        const upserted: { id: string }[] = [];
+
+        // Use raw queries inside transaction to avoid Prisma DateTime conversion issues
+        await prisma.$transaction(async (tx) => {
+            // Get existing client IDs for this user
+            const existingClients = await tx.$queryRaw`SELECT id FROM clients_rel WHERE userId = ${userId}`;
+            const existingIds = (existingClients as any[]).map((c: any) => c.id);
+            const incomingIds = arr.map((c: any) => c.id).filter(Boolean);
+            const toDelete = existingIds.filter(id => !incomingIds.includes(id));
+
+            if (toDelete.length > 0) {
+                for (const id of toDelete) {
+                    await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id} AND userId = ${userId}`;
+                }
             }
 
-            await prisma.clients_rel.upsert({
-                where: { id: docId },
-                create: {
-                    id: docId,
-                    userId: authReq.user?.id,
-                    name: c.name || '',
-                    nip: c.nip || '',
-                    address: c.address || '',
-                    contact: c.contact || '',
-                    phone: c.phone || '',
-                    email: c.email || '',
-                    createdAt: c.createdAt || new Date().toISOString()
-                },
-                update: {
-                    userId: authReq.user?.id,
-                    name: c.name || '',
-                    nip: c.nip || '',
-                    address: c.address || '',
-                    contact: c.contact || '',
-                    phone: c.phone || '',
-                    email: c.email || '',
-                    createdAt: c.createdAt || new Date().toISOString()
+            for (const c of arr) {
+                let docId = c.id;
+                if (!docId) {
+                    docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
                 }
-            });
-        }
 
-        res.json({ ok: true });
+                // Always normalize createdAt to ISO 8601 string
+                let parsedDate = now;
+                if (c.createdAt != null && c.createdAt !== '') {
+                    const num = Number(c.createdAt);
+                    if (!isNaN(num) && num > 0) {
+                        // Handle both seconds and milliseconds timestamps
+                        const ms = num > 1e12 ? num : num * 1000;
+                        parsedDate = new Date(ms).toISOString();
+                    } else {
+                        const d = new Date(c.createdAt);
+                        if (!isNaN(d.getTime())) parsedDate = d.toISOString();
+                    }
+                }
+
+                // Upsert via raw query
+                await tx.$executeRaw`
+                    INSERT INTO clients_rel (id, userId, name, nip, address, contact, phone, email, createdAt, updatedAt)
+                    VALUES (${docId}, ${userId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
+                    ON CONFLICT(id) DO UPDATE SET
+                        userId = ${userId},
+                        name = ${c.name || ''},
+                        nip = ${c.nip || ''},
+                        address = ${c.address || ''},
+                        contact = ${c.contact || ''},
+                        phone = ${c.phone || ''},
+                        email = ${c.email || ''},
+                        updatedAt = ${now}
+                `;
+                upserted.push({ id: docId });
+            }
+        });
+
+        res.json({ ok: true, count: upserted.length });
     } catch (e: unknown) {
+        logger.error('Clients', 'PUT /api/clients błąd', e);
         const message = e instanceof Error ? e.message : 'Unknown error';
         res.status(500).json({ error: message });
     }

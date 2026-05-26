@@ -8,7 +8,7 @@
             content="WITROS — Kartoteka Ofert. Przeglądaj, filtruj i zarządzaj ofertami na rury i studnie."
         />
         <title>WITROS — Kartoteka Ofert</title>
-        <link rel="stylesheet" href="css/style.css?v=1.6" />
+        <link rel="stylesheet" href="css/style.css?v=3.0" />
     </head>
 
     <body>
@@ -125,56 +125,155 @@
                     class="app-container"
                     style="max-width: 1900px; margin: 0 auto; padding: 0 0.5rem"
                 >
-                    <!-- Filter Tabs: Type -->
+                    <!-- Unified Filter Bar -->
                     <div
+                        class="kartoteka-filter-bar"
                         style="
                             display: flex;
-                            gap: 0.5rem;
-                            margin-bottom: 1rem;
+                            gap: 1rem;
+                            margin-bottom: 1.5rem;
                             flex-wrap: wrap;
                             align-items: center;
+                            padding: 0.8rem 1rem;
+                            background: var(--bg-glass);
+                            border: 1px solid var(--border-glass);
+                            border-radius: var(--radius-sm);
                         "
                     >
-                        <span
-                            style="
-                                font-size: 0.8rem;
-                                color: var(--text-muted);
-                                font-weight: 600;
-                                margin-right: 0.4rem;
-                            "
-                            >Typ:</span
-                        >
+                        <!-- Type Filters -->
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <span
+                                style="
+                                    font-size: 0.75rem;
+                                    color: var(--text-muted);
+                                    font-weight: 600;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.3px;
+                                "
+                            >Typ:</span>
+                            <button
+                                class="btn btn-sm pv-type-filter-btn active"
+                                data-type-filter="all"
+                                onclick="filterByType('all')"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            >
+                                Wszystkie
+                            </button>
+                            <button
+                                class="btn btn-sm btn-secondary pv-type-filter-btn"
+                                data-type-filter="offer"
+                                onclick="filterByType('offer')"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            >
+                                <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
+                            </button>
+                            <button
+                                class="btn btn-sm btn-secondary pv-type-filter-btn"
+                                data-type-filter="studnia_oferta"
+                                onclick="filterByType('studnia_oferta')"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            >
+                                <i data-lucide="cylinder"></i> Studnie
+                            </button>
+                        </div>
+
+                        <!-- Divider -->
+                        <div style="width: 1px; height: 24px; background: var(--border-glass);"></div>
+
+                        <!-- Status Filters -->
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <span
+                                style="
+                                    font-size: 0.75rem;
+                                    color: var(--text-muted);
+                                    font-weight: 600;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.3px;
+                                "
+                            >Status:</span>
+                            <button
+                                class="btn btn-sm pv-filter-btn active"
+                                data-filter="all"
+                                onclick="window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('all')"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            >
+                                Wszystkie
+                            </button>
+                            <button
+                                class="btn btn-sm btn-secondary pv-filter-btn"
+                                data-filter="with_order"
+                                onclick="window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('with_order')"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            >
+                                <i data-lucide="package"></i> Z zamówieniem
+                            </button>
+                            <button
+                                class="btn btn-sm btn-secondary pv-filter-btn"
+                                data-filter="without_order"
+                                onclick="window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('without_order')"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            >
+                                Bez zamówienia
+                            </button>
+                        </div>
+
+                        <!-- Compact Mode Toggle -->
                         <button
-                            class="btn btn-sm pv-type-filter-btn active"
-                            data-type-filter="all"
-                            onclick="filterByType('all')"
-                            style="border-radius: 20px; padding: 0.3rem 0.8rem"
+                            class="btn btn-sm btn-secondary"
+                            id="btn-compact-mode"
+                            onclick="toggleCompactMode()"
+                            style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            title="Przełącz tryb kompaktowy"
                         >
-                            Wszystkie
+                            <i data-lucide="panel-right-close"></i> Kompakt
                         </button>
-                        <button
-                            class="btn btn-sm btn-secondary pv-type-filter-btn"
-                            data-type-filter="offer"
-                            onclick="filterByType('offer')"
-                            style="border-radius: 20px; padding: 0.3rem 0.8rem"
+
+                        <!-- Spacer -->
+                        <div style="flex: 1; min-width: 20px;"></div>
+
+                        <!-- Search -->
+                        <div
+                            class="search-box"
+                            style="margin: 0; width: 100%; max-width: 320px; position: relative;"
                         >
-                            <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
-                        </button>
-                        <button
-                            class="btn btn-sm btn-secondary pv-type-filter-btn"
-                            data-type-filter="studnia_oferta"
-                            onclick="filterByType('studnia_oferta')"
-                            style="border-radius: 20px; padding: 0.3rem 0.8rem"
-                        >
-                            <i data-lucide="cylinder"></i> Studnie
-                        </button>
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                style="
+                                    position: absolute;
+                                    left: 0.7rem;
+                                    top: 50%;
+                                    transform: translateY(-50%);
+                                    width: 1rem;
+                                    color: var(--text-muted);
+                                "
+                            >
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                            <input
+                                type="text"
+                                id="pv-local-search-input"
+                                class="form-input form-input-sm"
+                                placeholder="Szukaj: firma, NIP, budowa, nr..."
+                                style="
+                                    font-weight: normal;
+                                    padding-left: 2.4rem !important;
+                                    width: 100%;
+                                    font-size: 0.8rem;
+                                "
+                                oninput="window.pvSalesUI && window.pvSalesUI.filterLocalOffers && window.pvSalesUI.filterLocalOffers()"
+                            />
+                        </div>
                     </div>
 
                     <!-- Main Offers List -->
                     <section
                         class="card pv-card"
                         style="
-                            padding: 0.8rem 0.6rem;
+                            padding: 1.2rem;
                             background: var(--bg-card);
                             border-radius: 12px;
                             border: 1px solid var(--border-glass);
@@ -182,117 +281,23 @@
                         "
                     >
                         <div
-                            style="
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                border-bottom: 1px solid var(--border-glass);
-                                padding-bottom: 0.8rem;
-                                margin-bottom: 1rem;
-                                flex-wrap: wrap;
-                                gap: 1rem;
-                            "
-                        >
-                            <h3 style="margin: 0; font-size: 1rem; flex: 1; min-width: 250px">
-                                Moje Oferty
-                            </h3>
-
-                            <div
-                                class="pv-filters"
-                                style="
-                                    display: flex;
-                                    gap: 0.4rem;
-                                    flex-wrap: wrap;
-                                    align-items: center;
-                                "
-                            >
-                                <button
-                                    class="btn btn-sm pv-filter-btn active"
-                                    data-filter="all"
-                                    onclick="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.setFilterLocalOffers('all')
-                                    "
-                                    style="border-radius: 20px; padding: 0.3rem 0.8rem"
-                                >
-                                    Wszystkie
-                                </button>
-                                <button
-                                    class="btn btn-sm btn-secondary pv-filter-btn"
-                                    data-filter="with_order"
-                                    onclick="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.setFilterLocalOffers('with_order')
-                                    "
-                                    style="border-radius: 20px; padding: 0.3rem 0.8rem"
-                                >
-                                    <i data-lucide="package"></i> Z zamówieniem
-                                </button>
-                                <button
-                                    class="btn btn-sm btn-secondary pv-filter-btn"
-                                    data-filter="without_order"
-                                    onclick="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.setFilterLocalOffers('without_order')
-                                    "
-                                    style="border-radius: 20px; padding: 0.3rem 0.8rem"
-                                >
-                                    Brak zamówienia
-                                </button>
-                            </div>
-
-                            <div
-                                class="search-box"
-                                style="margin: 0; width: 350px; position: relative"
-                            >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    style="
-                                        position: absolute;
-                                        left: 0.7rem;
-                                        top: 50%;
-                                        transform: translateY(-50%);
-                                        width: 1rem;
-                                        color: var(--text-muted);
-                                    "
-                                >
-                                    <circle cx="11" cy="11" r="7" />
-                                    <path d="m21 21-4.35-4.35" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    id="pv-local-search-input"
-                                    class="form-input form-input-sm"
-                                    placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
-                                    style="
-                                        font-weight: normal;
-                                        padding-left: 2.4rem !important;
-                                        width: 100%;
-                                    "
-                                    oninput="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.filterLocalOffers &&
-                                            window.pvSalesUI.filterLocalOffers()
-                                    "
-                                />
-                            </div>
-                        </div>
-                        <div
                             id="pv-local-offers-list"
-                            style="display: flex; flex-direction: column; gap: 0.3rem"
+                            class="kartoteka-offers-grid"
+                            style="display: flex; flex-direction: column; gap: 1rem;"
                         >
                             <div
                                 style="
                                     text-align: center;
-                                    padding: 2rem;
+                                    padding: 3rem 2rem;
                                     color: var(--text-muted);
                                     font-style: italic;
+                                    background: var(--bg-glass);
+                                    border-radius: var(--radius-sm);
+                                    border: 1px dashed var(--border-glass);
                                 "
                             >
-                                Ładowanie ofert z serwera...
+                                <i data-lucide="archive" style="width: 48px; height: 48px; opacity: 0.3; margin-bottom: 1rem;"></i>
+                                <div style="font-size: 0.9rem;">Ładowanie ofert z serwera...</div>
                             </div>
                         </div>
                     </section>
@@ -304,94 +309,13 @@
         <div id="toast-container" class="toast-container"></div>
 
         <!-- Dependencies -->
-        <script src="js/shared/formatters.js?v=2.0"></script>
-        <script src="js/shared/auth.js?v=2.0"></script>
-        <script src="js/shared/ui.js?v=2.0"></script>
-        <script type="module" src="js/pv/pv_sales_ui.js?v=2.0"></script>
+        <script src="js/shared/formatters.js?v=3.0"></script>
+        <script src="js/shared/auth.js?v=3.0"></script>
+        <script src="js/shared/ui.js?v=3.0"></script>
+        <script src="js/studnie/offerPrintManager.js?v=3.0"></script>
+        <script type="module" src="js/sales/pv_sales_ui.js?v=3.0"></script>
 
-        <script>
-            /* ===== KARTOTEKA INITIALIZATION ===== */
-            let currentTypeFilter = 'all';
-
-            document.addEventListener('DOMContentLoaded', async () => {
-                // Auth check
-                const token = getAuthToken();
-                if (!token) {
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                try {
-                    const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
-                    const authData = await authRes.json();
-                    if (!authData.user) {
-                        window.location.href = 'index.html';
-                        return;
-                    }
-
-                    const user = authData.user;
-                    sessionStorage.setItem('user', JSON.stringify(user));
-
-                    const userEl = document.getElementById('header-username');
-                    const roleEl = document.getElementById('header-role-badge');
-                    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + user.username;
-                    if (roleEl) {
-                        roleEl.textContent =
-                            user.role === 'admin' ? 'ADMIN' : user.role === 'pro' ? 'PRO' : 'USER';
-                        const colorMap = {
-                            admin: {
-                                bg: 'rgba(245,158,11,0.15)',
-                                fg: '#f59e0b',
-                                border: 'rgba(245,158,11,0.3)'
-                            },
-                            pro: {
-                                bg: 'rgba(16,185,129,0.15)',
-                                fg: '#10b981',
-                                border: 'rgba(16,185,129,0.3)'
-                            },
-                            user: {
-                                bg: 'rgba(59,130,246,0.15)',
-                                fg: '#60a5fa',
-                                border: 'rgba(59,130,246,0.3)'
-                            }
-                        };
-                        const c = colorMap[user.role] || colorMap.user;
-                        roleEl.style.background = c.bg;
-                        roleEl.style.color = c.fg;
-                        roleEl.style.border = '1px solid ' + c.border;
-                    }
-                } catch (e) {
-                    window.location.href = 'index.html';
-                    return;
-                }
-            });
-
-            /**
-             * Filtruj oferty po typie (rury/studnie/wszystkie).
-             * Nadpisuje PVSalesUI.filterLocalOffers, dodając dodatkowy filtr typu.
-             */
-            function filterByType(type) {
-                currentTypeFilter = type;
-
-                // Update button states
-                document.querySelectorAll('.pv-type-filter-btn').forEach((btn) => {
-                    btn.classList.toggle('active', btn.dataset.typeFilter === type);
-                    if (btn.dataset.typeFilter === type) {
-                        btn.classList.remove('btn-secondary');
-                    } else {
-                        btn.classList.add('btn-secondary');
-                    }
-                });
-
-                // Delegate to PVSalesUI
-                if (window.pvSalesUI) {
-                    window.pvSalesUI.setTypeFilter(type);
-                }
-            }
-
-            // Override the showSection to be a no-op (kartoteka has only one section)
-            function showSection() {}
-        </script>
-        <script src="js/shared/icons-slim.js?v=2.0"></script>
+        <script src="js/sales/kartotekaInit.js?v=3.0"></script>
+        <script src="js/shared/icons-slim.js?v=3.0"></script>
 </body>
 </html>

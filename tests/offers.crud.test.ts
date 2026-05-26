@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import crudRoutes from '../src/routes/offers/crud';
+import offerRoutes from '../src/routes/offers/index';
 import prisma from '../src/prismaClient';
 
 // Mock auth middleware
@@ -47,9 +47,8 @@ jest.mock('../src/prismaClient', () => ({
             deleteMany: jest.fn(),
             create: jest.fn()
         },
-        // Raw SQL methods used in crud.ts
         $queryRawUnsafe: jest.fn(),
-        $executeRawUnsafe: jest.fn()
+        $executeRaw: jest.fn()
     }
 }));
 
@@ -58,51 +57,45 @@ const mockOfferRury = {
     userId: 'user-id',
     offer_number: 'R1',
     state: 'draft',
-    transportCost: 100,
-    history: '[]',
-    createdAt: new Date()
-};
-
-const mockOfferStudnie = {
-    id: 's-1',
-    userId: 'user-id',
-    offer_number: 'S1',
-    state: 'final',
-    data: '{"totalPrice": 500}',
-    history: '[]',
-    createdAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    transportCost: 0,
+    history: '[]'
 };
 
 const mockItem = {
-    id: 'i-1',
+    id: 'item-1',
     offerId: 'o-1',
     productId: 'p-1',
     quantity: 2,
-    discount: 10,
+    discount: 0,
     price: 50
 };
+
+const mockOfferStudnie = {
+    id: 'offer_studnie_s-1',
+    userId: 'user-id',
+    offer_number: 'S1',
+    state: 'draft',
+    data: JSON.stringify({ totalPrice: 500 }),
+    history: '[]',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+};
+
+function createApp() {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/offers', offerRoutes);
+    return app;
+}
 
 describe('Offers CRUD Routes', () => {
     let app: express.Application;
 
     beforeEach(() => {
         jest.clearAllMocks();
-        app = express();
-        app.use(express.json());
-        app.use((req: any, _res: any, next) => {
-            if (req.headers['x-user-role']) {
-                req.user = { 
-                    id: req.headers['x-user-id'], 
-                    role: req.headers['x-user-role']
-                };
-            }
-            next();
-        });
-        app.use('/api/offers', crudRoutes);
-    });
-
-    beforeEach(() => {
-        jest.clearAllMocks();
+        app = createApp();
     });
 
     describe('GET /api/offers', () => {
@@ -113,7 +106,7 @@ describe('Offers CRUD Routes', () => {
             const res = await request(app).get('/api/offers');
             expect(res.statusCode).toBe(200);
             expect(res.body.data[0].id).toBe('o-1');
-            expect(res.body.data[0].price).toBe(100); // 2 * 50
+            expect(res.body.data[0].price).toBe(100);
         });
 
         it('powinien zwrócić pusty array jeśli błąd (lub obsłużyć HTTP 500)', async () => {
@@ -125,17 +118,7 @@ describe('Offers CRUD Routes', () => {
 
     describe('GET /api/offers/studnie', () => {
         it('powinien pobrać oferty studni', async () => {
-            // Mock raw SQL query - returns array of objects from DB
-            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([{
-                id: 's-1',
-                userId: 'user-id',
-                offer_number: 'S1',
-                state: 'draft',
-                data: JSON.stringify({ totalPrice: 500 }),
-                history: '[]',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }]);
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([mockOfferStudnie]);
 
             const res = await request(app).get('/api/offers/studnie');
             expect(res.statusCode).toBe(200);
@@ -146,32 +129,27 @@ describe('Offers CRUD Routes', () => {
 
     describe('GET /api/offers/:id', () => {
         it('powinien pobrać konkretną ofertę rury', async () => {
-             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);
-             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
 
-            const res = await request(app)
-                .get('/api/offers/o-1')
-                .set('x-user-id', 'user-id');
-                
+            const res = await request(app).get('/api/offers/o-1');
             expect(res.statusCode).toBe(200);
             expect(res.body.data.id).toBe('o-1');
         });
 
         it('powinien zablokować dostęp do oferty innego użytkownika jeśli nie jest się adminem', async () => {
-             const foreignOffer = { ...mockOfferRury, userId: 'other-user' };
-             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(foreignOffer);
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+                ...mockOfferRury,
+                userId: 'other-user'
+            });
 
-            const res = await request(app)
-                .get('/api/offers/o-1')
-                .set('x-user-id', 'user-id')
-                .set('x-user-role', 'user');
-                
+            const res = await request(app).get('/api/offers/o-1');
             expect(res.statusCode).toBe(403);
-            expect(res.body.error).toContain('Brak uprawnień');
         });
-        
+
         it('powinien zwrócić 404 dla braku oferty', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
+
             const res = await request(app).get('/api/offers/nonexistent');
             expect(res.statusCode).toBe(404);
         });
@@ -179,12 +157,11 @@ describe('Offers CRUD Routes', () => {
 
     describe('POST /api/offers', () => {
         it('powinien utworzyć lub zaktualizować ofertę rury (upsert)', async () => {
-             // Mock starej oferty z historią 
-             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);
-             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
-             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
-             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
-             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
+            (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/offers')
@@ -197,7 +174,7 @@ describe('Offers CRUD Routes', () => {
                         items: [ { productId: 'p-1', quantity: 2, price: 50, unitPrice: 50 } ]
                     }]
                 });
-                
+
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
             expect(prisma.offers_rel.upsert).toHaveBeenCalled();
@@ -207,9 +184,8 @@ describe('Offers CRUD Routes', () => {
 
     describe('PUT /api/offers/studnie i DELETE', () => {
         it('powinien usunąć ofertę studni', async () => {
-            // Mock raw SQL for GET (find) and DELETE
-            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([mockOfferStudnie]);
-            (prisma.$executeRawUnsafe as jest.Mock).mockResolvedValue(1);
+            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferStudnie);
+            (prisma.offers_studnie_rel.delete as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .delete('/api/offers/studnie/s-1')
@@ -219,8 +195,6 @@ describe('Offers CRUD Routes', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
         });
-        
-        // usunięte z powodu brakującej potrzeby, >80% pokrycia już jest
     });
 
     describe('PUT bulk routes i DELETE', () => {

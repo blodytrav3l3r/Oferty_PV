@@ -16,7 +16,8 @@
         "backup": "node scripts/backup.js",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
-        "prisma:studio": "prisma studio"
+        "prisma:studio": "prisma studio",
+        "graphify:watch": "graphify watch ."
     },
     "keywords": [],
     "author": "",

@@ -72,7 +72,7 @@ function renderOfferLockBanner() {
             </div>
             <div style="display:flex; gap:0.4rem; align-items:center;">
                 ${wellOrder
-                    ? `<button class="btn btn-sm" onclick="window.location.href='/studnie?order=${wellOrder.id}'" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
+                    ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="package"></i> Edytuj zamówienie
                     </button>`
                     : ''
@@ -103,22 +103,23 @@ function renderOfferLockBanner() {
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) ===== */
 function setupParamTiles() {
-    document.querySelectorAll('#wizard-step-2 .param-group').forEach((group) => {
+    const wizardRoot = document.getElementById('wizard-step-2');
+    if (!wizardRoot) return;
+
+    wizardRoot.querySelectorAll('.param-group').forEach((group) => {
         const paramName = group.getAttribute('data-param');
         group.querySelectorAll('.param-tile').forEach((btn) => {
             if (btn.dataset.listenerBound === 'true') return;
             btn.dataset.listenerBound = 'true';
             btn.addEventListener('click', async () => {
                 const val = btn.getAttribute('data-val');
-                const well = getCurrentWell();
-
                 // Zawsze przełączaj wizualny stan aktywności (dla kroku 2 kreatora bez studni)
                 group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
 
                 // Domyślne "Nie" dla wkładki na całą wysokość przy wyborze PRECO
                 if (paramName === 'kineta' && (val === 'preco' || val === 'precotop')) {
-                    const precoHeightGroup = document.querySelector('.param-group[data-param="precoFullHeight"]');
+                    const precoHeightGroup = wizardRoot.querySelector('.param-group[data-param="precoFullHeight"]');
                     if (precoHeightGroup && !precoHeightGroup.querySelector('.param-tile.active')) {
                         const nieBtn = precoHeightGroup.querySelector('.param-tile[data-val="nie"]');
                         if (nieBtn) {
@@ -129,7 +130,7 @@ function setupParamTiles() {
 
                 // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
                 if (paramName === 'kineta') {
-                    const spocznikGroup = document.querySelector('.param-group[data-param="spocznik"]');
+                    const spocznikGroup = wizardRoot.querySelector('.param-group[data-param="spocznik"]');
                     if (spocznikGroup) {
                         const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
                         if (syncValues.includes(val)) {
@@ -142,7 +143,7 @@ function setupParamTiles() {
 
                     // PRECO / PrecoTop → wymuszenie spocznikH = '1/1'
                     if (val === 'preco' || val === 'precotop') {
-                        const spocznikHGroup = document.querySelector('.param-group[data-param="spocznikH"]');
+                        const spocznikHGroup = wizardRoot.querySelector('.param-group[data-param="spocznikH"]');
                         if (spocznikHGroup) {
                             const hBtn = spocznikHGroup.querySelector('.param-tile[data-val="1/1"]');
                             if (hBtn && !hBtn.classList.contains('active')) {
@@ -152,22 +153,8 @@ function setupParamTiles() {
                     }
                 }
 
-                // Jeśli studnia istnieje, zastosuj parametr + odśwież renderowanie
-                if (well) {
-                    well[paramName] = val;
-                    enforceLoadClassRules(well, paramName);
-                    updateParamTilesUI();
-                    updateAutoLockUI();
-                    if (typeof updateConfigToMatchParams === 'function') {
-                        updateConfigToMatchParams(well);
-                    }
-                    await autoSelectComponents(true);
-                    refreshAll();
-                } else {
-                    // Wymuś zasady klas obciążenia nawet w kreatorze (brak studni)
-                    enforceLoadClassRulesWizard(paramName, val);
-                    updateParamTilesUI();
-                }
+                enforceLoadClassRulesWizard(paramName, val);
+                updateParamTilesUI();
 
                 // Śledzenie kreatora (zawsze)
                 wizardConfirmedParams.add(paramName);
@@ -178,28 +165,8 @@ function setupParamTiles() {
 }
 
 function updateParamTilesUI() {
-    const well = getCurrentWell();
-    if (well) {
-        // Synchronizuj kafelki z obiektem studni, gdy studnia istnieje
-        document.querySelectorAll('.param-group').forEach((group) => {
-            const paramName = group.getAttribute('data-param');
-            const currentVal = well[paramName] || 'brak';
-            group.querySelectorAll('.param-tile').forEach((btn) => {
-                if (btn.getAttribute('data-val') === currentVal) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        });
-
-        // Synchronizuj pola powłok ze studni
-        const powlokaWInput = document.getElementById('powloka-name-w');
-        if (powlokaWInput) powlokaWInput.value = well.powlokaNameW || '';
-        const powlokaZInput = document.getElementById('powloka-name-z');
-        if (powlokaZInput) powlokaZInput.value = well.powlokaNameZ || '';
-    }
-    // Uwaga: gdy nie ma studni, kafelki zachowują swój stan wizualny z obsługi kliknięć
+    // Kafelki w kroku 2 zachowuja wlasny stan. Nie synchronizujemy ich z aktualnie
+    // edytowana studnia, zeby zmiana jednej studni nie zmieniala parametrow ogolnych.
 
     // Pokaż/ukryj pola nazw powłok w zależności od bieżącego stanu kafelków (działa ze studnią lub bez niej)
     const malowanieWVal = getActiveTileValue('malowanieW');
@@ -226,12 +193,10 @@ function updateParamTilesUI() {
     if (malowanieWVal === 'brak') {
         const pwWInput = document.getElementById('powloka-name-w');
         if (pwWInput) pwWInput.value = '';
-        if (well) well.powlokaNameW = '';
     }
     if (malowanieZVal === 'brak') {
         const pwZInput = document.getElementById('powloka-name-z');
         if (pwZInput) pwZInput.value = '';
-        if (well) well.powlokaNameZ = '';
     }
 }
 
@@ -898,15 +863,17 @@ window.renderWellsList = function renderWellsList() {
             }
 
             const statusBadge =
-                w.configStatus === 'ERROR'
-                    ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
-                    : w.configStatus === 'WARNING'
-                      ? '<span title="' +
-                        (w.configErrors || []).join('; ') +
-                        '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
-                      : w.configStatus === 'OK'
-                        ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'
-                        : '';
+                w.configStatus === 'LOADING'
+                    ? '<span title="Trwa auto-dobór..." style="margin-left:0.3rem;"><span class="loading-spinner-inline"></span></span>'
+                    : w.configStatus === 'ERROR'
+                      ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
+                      : w.configStatus === 'WARNING'
+                        ? '<span title="' +
+                          (w.configErrors || []).join('; ') +
+                          '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
+                        : w.configStatus === 'OK'
+                          ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'
+                          : '';
 
             // Ikona źródła konfiguracji
             let sourceBadge = '';
@@ -935,7 +902,7 @@ window.renderWellsList = function renderWellsList() {
                     : null;
                 if (wellOrder && wellOrder.orderNumber) {
                     wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
-                        onclick="event.stopPropagation(); window.location.href='/studnie?order=${wellOrder.id}'"
+                        onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
                         style="font-size:0.55rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
                     </span>`;

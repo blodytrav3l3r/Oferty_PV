@@ -13,27 +13,46 @@
 /* ===== STAN MODUŁU ===== */
 let editingClientId = null;
 
+/* ===== BEZPIECZEŃSTWO ===== */
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+}
+
 /* ===== API KLIENTÓW ===== */
 async function loadClientsDb() {
     try {
-        const res = await fetch('/api/clients', { headers: authHeaders() });
+        const res = await fetchWithTimeout('/api/clients', { headers: authHeaders() });
+        if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            throw new Error(json.error || `HTTP ${res.status}`);
+        }
         const json = await res.json();
         return json.data || [];
     } catch (err) {
         console.error('loadClientsDb error:', err);
+        showToast('Błąd ładowania klientów: ' + (err.message || 'błąd sieci'), 'error');
         return [];
     }
 }
 
 async function saveClientsDbData(data) {
     try {
-        await fetch('/api/clients', {
+        const res = await fetch('/api/clients', {
             method: 'PUT',
             headers: authHeaders(),
             body: JSON.stringify({ data })
         });
+        if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            throw new Error(json.error || `HTTP ${res.status}`);
+        }
+        return true;
     } catch (err) {
         console.error('saveClientsDbData error:', err);
+        showToast('Błąd zapisu klientów: ' + (err.message || 'błąd sieci'), 'error');
+        return false;
     }
 }
 
@@ -148,82 +167,88 @@ function renderClientsDbList(query) {
     }
 
     if (filtered.length === 0) {
-        container.innerHTML =
-            '<div style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Brak wyników dla „' +
-            q +
-            '"</div>';
+        container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Brak wyników dla „' + escapeHtml(q) + '"</div>';
         return;
     }
 
-    let html = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-    <thead>
-      <tr style="border-bottom:2px solid var(--border); color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">
+    const table = document.createElement('table');
+    table.style.cssText = 'width:100%; border-collapse:collapse; font-size:0.85rem;';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = `<tr style="border-bottom:2px solid var(--border); color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Firma</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600; width:130px;">NIP</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Adres</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Kontakt</th>
         <th style="padding:0.5rem 0.8rem; text-align:center; font-weight:600; width:80px;">Akcje</th>
-      </tr>
-    </thead>
-    <tbody>`;
+    </tr>`;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
 
     filtered.forEach((c) => {
+        const tr = document.createElement('tr');
+        tr.style.cssText = 'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
+        tr.onmouseenter = () => { tr.style.background = 'rgba(99,102,241,0.06)'; };
+        tr.onmouseleave = () => { tr.style.background = 'transparent'; };
+
         if (editingClientId === c.id) {
-            html += `<tr style="border-bottom:1px solid var(--border-glass); background:rgba(99,102,241,0.05);">
-                <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-name" class="form-input form-input-sm" value="${c.name.replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
-                <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-nip" class="form-input form-input-sm" value="${(c.nip || '').replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
-                <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-address" class="form-input form-input-sm" value="${(c.address || '').replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
-                <td style="padding:0.4rem 0.6rem;"><input type="text" id="edit-client-contact" class="form-input form-input-sm" value="${(c.contact || '').replace(/"/g, '&quot;')}" style="width:100%" onclick="event.stopPropagation()"></td>
-                <td style="padding:0.4rem 0.6rem; text-align:center; display:flex; gap:0.2rem; justify-content:center;">
-                    <button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${c.id}')" title="Zapisz" style="color:var(--primary); font-size:1rem;"><i data-lucide="save"></i></button>
-                    <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x"></i></button>
-                </td>
-            </tr>`;
+            tr.style.background = 'rgba(99,102,241,0.05)';
+            const fields = ['name', 'nip', 'address', 'contact'];
+            fields.forEach((field) => {
+                const td = document.createElement('td');
+                td.style.padding = '0.4rem 0.6rem';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'edit-client-' + field;
+                input.className = 'form-input form-input-sm';
+                input.value = c[field] || '';
+                input.style.width = '100%';
+                input.onclick = (e) => e.stopPropagation();
+                td.appendChild(input);
+                tr.appendChild(td);
+            });
+            const actionTd = document.createElement('td');
+            actionTd.style.cssText = 'padding:0.4rem 0.6rem; text-align:center;';
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" style="color:var(--primary); font-size:1rem;"><i data-lucide="save"></i></button>
+                <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x"></i></button>`;
+            tr.appendChild(actionTd);
         } else {
-            let nameDisplay = c.name;
-            let nipDisplay = c.nip || '—';
+            const nameTd = document.createElement('td');
+            nameTd.style.cssText = 'padding:0.6rem 0.8rem; font-weight:600; color:var(--text);';
+            nameTd.textContent = c.name;
+            tr.appendChild(nameTd);
 
-            if (q) {
-                const nameIdx = c.name.toLowerCase().indexOf(q);
-                if (nameIdx >= 0) {
-                    nameDisplay =
-                        c.name.substring(0, nameIdx) +
-                        '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' +
-                        c.name.substring(nameIdx, nameIdx + q.length) +
-                        '</mark>' +
-                        c.name.substring(nameIdx + q.length);
-                }
-                if (c.nip) {
-                    const nipIdx = c.nip.indexOf(q);
-                    if (nipIdx >= 0) {
-                        nipDisplay =
-                            c.nip.substring(0, nipIdx) +
-                            '<mark style="background:rgba(99,102,241,0.3); color:var(--text); padding:0 2px; border-radius:2px;">' +
-                            c.nip.substring(nipIdx, nipIdx + q.length) +
-                            '</mark>' +
-                            c.nip.substring(nipIdx + q.length);
-                    }
-                }
-            }
+            const nipTd = document.createElement('td');
+            nipTd.style.cssText = 'padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);';
+            nipTd.textContent = c.nip || '—';
+            tr.appendChild(nipTd);
 
-            html += `<tr onclick="selectClientFromDb('${c.id}')" 
-                style="border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;"
-                onmouseenter="this.style.background='rgba(99,102,241,0.06)'" 
-                onmouseleave="this.style.background='transparent'">
-                <td style="padding:0.6rem 0.8rem; font-weight:600; color:var(--text);">${nameDisplay}</td>
-                <td style="padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);">${nipDisplay}</td>
-                <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.address || '—'}</td>
-                <td style="padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;">${c.contact || '—'}</td>
-                <td style="padding:0.6rem 0.8rem; text-align:center; display:flex; gap:0.2rem; justify-content:center;">
-                    <button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${c.id}')" title="Edytuj" style="color:var(--text-secondary); font-size:0.85rem; opacity:0.8;"><i data-lucide="pencil"></i></button>
-                    <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${c.id}')" title="Usuń z bazy" style="color:var(--danger); font-size:0.85rem; opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x"></i></button>
-                </td>
-            </tr>`;
+            const addrTd = document.createElement('td');
+            addrTd.style.cssText = 'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
+            addrTd.textContent = c.address || '—';
+            tr.appendChild(addrTd);
+
+            const contactTd = document.createElement('td');
+            contactTd.style.cssText = 'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
+            contactTd.textContent = c.contact || '—';
+            tr.appendChild(contactTd);
+
+            const actionTd = document.createElement('td');
+            actionTd.style.cssText = 'padding:0.6rem 0.8rem; text-align:center;';
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeHtml(c.id)}')" title="Edytuj" style="color:var(--text-secondary); font-size:0.85rem; opacity:0.8;"><i data-lucide="pencil"></i></button>
+                <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeHtml(c.id)}')" title="Usuń z bazy" style="color:var(--danger); font-size:0.85rem; opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x"></i></button>`;
+            tr.appendChild(actionTd);
+
+            tr.onclick = () => selectClientFromDb(c.id);
         }
+
+        tbody.appendChild(tr);
     });
 
-    html += '</tbody></table>';
-    container.innerHTML = html;
+    table.appendChild(tbody);
+    container.innerHTML = '';
+    container.appendChild(table);
 }
 
 /* ===== INLINE EDIT ===== */

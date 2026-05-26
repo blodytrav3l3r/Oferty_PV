@@ -1,0 +1,28 @@
+{
+    "$schema": "https://app.kilo.ai/config.json",
+    "instructions": [
+      "AGENTS.md"
+    ],
+    "model": "kilo/default",
+    "permission": {
+      "read": "allow",
+      "glob": "allow",
+      "grep": "allow",
+      "bash": "allow",
+      "edit": {
+        "src/**": "allow",
+        "public/**": "allow",
+        "prisma/**": "allow",
+        "tests/**": "allow",
+        "server.ts": "allow",
+        "*.json": "allow",
+        ".kilo/**": "allow",
+        "scripts/**": "allow",
+        "*": "ask"
+      },
+      "external_directory": {
+        "C:\\Users\\blody\\AppData\\Local\\Temp\\kilo": "allow",
+        "*": "deny"
+      }
+    }
+  }

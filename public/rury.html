@@ -8,7 +8,7 @@
             content="Aplikacja do tworzenia ofert handlowych na rury WITROS - betonowe, żelbetowe, jajowe"
         />
         <title>WITROS — Generator Ofert</title>
-        <link rel="stylesheet" href="css/style.css?v=1.5" />
+        <link rel="stylesheet" href="css/style.css?v=3.0" />
     </head>
 
     <body>
@@ -195,6 +195,22 @@
                                 <i data-lucide="refresh-cw"></i> Nowa Oferta
                             </button>
                             <button
+                                id="btn-change-offer-user"
+                                class="btn btn-sm"
+                                style="
+                                    display: none;
+                                    background: rgba(99, 102, 241, 0.1);
+                                    border: 1px solid rgba(99, 102, 241, 0.3);
+                                    color: #818cf8;
+                                    font-size: 0.75rem;
+                                    font-weight: 700;
+                                    padding: 0.2rem 0.5rem;
+                                "
+                                onclick="changeOfferUser()"
+                            >
+                                <i data-lucide="user"></i> Zmień opiekuna
+                            </button>
+                            <button
                                 class="btn btn-primary btn-sm"
                                 id="btn-save-offer"
                                 onclick="saveOffer()"
@@ -277,31 +293,8 @@
 
                             <!-- Offer side -->
                             <div>
-                                <div
-                                    style="
-                                        display: flex;
-                                        justify-content: space-between;
-                                        align-items: flex-end;
-                                        margin-bottom: 0.2rem;
-                                    "
-                                >
-                                    <div class="form-label-sm" style="margin: 0">Nr oferty</div>
-                                    <button
-                                        id="btn-change-offer-user"
-                                        class="btn btn-sm"
-                                        style="
-                                            display: none;
-                                            background: rgba(99, 102, 241, 0.1);
-                                            border: 1px solid rgba(99, 102, 241, 0.3);
-                                            color: #818cf8;
-                                            font-size: 0.6rem;
-                                            font-weight: 700;
-                                            padding: 0.15rem 0.4rem;
-                                        "
-                                        onclick="changeOfferUser()"
-                                    >
-                                        <i data-lucide="user"></i> Zmień opiekuna
-                                    </button>
+                                <div class="form-label-sm" style="margin-bottom: 0.2rem">
+                                    Nr oferty
                                 </div>
                                 <div class="form-row form-row-4 form-row-compact">
                                     <div class="form-group-sm">
@@ -700,9 +693,10 @@
         <script src="js/shared/auth.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
         <script src="js/shared/clientManager.js?v=3.0"></script>
+        <script src="data/default_products_rury.js?v=3.0"></script>
         <script src="js/pricelist.js?v=3.0"></script>
         <!-- AppState singleton — centralny stan modułu Rury (Faza 4) -->
-        <script src="js/shared/appState.js?v=4.0"></script>
+        <script src="js/shared/appState.js?v=3.0"></script>
         <!-- Moduły wydzielone z app.js (Faza 1 refaktoryzacji) -->
         <script src="js/rury/productHelpers.js?v=3.0"></script>
         <script src="js/rury/dataService.js?v=3.0"></script>
@@ -712,6 +706,6 @@
         <script src="js/rury/offerExports.js?v=3.0"></script>
         <script src="js/rury/pricelistUi.js?v=3.0"></script>
         <script src="js/app.js?v=3.0"></script>
-        <script src="js/shared/icons-slim.js?v=2.0"></script>
+        <script src="js/shared/icons-slim.js?v=3.0"></script>
 </body>
 </html>

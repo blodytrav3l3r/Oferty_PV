@@ -74,13 +74,12 @@ export async function logAudit(
         // Dla 'create' / 'delete': pełna migawka (snapshot)
         // Użyj raw query aby uniknąć problemów z konwersją dat
         const auditId = generateAuditId();
-        const oldDataStr = oldData ? JSON.stringify(oldData).replace(/'/g, "''") : null;
-        const newDataStr = newData ? JSON.stringify(newData).replace(/'/g, "''") : null;
-        await prisma.$executeRawUnsafe(
-            `INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt) ` +
-            `VALUES ('${auditId}', '${entityType}', '${entityId}', '${userId}', '${action}', ` +
-            `${oldDataStr ? `'${oldDataStr}'` : 'NULL'}, ${newDataStr ? `'${newDataStr}'` : 'NULL'}, '${now}')`
-        );
+        const oldDataStr = oldData ? JSON.stringify(oldData) : null;
+        const newDataStr = newData ? JSON.stringify(newData) : null;
+        await prisma.$executeRaw`
+            INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
+            VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, ${action}, ${oldDataStr}, ${newDataStr}, ${now})
+        `;
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('AuditLog', 'Błąd zapisu logu', message);
@@ -105,33 +104,32 @@ async function logUpdateWithDebounce(
     const cutoff = new Date(new Date(now).getTime() - DEBOUNCE_SECONDS * 1000).toISOString();
 
     // Użyj raw query dla find (obsługa błędnych dat w bazie)
-    const recentRows = await prisma.$queryRawUnsafe<
+    const recentRows = await prisma.$queryRaw<
         Array<{ id: string }>
-    >(
-        `SELECT id FROM audit_logs WHERE entityType = '${entityType}' AND entityId = '${entityId}' ` +
-        `AND userId = '${userId}' AND action = 'update' AND createdAt > '${cutoff}' ` +
-        `ORDER BY createdAt DESC LIMIT 1`
-    );
+    >`
+        SELECT id FROM audit_logs WHERE entityType = ${entityType} AND entityId = ${entityId}
+        AND userId = ${userId} AND action = 'update' AND createdAt > ${cutoff}
+        ORDER BY createdAt DESC LIMIT 1
+    `;
     const recent = recentRows[0];
 
-    const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true }).replace(/'/g, "''");
+    const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true });
 
     if (recent) {
         // Nadpisz istniejący wpis
-        await prisma.$executeRawUnsafe(
-            `UPDATE audit_logs SET newData = '${newDataStr}', createdAt = '${now}' WHERE id = '${recent.id}'`
-        );
+        await prisma.$executeRaw`
+            UPDATE audit_logs SET newData = ${newDataStr}, createdAt = ${now} WHERE id = ${recent.id}
+        `;
         return;
     }
 
     // Nowy wpis z diffem
     const auditId = generateAuditId();
-    const oldDataStr = JSON.stringify({ ...diff.old, _diffMode: true }).replace(/'/g, "''");
-    await prisma.$executeRawUnsafe(
-        `INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt) ` +
-        `VALUES ('${auditId}', '${entityType}', '${entityId}', '${userId}', 'update', ` +
-        `'${oldDataStr}', '${newDataStr}', '${now}')`
-    );
+    const oldDataStr = JSON.stringify({ ...diff.old, _diffMode: true });
+    await prisma.$executeRaw`
+        INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
+        VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, 'update', ${oldDataStr}, ${newDataStr}, ${now})
+    `;
 }
 
 // ─── Czyszczenie logów (Retention Cleanup) ──────────────────────────

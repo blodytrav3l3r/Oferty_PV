@@ -66,7 +66,7 @@ export function textCell(
 // ─── Ładowanie obrazów ──────────────────────────────────────────────
 
 export function loadImageData(filename: string): Buffer | null {
-    const filePath = path.join(process.cwd(), 'public', 'templates', filename);
+    const filePath = path.join(process.cwd(), 'public', 'images', filename);
     try {
         return fs.readFileSync(filePath);
     } catch {

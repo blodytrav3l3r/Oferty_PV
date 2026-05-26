@@ -1,18 +1,49 @@
 /* ===== KREATOR ===== */
 function goToWizardStep(step) {
     if (step <= 3 && typeof orderEditMode !== 'undefined' && orderEditMode) {
-        // Jeśli wracamy do kroku 1, 2 lub 3 z kroku 4, musimy wyjść z trybu zamówienia
+        // Jeśli wracamy do kroku 1, 2 lub 3 z kroku 5, musimy wyjść z trybu zamówienia
         // Przekazujemy krok docelowy, aby po załadowaniu poprawnie go ustawić
         exitWizardOrderMode(step);
         return; // exitWizardOrderMode wywoła goToWizardStep ponownie
+    }
+
+    if (typeof startStudnieViewTransition === 'function') {
+        startStudnieViewTransition();
     }
 
     currentWizardStep = step;
     document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
     updateWizardIndicator();
 
+    const layout = document.querySelector('.well-app-layout');
+    if (layout) {
+        if (step === 1 || step === 2 || step === 4) {
+            layout.classList.add('intro-mode');
+        } else {
+            layout.classList.remove('intro-mode');
+        }
+    }
+
     if (step === 4) {
-        // Krok 4 (Zamówienie) — wejdź w tryb edycji zamówienia w builderze
+        // Krok 4.1 (Karta budowy) — własny panel w builderze
+        const builderSection = document.getElementById('section-builder');
+        if (builderSection && !builderSection.classList.contains('active')) {
+            showSection('builder');
+        }
+        const target = document.getElementById('wizard-step-4');
+        if (target) target.classList.add('active');
+        
+        // Załaduj dane tylko jeśli jesteśmy w trybie edycji zamówienia 
+        // (przy nowym zamówieniu funkcja jest już wywoływana z parametrem w orderManager.js)
+        if (typeof orderEditMode !== 'undefined' && orderEditMode && typeof initKartaBudowyStep4 === 'function') {
+            initKartaBudowyStep4();
+        }
+        
+        return;
+    }
+
+    if (step === 5) {
+        // Krok 4.2 (Zamówienie) — wejdź w tryb edycji zamówienia w builderze
         enterWizardOrderMode();
         return;
     }
@@ -25,17 +56,9 @@ function goToWizardStep(step) {
 
     const target = document.getElementById('wizard-step-' + step);
     if (target) target.classList.add('active');
+    
     if (step === 3) updateWizardSummaryBar();
     if (step === 2) validateWizardStep2();
-
-    const layout = document.querySelector('.well-app-layout');
-    if (layout) {
-        if (step === 1 || step === 2) {
-            layout.classList.add('intro-mode');
-        } else {
-            layout.classList.remove('intro-mode');
-        }
-    }
 }
 
 /**
@@ -49,7 +72,7 @@ function enterWizardOrderMode() {
         if (builderSection && !builderSection.classList.contains('active')) {
             showSection('builder');
         }
-        // Aktywuj wizard-step-3 (builder) bo krok 4 nie ma własnego panelu
+        // Aktywuj wizard-step-3 (builder) bo krok 4.2 nie ma własnego panelu
         const target = document.getElementById('wizard-step-3');
         if (target) target.classList.add('active');
         return;
@@ -113,7 +136,7 @@ function wizardPrev() {
 }
 
 function wizardNavStep(targetStep) {
-    if (targetStep === currentWizardStep || targetStep < 1 || targetStep > 4) return;
+    if (targetStep === currentWizardStep || targetStep < 1 || targetStep > 5) return;
 
     // Pozwól na dowolną nawigację wstecz
     if (targetStep < currentWizardStep) {
@@ -137,8 +160,11 @@ function wizardNavStep(targetStep) {
         }
         goToWizardStep(3);
     } else if (targetStep === 4) {
-        // Krok 4 — Zamówienie (przełącza na widok podsumowania oferty/zamówienia)
+        // Krok 4.1 — Karta budowy
         goToWizardStep(4);
+    } else if (targetStep === 5) {
+        // Krok 4.2 — Zamówienie (przełącza na widok podsumowania oferty/zamówienia)
+        goToWizardStep(5);
     }
 }
 
@@ -249,9 +275,11 @@ function updateWizardIndicator() {
     const line1 = document.getElementById('wizard-line-1');
     const line2 = document.getElementById('wizard-line-2');
     const line3 = document.getElementById('wizard-line-3');
+    const line4 = document.getElementById('wizard-line-4');
     if (line1) line1.classList.toggle('completed', currentWizardStep > 1);
     if (line2) line2.classList.toggle('completed', currentWizardStep > 2);
     if (line3) line3.classList.toggle('completed', currentWizardStep > 3);
+    if (line4) line4.classList.toggle('completed', currentWizardStep > 4);
 }
 
 function updateWizardSummaryBar() {
@@ -309,7 +337,7 @@ async function getDefaultProductsStudnie() {
     }
     // 2. Załaduj z JSON
     try {
-        const res = await fetch('/data/products_studnie.json');
+        const res = await fetchWithTimeout('/data/products_studnie.json', {}, 5000);
         if (res.ok) {
             _defaultProductsStudnieCache = await res.json();
             console.log(`[Studnie] Załadowano ${_defaultProductsStudnieCache.length} domyślnych produktów z JSON`);
@@ -332,6 +360,20 @@ async function loadStudnieProducts() {
 
     function migrateProducts(arr) {
         arr.forEach((p) => {
+            // Mapuj polskie klucze z pliku JSON na angielskie używane w kodzie
+            const KEY_MAP = {
+                'Zapas dół mm': 'zapasDol',
+                'Zapas góra mm': 'zapasGora',
+                'Zapas dół min mm': 'zapasDolMin',
+                'Zapas góra min mm': 'zapasGoraMin',
+            };
+            for (const [plKey, enKey] of Object.entries(KEY_MAP)) {
+                if (p[plKey] !== undefined) {
+                    p[enKey] = p[plKey];
+                    delete p[plKey];
+                }
+            }
+
             if (p.formaStandardowa == null) p.formaStandardowa = 1;
             if (p.formaStandardowaKLB == null) p.formaStandardowaKLB = 1;
 
@@ -375,7 +417,7 @@ async function loadStudnieProducts() {
         return arr;
     }
     try {
-        const res = await fetch('/api/products-studnie');
+        const res = await fetchWithTimeout('/api/products-studnie');
         const json = await res.json();
         let saved = json.data;
         if (!saved || saved.length === 0) {
@@ -438,9 +480,9 @@ async function checkBackendStatus() {
             : null
     ];
     try {
-        const response = await fetch(`http://${window.location.hostname}:8000/api/v1/sync/pull`, {
+        const response = await fetchWithTimeout(`http://${window.location.hostname}:8000/api/v1/health`, {
             method: 'GET'
-        });
+        }, 5000);
         if (response.ok) {
             isBackendOnline = true;
             indicators.forEach((indicator) => {
@@ -457,15 +499,14 @@ async function checkBackendStatus() {
         isBackendOnline = false;
         indicators.forEach((indicator) => {
             if (indicator) {
-                indicator.style.background = '#f87171'; // czerwony
-                indicator.style.boxShadow = '0 0 8px #f87171';
+                indicator.style.background = 'var(--danger-hover)'; // czerwony
+                indicator.style.boxShadow = '0 0 8px var(--danger-hover)';
                 indicator.parentElement.title = 'Serwer obliczeniowy OFFLINE (działa tryb JS)';
             }
         });
     }
 }
-checkBackendStatus(); // Sprawdź natychmiast po załadowaniu
-setInterval(checkBackendStatus, 15000); // Sprawdź co 15 sekund
+setInterval(checkBackendStatus, 15000); // Sprawdź co 15 sekund (pierwsze sprawdzenie w DOMContentLoaded w app_studnie.js)
 
 /* ===== CENNIK PRECO — load / save / defaults ===== */
 
@@ -600,7 +641,7 @@ function getDefaultPrecoPricing() {
  */
 async function loadPrecoPricing() {
     try {
-        const res = await fetch('/api/preco-pricing');
+        const res = await fetchWithTimeout('/api/preco-pricing');
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
