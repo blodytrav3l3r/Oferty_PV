@@ -150,7 +150,7 @@ python run.py
 
 - SQLite przez Prisma ORM
 - Schema: `prisma/schema.prisma`
-- Baza: `data/witros.db`
+- Baza: `data/app_database.sqlite`
 
 Główne modele: users, sessions, settings, offers, offer_items, clients, orders, production_orders, products, audit_logs, ai_telemetry_logs.
 
