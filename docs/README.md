@@ -65,7 +65,7 @@ start_all.bat           # Node.js + Python AI Backend
 │   │   ├── orders/            # Zamówienia, zlecenia
 │   │   ├── audit.ts           # Logi audytowe
 │   │   ├── products*.ts       # Produkty (rury, studnie)
-│   │   ├── pv_marketplace.ts  # Rynek PV
+│   │   ├── pvMarketplace.ts  # Rynek PV
 │   │   ├── settings.ts        # Ustawienia systemu
 │   │   └── telemetry.ts       # Telemetria AI
 │   ├── services/              # Logika biznesowa

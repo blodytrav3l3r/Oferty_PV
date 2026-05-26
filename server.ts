@@ -104,7 +104,7 @@ import productStudnieAutoRoutes from './src/routes/productsStudnieAuto';
 import offerRoutes from './src/routes/offers/index';
 import orderRoutes from './src/routes/orders/index';
 import clientRoutes from './src/routes/clients';
-import pvMarketplaceRoutes from './src/routes/pv_marketplace';
+import pvMarketplaceRoutes from './src/routes/pvMarketplace';
 import auditRoutes from './src/routes/audit';
 import settingsRoutes from './src/routes/settings';
 import telemetryRoutes from './src/routes/telemetry';
