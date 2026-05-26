@@ -141,7 +141,7 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 
 - SQLite przez Prisma ORM
 - Schema: `prisma/schema.prisma`
-- Baza: `data/witros.db` (odczyt/zapis)
+- Baza: `data/app_database.sqlite (SQLite, ok. 10 MB)` (odczyt/zapis)
 - Migracje: `prisma/migrations/`
 
 ## Bieżące zadania do optymalizacji
