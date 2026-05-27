@@ -6,6 +6,7 @@ const AppZlecenia = (() => {
     let ordersCache = [];
     let activeFilter = 'all'; // 'all' | 'draft' | 'accepted'
     let selectedIds = new Set(); // multi-select for batch print
+    let autoRefreshInterval = null;
 
     const statusMap = {
         draft: { label: 'Oczekujące', class: 'status-draft', icon: '<i data-lucide="hourglass-2"></i>' },
@@ -152,12 +153,27 @@ const AppZlecenia = (() => {
             renderStats();
             const searchInput = document.getElementById('zlecenia-search-input');
             renderTable(searchInput ? searchInput.value.toLowerCase().trim() : '');
+            startAutoRefresh();
         } catch (err) {
             console.error(err);
             showToast('<i data-lucide="x-circle"></i> Błąd pobierania zleceń', 'error');
             if (tbody) {
                 tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:#ef4444;">Wystąpił błąd: ${err.message}</td></tr>`;
             }
+        }
+    }
+
+    function startAutoRefresh() {
+        stopAutoRefresh();
+        autoRefreshInterval = setInterval(() => {
+            if (!document.hidden && selectedIds.size === 0) loadOrders();
+        }, 60000);
+    }
+
+    function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
         }
     }
 
@@ -1132,6 +1148,7 @@ setTimeout(runAllFit, 400);
     return {
         init,
         loadOrders,
+        stopAutoRefresh,
         editOrder,
         deleteOrder,
         setFilter,

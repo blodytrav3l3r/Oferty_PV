@@ -9,6 +9,7 @@ class PVSalesUI {
         this.ordersMap = new Map(); // offerId -> order
         this.currentFilter = 'all'; // 'all', 'with_order', 'without_order'
         this.currentTypeFilter = 'all'; // 'all', 'offer', 'studnia_oferta'
+        this.autoRefreshInterval = null;
 
         this.init();
     }
@@ -76,6 +77,8 @@ class PVSalesUI {
             await this.loadOrdersMap();
             if (typeof fetchGlobalUsers === 'function') await fetchGlobalUsers();
             await this.loadLocalOffers();
+
+            this._startAutoRefresh();
 
             this.initialized = true;
         } catch (error) {
@@ -170,8 +173,23 @@ class PVSalesUI {
             listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">
                 <strong>Błąd pobierania ofert:</strong><br/>
                 <span style="font-size:0.85rem; opacity:0.8;">${error.message || 'Wystąpił nieoczekiwany błąd sieciowy'}</span><br/>
-                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.location.reload()">Odśwież stronę</button>
+                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.loadLocalOffers()"><i data-lucide="refresh-cw"></i> Odśwież</button>
             </div>`;
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+    }
+
+    _startAutoRefresh() {
+        this._stopAutoRefresh();
+        this.autoRefreshInterval = setInterval(() => {
+            if (!document.hidden) this.loadLocalOffers();
+        }, 60000);
+    }
+
+    _stopAutoRefresh() {
+        if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+            this.autoRefreshInterval = null;
         }
     }
 

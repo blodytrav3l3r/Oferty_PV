@@ -29,7 +29,7 @@
                     </h2>
                     <div class="toolbar-spacer"></div>
                     <button
-                        class="btn btn-primary btn-sm"
+                        class="btn btn-secondary btn-sm"
                         onclick="AppZlecenia.loadOrders()"
                         title="Odśwież bazę zleceń"
                     >
@@ -44,16 +44,7 @@
                     <!-- Main card -->
                     <section style="margin-bottom: 2rem">
                         <!-- Header: filters + search -->
-                        <div
-                            style="
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                                margin-bottom: 0.8rem;
-                                flex-wrap: wrap;
-                                gap: 0.8rem;
-                            "
-                        >
+                        <div class="zlecenia-header">
                             <div class="zlecenia-filters" id="zlecenia-filter-tabs">
                                 <button
                                     class="zlecenia-filter-tab active"
@@ -80,7 +71,7 @@
 
                             <div
                                 class="search-box"
-                                style="margin: 0; width: 600px; position: relative"
+                                style="margin: 0; position: relative; flex: 1; min-width: 300px"
                             >
                                 <svg
                                     viewBox="0 0 24 24"
