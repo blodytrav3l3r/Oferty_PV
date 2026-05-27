@@ -17,7 +17,12 @@
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
         "prisma:studio": "prisma studio",
-        "graphify:watch": "graphify watch ."
+        "graphify:watch": "graphify watch .",
+        "graphify:update": "graphify update .",
+        "graphify:query": "graphify query",
+        "graphify:status": "graphify status .",
+        "graphify:ci": "graphify build .",
+        "predev": "where graphify >nul 2>&1 || (echo [WARN] graphify nie znaleziony. Uruchom: npm i -g graphify && exit /b 0)"
     },
     "keywords": [],
     "author": "",

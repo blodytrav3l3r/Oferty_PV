@@ -183,14 +183,8 @@ function filterByWellParams(p: MockProduct, well: { nadbudowa?: string; dennicaM
         if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
     }
 
-    // Dennice
-    if (p.componentType === 'dennica') {
-        const isZelbet = well.dennicaMaterial === 'zelbetowa';
-        if (p.dn !== 1200 && p.dn !== 2000 && p.dn !== 2500) {
-            if (isZelbet && id.startsWith('DU') && !id.startsWith('DUZ')) return false;
-            if (!isZelbet && id.startsWith('DUZ')) return false;
-        }
-    }
+    // Dennice — wszystkie DDD są uniwersalne materiałowo
+    // Dopłata za żelbet realizowana przez pole doplataZelbet + parametr dennicaMaterial
 
     // Stopnie (tylko kreg i konus)
     if (p.componentType === 'krag' || p.componentType === 'konus') {
@@ -241,24 +235,13 @@ describe('filterByWellParams — material', () => {
         expect(filterByWellParams(kdz2000, { nadbudowa: 'betonowa', stopnie: 'drabinka' })).toBe(true);
     });
 
-    it('dennica beton → DU OK, DUZ zablokowany', () => {
-        const du: MockProduct = { id: 'DU-1000-500', name: 'DU', componentType: 'dennica', dn: 1000, height: 500, formaStandardowaKLB: 1 };
-        const duz: MockProduct = { id: 'DUZ-1000-500', name: 'DUZ', componentType: 'dennica', dn: 1000, height: 500, formaStandardowaKLB: 1 };
-        expect(filterByWellParams(du, { dennicaMaterial: 'betonowa' })).toBe(true);
-        expect(filterByWellParams(duz, { dennicaMaterial: 'betonowa' })).toBe(false);
-    });
-
-    it('dennica żelbet → DUZ OK, DU zablokowany', () => {
-        const du: MockProduct = { id: 'DU-1000-500', name: 'DU', componentType: 'dennica', dn: 1000, height: 500, formaStandardowaKLB: 1 };
-        const duz: MockProduct = { id: 'DUZ-1000-500', name: 'DUZ', componentType: 'dennica', dn: 1000, height: 500, formaStandardowaKLB: 1 };
-        expect(filterByWellParams(du, { dennicaMaterial: 'zelbetowa' })).toBe(false);
-        expect(filterByWellParams(duz, { dennicaMaterial: 'zelbetowa' })).toBe(true);
-    });
-
-    it('DN1200 dennica uniwersalna', () => {
-        const ddd: MockProduct = { id: 'DDD-1200-500', name: 'DDD', componentType: 'dennica', dn: 1200, height: 500, formaStandardowaKLB: 1 };
-        expect(filterByWellParams(ddd, { dennicaMaterial: 'betonowa' })).toBe(true);
-        expect(filterByWellParams(ddd, { dennicaMaterial: 'zelbetowa' })).toBe(true);
+    it('dennica DDD przepuszczana dla beton i żelbet', () => {
+        const ddd1000: MockProduct = { id: 'DDD-10-045', name: 'DDD', componentType: 'dennica', dn: 1000, height: 300, formaStandardowaKLB: 1 };
+        const ddd1200: MockProduct = { id: 'DDD-12-065', name: 'DDD', componentType: 'dennica', dn: 1200, height: 500, formaStandardowaKLB: 1 };
+        expect(filterByWellParams(ddd1000, { dennicaMaterial: 'betonowa' })).toBe(true);
+        expect(filterByWellParams(ddd1000, { dennicaMaterial: 'zelbetowa' })).toBe(true);
+        expect(filterByWellParams(ddd1200, { dennicaMaterial: 'betonowa' })).toBe(true);
+        expect(filterByWellParams(ddd1200, { dennicaMaterial: 'zelbetowa' })).toBe(true);
     });
 
     it('krag_ot filtrowany tak samo jak krag', () => {

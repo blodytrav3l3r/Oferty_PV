@@ -343,30 +343,6 @@ export type StudnieOrdersBatchInput = z.infer<typeof studnieOrdersBatchSchema>;
 export type StudnieOrderUpdateInput = z.infer<typeof studnieOrderUpdateSchema>;
 
 // =============================================================================
-// AUTOMATYCZNY DOBÓR STUDNI
-// =============================================================================
-
-/**
- * Schemat konfiguracji automatycznego doboru studni
- */
-export const autoSelectConfigSchema = z.object({
-    targetDn: z.string().min(1, 'Średnica DN jest wymagana'),
-    targetHeight: z.number().positive('Wysokość musi być dodatnia').optional(),
-    hasZewnatrzna: z.boolean().optional(),
-    hasZweinczenie: z.boolean().optional(),
-    hasZasuw: z.boolean().optional(),
-    hasPierscienOdciazajacy: z.boolean().optional()
-});
-
-/**
- * Schemat walidacji komponentów studni
- */
-export const validateComponentsSchema = z.object({
-    components: z.array(z.record(z.string(), z.unknown())).min(1, 'Wymagana tablica komponentów'),
-    config: z.record(z.string(), z.unknown()).optional()
-});
-
-// =============================================================================
 // MARKETPLACE
 // =============================================================================
 
@@ -390,7 +366,5 @@ export const marketplaceModerateSchema = z.object({
     reason: z.string().optional()
 });
 
-export type AutoSelectConfigInput = z.infer<typeof autoSelectConfigSchema>;
-export type ValidateComponentsInput = z.infer<typeof validateComponentsSchema>;
 export type MarketplaceSearchInput = z.infer<typeof marketplaceSearchSchema>;
 export type MarketplaceModerateInput = z.infer<typeof marketplaceModerateSchema>;

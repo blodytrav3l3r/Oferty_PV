@@ -608,6 +608,7 @@
                                                 class="wizard-form-input"
                                                 id="offer-validity"
                                                 value="7 dni"
+                                                onfocus="this.select()"
                                             />
                                         </div>
                                     </div>
@@ -3321,20 +3322,18 @@
                     ></textarea>
                 </div>
 
-                <!-- NEW: WARUNKI PŁATNOŚCI -->
+                <!-- WARUNKI PŁATNOŚCI + DATA WAŻNOŚCI -->
                 <div class="card" style="margin-bottom: 1rem; padding: 0.8rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">
                             <i data-lucide="credit-card"></i> Warunki płatności
                         </label>
+                        <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">Data ważności</label>
                     </div>
-                    <textarea
-                        id="offer-tab-payment-terms"
-                        class="wizard-form-input"
-                        rows="2"
-                        placeholder="Domyślnie przepisywane z kroku 1..."
-                        style="resize: vertical; width: 100%; font-size: 0.75rem;"
-                    ></textarea>
+                    <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 0.8rem;">
+                        <textarea id="offer-tab-payment-terms" class="wizard-form-input" rows="2" placeholder="Domyślnie przepisywane z kroku 1..." style="resize: vertical; width: 100%; font-size: 0.75rem;"></textarea>
+                        <input id="offer-tab-validity" class="wizard-form-input" style="width: 100%; font-size: 0.75rem; text-align: right;" onfocus="this.select()" />
+                    </div>
                 </div>
 
                 <div class="card" class="mb-1">

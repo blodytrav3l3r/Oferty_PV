@@ -95,19 +95,7 @@ function filterByWellParams(p, well) {
         }
     }
 
-    // 2. Dennice (DUZ/DU)
-    if (p.componentType === 'dennica') {
-        const isZelbet = well.dennicaMaterial === 'zelbetowa';
-        if (
-            isZelbet &&
-            id.startsWith('DU') &&
-            !id.startsWith('DUZ') &&
-            p.dn !== 2000 &&
-            p.dn !== 2500
-        )
-            return false;
-        if (!isZelbet && id.startsWith('DUZ') && p.dn !== 2000 && p.dn !== 2500) return false;
-    }
+    // 2. Dennice (DUZ/DU) — USUNIĘTE: wszystkie DDD są uniwersalne, dopłata żelbet przez pole doplataZelbet
 
     // 3. Płyty (PDZ/PD itp)
     if (

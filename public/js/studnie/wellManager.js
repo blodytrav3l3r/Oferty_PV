@@ -1734,7 +1734,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         itemPrice += parseFloat(p.malowanieZewnetrzne);
     }
 
-    // Żelbet (dopłata dla dennicy) - zachowane, jeśli używane dla specyficznych dennic, choć DU/DUZ ma własne ceny
+    // Żelbet (dopłata dla dennicy) - dodawana do ceny gdy dennicaMaterial === 'zelbetowa'
     if (
         (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
         p.componentType === 'dennica' &&

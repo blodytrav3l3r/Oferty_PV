@@ -366,6 +366,7 @@ async function loadStudnieProducts() {
                 'Zapas góra mm': 'zapasGora',
                 'Zapas dół min mm': 'zapasDolMin',
                 'Zapas góra min mm': 'zapasGoraMin',
+                'Dopłata Żelbet': 'doplataZelbet',
             };
             for (const [plKey, enKey] of Object.entries(KEY_MAP)) {
                 if (p[plKey] !== undefined) {

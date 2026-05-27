@@ -5,7 +5,7 @@
 1. **Struktura Katalogów**
     - `src/routes/` - Główne routery zgrupowane dziedzinowo (np. `offers/`, `products/`). Unikać "God Objects" obsługujących dziesiątki podścieżek. Duże routery dzielimy do podfolderów. Routery zajmują się **wyłącznie** obsługą HTTP — logika biznesowa trafia do `services/`.
     - `src/services/` - Logika biznesowa, integracje zewnętrzne i zaawansowane operatory.
-        - `antygrawity/` - Automatyczny dobór elementów studni (selekcja, przejścia, walidacja).
+        - `services/` - Serwisy biznesowe (pricelist, PDF, DOCX, audit)
         - `docx/studnie/` - Generator DOCX ofert studnianych (sekcje, tabele, treści statyczne).
         - `auditService.ts` - Centralne logowanie zmian (diff, debounce, retencja).
         - `pricelistService.ts` - Współdzielona logika CRUD cenników (rury + studnie).

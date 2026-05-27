@@ -24,15 +24,6 @@ function renderOfferSummary() {
     // Auto-generate offer notes
     generateOfferNotes(false);
 
-    // Sync payment terms if empty
-    const paymentTermsTabField = document.getElementById('offer-tab-payment-terms');
-    if (paymentTermsTabField && !paymentTermsTabField.value.trim()) {
-        const originalPaymentTerms = document.getElementById('offer-payment-terms');
-        if (originalPaymentTerms) {
-            paymentTermsTabField.value = originalPaymentTerms.value;
-        }
-    }
-
     // Obliczenia globalne
     const totals = calculateOfferTotals();
 
@@ -1432,7 +1423,11 @@ async function saveOfferStudnie() {
         document.getElementById('offer-tab-payment-terms')?.value.trim() ||
         document.getElementById('offer-payment-terms')?.value.trim() ||
         'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    const validity = document.getElementById('offer-validity')?.value.trim() || '7 dni';
+    const validity = normalizeValidityValue(
+        document.getElementById('offer-tab-validity')?.value.trim() ||
+        document.getElementById('offer-validity')?.value.trim() ||
+        '7 dni'
+    );
     const transportKm = parseFloat(document.getElementById('transport-km').value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate').value) || 0;
 
@@ -1756,6 +1751,8 @@ function clearOfferForm() {
     if (tabPayment) tabPayment.value = 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = '7 dni';
+    const tabValidity = document.getElementById('offer-tab-validity');
+    if (tabValidity) tabValidity.value = '7 dni';
     document.getElementById('transport-km').value = '100';
     document.getElementById('transport-rate').value = '10';
     wells = [];
@@ -1992,6 +1989,9 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = normalized.validity || '7 dni';
+
+    const tabValidity = document.getElementById('offer-tab-validity');
+    if (tabValidity) tabValidity.value = normalized.validity || '7 dni';
     document.getElementById('transport-km').value = normalized.transportKm || 100;
     document.getElementById('transport-rate').value = normalized.transportRate || 10;
 
@@ -3196,3 +3196,51 @@ window.syncTransportFromModal = function () {
 
     if (typeof window.updateModalTransportDetails === 'function') window.updateModalTransportDetails();
 };
+
+function normalizeValidityValue(val) {
+    if (!val) return '7 dni';
+    const trimmed = val.trim();
+    if (/^\d+$/.test(trimmed)) return trimmed + ' dni';
+    return trimmed;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    let _syncingValidity = false;
+    let _syncingPaymentTerms = false;
+
+    function syncValidity(src, dst) {
+        if (_syncingValidity) return;
+        _syncingValidity = true;
+        dst.value = normalizeValidityValue(src.value);
+        _syncingValidity = false;
+    }
+
+    function syncPaymentTerms(src, dst) {
+        if (_syncingPaymentTerms) return;
+        _syncingPaymentTerms = true;
+        dst.value = src.value;
+        _syncingPaymentTerms = false;
+    }
+
+    const wizardValidity = document.getElementById('offer-validity');
+    const tabValidity = document.getElementById('offer-tab-validity');
+
+    if (wizardValidity && tabValidity) {
+        wizardValidity.addEventListener('input', function () { syncValidity(this, tabValidity); });
+        tabValidity.addEventListener('input', function () { syncValidity(this, wizardValidity); });
+        wizardValidity.addEventListener('blur', function () {
+            this.value = normalizeValidityValue(this.value);
+        });
+        tabValidity.addEventListener('blur', function () {
+            this.value = normalizeValidityValue(this.value);
+        });
+    }
+
+    const wizardPayment = document.getElementById('offer-payment-terms');
+    const tabPayment = document.getElementById('offer-tab-payment-terms');
+
+    if (wizardPayment && tabPayment) {
+        wizardPayment.addEventListener('input', function () { syncPaymentTerms(this, tabPayment); });
+        tabPayment.addEventListener('input', function () { syncPaymentTerms(this, wizardPayment); });
+    }
+});

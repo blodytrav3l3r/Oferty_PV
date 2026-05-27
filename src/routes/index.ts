@@ -3,7 +3,6 @@ export { default as authRoutes } from './auth';
 export { default as clientRoutes } from './clients';
 export { default as productRoutes } from './products';
 export { default as productStudnieRoutes } from './productsStudnie';
-export { default as productStudnieAutoRoutes } from './productsStudnieAuto';
 export { default as pvMarketplaceRoutes } from './pvMarketplace';
 export { default as settingsRoutes } from './settings';
 export { default as telemetryRoutes } from './telemetry';

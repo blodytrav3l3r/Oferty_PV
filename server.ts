@@ -100,7 +100,6 @@ import authRoutes from './src/routes/auth';
 import userRoutes from './src/routes/users';
 import productRoutes from './src/routes/products';
 import productStudnieRoutes from './src/routes/productsStudnie';
-import productStudnieAutoRoutes from './src/routes/productsStudnieAuto';
 import offerRoutes from './src/routes/offers/index';
 import orderRoutes from './src/routes/orders/index';
 import clientRoutes from './src/routes/clients';
@@ -119,8 +118,6 @@ app.use('/api/users-for-assignment', (req, res, next) => {
 
 app.use('/api/products', productRoutes);
 app.use('/api/products-studnie', productStudnieRoutes);
-app.use('/api/products-studnie', productStudnieAutoRoutes);
-
 // Oferty Rury (standardowa ścieżka)
 app.use('/api/offers-rury', offerRoutes);
 

@@ -109,16 +109,8 @@ function filterByWellParams(p, well) {
             if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
         }
 
-        // Dennice
-        if (p.componentType === 'dennica') {
-            const isZelbet = well.dennicaMaterial === 'zelbetowa';
-            // Dla DN1200 dennice zaczynają się od DDD i są uniwersalne
-            // Dla DN2000/2500 też są uniwersalne (wszystko jest żelbetowe w standardzie)
-            if (p.dn !== 1200 && p.dn !== 2000 && p.dn !== 2500) {
-                if (isZelbet && id.startsWith('DU') && !id.startsWith('DUZ')) return false;
-                if (!isZelbet && id.startsWith('DUZ')) return false;
-            }
-        }
+        // Dennice — wszystkie DDD są uniwersalne materiałowo
+        // Dopłata za żelbet realizowana przez pole doplataZelbet + parametr dennicaMaterial
 
         // 2. Filtrowanie stopni (tylko dla kręgów i konusów)
         // Kręgi z otworem (krag_ot) są zawsze widoczne niezależnie od rodzaju stopni

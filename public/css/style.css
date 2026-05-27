@@ -103,6 +103,7 @@ body::before {
 
 /* Header */
 .header {
+    width: 100%;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-glass);
     padding: 0 1rem;

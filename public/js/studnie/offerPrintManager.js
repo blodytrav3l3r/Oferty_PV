@@ -257,8 +257,8 @@ async function generateOfferHtml() {
     const offerDate =
         document.getElementById('offer-date')?.value || new Date().toISOString().slice(0, 10);
     const notes = document.getElementById('offer-tab-notes')?.value?.trim() || document.getElementById('offer-notes')?.value?.trim() || '';
-    const paymentTerms = document.getElementById('offer-payment-terms')?.value?.trim() || '';
-    const validity = document.getElementById('offer-validity')?.value?.trim() || '';
+    const paymentTerms = document.getElementById('offer-tab-payment-terms')?.value?.trim() || document.getElementById('offer-payment-terms')?.value?.trim() || '';
+    const validity = document.getElementById('offer-tab-validity')?.value?.trim() || document.getElementById('offer-validity')?.value?.trim() || '';
 
     // Transport
     const { map: transportMap, totalTransportCost } = calculateWellTransportMap(wells);
