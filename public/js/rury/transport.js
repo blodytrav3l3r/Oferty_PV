@@ -104,6 +104,12 @@ function updateOfferSummary() {
 
     // Renderuj zestawienie transportu
     renderTransportBreakdown(transportResult, costPerTrip);
+
+    // Renderuj nową zakładkę Oferta
+    if (typeof renderOfferSummaryTab === 'function') renderOfferSummaryTab();
+
+    // Synchronizuj tabelę w kroku 5 (Zamówienie) — kopiuje z #offer-items-body do #order-items-body
+    if (typeof updateRuryOrderSummary === 'function') updateRuryOrderSummary();
 }
 
 /* ===== KALKULACJA KURSÓW ===== */
@@ -285,4 +291,21 @@ function renderTransportBreakdown(result, costPerTrip) {
     html += `</div>`; // Close transport-breakdown-content
 
     container.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
 }
+
+/* ===== AKTUALIZACJA POLA "WYLICZONY TRANSPORT" W KARCIE BUDOWY ===== */
+/* Reaguje na zmiany km/stawki/przedmiotów — analogicznie do studnie/offerManager.js */
+
+window.updateTransportCostSummary = function () {
+    const input = document.getElementById('step4-wyliczony-transport');
+    if (!input) return;
+    const transportResult = calculateTransports(currentOfferItems || []);
+    const costPerTrip = getCostPerTrip();
+    if (transportResult.totalTransports > 0 && costPerTrip > 0) {
+        const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        input.value = `${transportResult.totalTransports} x ${fmt(costPerTrip)} zł`;
+    } else {
+        input.value = 'Brak transportu';
+    }
+};

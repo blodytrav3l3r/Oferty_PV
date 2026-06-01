@@ -6,7 +6,7 @@
     padding: 0 1rem;
 }
 
-/* Summary stats bar */
+/* Pasek statystyk podsumowania */
 .zlecenia-stats {
     display: flex;
     gap: 0.6rem;
@@ -23,8 +23,9 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
     cursor: default;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
@@ -74,7 +75,7 @@
     margin-top: 1px;
 }
 
-/* Filter tabs */
+/* Zak³adki filtrów */
 .zlecenia-header {
     display: flex;
     align-items: center;
@@ -96,7 +97,7 @@
     font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
     white-space: nowrap;
     text-align: center;
     display: inline-flex;
@@ -118,12 +119,13 @@
     max-width: none;
 }
 
-/* Table styling */
+/* Stylowanie tabeli */
 .zlecenia-table-container {
     overflow-x: auto;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(17, 24, 39, 0.4);
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     scrollbar-width: thin;
@@ -153,10 +155,10 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     color: var(--text-primary);
     vertical-align: middle;
-    transition: all 0.2s;
+    transition: background-color 0.2s;
 }
 .zlecenia-table tbody tr {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 .zlecenia-table tbody tr:hover {
@@ -170,7 +172,7 @@
     border-bottom: none;
 }
 
-/* Order number column */
+/* Kolumna numeru zamówienia */
 .order-num {
     font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.9rem;
@@ -222,7 +224,7 @@
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
 }
 
-/* Sales order badge */
+/* Odznaka zamówienia sprzeda¿y */
 .sales-order-badge {
     background: rgba(129, 140, 248, 0.08);
     color: #818cf8;
@@ -266,7 +268,7 @@
     background: transparent;
     cursor: pointer;
     font-size: 0.72rem;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     color: var(--text-secondary);
     line-height: 1;
     white-space: nowrap;
@@ -335,6 +337,7 @@
     border-radius: 14px;
     margin-bottom: 1.2rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1);
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -377,7 +380,7 @@
     font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     display: flex;
     align-items: center;
     gap: 0.3rem;
@@ -399,4 +402,90 @@
 }
 .batch-btn-label:hover {
     background: rgba(168, 85, 247, 0.12);
+}
+
+/* Widok responsywny â€” Kartoteka ZleceÅ„ */
+
+@media (max-width: 900px) {
+    .zlecenia-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .zlecenia-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+    }
+    .zlecenia-filters {
+        justify-content: stretch;
+    }
+    .zlecenia-filter-tab {
+        flex: 1;
+        text-align: center;
+    }
+    .zlecenia-header .search-box {
+        max-width: 100%;
+    }
+    /* Ukryj mniej waÅ¼ne kolumny */
+    .zlecenia-table th:nth-child(4),  /* Element */
+    .zlecenia-table td:nth-child(4),
+    .zlecenia-table th:nth-child(6),  /* WygenerowaÅ‚ */
+    .zlecenia-table td:nth-child(6),
+    .zlecenia-table th:nth-child(7),  /* Data */
+    .zlecenia-table td:nth-child(7) {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .zlecenia-stats {
+        grid-template-columns: 1fr;
+    }
+    .zlecenia-stat-card {
+        min-width: auto;
+    }
+    /* Ukryj wiÄ™cej kolumn */
+    .zlecenia-table th:nth-child(3),  /* Nr zamÃ³wienia */
+    .zlecenia-table td:nth-child(3),
+    .zlecenia-table th:nth-child(5),  /* Opiekun */
+    .zlecenia-table td:nth-child(5) {
+        display: none;
+    }
+    .zlecenia-batch-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .batch-actions {
+        margin-left: 0;
+        justify-content: stretch;
+    }
+    .batch-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .zlecenia-table th:nth-child(1),  /* Checkbox */
+    .zlecenia-table td:nth-child(1) {
+        display: none;
+    }
+    .zlecenia-table th,
+    .zlecenia-table td {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .status-draft,
+  .zlecenia-batch-bar {
+    animation: none !important;
+    transition: none !important;
+  }
 }

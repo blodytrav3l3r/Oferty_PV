@@ -2,6 +2,7 @@
 
 :root {
     --bg-primary: #0a0e1a;
+    --body-bg: #0a0e1a;
     --bg-secondary: #111827;
     --bg-card: #111827;
     --bg-glass: #141a2a;
@@ -10,18 +11,22 @@
     --bg-hover: #1e1e4a;
     --bg-tile: #1a2536;
     --bg-input: #1e2d42;
+    --border: #1e293b;
     --border-glass: #1e293b;
+    --primary: #6366f1;
     --accent: #6366f1;
     --accent-hover: #818cf8;
     --accent-glow: #2e2b6e;
     --accent2: #8b5cf6;
     --accent-text: #a5b4fc;
+    --accent-light: #a5b4fc;
     --accent-bg: #161640;
     --accent-bg-hover: #22225a;
     --accent-border: #4d4da0;
     --accent-border-dim: #2e2e75;
     --success: #10b981;
     --danger: #ef4444;
+    --text-danger: var(--danger);
     --danger-hover: #f87171;
     --warn: #f59e0b;
     --success-bg: #0d2a20;
@@ -43,7 +48,7 @@
     --shadow-md: 0 4px 16px var(--shadow-color);
     --shadow-lg: 0 8px 32px var(--shadow-color);
     --shadow-color: #080808;
-    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     --scrollbar-track: #0f172a;
     --scrollbar-thumb: #3730a3;
     --scrollbar-thumb-hover: #4f46e5;
@@ -68,7 +73,7 @@ body {
     line-height: 1.6;
 }
 
-/* Custom Scrollbar */
+/* Niestandardowy pasek przewijania */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -87,6 +92,8 @@ body {
     background: var(--scrollbar-thumb-hover);
 }
 
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+
 body::before {
     display: none;
 }
@@ -101,7 +108,7 @@ body::before {
     }
 }
 
-/* Header */
+/* Nagłówek */
 .header {
     width: 100%;
     background: var(--bg-secondary);
@@ -163,7 +170,7 @@ body::before {
     height: 28px;
 }
 
-/* Navigation */
+/* Nawigacja */
 .nav {
     display: flex;
     gap: 0.6rem;
@@ -177,7 +184,7 @@ body::before {
     border-left: 1px solid var(--bg-tertiary);
 }
 
-/* Base tile setup for top menu */
+/* Podstawowa konfiguracja kafelk�w dla g�rnego menu */
 .nav-tile {
     display: flex;
     flex-direction: row;
@@ -191,7 +198,7 @@ body::before {
     background: var(--border-glass);
     color: var(--text-secondary);
     text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.25s, box-shadow 0.25s;
     cursor: pointer;
     position: relative;
     overflow: hidden;
@@ -233,14 +240,63 @@ body::before {
     letter-spacing: 0.2px;
 }
 
-/* Main */
+.nav-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 700px) {
+    .header-inner {
+        flex-wrap: wrap;
+        min-height: auto;
+        padding: 0.3rem 0.8rem;
+        gap: 0.3rem;
+    }
+    .header-left {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        width: 100%;
+    }
+    .nav-apps {
+        padding-left: 0;
+        margin-left: 0;
+        border-left: none;
+        flex-wrap: wrap;
+    }
+    .nav-tile {
+        padding: 0.3rem 0.5rem;
+    }
+    .nav-tile-text {
+        display: none;
+    }
+    .header-center {
+        display: none;
+    }
+    .header-right {
+        font-size: 0.7rem;
+    }
+    .logo {
+        font-size: 1rem;
+    }
+    .logo span {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-left {
+        justify-content: center;
+    }
+    .nav-tile-icon {
+        font-size: 1.1rem;
+    }
+}
+
+/* Główna */
 .main {
     max-width: 100%;
     margin: 0 auto;
     padding: 0.8rem 1.5rem 2rem;
 }
 
-/* Section (tab content) */
+/* Sekcja (zawartość zakładki) */
 .section {
     display: none;
     animation: fadeIn 0.35s ease;
@@ -262,14 +318,14 @@ body::before {
     }
 }
 
-/* Cards */
+/* Karty */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius);
     padding: 0.8rem 1rem;
     box-shadow: var(--shadow);
-    transition: var(--transition);
+    transition: border-color 0.25s, box-shadow 0.25s;
 }
 
 .card:hover {
@@ -302,7 +358,7 @@ body::before {
     color: var(--accent-hover);
 }
 
-/* Compact header grid */
+/* Kompaktowa siatka nagłówka */
 .offer-header-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -375,17 +431,8 @@ body::before {
 }
 
 /* Utility semantic colors for JS dynamic styling */
-.text-success { color: var(--success); }
-.text-danger { color: var(--danger); }
 .text-warn { color: var(--warn); }
-.text-accent { color: var(--accent-hover); }
-.bg-success-soft { background: var(--success-bg); }
-.bg-danger-soft { background: var(--danger-bg); }
-.bg-warn-soft { background: var(--warn-bg); }
-.bg-hover { background: var(--bg-hover); }
-.border-danger-soft { border-color: var(--danger-border); }
-
-/* Buttons */
+/* Przyciski */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -397,7 +444,7 @@ body::before {
         sans-serif;
     border: none;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
 }
 
@@ -459,6 +506,7 @@ body::before {
     background: var(--success-bg-hover) !important;
     color: #34d399 !important;
     border: 1px solid var(--success-bg) !important;
+    border-radius: var(--radius-sm);
     box-shadow: none !important;
     font-weight: 600 !important;
     text-shadow: none !important;
@@ -479,6 +527,8 @@ body::before {
     font-size: 0.75rem;
 }
 
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .btn-icon {
     padding: 0.4rem;
     border-radius: var(--radius-sm);
@@ -486,7 +536,7 @@ body::before {
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .btn-icon:hover {
@@ -494,7 +544,9 @@ body::before {
     background: var(--bg-tertiary);
 }
 
-/* Inputs */
+.btn-icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Pola wprowadzania */
 .form-group {
     margin-bottom: 1rem;
 }
@@ -519,7 +571,7 @@ body::before {
     font:
         400 0.85rem 'Inter',
         sans-serif;
-    transition: var(--transition);
+    transition: border-color 0.25s, box-shadow 0.25s;
     outline: none;
 }
 
@@ -529,6 +581,8 @@ body::before {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
 }
+
+.form-input:focus-visible, .form-select:focus-visible, .form-textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
 
 .form-input::placeholder {
     color: var(--text-muted);
@@ -554,6 +608,11 @@ body::before {
     background: var(--bg-secondary);
 }
 
+.btn, .btn-icon, .action-btn, .nav-tile, .catalog-tab, .catalog-item-row,
+.form-input, .form-select, .form-textarea, .tile, .dn-btn, .param-tile,
+.launch-card, .index-card, .zlecenia-filter-tab, .zlecenia-stat-card,
+.well-list-item, .offer-list-item { touch-action: manipulation; }
+
 .form-row {
     display: grid;
     gap: 1rem;
@@ -571,7 +630,7 @@ body::before {
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
-/* Tables */
+/* Tabele */
 .table-wrap {
     overflow-x: auto;
     border-radius: var(--radius-sm);
@@ -596,7 +655,7 @@ thead th {
     position: sticky;
     top: 0;
     z-index: 5;
-    /* Lowered z-index */
+    /* Obniżony z-index */
     white-space: nowrap;
 }
 
@@ -608,7 +667,7 @@ tbody td {
 }
 
 tbody tr {
-    transition: var(--transition);
+    transition: background-color 0.25s;
 }
 
 tbody tr:hover {
@@ -709,7 +768,7 @@ tbody tr:hover {
     cursor: pointer;
     padding: 0.2rem 0.4rem;
     border-radius: 4px;
-    transition: var(--transition);
+    transition: background-color 0.25s;
 }
 
 .editable:hover {
@@ -729,7 +788,7 @@ tbody tr:hover {
     outline: none;
 }
 
-/* Search */
+/* Wyszukiwarka */
 .search-box {
     position: relative;
     margin-bottom: 0.5rem;
@@ -753,7 +812,7 @@ tbody tr:hover {
     padding-bottom: 0.35rem;
 }
 
-/* Offer items */
+/* Pozycje oferty */
 .offer-search-row {
     display: flex !important;
     gap: 0.4rem;
@@ -826,7 +885,7 @@ tbody tr:hover {
 .product-dropdown-item {
     padding: 0.5rem 0.8rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 0.25s;
     font-size: 0.82rem;
     display: flex;
     justify-content: space-between;
@@ -842,7 +901,7 @@ tbody tr:hover {
     font-weight: 600;
 }
 
-/* Product Catalog */
+/* Katalog produkt�w */
 .product-catalog {
     margin-bottom: 1.2rem;
     animation: fadeIn 0.3s ease;
@@ -855,10 +914,10 @@ tbody tr:hover {
     margin-bottom: 0.3rem;
     position: sticky;
     top: 92px;
-    /* Adjusted due to a more compact search bar */
+    /* Dostosowane ze wzgl?du na bardziej kompaktowy pasek wyszukiwania */
     z-index: 39;
     background: var(--bg-secondary);
-    /* Solid background */
+    /* Jednolite t?o */
     padding: 0.3rem 0.6rem;
     margin-left: -1rem;
     margin-right: -1rem;
@@ -868,16 +927,14 @@ tbody tr:hover {
 .catalog-tab {
     padding: 0.3rem 0.7rem;
     border-radius: 4px;
-    /* More compact, less rounded, solid */
     font:
         500 0.75rem 'Inter',
         sans-serif;
     border: 1px solid var(--border);
     background: #1f2937;
-    /* Solid instead of glass */
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
+    transition: color 0.25s, border-color 0.25s;
     white-space: nowrap;
 }
 
@@ -888,7 +945,7 @@ tbody tr:hover {
 
 .catalog-tab.active {
     background: var(--primary);
-    /* Solid primary color */
+    /* Jednolity kolor podstawowy */
     color: #ffffff;
     border-color: var(--primary);
 }
@@ -921,7 +978,7 @@ tbody tr:hover {
     padding: 0.55rem 0.8rem 0.55rem 1.6rem;
     border-bottom: 1px solid var(--bg-tertiary);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 0.25s, border-color 0.25s;
 }
 
 .catalog-item-row:hover {
@@ -983,7 +1040,7 @@ tbody tr:hover {
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 0.25s;
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -992,7 +1049,7 @@ tbody tr:hover {
     background: var(--bg-hover);
 }
 
-/* Summary cards */
+/* Karty podsumowania */
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1035,7 +1092,7 @@ tbody tr:hover {
     margin-top: 0.1rem;
 }
 
-/* Saved offers list */
+/* Lista zapisanych ofert */
 .offer-list {
     display: grid;
     gap: 0.75rem;
@@ -1050,7 +1107,7 @@ tbody tr:hover {
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
-    transition: var(--transition);
+    transition: border-color 0.25s, background-color 0.25s;
     margin-bottom: 0.35rem;
 }
 
@@ -1065,7 +1122,7 @@ tbody tr:hover {
     border: 1px solid var(--border-glass);
     background: var(--bg-card);
     box-shadow: var(--shadow-sm);
-    transition: var(--transition);
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
 }
 
 .offer-card:hover {
@@ -1074,24 +1131,7 @@ tbody tr:hover {
     transform: translateY(-2px);
 }
 
-/* Kartoteka specific card styles */
-.kartoteka-offer-card {
-    margin-bottom: 1rem;
-}
-
-.kartoteka-offer-card .offer-card-header {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), transparent);
-}
-
-.kartoteka-offer-card .offer-card-meta-section {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.kartoteka-offer-card .offer-card-actions {
-    background: rgba(99, 102, 241, 0.02);
-}
-
-/* ===== MODERN OFFER CARDS ===== */
+/* ===== NOWOCZESNE KARTY OFERT ===== */
 .modern-offer-card {
     position: relative;
     background: linear-gradient(135deg, #1a1f2e 0%, #161b2e 100%);
@@ -1100,7 +1140,7 @@ tbody tr:hover {
     padding: 0;
     margin-bottom: 0.7rem;
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--shadow-sm);
 }
 
@@ -1154,7 +1194,7 @@ tbody tr:hover {
     justify-content: center;
     color: var(--accent-hover);
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: box-shadow 0.2s ease;
 }
 
 .offer-title-section {
@@ -1220,7 +1260,7 @@ tbody tr:hover {
     margin-top: 0.15rem;
 }
 
-/* Author badges — rendered inline in .offer-subtitle */
+/* Odznaki autora � renderowane inline w .offer-subtitle */
 .author-badge {
     display: inline-flex;
     align-items: center;
@@ -1419,7 +1459,7 @@ tbody tr:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
     text-decoration: none;
     flex-shrink: 0;
 }
@@ -1427,6 +1467,8 @@ tbody tr:hover {
 .action-btn:hover {
     box-shadow: 0 3px 8px rgba(99, 102, 241, 0.2);
 }
+
+.action-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .action-btn:disabled {
     opacity: 0.4;
@@ -1517,7 +1559,7 @@ tbody tr:hover {
     height: 16px;
 }
 
-/* ===== COMPACT MODE ===== */
+/* ===== TRYB KOMPAKTOWY ===== */
 .compact-mode .modern-offer-card {
     margin-bottom: 0.4rem;
     border-radius: 8px;
@@ -1636,7 +1678,7 @@ tbody tr:hover {
     height: 14px;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== WIDOK RESPONSYWNY ===== */
 @media (max-width: 768px) {
     .modern-offer-card {
         margin-bottom: 0.55rem;
@@ -1704,6 +1746,38 @@ tbody tr:hover {
     .kartoteka-filter-bar .search-box {
         max-width: 100%;
     }
+
+    /* Tabela ofert rur — ukryj kolumny */
+    #offer-items-body table th:nth-child(5),  /* Ilość */
+    #offer-items-body table td:nth-child(5),
+    #offer-items-body table th:nth-child(8),  /* Dopłata */
+    #offer-items-body table td:nth-child(8),
+    #offer-items-body table th:nth-child(12), /* Wersja handlowa */
+    #offer-items-body table td:nth-child(12) {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    #offer-items-body table th:nth-child(4),  /* Metry */
+    #offer-items-body table td:nth-child(4),
+    #offer-items-body table th:nth-child(9),  /* Transport/szt */
+    #offer-items-body table td:nth-child(9),
+    #offer-items-body table th:nth-child(11), /* Brutto */
+    #offer-items-body table td:nth-child(11) {
+        display: none;
+    }
+
+    #offer-items-body table th,
+    #offer-items-body table td {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.72rem;
+    }
+
+    /* Przyciski akcji ukryj tekst, zostaw ikony */
+    .action-btn.text-btn span {
+        display: none;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1746,15 +1820,26 @@ tbody tr:hover {
         font-size: 0.75rem;
         padding: 0.35rem 0.75rem;
     }
+
+    .form-row-2,
+    .form-row-3,
+    .form-row-4,
+    .form-row-compact {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
-/* Unified filter bar */
+/* Ujednolicony pasek filtr�w */
 .kartoteka-filter-bar {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(99, 102, 241, 0.08));
     border: 1px solid rgba(99, 102, 241, 0.2);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .kartoteka-filter-bar:hover {
@@ -1764,7 +1849,7 @@ tbody tr:hover {
 
 .kartoteka-filter-bar .pv-type-filter-btn,
 .kartoteka-filter-bar .pv-filter-btn {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s, box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .kartoteka-filter-bar .pv-type-filter-btn:hover,
@@ -1781,56 +1866,37 @@ tbody tr:hover {
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
 }
 
-/* Offers grid */
+/* Siatka ofert */
 .kartoteka-offers-grid {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-/* Loading shimmer effect */
+/* Efekt shimmmera �adowania */
 .kartoteka-offers-grid .loading-shimmer {
-    background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 25%, rgba(99, 102, 241, 0.1) 50%, rgba(30, 41, 59, 0.5) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+    position: relative;
+    overflow: hidden;
     border-radius: 12px;
     padding: 2rem;
     text-align: center;
     color: var(--text-muted);
 }
+.kartoteka-offers-grid .loading-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    animation: shimmer 1.5s infinite;
+}
 
 @keyframes shimmer {
     0% {
-        background-position: 200% 0;
+        transform: translateX(-100%);
     }
     100% {
-        background-position: -200% 0;
+        transform: translateX(100%);
     }
-}
-
-/* Action buttons grouping */
-.offer-actions-grouped {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.offer-actions-grouped > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    align-items: center;
-}
-
-/* Improved button spacing in offer cards */
-.offer-card-actions .btn {
-    transition: var(--transition);
-}
-
-.offer-card-actions .btn:hover {
-    transform: translateY(-1px);
 }
 
 .offer-status-bar {
@@ -1846,81 +1912,6 @@ tbody tr:hover {
     background: var(--text-muted);
 }
 
-.offer-card-top {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 1rem;
-    padding-left: 0.75rem;
-}
-
-.offer-card-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 0;
-    flex: 1 1 240px;
-}
-
-.offer-card-title h4 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.offer-card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-    flex: 2 1 420px;
-}
-
-.offer-card-meta span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.offer-card-meta span strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.offer-card-price {
-    min-width: 140px;
-    text-align: right;
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--accent-light);
-    flex: 0 0 auto;
-}
-
-.offer-card-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding-left: 0.75rem;
-}
-
-.offer-badge-wrap {
-    flex: 1 1 240px;
-    min-width: 0;
-}
-
 .btn-order-badge {
     display: inline-flex;
     align-items: center;
@@ -1929,7 +1920,7 @@ tbody tr:hover {
     height: 34px;
     border-radius: 8px;
     border: 1px solid transparent;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     text-decoration: none;
     white-space: nowrap;
     font-size: 0.78rem;
@@ -1969,31 +1960,7 @@ tbody tr:hover {
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.offer-no-order {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: 999px;
-    background: rgba(148, 163, 184, 0.12);
-    color: var(--text-secondary);
-}
-
 @media (max-width: 860px) {
-    .offer-card-top,
-    .offer-card-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .offer-card-price {
-        text-align: left;
-    }
-
-    .offer-card-meta span {
-        white-space: normal;
-    }
-
     .offer-actions {
         justify-content: flex-start;
     }
@@ -2057,16 +2024,17 @@ tbody tr:hover {
     align-items: center;
 }
 
-/* Modal */
+/* Okno modalne */
 .modal-overlay {
     position: fixed;
     inset: 0;
     background: var(--shadow-color);
-    z-index: 200;
+    z-index: 100000;
     display: flex;
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.2s ease;
+    overscroll-behavior: contain;
 }
 
 .modal {
@@ -2098,7 +2066,7 @@ tbody tr:hover {
     margin-top: 1.2rem;
 }
 
-/* Toast */
+/* Komunikat Toast */
 .toast-container {
     position: fixed;
     bottom: 1.5rem;
@@ -2228,7 +2196,7 @@ tbody tr:hover {
     flex: 1;
 }
 
-/* Scrollbar */
+/* Pasek przewijania */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -2247,7 +2215,7 @@ tbody tr:hover {
     background: var(--bg-tertiary);
 }
 
-/* Responsive */
+/* Widok responsywny */
 @media (max-width: 768px) {
     .main {
         padding: 1rem;
@@ -2459,7 +2427,7 @@ tbody tr:hover {
         page-break-after: avoid;
     }
 
-    /* Offer header grid */
+    /* Siatka nag��wka oferty */
     .offer-header-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
@@ -2477,7 +2445,7 @@ tbody tr:hover {
         display: none !important;
     }
 
-    /* Print-only header */
+    /* Nag��wek tylko do druku */
     .print-header {
         display: block !important;
         text-align: center;
@@ -2486,7 +2454,7 @@ tbody tr:hover {
         margin-bottom: 1rem;
     }
 
-    /* Print-only footer */
+    /* Stopka tylko do druku */
     .print-footer {
         display: block !important;
         text-align: center;
@@ -2497,7 +2465,7 @@ tbody tr:hover {
         color: #666;
     }
 
-    /* Badge/role styles */
+    /* Style odznak/rol */
     .badge-role,
     .user-role,
     .token-badge {
@@ -2507,12 +2475,12 @@ tbody tr:hover {
     }
 }
 
-/* Print-only elements (hidden on screen) */
+/* Elementy tylko do druku (ukryte na ekranie) */
 .print-header,
 .print-footer {
     display: none;
 }
-/* --- UI Helpers (extracted from inline styles) --- */
+/* --- Pomocnicze UI (wyodr�bnione ze styl�w inline) --- */
 .ui-text-muted-sm {
     font-size: 0.6rem;
     color: var(--text-muted);
@@ -2580,4 +2548,360 @@ svg.lucide {
     display: inline-block;
     position: relative;
     top: -1px; /* Korekta optycznego środka */
+}
+
+/* ===== WIZARD SYSTEM (shared by rury & studnie) ===== */
+.wizard-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 0.6rem;
+    padding: 0.3rem 0;
+}
+
+.well-app-layout:not(.intro-mode) .wizard-indicator {
+    margin-top: 0.8rem;
+}
+
+.wizard-step-dot {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    z-index: 1;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.wizard-step-dot:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.wizard-step-dot.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.wizard-step-dot.disabled:hover {
+    opacity: 0.4;
+    transform: none;
+}
+
+.wizard-dot-number {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.65rem;
+    background: var(--border-glass);
+    border: 2px solid #334155;
+    color: var(--text-muted);
+    transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wizard-step-dot.active .wizard-dot-number {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: var(--accent-hover);
+    color: white;
+    box-shadow: 0 0 8px #4338ca;
+}
+
+.wizard-step-dot.completed .wizard-dot-number {
+    background: linear-gradient(135deg, var(--success), #34d399);
+    border-color: #34d399;
+    color: white;
+}
+
+.wizard-dot-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    transition: color 0.3s;
+}
+
+.wizard-step-dot.active .wizard-dot-label {
+    color: #c7d2fe;
+}
+
+.wizard-step-dot.completed .wizard-dot-label {
+    color: #6ee7b7;
+}
+
+.wizard-step-line {
+    width: 50px;
+    height: 2px;
+    background: #334155;
+    transition: background 0.4s;
+    margin: 0 0.35rem;
+}
+
+.wizard-step-line.completed {
+    background: linear-gradient(90deg, #34d399, var(--accent));
+}
+
+.wizard-step {
+    display: none;
+    animation: wizardFadeIn 0.35s ease-out;
+}
+
+.wizard-step.active {
+    display: block;
+}
+
+@keyframes wizardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wizard-card {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    padding: 1.8rem 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.wizard-card-header {
+    text-align: left;
+    margin-bottom: 1.3rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.wizard-card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.wizard-card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.wizard-card-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.wizard-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.wizard-form-grid {
+    display: grid;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+}
+
+.wizard-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wizard-form-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.wizard-form-input {
+    padding: 0.5rem 0.65rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font: 500 0.82rem 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wizard-form-input:focus {
+    outline: none;
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.wizard-form-textarea {
+    padding: 0.5rem 0.65rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font: 500 0.82rem 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+}
+
+.wizard-form-textarea:focus {
+    outline: none;
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-glass);
+}
+
+.wizard-btn {
+    padding: 0.55rem 1.6rem;
+    border: none;
+    border-radius: 10px;
+    font: 600 0.82rem 'Inter', sans-serif;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.wizard-btn-next {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 15px var(--accent-border-dim);
+}
+
+.wizard-btn-next:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px #3a3a8a;
+}
+
+.wizard-btn-next:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.wizard-btn-prev {
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+}
+
+.wizard-btn-prev:hover:not(:disabled) {
+    background: var(--border-glass);
+    color: var(--text-primary);
+    border-color: var(--accent-border-dim);
+}
+
+.wizard-btn-prev:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.wizard-btn-apply {
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #fbbf24;
+}
+
+.wizard-btn-apply:hover {
+    background: rgba(245,158,11,0.25);
+    border-color: rgba(245,158,11,0.5);
+}
+
+.wizard-nav-fixed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-glass);
+    padding: 0.75rem 1.5rem;
+    box-shadow: 0 -4px 20px var(--shadow-color);
+}
+
+.wizard-nav-left {
+    position: absolute;
+    left: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.wizard-nav-right {
+    position: absolute;
+    right: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.wizard-nav-fixed .wizard-step-info {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.wizard-nav-fixed .wizard-btn svg.lucide {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.2;
+}
+
+.wizard-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border-glass);
+}
+
+html { color-scheme: dark; }
+
+.toast[role="alert"] { /* ensure visibility */ }
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .product-catalog,
+  .modal-overlay,
+  .well-details-container,
+  .kartoteka-offers-grid .loading-shimmer,
+  .toast {
+    animation: none !important;
+    transition: none !important;
+  }
 }

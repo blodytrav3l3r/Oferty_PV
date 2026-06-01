@@ -1,10 +1,10 @@
-// Version 2.0 - Order Management in Kartoteka
+// Wersja 2.0 - Zarzadzanie zamowieniami w Kartotece
 import { storageService } from '../shared/StorageService.js';
 
 class PVSalesUI {
     constructor() {
         this.syncManager = null;
-        this.allLocalOffers = []; // Store for filtering
+        this.allLocalOffers = []; // Przechowalnia do filtrowania
         this.isSyncUpToDate = true;
         this.ordersMap = new Map(); // offerId -> order
         this.currentFilter = 'all'; // 'all', 'with_order', 'without_order'
@@ -14,7 +14,7 @@ class PVSalesUI {
         this.init();
     }
 
-    /** Helper to normalize ID */
+    /** Pomocnik do normalizacji ID */
     normalizeId(id) {
         if (!id) return '';
         return String(id);
@@ -31,7 +31,7 @@ class PVSalesUI {
 
     formatOrderLabel(order) {
         return this.escapeHtml(
-            order?.orderNumber || (order?.id ? String(order.id).substring(0, 8) : 'Zamówienie')
+            order?.orderNumber || order?.offerNumber || (order?.id ? String(order.id).substring(0, 8) : 'Zamówienie')
         );
     }
 
@@ -85,7 +85,7 @@ class PVSalesUI {
             console.error('[PVSalesUI] Błąd inicjalizacji UI Sprzedaży:', error);
             const listDiv = document.getElementById('pv-local-offers-list');
             if (listDiv)
-                listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${error.message}</div>`;
+                listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${this.escapeHtml(error.message)}</div>`;
         }
     }
 
@@ -100,22 +100,41 @@ class PVSalesUI {
                     ? authHeaders()
                     : { 'Content-Type': 'application/json' };
             const timestamp = Date.now();
-            const response = await fetch(`/api/orders-studnie?t=${timestamp}`, { headers });
-            if (!response.ok) return;
-
-            const json = await response.json();
-            const orders = json.data || [];
 
             this.ordersMap.clear();
-            orders.forEach((order) => {
-                const offId = order.offerId || order.offerStudnieId || order.offer_id;
-                if (!offId) return;
-                const key = this.normalizeId(offId);
-                const list = this.ordersMap.get(key) || [];
-                list.push(order);
-                this.ordersMap.set(key, list);
-            });
-            console.log(`[PVSalesUI] Załadowano ${orders.length} zamówień powiązanych z ${this.ordersMap.size} ofertami.`);
+            let totalOrders = 0;
+
+            // Studnie
+            const studnieResp = await fetch(`/api/orders-studnie?t=${timestamp}`, { headers });
+            if (studnieResp.ok) {
+                const json = await studnieResp.json();
+                (json.data || []).forEach((order) => {
+                    const offId = order.offerId || order.offerStudnieId || order.offer_id;
+                    if (!offId) return;
+                    const key = this.normalizeId(offId);
+                    const list = this.ordersMap.get(key) || [];
+                    list.push(order);
+                    this.ordersMap.set(key, list);
+                    totalOrders++;
+                });
+            }
+
+            // Rury
+            const ruryResp = await fetch(`/api/orders-rury?t=${timestamp}`, { headers });
+            if (ruryResp.ok) {
+                const json = await ruryResp.json();
+                (json.data || []).forEach((order) => {
+                    const offId = order.offerId;
+                    if (!offId) return;
+                    const key = this.normalizeId(offId);
+                    const list = this.ordersMap.get(key) || [];
+                    list.push(order);
+                    this.ordersMap.set(key, list);
+                    totalOrders++;
+                });
+            }
+
+            console.log(`[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`);
         } catch (error) {
             console.warn('[PVSalesUI] Nie udało się pobrać zamówień:', error.message);
         }
@@ -172,8 +191,8 @@ class PVSalesUI {
             console.error('[PVSalesUI] Błąd pobierania ofert:', error);
             listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">
                 <strong>Błąd pobierania ofert:</strong><br/>
-                <span style="font-size:0.85rem; opacity:0.8;">${error.message || 'Wystąpił nieoczekiwany błąd sieciowy'}</span><br/>
-                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.loadLocalOffers()"><i data-lucide="refresh-cw"></i> Odśwież</button>
+                <span style="font-size:0.85rem; opacity:0.8;">${this.escapeHtml(error.message || 'Wystąpił nieoczekiwany błąd sieciowy')}</span><br/>
+                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.loadLocalOffers()"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button>
             </div>`;
             setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
         }
@@ -200,18 +219,18 @@ class PVSalesUI {
 
         const query = input.value.trim().toLowerCase();
 
-        // Update active status filter button UI
+        // Aktualizacja UI przycisku filtra statusu
         document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
             if (btn.dataset.filter === this.currentFilter) btn.classList.add('active');
             else btn.classList.remove('active');
         });
 
         const filtered = this.allLocalOffers.filter((offer) => {
-            // Type Filter (kartoteka-level)
+            // Filtr typu (poziom kartoteki)
             if (this.currentTypeFilter !== 'all' && offer.type !== this.currentTypeFilter)
                 return false;
 
-            // Text Search
+            // Wyszukiwanie tekstowe
             const num = (offer.number || offer.title || offer.offerName || '').toLowerCase();
             const client = (
                 offer.clientName ||
@@ -244,7 +263,7 @@ class PVSalesUI {
                 budowa.includes(query) ||
                 userStr.includes(query);
 
-            // Status Filter
+            // Filtr statusu
             if (!matchesText) return false;
 
             if (this.currentFilter !== 'all') {
@@ -267,7 +286,7 @@ class PVSalesUI {
     setFilterLocalOffers(filterType) {
         this.currentFilter = filterType;
 
-        // Update filter button UI
+        // Aktualizacja UI przycisku filtru
         document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === filterType);
             if (btn.dataset.filter === filterType) {
@@ -305,7 +324,7 @@ class PVSalesUI {
                     const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
 
                     orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${this.escapeHtml(order.id || '')}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
-                    <i data-lucide="package"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
+                    <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
                    </a>`;
 
                     orderItemsHtml = orderList
@@ -325,10 +344,10 @@ class PVSalesUI {
                                         </span>
                                     </button>
                                     <div class="offer-order-actions">
-                                        ${changeInfo.changed ? '<span class="offer-change-chip"><i data-lucide="activity"></i> zmiany</span>' : ''}
-                                        <button class="action-btn success btn-karta-budowy" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" title="Karta budowy ${label}"><i data-lucide="clipboard-list"></i></button>
-                                        <button class="action-btn secondary btn-history-order" data-order-id="${this.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}"><i data-lucide="clock"></i></button>
-                                        <button class="action-btn danger btn-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}"><i data-lucide="trash-2"></i></button>
+                                        ${changeInfo.changed ? '<span class="offer-change-chip"><i data-lucide="activity" aria-hidden="true"></i> zmiany</span>' : ''}
+                                        <button class="action-btn success btn-karta-budowy" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                                        <button class="action-btn secondary btn-history-order" data-order-id="${this.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
+                                        <button class="action-btn danger btn-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
                                     </div>
                                 </div>`;
                         })
@@ -433,10 +452,10 @@ class PVSalesUI {
                                         let html = '';
                                         const isClickable = this.role === 'admin' || this.role === 'pro';
                                         if (creatorName === userName && creatorName) {
-                                            html = `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="user"></i> ${creatorName}</span>`;
+                                            html = `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> ${creatorName}</span>`;
                                         } else {
-                                            if (creatorName) html += `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool"></i> ${creatorName}</span>`;
-                                            if (userName) html += `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase"></i> ${userName}</span>`;
+                                            if (creatorName) html += `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>`;
+                                            if (userName) html += `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>`;
                                         }
                                         return html;
                                     })()}
@@ -463,29 +482,29 @@ class PVSalesUI {
                                     isLocalList
                                         ? `
                                         <button class="action-btn primary text-btn" data-id="${offer.id}" data-type="${offer.type}" title="Edytuj ofertę">
-                                            <i data-lucide="pencil"></i> Edytuj
+                                            <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
                                         </button>
                                         <button class="action-btn secondary text-btn" data-id="${offer.id}" title="Skopiuj ofertę">
-                                            <i data-lucide="copy"></i> Skopiuj ofertę
+                                            <i data-lucide="copy" aria-hidden="true"></i> Skopiuj ofertę
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian">
-                                            <i data-lucide="clock"></i>
+                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
+                                            <i data-lucide="clock" aria-hidden="true"></i>
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-order-id="${hasOrder ? order.id : ''}" title="Wydruk">
-                                            <i data-lucide="printer"></i>
+                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-order-id="${hasOrder ? order.id : ''}" title="Wydruk" aria-label="Wydruk">
+                                            <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
                                         ${
                                             offer.clientPhone
-                                                ? `<a href="tel:${offer.clientPhone}" class="action-btn phone" title="Zadzwoń"><i data-lucide="phone"></i></a>`
+                                                ? `<a href="tel:${offer.clientPhone}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
                                                 : ''
                                         }
-                                        <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
-                                            <i data-lucide="trash-2"></i>
+                                        <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
+                                            <i data-lucide="trash-2" aria-hidden="true"></i>
                                         </button>
                                         `
                                         : `
-                                        <button class="action-btn primary" data-id="${offer.id}" title="Szczegóły">
-                                            <i data-lucide="eye"></i>
+                                        <button class="action-btn primary" data-id="${offer.id}" title="Szczegóły" aria-label="Szczegóły">
+                                            <i data-lucide="eye" aria-hidden="true"></i>
                                         </button>
                                         `
                                 }
@@ -511,29 +530,10 @@ class PVSalesUI {
         const offerLabel = offer && (offer.number || offer.title || offer.offerName) ?
             (offer.number || offer.title || offer.offerName) : 'Oferta';
 
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        overlay.id = 'offer-orders-modal';
-        
-        const closePopup = () => {
-            if (typeof window.closeModal === 'function') {
-                window.closeModal();
-            } else {
-                overlay.remove();
-            }
-        };
-
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closePopup();
-        });
-
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-
         let html = `
             <div class="modal-header">
-                <h3>Zamówienia oferty ${offerLabel}</h3>
-                <button class="btn-icon btn-close-x" onclick="if(typeof window.closeModal === 'function'){window.closeModal();}else{this.closest('.modal-overlay').remove();}"><i data-lucide="x"></i></button>
+                <h3 id="offer-orders-title">Zamówienia oferty ${offerLabel}</h3>
+                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div style="margin-bottom:1rem; color:var(--text-muted); font-size:0.9rem;">Lista wszystkich zamówień przypisanych do tej oferty.</div>
             <div style="display:flex; flex-direction:column; gap:0.75rem; max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
@@ -562,13 +562,15 @@ class PVSalesUI {
         html += `
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-close-footer" onclick="if(typeof window.closeModal === 'function'){window.closeModal();}else{this.closest('.modal-overlay').remove();}">Zamknij</button>
+                <button class="btn btn-secondary btn-close-footer" onclick="closeModal()">Zamknij</button>
             </div>
         `;
 
-        modal.innerHTML = html;
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
+        const overlay = showModal({
+            id: 'offer-orders-modal',
+            titleId: 'offer-orders-title',
+            html: `<div class="modal">${html}</div>`
+        });
         
         try {
             if (typeof window.lucide !== 'undefined') window.lucide.replace();
@@ -576,19 +578,13 @@ class PVSalesUI {
             console.error('Lucide replace error in showOfferOrdersPopup:', err);
         }
 
-        // Attach modal closing event listeners programmatically (secondary backup)
-        const closeBtnX = modal.querySelector('.btn-close-x');
-        if (closeBtnX) closeBtnX.addEventListener('click', closePopup);
-
-        const closeBtnFooter = modal.querySelector('.btn-close-footer');
-        if (closeBtnFooter) closeBtnFooter.addEventListener('click', closePopup);
-
-        modal.querySelectorAll('.btn-open-order').forEach((btn) => {
+        // Attach modal closing event listeners
+        overlay.querySelectorAll('.btn-open-order').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const buttonEl = e.target.closest('.btn-open-order');
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerType = buttonEl.getAttribute('data-offer-type');
-                closePopup();
+                closeModal();
                 if (window.parent && window.parent.SpaRouter) {
                     window.parent.SpaRouter.openOfferInModule(offerType, orderId, 'order');
                 } else if (window.SpaRouter) {
@@ -600,7 +596,7 @@ class PVSalesUI {
             });
         });
 
-        modal.querySelectorAll('.btn-print-order').forEach((btn) => {
+        overlay.querySelectorAll('.btn-print-order').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const buttonEl = e.target.closest('button');
                 const orderId = buttonEl.getAttribute('data-order-id');
@@ -608,384 +604,187 @@ class PVSalesUI {
                 if (typeof window.showUniversalPrintModal === 'function') {
                     window.showUniversalPrintModal(offerIdAttr, orderId);
                 } else {
-                    closePopup();
+                    closeModal();
                     showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
                 }
             });
         });
 
-        modal.querySelectorAll('.btn-modal-history-order').forEach((btn) => {
+        overlay.querySelectorAll('.btn-modal-history-order').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const buttonEl = e.target.closest('button');
                 const orderId = buttonEl.getAttribute('data-order-id');
-                closePopup();
+                closeModal();
                 this.showOfferHistoryUnified(String(orderId), 'order');
             });
         });
 
-        modal.querySelectorAll('.btn-modal-delete-order').forEach((btn) => {
+        overlay.querySelectorAll('.btn-modal-delete-order').forEach((btn) => {
             btn.addEventListener('click', async (e) => {
                 const buttonEl = e.target.closest('button');
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerType = buttonEl.getAttribute('data-offer-type');
-                closePopup();
+                closeModal();
                 await this.deleteOrderUnified(orderId, offerType);
             });
         });
     }
 
     attachActionListeners(container) {
+        // Guard: zapobiega wielokrotnemu dodawaniu tego samego listenera do kontenera
+        if (container._pvActionListenersAttached) return;
+        container._pvActionListenersAttached = true;
+
         const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith(
             'kartoteka'
         );
 
-        // Edit Action - new icon buttons
-        container.querySelectorAll('.action-btn.primary').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const btnEl = e.target.closest('.action-btn');
-                const id = btnEl.getAttribute('data-id');
-                const type = btnEl.getAttribute('data-type');
+        container.addEventListener('click', async (e) => {
+            const btn = e.target.closest(
+                '.action-btn, .btn-order-badge, .btn-edit-order, .btn-change-owner, ' +
+                '.btn-edit-pv-offer, .btn-copy-pv-offer, .btn-history-pv-offer, ' +
+                '.btn-export-pv-offer, .btn-delete-pv-offer, .btn-delete-order, ' +
+                '.btn-history-order, .btn-karta-budowy'
+            );
+            if (!btn) return;
 
-                // If we're in kartoteka (SPA iframe), delegate to parent router
-                if (isKartoteka) {
-                    try {
-                        window.parent.SpaRouter.openOfferInModule(type, id, 'edit');
-                    } catch (err) {
-                        // Fallback: direct navigation
-                        const target = type === 'studnia_oferta' ? 'studnie.html' : 'rury.html';
-                        window.location.href = `${target}?edit=${id}`;
-                    }
-                    return;
-                }
+            const title = (btn.title || '').toLowerCase();
 
-                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            // Phone links — let default browser behavior
+            if (btn.tagName === 'A' && btn.getAttribute('href')?.startsWith('tel:')) return;
 
-                if (type === 'studnia_oferta' && currentPage !== 'studnie.html') {
-                    window.location.href = `studnie.html?edit=${id}`;
-                    return;
-                } else if (type === 'offer' && currentPage !== 'rury.html') {
-                    window.location.href = `rury.html?edit=${id}`;
-                    return;
-                }
-
-                try {
-                    const doc = await storageService.getOfferById(id);
-                    this.openOfferForEdit(doc, id, type);
-                } catch (err) {
-                    console.error('[PVSalesUI] Błąd pobierania do edycji:', err);
-                }
-            });
-        });
-
-        // Legacy Edit Action - for backward compatibility
-        container.querySelectorAll('.btn-edit-pv-offer').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const btnEl = e.target.closest('button');
-                const id = btnEl.getAttribute('data-id');
-                const type = btnEl.getAttribute('data-type');
-
-                if (isKartoteka) {
-                    try {
-                        window.parent.SpaRouter.openOfferInModule(type, id, 'edit');
-                    } catch (err) {
-                        const target = type === 'studnia_oferta' ? 'studnie.html' : 'rury.html';
-                        window.location.href = `${target}?edit=${id}`;
-                    }
-                    return;
-                }
-
-                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-
-                if (type === 'studnia_oferta' && currentPage !== 'studnie.html') {
-                    window.location.href = `studnie.html?edit=${id}`;
-                    return;
-                } else if (type === 'offer' && currentPage !== 'rury.html') {
-                    window.location.href = `rury.html?edit=${id}`;
-                    return;
-                }
-
-                try {
-                    const doc = await storageService.getOfferById(id);
-                    this.openOfferForEdit(doc, id, type);
-                } catch (err) {
-                    console.error('[PVSalesUI] Błąd pobierania do edycji:', err);
-                }
-            });
-        });
-
-        // Copy Action - new icon buttons
-        container.querySelectorAll('.action-btn.secondary').forEach((btn) => {
-            if (btn.getAttribute('title') === 'Skopiuj ofertę') {
-                btn.addEventListener('click', async (e) => {
-                    const btnEl = e.target.closest('.action-btn');
-                    const id = btnEl.getAttribute('data-id');
-                    await this.copyOfferWithVersion(id);
-                });
-            }
-        });
-
-        // Legacy Copy Action
-        container.querySelectorAll('.btn-copy-pv-offer').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const btnEl = e.target.closest('button');
-                const id = btnEl.getAttribute('data-id');
-                await this.copyOfferWithVersion(id);
-            });
-        });
-
-        // History Action - new icon buttons
-        container.querySelectorAll('.action-btn.secondary').forEach((btn) => {
-            if (btn.getAttribute('title') === 'Historia zmian') {
-                btn.addEventListener('click', (e) => {
-                    const btnEl = e.target.closest('.action-btn');
-                    const id = btnEl.getAttribute('data-id');
-                    const type = btnEl.getAttribute('data-type') || 'studnia_oferta';
-                    this.showOfferHistoryUnified(String(id), type);
-                });
-            }
-        });
-
-        // Legacy History Action (Offer)
-        container.querySelectorAll('.btn-history-pv-offer').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const btnEl = e.target.closest('button');
-                const id = btnEl.getAttribute('data-id');
-                const type = btnEl.getAttribute('data-type') || 'studnia_oferta';
-                this.showOfferHistoryUnified(String(id), type);
-            });
-        });
-
-        // Export/Print Action - new icon buttons
-        container.querySelectorAll('.action-btn.secondary').forEach((btn) => {
-            if (btn.getAttribute('title') === 'Wydruk') {
-                btn.addEventListener('click', (e) => {
-                    const btnEl = e.target.closest('.action-btn');
-                    const id = btnEl.getAttribute('data-id');
-                    const type = btnEl.getAttribute('data-type');
-                    const orderId = btnEl.getAttribute('data-order-id');
-                    // Handle print/export logic
-                    if (typeof window.showUniversalPrintModal === 'function') {
-                        window.showUniversalPrintModal(id, orderId);
-                    } else {
-                        showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
-                    }
-                });
-            }
-        });
-
-        // Legacy Export Action
-        container.querySelectorAll('.btn-export-pv-offer').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const btnEl = e.target.closest('button');
-                const id = btnEl.getAttribute('data-id');
-                const type = btnEl.getAttribute('data-type');
-                const orderId = btnEl.getAttribute('data-order-id');
-                if (typeof window.showUniversalPrintModal === 'function') {
-                    window.showUniversalPrintModal(id, orderId);
-                } else {
-                    showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
-                }
-            });
-        });
-
-        // Delete Action - new icon buttons
-        container.querySelectorAll('.action-btn.danger').forEach((btn) => {
-            if (btn.hasAttribute('data-order-id')) return;
-            btn.addEventListener('click', async (e) => {
-                const btnEl = e.target.closest('.action-btn');
-                const id = btnEl.getAttribute('data-id');
-                if (!btnEl.disabled) {
-                    await this.deleteOfferWithConfirmation(id);
-                }
-            });
-        });
-
-        // Legacy Delete Action
-        container.querySelectorAll('.btn-delete-pv-offer').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const btnEl = e.target.closest('button');
-                const id = btnEl.getAttribute('data-id');
-                await this.deleteOfferWithConfirmation(id);
-            });
-        });
-
-        // Delete Order Action - new icon buttons
-        container.querySelectorAll('.action-btn.danger').forEach((btn) => {
-            if (btn.getAttribute('title') && btn.getAttribute('title').includes('Usuń Zam.')) {
-                btn.addEventListener('click', async (e) => {
-                    const btnEl = e.target.closest('.action-btn');
-                    const orderId = btnEl.getAttribute('data-order-id');
-                    const offerType = btnEl.getAttribute('data-offer-type');
-
-                    if (offerType === 'studnia_oferta') {
-                        this.deleteOrderUnified(orderId, offerType);
-                    } else {
-                        console.warn('[PVSalesUI] Nieobsługiwany typ oferty dla usuwania zamówienia');
-                        showToast(
-                            'Funkcja usuwania zamówienia dla ofert PV zostanie wkrótce udostępniona.',
-                            'info'
-                        );
-                    }
-                });
-            }
-        });
-
-        // Legacy Delete Order Action
-        container.querySelectorAll('.btn-delete-order').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const btnEl = e.target.closest('button');
-                const orderId = btnEl.getAttribute('data-order-id');
-                const offerType = btnEl.getAttribute('data-offer-type');
-
-                if (offerType === 'studnia_oferta') {
-                    this.deleteOrderUnified(orderId, offerType);
-                } else {
-                    console.warn('[PVSalesUI] Nieobsługiwany typ oferty dla usuwania zamówienia');
-                    showToast(
-                        'Funkcja usuwania zamówienia dla ofert PV zostanie wkrótce udostępniona.',
-                        'info'
-                    );
-                }
-            });
-        });
-
-        // History Action (Order) - new icon buttons
-        container.querySelectorAll('.action-btn.secondary').forEach((btn) => {
-            if (btn.getAttribute('title') && btn.getAttribute('title').includes('Hist. Zam.')) {
-                btn.addEventListener('click', (e) => {
-                    const btnEl = e.target.closest('.action-btn');
-                    const orderId = btnEl.getAttribute('data-order-id');
-                    this.showOfferHistoryUnified(String(orderId), 'order');
-                });
-            }
-        });
-
-        // Legacy History Action (Order)
-        container.querySelectorAll('.btn-history-order').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const btnEl = e.target.closest('button');
-                const orderId = btnEl.getAttribute('data-order-id');
-                this.showOfferHistoryUnified(String(orderId), 'order');
-            });
-        });
-
-        // Order Badge Click — show list of orders assigned to the offer
-        container.querySelectorAll('.btn-order-badge').forEach((badge) => {
-            badge.addEventListener('click', (e) => {
+            // ---- ORDER BADGE ----
+            if (btn.classList.contains('btn-order-badge')) {
                 e.preventDefault();
-                const offerId = badge.getAttribute('data-offer-id');
-                if (!offerId) return;
-                this.showOfferOrdersPopup(offerId);
-            });
-        });
-
-        // Karta Budowy Action - new icon buttons
-        container.querySelectorAll('.action-btn.success').forEach((btn) => {
-            if (btn.getAttribute('title') === 'Karta budowy') {
-                btn.addEventListener('click', (e) => {
-                    const btnEl = e.target.closest('.action-btn');
-                    const orderId = btnEl.getAttribute('data-order-id');
-                    const offerId = btnEl.getAttribute('data-offer-id');
-                    if (typeof window.showUniversalPrintModal === 'function') {
-                        window.showUniversalPrintModal(offerId, orderId);
-                    } else {
-                        showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
-                    }
-                });
+                const badgeOfferId = btn.getAttribute('data-offer-id');
+                if (badgeOfferId) this.showOfferOrdersPopup(badgeOfferId);
+                return;
             }
-        });
 
-        // Legacy Karta Budowy Action
-        container.querySelectorAll('.btn-karta-budowy').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const btnEl = e.target.closest('button');
-                const orderId = btnEl.getAttribute('data-order-id');
-                const offerId = btnEl.getAttribute('data-offer-id');
-                if (typeof window.showUniversalPrintModal === 'function') {
-                    window.showUniversalPrintModal(offerId, orderId);
-                } else {
-                    showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
-                }
-            });
-        });
-
-        // Edit Order Click — open a specific order in the module
-        container.querySelectorAll('.btn-edit-order').forEach((badge) => {
-            badge.addEventListener('click', (e) => {
+            // ---- EDIT ORDER ----
+            if (btn.classList.contains('btn-edit-order')) {
                 e.preventDefault();
-                const orderId = badge.getAttribute('data-order-id');
-                const offerType = badge.getAttribute('data-offer-type');
-
-                if (!orderId) return;
-
-                console.log(`[PVSalesUI] Opening order ${orderId} in module ${offerType}`);
-
+                const editOrderId = btn.getAttribute('data-order-id');
+                const editOfferType = btn.getAttribute('data-offer-type');
+                if (!editOrderId) return;
                 try {
-                    if (window.parent && window.parent.SpaRouter) {
-                        window.parent.SpaRouter.openOfferInModule(offerType, orderId, 'order');
+                    if (window.parent?.SpaRouter) {
+                        window.parent.SpaRouter.openOfferInModule(editOfferType, editOrderId, 'order');
                     } else if (window.SpaRouter) {
-                        window.SpaRouter.openOfferInModule(offerType, orderId, 'order');
+                        window.SpaRouter.openOfferInModule(editOfferType, editOrderId, 'order');
                     } else {
-                        const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
-                        window.location.href = `app.html#/${targetModule}?order=${orderId}`;
+                        window.location.href = `app.html#/${editOfferType === 'studnia_oferta' ? 'studnie' : 'rury'}?order=${editOrderId}`;
                     }
                 } catch (err) {
                     console.error('[PVSalesUI] Błąd nawigacji do zamówienia:', err);
-                    const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
-                    window.location.href = `app.html#/${targetModule}?order=${orderId}`;
+                    window.location.href = `app.html#/${editOfferType === 'studnia_oferta' ? 'studnie' : 'rury'}?order=${editOrderId}`;
                 }
-            });
-        });
+                return;
+            }
 
-        // Change Owner Action
-        container.querySelectorAll('.btn-change-owner').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.target.closest('button').getAttribute('data-id');
-                this.changeOfferUserFromList(id);
-            });
-        });
+            // ---- CHANGE OWNER ----
+            if (btn.classList.contains('btn-change-owner')) {
+                this.changeOfferUserFromList(btn.getAttribute('data-id'));
+                return;
+            }
 
-        // Export Action — uniwersalny modal wydruku (oferta + karta budowy)
-        container.querySelectorAll('.btn-export-pv-offer').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const buttonEl = e.target.closest('button');
-                const id = buttonEl.getAttribute('data-id');
-                const type = buttonEl.getAttribute('data-type');
-                if (typeof window.showUniversalPrintModal === 'function') {
-                    const orderId = buttonEl.getAttribute('data-order-id') || '';
-                    window.showUniversalPrintModal(id, orderId);
+            // ---- Standard data attributes ----
+            const id = btn.getAttribute('data-id');
+            const typeAttr = btn.getAttribute('data-type');
+            const orderId = btn.getAttribute('data-order-id');
+            const offerType = btn.getAttribute('data-offer-type');
+
+            // ---- EDIT / SZCZEGÓŁY ----
+            if (title.includes('edytuj') || title.includes('szczegóły') || title.includes('szczegoly')) {
+                if (isKartoteka) {
+                    try {
+                        window.parent.SpaRouter.openOfferInModule(typeAttr, id, 'edit');
+                    } catch (err) {
+                        const target = typeAttr === 'studnia_oferta' ? 'studnie.html' : 'rury.html';
+                        window.location.href = `${target}?edit=${id}`;
+                    }
+                    return;
+                }
+                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                if (typeAttr === 'studnia_oferta' && currentPage !== 'studnie.html') {
+                    window.location.href = `studnie.html?edit=${id}`;
+                    return;
+                } else if (typeAttr === 'offer' && currentPage !== 'rury.html') {
+                    window.location.href = `rury.html?edit=${id}`;
+                    return;
+                }
+                try {
+                    const doc = await storageService.getOfferById(id);
+                    this.openOfferForEdit(doc, id, typeAttr);
+                } catch (err) {
+                    console.error('[PVSalesUI] Błąd pobierania do edycji:', err);
+                }
+                return;
+            }
+
+            // ---- COPY ----
+            if (title.includes('kopiuj') || title.includes('skopiuj')) {
+                await this.copyOfferWithVersion(id);
+                return;
+            }
+
+            // ---- HISTORY (offer) ----
+            if (title.includes('historia zmian') && !title.includes('zamówienia')) {
+                this.showOfferHistoryUnified(String(id), typeAttr || 'studnia_oferta');
+                return;
+            }
+
+            // ---- PRINT / EXPORT / KARTA BUDOWY ----
+            if (title.includes('wydruk') || title.includes('drukuj') || title.includes('karta budowy')) {
+                const printOfferId = btn.getAttribute('data-offer-id') || id;
+                const printOrderId = orderId || '';
+                // Rury — bezpośredni export karty budowy (showUniversalPrintModal jest studni-specyficzny)
+                if (offerType === 'offer' && printOrderId) {
+                    if (typeof window.exportKartaDirect_action === 'function') {
+                        window.exportKartaDirect_action(printOrderId, 'pdf');
+                    } else {
+                        showToast('Funkcja Karty Budowy niedostępna w tym widoku.', 'info');
+                    }
+                } else if (typeof window.showUniversalPrintModal === 'function') {
+                    window.showUniversalPrintModal(printOfferId, printOrderId);
                 } else {
-                    this.openExportPopupUnified(id, type);
+                    showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
                 }
-            });
-        });
+                return;
+            }
 
-        // Karta Budowy Action
-        container.querySelectorAll('.btn-karta-budowy').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const buttonEl = e.target.closest('button');
-                const orderId = buttonEl.getAttribute('data-order-id');
-                const offerId = buttonEl.getAttribute('data-offer-id');
-                if (typeof window.showUniversalPrintModal === 'function') {
-                    window.showUniversalPrintModal(offerId, orderId);
+            // ---- DELETE ORDER ----
+            if (title.includes('usuń zam') || title.includes('usun zam')) {
+                await this.deleteOrderUnified(orderId, offerType);
+                return;
+            }
+
+            // ---- HISTORY (order) ----
+            if (title.includes('hist. zam') || title.includes('historia zmian zamówienia')) {
+                this.showOfferHistoryUnified(String(orderId), 'order');
+                return;
+            }
+
+            // ---- DELETE OFFER ----
+            if (title.includes('usuń') || title.includes('usun')) {
+                if (!btn.disabled) {
+                    await this.deleteOfferWithConfirmation(id);
                 }
-            });
+                return;
+            }
         });
-
     }
 
     openExportPopupUnified(id, type) {
         let overlay = document.getElementById('export-offer-modal');
         if (overlay) overlay.remove();
 
-        overlay = document.createElement('div');
-        overlay.className = 'modal-overlay active';
-        overlay.id = 'export-offer-modal';
-        overlay.style.display = 'flex';
-
-        overlay.innerHTML = `
+        showModal({
+            id: 'export-offer-modal',
+            titleId: 'export-offer-title',
+            html: `
             <div class="modal" style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:350px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
-                <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wydruk Oferty</h3>
+                <h3 id="export-offer-title" style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wydruk Oferty</h3>
                 <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:1.5rem;">Do jakiego formatu chcesz wyeksportować tę ofertę?</p>
                 <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:1.5rem;">
                     <!-- PDF -->
@@ -997,14 +796,14 @@ class PVSalesUI {
                         <span style="font-size:2rem;"><i data-lucide="edit"></i></span> Word
                     </button>
                 </div>
-                <button style="padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('export-offer-modal').remove()">Anuluj</button>
+                <button style="padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="closeModal()">Anuluj</button>
             </div>
-        `;
-        document.body.appendChild(overlay);
+        `
+        });
     }
 
     handleExportClick(id, type, format) {
-        document.getElementById('export-offer-modal').remove();
+        closeModal();
 
         const ext = format === 'pdf' ? 'pdf' : 'docx';
         const endpoint =
@@ -1068,7 +867,7 @@ class PVSalesUI {
             const endpoint =
                 offerType === 'studnia_oferta'
                     ? `/api/orders-studnie/${encodeURIComponent(orderId)}`
-                    : `/api/orders-pv/${encodeURIComponent(orderId)}`;
+                    : `/api/orders-rury/${encodeURIComponent(orderId)}`;
             const headers =
                 typeof authHeaders === 'function'
                     ? authHeaders()
@@ -1419,10 +1218,6 @@ class PVSalesUI {
             const existing = document.getElementById('offer-history-modal');
             if (existing) existing.remove();
 
-            const overlay = document.createElement('div');
-            overlay.className = 'modal-overlay active';
-            overlay.id = 'offer-history-modal';
-
             const contextLabel = this.getAuditContextLabel(type);
             const historyHtml = logs.map((log) => this.renderAuditEntry(log, id, type)).join('');
             const loadMoreHtml =
@@ -1432,7 +1227,7 @@ class PVSalesUI {
                     </div>`
                     : '';
 
-            overlay.innerHTML = `
+            const overlayHtml = `
                 <style>
                     .audit-modal-inner {
                         width: 100vw;
@@ -1608,10 +1403,10 @@ class PVSalesUI {
                 <div class="modal audit-modal-inner">
                     <div class="audit-modal-header">
                         <div>
-                            <h3><i data-lucide="history"></i> Historia ${contextLabel}</h3>
+                            <h3 id="offer-history-title"><i data-lucide="history"></i> Historia ${contextLabel}</h3>
                             <div class="audit-modal-subtitle">${total} wpisów • najnowsze zmiany na górze</div>
                         </div>
-                        <button class="btn-icon" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x"></i></button>
+                        <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x" aria-hidden="true"></i></button>
                     </div>
                     <div id="audit-logs-container-kartoteka" class="audit-list">
                         ${historyHtml}
@@ -1620,9 +1415,10 @@ class PVSalesUI {
                 </div>
             `;
 
-            document.body.appendChild(overlay);
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.remove();
+            const overlay = showModal({
+                id: 'offer-history-modal',
+                titleId: 'offer-history-title',
+                html: overlayHtml
             });
             if (typeof window.lucide !== 'undefined') window.lucide.replace();
 
@@ -1740,10 +1536,10 @@ class PVSalesUI {
             )
             .join('');
 
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay active';
-        overlay.id = 'audit-snapshot-modal';
-        overlay.innerHTML = `
+        showModal({
+            id: 'audit-snapshot-modal',
+            titleId: 'audit-snapshot-title',
+            html: `
             <style>
                 #audit-snapshot-modal .audit-modal-inner { width:100vw; height:100vh; max-width:none; max-height:none; background:#0f172a; border:0; border-radius:0; box-shadow:none; display:flex; flex-direction:column; }
                 #audit-snapshot-modal .audit-modal-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid rgba(148,163,184,0.12); }
@@ -1759,19 +1555,16 @@ class PVSalesUI {
             <div class="modal audit-modal-inner" style="width:100vw; height:100vh; max-width:none; max-height:none; overflow:hidden;">
                 <div class="audit-modal-header">
                     <div>
-                        <h3><i data-lucide="eye"></i> Podgląd historyczny</h3>
+                        <h3 id="audit-snapshot-title"><i data-lucide="eye"></i> Podgląd historyczny</h3>
                         <div class="audit-modal-subtitle">${this.escapeHtml(this.getAuditContextLabel(type))}</div>
                     </div>
-                    <button class="btn-icon" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="document.getElementById('audit-snapshot-modal').remove()"><i data-lucide="x"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div class="audit-list" style="display:flex; flex-direction:column; gap:0.45rem;">
                     ${rows || '<div class="audit-muted">Brak danych do pokazania.</div>'}
                 </div>
             </div>
-        `;
-        document.body.appendChild(overlay);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) overlay.remove();
+        `
         });
         if (typeof window.lucide !== 'undefined') window.lucide.replace();
     }
@@ -1826,7 +1619,7 @@ class PVSalesUI {
             }
 
             // Głęboka kopia
-            const newOffer = JSON.parse(JSON.stringify(offer));
+            const newOffer = structuredClone(offer);
 
             // Wyczyść ID i metadane
             delete newOffer.id;
@@ -1863,7 +1656,7 @@ class PVSalesUI {
                 window.showToast(`Utworzono kopię: ${newNumber}`, 'success');
             }
 
-            // Reload list
+            // Przeładuj listę
             await this.loadLocalOffers();
             this.filterLocalOffers(); // Zaaplikuj aktualny filtr jeśli istnieje
         } catch (error) {
@@ -1949,7 +1742,7 @@ class PVSalesUI {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize on kartoteka page (no nav-sales button, always visible)
+    // Inicjalizacja na stronie kartoteki (brak przycisku nav-sales, zawsze widoczny)
     const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith('kartoteka');
     const navSales = document.getElementById('nav-sales');
 

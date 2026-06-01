@@ -6,7 +6,7 @@ import { loadImageData } from './helpers';
 
 /** Buduje natywny Header z obrazkiem naglowek.png (identyczny jak w PDF) */
 export function buildImageHeader(): Header {
-    const imgData = loadImageData('naglowek.png');
+    const imgData = loadImageData('letterhead-header.png');
     if (!imgData) {
         return new Header({
             children: [
@@ -26,7 +26,7 @@ export function buildImageHeader(): Header {
         });
     }
 
-    // naglowek.png: 808x174px → szerokość strony minus marginesy ≈ 190mm ≈ 680pt
+    // letterhead-header.png: 808x174px → szerokość strony minus marginesy ≈ 190mm ≈ 680pt
     return new Header({
         children: [
             new Paragraph({
@@ -46,7 +46,7 @@ export function buildImageHeader(): Header {
 
 /** Buduje natywny Footer z obrazkiem stopka.png + numeracja stron */
 export function buildImageFooter(): Footer {
-    const imgData = loadImageData('stopka.png');
+    const imgData = loadImageData('letterhead-footer.png');
     const children: Paragraph[] = [];
 
     if (imgData) {

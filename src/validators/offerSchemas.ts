@@ -342,6 +342,35 @@ export type StudnieOrderItemInput = z.infer<typeof studnieOrderItemSchema>;
 export type StudnieOrdersBatchInput = z.infer<typeof studnieOrdersBatchSchema>;
 export type StudnieOrderUpdateInput = z.infer<typeof studnieOrderUpdateSchema>;
 
+/**
+ * Schemat pozycji zamówienia rur (batch)
+ */
+export const ruryOrderItemSchema = z.object({
+    id: z.string().optional(),
+    offerId: z.string().optional(),
+    status: z.string().optional()
+});
+
+/**
+ * Schemat batcha zamówień rur (PUT /)
+ */
+export const ruryOrdersBatchSchema = z.object({
+    data: z.array(ruryOrderItemSchema)
+});
+
+/**
+ * Schemat aktualizacji zamówienia rur (PATCH /:id)
+ */
+export const ruryOrderUpdateSchema = z.object({
+    status: z.string().optional(),
+    userId: z.string().optional(),
+    data: z.record(z.string(), z.unknown()).optional()
+});
+
+export type RuryOrderItemInput = z.infer<typeof ruryOrderItemSchema>;
+export type RuryOrdersBatchInput = z.infer<typeof ruryOrdersBatchSchema>;
+export type RuryOrderUpdateInput = z.infer<typeof ruryOrderUpdateSchema>;
+
 // =============================================================================
 // MARKETPLACE
 // =============================================================================

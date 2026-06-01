@@ -57,7 +57,8 @@ router.get('/', requireAuth, async (req, res) => {
                 lastEditedBy: offer.userId,
                 items: items,
                 transportCost: offer.transportCost || 0,
-                history: JSON.parse(offer.history || '[]')
+                history: JSON.parse(offer.history || '[]'),
+                ...(offer.data ? JSON.parse(offer.data) : {})
             });
         }
 
@@ -136,6 +137,7 @@ router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema
             })();
             const updated = new Date().toISOString();
             const offerNumber = o.offer_number || o.number || '';
+            const dataStr = JSON.stringify(o);
 
             await prisma.offers_rel.upsert({
                 where: { id: docId },
@@ -147,7 +149,8 @@ router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema
                     createdAt: created,
                     updatedAt: updated,
                     transportCost: o.transportCost || 0,
-                    history: JSON.stringify(newHistory)
+                    history: JSON.stringify(newHistory),
+                    data: dataStr
                 },
                 update: {
                     userId: o.userId || authReq.user?.id,
@@ -155,7 +158,8 @@ router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema
                     state: state,
                     updatedAt: updated,
                     transportCost: o.transportCost || 0,
-                    history: JSON.stringify(newHistory)
+                    history: JSON.stringify(newHistory),
+                    data: dataStr
                 }
             });
 
@@ -214,6 +218,7 @@ router.put('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema)
                 }
                 return new Date().toISOString();
             })();
+            const dataStr = JSON.stringify(o);
 
             await prisma.offers_rel.upsert({
                 where: { id: docId },
@@ -222,13 +227,15 @@ router.put('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema)
                     userId: authReq.user?.id,
                     state: state,
                     createdAt: created,
-                    transportCost: o.transportCost || 0
+                    transportCost: o.transportCost || 0,
+                    data: dataStr
                 },
                 update: {
                     userId: authReq.user?.id,
                     state: state,
                     createdAt: created,
-                    transportCost: o.transportCost || 0
+                    transportCost: o.transportCost || 0,
+                    data: dataStr
                 }
             });
 

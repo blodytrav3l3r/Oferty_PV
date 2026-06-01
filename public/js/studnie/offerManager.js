@@ -49,7 +49,7 @@ function renderOfferSummary() {
 
     if (saveBtn) {
         if (orderEditMode) {
-            saveBtn.innerHTML = `<i data-lucide="save"></i> Zapisz zmiany w zamówieniu`;
+            saveBtn.innerHTML = `<i data-lucide="save" aria-hidden="true"></i> Zapisz zmiany w zamówieniu`;
             saveBtn.onclick = () => {
                 if (typeof saveCurrentOrder === 'function') saveCurrentOrder();
             };
@@ -63,7 +63,7 @@ function renderOfferSummary() {
             if (createOrderBtn) createOrderBtn.style.display = 'none';
             if (newOfferBtn) newOfferBtn.style.display = 'none';
         } else {
-            saveBtn.innerHTML = `<i data-lucide="save"></i> Zapisz ofertę`;
+            saveBtn.innerHTML = `<i data-lucide="save" aria-hidden="true"></i> Zapisz ofertę`;
             saveBtn.onclick = () => {
                 if (typeof saveOfferStudnie === 'function') saveOfferStudnie();
             };
@@ -333,7 +333,7 @@ function renderOrderBanners(order, orderChanges) {
                 <span style="font-size:1.1rem;"><i data-lucide="package"></i></span>
                 <span style="font-size:0.75rem; font-weight:700; color:${hasChanges ? '#f87171' : '#34d399'};">ZAMÓWIENIE ${hasChanges ? '— ' + changeCount + ' studni zmienionych' : '— bez zmian'}</span>
             </div>
-            <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package"></i> Zapisz zamówienie</button>
+            <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;
     }
 
@@ -359,7 +359,7 @@ function renderPartialOrderProgress() {
         <div style="flex:1;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary);">
-                    <i data-lucide="package"></i> Postęp zamówień
+                    <i data-lucide="package" aria-hidden="true"></i> Postęp zamówień
                 </span>
                 <span style="font-size:0.72rem; font-weight:800; color:${progressColor};">
                     ${progress.ordered} / ${progress.total} studni (${progress.percent}%)
@@ -431,7 +431,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 const origWell = originalWells[originalIndex];
 
                 // Tymczasowo podmień rabaty globalne na te z migawki dla poprawnego wyliczenia ceny historycznej
-                const currentGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? JSON.parse(JSON.stringify(wellDiscounts)) : {};
+                const currentGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
                 if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
                     window.wellDiscounts = originalDiscounts;
                 }
@@ -528,7 +528,7 @@ function getWellBadges(change, isOrdered, well) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
                 title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
                 style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.15); color:#34d399; font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:3px;">
-                <i data-lucide="package"></i> ${wellOrder.orderNumber}
+                <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}
             </span>`;
         } else {
             html += `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(99,102,241,0.2); color:#a5b4fc; font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>`;
@@ -847,7 +847,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
     if (isBase) {
         if (wellTransportCost > 0) {
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:#a855f7;">
-                <td colspan="3" style="padding-left:1.5rem;">↳ <i data-lucide="truck"></i> Udział w transporcie</td>
+                <td colspan="3" style="padding-left:1.5rem;">↳ <i data-lucide="truck" aria-hidden="true"></i> Udział w transporcie</td>
                 <td class="text-right">${fmt(wellTransportCost)} PLN</td>
             </tr>`;
         }
@@ -1110,22 +1110,22 @@ function updateOfferSummaryUI(totals) {
         const wellsList = typeof wells !== 'undefined' ? wells : [];
 
         // Fixed grid layout: 4 columns × 2 rows
-        // Row 1: DN1000, DN1500, DN2500, PEHD
-        // Row 2: DN1200, DN2000, Styczna, Malowanie
+        // Wiersz 1: DN1000, DN1500, DN2500, PEHD
+        // Wiersz 2: DN1200, DN2000, Styczna, Malowanie
         const tileBase = 'padding:4px 6px; border-radius:6px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0;';
         const labelStyle = 'font-size:0.85rem; font-weight:800; line-height:1.2;';
         const detailStyle = 'font-size:0.75rem; font-weight:600; line-height:1.2;';
         const dimVal = 'opacity:0.3;';
         const disabledTile = `${tileBase} background:rgba(255,255,255,0.02); color:rgba(100,116,139,0.35); border:1px solid rgba(255,255,255,0.04);`;
 
-        /** Formats a single discount value — active or dimmed */
+        /** Formatuje pojedynczą wartość rabatu — aktywną lub przyciemnioną */
         const fmtDisc = (prefix, val, color) => {
             const v = Number(val || 0).toFixed(2);
             if (val > 0) return color ? `<span style="color:${color};">${prefix}${v}%</span>` : `${prefix}${v}%`;
             return `<span style="${dimVal}">${prefix}${v}%</span>`;
         };
 
-        /** Builds a diameter tile — always shows D, N, P */
+        /** Buduje kafelek średnicy — zawsze pokazuje D, N, P */
         const buildDnTile = (dn) => {
             const label = dn === 'styczne' ? 'Stycz' : `DN${dn}`;
             const hasWells = wellsList.some(w => dn === 'styczne' ? (w.type === 'styczna' || w.dn === 'styczna') : w.dn == dn);
@@ -1138,7 +1138,7 @@ function updateOfferSummaryUI(totals) {
             return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span></div>`;
         };
 
-        /** Builds the PEHD tile */
+        /** Buduje kafelek PEHD */
         const buildPehdTile = () => {
             const anyPehd = wellsList.some(w => (w.wkladkaDennica && w.wkladkaDennica !== 'brak') || (w.wkladkaNadbudowa && w.wkladkaNadbudowa !== 'brak') || (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak'));
             if (!anyPehd) return `<div style="${disabledTile}"><span style="${labelStyle}">PEHD</span></div>`;
@@ -1158,7 +1158,7 @@ function updateOfferSummaryUI(totals) {
             return `<div style="${tileBase} background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3);"><span style="${labelStyle}"><i data-lucide="shield" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:2px;"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
         };
 
-        /** Builds the Painting tile */
+        /** Buduje kafelek Malowania */
         const buildMalTile = () => {
             const anyW = wellsList.some(w => w.malowanieW && w.malowanieW !== 'brak');
             const anyZ = wellsList.some(w => w.malowanieZ && w.malowanieZ !== 'brak');
@@ -1602,14 +1602,14 @@ async function saveOfferStudnie() {
         notes,
         paymentTerms,
         validity,
-        wells: JSON.parse(JSON.stringify(wells)),
+        wells: structuredClone(wells),
         wellsExport: wellsForExport,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         transportKm,
         transportRate,
         wellDiscounts:
             typeof wellDiscounts !== 'undefined'
-                ? JSON.parse(JSON.stringify(wellDiscounts || {}))
+                ? structuredClone(wellDiscounts || {})
                 : {},
         totalWeight,
         totalNetto: totalNetto + totalTransportCostForOffer,
@@ -1693,6 +1693,8 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
 function showTelemetryPopup(well, callback) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
     overlay.style.zIndex = '99999';
     overlay.innerHTML = `
     <div class="modal" style="max-width:500px; padding:1.5rem;">
@@ -1835,12 +1837,12 @@ function renderSavedOffersStudnie() {
                         ${orderBadge}
                     </div>
                     <div style="font-weight:700; color:var(--text-primary); font-size: 0.9rem; white-space:nowrap;">
-                        <i data-lucide="banknote"></i> ${fmt(o.totalBrutto)} PLN
+                        <i data-lucide="banknote" aria-hidden="true"></i> ${fmt(o.totalBrutto)} PLN
                     </div>
                 </div>
                 <div class="meta" style="margin-top:0.3rem;">
-                    <span><i data-lucide="calendar"></i> <strong>${o.date}</strong></span>
-                    <span><i data-lucide="folder-open"></i> <strong>${o.wells.length}</strong> studnie</span>
+                    <span><i data-lucide="calendar" aria-hidden="true"></i> <strong>${o.date}</strong></span>
+                    <span><i data-lucide="folder-open" aria-hidden="true"></i> <strong>${o.wells.length}</strong> studnie</span>
                     ${(() => {
                     const resolveName = (rawName) => {
                         if (!rawName) return '';
@@ -1860,12 +1862,12 @@ function renderSavedOffersStudnie() {
                     let html = '';
                     const isClickable = currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro');
                     if (creatorName === assignedName && creatorName) {
-                        html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
+                        html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
                     } else {
                         if (creatorName)
-                            html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool"></i>️ Autor: <strong>${creatorName}</strong></span>`;
+                            html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${creatorName}</strong></span>`;
                         if (assignedName)
-                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user"></i> Opiekun: <strong>${assignedName}</strong></span>`;
+                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${assignedName}</strong></span>`;
                     }
                     return html;
                 })()}
@@ -1877,26 +1879,26 @@ function renderSavedOffersStudnie() {
                 ${o.clientName || o.investName || o.clientContact
                     ? `
                 <div class="offer-client-badges">
-                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
-                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
+                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2" aria-hidden="true"></i> <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
+                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
                 </div>`
                     : ''
                 }
             </div>
             <div class="offer-actions">
                 <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj" style="font-size:0.72rem; padding:0.3rem 0.6rem;">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); color: #f87171; font-weight: 700;" onclick="window.showUniversalPrintModal('${oId}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer"></i> Drukuj</button>
-                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user"></i> Opiekun</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass"></i> Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="trash-2"></i> Usuń</button>
+                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); color: #f87171; font-weight: 700;" onclick="window.showUniversalPrintModal('${oId}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
+                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
                 ${hasOrder
                     ? (() => {
                         const offerOrders = getOrdersForOffer(oId);
                         let buttonsHtml = '';
                         offerOrders.forEach(order => {
                             buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package"></i> Zamówienie ${order.orderNumber || ''}</button>
+                                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
                                     <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
                                 `;
                         });
@@ -1996,11 +1998,11 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     document.getElementById('transport-rate').value = normalized.transportRate || 10;
 
     wellDiscounts = normalized.wellDiscounts
-        ? JSON.parse(JSON.stringify(normalized.wellDiscounts))
+        ? structuredClone(normalized.wellDiscounts)
         : {};
     visiblePrzejsciaTypes = new Set(normalized.visiblePrzejsciaTypes || []);
 
-    wells = JSON.parse(JSON.stringify(normalized.wells || []));
+    wells = structuredClone(normalized.wells || []);
     migrateWellData(wells);
 
     // Przelicz uszczelki i zsynchronizuj kinetę dla wszystkich studni
@@ -2040,7 +2042,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     refreshAll();
 
-    // Populate step 2 DOM fields from the first well so they match what was loaded
+    // Wypelnij pola DOM kroku 2 z pierwszej studni, aby byly zgodne z zaladowanymi danymi
     if (wells.length > 0) {
         const firstWell = wells[0];
         ['nadbudowa', 'dennicaMaterial', 'wkladka', 'malowanieW', 'malowanieZ', 'klasaNosnosci_korpus', 'klasaNosnosci_zwienczenie'].forEach(param => {
@@ -2368,7 +2370,7 @@ window.addEventListener('pv-sync-status-changed', () => {
     }
 });
 
-/* ===== OFFER HISTORY STUDNIE (SQLite audit) ===== */
+/* ===== HISTORIA OFERTY STUDNIE (audyt SQLite) ===== */
 
 function renderAuditLogEntry(log) {
     const data = log.newData || {};
@@ -2429,13 +2431,13 @@ function renderAuditLogEntry(log) {
     const restoreBtnHtml =
         !isDelete && !isDiff
             ? `
-        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')"><i data-lucide="refresh-cw"></i> Przywróć</button>
+        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
     `
             : '';
 
     const buttonsHtml = `
         <div style="display:flex; gap:0.4rem;">
-            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${log.id}')"><i data-lucide="eye"></i>️ Podgląd</button>
+            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${log.id}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
             ${restoreBtnHtml}
         </div>
     `;
@@ -2476,6 +2478,8 @@ async function showOfferHistoryStudnie(id) {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         overlay.id = 'offer-history-modal';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
 
         const historyHtml = logs.map(renderAuditLogEntry).join('');
         const loadMoreHtml =
@@ -2554,7 +2558,7 @@ async function showOfferHistoryStudnie(id) {
                     <h3 style="font-weight:800; color:#fff; margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
-                    <button class="btn-icon" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                     ${historyHtml}
@@ -2715,7 +2719,7 @@ window.updateOrderSelectionCount = updateOrderSelectionCount;
 let initialOfferDiscountsSnapshot = null;
 
 function openOfferDiscountsPopup() {
-    initialOfferDiscountsSnapshot = JSON.parse(JSON.stringify(window.wellDiscounts || {}));
+    initialOfferDiscountsSnapshot = structuredClone(window.wellDiscounts || {});
     const modal = document.getElementById('offer-discounts-modal');
     if (!modal) return;
     renderOfferDiscountsPopupContent();
@@ -2765,7 +2769,7 @@ async function handleOfferDiscountsCancel() {
         // Rollback state
         window.wellDiscounts = JSON.parse(initialSnapshot);
 
-        // Push rolled back state up to underlying elements
+        // Przekaż przywrócony stan do elementów bazowych
         const diameters = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
         diameters.forEach(dn => {
             const disc = window.wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };

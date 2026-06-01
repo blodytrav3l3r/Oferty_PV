@@ -20,8 +20,8 @@ function toggleSubUsersList() {
                 .map(
                     (u) => `
                         <label style="display:flex; align-items:center; gap:0.3rem; background:var(--bg-lighter); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; border:1px solid var(--border-glass);">
-                            <input type="checkbox" value="${u.id}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
-                            ${u.firstName && u.lastName ? u.firstName + ' ' + u.lastName : u.username}
+                            <input type="checkbox" value="${escapeHtml(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
+                            ${u.firstName && u.lastName ? escapeHtml(u.firstName + ' ' + u.lastName) : escapeHtml(u.username)}
                         </label>
                     `
                 )
@@ -40,6 +40,12 @@ function updateSubUsers(checkbox) {
     } else {
         selectedSubUsers = selectedSubUsers.filter((id) => id !== checkbox.value);
     }
+}
+
+function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
 }
 
 function getToken() {
@@ -95,7 +101,7 @@ async function loadRecycledNumbers(user) {
     }
 }
 
-// Handle Enter key in login fields
+// Obsluga klawisza Enter w polach logowania
 document.addEventListener('keydown', (e) => {
     if (
         e.key === 'Enter' &&
@@ -128,11 +134,17 @@ function showLoggedIn(user) {
     const roleEl = document.getElementById('user-display-role');
     roleEl.textContent = user.role.toUpperCase();
 
-    // Show dashboard nav header
+    // Pokaz naglowek nawigacji pulpitu
     document.getElementById('dash-header').classList.add('visible');
     const dashUser = document.getElementById('dash-username');
     const dashRole = document.getElementById('dash-role');
-    if (dashUser) dashUser.innerHTML = '<i data-lucide="user"></i> ' + user.username;
+    if (dashUser) {
+        dashUser.textContent = '';
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', 'user');
+        dashUser.appendChild(icon);
+        dashUser.appendChild(document.createTextNode(' ' + user.username));
+    }
     if (dashRole) {
         dashRole.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
         dashRole.style.background = user.role === 'admin' ? '#2d2208' : '#152040';
@@ -203,18 +215,18 @@ async function loadUsers() {
                 let html = `
       <tr>
         <td>
-            <div style="font-weight:700; color:white; text-align: center;">${(u.firstName || '') + ' ' + (u.lastName || '')}</div>
-            <div style="font-size:0.65rem; color:var(--text-dim); text-align: center;">${u.email || 'brak email'}</div>
+            <div style="font-weight:700; color:white; text-align: center;">${escapeHtml((u.firstName || '') + ' ' + (u.lastName || ''))}</div>
+            <div style="font-size:0.65rem; color:var(--text-dim); text-align: center;">${escapeHtml(u.email || 'brak email')}</div>
         </td>
-        <td><span class="token-badge" style="color:var(--warn);">${u.symbol || '??'}</span></td>
-        <td style="font-family:monospace; color:var(--primary-hover);">${u.username}</td>
-        <td style="font-size:0.75rem;">${u.phone || '—'}</td>
-        <td><span class="badge-role ${u.role}">${u.role.toUpperCase()}</span></td>
-        <td style="color:#60a5fa; font-weight:800;">${u.orderStartNumber || 1}</td>
-        <td style="color:var(--primary-hover); font-weight:800;">${u.productionOrderStartNumber || 1}</td>
+        <td><span class="token-badge" style="color:var(--warn);">${escapeHtml(u.symbol || '??')}</span></td>
+        <td style="font-family:monospace; color:var(--primary-hover);">${escapeHtml(u.username)}</td>
+        <td style="font-size:0.75rem;">${escapeHtml(u.phone || '—')}</td>
+        <td><span class="badge-role ${escapeHtml(u.role)}">${escapeHtml(u.role.toUpperCase())}</span></td>
+        <td style="color:#60a5fa; font-weight:800;">${escapeHtml(String(u.orderStartNumber || 1))}</td>
+        <td style="color:var(--primary-hover); font-weight:800;">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td style="white-space:nowrap;">
-          <button class="btn-hero" onclick="startEditUser('${u.id}')" style="padding:0.4rem; display:inline-flex;"><i data-lucide="pencil"></i></button>
-          ${u.username !== 'admin' ? `<button class="btn-hero" onclick="deleteUser('${u.id}')" style="padding:0.4rem; display:inline-flex; border-color:rgba(239,68,68,0.2); color:#f87171;"><i data-lucide="trash-2"></i></button>` : ''}
+          <button class="btn-hero" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeHtml(u.id)}')" style="padding:0.4rem; display:inline-flex;"><i data-lucide="pencil" aria-hidden="true"></i></button>
+          ${u.username !== 'admin' ? `<button class="btn-hero" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeHtml(u.id)}')" style="padding:0.4rem; display:inline-flex; border-color:rgba(239,68,68,0.2); color:#f87171;"><i data-lucide="trash-2" aria-hidden="true"></i></button>` : ''}
         </td>
       </tr>`;
                 if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
@@ -232,7 +244,7 @@ async function loadUsers() {
             <div class="subordinate-list" style="justify-content: center; display: flex; align-items: center; margin: 0.5rem auto; max-width: fit-content;">
                 <span class="subordinate-label"><i data-lucide="users"></i> POWIĄZANI HANDLOWCY:</span>
                 <div class="subordinate-badges">
-                    ${subUsersNames.map((name) => `<span class="token-badge sub-token">${name}</span>`).join('')}
+                    ${subUsersNames.map((name) => `<span class="token-badge sub-token">${escapeHtml(name)}</span>`).join('')}
                 </div>
             </div>
         </td>
@@ -311,7 +323,7 @@ async function createUser() {
         errorEl.textContent = 'Podaj login';
         return;
     }
-    // For new users, password is required
+    // Dla nowych uzytkownikow haslo jest wymagane
     if (!editingUserId && !password) {
         errorEl.textContent = 'Podaj hasło dla nowego użytkownika';
         return;

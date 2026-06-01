@@ -166,7 +166,7 @@ window.autoUpdateWellName = function(well, index) {
     
     let baseName = well.numer || ('Studnia ' + (well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn) + ' (#' + (index + 1) + ')');
     
-    // Remove existing suffix if present so we don't append multiple times
+    // Usuń istniejący przyrostek, aby nie dodawać go wielokrotnie
     baseName = baseName.replace(/ (PRE|UTH)$/, '');
     
     let suffix = '';
@@ -199,7 +199,7 @@ function checkWellNumerDuplicate(newNumer, inputEl) {
             return true; // is duplicate
         }
     }
-    // reset styling
+    // resetowanie stylowania
     inputEl.style.borderColor = 'var(--border-glass)';
     inputEl.style.color = '#a78bfa';
     inputEl.style.boxShadow = 'none';
@@ -217,10 +217,11 @@ function updateDoplata() {
         return;
     }
     const domEl = document.getElementById('input-doplata');
+    if (!domEl) return;
     const dVal = domEl.value !== '' ? parseFloat(domEl.value) : 0;
     well.doplata = dVal;
 
-    // Apply color immediately
+    // Zastosuj kolor natychmiastowo
     if (dVal > 0) {
         domEl.style.color = 'var(--success)';
         domEl.style.fontWeight = '700';
@@ -588,7 +589,7 @@ function addWellComponent(productId) {
     renderWellDiagram();
     updateSummary();
     renderWellsList();
-    renderTiles(); // Update highlight
+    renderTiles(); // Aktualizacja podświetlenia
     updateHeightIndicator(); // Odśwież błędy
 
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
@@ -678,7 +679,7 @@ function updateWellQuantity(index, value) {
     renderWellConfig();
     renderWellDiagram();
     updateSummary();
-    renderTiles(); // highlight items
+    renderTiles(); // podświetlenie elementów
     updateHeightIndicator(); // Odśwież błędy
 }
 
@@ -701,11 +702,11 @@ function clearWellConfig() {
 
 function renderTiles() {
     const container = document.getElementById('tiles-container');
+    if (!container) return;
     const well = getCurrentWell();
     if (!well) {
-        if (container)
-            container.innerHTML =
-                '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
+        container.innerHTML =
+            '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
         return;
     }
     const dn = well.dn;
@@ -987,6 +988,8 @@ function renderWellConfig() {
     const tbody = document.getElementById('well-config-body');
     const well = getCurrentWell();
 
+    if (!tbody) return;
+
     if (!well || !well.config || well.config.length === 0) {
         tbody.innerHTML =
             '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</div>';
@@ -1084,9 +1087,9 @@ function renderWellConfig() {
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
                 <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(0,0,0,0.25); padding:2px 4px; border-radius:4px; min-width:24px;">
-                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;"></i></button>
+                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
                   <span style="font-size:0.65rem; line-height:1; color:var(--text-primary); font-weight:800; margin:2px 0;">${index + 1}</span>
-                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;"></i></button>
+                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;" aria-hidden="true"></i></button>
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
@@ -1307,7 +1310,7 @@ function moveWellComponent(index, direction) {
     well.config[index] = well.config[newIndex];
     well.config[newIndex] = temp;
 
-    // Enable manual mode since user is reordering
+    // Wlacz tryb reczny poniewaz uzytkownik zmienia kolejnosc
     if (!well.autoLocked) {
         well.autoLocked = true;
         updateAutoLockUI();
@@ -1320,7 +1323,7 @@ function moveWellComponent(index, direction) {
     updateHeightIndicator(); // Odśwież błędy po przesunięciu
 }
 
-/* ===== ZAKOŁCZENIE (WYBÓR ZAMKNIĘCIA GÓRNEGO) ===== */
+/* ===== ZAKOŃCZENIE (WYBÓR ZAMKNIĘCIA GÓRNEGO) ===== */
 
 async function selectZakonczenie(productId) {
     const well = getCurrentWell();
@@ -1410,7 +1413,7 @@ async function togglePsiaBuda() {
     updatePsiaBudaButton();
 
     if (well.psiaBuda) {
-        showToast('Tryb Psia buda — WŁĄCZONY', 'success');
+        showToast('Tryb Psia buda — WŁĄCZONY', 'success');
 
         // Backup parametrów
         well._psiaBudaBackup = {
@@ -1424,7 +1427,7 @@ async function togglePsiaBuda() {
         well.spocznik = 'brak';
         well.spocznikH = 'brak';
     } else {
-        showToast('Tryb Psia buda — WYŁĄCZONY', 'info');
+        showToast('Tryb Psia buda — WYŁĄCZONY', 'info');
 
         // Przywracanie parametrów, jeśli backup istnieje
         if (well._psiaBudaBackup) {
@@ -1618,7 +1621,7 @@ function updateDNButtons() {
     });
 }
 
-/* ===== DRAG & DROP FOR CONCRETE CONFIG ===== */
+/* ===== PRZECIAGNIJ I UPUSC DLA KONFIGURACJI BETONOWEJ ===== */
 let draggedCfgIndex = null;
 
 window.handleCfgDragStart = function (e) {
@@ -1657,7 +1660,7 @@ window.handleCfgDragOver = function (e) {
             const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
             const well = getCurrentWell();
             if (well) {
-                // Find existing placeholder index
+                // Znajdz istniejacy indeks placeholdera
                 const plIdx = well.config.findIndex((c) => c.isPlaceholder);
 
                 if (plIdx !== dropIndex) {
@@ -1665,10 +1668,10 @@ window.handleCfgDragOver = function (e) {
                         (x) => x.id === window.currentDraggedPlaceholderId
                     );
                     if (p) {
-                        // Remove old placeholder
+                        // Usun stary placeholder
                         if (plIdx > -1) well.config.splice(plIdx, 1);
 
-                        // Because splicing might shift indices, find new effective drop index
+                        // Poniewaz wycinanie moze przesunac indeksy, znajdz nowy efektywny indeks upuszczenia
                         let targetIdx = dropIndex;
                         if (plIdx > -1 && plIdx < dropIndex) targetIdx -= 1; // It shifted down
 
@@ -1808,7 +1811,7 @@ window.handleCfgDragEnd = function (e) {
     }
 };
 
-/* ===== ODŁšWIEŁ»ANIE MODALA ZLECEŁ ===== */
+/* ===== ODŚWIEŻANIE MODALA ZLECEŃ ===== */
 window.refreshZleceniaModalIfActive = function () {
     const zlModal = document.getElementById('zlecenia-modal');
     if (
@@ -1887,7 +1890,7 @@ function enforceSingularTopClosures(well, productId) {
             } else {
                 showToast('Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.', 'error');
             }
-            // Remove the placeholder since we are blocking it
+            // Usun placeholder poniewaz go blokujemy
             well.config = well.config.filter(item => !(item.isPlaceholder && item.productId === productId));
             return;
         }

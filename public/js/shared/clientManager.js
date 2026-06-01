@@ -111,15 +111,13 @@ function saveClientToDb() {
 
 /* ===== MODAL BAZY KLIENTÓW ===== */
 function showClientsDb() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'clients-db-modal';
-
-    overlay.innerHTML = `
+    showModal({
+        id: 'clients-db-modal',
+        html: `
     <div class="modal" style="max-width:1200px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:0;">
         <h3 style="font-size:1.25rem; font-weight:700; color:var(--text);"><i data-lucide="folder-open"></i> Baza klientów <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${clientsDb.length})</span></h3>
-        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="padding:0.8rem 0; border-bottom:1px solid var(--border);">
         <div style="display:flex; gap:0.5rem; align-items:center;">
@@ -132,11 +130,7 @@ function showClientsDb() {
         </div>
       </div>
       <div id="clients-db-list" style="flex:1; overflow-y:auto; padding:0.5rem 0;"></div>
-    </div>`;
-
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
 
     renderClientsDbList('');
@@ -180,7 +174,7 @@ function renderClientsDbList(query) {
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600; width:130px;">NIP</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Adres</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Kontakt</th>
-        <th style="padding:0.5rem 0.8rem; text-align:center; font-weight:600; width:80px;">Akcje</th>
+        <th style="padding:0.5rem 0.8rem; text-align:center; font-weight:600; width:100px;">Akcje</th>
     </tr>`;
     table.appendChild(thead);
 
@@ -209,9 +203,9 @@ function renderClientsDbList(query) {
                 tr.appendChild(td);
             });
             const actionTd = document.createElement('td');
-            actionTd.style.cssText = 'padding:0.4rem 0.6rem; text-align:center;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" style="color:var(--primary); font-size:1rem;"><i data-lucide="save"></i></button>
-                <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x"></i></button>`;
+            actionTd.style.cssText = 'padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;';
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--primary); font-size:1rem;"><i data-lucide="save" aria-hidden="true"></i></button>
+                <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
         } else {
             const nameTd = document.createElement('td');
@@ -235,9 +229,9 @@ function renderClientsDbList(query) {
             tr.appendChild(contactTd);
 
             const actionTd = document.createElement('td');
-            actionTd.style.cssText = 'padding:0.6rem 0.8rem; text-align:center;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeHtml(c.id)}')" title="Edytuj" style="color:var(--text-secondary); font-size:0.85rem; opacity:0.8;"><i data-lucide="pencil"></i></button>
-                <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeHtml(c.id)}')" title="Usuń z bazy" style="color:var(--danger); font-size:0.85rem; opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x"></i></button>`;
+            actionTd.style.cssText = 'padding:0.6rem 0.8rem; text-align:center; white-space:nowrap;';
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeHtml(c.id)}')" title="Edytuj" aria-label="Edytuj" style="color:var(--text-secondary); font-size:0.85rem; opacity:0.8;"><i data-lucide="pencil" aria-hidden="true"></i></button>
+                <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeHtml(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy" style="color:var(--danger); font-size:0.85rem; opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
 
             tr.onclick = () => selectClientFromDb(c.id);

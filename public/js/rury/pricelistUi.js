@@ -56,8 +56,8 @@ function renderPriceList() {
         <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${p.id}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'weight','${p.id}')">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" onclick="copyProduct('${p.id}')"><i data-lucide="clipboard-list"></i></button>
-          <button class="btn-icon" title="Usuń" onclick="deleteProduct('${p.id}')"><i data-lucide="x"></i></button>
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyProduct('${p.id}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteProduct('${p.id}')"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });
@@ -72,6 +72,7 @@ function renderPriceList() {
     }
 
     container.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
 }
 
 /* ===== EDYCJA INLINE ===== */
@@ -147,7 +148,7 @@ function copyProduct(id) {
         counter++;
     }
 
-    const copied = JSON.parse(JSON.stringify(original));
+    const copied = structuredClone(original);
     copied.id = finalId;
     copied.name = copied.name + ' (Kopia)';
 
@@ -186,7 +187,7 @@ async function resetPriceList() {
                 ))
             )
                 return;
-            products = JSON.parse(JSON.stringify(customDefault));
+            products = structuredClone(customDefault);
         } else {
             if (
                 !(await appConfirm(
@@ -195,7 +196,7 @@ async function resetPriceList() {
                 ))
             )
                 return;
-            products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+            products = structuredClone(DEFAULT_PRODUCTS);
         }
     } catch {
         if (
@@ -205,7 +206,7 @@ async function resetPriceList() {
             ))
         )
             return;
-        products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+        products = structuredClone(DEFAULT_PRODUCTS);
     }
     await saveProducts(products);
     renderPriceList();
@@ -253,12 +254,12 @@ async function manuallySaveProductsDB() {
 /* ===== MODAL DODAWANIA PRODUKTU ===== */
 
 function showAddProductModal() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'add-product-modal';
-    overlay.innerHTML = `
+    showModal({
+        id: 'add-product-modal',
+        titleId: 'add-product-title',
+        html: `
     <div class="modal">
-      <div class="modal-header"><h3><i data-lucide="plus"></i> Dodaj nowy produkt</h3><button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+      <div class="modal-header"><h3 id="add-product-title"><i data-lucide="plus" aria-hidden="true"></i> Dodaj nowy produkt</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="np. RTB-0-10-25-K00"></div>
@@ -273,11 +274,9 @@ function showAddProductModal() {
         <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
         <button class="btn btn-primary" onclick="addProduct()">Dodaj produkt</button>
       </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
+    if (window.lucide) lucide.createIcons();
 }
 
 function addProduct() {

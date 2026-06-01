@@ -253,7 +253,7 @@ window.updateConfigToMatchParams = function (well) {
                     if (baseSub) {
                         const dynamicOtId = baseSub.id + '_OT';
                         if (!studnieProducts.find((pr) => pr.id === dynamicOtId)) {
-                            const dynamicProd = JSON.parse(JSON.stringify(baseSub));
+                            const dynamicProd = structuredClone(baseSub);
                             dynamicProd.id = dynamicOtId;
                             dynamicProd.componentType = 'krag_ot';
                             if (!dynamicProd.name.endsWith(' z otworem'))
@@ -375,7 +375,7 @@ window.resolveEffectiveProduct = function (well, productId, configItem) {
                 const dynamicOtId = baseSub.id + '_OT';
                 let dynamicProd = studnieProducts.find((pr) => pr.id === dynamicOtId);
                 if (!dynamicProd) {
-                    dynamicProd = JSON.parse(JSON.stringify(baseSub));
+                    dynamicProd = structuredClone(baseSub);
                     dynamicProd.id = dynamicOtId;
                     dynamicProd.componentType = 'krag_ot';
                     if (!dynamicProd.name.endsWith(' z otworem'))
@@ -504,7 +504,7 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
                     const dynamicId = ringProd.id + '_OT';
                     otProd = studnieProducts.find(p => p.id === dynamicId);
                     if (!otProd) {
-                        otProd = JSON.parse(JSON.stringify(ringProd));
+                        otProd = structuredClone(ringProd);
                         otProd.id = dynamicId;
                         otProd.componentType = 'krag_ot';
                         if (!otProd.name.includes('wiercony'))

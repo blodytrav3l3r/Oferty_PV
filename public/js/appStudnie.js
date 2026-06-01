@@ -96,6 +96,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         createNewWell(1000);
         renderWellsList();
         selectWell(0);
+        goToWizardStep(1);
+        if (typeof setupParamTiles === 'function') setupParamTiles();
         document.documentElement.classList.remove('wizard-loading-state');
 
         // Dane ładuj w tle — nie blokuje UI

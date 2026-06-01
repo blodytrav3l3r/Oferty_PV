@@ -27,7 +27,7 @@ function importOfferFromFile() {
                         showToast(`Plik ${file.name} nie zawiera poprawnej oferty`, 'error');
                         return;
                     }
-                    // Check if offer with same id already exists
+                    // Sprawdz czy oferta o tym samym ID juz istnieje
                     const existingIdx = offers.findIndex((o) => o.id === offer.id);
                     if (existingIdx >= 0) {
                         if (
@@ -88,7 +88,7 @@ function exportOfferPDF(id) {
         transportHtml = `<h3 style="font-size:13px;color:#2d3561;margin-top:18px;margin-bottom:6px"><i data-lucide="truck"></i> Transport (max 24 000 kg / kurs)</h3>
     <table><thead><tr><th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th><th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th><th class="text-right">Transporty</th></tr></thead><tbody>`;
         transportResult.lines.forEach((l) => {
-            transportHtml += `<tr><td>${l.name}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
+            transportHtml += `<tr><td>${escapeHtml(l.name)}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
         });
         transportHtml += `</tbody></table>`;
         if (transportResult.saved > 0) {
@@ -130,12 +130,12 @@ function exportOfferPDF(id) {
   </div>
   <div class="info-grid">
     <div class="info-box"><h3>Dane klienta</h3>
-      ${offer.clientName ? `<div><strong>${offer.clientName}</strong></div>` : ''}
-      ${offer.clientNip ? `<div>NIP: ${offer.clientNip}</div>` : ''}
-      ${offer.clientAddress ? `<div>${offer.clientAddress}</div>` : ''}
-      ${offer.clientContact ? `<div>Kontakt: ${offer.clientContact}</div>` : ''}
-      ${offer.investName ? `<div style="margin-top:6px"><strong>Inwestycja:</strong> ${offer.investName}</div>` : ''}
-      ${offer.investAddress ? `<div>Adres inwestycji: ${offer.investAddress}</div>` : ''}
+      ${offer.clientName ? `<div><strong>${escapeHtml(offer.clientName)}</strong></div>` : ''}
+      ${offer.clientNip ? `<div>NIP: ${escapeHtml(offer.clientNip)}</div>` : ''}
+      ${offer.clientAddress ? `<div>${escapeHtml(offer.clientAddress)}</div>` : ''}
+      ${offer.clientContact ? `<div>Kontakt: ${escapeHtml(offer.clientContact)}</div>` : ''}
+      ${offer.investName ? `<div style="margin-top:6px"><strong>Inwestycja:</strong> ${escapeHtml(offer.investName)}</div>` : ''}
+      ${offer.investAddress ? `<div>Adres inwestycji: ${escapeHtml(offer.investAddress)}</div>` : ''}
     </div>
     <div class="info-box"><h3>Podsumowanie</h3>
       <div>Pozycji: ${offer.items.length}</div>
@@ -152,11 +152,11 @@ function exportOfferPDF(id) {
             const unitTotal = pad + tpu;
             const n = unitTotal * item.quantity;
 
-            let pName = item.name;
+            let pName = escapeHtml(item.name);
             if (item.pehdType === 'PEHD-3MM') pName += ' + PEHD 3mm';
             if (item.pehdType === 'PEHD-4MM') pName += ' + PEHD 4mm';
 
-            return `<tr><td>${i + 1}</td><td>${item.productId}</td><td>${pName}${item.autoAdded ? ' (uszczelka)' : ''}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
+            return `<tr><td>${i + 1}</td><td>${escapeHtml(item.productId)}</td><td>${pName}${item.autoAdded ? ' (uszczelka)' : ''}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
         })
         .join('')}</tbody>
   </table>
@@ -168,7 +168,7 @@ function exportOfferPDF(id) {
     <div class="summary-row"><span>VAT (23%):</span><span>${fmt(totalVat)} PLN</span></div>
     <div class="summary-row total"><span>SUMA BRUTTO:</span><span>${fmt(totalBrutto)} PLN</span></div>
   </div>
-  ${offer.notes ? `<div class="notes"><strong>Uwagi:</strong> ${offer.notes}</div>` : ''}
+  ${offer.notes ? `<div class="notes"><strong>Uwagi:</strong> ${escapeHtml(offer.notes)}</div>` : ''}
   <div style="margin-top: 15px; font-size: 11px;">
     <strong>Warunki płatności:</strong> ${offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.'}<br>
     <strong>Data ważności oferty:</strong> ${offer.validity || '7 dni'}
@@ -199,15 +199,14 @@ function showItemDiscountModal() {
     // Utwórz płytką kopię bieżących rabatów
     tempDiscounts = currentOfferItems.map((item) => item.discount || 0);
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'item-discount-modal';
-
-    overlay.innerHTML = `
+    showModal({
+        id: 'item-discount-modal',
+        titleId: 'item-discount-title',
+        html: `
     <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
-        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
-        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
+        <h3 id="item-discount-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
+        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <div style="overflow-y:auto; flex:1; padding-right:0.5rem;" id="discount-modal-list">
@@ -221,14 +220,12 @@ function showItemDiscountModal() {
         </div>
         <div style="display:flex; gap: 1rem;">
           <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-          <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600;">Zastosuj <i data-lucide="arrow-right"></i></button>
+          <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600;">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
         </div>
       </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
+    if (window.lucide) lucide.createIcons();
 
     renderDiscountModalItems();
 }
@@ -284,7 +281,7 @@ function renderDiscountModalItems() {
 
         totalNetto += netto;
 
-        let pName = item.name;
+        let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM')
             pName +=
                 ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 3mm</span>';
@@ -384,9 +381,10 @@ function applyItemDiscounts() {
     });
 
     closeModal();
-    syncGaskets();
+    syncGaskets(); syncTransportSecurity();
     renderOfferItems();
     updateOfferSummary();
+    if (typeof renderOfferSummaryTab === 'function') renderOfferSummaryTab();
     showToast('Zaktualizowano rabaty dla wybranych pozycji', 'success');
 }
 
@@ -497,7 +495,7 @@ function exportOfferXlsx(id) {
         rows.push(['Uwagi:', offer.notes]);
     }
 
-    // Create worksheet
+    // Utworz arkusz
     const ws = XLSX.utils.aoa_to_sheet(rows);
 
     // Szerokości kolumn
@@ -556,7 +554,7 @@ function exportOfferXlsx(id) {
     const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
     wsMeta['!cols'] = [{ wch: 15 }, { wch: 120 }];
 
-    // Create workbook
+    // Utworz skoroszyt
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Oferta');
     XLSX.utils.book_append_sheet(wb, wsMeta, 'Dane');

@@ -33,7 +33,7 @@ function setupOfferForm() {
             .map(
                 (p) =>
                     `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
-        <span>${p.name}</span>
+        <span>${escapeHtml(p.name)}</span>
         <span class="price">${fmt(p.price)} PLN</span>
       </div>`
             )
@@ -67,14 +67,16 @@ function toggleCatalog() {
     const btn = document.getElementById('toggle-catalog-btn');
     if (catalogVisible) {
         catalog.style.display = 'block';
-        btn.innerHTML = '<i data-lucide="folder-open"></i> Ukryj katalog produktów';
+        btn.innerHTML = '<i data-lucide="folder-open" aria-hidden="true"></i> Ukryj katalog produktów';
+        if (window.lucide) lucide.createIcons();
         if (!activeCatalogCategory || activeCatalogCategory === 'Akcesoria PEHD')
             activeCatalogCategory = CATEGORIES.filter((c) => c !== 'Akcesoria PEHD')[0];
         renderCatalogTabs();
         renderCatalogProducts();
     } else {
         catalog.style.display = 'none';
-        btn.innerHTML = '<i data-lucide="folder-open"></i> Pokaż katalog produktów';
+        btn.innerHTML = '<i data-lucide="folder-open" aria-hidden="true"></i> Pokaż katalog produktów';
+        if (window.lucide) lucide.createIcons();
     }
 }
 
@@ -127,9 +129,9 @@ function renderCatalogProducts() {
             const is1m = isOneMetrePipe(p.id);
             html += `
       <div class="catalog-item-row${is1m ? ' catalog-item-1m' : ''}" onclick="addOfferItem('${p.id}')">
-        <div class="catalog-item-row-name">${p.name}</div>
+        <div class="catalog-item-row-name">${escapeHtml(p.name)}</div>
         <div class="catalog-item-row-meta">
-          <span class="catalog-item-row-id">${p.id}</span>
+          <span class="catalog-item-row-id">${escapeHtml(p.id)}</span>
           ${p.weight ? `<span class="catalog-item-row-weight">${fmtInt(p.weight)} kg</span>` : ''}
         </div>
         <div class="catalog-item-row-price">${fmt(p.price)} PLN</div>
@@ -191,17 +193,17 @@ function showPipeLengthModal(productId, editIndex = null) {
         currentVal = item.customLengthM || item.lengthM || currentVal;
     }
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'add-pipe-length-modal';
-    overlay.innerHTML = `
+    showModal({
+        id: 'add-pipe-length-modal',
+        titleId: 'pipe-length-title',
+        html: `
     <div class="modal" style="max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
-        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text);"><i data-lucide="ruler"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
-        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
+        <h3 id="pipe-length-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text);"><i data-lucide="ruler" aria-hidden="true"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
+        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="font-size:0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
-        Wybrany produkt:<br><strong style="color:var(--text); font-size: 1.05rem;">${product.name}</strong>
+        Wybrany produkt:<br><strong style="color:var(--text); font-size: 1.05rem;">${escapeHtml(product.name)}</strong>
       </div>
       <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
         <label class="form-label" style="font-size:1.15rem; font-weight:600; margin-bottom:1rem; color: var(--text);">Wprowadź długość rury (m)</label>
@@ -218,13 +220,11 @@ function showPipeLengthModal(productId, editIndex = null) {
       </div>
       <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
         <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-        <button class="btn btn-primary" onclick="confirmPipeLength('${productId}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź <i data-lucide="arrow-right"></i></button>
+        <button class="btn btn-primary" onclick="confirmPipeLength('${productId}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
+    if (window.lucide) lucide.createIcons();
 
     setTimeout(() => {
         const input = document.getElementById('pipe-custom-length');
@@ -232,7 +232,7 @@ function showPipeLengthModal(productId, editIndex = null) {
             input.focus();
             input.select();
         }
-    }, 50);
+    }, 100);
 }
 
 function confirmPipeLength(productId, editIndex) {
@@ -272,6 +272,7 @@ function doAddOfferItem(productId, customLengthM) {
     const lengthM = lengthMm ? lengthMm / 1000 : null;
 
     const item = {
+        uid: 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         productId: product.id,
         name: product.name,
         unitPrice: product.price,
@@ -294,7 +295,7 @@ function doAddOfferItem(productId, customLengthM) {
         const newIndex = currentOfferItems.length - 1;
         updatePipeLength(newIndex, customLengthM, true);
     } else {
-        syncGaskets();
+        syncGaskets(); syncTransportSecurity();
         document.getElementById('product-search').value = '';
         document.getElementById('product-dropdown').classList.remove('show');
         renderOfferItems();
@@ -305,6 +306,11 @@ function doAddOfferItem(productId, customLengthM) {
 /* ===== SYNCHRONIZACJA USZCZELEK ===== */
 
 function syncGaskets() {
+    if (!currentOfferItems.some(i => i.ordered && !i.autoAdded)) {
+        // no ordered non-auto items, proceed normally
+    } else if (!window.orderEditMode) {
+        return; // ordered items exist and we're not in order edit mode — skip gasket sync
+    }
     const req = {};
 
     currentOfferItems.forEach((item) => {
@@ -331,7 +337,7 @@ function syncGaskets() {
 
     for (let i = currentOfferItems.length - 1; i >= 0; i--) {
         const item = currentOfferItems[i];
-        if (item.autoAdded) {
+        if (item.autoAdded && !item.productId.startsWith('ZT-')) {
             if (req[item.productId] && req[item.productId].qty > 0) {
                 item.quantity = req[item.productId].qty;
                 req[item.productId].qty = 0; // obsłużone
@@ -344,6 +350,7 @@ function syncGaskets() {
     Object.values(req).forEach((r) => {
         if (r.qty > 0) {
             currentOfferItems.push({
+                uid: 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
                 productId: r.product.id,
                 name: r.product.name,
                 unitPrice: r.product.price,
@@ -361,7 +368,97 @@ function syncGaskets() {
     });
 }
 
+/* ===== ZABEZPIECZENIE TRANSPORTU — STAN I TOGGLE ===== */
+
+let zabezpieczenieTransportuEnabled = true;
+window.zabezpieczenieTransportuEnabled = zabezpieczenieTransportuEnabled;
+
+window.setZabezpieczenieTransportu = function (enabled) {
+    window.zabezpieczenieTransportuEnabled = enabled;
+    updateZabezpieczenieTransportuUI();
+    syncTransportSecurity(!enabled);
+    renderOfferItems();
+    updateOfferSummary();
+};
+
+function updateZabezpieczenieTransportuUI() {
+    const tak = document.getElementById('zt-toggle-tak');
+    const nie = document.getElementById('zt-toggle-nie');
+    if (tak && nie) {
+        tak.classList.toggle('active', !!window.zabezpieczenieTransportuEnabled);
+        nie.classList.toggle('active', !window.zabezpieczenieTransportuEnabled);
+    }
+}
+window.updateZabezpieczenieTransportuUI = updateZabezpieczenieTransportuUI;
+
+/* ===== SYNCHRONIZACJA ZABEZPIECZENIA TRANSPORTU ===== */
+
+function syncTransportSecurity(forceRemove) {
+    const hasNonAutoOrdered = currentOfferItems.some(i => i.ordered && !i.autoAdded);
+    if (hasNonAutoOrdered && !window.orderEditMode && !forceRemove) return;
+    if (forceRemove || !window.zabezpieczenieTransportuEnabled) {
+        let removed = false;
+        for (let i = currentOfferItems.length - 1; i >= 0; i--) {
+            if (currentOfferItems[i].autoAdded && currentOfferItems[i].productId.startsWith('ZT-')) {
+                currentOfferItems.splice(i, 1);
+                removed = true;
+            }
+        }
+        return removed;
+    }
+
+    const req = {};
+
+    currentOfferItems.forEach((item) => {
+        if (!item.autoAdded && item.quantity > 0) {
+            const product = products.find((p) => p.id === item.productId);
+            if (product && product.category !== 'Zabezpieczenie transportu') {
+                const diam = getProductDiameter(item.productId);
+                if (diam) {
+                    const ztId = 'ZT-' + String(diam).padStart(4, '0');
+                    const ztProduct = products.find((p) => p.id === ztId);
+                    if (ztProduct) {
+                        if (!req[ztId]) req[ztId] = { product: ztProduct, qty: 0 };
+                        req[ztId].qty += item.quantity;
+                    }
+                }
+            }
+        }
+    });
+
+    for (let i = currentOfferItems.length - 1; i >= 0; i--) {
+        const item = currentOfferItems[i];
+        if (item.autoAdded && item.productId.startsWith('ZT-')) {
+            if (req[item.productId] && req[item.productId].qty > 0) {
+                item.quantity = req[item.productId].qty;
+                req[item.productId].qty = 0;
+            } else {
+                currentOfferItems.splice(i, 1);
+            }
+        }
+    }
+
+    Object.values(req).forEach((r) => {
+        if (r.qty > 0) {
+            currentOfferItems.push({
+                uid: 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                productId: r.product.id,
+                name: r.product.name,
+                unitPrice: r.product.price,
+                quantity: r.qty,
+                meters: 0,
+                lengthM: null,
+                discount: 0,
+                weight: null,
+                transport: null,
+                autoAdded: true
+            });
+        }
+    });
+}
+
 function addPehdToPipe(pipeIndex, pehdId) {
+    if (currentOfferItems[pipeIndex]?.ordered && !window.orderEditMode) return;
     const pipe = currentOfferItems[pipeIndex];
     const area = getPipeInnerArea(pipe.productId);
     if (area <= 0) return;
@@ -392,8 +489,8 @@ function addPehdToPipe(pipeIndex, pehdId) {
 function renderOfferItems() {
     const tbody = document.getElementById('offer-items-body');
     if (currentOfferItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" class="text-center" style="padding:2rem;color:var(--text-muted)">
-      Wyszukaj i dodaj produkty z cennika powyżej</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="14" class="text-center" style="padding:2rem;color:var(--text-muted)">
+      Wróć do kroku 2 aby dodać produkty</td></tr>`;
         updateOfferSummary();
         return;
     }
@@ -438,6 +535,21 @@ function renderOfferItems() {
         }
     });
 
+    // Backfill uid + ordered status z istniejących zamówień
+    const orderedUids = new Set();
+    if (typeof ordersRury !== 'undefined' && ordersRury && editingOfferId) {
+        const offerOrders = ordersRury.filter(o => o.offerId === editingOfferId);
+        offerOrders.forEach(order => {
+            if (order.items) {
+                order.items.forEach(oi => { if (oi.uid) orderedUids.add(oi.uid); });
+            }
+        });
+    }
+    currentOfferItems.forEach(item => {
+        if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        if (orderedUids.has(item.uid)) item.ordered = true;
+    });
+
     // Wstępnie oblicz rozkład transportu dla wszystkich pozycji
     const transportDist = calculateTransportDistribution(currentOfferItems);
 
@@ -473,7 +585,7 @@ function renderOfferItems() {
 
     sortedCategories.forEach((cat) => {
         // Wiersz nagłówka kategorii
-        html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
+        html += `<tr class="offer-cat-header"><td colspan="14">${cat}</td></tr>`;
 
         // Sortuj średnice numerycznie
         const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
@@ -484,7 +596,7 @@ function renderOfferItems() {
 
         diamKeys.forEach((diamKey) => {
             // Wiersz podnagłówka średnicy
-            html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${diamKey}</td></tr>`;
+            html += `<tr class="offer-diam-header"><td colspan="14">⌀ ${diamKey}</td></tr>`;
 
             grouped[cat][diamKey].sort((a, b) => {
                 // Bosy-Bosy zawsze pierwsze
@@ -515,7 +627,7 @@ function renderOfferItems() {
                     : '';
                 const is1m = isOneMetrePipe(item.productId);
 
-                let pName = item.name;
+                let pName = escapeHtml(item.name);
                 if (item.pehdType === 'PEHD-3MM')
                     pName +=
                         ' <span style="color:var(--primary);font-weight:bold">+ PEHD 3mm</span>';
@@ -553,36 +665,45 @@ function renderOfferItems() {
                         ? `<br><div style="margin-top:6px;"><button class="btn-icon" style="font-size:0.75rem; padding:0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text);" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport"><i data-lucide="ruler"></i> Dł. rury: <strong style="color:var(--primary)">${fmt(item.customLengthM || item.lengthM)}m</strong> <i data-lucide="pencil"></i></button></div>`
                         : '';
 
-                html += `<tr class="${rowClass}" ${rowStyle ? `style="${rowStyle}"` : ''}>
+                const isOrdered = item.ordered === true;
+                const isLocked = isOrdered && !window.orderEditMode;
+                const checkboxCell = isOrdered
+                    ? '<td style="text-align:center;"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>'
+                    : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px"></td>`;
+                const orderedRowStyle = isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
+                const lockAttr = isLocked ? ' disabled' : '';
+
+                html += `<tr class="${rowClass}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>
+          ${checkboxCell}
           <td>${lp++}</td>
           <td style="max-width:280px">${pName}${autoTag}${lengthEditor}</td>
           <td class="text-right">${fmt(item.unitPrice)}</td>
           <td class="text-center">${
               hasLength
-                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onfocus="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"> m`
+                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onfocus="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</td>
-          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onfocus="this.select()" onchange="updateItem(${i},'quantity',this.value)"> szt.</td>
-          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onfocus="this.select()" onchange="updateItem(${i},'discount',this.value)">%</td>
+          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onfocus="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</td>
+          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onfocus="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</td>
           <td class="text-right">${fmt(unitTotal)}</td>
-          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onfocus="this.select()" onchange="updateItem(${i},'surcharge',this.value)"></td>
+          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onfocus="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></td>
           <td class="text-right" style="color:var(--warn)">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</td>
           <td class="text-right" style="font-weight:600">${fmt(netto)}</td>
           <td class="text-right">${fmt(brutto)}</td>
-          <td class="text-center"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"></td>
+          <td class="text-center"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></td>
           <td class="text-center" style="white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
               ${
                   getPipeInnerArea(item.productId) > 0 && !item.autoAdded
                       ? `
-                <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="display: flex; flex-direction: column; gap: 2px;${isLocked ? ' display:none;' : ''}">
                   <button class="btn btn-sm btn-secondary" ${active3mm} onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
                   <button class="btn btn-sm btn-secondary" ${active4mm} onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
                 </div>
               `
                       : ''
               }
-              <button class="btn-icon" title="Usuń" onclick="removeOfferItem(${i})"><i data-lucide="x"></i></button>
+              <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="removeOfferItem(${i})"${isLocked ? ' style="display:none"' : ''}><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
           </td>
         </tr>`;
@@ -591,6 +712,7 @@ function renderOfferItems() {
     });
 
     tbody.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
     updateOfferSummary();
 }
 
@@ -648,12 +770,12 @@ function updatePipeLength(index, newLengthM, skipRender = false) {
     item.meters = item.quantity * item.lengthM;
 
     if (!skipRender) {
-        syncGaskets();
+        syncGaskets(); syncTransportSecurity();
         renderOfferItems();
         updateOfferSummary();
         showToast('Przeliczono uciętą rurę (waga, transport, nazwa)', 'info');
     } else {
-        syncGaskets();
+        syncGaskets(); syncTransportSecurity();
         document.getElementById('product-search').value = '';
         document.getElementById('product-dropdown').classList.remove('show');
         renderOfferItems();
@@ -662,13 +784,16 @@ function updatePipeLength(index, newLengthM, skipRender = false) {
 }
 
 function updateItemText(index, field, value) {
-    if (currentOfferItems[index]) {
-        currentOfferItems[index][field] = value;
+    const item = currentOfferItems[index];
+    if (item?.ordered && !window.orderEditMode) return;
+    if (item) {
+        item[field] = value;
     }
 }
 
 function updateItem(index, field, value) {
     const item = currentOfferItems[index];
+    if (item?.ordered && !window.orderEditMode) return;
     const numVal = Number(value);
 
     // Ostrzeżenie o rabacie na uszczelki
@@ -688,12 +813,13 @@ function updateItem(index, field, value) {
         item.meters = numVal * item.lengthM;
     }
 
-    syncGaskets();
+    syncGaskets(); syncTransportSecurity();
     renderOfferItems();
 }
 
 function updateItemMeters(index, metersValue) {
     const item = currentOfferItems[index];
+    if (item?.ordered && !window.orderEditMode) return;
     const meters = Number(metersValue);
     item.meters = meters;
     if (item.lengthM && item.lengthM > 0) {
@@ -702,12 +828,43 @@ function updateItemMeters(index, metersValue) {
         if (meters === 0) item.quantity = 0;
     }
 
-    syncGaskets();
+    syncGaskets(); syncTransportSecurity();
     renderOfferItems();
 }
 
 function removeOfferItem(index) {
+    if (currentOfferItems[index]?.ordered && !window.orderEditMode) return;
     currentOfferItems.splice(index, 1);
-    syncGaskets();
+    syncGaskets(); syncTransportSecurity();
     renderOfferItems();
 }
+
+/* ===== SELEKCJA POZYCJI DO ZAMÓWIENIA ===== */
+
+window.toggleAllItemsForOrder = function (checked) {
+    document.querySelectorAll('.item-order-checkbox').forEach(cb => {
+        cb.checked = checked;
+    });
+};
+
+window.updateOrderSelectionCount = function () {
+    const total = document.querySelectorAll('.item-order-checkbox').length;
+    const checked = document.querySelectorAll('.item-order-checkbox:checked').length;
+    const selectAll = document.getElementById('select-all-items');
+    if (selectAll) {
+        selectAll.checked = total > 0 && checked === total;
+        selectAll.indeterminate = checked > 0 && checked < total;
+    }
+};
+
+window.collectSelectedItemsForOrder = function () {
+    const offerTabActive = document.getElementById('section-offer')?.classList?.contains('active');
+    const selector = offerTabActive ? '.offer-summary-checkbox:checked' : '.item-order-checkbox:checked';
+    const selected = [];
+    document.querySelectorAll(selector).forEach(cb => {
+        const uid = cb.dataset.uid;
+        const item = currentOfferItems.find(it => it.uid === uid);
+        if (item) selected.push(item);
+    });
+    return selected;
+};

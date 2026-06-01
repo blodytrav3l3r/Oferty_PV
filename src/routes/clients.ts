@@ -32,7 +32,7 @@ router.get('/', requireAuth, async (req, res) => {
             clients = await prisma.$queryRaw`SELECT * FROM clients_rel WHERE userId = ${user?.id}`;
         }
 
-        // Normalize date fields — convert numeric timestamps to ISO strings
+        // Normalizuj pola dat — konwertuj numeryczne timestampy na stringi ISO
         const normalized = (clients as any[]).map((c: any) => ({
             ...c,
             createdAt: c.createdAt && /^\d{10,}$/.test(String(c.createdAt))
@@ -61,9 +61,9 @@ router.put('/', requireAuth, writeClientsLimiter, validateData(clientsBatchSchem
         const now = new Date().toISOString();
         const upserted: { id: string }[] = [];
 
-        // Use raw queries inside transaction to avoid Prisma DateTime conversion issues
+        // Użyj surowych zapytań wewnątrz transakcji, aby uniknąć problemów z konwersją DateTime w Prisma
         await prisma.$transaction(async (tx) => {
-            // Get existing client IDs for this user
+            // Pobierz istniejące ID klientów dla tego użytkownika
             const existingClients = await tx.$queryRaw`SELECT id FROM clients_rel WHERE userId = ${userId}`;
             const existingIds = (existingClients as any[]).map((c: any) => c.id);
             const incomingIds = arr.map((c: any) => c.id).filter(Boolean);
@@ -81,12 +81,12 @@ router.put('/', requireAuth, writeClientsLimiter, validateData(clientsBatchSchem
                     docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
                 }
 
-                // Always normalize createdAt to ISO 8601 string
+                // Zawsze normalizuj createdAt do stringa ISO 8601
                 let parsedDate = now;
                 if (c.createdAt != null && c.createdAt !== '') {
                     const num = Number(c.createdAt);
                     if (!isNaN(num) && num > 0) {
-                        // Handle both seconds and milliseconds timestamps
+                        // Obsłuż zarówno timestampy w sekundach, jak i milisekundach
                         const ms = num > 1e12 ? num : num * 1000;
                         parsedDate = new Date(ms).toISOString();
                     } else {

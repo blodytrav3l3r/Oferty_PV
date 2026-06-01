@@ -21,7 +21,7 @@ let editPrzejscieState = {
 };
 
 let inlinePrzejsciaState = { type: null, dnId: null };
-let visiblePrzejsciaTypes = new Set(); // By default, all types are hidden
+let visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
 
 window.editPrzejscie = editPrzejscie;
 window.savePrzejscieEdit = savePrzejscieEdit;
@@ -250,7 +250,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     if (!window.activateQuickEdit) {
         window.activateQuickEdit = function (element, index, field) {
-            if (element.querySelector('input')) return; // Aboard if already in edit mode
+            if (element.querySelector('input')) return; // Przerwij jesli juz w trybie edycji
             if (isWellLocked()) {
                 showToast(WELL_LOCKED_MSG, 'error');
                 return;
@@ -498,7 +498,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             configMap
         );
 
-        // Calculate drilling price for this transition
+        // Oblicz cene wiercenia dla tego przejscia
         let drillingBasePrice = 0;
         let bestDrillProd = null;
         const p = findProduct(item.productId);
@@ -529,7 +529,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             }
         }
 
-        // Skip transitions not assigned to this element when filtering
+        // Pomin przejscia nieprzypisane do tego elementu podczas filtrowania
         if (filterElementIndex != null && assignedIndex !== filterElementIndex) return;
         filteredCount++;
 
@@ -556,7 +556,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
         const heightMm = computeHeightFromElement(mmFromBottom, configMap);
 
-        // Edit mode for this tile
+        // Tryb edycji dla tego kafelka
         if (editPrzejscieIdx === index) {
             const typeName = p ? p.category : 'Nieznane';
             const przejsciaProducts = studnieProducts.filter(
@@ -564,7 +564,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             );
             const allTypes = [...new Set(przejsciaProducts.map((pr) => pr.category))].sort();
 
-            // Sync fallback to what was currently rendering if state is empty
+            // Synchronizuj fallback do aktualnie renderowanego, jesli stan jest pusty
             if (!editPrzejscieState.type) {
                 editPrzejscieState.type = typeName;
                 editPrzejscieState.dnId = item.productId;
@@ -663,7 +663,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             return;
         }
 
-        // Use the shared transition tile renderer
+        // Uzyj wspolnego renderera kafelkow przejsc
         html += renderTransitionTileHTML(item, index, p, {
             heightMm,
             showEditBtn: true,
@@ -954,15 +954,15 @@ function refreshPrzejsciaVisibilityTiles() {
     const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
     const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
-    // Update counter text
+    // Aktualizuj tekst licznika
     const counterEl = overlay.querySelector('.przejscia-vis-counter');
     if (counterEl)
         counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
 
-    // Status server ping
+    // Sprawdzenie statusu serwera
     checkBackendStatus();
 
-    // Update each tile in-place
+    // Aktualizuj kazdy kafelek w miejscu
     const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
     tiles.forEach((tile) => {
         const type = tile.getAttribute('title');

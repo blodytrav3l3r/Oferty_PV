@@ -19,7 +19,7 @@ import {
 } from 'docx';
 import { UserContactInfo } from '../../pdfGenerator';
 
-// Helper type for TextRun with break property (docx types may not include it)
+// Typ pomocniczy dla TextRun z właściwością break (typy docx mogą jej nie zawierać)
 interface TextRunWithBreak extends IRunOptions {
     break?: number;
 }

@@ -128,7 +128,7 @@ function createNewWell(name, dn = 1000) {
     }
 
     if (typeof autoUpdateWellName === 'function') {
-        // wellCounter - 1 to make it 0-indexed for the index argument
+        // wellCounter - 1, aby był 0-indeksowany dla argumentu index
         autoUpdateWellName(well, wellCounter - 1);
     }
 
@@ -200,7 +200,7 @@ function duplicateWell(index) {
     const src = wells[index];
     if (!src) return;
     wellCounter++;
-    const copy = JSON.parse(JSON.stringify(src));
+    const copy = structuredClone(src);
     copy.id = 'well-' + Date.now() + '-' + wellCounter;
     copy.name = src.name + ' (kopia)';
     wells.splice(index + 1, 0, copy);
@@ -373,7 +373,7 @@ function _findPrecoGroup(grupy, dnRury) {
             if (dnRury >= min && dnRury <= max) {
                 return grupy[key]; // Exact match inside range
             }
-            // If pipe is smaller than the range, consider it as a "larger fallback"
+            // Jesli rura jest mniejsza niz zakres, potraktuj ja jako "wiekszy fallback"
             if (min > dnRury && (min - dnRury) < minDiff) {
                 minDiff = min - dnRury;
                 bestMatchKey = key;
@@ -388,7 +388,7 @@ function _findPrecoGroup(grupy, dnRury) {
         }
     }
     
-    // If no exact match and we found a larger group, return it
+    // Jesli brak dokladnego dopasowania i znaleziono wieksza grupe, zwroc ja
     if (bestMatchKey) {
         return grupy[bestMatchKey];
     }

@@ -118,6 +118,16 @@ model orders_studnie_rel {
   data           String?
 }
 
+// Zamówienia na rury
+model orders_rury_rel {
+  id        String  @id
+  userId    String?
+  offerId   String?
+  createdAt String?
+  status    String?
+  data      String?
+}
+
 model production_order_counters {
   userId     String
   year       Int

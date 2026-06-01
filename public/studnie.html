@@ -199,7 +199,7 @@
                                 justify-items: stretch;
                             "
                         >
-                            <div class="ws-item" class="p-2">
+                            <div class="ws-item p-2">
                                 <div
                                     class="ws-label"
                                     class="fs-065-nowrap"
@@ -214,7 +214,7 @@
                                     —
                                 </div>
                             </div>
-                            <div class="ws-item" class="p-2">
+                            <div class="ws-item p-2">
                                 <div
                                     class="ws-label"
                                     class="fs-065-nowrap"
@@ -229,7 +229,7 @@
                                     0 mm
                                 </div>
                             </div>
-                            <div class="ws-item" class="p-2">
+                            <div class="ws-item p-2">
                                 <div
                                     class="ws-label"
                                     class="fs-065-nowrap"
@@ -1824,7 +1824,7 @@
                                                 "
                                                 >DN</span
                                             >
-                                            <div class="dn-selector" class="mb-0">
+                                            <div class="dn-selector mb-0">
                                                 <button
                                                     class="dn-btn active"
                                                     onclick="selectDN(1000)"
@@ -2718,10 +2718,7 @@
                                         <textarea id="step4-uwagi-ogolne" class="form-input" rows="9" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; resize: vertical;" placeholder="Wpisz uwagi..."></textarea>
                                     </div>
 
-                                <div class="wizard-nav" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #1b2334; padding-top: 1rem; margin-top: 1rem;">
-                                    <button type="button" class="wizard-btn wizard-btn-prev" onclick="wizardNavStep(3)">← Wstecz</button>
-                                    <button type="button" class="wizard-btn wizard-btn-next" onclick="step4NextAction()" id="step4-next-btn">Przejdź do zamówienia →</button>
-                                </div>
+                                <!-- Step 4 nav handled by bottom fixed nav -->
                             </div>
                         </div>
                     </div>
@@ -3165,11 +3162,29 @@
                 <!-- /well-app-layout -->
             </div>
             <!-- /section-builder -->
+            <!-- ===== WSP?LNY DOLNY PASEK NAWIGACJI ===== -->
+            <div class="wizard-nav-fixed" id="studnie-wizard-bottom-nav">
+                <div class="wizard-nav-left">
+                    <button class="wizard-btn wizard-btn-prev" id="studnie-nav-prev" onclick="wizardPrev()" style="display:none"><i data-lucide="chevron-left"></i> Wstecz</button>
+                </div>
+                <span class="wizard-step-info" id="studnie-nav-step-info">Krok 1 z 5</span>
+                <div class="wizard-nav-right">
+                    <button class="wizard-btn wizard-btn-next" id="studnie-nav-next" onclick="wizardNext()"><i data-lucide="chevron-right"></i> Dalej</button>
+                </div>
+            </div>
+
 
             <!-- ===== SECTION: OFFER ===== -->
             <div class="section" id="section-offer" style="padding-bottom: 140px;">
+                <!-- Baner kontekstu: oferta / zamówienie -->
+                <div id="offer-context-banner-studnie" style="display:none; margin-bottom:0.75rem;">
+                    <div class="card" style="padding:0.5rem 0.75rem; display:flex; align-items:center; gap:0.75rem;">
+                        <span id="offer-context-badge-studnie" style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.72rem; font-weight:700;"></span>
+                        <span id="offer-context-text-studnie" style="font-size:0.78rem; color:var(--text-secondary);"></span>
+                    </div>
+                </div>
                 <!-- Client & offer info summary (read from builder form) -->
-                <div class="card card-compact" class="mb-1">
+                <div class="card card-compact mb-1">
                     <div
                         class="card-title-sm"
                         style="
@@ -3336,7 +3351,7 @@
                     </div>
                 </div>
 
-                <div class="card" class="mb-1">
+                <div class="card mb-1">
                     <div class="toolbar" style="margin-top: 0; margin-bottom: 0.5rem; padding: 0">
                         <h2 style="font-size: 1rem; font-weight: 700">
                             <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Studnie)
@@ -3767,7 +3782,7 @@
                             min-height: 57px;
                         "
                     >
-                        <div class="card-title" class="mb-0">
+                        <div class="card-title mb-0">
                             <i data-lucide="factory"></i> Zlecenie Produkcyjne
                         </div>
                         <div style="display: flex; gap: 0.4rem">
@@ -3880,7 +3895,7 @@
                 <!-- RIGHT: Well Elements List -->
                 <div class="zlecenia-right">
                     <div class="zlecenia-right-header">
-                        <div class="card-title-sm" class="mb-0"><i data-lucide="clipboard-list"></i> Elementy</div>
+                        <div class="card-title-sm mb-0"><i data-lucide="clipboard-list"></i> Elementy</div>
                         <span id="zlecenia-el-count" class="badge" style="font-size: 0.6rem"></span>
                     </div>
                     <div

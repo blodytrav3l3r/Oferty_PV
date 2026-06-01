@@ -44,6 +44,8 @@ async function showMLDashboard() {
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
     overlay.style.zIndex = '99999';
 
     const prefRows = topPrefs.length > 0

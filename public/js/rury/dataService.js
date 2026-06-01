@@ -17,14 +17,14 @@ async function loadProducts() {
         const json = await res.json();
         let saved = json.data && json.data.length > 0
             ? json.data
-            : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+            : structuredClone(DEFAULT_PRODUCTS);
 
         // Synchronizuj brakujące produkty z cennika domyślnego
         let modified = false;
         DEFAULT_PRODUCTS.forEach((dp) => {
             const sp = saved.find((s) => s.id === dp.id);
             if (!sp) {
-                saved.push(JSON.parse(JSON.stringify(dp)));
+                saved.push(structuredClone(dp));
                 modified = true;
             } else {
                 // Napraw uszkodzoną kategorię, jeśli została ustawiona na 'studnie' przez błąd backendu
@@ -47,7 +47,7 @@ async function loadProducts() {
         return saved;
     } catch (err) {
         console.error('Błąd loadProducts:', err);
-        return JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+        return structuredClone(DEFAULT_PRODUCTS);
     }
 }
 
@@ -102,7 +102,7 @@ async function loadOffers() {
  */
 async function saveOffersData(data) {
     try {
-        const { storageService } = await import('./shared/StorageService.js');
+        const { storageService } = await import('../shared/StorageService.js');
         for (const offer of data) {
             const doc = { ...offer, id: offer.id, type: 'offer' };
             await storageService.saveOffer(doc);

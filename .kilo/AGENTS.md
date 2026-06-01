@@ -166,8 +166,24 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 3. JS: zastąpić inline style (`element.style.color = '#...'`) klasami CSS
 4. JS: zredukować ~557 hex + 446 rgba w plikach JS
 
+## Graphify — automatyczny graf wiedzy
+
+### Automatyczna aktualizacja
+- **post-commit hook** (`.git/hooks/post-commit`) uruchamia `npm run graphify:ast-update` po każdym commicie — zero kosztów API, tylko AST
+- Agent (ja) uruchamia `npm run graphify:ast-update` **po każdej znaczącej zmianie w kodzie** — nawet przed commitem
+- Stan grafu: `graphify-out/graph.json` (15k+ node'ów, 25k+ krawędzi)
+
+### Automatyczne użycie (agent)
+Zanim odpowiesz na pytanie o:
+- **Architekturę** — sprawdź `graphify-out/GRAPH_REPORT.md` (god nodes, communities, wiedza o strukturze)
+- **Zależności między modułami** — zapytaj `graphify query "zależności między X a Y"` (scope'owany subgraph)
+- **Nieznany plik/funkcję** — zapytaj `graphify query "co to jest X w kontekście Y"`
+- **Bridge nodes / surprising connections** — czytaj z `GRAPH_REPORT.md` sekcję "Surprising Connections"
+
+Kolejność: `graphify query → GRAPH_REPORT.md → grep` — graphify daje scope'owany kontekst zanim zaczniesz przeszukiwać pliki.
+
 ## Dostępne narzędzia
 
 - **ECC** (`ECC/`) — 60 agentów (planner, code-reviewer, typescript-reviewer, itp.), 232 skille, 75+ komend
-- **Graphify** (`graphify-out/`) — graf wiedzy o kodzie, używaj `graphify query "..."` przed grepem
+- **Graphify** (`graphify-out/`) — automatyczny graf wiedzy o kodzie (patrz sekcja wyżej)
 - **Playwright** — testy E2E (jeśli skonfigurowane)

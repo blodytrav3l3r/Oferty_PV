@@ -288,7 +288,7 @@ async function generateOfferHtml() {
     // Uwagi / warunki
     const notesHtml = buildOfferNotesHtml(notes, paymentTerms, validity);
 
-    // Fetch contact details for offer author and assignee (opiekun)
+    // Pobierz dane kontaktowe autora oferty i opiekuna
     // createdByUserName = oryginalna nazwa autora (niezmienna)
     // editingOfferAssignedUserId = aktualny opiekun handlowy
     let usersList = [];

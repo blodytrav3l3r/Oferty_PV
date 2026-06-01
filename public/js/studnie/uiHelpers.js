@@ -14,6 +14,7 @@ function goToWizardStep(step) {
     currentWizardStep = step;
     document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
     updateWizardIndicator();
+    updateStudnieBottomNav();
 
     const layout = document.querySelector('.well-app-layout');
     if (layout) {
@@ -228,8 +229,10 @@ function validateWizardStep2() {
     const isFullyValid =
         allConfirmed && powlokaWValid && powlokaZValid && malCenaWValid && malCenaZValid;
 
-    const nextBtn = document.getElementById('wizard-next-step2');
-    if (nextBtn) nextBtn.disabled = !isFullyValid;
+    const bottomNextBtn = document.getElementById('studnie-nav-next');
+    const inlineNextBtn = document.getElementById('wizard-next-step2');
+    if (bottomNextBtn) bottomNextBtn.disabled = !isFullyValid;
+    if (inlineNextBtn) inlineNextBtn.disabled = !isFullyValid;
 
     // Zaktualizuj stan wizualny owijki każdej grupy parametrów
     let iconsChanged = false;
@@ -262,6 +265,54 @@ function validateWizardStep2() {
     if (msg) msg.classList.toggle('hidden', isFullyValid);
 
     return isFullyValid;
+}
+
+function updateStudnieBottomNav() {
+    const nav = document.getElementById('studnie-wizard-bottom-nav');
+    const prevBtn = document.getElementById('studnie-nav-prev');
+    const stepInfo = document.getElementById('studnie-nav-step-info');
+    const nextBtn = document.getElementById('studnie-nav-next');
+
+    if (!nav) return;
+
+    const step = currentWizardStep;
+
+    // Ukryj nawigację w kroku 5 (zamówienie) i w trybie zamówienia
+    if (step === 5 || (typeof orderEditMode !== 'undefined' && orderEditMode)) {
+        nav.style.display = 'none';
+        return;
+    }
+
+    nav.style.display = 'flex';
+
+    if (prevBtn) prevBtn.style.display = step === 1 ? 'none' : 'flex';
+    if (stepInfo) stepInfo.textContent = 'Krok ' + step + ' z 5';
+
+    if (nextBtn) {
+        // Reset disabled state (może być ustawiony przez validateWizardStep2 z kroku 2)
+        nextBtn.disabled = false;
+
+        if (step === 4) {
+            nextBtn.innerHTML = '<i data-lucide="arrow-right"></i> Przejdź do zamówienia';
+            nextBtn.onclick = function () { step4NextAction(); };
+        } else if (step === 3) {
+            nextBtn.innerHTML = '<i data-lucide="check"></i> Zakończ';
+            nextBtn.onclick = async function () {
+                if (!validateWizardStep2()) {
+                    showToast('Najpierw uzupełnij wszystkie parametry w kroku 2', 'error');
+                    return;
+                }
+                const saved = await saveOfferStudnie();
+                if (saved) {
+                    showSection('offer');
+                    showToast('Oferta zapisana pomyślnie', 'success');
+                }
+            };
+        } else {
+            nextBtn.innerHTML = '<i data-lucide="chevron-right"></i> Dalej';
+            nextBtn.onclick = wizardNext;
+        }
+    }
 }
 
 function updateWizardIndicator() {
@@ -422,7 +473,7 @@ async function loadStudnieProducts() {
         const json = await res.json();
         let saved = json.data;
         if (!saved || saved.length === 0) {
-            const data = JSON.parse(JSON.stringify(defaultProducts));
+            const data = structuredClone(defaultProducts);
             migrateProducts(data);
             await fetch('/api/products-studnie', {
                 method: 'PUT',
@@ -442,7 +493,7 @@ async function loadStudnieProducts() {
         }
         return migrated;
     } catch {
-        const data = JSON.parse(JSON.stringify(defaultProducts));
+        const data = structuredClone(defaultProducts);
         return migrateProducts(data);
     }
 }

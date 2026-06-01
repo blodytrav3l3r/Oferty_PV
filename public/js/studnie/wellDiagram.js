@@ -176,7 +176,7 @@ function upgradeToOtRing(seg, currentProd, currentId) {
     // Dynamiczny OT
     const dynamicOtId = currentId + '_OT';
     if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-        const dynamicProd = JSON.parse(JSON.stringify(currentProd));
+        const dynamicProd = structuredClone(currentProd);
         dynamicProd.id = dynamicOtId;
         dynamicProd.componentType = 'krag_ot';
         if (!dynamicProd.name.includes('wiercony')) {
@@ -881,6 +881,8 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     const svg = targetSvg || document.getElementById('well-diagram');
     const well = targetWell || getCurrentWell();
+
+    if (!svg) return;
 
     if (!well || well.config.length === 0) {
         svg.setAttribute('viewBox', '0 0 300 500');

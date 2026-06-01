@@ -99,6 +99,47 @@ function showSection(id) {
 
     if (id === 'pricelist') renderPriceList();
 
+    // Wspólna belka podsumowania dla builder i oferta
+    const summaryBar = document.getElementById('rury-summary-bar');
+    if (id === 'offer') {
+        if (summaryBar) summaryBar.style.display = 'block';
+        if (typeof updateOfferSummary === 'function') updateOfferSummary();
+
+        // Baner kontekstu
+        const ctxBanner = document.getElementById('offer-context-banner');
+        const ctxBadge = document.getElementById('offer-context-badge');
+        const ctxText = document.getElementById('offer-context-text');
+        if (ctxBanner && ctxBadge && ctxText) {
+            ctxBanner.style.display = 'block';
+            if (window.orderEditMode) {
+                ctxBadge.innerHTML = '<i data-lucide="package" style="width:14px;height:14px;"></i> Zamówienie (krok 5)';
+                ctxBadge.style.background = 'rgba(52,211,153,0.15)';
+                ctxBadge.style.color = '#34d399';
+                ctxBadge.style.border = '1px solid rgba(52,211,153,0.3)';
+                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+            } else if (window.editingOfferId) {
+                ctxBadge.innerHTML = '<i data-lucide="edit" style="width:14px;height:14px;"></i> Oferta (krok 3)';
+                ctxBadge.style.background = 'rgba(59,130,246,0.15)';
+                ctxBadge.style.color = '#3b82f6';
+                ctxBadge.style.border = '1px solid rgba(59,130,246,0.3)';
+                ctxText.textContent = 'Podgląd oferty — edytuj pozycje w zakładce Konfiguracja.';
+            } else {
+                ctxBadge.innerHTML = '<i data-lucide="file-text" style="width:14px;height:14px;"></i> Nowa oferta';
+                ctxBadge.style.background = 'rgba(156,163,175,0.15)';
+                ctxBadge.style.color = '#9ca3af';
+                ctxBadge.style.border = '1px solid rgba(156,163,175,0.3)';
+                ctxText.textContent = 'Dodaj produkty w zakładce Konfiguracja.';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+    } else if (id === 'builder') {
+        const activeStep = document.querySelector('.wizard-step.active');
+        const step = activeStep ? parseInt(activeStep.id.replace('wizard-step-', '')) : 1;
+        if (summaryBar) summaryBar.style.display = (step === 3 || step === 5) ? 'block' : 'none';
+    } else {
+        if (summaryBar) summaryBar.style.display = 'none';
+    }
+
     // Aktualizuj URL, aby przeładowanie nie powodowało utraty stanu
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set('tab', id);
@@ -169,6 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     products = await loadProducts();
     offers = await loadOffers();
     AppState.clientsDb = await loadClientsDb();
+    if (typeof loadOrdersRury === 'function') await loadOrdersRury();
 
     setupNavigation();
     renderPriceList();
@@ -180,15 +222,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editId = urlParams.get('edit');
     const orderId = urlParams.get('order');
 
+    initWizard();
+
     if (editId) {
-        showSection('offer');
+        showSection('builder');
         loadOffer(editId);
     } else if (orderId) {
-        showSection('offer');
+        showSection('builder');
+        if (typeof enterRuryOrderEditMode === 'function') {
+            enterRuryOrderEditMode(orderId);
+        }
     } else if (tab) {
         showSection(tab);
     } else {
-        showSection('offer');
+        showSection('builder');
     }
 });
 
@@ -196,15 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
     const editId = params.get('edit');
-
-    if (tab) {
-        const tabBtn = document.querySelector(`.nav-btn[data-section="${tab}"]`);
-        if (tabBtn) {
-            setTimeout(() => tabBtn.click(), 100);
-        }
-    }
 
     if (editId) {
         // Czekaj na inicjalizację pvSalesUI

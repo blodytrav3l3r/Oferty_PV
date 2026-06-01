@@ -736,7 +736,21 @@ const DEFAULT_PRODUCTS = [
         weight: null,
         category: 'Uszczelki',
         area: null
-    }
+    },
+    // Zabezpieczenie transportu
+    { id: 'ZT-0300', name: 'Zabezpieczenie transportu rura DN300', price: 30, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-0400', name: 'Zabezpieczenie transportu rura DN400', price: 40, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-0500', name: 'Zabezpieczenie transportu rura DN500', price: 50, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-0600', name: 'Zabezpieczenie transportu rura DN600', price: 60, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-0800', name: 'Zabezpieczenie transportu rura DN800', price: 80, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-1000', name: 'Zabezpieczenie transportu rura DN1000', price: 100, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-1200', name: 'Zabezpieczenie transportu rura DN1200', price: 120, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-1400', name: 'Zabezpieczenie transportu rura DN1400', price: 140, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-1500', name: 'Zabezpieczenie transportu rura DN1500', price: 150, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-1600', name: 'Zabezpieczenie transportu rura DN1600', price: 160, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-1800', name: 'Zabezpieczenie transportu rura DN1800', price: 180, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-2000', name: 'Zabezpieczenie transportu rura DN2000', price: 200, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null },
+    { id: 'ZT-2200', name: 'Zabezpieczenie transportu rura DN2200', price: 220, transport: null, weight: null, category: 'Zabezpieczenie transportu', area: null }
 ];
 
 const CATEGORIES = [
@@ -747,7 +761,8 @@ const CATEGORIES = [
     'Rury Jajowe Betonowe',
     'Rury Jajowe Żelbetowe',
     'Akcesoria PEHD',
-    'Uszczelki'
+    'Uszczelki',
+    'Zabezpieczenie transportu'
 ];
 
 const GASKET_MAP = {

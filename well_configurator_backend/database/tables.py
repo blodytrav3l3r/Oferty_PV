@@ -21,7 +21,7 @@ class ProductModel(Base):
     zapasDolMin = Column(Integer, nullable=True)
     zapasGoraMin = Column(Integer, nullable=True)
 
-    # Warehouse availability and standard forms
+    # Dostępność magazynowa i formy standardowe
     magazynWL = Column(Integer, default=1)
     magazynKLB = Column(Integer, default=1)
     formaStandardowaWL = Column(Integer, default=1)

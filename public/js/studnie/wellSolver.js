@@ -60,11 +60,11 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     const result = { items: kregItems, needsTallerDennica: false };
     if (!well.przejscia || well.przejscia.length === 0) {
         // Zwróć KLON aby caller mógł bezpiecznie zrobić splice na oryginalnej tablicy
-        result.items = JSON.parse(JSON.stringify(kregItems));
+        result.items = structuredClone(kregItems);
         return result;
     }
     const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
-    const newItems = JSON.parse(JSON.stringify(kregItems));
+    const newItems = structuredClone(kregItems);
     const usedSegIndices = new Set();
 
     for (const pr of well.przejscia) {
@@ -149,7 +149,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
                             } else {
                                 const dynamicOtId = kp.id + '_OT';
                                 if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-                                    const dynamicProd = JSON.parse(JSON.stringify(kp));
+                                    const dynamicProd = structuredClone(kp);
                                     dynamicProd.id = dynamicOtId;
                                     dynamicProd.componentType = 'krag_ot';
                                     if (!dynamicProd.name.includes(' wiercony')) {
@@ -270,7 +270,7 @@ function buildConfigFromBackendResult(backendResult) {
                 };
                 studnieProducts.push(product);
             } else {
-                const dynamicProd = JSON.parse(JSON.stringify(product));
+                const dynamicProd = structuredClone(product);
                 dynamicProd.id = bItem.product_id;
                 dynamicProd.name = bItem.name;
                 dynamicProd.componentType = bItem.component_type || product.componentType;
@@ -463,7 +463,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 
 function applyBackendConfig(well, newConfig, backendResult, autoTriggered) {
     well.config = newConfig;
-    well.originalAutoConfig = JSON.parse(JSON.stringify(newConfig));
+    well.originalAutoConfig = structuredClone(newConfig);
     well.overrideReason = null;
 
     // Upewnij się, że studnia ma właz
@@ -496,7 +496,7 @@ function applyBackendConfig(well, newConfig, backendResult, autoTriggered) {
     renderWellDiagram();
     updateSummary();
 
-    // PEHD resolver
+    // Rozwiazywanie PEHD
     if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
         const forcedZak = well.redukcjaDN1000 ? well.redukcjaZakonczenie : well.zakonczenie;
         if (!forcedZak) {
@@ -547,7 +547,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
     if (!topProd) return { error: 'Nie znaleziono domyślnego zakończenia studni.' };
 
-    // --- Build top closure configs ---
+    // --- Budowa konfiguracji zakończenia górnego ---
     const topConfigs = [];
     const buildTopConfig = (topP) => {
         let items = [];

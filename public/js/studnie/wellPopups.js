@@ -83,7 +83,7 @@ function openZakonczeniePopup() {
                 ">
                     <div class="ui-flex-between">
                         <div style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</div>
-                        <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle"></i> ZABLOKOWANE</span>
+                        <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> ZABLOKOWANE</span>
                     </div>
                     <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.15rem;">${p.name}</div>
                     <div style="font-size:0.6rem; color:var(--warning); margin-top:0.3rem;">Brak możliwości wykonania wkładki PEHD</div>
@@ -98,7 +98,7 @@ function openZakonczeniePopup() {
                onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
                 <div class="ui-flex-between">
                     <div style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</div>
-                    ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check"></i> AKTYWNE</span>' : ''}
+                    ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
                 </div>
                 <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:0.15rem; font-weight:600;">${p.name}</div>
                 <div style="display:flex; gap:0.8rem; margin-top:0.2rem; font-size:0.62rem; color:var(--text-muted);">
@@ -111,12 +111,13 @@ function openZakonczeniePopup() {
         });
     }
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
+    showModal({
+        id: 'zakonczenie-modal',
+        titleId: 'zakonczenie-title',
+        html: `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie studni <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${well.name} — DN ${dn === 'styczna' ? 'styczna (1000)' : dn})</span></h3>
+        <h3 id="zakonczenie-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie studni <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${well.name} — DN ${dn === 'styczna' ? 'styczna (1000)' : dn})</span></h3>
         <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
       </div>
       <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr; gap:0.5rem;">
@@ -125,10 +126,7 @@ function openZakonczeniePopup() {
       <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem;">
         <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
       </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
 }
 
@@ -317,7 +315,7 @@ function openRedukcjaZakonczeniePopup() {
             ">
                 <div class="ui-flex-between">
                     <div style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</div>
-                    <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle"></i> BLOKADA</span>
+                    <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA</span>
                 </div>
                 <div style="flex-grow:1;"></div>
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.3rem;">${p.name}</div>
@@ -335,7 +333,7 @@ function openRedukcjaZakonczeniePopup() {
            onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
             <div class="ui-flex-between">
                 <div style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</div>
-                ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check"></i> AKTYWNE</span>' : ''}
+                ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
             </div>
             <div style="flex-grow:1;"></div>
             <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:0.3rem; font-weight:600;">${p.name}</div>
@@ -361,7 +359,7 @@ function openRedukcjaZakonczeniePopup() {
         <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Automatyczny dobór zakończenia dla średnicy DN${targetDn}</div>
     </div>`;
 
-    // Group items
+    // Grupuj elementy
     const konuses = candidates.filter((p) => p.componentType === 'konus');
     const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
     const odcPlates = candidates.filter(
@@ -369,26 +367,27 @@ function openRedukcjaZakonczeniePopup() {
     );
     const rings = candidates.filter((p) => p.componentType === 'pierscien_odciazajacy');
 
-    // Row 1: Konusy
+    // Wiersz 1: Konusy
     konuses.forEach((p) => (tilesHtml += renderTile(p)));
-    // If odd number, add invisible empty div to keep grid aligned (unlikely needed with grid-auto-rows but safe)
+    // Jesli nieparzysta liczba, dodaj niewidoczny pusty div, aby zachowac wyrownanie siatki
     if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
 
-    // Row 2: DIN plates
+    // Wiersz 2: Plyty DIN
     dinPlates.forEach((p) => (tilesHtml += renderTile(p)));
     if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
 
     // Row 3: Płyty odciążające and Pierścienie
-    // Usually there's a plate and a ring, let's put them together
+    // Zazwyczaj jest płyta i pierścień, połączmy je razem
     odcPlates.forEach((p) => (tilesHtml += renderTile(p)));
     rings.forEach((p) => (tilesHtml += renderTile(p)));
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
+    showModal({
+        id: 'redukcja-zak-modal',
+        titleId: 'redukcja-zak-title',
+        html: `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie redukcji DN${targetDn}</h3>
+        <h3 id="redukcja-zak-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie redukcji DN${targetDn}</h3>
         <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN${targetDn}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
       </div>
       <div style="overflow-y:auto; padding:0.8rem; display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem;">
@@ -397,11 +396,8 @@ function openRedukcjaZakonczeniePopup() {
       <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.6rem; text-align:right;">
         <button class="btn btn-secondary btn-sm" onclick="closeModal()" style="font-size:0.8rem;">Zamknij</button>
       </div>
-    </div>`;
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
-    document.body.appendChild(overlay);
 }
 
 function showStycznaPopup(mode = 'select') {
@@ -440,26 +436,20 @@ function showStycznaPopup(mode = 'select') {
             </div>`;
     };
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText =
-        'position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease;';
-
-    overlay.innerHTML = `
+    showModal({
+        id: 'styczna-modal',
+        titleId: 'styczna-title',
+        html: `
       <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(249,115,22,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-          <div style="font-size:1rem; font-weight:800; color:#f97316;"><i data-lucide="cylinder"></i> Wybierz studnię styczną</div>
-          <button class="btn-icon" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x"></i></button>
+          <div id="styczna-title" style="font-size:1rem; font-weight:800; color:#f97316;"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
+          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
         ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}
       </div>
-    `;
-
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    `
     });
-    document.body.appendChild(overlay);
 }
 
 function handleStycznaProductChoice(productId, mode) {
@@ -516,18 +506,13 @@ window.showKonusPehdResolverModal = function(wellIndex, callback) {
     const well = wells[wellIndex];
     if (!well) return;
 
-    // Usuwamy stary popup jeśli istnieje
     const oldOverlay = document.getElementById('pehd-konus-resolver');
     if (oldOverlay) oldOverlay.remove();
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'pehd-konus-resolver';
-    
     let html = `
     <div style="background:var(--bg-secondary, #1e293b); padding:2.2rem; border-radius:16px; max-width:600px; width:100%; border:1px solid rgba(248,113,113,0.25); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
-        <h3 style="margin-top:0; color:#f87171; display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size:1.25rem; font-weight:700;">
-            <i data-lucide="alert-circle" style="width:24px;height:24px;"></i> Niezgodność technologiczna: Konus + PEHD
+        <h3 id="pehd-konus-title" style="margin-top:0; color:#f87171; display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size:1.25rem; font-weight:700;">
+            <i data-lucide="alert-circle" style="width:24px;height:24px;" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
         </h3>
         <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:1.8rem; line-height:1.6; font-family:Inter,sans-serif;">
             <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>
@@ -551,8 +536,11 @@ window.showKonusPehdResolverModal = function(wellIndex, callback) {
         </div>
     </div>
     `;
-    overlay.innerHTML = html;
-    document.body.appendChild(overlay);
+    const overlay = showModal({
+        id: 'pehd-konus-resolver',
+        titleId: 'pehd-konus-title',
+        html: html
+    });
     if (window.lucide) window.lucide.createIcons({ root: overlay });
     window.konusResolverCallback = callback;
 };
@@ -595,10 +583,6 @@ window.openGlobalRecalcModal = function () {
         return;
     }
     const uniqueDns = [...new Set(wells.map((w) => w.dn))].sort((a, b) => a - b);
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'global-recalc-modal';
-
     let groupsHtml = uniqueDns.map((dn) => {
         const exampleMag = wells[0]?.magazyn || 'Kluczbork';
         const availForDn = studnieProducts.filter(
@@ -677,20 +661,22 @@ window.openGlobalRecalcModal = function () {
         </div>`;
     }).join('');
 
-    overlay.innerHTML = `
+    showModal({
+        id: 'global-recalc-modal',
+        titleId: 'global-recalc-title',
+        html: `
     <div class="modal" style="width:700px; max-width:95vw; background:#111827;">
-      <div class="modal-header"><h3><i data-lucide="settings"></i> Automatycznie przelicz ofertę</h3><button class="btn-icon" onclick="window.closeGlobalRecalcModal()"><i data-lucide="x"></i></button></div>
+      <div class="modal-header"><h3 id="global-recalc-title"><i data-lucide="settings" aria-hidden="true"></i> Automatycznie przelicz ofertę</h3><button class="btn-icon" aria-label="Zamknij" onclick="window.closeGlobalRecalcModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div style="padding:1rem; max-height:65vh; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(99,102,241,0.4) transparent;">
         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">Ustaw preferencje dla poszczególnych średnic. Program zaktualizuje ustawienia zakończeń i ponownie wygeneruje układ elementów dla <strong>wszystkich studni w ofercie</strong> według reguł automatycznych.</p>
         ${groupsHtml}
       </div>
       <div style="padding:1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:0.5rem; background:rgba(0,0,0,0.2);">
         <button class="btn btn-secondary" onclick="window.closeGlobalRecalcModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="window.applyGlobalRecalc()" style="background:var(--accent); color:#fff; font-weight:600;"><i data-lucide="refresh-cw"></i> Przelicz wszystkie</button>
+        <button class="btn btn-primary" onclick="window.applyGlobalRecalc()" style="background:var(--accent); color:#fff; font-weight:600;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przelicz wszystkie</button>
       </div>
-    </div>`;
-
-    document.body.appendChild(overlay);
+    </div>`
+    });
 };
 
 window.closeGlobalRecalcModal = function () {
@@ -796,18 +782,17 @@ function openRedukcjaChoicePopup() {
     const well = getCurrentWell();
     if (!well) return;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    
-    // Check if DN1200 is available for this DN
     const can1200 = [1500, 2000, 2500].includes(well.dn) || well.dn === 'styczna';
     const currentTarget = well.redukcjaTargetDN || 1000;
     const isActive = well.redukcjaDN1000;
 
-    overlay.innerHTML = `
+    showModal({
+        id: 'redukcja-choice-modal',
+        titleId: 'redukcja-choice-title',
+        html: `
     <div class="modal" style="max-width:400px; width:90%; border-radius:12px; padding:1.5rem; background: var(--bg-secondary); border: 1px solid var(--border);">
-      <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
-        <i data-lucide="chevrons-down" style="color:var(--accent);"></i> Wybierz rodzaj redukcji
+      <h3 id="redukcja-choice-title" style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+        <i data-lucide="chevrons-down" style="color:var(--accent);" aria-hidden="true"></i> Wybierz rodzaj redukcji
       </h3>
       <div style="display:flex; flex-direction:column; gap:0.6rem;">
         <button onclick="selectRedukcjaChoice(1000)" style="
@@ -842,9 +827,8 @@ function openRedukcjaChoicePopup() {
       <div style="margin-top:1.2rem; text-align:right;">
         <button class="btn btn-secondary btn-sm" onclick="closeModal()">Anuluj</button>
       </div>
-    </div>`;
-    
-    document.body.appendChild(overlay);
+    </div>`
+    });
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -964,10 +948,6 @@ window.openTransitionManagerModal = function () {
     tmSelectedTransitions.clear();
     tmCurrentFilters = { sourceMaterial: [], dn: [], search: '' };
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'transition-manager-modal';
-
     let allMaterials = new Set();
     let allDNs = new Set();
     
@@ -978,13 +958,16 @@ window.openTransitionManagerModal = function () {
         });
     });
     
-    overlay.innerHTML = `
+    const overlay = showModal({
+        id: 'transition-manager-modal',
+        titleId: 'tm-title',
+        html: `
     <div class="modal" style="width:90vw; max-width:95vw; height:90vh; display:flex; flex-direction:column; background:#111827; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
       
       <!-- Nagłówek -->
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
-        <h3 style="font-size:1.1rem; font-weight:700; color:var(--text);"><i data-lucide="list"></i> Menedżer Przejść</h3>
-        <button class="btn-icon" onclick="window.closeTransitionManagerModal()"><i data-lucide="x"></i></button>
+        <h3 id="tm-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
+        <button class="btn-icon" aria-label="Zamknij" onclick="window.closeTransitionManagerModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <!-- Sekcja filtrów -->
@@ -1074,9 +1057,8 @@ window.openTransitionManagerModal = function () {
          </div>
       </div>
 
-    </div>`;
-
-    document.body.appendChild(overlay);
+    </div>`
+    });
     if (window.lucide) window.lucide.createIcons({ root: overlay });
     
     tmRenderTable();
@@ -1207,7 +1189,7 @@ window.tmRenderTable = function() {
     const container = document.getElementById('tm-table-body');
     if (!container) return;
 
-    // Sort wells if needed
+    // Sortuj studnie jesli potrzeba
     let sortedWells = [...tmWellData];
     if (tmSortState.column === 'wellName') {
         sortedWells.sort((a, b) => {
@@ -1653,7 +1635,7 @@ window.tmApplyChanges = async function() {
 
     if (replacedCount === 0) {
         if (skippedLocked.size > 0) {
-            // already showed toast above
+            // toast został już pokazany powyżej
         } else if (skippedDetails.length > 0) {
             showSkippedPopup(skippedDetails, targetCat);
         } else {
@@ -1687,10 +1669,6 @@ window.tmApplyChanges = async function() {
 };
 
 function showSkippedPopup(skippedDetails, targetCat) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = 'position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease;';
-
     const rowsHtml = skippedDetails.map((s, i) => `
         <tr>
             <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${i + 1}</td>
@@ -1701,11 +1679,14 @@ function showSkippedPopup(skippedDetails, targetCat) {
         </tr>
     `).join('');
 
-    overlay.innerHTML = `
+    showModal({
+        id: 'skipped-popup-modal',
+        titleId: 'skipped-title',
+        html: `
       <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(239,68,68,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:700px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-          <div style="font-size:1rem; font-weight:800; color:#f87171;"><i data-lucide="alert-triangle"></i> Pominięte przejścia (${skippedDetails.length})</div>
-          <button class="btn-icon" onclick="this.closest('.modal-overlay').remove()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x"></i></button>
+          <div id="skipped-title" style="font-size:1rem; font-weight:800; color:#f87171;"><i data-lucide="alert-triangle" aria-hidden="true"></i> Pominięte przejścia (${skippedDetails.length})</div>
+          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
             Poniższe przejścia nie zostały zamienione — w kategorii <strong>${targetCat}</strong> nie istnieje produkt o podanej średnicy.
@@ -1723,17 +1704,13 @@ function showSkippedPopup(skippedDetails, targetCat) {
             <tbody>${rowsHtml}</tbody>
         </table>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.08);">
-            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove(); window.activatePreviewPanel && window.activatePreviewPanel()" style="font-size:0.8rem; padding:0.4rem 1rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399;">
+            <button class="btn btn-secondary" onclick="closeModal(); window.activatePreviewPanel && window.activatePreviewPanel()" style="font-size:0.8rem; padding:0.4rem 1rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399;">
                 <i data-lucide="arrow-left"></i> Wróć do menedżera
             </button>
-            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()" style="font-size:0.8rem; padding:0.4rem 1.2rem;">Zamknij</button>
+            <button class="btn btn-secondary" onclick="closeModal()" style="font-size:0.8rem; padding:0.4rem 1.2rem;">Zamknij</button>
         </div>
       </div>
-    `;
-
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.remove();
+    `
     });
-    document.body.appendChild(overlay);
     if (window.lucide) window.lucide.createIcons();
 }

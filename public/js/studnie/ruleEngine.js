@@ -290,10 +290,10 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna) {
         return { dennica: dennicy[0], reason: 'no_transitions' };
     }
 
-    // Not filtering dennicas by physical minimum — let solver + OT handle crossing pipes
+    // Nie filtruj dennicy po fizycznym minimum — pozwól solverowi + OT obsłużyć krzyżujące się rury
     const candidates = dennicy;
 
-    // Helper: check internal clearance using pre-computed data or fallback
+    // Helper: sprawdź luz wewnętrzny używając prekompilowanych danych lub fallbacku
     const checkInternal = (d, mode) => {
         for (const pr of transitions) {
             const pel = parseFloat(pr.rzednaWlaczenia);
@@ -332,7 +332,7 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna) {
         return true;
     };
 
-    // Try standard/minimal on all candidates
+    // Spróbuj standardowego/minimalnego na wszystkich kandydatach
     for (const mode of ['standard', 'minimal']) {
         for (const d of candidates) {
             if (checkInternal(d, mode)) {
@@ -341,7 +341,7 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna) {
         }
     }
 
-    // Fallback: return lowest — solver will decide about OT
+    // Fallback: zwróć najniższy — solver zdecyduje o OT
     return { dennica: dennicy[0], reason: 'fallback_lowest' };
 }
 

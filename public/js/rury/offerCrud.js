@@ -33,13 +33,21 @@ async function saveOffer() {
     const investName = document.getElementById('invest-name').value.trim();
     const investAddress = document.getElementById('invest-address').value.trim();
     const investContractor = document.getElementById('invest-contractor').value.trim();
-    const notes = document.getElementById('offer-notes').value.trim();
+    const tabNotesEl = document.getElementById('offer-tab-notes');
+    const notes = tabNotesEl && tabNotesEl.value.trim() !== '' ? tabNotesEl.value.trim() : document.getElementById('offer-notes').value.trim();
+    
+    const tabPaymentEl = document.getElementById('offer-tab-payment-terms');
     const paymentTermsEl = document.getElementById('offer-payment-terms');
-    const paymentTerms = paymentTermsEl
-        ? paymentTermsEl.value.trim()
-        : 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+    const paymentTerms = tabPaymentEl && tabPaymentEl.value.trim() !== '' 
+        ? tabPaymentEl.value.trim() 
+        : (paymentTermsEl ? paymentTermsEl.value.trim() : 'Do uzgodnienia lub według indywidualnych warunków handlowych.');
+    
+    const tabValidityEl = document.getElementById('offer-tab-validity');
     const validityEl = document.getElementById('offer-validity');
-    const validity = validityEl ? validityEl.value.trim() : '7 dni';
+    const validity = tabValidityEl && tabValidityEl.value.trim() !== '' 
+        ? tabValidityEl.value.trim() 
+        : (validityEl ? validityEl.value.trim() : '7 dni');
+        
     const transportKm = Number(document.getElementById('transport-km').value) || 0;
     const transportRate = Number(document.getElementById('transport-rate').value) || 0;
     const transportCostPerTrip = transportKm * transportRate;
@@ -92,13 +100,22 @@ async function saveOffer() {
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
                     btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
             console.error('Błąd wyboru opiekuna:', e);
         }
     }
 
-    const { storageService } = await import('./shared/StorageService.js');
+    let storageService;
+    try {
+        const mod = await import('../shared/StorageService.js');
+        storageService = mod.storageService;
+    } catch (e) {
+        console.error('[App] Błąd importu StorageService:', e);
+        showToast('Błąd ładowania modułu zapisu oferty', 'error');
+        return;
+    }
 
     let existingDoc = null;
     if (editingOfferId) {
@@ -136,7 +153,7 @@ async function saveOffer() {
         notes,
         paymentTerms,
         validity,
-        items: JSON.parse(JSON.stringify(currentOfferItems)),
+        items: structuredClone(currentOfferItems),
         transportKm,
         transportRate,
         transportCostPerTrip,
@@ -161,7 +178,7 @@ async function saveOffer() {
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         editingOfferId = result.id || offerDoc.id;
 
-        // Update local array for immediate render
+        // Aktualizuj lokalna tablice do natychmiastowego renderowania
         const idx = offers.findIndex((o) => o.id === offerDoc.id);
         if (idx >= 0) offers[idx] = { ...offerDoc, id: offerDoc.id };
         else offers.push({ ...offerDoc, id: offerDoc.id });
@@ -201,8 +218,7 @@ function clearOfferForm() {
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
     if (titleEl) titleEl.innerHTML = `<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)`;
-    const btnEl = document.getElementById('btn-save-offer');
-    if (btnEl) btnEl.innerHTML = `<i data-lucide="save"></i> Zapisz ofertę`;
+    if (window.lucide) lucide.createIcons();
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
@@ -211,9 +227,18 @@ function clearOfferForm() {
                 ? 'inline-block'
                 : 'none';
         btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
+        if (window.lucide) lucide.createIcons();
     }
 
+    const btnSaveOffer = document.getElementById('btn-save-offer');
+    if (btnSaveOffer) {
+        btnSaveOffer.innerHTML = '<i data-lucide="save"></i> Zapisz ofertę';
+        if (window.lucide) lucide.createIcons();
+    }
+
+    syncTransportSecurity();
     renderOfferItems();
+    if (typeof goToPhase === 'function') goToPhase(1);
 }
 
 /* ===== LISTA ZAPISANYCH OFERT ===== */
@@ -235,15 +260,17 @@ function renderSavedOffers() {
     const isPro = currentUser && currentUser.role === 'pro';
     const subUsers = (currentUser && currentUser.subUsers) || [];
 
-    container.innerHTML = offers
+    const renderedList = offers
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
         .map((o) => {
             const isOwner = currentUser && o.userId === currentUser.id;
             const isSubUserOffer = isPro && subUsers.includes(o.userId);
             const canEdit = isAdmin || isOwner || isSubUserOffer;
+            const _orderList = typeof getOrdersForOffer === 'function' ? getOrdersForOffer(o.id) : [];
+            const _hasOrder = _orderList.length > 0;
 
             return `
-    <div class="offer-list-item">
+    <div class="offer-list-item"${_hasOrder ? ' style="border-left:3px solid #34d399;"' : ''}>
       <div class="offer-info" style="min-width:0;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
           <h3 style="margin-bottom:0.2rem; word-break:break-all;">${o.number}</h3>
@@ -286,20 +313,41 @@ function renderSavedOffers() {
         </div>`
                 : ''
         }
+        ${_hasOrder ? `<div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+            ${_orderList.map(ord => {
+                const label = ord.offerNumber || (ord.id ? ord.id.substring(0, 8) : '—');
+                return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:#34d399;">
+                    <i data-lucide="package" style="width:12px;height:12px;"></i> Zamówienie ${label}
+                </span>`;
+            }).join('')}
+        </div>` : ''}
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-        <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil"></i> Edytuj</button>
-        <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj"><i data-lucide="clipboard-list"></i> Duplikuj</button>
-        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian"><i data-lucide="hourglass"></i> Historia</button>` : ''}
-        <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON"><i data-lucide="save"></i> JSON</button>
-        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2"></i> XLSX</button>
-        <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text"></i> PDF</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2"></i> Usuń</button>
+        <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
+        <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
+        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+        <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
+        <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
+        ${_hasOrder ? _orderList.map(ord => `
+            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
+                <i data-lucide="package"></i> Zam. ${ord.offerNumber || ord.id.substring(0, 8)}
+            </button>
+            <button class="btn btn-sm" onclick="exportKartaDirect_action('${ord.id}', 'pdf')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
+                <i data-lucide="file-text"></i> Karta PDF
+            </button>
+            <button class="btn btn-sm" onclick="exportKartaDirect_action('${ord.id}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
+                <i data-lucide="edit"></i> Karta Word
+            </button>
+        `).join('') : ''}
+        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
       </div>
     </div>
   `;
         })
         .join('');
+    container.innerHTML = renderedList;
+    if (window.lucide) lucide.createIcons();
 }
 
 /* ===== ŁADOWANIE OFERTY ===== */
@@ -308,7 +356,7 @@ async function loadOffer(id) {
     let offer = offers.find((o) => o.id === id);
     let srv = null;
     try {
-        const { storageService } = await import('./shared/StorageService.js');
+        const { storageService } = await import('../shared/StorageService.js');
         srv = storageService;
     } catch (e) {
         console.warn('Could not import storageService', e);
@@ -355,7 +403,27 @@ async function loadOffer(id) {
         document.getElementById('offer-validity').value = normalized.validity || '7 dni';
     document.getElementById('transport-km').value = normalized.transportKm || 100;
     document.getElementById('transport-rate').value = normalized.transportRate || 10;
-    currentOfferItems = JSON.parse(JSON.stringify(normalized.items || []));
+    currentOfferItems = structuredClone(normalized.items || []);
+
+    // Backfill uid dla starych itemów + zaznacz jako ordered jeśli istnieją w zamówieniach
+    if (typeof loadOrdersRury === 'function' && (!ordersRury || ordersRury.length === 0)) {
+        try { await loadOrdersRury(); } catch (e) { /* ignore */ }
+    }
+    const orderedUids = new Set();
+    if (ordersRury && ordersRury.length > 0) {
+        const offerOrders = ordersRury.filter(o => o.offerId === editingOfferId);
+        offerOrders.forEach(order => {
+            if (order.items) {
+                order.items.forEach(oi => {
+                    if (oi.uid) orderedUids.add(oi.uid);
+                });
+            }
+        });
+    }
+    currentOfferItems.forEach(item => {
+        if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        if (orderedUids.has(item.uid)) item.ordered = true;
+    });
 
     // Uprawnienia
     const isAdmin = currentUser && currentUser.role === 'admin';
@@ -371,12 +439,7 @@ async function loadOffer(id) {
     const titleEl = document.getElementById('offer-form-title');
     if (titleEl)
         titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
-    const btnEl = document.getElementById('btn-save-offer');
-    if (btnEl) {
-        btnEl.innerHTML = `<i data-lucide="save"></i> Zapisz zmiany`;
-        btnEl.disabled = !canEdit;
-        btnEl.title = canEdit ? '' : 'Brak uprawnień do edycji tej oferty';
-    }
+    if (window.lucide) lucide.createIcons();
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
@@ -389,10 +452,23 @@ async function loadOffer(id) {
         } else {
             btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
         }
+        if (window.lucide) lucide.createIcons();
     }
 
+    const btnSaveOffer = document.getElementById('btn-save-offer');
+    if (btnSaveOffer) {
+        btnSaveOffer.innerHTML = '<i data-lucide="save"></i> Zapisz zmiany';
+        btnSaveOffer.disabled = !canEdit;
+        btnSaveOffer.title = canEdit ? 'Zapisz zmiany' : 'Brak uprawnień do edycji';
+        if (window.lucide) lucide.createIcons();
+    }
+
+    window.zabezpieczenieTransportuEnabled = true;
+    if (typeof updateZabezpieczenieTransportuUI === 'function') updateZabezpieczenieTransportuUI();
+    syncTransportSecurity();
     renderOfferItems();
-    showSection('offer');
+    showSection('builder');
+    if (typeof goToPhase === 'function') goToPhase(3);
     showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
 }
 
@@ -408,7 +484,7 @@ window.loadSavedOfferData = function (doc, id) {
 function duplicateOffer(id) {
     const offer = offers.find((o) => o.id === id);
     if (!offer) return;
-    const newOffer = JSON.parse(JSON.stringify(offer));
+    const newOffer = structuredClone(offer);
     newOffer.id = 'offer_' + Date.now();
     newOffer.number = offer.number + ' (kopia)';
     newOffer.userId = currentUser ? currentUser.id : null;
@@ -470,10 +546,6 @@ function showOfferHistory(id) {
         return;
     }
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'offer-history-modal';
-
     let historyHtml = offer.history
         .map((h, i) => {
             // Znajdź następny stan (albo następny element historii, albo bieżąca oferta)
@@ -520,21 +592,21 @@ function showOfferHistory(id) {
         .reverse()
         .join('');
 
-    overlay.innerHTML = `
+    showModal({
+        id: 'offer-history-modal',
+        titleId: 'offer-history-title',
+        html: `
     <div class="modal" style="max-width:800px; width:95%; border-radius:12px; max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 style="font-weight:700;"><i data-lucide="hourglass"></i> Historia zmian oferty: ${offer.number}</h3>
-        <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
+        <h3 id="offer-history-title" style="font-weight:700;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia zmian oferty: ${offer.number}</h3>
+        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="padding:1rem 0; overflow-y:auto; flex:1;">
         ${historyHtml}
       </div>
-    </div>`;
-
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    </div>`
     });
+    if (window.lucide) lucide.createIcons();
 }
 
 function restoreOfferVersion(offerId, historyIndex) {
@@ -543,7 +615,7 @@ function restoreOfferVersion(offerId, historyIndex) {
 
     const snapshot = offer.history[historyIndex];
 
-    // Load snapshot as new offer with current editing id
+    // Wczytaj migawke jako nowa oferte z biezacym ID edycji
     editingOfferId = offer.id;
     document.getElementById('offer-number').value = snapshot.number || offer.number;
     document.getElementById('offer-date').value = snapshot.date || offer.date;
@@ -564,10 +636,13 @@ function restoreOfferVersion(offerId, historyIndex) {
     document.getElementById('transport-km').value = snapshot.transportKm || 100;
     document.getElementById('transport-rate').value = snapshot.transportRate || 10;
 
-    currentOfferItems = JSON.parse(JSON.stringify(snapshot.items || []));
+    currentOfferItems = structuredClone(snapshot.items || []);
+    window.zabezpieczenieTransportuEnabled = true;
+    if (typeof updateZabezpieczenieTransportuUI === 'function') updateZabezpieczenieTransportuUI();
+    syncTransportSecurity();
     renderOfferItems();
 
-    // Switch to the form view
+    // Przełącz na widok formularza
     const navOffer = document.getElementById('nav-offer');
     if (navOffer) navOffer.click();
 

@@ -1,25 +1,25 @@
 /**
- * SPA Router — Iframe-based router for WITROS.
+ * SPA Router — Router oparty na iframe dla WITROS.
  *
- * Each module (rury, studnie) runs inside its own iframe,
- * providing COMPLETE isolation of JS, CSS, and DOM state.
- * The original HTML files work without ANY modification.
+ * Każdy moduł (rury, studnie) działa we własnym iframe,
+ * zapewniając PEŁNĄ izolację JS, CSS i stanu DOM.
+ * Oryginalne pliki HTML działają bez ŻADNYCH modyfikacji.
  *
- * Routes:
+ * Trasy:
  *   #/rury      → rury.html (iframe)
  *   #/studnie   → studnie.html (iframe)
  *   #/kartoteka → kartoteka.html (iframe)
- *   (default)   → #/rury
+ *   (domyślnie) → #/rury
  */
 
 const SpaRouter = (() => {
-    // ── State ──
+    // ── Stan ──
     let currentModule = null;
     const iframes = {};
     let transitionToken = 0;
     let transitionTimer = null;
 
-    // ── Config ──
+    // ── Konfiguracja ──
     const MODULES = {
         rury: {
             src: 'rury.html',
@@ -27,12 +27,13 @@ const SpaRouter = (() => {
             logoColors: ['#6366f1', '#8b5cf6'],
             sections: [
                 {
-                    id: 'offer',
+                    id: 'builder',
                     icon: '<i data-lucide="edit"></i>',
-                    label: 'Nowa Oferta',
+                    label: 'Konfiguracja',
                     accent: '#10b981',
-                    glow: '#0d2a20'
+                    glow: '#0d2b22'
                 },
+                { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta', accent: '#3b82f6', glow: '#152040' },
                 { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
             ]
         },
@@ -66,7 +67,13 @@ const SpaRouter = (() => {
         }
     };
 
-    // ── Helpers ──
+    // ── Pomocnicy ──
+
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
 
     function parseHash() {
         const hash = window.location.hash || '#/rury';
@@ -192,7 +199,7 @@ const SpaRouter = (() => {
                     return;
                 }
             } catch (e) {
-                // Same-origin iframe is expected, but keep navigation resilient.
+                // Oczekiwano iframe tej samej domeny, ale nawigacja pozostaje odporna.
             }
 
             iframe.addEventListener('load', complete);
@@ -215,7 +222,7 @@ const SpaRouter = (() => {
         });
     }
 
-    /** Create or get an iframe for a module */
+    /** Tworzy lub pobiera iframe dla modułu */
     function getOrCreateIframe(module) {
         if (iframes[module]) return iframes[module];
 
@@ -226,36 +233,36 @@ const SpaRouter = (() => {
 
         const { params } = parseHash();
         let src = config.src;
-        // Append all parameters from SPA hash to iframe URL
+        // Dołącz wszystkie parametry z hasha SPA do adresu URL iframe
         Object.entries(params).forEach(([k, v]) => {
             src += (src.includes('?') ? '&' : '?') + `${k}=${v}`;
         });
-        // Force cache-busting on the module itself
+        // Wymuś pominięcie pamięci podręcznej dla samego modułu
         src += (src.includes('?') ? '&' : '?') + 'v=2.0';
 
         iframe.src = src;
         iframe.style.display = 'none';
 
-        // Hide the module's own header inside the iframe (it's redundant — the SPA header handles navigation)
+        // Ukryj nagłówek modułu wewnątrz iframe (jest zbędny — nagłówek SPA obsługuje nawigację)
         iframe.addEventListener('load', () => {
             try {
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                // Hide the header in the iframe
+                // Ukryj nagłówek w iframe
                 const header = iframeDoc.querySelector('.header, header.header');
                 if (header) header.style.display = 'none';
 
-                // Adjust main content to not have the header offset
+                // Dopasuj główną treść, aby nie miała przesunięcia nagłówka
                 const main = iframeDoc.querySelector('main.main');
                 if (main) {
                     main.style.paddingTop = '0.5rem';
                     main.style.marginTop = '0';
                 }
 
-                // Make the body background transparent so the parent background shows through
+                // Ustaw przezroczyste tło body, aby tło rodzica było widoczne
                 iframeDoc.body.style.background = 'transparent';
                 iframeDoc.documentElement.style.background = 'transparent';
             } catch (e) {
-                // Cross-origin restriction — should not happen since same domain
+                // Ograniczenie cross-origin — nie powinno wystąpić, bo ta sama domena
                 console.warn('[SpaRouter] Could not modify iframe content:', e);
             }
         });
@@ -265,7 +272,7 @@ const SpaRouter = (() => {
         return iframe;
     }
 
-    // ── Public API ──
+    // ── Publiczne API ──
 
     function showSection(sectionId) {
         if (!currentModule || !iframes[currentModule]) return;
@@ -279,7 +286,7 @@ const SpaRouter = (() => {
             console.warn('[SpaRouter] Cannot call showSection in iframe:', e);
         }
 
-        // Update nav button active states in parent
+        // Aktualizacja stanów aktywności przycisków nawigacji w rodzicu
         document.querySelectorAll('#spa-section-nav .nav-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.section === sectionId);
         });
@@ -295,25 +302,25 @@ const SpaRouter = (() => {
 
         const transition = startViewTransition();
 
-        // Update header
+        // Aktualizuj nagłówek
         updateAppNav(module);
         toggleBackendIndicator(module);
 
-        // Render section nav only when switching modules
+        // Renderuj nawigację sekcji tylko przy przełączaniu modułów
         if (currentModule !== module) {
             renderSectionNav(module);
         }
 
-        // Hide all iframes
+        // Ukryj wszystkie iframe'y
         Object.values(iframes).forEach((f) => {
             f.style.display = 'none';
         });
 
-        // Show or create the target iframe
+        // Pokaż lub utwórz docelowy iframe
         const iframe = getOrCreateIframe(module);
         let readyPromise = waitForIframeReady(iframe);
 
-        // Force reload if editing or opening an order, to guarantee clean state
+        // Wymuś przeładowanie przy edycji/otwieraniu zamówienia, aby zagwarantować czysty stan
         if (params.edit || params.order) {
             let newSrc = MODULES[module].src;
             Object.entries(params).forEach(([k, v]) => {
@@ -327,29 +334,29 @@ const SpaRouter = (() => {
         iframe.style.display = 'block';
         currentModule = module;
 
-        // Auto-refresh data if module has a refresh function
+        // Auto-odświeżanie danych, jeśli moduł ma funkcję odświeżania
         try {
             refreshModule(module);
         } catch (e) {
-            // Context issues - ignore
+            // Problemy z kontekstem - ignoruj
         }
 
-        // Skip default section navigation when editing/ordering — the iframe handles it
+        // Pomiń domyślną nawigację sekcji podczas edycji/zamawiania — iframe obsługuje to sam
         if (params.edit || params.order) {
             await readyPromise;
             finishViewTransition(transition);
             return;
         }
 
-        // Determine which section to show (default to first section if no tab param)
+        // Określ, którą sekcję pokazać (domyślnie pierwsza, jeśli brak parametru tab)
         let tabToShow = params.tab;
         if (!tabToShow && MODULES[module].sections && MODULES[module].sections.length > 0) {
             tabToShow = MODULES[module].sections[0].id;
         }
 
-        // Navigate to section if specified
+        // Przejdź do sekcji, jeśli określona
         if (tabToShow) {
-            // Wait for iframe to load if it's new
+            // Poczekaj na załadowanie iframe'a, jeśli jest nowy
             if (iframe.contentDocument?.readyState === 'complete') {
                 showSection(tabToShow);
             } else {
@@ -368,7 +375,7 @@ const SpaRouter = (() => {
     }
 
     async function init() {
-        // Auth check
+        // Sprawdzenie autoryzacji
         const token = getAuthToken();
         if (!token) {
             window.location.href = 'index.html';
@@ -383,14 +390,20 @@ const SpaRouter = (() => {
                 return;
             }
 
-            // Display user in header
+            // Wyświetl użytkownika w nagłówku
             const userEl = document.getElementById('header-username');
             const roleEl = document.getElementById('header-role-badge');
             const displayName =
                 authData.user.firstName && authData.user.lastName
                     ? `${authData.user.firstName} ${authData.user.lastName}`
                     : authData.user.username;
-            if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + displayName;
+            if (userEl) {
+                userEl.textContent = '';
+                const icon = document.createElement('i');
+                icon.setAttribute('data-lucide', 'user');
+                userEl.appendChild(icon);
+                userEl.appendChild(document.createTextNode(' ' + displayName));
+            }
             if (roleEl) {
                 const role = authData.user.role;
                 roleEl.textContent = role === 'admin' ? 'ADMIN' : role === 'pro' ? 'PRO' : 'USER';
@@ -421,7 +434,7 @@ const SpaRouter = (() => {
             return;
         }
 
-        // Default hash
+        // Domyślny hash
         if (
             !window.location.hash ||
             window.location.hash === '#' ||
@@ -432,7 +445,7 @@ const SpaRouter = (() => {
 
         window.addEventListener('hashchange', navigate);
 
-        // Allow clicking the current active module icon to reset its state
+        // Pozwala kliknąć ikonę aktywnego modułu, aby zresetować jego stan
         document.querySelectorAll('.nav-apps a.nav-tile').forEach((link) => {
             link.addEventListener('click', (e) => {
                 const href = link.getAttribute('href');
@@ -447,19 +460,19 @@ const SpaRouter = (() => {
     }
 
     /**
-     * Opens an offer in the appropriate module (rury or studnie).
-     * Called from kartoteka iframe via window.parent.SpaRouter.openOfferInModule(...).
+     * Otwiera ofertę w odpowiednim module (rury lub studnie).
+     * Wywoływane z iframe kartoteki przez window.parent.SpaRouter.openOfferInModule(...).
      */
     function openOfferInModule(type, offerId, action = 'edit') {
         const targetModule = type === 'studnia_oferta' ? 'studnie' : 'rury';
         const param = action === 'order' ? 'order' : 'edit';
 
-        // Navigate to target module with edit param
+        // Przejdź do docelowego modułu z parametrem edycji
         window.location.hash = `#/${targetModule}?${param}=${offerId}`;
     }
 
     /**
-     * Refreshes a specific module's data if its iframe exists.
+     * Odświeża dane konkretnego modułu, jeśli jego iframe istnieje.
      */
     function refreshModule(module) {
         const iframe = iframes[module];

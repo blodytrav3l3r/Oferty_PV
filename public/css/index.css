@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════
    index.css — WITROS Landing / Login Page
    Liquid Glass design system with premium dark theme.
    Uses CSS variables from style.css for consistency.
@@ -40,7 +40,7 @@ body.index-page {
     --radius-lg: 24px;
 }
 
-/* ── Custom Scrollbar ── */
+/* ── Niestandardowy pasek przewijania ── */
 body.index-page ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -83,7 +83,7 @@ body.index-page::before {
     }
 }
 
-/* ── Container ── */
+/* ── Kontener ── */
 .container {
     position: relative;
     z-index: 1;
@@ -99,13 +99,14 @@ body.index-page::before {
     width: 100%;
     max-width: 1200px;
     background: var(--glass);
+    -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Compact logo after login */
+/* Kompaktowe logo po zalogowaniu */
 .container.logged-in .index-logo {
     font-size: 2rem;
     margin-bottom: 0.1rem;
@@ -154,23 +155,23 @@ body.index-page::before {
 /* ═══ Liquid Glass Mixin ═══ */
 .glass {
     background: rgba(17, 24, 39, 0.6);
-    backdrop-filter: blur(16px) saturate(1.2);
     -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.2);
     border: 1px solid rgba(99, 102, 241, 0.12);
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* ── Login Form ── */
+/* ── Formularz logowania ── */
 .login-box {
     max-width: 400px;
     margin: 0 auto 2.5rem;
     padding: 2rem;
     border-radius: 20px;
     background: rgba(17, 24, 39, 0.6);
-    backdrop-filter: blur(16px) saturate(1.2);
     -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.2);
     border: 1px solid rgba(99, 102, 241, 0.15);
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.4),
@@ -229,7 +230,7 @@ body.index-page::before {
         600 0.95rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.3s, transform 0.3s;
     margin-top: 0.3rem;
     position: relative;
     overflow: hidden;
@@ -265,7 +266,7 @@ body.index-page::before {
     min-height: 1.2rem;
 }
 
-/* ── User Bar (Hero Navigation) ── */
+/* ── Pasek użytkownika (Nawigacja Hero) ── */
 .user-hero {
     display: flex;
     align-items: center;
@@ -277,6 +278,7 @@ body.index-page::before {
     background: rgba(15, 23, 42, 0.4);
     padding: 0.75rem 1.5rem;
     border-radius: 60px;
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
 }
@@ -339,7 +341,7 @@ body.index-page::before {
         600 0.8rem 'Inter',
         sans-serif;
     text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.25s, transform 0.25s;
     cursor: pointer;
 }
 
@@ -361,7 +363,7 @@ body.index-page::before {
     color: white;
 }
 
-/* ── Launch Cards (Compact) ── */
+/* ── Karty uruchamiania (kompaktowe) ── */
 .launch-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -376,12 +378,13 @@ body.index-page::before {
     align-items: center;
     padding: 1.5rem 2rem;
     background: var(--glass);
+    -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     text-decoration: none;
     color: var(--text-primary);
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform 0.4s, box-shadow 0.4s;
     overflow: hidden;
     gap: 1.5rem;
     text-align: left;
@@ -457,12 +460,12 @@ body.index-page::before {
     padding: 2.5rem 2rem;
     border-radius: 20px;
     background: rgba(17, 24, 39, 0.55);
-    backdrop-filter: blur(16px) saturate(1.2);
     -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.2);
     border: 1px solid rgba(99, 102, 241, 0.1);
     text-decoration: none;
     color: #e2e8f0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.4s, box-shadow 0.4s;
     cursor: pointer;
     overflow: hidden;
     box-shadow:
@@ -592,6 +595,7 @@ body.index-page::before {
 
 .admin-card {
     background: var(--glass);
+    -webkit-backdrop-filter: blur(24px);
     backdrop-filter: blur(24px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
@@ -667,7 +671,7 @@ body.index-page::before {
     border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
-/* Token Badge (Symbol, SubUsers) */
+/* Odznaka tokena (Symbol, SubUsers) */
 .token-badge {
     display: inline-block;
     background: rgba(255, 255, 255, 0.06);
@@ -680,7 +684,7 @@ body.index-page::before {
     color: #e2e8f0;
 }
 
-/* Inline Admin Form */
+/* Formularz admina inline */
 .admin-form-inline {
     display: flex;
     flex-direction: column;
@@ -707,7 +711,7 @@ body.index-page::before {
     border-radius: 6px;
     color: var(--text-primary);
     outline: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .glass-input::placeholder {
@@ -805,9 +809,9 @@ body.index-page::before {
     background: rgba(99, 102, 241, 0.2) !important;
 }
 
-/* ── Shared Header Visibility Override (index page) ── */
-/* Header uses shared .header class from style.css.
-   On the index page, it starts hidden and is shown via JS after login. */
+/* ── Współdzielone nadpisanie widoczności nagłówka (strona index) ── */
+/* Nagłówek używa współdzielonej klasy .header z style.css.
+   Na stronie index jest początkowo ukryty i pokazywany przez JS po zalogowaniu. */
 body.index-page .header {
     display: none;
 }
@@ -816,7 +820,7 @@ body.index-page .header.visible {
     display: block;
 }
 
-/* ── Footer ── */
+/* ── Stopka ── */
 .footer {
     position: absolute;
     bottom: 1.5rem;
@@ -830,7 +834,7 @@ body.index-page .header.visible {
     display: none !important;
 }
 
-/* ── Responsive ── */
+/* ── Widok responsywny ── */
 @media (max-width: 700px) {
     .index-logo {
         font-size: 2.5rem;
@@ -843,4 +847,58 @@ body.index-page .header.visible {
         width: 90%;
         max-width: 320px;
     }
+    .index-logo {
+        font-size: 2rem;
+    }
+    .subtitle {
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+}
+
+@media (max-width: 640px) {
+    .launch-grid {
+        grid-template-columns: 1fr;
+    }
+    .user-hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.8rem;
+        border-radius: 20px;
+        padding: 0.8rem;
+    }
+    .user-profile-card {
+        justify-content: center;
+    }
+    .user-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .container.logged-in .index-logo {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .login-box {
+        padding: 1.2rem;
+    }
+    .admin-card {
+        padding: 0.3rem 0.8rem;
+    }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  body.index-page::before,
+  .index-logo {
+    animation: none !important;
+    transition: none !important;
+  }
 }

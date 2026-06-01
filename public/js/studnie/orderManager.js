@@ -91,7 +91,7 @@ async function createOrderFromOffer() {
     } else {
         // Automatycznie zapisz ofertę, aby upewnić się, że najnowszy stan został przesłany do SQLite i odświeżony
         const saveOk = await saveOfferStudnie();
-        if (!saveOk) return; // Save failed or locked
+        if (!saveOk) return; // Zapis nie powiodl sie lub zablokowany
     }
 
     const number = document.getElementById('offer-number').value.trim();
@@ -940,22 +940,6 @@ function renderPrzejsciaDetailsTable(existingData) {
     }
 
     // Przywróć dane jeśli istnieją
-    if (false && existingData && Array.isArray(existingData)) {
-        _customPrzejscieRows = existingData.filter((r) => r.source === 'custom');
-
-        // Nadpisz wartości z zapisanych danych do typów z oferty
-        offerTypes.forEach((ot) => {
-            const saved = existingData.find((s) => s.source === 'offer' && s.rodzaj === ot.rodzaj);
-            if (saved) {
-                ot.dnOd = saved.dnOd ?? ot.dnOd;
-                ot.dnDo = saved.dnDo ?? ot.dnDo;
-                ot.ilosc = saved.ilosc || 1;
-                ot.uwagi = saved.uwagi || '';
-                ot.czyPrzejscie = saved.czyPrzejscie || 'TAK';
-            }
-        });
-    }
-
     const allRows = [..._offerPrzejscieRows, ..._customPrzejscieRows];
 
     if (allRows.length === 0) {
@@ -1309,10 +1293,10 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     }
 
     // Przelicz sumy tylko dla wybranych studni korzystając z rabatów oferty
-    const effectiveDiscounts = (offer && offer.wellDiscounts) ? JSON.parse(JSON.stringify(offer.wellDiscounts)) : {};
+    const effectiveDiscounts = (offer && offer.wellDiscounts) ? structuredClone(offer.wellDiscounts) : {};
 
     // Utwórz zamówienie z WYBRANYCH studni — wykonaj głęboką kopię, zapisz oryginalną migawkę
-    const selectedWellsCopy = JSON.parse(JSON.stringify(selectedWells));
+    const selectedWellsCopy = structuredClone(selectedWells);
     // Upewnij się, że kineta jest zsynchronizowana w każdej studni przed zamrożeniem cen
     if (typeof syncKineta === 'function') {
         selectedWellsCopy.forEach((w) => syncKineta(w));
@@ -1337,8 +1321,8 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         wells: selectedWellsCopy,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         originalSnapshot: {
-            wells: JSON.parse(JSON.stringify(selectedWellsCopy)),
-            wellDiscounts: JSON.parse(JSON.stringify(effectiveDiscounts))
+            wells: structuredClone(selectedWellsCopy),
+            wellDiscounts: structuredClone(effectiveDiscounts)
         },
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
@@ -1349,7 +1333,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     };
     
     // Tymczasowo nadpisz globalne rabaty, aby calcWellStats i freezeWellPrices ich użyły
-    const originalGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? JSON.parse(JSON.stringify(wellDiscounts)) : {};
+    const originalGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
     if (typeof wellDiscounts !== 'undefined') {
         window.wellDiscounts = effectiveDiscounts;
     }
@@ -1439,9 +1423,9 @@ function saveOrderStudnie() {
     freezeWellPrices(wells);
 
     // Zaktualizuj studnie zamówienia bieżącym stanem studni (ceny są już zamrożone)
-    order.wells = JSON.parse(JSON.stringify(wells));
+    order.wells = structuredClone(wells);
     if (typeof window.wellDiscounts !== 'undefined') {
-        order.wellDiscounts = JSON.parse(JSON.stringify(window.wellDiscounts));
+        order.wellDiscounts = structuredClone(window.wellDiscounts);
     }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
@@ -1619,7 +1603,7 @@ function getOrderChanges(order) {
     const originalSnapshotData = order.originalSnapshot;
     const originalWells = Array.isArray(originalSnapshotData) ? originalSnapshotData : (originalSnapshotData.wells || []);
     
-    const orig = JSON.parse(JSON.stringify(originalWells));
+    const orig = structuredClone(originalWells);
     if (typeof migrateWellData === 'function') migrateWellData(orig);
     const curr = order.wells;
 
@@ -1770,12 +1754,12 @@ async function enterOrderEditMode(orderId) {
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
 
         // Wczytaj studnie z zamówienia — upewnij się, że wells jest zawsze tablicą
-        wells = Array.isArray(order.wells) ? JSON.parse(JSON.stringify(order.wells)) : [];
+        wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         migrateWellData(wells);
 
         // Załaduj zapisane rabaty z zamówienia (zabezpieczenie, jeśli zamówienie ma własne rabaty)
         if (order.wellDiscounts) {
-            window.wellDiscounts = JSON.parse(JSON.stringify(order.wellDiscounts));
+            window.wellDiscounts = structuredClone(order.wellDiscounts);
         } else {
             // Jeśli stare zamówienie nie ma wellDiscounts, można zostawić obecne lub zresetować:
             // window.wellDiscounts = {}; 
@@ -1909,12 +1893,12 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         
         // Załaduj rabaty zamówienia dla poprawnego przeliczania cen w podglądzie
         if (order.wellDiscounts) {
-            window.wellDiscounts = JSON.parse(JSON.stringify(order.wellDiscounts));
+            window.wellDiscounts = structuredClone(order.wellDiscounts);
         } else {
             window.wellDiscounts = {};
         }
 
-        wells = Array.isArray(order.wells) ? JSON.parse(JSON.stringify(order.wells)) : [];
+        wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         if (typeof migrateWellData === 'function') migrateWellData(wells);
         wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
@@ -2036,13 +2020,13 @@ async function saveCurrentOrder() {
 
     const order = orderEditMode.order;
 
-    // Freeze prices on all elements before saving
+    // Zamroź ceny wszystkich elementów przed zapisem
     freezeWellPrices(wells);
 
     // Zaktualizuj zamówienie bieżącymi studniami (ceny już zamrożone)
-    order.wells = JSON.parse(JSON.stringify(wells));
+    order.wells = structuredClone(wells);
     if (typeof window.wellDiscounts !== 'undefined') {
-        order.wellDiscounts = JSON.parse(JSON.stringify(window.wellDiscounts));
+        order.wellDiscounts = structuredClone(window.wellDiscounts);
     }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
@@ -2257,7 +2241,7 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
     }
 
     // TWORZYMY MIGAWKĘ STANU STUDNI
-    wellsSnapshotBeforeZlecenia = JSON.parse(JSON.stringify(wells));
+    wellsSnapshotBeforeZlecenia = structuredClone(wells);
 
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.add('active');
@@ -2325,7 +2309,7 @@ async function closeZleceniaModal() {
     // Jeśli użytkownik zrezygnował z zapisu, przywracamy stan studni sprzed otwarcia modalu
     if (!savedNow && wellsSnapshotBeforeZlecenia) {
         wells.length = 0;
-        wells.push(...JSON.parse(JSON.stringify(wellsSnapshotBeforeZlecenia)));
+        wells.push(...structuredClone(wellsSnapshotBeforeZlecenia));
         
         if (typeof renderWellsList === 'function') renderWellsList();
         if (typeof updateSummary === 'function') updateSummary();
@@ -2637,7 +2621,7 @@ window.moveZleceniaComponent = function (index, dir) {
 };
 
 function rebuildZleceniaListAndFocus(targetObj) {
-    // Regenerate the big list because indices changed
+    // Wygeneruj ponownie dużą listę, ponieważ indeksy się zmieniły
     initializeZleceniaModal();
 
     if (targetObj) {
@@ -2773,18 +2757,18 @@ function populateZleceniaForm(el) {
         ? orderEditMode.order.number
         : document.getElementById('offer-number')?.value || '';
 
-    // Get user name
+    // Pobierz nazwe uzytkownika
     const userName = currentUser
         ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() ||
           currentUser.username
         : '';
-    // Get firma from offer client
+    // Pobierz firme z klienta oferty
     const clientName = document.getElementById('client-name')?.value || '';
     const investName = document.getElementById('invest-name')?.value || '';
     const investAddress = document.getElementById('invest-address')?.value || '';
     const investContractor = document.getElementById('invest-contractor')?.value || '';
 
-    // Check for existing saved production order
+    // Sprawdz istniejace zapisane zlecenie produkcyjne
     const existing = (productionOrders || []).find(
         (po) => po.wellId === well.id && po.elementIndex === elementIndex
     );
@@ -3695,7 +3679,7 @@ async function saveProductionOrder() {
 
             // Wzbogać o kategorię produktu/DN
             return assigned.map((p) => {
-                const clone = JSON.parse(JSON.stringify(p));
+                const clone = structuredClone(p);
                 const prod = findProductFn(p.productId);
                 if (prod) {
                     clone.productCategory = prod.category || '';
@@ -3744,7 +3728,7 @@ async function saveProductionOrder() {
 
         // AKTUALIZACJA MIGAWKI - zapisano zmiany na studni, więc stają się nowym punktem odniesienia
         if (wellsSnapshotBeforeZlecenia) {
-            wellsSnapshotBeforeZlecenia = JSON.parse(JSON.stringify(wells));
+            wellsSnapshotBeforeZlecenia = structuredClone(wells);
         }
 
         renderZleceniaList();
@@ -4089,7 +4073,7 @@ function buildAutoOrderData(el, sharedData) {
             : allPrzejscia;
 
     const przejsciaSnapshot = assignedPrzejscia.map((p) => {
-        const clone = JSON.parse(JSON.stringify(p));
+        const clone = structuredClone(p);
         const prod = findProductFn(p.productId);
         if (prod) {
             clone.productCategory = prod.category || '';
@@ -4472,7 +4456,7 @@ async function executeBulkGeneration(elements) {
     refreshGlobalMetrics();
 
     if (wellsSnapshotBeforeZlecenia) {
-        wellsSnapshotBeforeZlecenia = JSON.parse(JSON.stringify(wells));
+        wellsSnapshotBeforeZlecenia = structuredClone(wells);
     }
 
     const errMsg = errorCount > 0 ? ` (${errorCount} błędów)` : '';

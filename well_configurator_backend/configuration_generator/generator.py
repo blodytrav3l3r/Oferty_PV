@@ -11,7 +11,7 @@ logger = logging.getLogger("AI_GENERATOR")
 
 
 class _BuildResult:
-    """Helper for internal build results."""
+    """Pomocnik dla wewnętrznych wyników budowania."""
 
     def __init__(self):
         self.items: List[ItemDetail] = []

@@ -2,6 +2,11 @@
 description: Zaktualizuj graf wiedzy Graphify po zmianach w kodzie
 ---
 Zaktualizuj graf wiedzy Graphify (AST-only, bez kosztów API):
-`graphify update .`
+`npm run graphify:ast-update`
 
-Potwierdź że operacja się powiodła. Uruchamiaj po każdej znaczącej zmianie w kodzie.
+Automatyzacja:
+- **post-commit hook**: uruchamia `graphify:ast-update` po każdym commicie
+- **Agent (ja)**: uruchamiam to automatycznie po każdej zmianie kodu
+- **Zero kosztów API**: tylko AST, bez LLM
+
+Potwierdź że operacja się powiodła.

@@ -86,7 +86,8 @@ router.get('/:id', requireAuth, async (req, res) => {
                 lastEditedBy: offer.userId,
                 items: items,
                 transportCost: offer.transportCost || 0,
-                history: JSON.parse(offer.history || '[]')
+                history: JSON.parse(offer.history || '[]'),
+                ...(offer.data ? JSON.parse(offer.data) : {})
             }
         });
     } catch (e: unknown) {

@@ -130,9 +130,9 @@ function renderStudniePriceList() {
     let html = `<div class="table-wrap">
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
         ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" onchange="recalculatePEHD()" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"></div>` : ''}
-        ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj kategorię</button>`}
-        <button class="btn btn-secondary" onclick="addStudnieElement()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus"></i> Dodaj element</button>
-        ${isKinety ? `<button class="btn btn-secondary" onclick="generateDefaultKinety()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plug"></i> Generuj puste Kinety</button>` : ''}
+        ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
+        <button class="btn btn-secondary" onclick="addStudnieElement()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
+        ${isKinety ? `<button class="btn btn-secondary" onclick="generateDefaultKinety()" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
     </div>
     <table style="table-layout: fixed; width: 100%;">
       <thead>
@@ -201,10 +201,10 @@ function renderStudniePriceList() {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(99,102,241,0.06); font-size:0.85rem;">
             <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
-              <button class="btn-icon" title="Dodaj element do tej kategorii" onclick="addStudnieElement('${groupKey.replace(/'/g, "\\'")}')"
-                style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="plus"></i></button>
-              <button class="btn-icon del" title="Usuń całą kategorię" onclick="deleteStudnieCategory('${groupKey.replace(/'/g, "\\'")}')"
-                style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="trash-2"></i></button>
+              <button class="btn-icon" title="Dodaj element do tej kategorii" aria-label="Dodaj element" onclick="addStudnieElement('${groupKey.replace(/'/g, "\\'")}')"
+                style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="plus" aria-hidden="true"></i></button>
+              <button class="btn-icon del" title="Usuń całą kategorię" aria-label="Usuń kategorię" onclick="deleteStudnieCategory('${groupKey.replace(/'/g, "\\'")}')"
+                style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="trash-2" aria-hidden="true"></i></button>
             </div>
           </div>
         </td>
@@ -271,8 +271,8 @@ function renderStudniePriceList() {
             html += `
         <td class="text-right" onclick="editStudnieCell(this,'price','${p.id}')" style="cursor:pointer; font-weight:700; color:var(--success);">${fmtInt(p.price)}</td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" onclick="copyStudnieProduct('${p.id}')"><i data-lucide="clipboard-list"></i></button>
-          <button class="btn-icon" title="Usuń" onclick="deleteStudnieProduct('${p.id}')"><i data-lucide="x"></i></button>
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyStudnieProduct('${p.id}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteStudnieProduct('${p.id}')"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });
@@ -675,7 +675,7 @@ function copyStudnieProduct(id) {
         finalId = `${original.id}-KOP${counter}`;
         counter++;
     }
-    const copied = JSON.parse(JSON.stringify(original));
+    const copied = structuredClone(original);
     copied.id = finalId;
     copied.name = copied.name + ' (Kopia)';
     const index = studnieProducts.findIndex((p) => p.id === id);
@@ -689,9 +689,11 @@ function showAddStudnieProductModal() {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'add-product-modal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
     overlay.innerHTML = `
     <div class="modal">
-      <div class="modal-header"><h3><i data-lucide="plus"></i> Dodaj element</h3><button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+      <div class="modal-header"><h3><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map((c) => `<option value="${c}">${c}</option>`).join('')}</select>
         <input type="text" class="form-input" id="np-custom-category" placeholder="Nazwa nowej kategorii (np. W + PVC)" style="display:none; margin-top:0.5rem;" list="przejscia-cats-list">
@@ -896,7 +898,7 @@ async function resetStudniePriceList() {
                 }))
             )
                 return;
-            studnieProducts = JSON.parse(JSON.stringify(customDefault));
+            studnieProducts = structuredClone(customDefault);
         } else {
             if (
                 !(await appConfirm('Brak własnego cennika. Przywrócić do wartości fabrycznych?', {
@@ -906,7 +908,7 @@ async function resetStudniePriceList() {
             )
                 return;
             const defaultData1 = await getDefaultProductsStudnie();
-            studnieProducts = JSON.parse(JSON.stringify(defaultData1));
+            studnieProducts = structuredClone(defaultData1);
         }
     } catch {
         if (
@@ -917,7 +919,7 @@ async function resetStudniePriceList() {
         )
             return;
         const defaultData2 = await getDefaultProductsStudnie();
-        studnieProducts = JSON.parse(JSON.stringify(defaultData2));
+        studnieProducts = structuredClone(defaultData2);
     }
     await saveStudnieProducts(studnieProducts);
     renderStudniePriceList();
@@ -1278,7 +1280,7 @@ function importStudnieFromExcel(event) {
                 .map((raw, index) => {
                     const product = {};
 
-                    // Map columns - support both Polish headers and raw keys
+                    // Mapowanie kolumn - obsluga zarowno polskich naglowkow jak i surowych kluczy
                     Object.keys(raw).forEach((col) => {
                         const key = HEADER_TO_KEY[col] || col;
                         product[key] = raw[col];
@@ -1390,7 +1392,7 @@ function importStudnieFromExcel(event) {
             console.error('Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
         }
-        event.target.value = ''; // Reset input
+        event.target.value = ''; // Resetuj pole
     };
     reader.onerror = () => showToast('Błąd odczytu pliku', 'error');
     reader.readAsArrayBuffer(file);
@@ -1597,10 +1599,10 @@ function renderPrecoPriceList() {
     let html = `
     <div style="padding:0.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
         <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">
-            <i data-lucide="refresh-cw"></i> Załaduj domyślne
+            <i data-lucide="refresh-cw" aria-hidden="true"></i> Załaduj domyślne
         </button>
         <button class="btn btn-primary" onclick="savePrecoFromUI()" style="font-size:0.8rem; padding:0.4rem 0.8rem;">
-            <i data-lucide="save"></i> Zapisz cennik PRECO
+            <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
     </div>`;
 
@@ -1623,7 +1625,7 @@ function renderPrecoPriceList() {
         // Tabela kinet
         html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">`;
         html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">Kinety — cena prosta / dod. wlot</div>`;
-        html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoKinetaRow(${dn})" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> Dodaj Kinetę</button>`;
+        html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoKinetaRow(${dn})" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" style="width:12px;height:12px;" aria-hidden="true"></i> Dodaj Kinetę</button>`;
         html += `</div>`;
         html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>
             <th style="width:20%;">DN rury</th>
@@ -1636,7 +1638,7 @@ function renderPrecoPriceList() {
                 <td style="font-weight:600; color:#818cf8;"><input type="number" class="edit-input" style="width:100px;" value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.prosta}" data-preco-field="kinety.${i}.prosta" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.dodWlot}" data-preco-field="kinety.${i}.dodWlot" data-preco-dn="${dn}"></td>
-                <td class="text-center"><button class="btn-icon del" onclick="removePrecoKinetaRow(${dn}, ${i})" title="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td>
+                <td class="text-center"><button class="btn-icon del" onclick="removePrecoKinetaRow(${dn}, ${i})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" style="width:14px;height:14px;" aria-hidden="true"></i></button></td>
             </tr>`;
         });
         html += `</tbody></table>`;
@@ -1695,7 +1697,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
 
     let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0 0.3rem;">`;
     html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">${title}</div>`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoRangeRow(${dn}, '${fieldBase}')" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> Dodaj Zakres</button>`;
+    html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoRangeRow(${dn}, '${fieldBase}')" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" style="width:12px;height:12px;" aria-hidden="true"></i> Dodaj Zakres</button>`;
     html += `</div>`;
     
     html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>`;
@@ -1705,13 +1707,13 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
                 <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
                 <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${g}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', '${g}', this.value)" title="Edytuj nazwę grupy">
-                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${g}')" title="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>
+                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${g}')" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" style="width:12px;height:12px;" aria-hidden="true"></i></button>
             </div>
         </th>`;
     });
     html += `<th class="text-center" style="width:15%;">
         <div style="display:flex; justify-content:center; align-items:center; gap:0.3rem;">
-            <button class="btn btn-secondary btn-sm" onclick="addPrecoGrupaCol(${dn}, '${fieldBase}')" style="padding:0.1rem 0.3rem;" title="Dodaj grupę DN"><i data-lucide="plus" style="width:12px;height:12px;"></i></button>
+            <button class="btn btn-secondary btn-sm" onclick="addPrecoGrupaCol(${dn}, '${fieldBase}')" style="padding:0.1rem 0.3rem;" title="Dodaj grupę DN"><i data-lucide="plus" style="width:12px;height:12px;" aria-hidden="true"></i></button>
             <span>Akcje</span>
         </div>
     </th>`;
@@ -1729,7 +1731,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
             grupyKeys.forEach(g => {
                 html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${g}" data-preco-dn="${dn}"></td>`;
             });
-            html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td>`;
+            html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" style="width:14px;height:14px;" aria-hidden="true"></i></button></td>`;
             html += `</tr>`;
         });
     } else {
@@ -1846,7 +1848,7 @@ function togglePrecoAccordion(headerEl, dn) {
 
 /** Odczytuje wartości z inputów UI i buduje obiekt precoPricing */
 function collectPrecoFromUI() {
-    const data = JSON.parse(JSON.stringify(precoPricing));
+    const data = structuredClone(precoPricing);
     document.querySelectorAll('[data-preco-field]').forEach(input => {
         const dn = input.dataset.precoDn;
         const fieldPath = input.dataset.precoField;

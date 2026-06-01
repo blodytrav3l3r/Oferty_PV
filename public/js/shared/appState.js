@@ -24,6 +24,7 @@ const AppState = {
     _editingOfferAssignedUserId: null,
     _editingOfferAssignedUserName: '',
     _isTransportBreakdownExpanded: false,
+    _currentWizardStep: 1,
 
     /* ===== WALIDATORY ===== */
 
@@ -125,6 +126,12 @@ const AppState = {
         this._isTransportBreakdownExpanded = Boolean(value);
     },
 
+    /** Aktualny krok kreatora (1-5) */
+    get currentWizardStep() { return this._currentWizardStep; },
+    set currentWizardStep(value) {
+        this._currentWizardStep = Math.max(1, Math.min(5, Number(value) || 1));
+    },
+
     /* ===== METODY POMOCNICZE ===== */
 
     /**
@@ -137,6 +144,7 @@ const AppState = {
         this._editingOfferAssignedUserId = null;
         this._editingOfferAssignedUserName = '';
         this._isTransportBreakdownExpanded = false;
+        this._currentWizardStep = 1;
     },
 
     /**
@@ -153,7 +161,8 @@ const AppState = {
             editingOfferId: this._editingOfferId,
             editingOfferAssignedUserId: this._editingOfferAssignedUserId,
             editingOfferAssignedUserName: this._editingOfferAssignedUserName,
-            isTransportBreakdownExpanded: this._isTransportBreakdownExpanded
+            isTransportBreakdownExpanded: this._isTransportBreakdownExpanded,
+            currentWizardStep: this._currentWizardStep
         };
     }
 };
@@ -173,7 +182,8 @@ const _appStateGlobalAliases = [
     'editingOfferId',
     'editingOfferAssignedUserId',
     'editingOfferAssignedUserName',
-    'isTransportBreakdownExpanded'
+    'isTransportBreakdownExpanded',
+    'currentWizardStep'
 ];
 
 _appStateGlobalAliases.forEach((key) => {

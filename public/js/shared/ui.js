@@ -3,6 +3,40 @@
  * Eliminuje duplikat showToast/closeModal/toggleCard/showSection z app.js i app_studnie.js.
  */
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getUserDisplayName(user) {
+  if (!user) return '';
+  return user.firstName && user.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user.username || '';
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function trapFocus(container) {
+  const focusable = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    if (e.key === 'Escape') closeModal();
+  });
+}
+
 /**
  * Wyświetla powiadomienie toast.
  * @param {string} msg - treść powiadomienia
@@ -17,14 +51,18 @@ function showToast(msg, type = 'info') {
     }
     const toast = document.createElement('div');
     toast.className = 'toast toast-' + type;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'polite');
 
     const text = document.createElement('span');
     text.innerHTML = msg;
+    if (window.lucide) lucide.createIcons();
     text.style.flex = '1';
     toast.appendChild(text);
 
     const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<i data-lucide="x"></i>';
+    closeBtn.innerHTML = '<i data-lucide="x" aria-hidden="true"></i>';
+    if (window.lucide) lucide.createIcons();
     closeBtn.style.cssText =
         'background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;opacity:.7;';
     closeBtn.addEventListener('click', () => toast.remove());
@@ -86,15 +124,10 @@ function showSection(name) {
  */
 function showUserSelectionPopup(users, defaultUserId) {
     return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.style.cssText =
-            'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; display:flex; align-items:center; justify-content:center;';
+        let resolved = false;
+        const once = (result) => { if (!resolved) { resolved = true; resolve(result); } };
 
-        const modal = document.createElement('div');
-        modal.style.cssText =
-            'background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;';
-
-        let html = `<div style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
+        let html = `<div id="user-selection-title" style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
         html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
         html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
 
@@ -127,11 +160,15 @@ function showUserSelectionPopup(users, defaultUserId) {
         html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:transparent; color:#94a3b8; cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
         html += `</div>`;
 
-        modal.innerHTML = html;
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
+        const overlay = showModal({
+            id: 'user-selection-overlay',
+            titleId: 'user-selection-title',
+            html: `<div class="modal" style="background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;">${html}</div>`,
+            onClose: () => once(null)
+        });
+        if (window.lucide) lucide.createIcons();
 
-        modal.querySelectorAll('.user-select-btn').forEach((btn) => {
+        overlay.querySelectorAll('.user-select-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const userId = btn.getAttribute('data-user-id');
                 const selectedUser = users.find((u) => u.id === userId);
@@ -141,14 +178,14 @@ function showUserSelectionPopup(users, defaultUserId) {
                             ? `${selectedUser.firstName} ${selectedUser.lastName}`
                             : selectedUser.username;
                 }
-                document.body.removeChild(overlay);
-                resolve(selectedUser);
+                overlay.remove();
+                once(selectedUser);
             });
         });
 
-        modal.querySelector('#user-select-cancel').addEventListener('click', () => {
-            document.body.removeChild(overlay);
-            resolve(null);
+        overlay.querySelector('#user-select-cancel').addEventListener('click', () => {
+            overlay.remove();
+            once(null);
         });
     });
 }
@@ -215,86 +252,64 @@ function appConfirm(message, opts = {}) {
     const { title = 'Potwierdzenie', okText = 'OK', cancelText = 'Anuluj', type = 'info' } = opts;
 
     return new Promise((resolve) => {
-        _ensureConfirmDOM();
+        let resolved = false;
+        const once = (result) => { if (!resolved) { resolved = true; resolve(result); } };
 
-        const overlay = document.getElementById('app-confirm-overlay');
-        const titleEl = document.getElementById('app-confirm-title');
-        const msgEl = document.getElementById('app-confirm-message');
-        const okBtn = document.getElementById('app-confirm-ok');
-        const cancelBtn = document.getElementById('app-confirm-cancel');
-        const iconEl = document.getElementById('app-confirm-icon');
+        _ensureConfirmStyles();
 
         const iconMap = { info: '<i data-lucide="info" style="width: 32px; height: 32px; color: #6366f1;"></i>', warning: '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: #f59e0b;"></i>', danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: #ef4444;"></i>' };
         const accentMap = { info: '#6366f1', warning: '#f59e0b', danger: '#ef4444' };
         const accent = accentMap[type] || accentMap.info;
 
-        if (iconEl) iconEl.innerHTML = iconMap[type] || iconMap.info;
-        if (titleEl) {
-            if (opts.allowHtml) {
-                titleEl.innerHTML = title;
-            } else {
-                titleEl.textContent = title;
-            }
-        }
-        if (msgEl) {
-            msgEl.innerHTML = opts.allowHtml ? message.replace(/\n/g, '<br>') : _escapeHtml(message).replace(/\n/g, '<br>');
-        }
+        const safeTitle = opts.allowHtml ? title : _escapeHtml(title);
+        const safeMsg = opts.allowHtml ? message.replace(/\n/g, '<br>') : _escapeHtml(message).replace(/\n/g, '<br>');
 
-        okBtn.innerHTML = okText;
-        okBtn.style.background = accent;
-        cancelBtn.innerHTML = cancelText;
+        const html = `
+            <div class="app-confirm-modal">
+                <div class="app-confirm-icon" id="app-confirm-icon">${iconMap[type] || iconMap.info}</div>
+                <div class="app-confirm-title" id="app-confirm-title">${safeTitle}</div>
+                <div class="app-confirm-message" id="app-confirm-message">${safeMsg}</div>
+                <div class="app-confirm-actions">
+                    <button class="app-confirm-btn" id="app-confirm-cancel">${cancelText}</button>
+                    <button class="app-confirm-btn" id="app-confirm-ok" style="background:${accent}">${okText}</button>
+                </div>
+            </div>`;
 
-        overlay.style.display = 'flex';
-        overlay.style.opacity = '0';
-        requestAnimationFrame(() => {
-            overlay.style.opacity = '1';
+        const overlay = showModal({
+            id: 'app-confirm-overlay',
+            titleId: 'app-confirm-title',
+            html: html,
+            onClose: () => once(false)
         });
-        setTimeout(() => okBtn.focus(), 50);
 
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
             setTimeout(() => window.lucide.createIcons({ root: overlay }), 10);
         }
 
-        const cleanup = (result) => {
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 150);
-            okBtn.removeEventListener('click', onOk);
-            cancelBtn.removeEventListener('click', onCancel);
-            overlay.removeEventListener('keydown', onKey);
-            resolve(result);
-        };
+        setTimeout(() => {
+            const okBtn = document.getElementById('app-confirm-ok');
+            const cancelBtn = document.getElementById('app-confirm-cancel');
+            if (!okBtn || !cancelBtn) return;
 
-        const onOk = () => cleanup(true);
-        const onCancel = () => cleanup(false);
-        const onKey = (e) => {
-            if (e.key === 'Escape') onCancel();
-            if (e.key === 'Enter') onOk();
-        };
+            okBtn.focus();
 
-        okBtn.addEventListener('click', onOk);
-        cancelBtn.addEventListener('click', onCancel);
-        overlay.addEventListener('keydown', onKey);
+            okBtn.addEventListener('click', () => { overlay.remove(); once(true); });
+            cancelBtn.addEventListener('click', () => { overlay.remove(); once(false); });
+
+            overlay.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { overlay.remove(); once(true); }
+            });
+        }, 50);
     });
 }
 
-/** Tworzy DOM modala potwierdzenia jeśli jeszcze nie istnieje */
-function _ensureConfirmDOM() {
-    if (document.getElementById('app-confirm-overlay')) return;
+/** Tworzy style dla modala potwierdzenia jeśli jeszcze nie istnieją */
+function _ensureConfirmStyles() {
+    if (document.getElementById('app-confirm-styles')) return;
 
     const style = document.createElement('style');
+    style.id = 'app-confirm-styles';
     style.textContent = `
-        #app-confirm-overlay {
-            position:fixed; inset:0;
-            background:rgba(0,0,0,0.75);
-            backdrop-filter:blur(4px);
-            z-index:99999;
-            display:none;
-            align-items:center;
-            justify-content:center;
-            transition:opacity 0.15s ease;
-        }
         .app-confirm-modal {
             background:#0d1520;
             border:1px solid #2e2e75;
@@ -336,27 +351,58 @@ function _ensureConfirmDOM() {
         #app-confirm-cancel:hover { color:#fff; background:#2d3e5a; }
     `;
     document.head.appendChild(style);
-
-    const overlay = document.createElement('div');
-    overlay.id = 'app-confirm-overlay';
-    overlay.tabIndex = -1;
-    overlay.innerHTML = `
-        <div class="app-confirm-modal">
-            <div class="app-confirm-icon" id="app-confirm-icon"></div>
-            <div class="app-confirm-title" id="app-confirm-title">Potwierdzenie</div>
-            <div class="app-confirm-message" id="app-confirm-message"></div>
-            <div class="app-confirm-actions">
-                <button class="app-confirm-btn" id="app-confirm-cancel">Anuluj</button>
-                <button class="app-confirm-btn" id="app-confirm-ok">OK</button>
-            </div>
-        </div>`;
-    document.body.appendChild(overlay);
 }
 
 function _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return escapeHtml(str);
 }
 
 window.appConfirm = appConfirm;
+
+/**
+ * Create and show a modal overlay with standard ARIA attributes.
+ * @param {Object} opts
+ * @param {string} opts.id - Overlay element ID
+ * @param {string} opts.title - Modal title (for aria-labelledby)
+ * @param {string} opts.titleId - Element ID for the title
+ * @param {string} opts.html - Modal inner HTML
+ * @param {Function} [opts.onOpen] - Called after modal is shown
+ * @param {Function} [opts.onClose] - Called when modal is closed
+ * @returns {HTMLDivElement} The overlay element
+ */
+window.showModal = function(opts) {
+    const existing = document.getElementById(opts.id);
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = opts.id;
+    overlay.role = 'dialog';
+    overlay.ariaModal = 'true';
+    if (opts.titleId) overlay.setAttribute('aria-labelledby', opts.titleId);
+
+    overlay.innerHTML = opts.html;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            overlay.remove();
+            if (opts.onClose) opts.onClose();
+        }
+    });
+
+    overlay.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            overlay.remove();
+            if (opts.onClose) opts.onClose();
+        }
+    });
+
+    trapFocus(overlay);
+
+    const firstBtn = overlay.querySelector('button');
+    if (firstBtn) setTimeout(function() { firstBtn.focus(); }, 50);
+
+    if (opts.onOpen) opts.onOpen();
+    return overlay;
+};

@@ -71,14 +71,26 @@ const AppZlecenia = (() => {
         return map[val] || val || '';
     }
 
-    /** Simple template interpolation: replaces {{KEY}} with values from dataObj */
+    /** Escape for HTML body content */
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    /** Escape for JS single-quoted strings inside onclick attributes */
+    function escapeJsStr(str) {
+        return String(str ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    /** Prosta interpolacja szablonu: zastępuje {{KEY}} wartościami z dataObj */
     function renderTemplate(template, dataObj) {
         return template.replace(/\{\{([\w_]+)\}\}/g, (match, key) => {
             return dataObj[key] !== undefined ? dataObj[key] : '';
         });
     }
 
-    /** Fetch an HTML template, uses cache-busting for dev */
+    /** Pobiera szablon HTML, używa cache-busting dla dewelopmentu */
     async function fetchTemplate(path) {
         try {
             const res = await fetch(path + '?v=' + Date.now());
@@ -113,7 +125,7 @@ const AppZlecenia = (() => {
         };
     }
 
-    /* ===== SEARCH & FILTER ===== */
+    /* ===== WYSZUKIWANIE I FILTROWANIE ===== */
 
     function setupSearch() {
         const input = document.getElementById('zlecenia-search-input');
@@ -177,7 +189,7 @@ const AppZlecenia = (() => {
         }
     }
 
-    /* ===== STATS ===== */
+    /* ===== STATYSTYKI ===== */
 
     function renderStats() {
         const container = document.getElementById('zlecenia-stats');
@@ -193,28 +205,28 @@ const AppZlecenia = (() => {
 
         container.innerHTML = `
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(129,140,248,0.1); color:#818cf8;"><i data-lucide="layers"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(129,140,248,0.1); color:#818cf8;"><i data-lucide="layers" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${total}</div>
                     <div class="zlecenia-stat-label">Wszystkie zlecenia</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(16,185,129,0.1); color:#34d399;"><i data-lucide="check-check"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(16,185,129,0.1); color:#34d399;"><i data-lucide="check-check" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${accepted}</div>
                     <div class="zlecenia-stat-label">Zatwierdzone</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;"><i data-lucide="hourglass-2"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;"><i data-lucide="hourglass-2" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${draft}</div>
                     <div class="zlecenia-stat-label">Oczekujące</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(168,85,247,0.1); color:#c084fc;"><i data-lucide="zap"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(168,85,247,0.1); color:#c084fc;"><i data-lucide="zap" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${todayCount}</div>
                     <div class="zlecenia-stat-label">Dodane dziś</div>
@@ -260,7 +272,7 @@ const AppZlecenia = (() => {
         }
     }
 
-    /* ===== TABLE RENDER ===== */
+    /* ===== RENDEROWANIE TABELI ===== */
 
     function getFilteredOrders(searchTerm = '') {
         let filtered = ordersCache;
@@ -332,21 +344,21 @@ const AppZlecenia = (() => {
                 const isDraft = !isAccepted && o.id;
                 const isChecked = selectedIds.has(o.id);
 
-                // Action buttons
+                // Przyciski akcji
                 let actions = '';
                 if (o.offerId) {
-                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${o.offerId}', '${o.wellId || ''}', '${o.elementIndex !== undefined ? o.elementIndex : ''}', '${o.dbSalesOrderId || ''}')" title="Edytuj"><i data-lucide="pencil"></i></button>`;
+                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${escapeJsStr(o.offerId)}', '${escapeJsStr(o.wellId || '')}', '${escapeJsStr(o.elementIndex !== undefined ? o.elementIndex : '')}', '${escapeJsStr(o.dbSalesOrderId || '')}')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>`;
                 }
-                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleZlecenie('${o.id}')" title="Drukuj zlecenie"><i data-lucide="printer"></i></button>`;
-                actions += `<button class="action-btn" onclick="AppZlecenia.printSingleEtykieta('${o.id}')" title="Drukuj etykietę"><i data-lucide="tag"></i></button>`;
+                actions += `<button class="action-btn" aria-label="Drukuj zlecenie" onclick="AppZlecenia.printSingleZlecenie('${escapeJsStr(o.id)}')" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>`;
+                actions += `<button class="action-btn" aria-label="Drukuj etykietę" onclick="AppZlecenia.printSingleEtykieta('${escapeJsStr(o.id)}')" title="Drukuj etykietę"><i data-lucide="tag" aria-hidden="true"></i></button>`;
                 if (isDraft) {
-                    actions += `<button class="action-btn action-btn-delete" onclick="AppZlecenia.deleteOrder('${o.id}')" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>`;
+                    actions += `<button class="action-btn action-btn-delete" aria-label="Usuń zlecenie" onclick="AppZlecenia.deleteOrder('${escapeJsStr(o.id)}')" title="Usuń zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>`;
                 }
 
                 return `
                 <tr>
                     <td style="width:40px; text-align:center;">
-                        <input type="checkbox" class="zlecenia-row-cb" data-id="${o.id}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${o.id}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:#818cf8;">
+                        <input type="checkbox" class="zlecenia-row-cb" data-id="${escapeJsStr(o.id)}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${escapeJsStr(o.id)}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:#818cf8;">
                     </td>
                     <td>${orderNum}</td>
                     <td class="date-cell">${formatDate(o.createdAt)}</td>
@@ -356,8 +368,8 @@ const AppZlecenia = (() => {
                     </td>
                     <td>${salesOrderLabel}</td>
                     <td class="element-cell">${elementInfo}</td>
-                    <td><span class="person-badge person-handler"><i data-lucide="user"></i> ${o.handlerName || '—'}</span></td>
-                    <td><span class="person-badge person-creator"><i data-lucide="settings"></i> ${o.creatorName || '—'}</span></td>
+                    <td><span class="person-badge person-handler"><i data-lucide="user" aria-hidden="true"></i> ${o.handlerName || '—'}</span></td>
+                    <td><span class="person-badge person-creator"><i data-lucide="settings" aria-hidden="true"></i> ${o.creatorName || '—'}</span></td>
                     <td><span class="status-badge ${statusConfig.class}">${statusConfig.icon} ${statusConfig.label}</span></td>
                     <td style="text-align:right">
                         <div style="display:flex; gap:0.25rem; justify-content:flex-end;">
@@ -464,7 +476,7 @@ const AppZlecenia = (() => {
         return rows;
     }
 
-    /** Build a Zlecenie SVG graphic from stored przejscia */
+    /** Buduje grafikę SVG zlecenia z zapisanych przejść */
     function generateSvgFromPO(po) {
         const przejscia = po.przejscia || [];
         if (przejscia.length === 0) return '';
@@ -625,7 +637,7 @@ const AppZlecenia = (() => {
         return svg;
     }
 
-    /** Build the full Zlecenie HTML from PO data + template */
+    /** Buduje pełny HTML zlecenia z danych PO + szablonu */
     function buildZlecenieFromPO(template, po) {
         const przejsciaRows = buildPrzejsciaRowsFromPO(po);
 
@@ -681,7 +693,7 @@ const AppZlecenia = (() => {
             GRAFIKA_KATOW: generateSvgFromPO(po)
         };
 
-        // Transitions rows 0-3 (match configurator: render all rows including empty)
+        // Wiersze przejść 0-3 (zgodnie z konfiguratorem: renderuj wszystkie wiersze, także puste)
         for (let i = 0; i < 4; i++) {
             if (przejsciaRows[i]) {
                 payload[`PRZEJSCIA_ROW_${i}`] = `
@@ -700,7 +712,7 @@ const AppZlecenia = (() => {
             }
         }
 
-        // Remaining rows (match configurator: render ALL rows including empty)
+        // Pozostałe wiersze (zgodnie z konfiguratorem: renderuj WSZYSTKIE wiersze, także puste)
         payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
             .slice(4)
             .map(
@@ -742,7 +754,7 @@ const AppZlecenia = (() => {
 
         const cert = getCertData(po.srednica || po.dn);
 
-        // Build element rows from stored snapshot
+        // Zbuduj wiersze elementów z zapisanego migawki
         const elementy = po.etykietaElementy || [];
         const elementRows = elementy
             .map(
@@ -756,7 +768,7 @@ const AppZlecenia = (() => {
             )
             .join('');
 
-        // Use unique SVG ids per page for batch printing
+        // Użyj unikalnych ID SVG dla każdej strony przy drukowaniu wsadowym
         const snrSvgId = 'snr-svg-' + pageIndex;
         const orderSvgId = 'order-svg-' + pageIndex;
 
@@ -770,7 +782,7 @@ const AppZlecenia = (() => {
             CERT_TEXT: cert.text
         };
 
-        // Replace SVG IDs in template to unique per page
+        // Zastąp ID SVG w szablonie unikalnymi dla każdej strony
         let html = renderTemplate(template, payload);
         html = html.replace('id="snr-svg"', `id="${snrSvgId}"`);
         html = html.replace('id="order-svg"', `id="${orderSvgId}"`);
@@ -831,7 +843,7 @@ const AppZlecenia = (() => {
         const template = await fetchTemplate('templates/zlecenie.html');
         if (!template) return;
 
-        // Extract reusable page block from the raw template
+        // Wyodrębnij blok strony wielokrotnego użytku z surowego szablonu
         const pageStartIdx = template.indexOf('<div class="page">');
         const bodyEndIdx = template.lastIndexOf('</body>');
         if (pageStartIdx < 0 || bodyEndIdx < 0) {
@@ -844,7 +856,7 @@ const AppZlecenia = (() => {
         const batchPageStyle =
             '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
 
-        // Populate the page template for each order
+        // Wypełnij szablon strony dla każdego zamówienia
         let allPages = '';
         orders.forEach((po) => {
             allPages += buildZlecenieFromPageBlock(pageTemplate, po) + '\n';
@@ -855,7 +867,7 @@ const AppZlecenia = (() => {
         silentPrint(finalHTML);
     }
 
-    /** Build a single zlecenie page block (no <html>/<head>/<body>) */
+    /** Buduje pojedynczy blok strony zlecenia (bez <html>/<head>/<body>) */
     function buildZlecenieFromPageBlock(pageTemplate, po) {
         const przejsciaRows = buildPrzejsciaRowsFromPO(po);
 
@@ -969,7 +981,7 @@ const AppZlecenia = (() => {
         const template = await fetchTemplate('templates/etykieta.html');
         if (!template) return;
 
-        // Extract the reusable page block and the fitSvgText function from the template
+        // Wyodrębnij wielokrotnego użytku blok strony i funkcję fitSvgText z szablonu
         const pageStartIdx = template.indexOf('<div class="page">');
         const pageEndComment = template.indexOf('<!-- KONIEC BLOKU "page" -->');
         if (pageStartIdx < 0 || pageEndComment < 0) {
@@ -984,7 +996,7 @@ const AppZlecenia = (() => {
         const batchPageStyle =
             '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
 
-        // Build each page with unique SVG IDs
+        // Zbuduj każdą stronę z unikalnymi ID SVG
         let allPages = '';
         let allFitCalls = '';
 
@@ -994,7 +1006,7 @@ const AppZlecenia = (() => {
             allFitCalls += `fitSvgText('snr-svg-${i}'); fitSvgText('order-svg-${i}');\n`;
         });
 
-        // Build final document with SVG fit script
+        // Zbuduj końcowy dokument ze skryptem dopasowania SVG
         const fitScript = `
 <script>
 function runAllFit() {
@@ -1018,7 +1030,7 @@ setTimeout(runAllFit, 400);
         silentPrint(finalHTML);
     }
 
-    /** Build a single etykieta page block with unique SVG IDs */
+    /** Buduje pojedynczy blok strony etykiety z unikalnymi ID SVG */
     function buildEtykietaPageBlock(pageTemplate, po, pageIndex) {
         function getCertData(dn) {
             const dnStr = String(dn || '');
@@ -1060,14 +1072,14 @@ setTimeout(runAllFit, 400);
 
         let html = renderTemplate(pageTemplate, payload);
 
-        // Replace SVG IDs with unique per-page IDs
+        // Zastąp ID SVG unikalnymi ID dla każdej strony
         html = html.replace('id="snr-svg"', `id="snr-svg-${pageIndex}"`);
         html = html.replace('id="order-svg"', `id="order-svg-${pageIndex}"`);
 
         return html;
     }
 
-    /* ===== DELETE ===== */
+    /* ===== USUWANIE ===== */
 
     async function deleteOrder(id) {
         const order = ordersCache.find((o) => o.id === id);
@@ -1120,7 +1132,7 @@ setTimeout(runAllFit, 400);
         }
     }
 
-    /* ===== NAVIGATION ===== */
+    /* ===== NAWIGACJA ===== */
 
     function editOrder(offerId, wellId = '', elementIndex = '', salesOrderId = '') {
         if (!offerId) return;

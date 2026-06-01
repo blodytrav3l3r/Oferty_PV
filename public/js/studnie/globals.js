@@ -57,7 +57,7 @@ const WIZARD_REQUIRED_PARAMS = [
 /* ===== AUTH ===== */
 // getAuthToken(), authHeaders(), appLogout() — dostępne z shared/auth.js
 
-/* ===== TOAST ===== */
+/* ===== TOASTY ===== */
 // showToast() — dostępne z shared/ui.js
 
 /* ===== PRZEŁĄCZANIE KART ===== */
@@ -92,6 +92,34 @@ function showSection(id) {
     if (id === 'offer') {
         syncOfferClientSummary();
         renderOfferSummary();
+
+        // Baner kontekstu
+        const ctxBanner = document.getElementById('offer-context-banner-studnie');
+        const ctxBadge = document.getElementById('offer-context-badge-studnie');
+        const ctxText = document.getElementById('offer-context-text-studnie');
+        if (ctxBanner && ctxBadge && ctxText) {
+            ctxBanner.style.display = 'block';
+            if (orderEditMode) {
+                ctxBadge.innerHTML = '<i data-lucide="package" style="width:14px;height:14px;"></i> Zamówienie (krok 5)';
+                ctxBadge.style.background = 'rgba(52,211,153,0.15)';
+                ctxBadge.style.color = '#34d399';
+                ctxBadge.style.border = '1px solid rgba(52,211,153,0.3)';
+                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+            } else if (editingOfferIdStudnie) {
+                ctxBadge.innerHTML = '<i data-lucide="edit" style="width:14px;height:14px;"></i> Oferta (krok 3)';
+                ctxBadge.style.background = 'rgba(59,130,246,0.15)';
+                ctxBadge.style.color = '#3b82f6';
+                ctxBadge.style.border = '1px solid rgba(59,130,246,0.3)';
+                ctxText.textContent = 'Podgląd oferty — edytuj pozycje w zakładce Konfiguracja.';
+            } else {
+                ctxBadge.innerHTML = '<i data-lucide="file-text" style="width:14px;height:14px;"></i> Nowa oferta';
+                ctxBadge.style.background = 'rgba(156,163,175,0.15)';
+                ctxBadge.style.color = '#9ca3af';
+                ctxBadge.style.border = '1px solid rgba(156,163,175,0.3)';
+                ctxText.textContent = 'Dodaj produkty w zakładce Konfiguracja.';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
     }
 }
 

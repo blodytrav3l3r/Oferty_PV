@@ -1,4 +1,4 @@
-/* ─── 3-column layout: DIAGRAM | CONFIG | STUDNIE ─── */
+﻿/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
 .well-app-layout {
     display: grid;
     grid-template-columns: 350px 1fr 350px;
@@ -6,7 +6,7 @@
     margin: -0.8rem -1.5rem -2rem -1.5rem;
     align-items: stretch;
     height: calc(100vh - 58px);
-    /* 100vh minus header */
+    /* 100vh minus nag��wek */
     overflow: hidden;
     background: var(--bg-primary);
 }
@@ -33,7 +33,7 @@
     }
 }
 
-/* ── Layout modifier for steps 1 and 2 ── */
+/* ── Modyfikator układu dla kroków 1 i 2 ── */
 .well-app-layout.intro-mode {
     grid-template-columns: 1fr;
     max-width: 1200px;
@@ -47,7 +47,7 @@
     display: none !important;
 }
 
-/* ── Left: Well Diagram ── */
+/* ── Lewo: Schemat studni ── */
 .well-diagram-panel {
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-glass);
@@ -119,7 +119,7 @@
     color: var(--success);
 }
 
-/* ── Right: Wells sidebar ── */
+/* ── Prawo: Panel boczny studni ── */
 .wells-sidebar {
     height: 100%;
     display: flex;
@@ -143,7 +143,7 @@
 .well-center-column {
     height: 100%;
     overflow-y: auto;
-    padding: 0 1rem;
+    padding: 0 1rem 4.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -196,7 +196,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 4px;
-    /* for scrollbar */
+    /* dla paska przewijania */
     margin-right: -4px;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -218,7 +218,7 @@
         600 0.72rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .wells-add-btn:hover {
@@ -229,12 +229,13 @@
 .well-list-item {
     background: rgba(26, 37, 54, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     border-radius: 8px;
     padding: 0.4rem 0.6rem;
     margin-bottom: 0.25rem;
     cursor: pointer;
-    transition: all 0.15s ease-out;
+    transition: border-color 0.15s ease-out, background-color 0.15s ease-out, transform 0.15s ease-out;
     position: relative;
 }
 
@@ -334,7 +335,7 @@
     font-weight: 600;
 }
 
-/* ── Well info fields ── */
+/* ── Pola informacji o studni ── */
 .well-info-card {
     background: var(--bg-deep);
     border: 1px solid var(--border-glass);
@@ -415,7 +416,7 @@
     border-radius: 8px;
     padding: 0.4rem 0.5rem;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
@@ -471,7 +472,7 @@
     color: var(--tile-accent, #818cf8);
 }
 
-/* DN Selector */
+/* Selektor DN */
 .dn-selector {
     display: flex;
     gap: 0.25rem;
@@ -488,7 +489,7 @@
         600 0.75rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: border-color 0.15s, color 0.15s;
 }
 
 .dn-btn:hover {
@@ -502,7 +503,7 @@
     color: var(--accent-text);
 }
 
-/* Config table */
+/* Tabela konfiguracji */
 .well-config-table {
     width: 100%;
     border-collapse: collapse;
@@ -536,7 +537,7 @@
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .config-remove-btn:hover {
@@ -552,7 +553,7 @@
     padding: 1px 5px;
     border-radius: 3px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     line-height: 1;
 }
 
@@ -567,7 +568,7 @@
     cursor: not-allowed;
 }
 
-/* Tile type colors */
+/* Kolory typ�w kafelk�w */
 .tile[data-type='dennica'] {
     --tile-accent: #10b981;
 }
@@ -625,7 +626,7 @@
     --tile-accent: #84cc16;
 }
 
-/* Cennik Tabs */
+/* Zak�adki cennika */
 .cennik-tab {
     padding: 0.45rem 1rem;
     border: 1px solid var(--border-glass);
@@ -636,7 +637,7 @@
         600 0.8rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.25s;
+    transition: border-color 0.25s, color 0.25s;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -662,7 +663,7 @@
     flex-shrink: 0;
 }
 
-/* Offer */
+/* Oferta */
 .offer-stats-bar {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -691,7 +692,7 @@
     margin-top: 0.2rem;
 }
 
-/* Inline Builder Tabs */
+/* Zak�adki kreatora inline */
 .b-tab-btn {
     flex: 1;
     padding: 0.45rem;
@@ -701,7 +702,7 @@
     color: var(--text-muted);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: color 0.2s, background-color 0.2s;
     font-size: 0.75rem;
 }
 
@@ -716,7 +717,7 @@
     color: var(--text-primary);
 }
 
-/* Sidebar Tabs */
+/* Zak�adki panelu bocznego */
 .s-tab-btn {
     flex: 1;
     padding: 0.4rem;
@@ -726,7 +727,7 @@
     color: var(--text-muted);
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: color 0.2s, background-color 0.2s;
     font-size: 0.72rem;
     display: flex;
     align-items: center;
@@ -755,7 +756,7 @@
     font-size: 0.72rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease-in-out;
+    transition: border-color 0.15s ease-in-out, color 0.15s ease-in-out;
     white-space: nowrap;
 }
 
@@ -771,7 +772,7 @@
     box-shadow: 0 0 10px var(--warn-bg);
 }
 
-/* Inline Transitions App styles reusing fs-* names but localized */
+/* Style aplikacji Inline Transitions wykorzystuj�ce nazwy fs-* ale zlokalizowane */
 .fs-sidebar {
     background: var(--bg-deep);
     border-right: 1px solid var(--bg-tertiary);
@@ -791,7 +792,7 @@
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -832,19 +833,19 @@
     padding: 1.5rem;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: border-color 0.3s, transform 0.3s, background-color 0.3s;
     position: relative;
     overflow: hidden;
 }
 
 .fs-dn-tile:hover {
-    border-color: var(--indigo-500);
+    border-color: var(--accent);
     transform: translateY(-5px);
     background: #131335;
 }
 
 .fs-dn-tile.active {
-    border-color: var(--indigo-500);
+    border-color: var(--accent);
     background: var(--bg-hover);
     box-shadow: 0 0 20px var(--accent-bg-hover);
 }
@@ -895,7 +896,7 @@
     }
 }
 
-/* ── Wizard Steps ── */
+/* ── Kroki kreatora ── */
 .wizard-indicator {
     display: flex;
     align-items: center;
@@ -938,7 +939,7 @@
     background: var(--border-glass);
     border: 2px solid #334155;
     color: var(--text-muted);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .wizard-step-dot.active .wizard-dot-number {
@@ -999,6 +1000,7 @@
     z-index: 60;
     pointer-events: none;
     background: rgba(2, 6, 23, 0.2);
+    -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
     animation: studnieTransitionFade 0.18s ease both;
 }
@@ -1132,7 +1134,7 @@
         600 0.82rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -1168,6 +1170,63 @@
     border-color: var(--accent-border-dim);
 }
 
+.wizard-btn-apply {
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #fbbf24;
+}
+
+.wizard-btn-apply:hover {
+    background: rgba(245,158,11,0.25);
+    border-color: rgba(245,158,11,0.5);
+}
+
+/* ── Wspólny dolny pasek nawigacji kreatora (fixed) ── */
+.wizard-nav-fixed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-glass);
+    padding: 0.75rem 1.5rem;
+    box-shadow: 0 -4px 20px var(--shadow-color);
+}
+
+.wizard-nav-left {
+    position: absolute;
+    left: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.wizard-nav-right {
+    position: absolute;
+    right: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.wizard-nav-fixed .wizard-step-info {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+
+/* Ikony Lucide w dolnym pasku nawigacji — dopasowane do tekstu przycisków */
+.wizard-nav-fixed .wizard-btn svg.lucide {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.2;
+}
 .wizard-summary-bar {
     display: flex;
     align-items: center;
@@ -1209,7 +1268,7 @@
         600 0.65rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .wizard-summary-edit:first-of-type {
@@ -1324,7 +1383,7 @@
         600 0.6rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .przejscia-vis-action-btn:hover {
@@ -1343,7 +1402,7 @@
     padding: 0.4rem 0.5rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
     text-align: center;
     user-select: none;
 }
@@ -1390,7 +1449,7 @@
     line-height: 1.3;
 }
 
-/* Generic Confirm Modal */
+/* Og�lne okno potwierdzenia */
 .app-confirm-overlay {
     position: fixed;
     top: 0;
@@ -1398,6 +1457,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.75);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     z-index: 9999;
     display: none;
@@ -1444,7 +1504,7 @@
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
 }
 
 .app-confirm-btn-ok {
@@ -1536,7 +1596,7 @@
     align-items: center;
     justify-content: space-between;
     min-height: 57px;
-    /* matches the button bar height */
+    /* dopasowanie do wysoko�ci paska przycisk�w */
     box-shadow: var(--shadow-sm);
 }
 
@@ -1634,7 +1694,7 @@
     }
 }
 
-/* --- WIZARD LOADING STATE --- */
+/* --- STAN �ADOWANIA KREATORA --- */
 .wizard-loading-state .wizard-step {
     display: none !important;
 }
@@ -1665,7 +1725,7 @@ select.form-input option {
     color: #fff;
 }
 
-/* ─── Utility classes for inline style migration ─── */
+/* ─── Klasy narzędziowe do migracji stylów inline ─── */
 /* Font size */
 .fs-085 { font-size: 0.85rem; }
 .fs-075 { font-size: 0.75rem; }
@@ -1688,24 +1748,24 @@ select.form-input option {
 .fw-7 { font-weight: 700; }
 .fw-8 { font-weight: 800; }
 
-/* Flex helpers */
+/* Pomocnicze flex */
 .flex-row { display: flex; flex-direction: row; }
 .flex-center { display: flex; align-items: center; }
 .flex-center-gap-2 { display: flex; align-items: center; gap: 0.2rem; }
 .flex-center-gap-5 { display: flex; align-items: center; gap: 5px; }
 .flex-wrap-start { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
 
-/* Flex sizing */
+/* Wymiary flex */
 .flex-1-180 { flex: 1; min-width: 180px; }
 .flex-1-240 { flex: 1; min-width: 240px; }
 .flex-1-180-hidden { flex: 1; min-width: 180px; display: none; }
 .flex-2-240 { flex: 2; min-width: 240px; }
 
-/* Icon sizing */
+/* Wymiary ikon */
 .icon-sm { width: 16px; height: 16px; }
 .icon-check { accent-color: var(--accent); width: 16px; height: 16px; }
 
-/* Label style for checkboxes */
+/* Styl etykiety dla checkbox�w */
 .checkbox-label { display: flex; align-items: center; gap: 5px; cursor: pointer; color: #d4d4d8; font-size: 0.85rem; }
 
 /* Padding */
@@ -1713,10 +1773,10 @@ select.form-input option {
 .p-5-6 { padding: 0.5rem 0.6rem; }
 .p-6-12 { padding: 0.6rem 1.2rem; }
 
-/* Form inputs wide */
+/* Szerokie pola formularza */
 .form-input-wide { width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; }
 
-/* Text colors */
+/* Kolory tekstu */
 .text-warn { color: var(--warn); }
 
 /* Margins */
@@ -1728,21 +1788,89 @@ select.form-input option {
 /* Misc padding */
 .p-2 { padding: 0.2rem; }
 
-/* Text with nowrap */
+/* Tekst z nowrap */
 .fs-075-nowrap { font-size: 0.75rem; white-space: nowrap; }
 .fs-065-nowrap { font-size: 0.65rem; white-space: nowrap; }
 
 /* Misc */
 .text-muted { color: var(--text-muted); }
 
-/* ─── Offer transport modal: hide spinner ─── */
-#offer-transport-modal input::-webkit-outer-spin-button,
-#offer-transport-modal input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    appearance: none;
-    margin: 0;
+/* ─── Modal transportu oferty: ukryj spinner ─── */
+.spinner-hidden .spinner-border {
+    display: none;
+}
+
+/* Responsywność kreatora */
+
+@media (max-width: 768px) {
+    .wizard-dot-label {
+        display: none;
+    }
+    .wizard-step-dot {
+        gap: 0;
+    }
+    .wizard-step-line {
+        width: 24px;
+    }
+    .wizard-card {
+        padding: 1rem 0.8rem;
+    }
+    /* Przyciski nawigacji kreatora */
+    .wizard-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .wizard-nav .wizard-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .wizard-nav-fixed {
+        padding: 0.6rem 0.8rem;
+        gap: 0.5rem;
+    }
+    .wizard-nav-left { left: 0.8rem; gap: 0.4rem; }
+    .wizard-nav-right { right: 0.8rem; }
+}
+
+@media (max-width: 600px) {
+    .wizard-form-grid {
+        grid-template-columns: 1fr;
+    }
+    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-summary-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+    }
+    .wizard-summary-edit {
+        margin-left: 0 !important;
+    }
+
+    /* Panel 3-kolumnowy w parametrach (już po polsku) */
+    div[style*="grid-template-columns: 1fr 1fr 1fr"][style*="gap: 0.7rem"] {
+        grid-template-columns: 1fr !important;
+    }
 }
 #offer-transport-modal input[type=number] {
     -moz-appearance: textfield;
     appearance: textfield;
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .fs-inputs-pane,
+  .wizard-step,
+  .przejscia-vis-popup,
+  .app-confirm-overlay,
+  .main.studnie-view-transitioning::after,
+  .zlecenia-overlay,
+  .loading-spinner-inline {
+    animation: none !important;
+    transition: none !important;
+  }
 }

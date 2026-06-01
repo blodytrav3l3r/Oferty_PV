@@ -3,8 +3,8 @@
 
 /* ===== BLOKADA OFERTY - BANER ===== */
 const OFFER_LOCKED_MSG =
-    '<i data-lucide="lock"></i> Ta studnia jest zablokowana — jest częścią zamówienia. Edytuj ją przez zamówienie.';
-const WELL_LOCKED_MSG = '<i data-lucide="lock"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
+    '<i data-lucide="lock" aria-hidden="true"></i> Ta studnia jest zablokowana — jest częścią zamówienia. Edytuj ją przez zamówienie.';
+const WELL_LOCKED_MSG = '<i data-lucide="lock" aria-hidden="true"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 
 function renderOfferLockBanner() {
     // Jeśli jesteśmy w trybie zamówienia, baner blokady z oferty nie powinien się wyświetlać
@@ -64,7 +64,7 @@ function renderOfferLockBanner() {
                         STUDNIA ZABLOKOWANA
                     </div>
                     <div style="font-size:0.65rem; color:var(--text-muted);">
-                        „${well.name}" jest częścią zamówienia${wellOrder ? ' ' + (wellOrder.orderNumber || '') : ''}.
+                        „${escapeHtml(well.name)}" jest częścią zamówienia${wellOrder ? ' ' + escapeHtml(wellOrder.orderNumber || '') : ''}.
                         Edytuj ją przez zamówienie lub wybierz inną studnię.
                         <span style="color:#34d399; font-weight:700;">${progress.ordered}/${progress.total} studni zamówionych</span>
                     </div>
@@ -178,7 +178,7 @@ function updateParamTilesUI() {
     const powlokaZGroup = document.getElementById('powloka-name-z-group');
     if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
 
-    // Show/hide precoFullHeight param group based on kineta
+    // Pokaz/ukryj grupe parametrow precoFullHeight na podstawie kinety
     const precoGroupWizard = document.getElementById('preco-full-height-wizard-group');
     if (precoGroupWizard) {
         precoGroupWizard.style.display = (kinetaVal === 'preco' || kinetaVal === 'precotop') ? 'flex' : 'none';
@@ -476,7 +476,7 @@ function renderWellParams() {
         if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. wew.</span>`;
-            html += `<input type="text" value="${well.powlokaNameW || ''}" onfocus="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onfocus="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. wew.</span>`;
@@ -487,7 +487,7 @@ function renderWellParams() {
         if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. zew.</span>`;
-            html += `<input type="text" value="${well.powlokaNameZ || ''}" onfocus="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onfocus="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. zew.</span>`;
@@ -507,7 +507,7 @@ function renderWellParams() {
 
     html += `</div>`;
     html += `<div style="display:flex; gap:0.4rem; margin-top:1rem; justify-content:flex-end;">`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;"><i data-lucide="refresh-cw"></i> Przywróć domyślne (Krok 2)</button>`;
+    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne (Krok 2)</button>`;
     html += `</div>`;
 
     container.innerHTML = html;
@@ -564,7 +564,7 @@ function renderDiscountPanel() {
         grandDiscounted = 0;
 
     let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:0.5px; margin-bottom:0.3rem;"><i data-lucide="banknote"></i> Rabaty i podsumowanie</div>`;
+        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:0.5px; margin-bottom:0.3rem;"><i data-lucide="banknote" aria-hidden="true"></i> Rabaty i podsumowanie</div>`;
 
     activeDNs.forEach((dn) => {
         const groupWells = wells.filter((w) => w.dn === dn);
@@ -683,7 +683,7 @@ function renderDiscountPanel() {
 
         html += `<div style="background:rgba(168,85,247,0.06); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(168,85,247,0.15);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-            <span style="font-size:0.82rem; font-weight:700; color:#c084fc;"><i data-lucide="paintbrush"></i> Koszt malowania</span>
+            <span style="font-size:0.82rem; font-weight:700; color:#c084fc;"><i data-lucide="paintbrush" aria-hidden="true"></i> Koszt malowania</span>
             <span style="font-size:0.6rem; color:var(--text-muted);">PLN / m²</span>
           </div>
           <div style="display:grid; grid-template-columns:1fr auto; gap:0.25rem 0.45rem; font-size:0.78rem; align-items:center;">`;
@@ -869,7 +869,7 @@ window.renderWellsList = function renderWellsList() {
                       ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
                       : w.configStatus === 'WARNING'
                         ? '<span title="' +
-                          (w.configErrors || []).join('; ') +
+                          (w.configErrors || []).map(e => escapeHtml(e)).join('; ') +
                           '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
                         : w.configStatus === 'OK'
                           ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'
@@ -891,7 +891,7 @@ window.renderWellsList = function renderWellsList() {
             let errorsHtml = '';
             if (w.configErrors && w.configErrors.length > 0) {
                 const color = w.configStatus === 'ERROR' ? '#ef4444' : '#f59e0b';
-                errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.join('<br>')}</div>`;
+                errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.map(e => escapeHtml(e)).join('<br>')}</div>`;
             }
 
             let wellLockBadge = '';
@@ -939,10 +939,10 @@ window.renderWellsList = function renderWellsList() {
 
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
-                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${w.name}">${w.name}</div>
+                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escapeHtml(w.name)}">${escapeHtml(w.name)}</div>
                 <div class="well-list-actions">
-                  <button class="well-list-action" title="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list"></i></button>
-                  <button class="well-list-action del" title="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x"></i></button>
+                  <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                  <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
               </div>
               ${badgesHtml}
@@ -982,11 +982,17 @@ window.renderWellsList = function renderWellsList() {
 window.updateSummary = function updateSummary() {
     const well = getCurrentWell();
     if (!well) {
-        document.getElementById('sum-price').textContent = '0 PLN';
-        document.getElementById('sum-weight').textContent = '0 kg';
-        document.getElementById('sum-height').textContent = '0 mm';
-        document.getElementById('sum-area-int').textContent = '0,00 m²';
-        document.getElementById('sum-area-ext').textContent = '0,00 m²';
+        const el = (id) => document.getElementById(id);
+        const sp = el('sum-price');
+        const sw = el('sum-weight');
+        const sh = el('sum-height');
+        const sai = el('sum-area-int');
+        const sae = el('sum-area-ext');
+        if (sp) sp.textContent = '0 PLN';
+        if (sw) sw.textContent = '0 kg';
+        if (sh) sh.textContent = '0 mm';
+        if (sai) sai.textContent = '0,00 m²';
+        if (sae) sae.textContent = '0,00 m²';
 
         const wsHeight = document.getElementById('ws-height');
         const wsReq = document.getElementById('ws-req-height');
@@ -1028,10 +1034,14 @@ window.updateSummary = function updateSummary() {
         }
     }
 
-    document.getElementById('sum-weight').textContent = fmtInt(stats.weight) + ' kg';
-    document.getElementById('sum-height').textContent = fmtInt(stats.height) + ' mm';
-    document.getElementById('sum-area-int').textContent = fmt(stats.areaInt) + ' m²';
-    document.getElementById('sum-area-ext').textContent = fmt(stats.areaExt) + ' m²';
+    const swEl = document.getElementById('sum-weight');
+    const shEl = document.getElementById('sum-height');
+    const saiEl = document.getElementById('sum-area-int');
+    const saeEl = document.getElementById('sum-area-ext');
+    if (swEl) swEl.textContent = fmtInt(stats.weight) + ' kg';
+    if (shEl) shEl.textContent = fmtInt(stats.height) + ' mm';
+    if (saiEl) saiEl.textContent = fmt(stats.areaInt) + ' m²';
+    if (saeEl) saeEl.textContent = fmt(stats.areaExt) + ' m²';
 
     let reqMmText = '—';
     let diffMmText = '—';
