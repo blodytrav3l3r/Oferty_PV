@@ -74,10 +74,11 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
           <th style="width:100%;">Produkt</th>
           <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Cena jedn.</th>
           <th style="width:1%; min-width:60px; text-align:right; white-space:nowrap;">Rabat</th>
-          <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Po rabacie</th>
+          <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Cena po rabacie</th>
           <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Transp/szt</th>
-          <th style="width:1%; min-width:60px; text-align:center; white-space:nowrap;">Ilość</th>
-          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Razem netto</th>${showCmp ? `
+          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena po rabacie + Transp/szt</th>
+          <th style="width:1%; min-width:60px; text-align:center; white-space:nowrap;">Ilość szt.</th>
+          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">RAZEM NETTO</th>${showCmp ? `
           <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena z oferty</th>
           <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Różnica</th>` : ''}
         </tr>
@@ -185,7 +186,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             <td style="text-align:right; color:var(--text-secondary);">${item.discount}%</td>
             <td style="text-align:right; color:var(--text-secondary);">${fmt(priceAfterDiscount)}</td>
             <td style="text-align:right; color:var(--warn);">${tpu > 0 ? fmt(tpu) : '—'}</td>
-            <td style="text-align:center; font-weight:600;">${item.quantity} ${item.lengthM ? 'szt.' : ''}</td>
+            <td style="text-align:right; color:var(--text-primary); font-weight:600;">${fmt(unitTotal)}</td>
+            <td style="text-align:center; font-weight:600;">${item.quantity} szt.</td>
             <td style="text-align:right; font-weight:700; color:var(--success);">${fmt(netto)} PLN</td>
             ${offerPriceCell}${diffCell}
         </tr>`;
@@ -197,7 +199,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const tdColor = totalDiff > 0.01 ? '#34d399' : (totalDiff < -0.01 ? '#f87171' : 'var(--text-muted)');
         const tdSign = totalDiff > 0 ? '+' : '';
         html += `<tr style="font-weight:700; background:rgba(255,255,255,0.02); border-top:2px solid var(--border-glass);">
-            <td colspan="${showCmp ? 8 : 6}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
+            <td colspan="${showCmp ? 9 : 7}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--success);">${fmt(totalNetto)} PLN</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--text-secondary);">${fmt(totalOfferNetto)} PLN</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:${tdColor};">${tdSign}${fmt(totalDiff)} PLN</td>
