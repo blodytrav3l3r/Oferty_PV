@@ -142,48 +142,48 @@ function renderStudniePriceList() {
           ${
               isPrzejscia
                   ? `
-          <th class="text-center" class="ui-col-8">Średnica (DN)</th>
+          <th class="text-center ui-col-8">Średnica (DN)</th>
           <th class="text-right" style="width: 7%;">Waga kg</th>
-          <th class="text-right" class="ui-col-8">Zap. dół</th>
-          <th class="text-right" class="ui-col-8">Zap. góra</th>
-          <th class="text-right" class="ui-col-8">Zap. dół min</th>
-          <th class="text-right" class="ui-col-8">Zap. góra min</th>
+          <th class="text-right ui-col-8">Zap. dół</th>
+          <th class="text-right ui-col-8">Zap. góra</th>
+          <th class="text-right ui-col-8">Zap. dół min</th>
+          <th class="text-right ui-col-8">Zap. góra min</th>
           <th class="text-center" style="width: 4%;" title="Czy przejście jest widoczne w konfiguratorze (1=Tak, 0=Nie)">Dost.</th>
           `
                   : isKinety
                     ? `
           <th class="text-center" style="width: 4%;">DN</th>
-          <th class="text-center" class="ui-col-6">Wys.Sp.</th>
-          <th class="text-center" class="ui-col-5">Pow. m²</th>
+          <th class="text-center ui-col-6">Wys.Sp.</th>
+          <th class="text-center ui-col-5">Pow. m²</th>
           <th class="text-center" style="width: 4%;">Hmin1 mm</th>
           <th class="text-center" style="width: 4%;">Hmax1 mm</th>
-          <th class="text-right" class="ui-col-6">Cena1</th>
-          <th class="text-center" class="ui-col-5">Hmin2 mm</th>
-          <th class="text-center" class="ui-col-5">Hmax2 mm</th>
-          <th class="text-right" class="ui-col-6">Cena2</th>
-          <th class="text-center" class="ui-col-5">Hmin3 mm</th>
-          <th class="text-center" class="ui-col-5">Hmax3 mm</th>
-          <th class="text-right" class="ui-col-6">Cena3</th>
+          <th class="text-right ui-col-6">Cena1</th>
+          <th class="text-center ui-col-5">Hmin2 mm</th>
+          <th class="text-center ui-col-5">Hmax2 mm</th>
+          <th class="text-right ui-col-6">Cena2</th>
+          <th class="text-center ui-col-5">Hmin3 mm</th>
+          <th class="text-center ui-col-5">Hmax3 mm</th>
+          <th class="text-right ui-col-6">Cena3</th>
           `
                     : `
-          <th class="text-right" class="ui-col-5" title="Wysokość [mm]">Wys.</th>
-          <th class="text-right" class="ui-col-5" title="Waga [kg]">Waga</th>
-          <th class="text-right" class="ui-col-5" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
-          <th class="text-right" class="ui-col-5" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
+          <th class="text-right ui-col-5" title="Wysokość [mm]">Wys.</th>
+          <th class="text-right ui-col-5" title="Waga [kg]">Waga</th>
+          <th class="text-right ui-col-5" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
+          <th class="text-right ui-col-5" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
           <th class="text-right" style="width: 4%;" title="Maksymalna ilość sztuk na naczepie 24t">Szt</th>
-          <th class="text-right" class="ui-col-6" title="Dopłata do wkładki PEHD [PLN]">PEHD</th>
-          <th class="text-right" class="ui-col-5" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
-          <th class="text-right" class="ui-col-5" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
-          <th class="text-right" class="ui-col-5" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>
-          <th class="text-right" class="ui-col-5" title="Dopłata za stopnie nierdzewne zamiast drabinki [PLN]">Dr.Ni.</th>
+          <th class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN]">PEHD</th>
+          <th class="text-right ui-col-5" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
+          <th class="text-right ui-col-5" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
+          <th class="text-right ui-col-5" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>
+          <th class="text-right ui-col-5" title="Dopłata za stopnie nierdzewne zamiast drabinki [PLN]">Dr.Ni.</th>
           <th class="text-center" style="width: 3%;" title="Dostępne na magazynie Włocławek (1=Tak, 0=Nie)">M.WL</th>
           <th class="text-center" style="width: 3%;" title="Dostępne na magazynie Kluczbork (1=Tak, 0=Nie)">M.KLB</th>
           <th class="text-center" style="width: 3%;" title="Forma Standardowa: Włocławek (1=Tak, 0=Nie)">FS.WL</th>
           <th class="text-center" style="width: 4%;" title="Forma Standardowa: Kluczbork (1=Tak, 0=Nie)">FS.KLB</th>
           `
           }
-          <th class="text-right" class="ui-col-6">Cena PLN</th>
-          <th class="text-center" class="ui-col-6">Akcje</th>
+          <th class="text-right ui-col-6">Cena PLN</th>
+          <th class="text-center ui-col-6">Akcje</th>
         </tr>
       </thead>`;
 

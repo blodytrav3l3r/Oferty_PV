@@ -3048,31 +3048,31 @@ function populateZleceniaForm(el) {
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
             <div class="form-group-sm" style="margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Obiekt</label>
+                <label class="form-label-sm ui-text-sec">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${existing?.obiekt || investName}" placeholder="Nazwa obiektu...">
             </div>
             <div class="form-group-sm" style="margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Data</label>
+                <label class="form-label-sm ui-text-sec">Data</label>
                 <input type="text" id="zl-data" class="form-input form-input-sm" value="${existing?.data || todayStr}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Adres</label>
+                <label class="form-label-sm ui-text-sec">Adres</label>
                 <input type="text" id="zl-adres" class="form-input form-input-sm" value="${existing?.adres || investAddress}" placeholder="Adres obiektu...">
             </div>
             <div class="form-group-sm" style="margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Nazwisko (przygotował)</label>
+                <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
                 <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${existing?.nazwisko || userName}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Wykonawca</label>
+                <label class="form-label-sm ui-text-sec">Wykonawca</label>
                 <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${existing?.wykonawca || investContractor}" placeholder="Wykonawca...">
             </div>
             <div class="form-group-sm" style="margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Data produkcji</label>
+                <label class="form-label-sm ui-text-sec">Data produkcji</label>
                 <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${existing?.dataProdukcji || ''}">
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
-                <label class="form-label-sm" class="ui-text-sec">Fakturowane na</label>
+                <label class="form-label-sm ui-text-sec">Fakturowane na</label>
                 <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${existing?.fakturowane || clientName}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
             </div>
         </div>
@@ -3124,7 +3124,7 @@ function populateZleceniaForm(el) {
                 
                 <!-- Rodzaj studni -->
                 <div class="form-group-sm" style="margin-top:0.3rem;">
-                    <label class="form-label-sm" class="ui-text-sec">Rodzaj studni</label>
+                    <label class="form-label-sm ui-text-sec">Rodzaj studni</label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;" class="zl-param-group">
                         ${rodzajStudniOptions
                             .map(
