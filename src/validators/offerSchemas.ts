@@ -372,24 +372,58 @@ export type RuryOrdersBatchInput = z.infer<typeof ruryOrdersBatchSchema>;
 export type RuryOrderUpdateInput = z.infer<typeof ruryOrderUpdateSchema>;
 
 /**
+ * Helpery walidacji "nullish" — akceptują null, '' (pusty string) i NaN
+ * jako "brak wartości" (zamieniane na undefined przed właściwą walidacją).
+ *
+ * Używane w schemacie eksportu oferty z zamówienia, gdzie itemy
+ * z in-memory state (`orderCurrentItems`) mogą mieć explicit null/''
+ * w polach opcjonalnych (bo nigdy nie były wypełnione w formularzu).
+ */
+const nullishString = z.preprocess(
+    (v) => (v === null || v === '' ? undefined : v),
+    z.string().optional()
+);
+const nullishNumber = z.preprocess(
+    (v) => (v === null || v === '' || (typeof v === 'number' && Number.isNaN(v)) ? undefined : v),
+    z.number().nonnegative().optional()
+);
+const nullishBoolean = z.preprocess(
+    (v) => (v === null || v === '' ? undefined : v),
+    z.boolean().optional()
+);
+const nullishEnum = <T extends readonly [string, ...string[]]>(values: T) =>
+    z.preprocess(
+        (v) => (v === null || v === '' ? undefined : v),
+        z.enum(values).optional()
+    );
+
+/**
  * Schemat pozycji oferty wysyłanej do eksportu PDF/DOCX
  * z bieżącego stanu edycji zamówienia (krok 5).
  *
- * Wszystkie pola opcjonalne poza wymaganymi (productId, name, unitPrice, quantity)
- * — generator PDF/DOCX ma fallbacki dla brakujących danych (np. category='Inne').
+ * Pola wymagane: productId, name, unitPrice, quantity.
+ * Pola opcjonalne akceptują null/'' jako "brak wartości"
+ * (dzięki helperom nullish*). Generator PDF/DOCX ma fallbacki
+ * dla brakujących danych (np. category='Inne', weight=0).
  */
 export const ruryOfferExportItemSchema = z.object({
     productId: z.string().min(1, 'ID produktu jest wymagane'),
     name: z.string().min(1, 'Nazwa produktu jest wymagana'),
-    unitPrice: z.number().nonnegative('Cena jednostkowa nie może być ujemna'),
-    quantity: z.number().positive('Ilość musi być dodatnia'),
-    discount: z.number().min(0).max(100).optional().default(0),
-    weight: z.number().nonnegative().optional(),
-    category: z.string().optional(),
-    pehdType: z.enum(['PEHD-3MM', 'PEHD-4MM']).optional(),
-    pehdCostPerUnit: z.number().nonnegative().optional(),
-    autoAdded: z.boolean().optional(),
-    uid: z.string().optional()
+    unitPrice: z.preprocess(
+        (v) => (v === null || v === '' ? 0 : v),
+        z.number().nonnegative('Cena jednostkowa nie może być ujemna')
+    ),
+    quantity: z.preprocess(
+        (v) => (v === null || v === '' ? 0 : v),
+        z.number().positive('Ilość musi być dodatnia')
+    ),
+    discount: nullishNumber,
+    weight: nullishNumber,
+    category: nullishString,
+    pehdType: nullishEnum(['PEHD-3MM', 'PEHD-4MM']),
+    pehdCostPerUnit: nullishNumber,
+    autoAdded: nullishBoolean,
+    uid: nullishString
 });
 
 /**
