@@ -399,6 +399,12 @@ body::before {
 .fs-075-nowrap { font-size: 0.75rem; white-space: nowrap; }
 .fs-065-nowrap { font-size: 0.65rem; white-space: nowrap; }
 
+/* Kompaktowa karta (0.6rem 0.8rem) — kanoniczna wartość */
+.card-sm {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
 .form-label-sm {
     display: block;
     font-size: 0.68rem;
