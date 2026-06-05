@@ -16,6 +16,11 @@ function goToPhase(step) {
         return;
     }
 
+    if (step === 3 && window.orderEditMode) {
+        goToPhase(5);
+        return;
+    }
+
     currentWizardStep = step;
 
     document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
@@ -87,6 +92,17 @@ function goToPhase(step) {
         initKartaBudowyStep4();
     }
 
+    if (step === 2 && window.orderEditMode) {
+        const order = (typeof getCurrentRuryOrder === 'function') ? getCurrentRuryOrder() : null;
+        if (order && typeof renderStep2OrderBanner === 'function') {
+            renderStep2OrderBanner(order);
+        }
+    } else {
+        if (typeof hideStep2OrderBanner === 'function') {
+            hideStep2OrderBanner();
+        }
+    }
+
     // Wizualna blokada kropka 5 w trybie edycji oferty
     const step5Dot = document.querySelector('.wizard-step-dot[data-step="5"]');
     if (step5Dot) {
@@ -116,6 +132,13 @@ window.goToPhase = goToPhase;
 function phaseNext() {
     const next = currentWizardStep + 1;
     if (next > 5) return;
+
+    if (window.orderEditMode && currentWizardStep === 2) {
+        if (!validatePhase(2)) return;
+        goToPhase(5);
+        return;
+    }
+
     if (next === 5 && !validatePhase(4)) return;
 
     if (!validatePhase(currentWizardStep)) return;

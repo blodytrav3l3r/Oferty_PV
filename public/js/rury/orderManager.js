@@ -763,6 +763,38 @@ function hideOrderModeBanner() {
     if (el) el.remove();
 }
 
+function renderStep2OrderBanner(orderData) {
+    hideStep2OrderBanner();
+    const banner = document.createElement('div');
+    banner.id = 'step2-order-banner';
+    banner.style.cssText = 'background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;';
+    banner.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">'
+        + '<span style="font-size:1.3rem;">📦</span>'
+        + '<span style="font-weight:700;color:#34d399;">Dodajesz produkty do istniejącego zamówienia</span>'
+        + '<span style="color:var(--text-muted);">|</span>'
+        + '<span style="color:var(--text-muted);font-size:0.85rem;">Zamówienie: <strong style="color:var(--text);">' + escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '—') + '</strong></span>'
+        + '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text);">Dalej</strong> aby przejść do podsumowania.</span>'
+        + '</div>'
+        + '<div style="display:flex;gap:0.5rem;flex-shrink:0;">'
+        + '<button class="btn btn-sm" onclick="goToPhase(5)" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>'
+        + '<button class="btn btn-sm" onclick="exitOrderEditMode()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Wyjdź</button>'
+        + '</div>';
+    const step2 = document.getElementById('wizard-step-2');
+    if (step2 && step2.firstChild) {
+        step2.insertBefore(banner, step2.firstChild);
+    } else if (step2) {
+        step2.appendChild(banner);
+    }
+    if (window.lucide) lucide.createIcons();
+}
+window.renderStep2OrderBanner = renderStep2OrderBanner;
+
+function hideStep2OrderBanner() {
+    const el = document.getElementById('step2-order-banner');
+    if (el) el.remove();
+}
+window.hideStep2OrderBanner = hideStep2OrderBanner;
+
 /* ===== KOPIOWANIE KARTY BUDOWY Z ISTNIEJĄCEGO ZAMÓWIENIA ===== */
 
 function getKartaBudowyCopyOrders() {
