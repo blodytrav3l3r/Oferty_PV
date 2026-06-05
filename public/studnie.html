@@ -3479,18 +3479,18 @@
             </div>
         </div>
 
-        <!-- ===== OFFER TRANSPORT MODAL ===== -->
+        <!-- ===== OFFER TRANSPORT MODAL (ujednolicony ze stylem discounts) ===== -->
         <div id="offer-transport-modal" class="zlecenia-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center;">
             <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 16px; width: 95%; max-width: 820px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div class="gap-2" style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center;; color: #eab308">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1.2rem; background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.08) 100%); border-bottom: 1px solid var(--border-glass);">
+                    <div class="gap-2"  style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; color: #a5b4fc">
                         <i data-lucide="truck" class="icon-sm"></i> Koszty Transportu
                     </div>
-                    <button class="btn btn-icon" onclick="handleOfferTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" class="icon-sm"></i></button>
+                    <button class="btn btn-icon" onclick="handleOfferTransportCancel()" style="color: var(--text-muted); width: 28px; height: 28px;"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
                 </div>
-                <div style="padding: 2rem 1.5rem;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.72rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
-                    <div class="gap-4" style="display: flex;; align-items: flex-end">
+                <div style="padding: 0.75rem 1.2rem; max-height: 75vh; overflow-y: auto;">
+                    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.72rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
+                    <div class="gap-3" style="display: flex; align-items: flex-end;">
                         <div class="form-group" style="flex: 1; margin: 0;">
                             <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
                             <input type="number" id="transport-modal-km" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncTransportFromModal === 'function') syncTransportFromModal()">
@@ -3503,7 +3503,7 @@
                     <div id="transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.65rem; color: var(--text-muted);">
                         <!-- ilość transportów -->
                     </div>
-                    <div id="transport-modal-cost-details" class="gap-3" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr">
+                    <div class="gap-3"  id="transport-modal-cost-details" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr">
                         <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
                             <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Koszt / transport</div>
                             <div id="transport-modal-cost-per-trip" style="font-size: 0.9rem; font-weight: 800; color: #fbbf24;">0 PLN</div>
@@ -3517,14 +3517,14 @@
                             <div id="transport-modal-total-cost" style="font-size: 0.9rem; font-weight: 800; color: #34d399;">0 PLN</div>
                         </div>
                     </div>
-                    <div style="margin-top: 1.75rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 1rem; border-radius: 12px;">
+                    <div style="margin-top: 1rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 1rem; border-radius: 12px;">
                         <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
                         <div id="transport-modal-total-val" style="font-size: 1.05rem; font-weight: 900; color: var(--success); letter-spacing: -1px;">
                             0 PLN
                         </div>
                     </div>
                 </div>
-                <div class="gap-3" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end">
+                <div class="gap-3"  style="padding: 0.6rem 1.2rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end">
                     <button class="btn btn-secondary" onclick="handleOfferTransportCancel()" style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
                     <button class="btn btn-primary" onclick="handleOfferTransportSave()" style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800;"><i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem;"></i> Zastosuj</button>
                 </div>
