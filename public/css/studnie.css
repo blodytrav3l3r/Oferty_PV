@@ -1733,18 +1733,12 @@ select.form-input option {
 /* Kolory tekstu */
 .text-warn { color: var(--warn); }
 
-/* Margins */
-.mb-0 { margin-bottom: 0; }
-.mb-1 { margin-bottom: 1rem; }
-.mt-2-hidden { margin-top: 0.2rem; display: none; }
-.mb-5-p-5-6 { margin-bottom: 0.5rem; padding: 0.5rem 0.6rem; }
+/* Margins - PRZENIESIONE do style.css (shared) */
 
 /* Misc padding */
 .p-2 { padding: 0.2rem; }
 
-/* Tekst z nowrap */
-.fs-075-nowrap { font-size: 0.75rem; white-space: nowrap; }
-.fs-065-nowrap { font-size: 0.65rem; white-space: nowrap; }
+/* Tekst z nowrap - PRZENIESIONE do style.css (shared) */
 
 /* Misc */
 .text-muted { color: var(--text-muted); }

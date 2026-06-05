@@ -7,6 +7,10 @@
     margin: 0 auto;
 }
 
+/* Margins (uzupełnienie shared w style.css dla porządku) */
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 1rem; }
+
 /* ── Karty ── */
 .rury-card {
     background: var(--bg-card);

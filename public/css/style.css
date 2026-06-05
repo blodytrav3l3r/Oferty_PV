@@ -368,7 +368,7 @@ body::before {
 
 .card-compact {
     padding: 0.7rem 1rem !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 0;
 }
 
 .card-title-sm {
@@ -388,6 +388,16 @@ body::before {
 .form-group-sm {
     margin-bottom: 0.4rem;
 }
+
+/* Margins (shared, przeniesione ze studnie.css) */
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 1rem; }
+.mt-2-hidden { margin-top: 0.2rem; display: none; }
+.mb-5-p-5-6 { margin-bottom: 0.5rem; padding: 0.5rem 0.6rem; }
+
+/* Tekst z nowrap (shared) */
+.fs-075-nowrap { font-size: 0.75rem; white-space: nowrap; }
+.fs-065-nowrap { font-size: 0.65rem; white-space: nowrap; }
 
 .form-label-sm {
     display: block;
