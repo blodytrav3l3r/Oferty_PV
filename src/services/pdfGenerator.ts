@@ -425,7 +425,6 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
                 const hasLength = lengthM > 0;
                 const displayMeters = hasLength ? (meters > 0 ? meters : (lengthM / 1000) * quantity) : 0;
                 const pehdType = String(item.pehdType ?? '');
-                const autoAdded = item.autoAdded === true;
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
                 const itemPrice = unitPrice * (1 - discount / 100) + pehdCost + surcharge;
@@ -437,7 +436,6 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
                 let displayName = name;
                 if (pehdType === 'PEHD-3MM') displayName += ' PEHD 3mm';
                 if (pehdType === 'PEHD-4MM') displayName += ' PEHD 4mm';
-                if (autoAdded && !productId.startsWith('ZT-')) displayName += ' <span class="auto-tag">(auto)</span>';
 
                 tabelaPozycji += `<tr>
               <td class="text-center">${globalLp}</td>

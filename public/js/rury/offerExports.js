@@ -156,7 +156,7 @@ function exportOfferPDF(id) {
             if (item.pehdType === 'PEHD-3MM') pName += ' + PEHD 3mm';
             if (item.pehdType === 'PEHD-4MM') pName += ' + PEHD 4mm';
 
-            return `<tr><td>${i + 1}</td><td>${escapeHtml(item.productId)}</td><td>${pName}${item.autoAdded ? ' (uszczelka)' : ''}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
+            return `<tr><td>${i + 1}</td><td>${escapeHtml(item.productId)}</td><td>${pName}</td><td class="text-right">${fmt(item.unitPrice)}</td><td class="text-right">${item.discount}%</td><td class="text-right">${fmt(unitTotal)}</td><td class="text-right">${tpu > 0 ? fmt(tpu) : '—'}</td><td class="text-right">${item.quantity}</td><td class="text-right">${fmt(n)}</td><td class="text-right">${fmt(n * 1.23)}</td></tr>`;
         })
         .join('')}</tbody>
   </table>

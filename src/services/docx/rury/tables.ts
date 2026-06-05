@@ -21,7 +21,6 @@ const SZ_RURY_DH = 20;   // 10pt
 const SZ_RURY_TH = 14;   // 7pt
 const SZ_RURY_TB = 16;   // 8pt
 const SZ_RURY_PID = 14;  // 7pt
-const SZ_RURY_AUTO = 13; // 6.5pt
 import { fmtCurrency, fmtInt, textCell } from '../helpers';
 
 const CATEGORY_ORDER = [
@@ -151,7 +150,6 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
                 ];
                 if (pehdType === 'PEHD-3MM') nameRuns.push(new TextRun({ text: ' PEHD 3mm', size: SZ_RURY_TB, font: FONT, color: '000000' }));
                 if (pehdType === 'PEHD-4MM') nameRuns.push(new TextRun({ text: ' PEHD 4mm', size: SZ_RURY_TB, font: FONT, color: '000000' }));
-                if (item.autoAdded === true && !productId.startsWith('ZT-')) nameRuns.push(new TextRun({ text: ' (auto)', size: SZ_RURY_AUTO, font: FONT, color: 'b45309' }));
 
                 rows.push(
                     new TableRow({
