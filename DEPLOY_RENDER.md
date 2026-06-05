@@ -19,10 +19,13 @@ Po zakończeniu deployu aplikacja będzie dostępna pod adresem `https://witros-
 | Krok | Komenda |
 |---|---|
 | 1. Instalacja zależności | `npm ci` |
-| 2. Generowanie Prisma Client | `npx prisma generate` (via `postinstall`) |
+| 2. Generowanie Prisma Client | `npx prisma generate` |
 | 3. Kompilacja TypeScript | `npm run build` (`tsc`) |
-| 4. Synchronizacja schematu bazy | `npx prisma db push` (w entrypoint) |
-| 5. Start serwera | `node dist/server.js` |
+| 4. Symlink `dist/generated` → `../generated` | `ln -sf ../generated dist/generated` (wymagane — prisma client szuka ścieżki `../generated/prisma` z `dist/src/`) |
+| 5. Synchronizacja schematu bazy (przy starcie) | `npx prisma db push --skip-generate` |
+| 6. Start serwera | `node dist/server.js` |
+
+> **Uwaga:** `prisma db push` uruchamia się przy **każdym starcie** aplikacji (w startCommand). Jest idempotentny — dla niezmienionego schematu to no-op (~100ms).
 
 ## Persistent Disk
 

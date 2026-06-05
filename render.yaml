@@ -19,8 +19,8 @@ services:
       plan: starter
       rootDir: .
       region: oregon
-      buildCommand: npm ci && npx prisma generate && npm run build
-      startCommand: node dist/server.js
+      buildCommand: npm ci && npx prisma generate && npm run build && ln -sf ../generated dist/generated
+      startCommand: npx prisma db push --skip-generate && node dist/server.js
       healthCheckPath: /health
       autoDeploy: true
       envVars:
