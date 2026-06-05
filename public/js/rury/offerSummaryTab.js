@@ -66,21 +66,21 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
     const transportDist = calculateTransportDistribution(items, costPerTrip);
 
-    let html = `<div class="table-wrap"><table style="width:100%;">
+    let html = `<div class="table-wrap"><table style="width:100%; table-layout:auto;">
       <thead>
         <tr>
-          <th style="width:36px;text-align:center"><input type="checkbox" id="select-all-offer-summary" onchange="toggleAllOfferSummaryForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
-          <th style="width:1%; min-width:30px; text-align:center;">Lp.</th>
-          <th style="width:100%;">Produkt</th>
-          <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Cena jedn.</th>
-          <th style="width:1%; min-width:60px; text-align:right; white-space:nowrap;">Rabat</th>
-          <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Cena po rabacie</th>
-          <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Transp/szt</th>
-          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena po rabacie + Transp/szt</th>
-          <th style="width:1%; min-width:60px; text-align:center; white-space:nowrap;">Ilość szt.</th>
-          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">RAZEM NETTO</th>${showCmp ? `
-          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena z oferty</th>
-          <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Różnica</th>` : ''}
+          <th style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" onchange="toggleAllOfferSummaryForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
+          <th style="width:1%; min-width:36px; text-align:center; white-space:nowrap;">Lp.</th>
+          <th style="min-width:200px; max-width:320px; white-space:nowrap;">Produkt</th>
+          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena jedn.</th>
+          <th style="width:1%; min-width:64px; text-align:right; white-space:nowrap;">Rabat</th>
+          <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">Cena po rabacie</th>
+          <th style="width:1%; min-width:90px; text-align:right; white-space:nowrap;">Transp/szt</th>
+          <th style="width:1%; min-width:210px; text-align:right; white-space:nowrap;">Cena po rabacie + Transp/szt</th>
+          <th style="width:1%; min-width:80px; text-align:center; white-space:nowrap;">Ilość szt.</th>
+          <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">RAZEM NETTO</th>${showCmp ? `
+          <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">Cena z oferty</th>
+          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Różnica</th>` : ''}
         </tr>
       </thead>
       <tbody>`;
@@ -180,15 +180,15 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
         html += `<tr style="border-bottom:1px solid var(--border-glass); ${isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : ''}">
             ${summaryCheckboxCell}
-            <td style="text-align:center; color:var(--text-muted); font-weight:600;">${i + 1}</td>
-            <td style="font-weight:600; color:var(--text-primary); max-width: 300px;">${pName}</td>
-            <td style="text-align:right; color:var(--text-secondary);">${fmt(item.unitPrice)}</td>
-            <td style="text-align:right; color:var(--text-secondary);">${item.discount}%</td>
-            <td style="text-align:right; color:var(--text-secondary);">${fmt(priceAfterDiscount)}</td>
-            <td style="text-align:right; color:var(--warn);">${tpu > 0 ? fmt(tpu) : '—'}</td>
-            <td style="text-align:right; color:var(--text-primary); font-weight:600;">${fmt(unitTotal)}</td>
-            <td style="text-align:center; font-weight:600;">${item.quantity} szt.</td>
-            <td style="text-align:right; font-weight:700; color:var(--success);">${fmt(netto)} PLN</td>
+            <td style="text-align:center; color:var(--text-muted); font-weight:600; white-space:nowrap;">${i + 1}</td>
+            <td style="font-weight:600; color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
+            <td style="text-align:right; color:var(--text-secondary); white-space:nowrap;">${fmt(item.unitPrice)}</td>
+            <td style="text-align:right; color:var(--text-secondary); white-space:nowrap;">${item.discount}%</td>
+            <td style="text-align:right; color:var(--text-secondary); white-space:nowrap;">${fmt(priceAfterDiscount)}</td>
+            <td style="text-align:right; color:var(--warn); white-space:nowrap;">${tpu > 0 ? fmt(tpu) : '—'}</td>
+            <td style="text-align:right; color:var(--text-primary); font-weight:600; white-space:nowrap;">${fmt(unitTotal)}</td>
+            <td style="text-align:center; font-weight:600; white-space:nowrap;">${item.quantity} szt.</td>
+            <td style="text-align:right; font-weight:700; color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
             ${offerPriceCell}${diffCell}
         </tr>`;
     });
@@ -199,10 +199,10 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const tdColor = totalDiff > 0.01 ? '#34d399' : (totalDiff < -0.01 ? '#f87171' : 'var(--text-muted)');
         const tdSign = totalDiff > 0 ? '+' : '';
         html += `<tr style="font-weight:700; background:rgba(255,255,255,0.02); border-top:2px solid var(--border-glass);">
-            <td colspan="${showCmp ? 9 : 7}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
-            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--success);">${fmt(totalNetto)} PLN</td>
-            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--text-secondary);">${fmt(totalOfferNetto)} PLN</td>
-            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:${tdColor};">${tdSign}${fmt(totalDiff)} PLN</td>
+            <td colspan="${showCmp ? 9 : 7}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem; white-space:nowrap;">RAZEM</td>
+            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--success); white-space:nowrap;">${fmt(totalNetto)} PLN</td>
+            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">${fmt(totalOfferNetto)} PLN</td>
+            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:${tdColor}; white-space:nowrap;">${tdSign}${fmt(totalDiff)} PLN</td>
         </tr>`;
     }
 
