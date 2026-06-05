@@ -405,6 +405,12 @@ body::before {
     margin-bottom: 0.5rem;
 }
 
+/* Gap scale: 0.25 / 0.5 / 0.75 / 1 rem */
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+
 .form-label-sm {
     display: block;
     font-size: 0.68rem;

@@ -132,7 +132,7 @@
                 <!-- ===== FAZA 1: DANE KLIENTA I OFERTY (identyczny HTML jak studnie) ===== -->
                 <div class="wizard-step active" id="wizard-step-1">
                     <div class="wizard-card">
-                        <div class="wizard-card-header" style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem; padding-bottom: 0.6rem; border-bottom: 1px solid #1b2334;">
+                        <div class="wizard-card-header gap-2" style="display: flex; align-items: center;; margin-bottom: 0.8rem; padding-bottom: 0.6rem; border-bottom: 1px solid #1b2334">
                             <div style="font-size: 1.4rem; background: #1a1a3e; width: 2.4rem; height: 2.4rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                 <i data-lucide="clipboard-list"></i>
                             </div>
@@ -140,7 +140,7 @@
                                 <h2 id="offer-form-title" class="wizard-card-title" style="margin: 0; font-size: 1.15rem; font-weight: 700;">Dane klienta i oferty</h2>
                                 <p class="wizard-card-subtitle" style="margin: 0; font-size: 0.75rem; color: #71717a;">Uzupełnij dane klienta i podstawowe informacje o ofercie</p>
                             </div>
-                            <div style="display: flex; gap: 0.5rem; margin-left: auto">
+                            <div class="gap-2" style="display: flex;; margin-left: auto">
                                 <button class="btn btn-secondary btn-sm" onclick="showClientsDb()" style="padding: 0.4rem 0.8rem; font-size: 0.75rem"><i data-lucide="folder-open"></i> Wczytaj klienta</button>
                                 <button class="btn btn-primary btn-sm" onclick="saveClientToDb()" style="padding: 0.4rem 0.8rem; font-size: 0.75rem"><i data-lucide="save"></i> Zapisz klienta</button>
                             </div>
@@ -311,7 +311,7 @@
                         <div class="wizard-card-content" style="padding: 1rem 0;">
 
                             <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamówienia -->
-                            <div style="display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem;">
+                            <div class="gap-3" style="display: flex;; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem">
                                 <div style="flex: 1; min-width: 0;">
                                     <select id="step4-copy-order-select" class="form-input form-input-wide">
                                         <option value="">Wybierz kartę budowy do skopiowania</option>
@@ -324,7 +324,7 @@
                             </div>
 
                             <!-- Wiersz 1: Emaile i numer oferty -->
-                            <div style="display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; padding: 0.4rem 1.2rem 0.6rem;">
+                            <div class="gap-4" style="display: flex;; align-items: flex-start; flex-wrap: wrap; padding: 0.4rem 1.2rem 0.6rem">
                                 <div class="flex-1-240">
                                     <label style="display:block; font-size:0.75rem; font-weight:700; color:#f59e0b; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
                                         Aktualnie przypisane emaile do faktury
@@ -639,11 +639,10 @@
                             <div style="padding: 0.6rem 1.2rem;">
                                 <div style="background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.2); border-radius: 10px; padding: 0.8rem; position: relative;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                                        <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; color:#a78bfa; text-transform:uppercase; letter-spacing:0.3px;">
+                                        <label class="gap-2" style="display:flex; align-items:center;; font-size:0.75rem; font-weight:700; color:#a78bfa; text-transform:uppercase; letter-spacing:0.3px">
                                             <i data-lucide="link"></i> Przejścia szczelne — szczegóły z oferty
                                         </label>
-                                        <button type="button" id="step4-add-custom-przejscie-btn" onclick="addCustomPrzejscieRow()"
-                                            style="display:flex; align-items:center; gap:0.3rem; background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3); color:#c4b5fd; font-size:0.65rem; font-weight:700; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; transition:all 0.15s; text-transform:uppercase; letter-spacing:0.3px;"
+                                        <button type="button" id="step4-add-custom-przejscie-btn" onclick="addCustomPrzejscieRow()" class="gap-1" style="display:flex; align-items:center;; background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3); color:#c4b5fd; font-size:0.65rem; font-weight:700; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; transition:all 0.15s; text-transform:uppercase; letter-spacing:0.3px"
                                             onmouseenter="this.style.background='rgba(139,92,246,0.25)';this.style.borderColor='rgba(139,92,246,0.5)'"
                                             onmouseleave="this.style.background='rgba(139,92,246,0.12)';this.style.borderColor='rgba(139,92,246,0.3)'">
                                             <i data-lucide="plus" style="width:12px;height:12px;"></i> Dodaj niestandardowe
@@ -691,7 +690,7 @@
                                             <th style="text-align:right"><span style="display:block;text-align:center">Wersja handlowa</span></th>
                                             <th style="text-align:right"><span style="display:block;text-align:center">Akcje</span></th>
                                             <th style="width:1%; min-width:44px; text-align:center; padding:0.3rem;">
-                                                <button type="button" id="btn-toggle-price-cmp" onclick="togglePriceComparison()" title="Pokaż/ukryj porównanie z ofertą" style="background:none;border:1px solid var(--border-glass);border-radius:6px;padding:0.3rem 0.5rem;cursor:pointer;color:var(--text-secondary);display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;">
+                                                <button type="button" id="btn-toggle-price-cmp" onclick="togglePriceComparison()" title="Pokaż/ukryj porównanie z ofertą" class="gap-1" style="background:none;border:1px solid var(--border-glass);border-radius:6px;padding:0.3rem 0.5rem;cursor:pointer;color:var(--text-secondary);display:inline-flex;align-items:center;;font-size:0.7rem">
                                                     <i data-lucide="scale" style="width:14px;height:14px"></i>
                                                     <span id="btn-toggle-price-cmp-label">Pokaż porównanie</span>
                                                 </button>
@@ -720,8 +719,8 @@
             <div class="section" id="section-offer" style="padding-bottom: 140px;">
                 <!-- Baner kontekstu: oferta / zamówienie -->
                 <div id="offer-context-banner" style="display:none; margin-bottom:0.75rem;">
-                    <div class="card" style="padding:0.5rem 0.75rem; display:flex; align-items:center; gap:0.75rem;">
-                        <span id="offer-context-badge" style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.72rem; font-weight:700;"></span>
+                    <div class="card gap-3" style="padding:0.5rem 0.75rem; display:flex; align-items:center">
+                        <span id="offer-context-badge" class="gap-1" style="display:inline-flex; align-items:center;; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.72rem; font-weight:700"></span>
                         <span id="offer-context-text" style="font-size:0.78rem; color:var(--text-secondary);"></span>
                     </div>
                 </div>
@@ -740,14 +739,11 @@
                     </div>
                     <div class="card-content" style="margin-top: 0.5rem">
                         <div
-                            id="offer-client-summary"
-                            style="
+                            id="offer-client-summary" class="gap-2" style="
                                 display: grid;
-                                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                                gap: 0.4rem;
+                                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));;
                                 font-size: 0.78rem;
-                                color: var(--text-secondary);
-                            "
+                                color: var(--text-secondary);"
                         >
                             <div>
                                 <span style="color: var(--text-muted); font-size: 0.65rem">Firma:</span>
@@ -801,7 +797,7 @@
                         </label>
                         <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">Data ważności</label>
                     </div>
-                    <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 0.8rem;">
+                    <div class="gap-3" style="display: grid; grid-template-columns: 3fr 1fr">
                         <textarea id="offer-tab-payment-terms" class="wizard-form-input" rows="2" placeholder="Domyślnie przepisywane z kroku 1..." style="resize: vertical; width: 100%; font-size: 0.75rem;"></textarea>
                         <input id="offer-tab-validity" class="wizard-form-input" style="width: 100%; font-size: 0.75rem; text-align: right;" onfocus="this.select()" />
                     </div>
@@ -889,7 +885,7 @@
                         title="Kliknij aby zmienić koszt transportu"
                     >
                         <div class="rury-summary-label">Koszt transportu</div>
-                        <div class="rury-summary-value warn" id="sum-transport-cost" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        <div class="rury-summary-value warn gap-2" id="sum-transport-cost" style="display: flex; align-items: center; justify-content: center">
                             <i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0,00 PLN
                         </div>
                         <div id="rury-active-transport-info" style="font-size: 0.72rem; color: #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; text-align: center; margin-top: 0.15rem;">
@@ -952,14 +948,14 @@
         <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000;">
             <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 16px; width: 95%; max-width: 820px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div id="rury-transport-modal-title" style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem; color: #eab308;">
+                    <div id="rury-transport-modal-title" class="gap-2" style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center;; color: #eab308">
                         <i data-lucide="truck" style="width: 18px; height: 18px;"></i> Koszty Transportu
                     </div>
                     <button class="btn btn-icon" onclick="handleRuryTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
                 </div>
                 <div style="padding: 2rem 1.5rem;">
                     <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.72rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi oferty i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
-                    <div style="display: flex; gap: 1.5rem; align-items: flex-end;">
+                    <div class="gap-4" style="display: flex;; align-items: flex-end">
                         <div class="form-group" style="flex: 1; margin: 0;">
                             <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
                             <input type="number" id="rury-transport-modal-km" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncRuryTransportFromModal === 'function') syncRuryTransportFromModal()">
@@ -970,7 +966,7 @@
                         </div>
                     </div>
                     <div id="rury-transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.7rem; color: var(--text-muted);"></div>
-                    <div id="rury-transport-modal-cost-details" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                    <div id="rury-transport-modal-cost-details" class="gap-3" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr">
                         <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
                             <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Koszt / transport</div>
                             <div id="rury-transport-modal-cost-per-trip" style="font-size: 0.9rem; font-weight: 800; color: #fbbf24;">0 PLN</div>
@@ -989,7 +985,7 @@
                         <div id="rury-transport-modal-total-val" style="font-size: 1.05rem; font-weight: 900; color: var(--success); letter-spacing: -1px;">0 PLN</div>
                     </div>
                 </div>
-                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <div class="gap-3" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end">
                     <button class="btn btn-secondary" onclick="handleRuryTransportCancel()" style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
                     <button class="btn btn-primary" onclick="handleRuryTransportSave()" style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800;"><i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem;"></i> Zastosuj</button>
                 </div>
