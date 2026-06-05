@@ -920,8 +920,11 @@ function renderTiles() {
             html += `<h3 style="color:#f59e0b; margin-bottom:1rem; font-size:1.1rem;">Redukcja (DN${tDn})</h3>`;
             
             groups.forEach((g) => {
+                // Płyty redukcyjne pomijamy — są dostępne w głównej liście kafelków
+                // (wellActions.js:723 + filtr redukcjaDN1000), nie chcemy duplikatu w sekcji Redukcja
+                if (g.types.includes('plyta_redukcyjna')) return;
                 let items = redProducts.filter((p) => g.types.includes(p.componentType));
-                
+
                 if (g.types.includes('uszczelka')) {
                     items = filterSealsByWellType(items, well);
                 }
