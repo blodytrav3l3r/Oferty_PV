@@ -57,9 +57,12 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         return;
     }
 
-    // Sprawdź czy jesteśmy w trybie zamówienia z snapshotem
-    const order = typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
-    const snapItems = order && order.originalSnapshot ? order.originalSnapshot.items || [] : [];
+    // Porównanie cen widoczne tylko w trybie zamówienia + jawnie włączone
+    const order = (window.orderEditMode && typeof getCurrentRuryOrder === 'function')
+        ? getCurrentRuryOrder()
+        : null;
+    const showCmp = !!(order && order.originalSnapshot && window.showPriceComparison);
+    const snapItems = showCmp ? (order.originalSnapshot.items || []) : [];
 
     const transportDist = calculateTransportDistribution(items, costPerTrip);
 
@@ -74,7 +77,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
           <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Po rabacie</th>
           <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Transp/szt</th>
           <th style="width:1%; min-width:60px; text-align:center; white-space:nowrap;">Ilość</th>
-          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Razem netto</th>${snapItems.length > 0 ? `
+          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Razem netto</th>${showCmp ? `
           <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena z oferty</th>
           <th style="width:1%; min-width:80px; text-align:right; white-space:nowrap;">Różnica</th>` : ''}
         </tr>
@@ -139,7 +142,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
         // Oblicz cenę z oferty (snapshot)
         let offerNetto = null;
-        if (snapItems.length > 0 && order && order.originalSnapshot) {
+        if (showCmp) {
             const snapItem = snapItems.find(si => si.uid === item.uid);
             if (snapItem && typeof calcSnapshotItemNetto === 'function') {
                 offerNetto = calcSnapshotItemNetto(snapItem, order.originalSnapshot);
@@ -161,7 +164,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         // Komórki porównania
         let offerPriceCell = '';
         let diffCell = '';
-        if (snapItems.length > 0) {
+        if (showCmp) {
             if (offerNetto !== null) {
                 const diff = netto - offerNetto;
                 const diffColor = diff > 0.01 ? '#34d399' : (diff < -0.01 ? '#f87171' : 'var(--text-muted)');
@@ -189,12 +192,12 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     });
 
     // Podsumowanie z różnicą
-    if (snapItems.length > 0 && totalOfferNetto > 0) {
+    if (showCmp && totalOfferNetto > 0) {
         const totalDiff = totalNetto - totalOfferNetto;
         const tdColor = totalDiff > 0.01 ? '#34d399' : (totalDiff < -0.01 ? '#f87171' : 'var(--text-muted)');
         const tdSign = totalDiff > 0 ? '+' : '';
         html += `<tr style="font-weight:700; background:rgba(255,255,255,0.02); border-top:2px solid var(--border-glass);">
-            <td colspan="${snapItems.length > 0 ? 8 : 6}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
+            <td colspan="${showCmp ? 8 : 6}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--success);">${fmt(totalNetto)} PLN</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--text-secondary);">${fmt(totalOfferNetto)} PLN</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:${tdColor};">${tdSign}${fmt(totalDiff)} PLN</td>
