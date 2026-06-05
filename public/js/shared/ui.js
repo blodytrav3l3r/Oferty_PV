@@ -85,7 +85,7 @@ function closeModal(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     } else {
-        document.querySelectorAll('.modal-overlay').forEach((m) => m.remove());
+        document.querySelectorAll('.js-modal-overlay').forEach((m) => m.remove());
     }
 }
 
@@ -375,7 +375,7 @@ window.showModal = function(opts) {
     if (existing) existing.remove();
 
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+    overlay.className = 'modal-overlay js-modal-overlay';
     overlay.id = opts.id;
     overlay.role = 'dialog';
     overlay.ariaModal = 'true';
