@@ -1,0 +1,41 @@
+# ==============================================
+# WITROS Oferty — konfiguracja Render.com
+# ==============================================
+# Plik deklaratywny dla Render.com Blueprint.
+# Render automatycznie wykryje ten plik i utworzy
+# Web Service + Persistent Disk.
+#
+# Jak użyć:
+#   1. Dashboard Render → "New" → "Blueprint"
+#   2. Wskaż repo: blodytrav3l3r/Oferty_PV
+#   3. Render odczyta poniższą konfigurację
+#   4. Po deployu ustaw DEFAULT_ADMIN_PASSWORD w Environment
+# ==============================================
+
+services:
+    - type: web
+      name: witros-oferty
+      runtime: node
+      plan: starter
+      rootDir: .
+      region: oregon
+      buildCommand: npm ci && npx prisma generate && npm run build
+      startCommand: node dist/server.js
+      healthCheckPath: /health
+      autoDeploy: true
+      envVars:
+          - key: NODE_ENV
+            value: production
+          - key: HOST
+            value: 0.0.0.0
+          - key: PORT
+            value: '10000'
+          - key: DATABASE_URL
+            value: file:/var/data/app_database.sqlite
+          - key: DEFAULT_ADMIN_PASSWORD
+            sync: false
+            generateValue: false
+      disk:
+          name: witros-data
+          mountPath: /var/data
+          sizeGB: 1

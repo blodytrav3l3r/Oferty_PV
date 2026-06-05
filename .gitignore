@@ -96,3 +96,20 @@ data/app_database.sqlite.backup_*
 
 # === Local git hooks (powiązane z graphify które wykluczyliśmy) ===
 .githooks/
+
+# === Python well configurator (osobna usługa, NIE używana przez Node) ===
+# Zachowujemy lokalnie, ale nie pushujemy na GitHub.
+# Nie jest importowane przez Node kod, ma własny requirements.txt i run.py.
+well_configurator_backend/
+
+# === Przykładowe pliki docs/examples (Etykieta_pliki, Zlecenia_pliki, MHT, PDF) ===
+# Próbki wygenerowanych ofert, służą do prezentacji. Nie potrzebne w runtime.
+docs/examples/
+
+# === Assets — źródłowe cenniki (CSV/XLSX) ===
+# Backup danych źródłowych (NIE serwowany przez aplikację).
+# Główne dane produktowe są w public/data/products_studnie.json.
+assets/
+
+# === Archived scripts (lokalne kopie starych wersji) ===
+scripts/archive/

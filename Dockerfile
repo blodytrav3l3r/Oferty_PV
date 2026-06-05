@@ -27,23 +27,23 @@ RUN npm prune --production && \
     npm cache clean --force
 
 # Tworzymy katalog danych i kopiujemy szablon bazy (dla inicjalizacji wolumenu)
-RUN mkdir -p data && \
-    cp data/app_database.sqlite ./app_database.sqlite.template || touch ./app_database.sqlite.template && \
-    chmod -R 755 data
+# Na Render.com Persistent Disk montowany jest w /var/data
+RUN mkdir -p /var/data && \
+    chmod -R 755 /var/data
 
 # Skrypt startowy (naprawa znaków końca linii i uprawnienia)
 RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh && \
     chmod +x ./scripts/docker-entrypoint.sh
 
 ENV NODE_ENV=production
-ENV DATABASE_URL=file:/app/data/app_database.sqlite
-ENV PORT=3000
+ENV DATABASE_URL=file:/var/data/app_database.sqlite
+ENV PORT=10000
 ENV HOST=0.0.0.0
 
-EXPOSE 3000
+EXPOSE 10000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 

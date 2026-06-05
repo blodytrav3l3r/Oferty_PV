@@ -63,8 +63,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
 // Cachowanie: wyłączone w dev, włączone w produkcji
-// W produkcji serwujemy zbudowane pliki z dist/, w dev surowe pliki z public/
-const staticDir = NODE_ENV === 'production' ? 'dist' : 'public';
+// Frontend to vanilla JS/CSS/HTML w public/ — nie wymaga bundlowania.
+// Vite jest dostępny tylko w dev (npm run dev:frontend).
+const staticDir = 'public';
 if (NODE_ENV === 'production') {
     app.use(
         express.static(path.join(process.cwd(), staticDir), {
