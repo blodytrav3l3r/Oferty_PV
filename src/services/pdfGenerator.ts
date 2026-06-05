@@ -282,7 +282,11 @@ export interface StudnieOfferData {
  */
 export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     const formatDate = (dateStr: string) => {
-        try { return new Date(dateStr).toLocaleDateString('pl-PL'); }
+        if (!dateStr) return new Date().toLocaleDateString('pl-PL');
+        // Format YYYY-MM-DD z <input type="date"> traktuj jako local date (nie UTC),
+        // żeby uniknąć przesunięcia dnia w strefach czasowych != UTC.
+        const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
+        try { return new Date(normalized).toLocaleDateString('pl-PL'); }
         catch { return dateStr; }
     };
 
@@ -654,8 +658,11 @@ export function buildContactSectionHTML(
 
 export async function generateStudnieHTML(data: StudnieOfferData): Promise<string> {
     const formatDate = (dateStr: string) => {
+        if (!dateStr) return new Date().toLocaleDateString('pl-PL');
+        // Format YYYY-MM-DD z <input type="date"> traktuj jako local date (nie UTC).
+        const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
         try {
-            return new Date(dateStr).toLocaleDateString('pl-PL');
+            return new Date(normalized).toLocaleDateString('pl-PL');
         } catch {
             return dateStr;
         }

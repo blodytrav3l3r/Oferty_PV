@@ -5,7 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
-import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/offerSchemas';
+import { ruryOrdersBatchSchema, ruryOrderUpdateSchema, ruryOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
 import { generateRuryPDFFromContext, lookupOfferUsers } from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
@@ -17,6 +17,13 @@ const writeOrdersLimiter = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 60,
     message: 'Zbyt wiele operacji na zamówieniach. Odczekaj minutę.'
+});
+
+// Osobny limit dla eksportów PDF/DOCX — generowanie jest kosztowne (puppeteer).
+const exportOrdersLimiter = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 20,
+    message: 'Zbyt wiele eksportów. Odczekaj minutę.'
 });
 
 function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[] }): string {
@@ -223,11 +230,21 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
 // POST /api/orders-rury/:id/export-offer-pdf
 // Generuje PDF oferty w formacie standardowym na podstawie bieżącego stanu edycji zamówienia.
 // Body: { items, clientName, clientNip, clientAddress, clientContact, investName,
-//         investAddress, investContractor, notes, paymentTerms, validity, date,
-//         transportKm, transportRate, orderNumber, offerNumber, authorUser, guardianUser }
-router.post('/:id/export-offer-pdf', requireAuth, writeOrdersLimiter, async (req, res) => {
+//         investAddress, investContractor, notes, paymentTerms, validity, validityDays,
+//         date, transportKm, transportRate, orderNumber, offerNumber }
+router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
+        const parseResult = ruryOfferExportSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res.status(400).json({
+                error: 'Nieprawidłowe dane eksportu oferty',
+                details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
+            });
+        }
+        const body = parseResult.data as Record<string, unknown>;
+        const items = body.items as Array<Record<string, unknown>>;
+
         const docId = req.params.id;
         const o = await prisma.orders_rury_rel.findUnique({
             where: { id: docId },
@@ -242,13 +259,10 @@ router.post('/:id/export-offer-pdf', requireAuth, writeOrdersLimiter, async (req
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
-        const body = (req.body || {}) as Record<string, unknown>;
-        const items = Array.isArray(body.items) ? (body.items as Array<Record<string, unknown>>) : [];
-
         let authorUser: UserContactInfo | null = null;
         let guardianUser: UserContactInfo | null = null;
         try {
-            const lu = await lookupOfferUsers(body as Record<string, unknown>, o.userId || '');
+            const lu = await lookupOfferUsers(body, o.userId || '');
             authorUser = lu.authorUser;
             guardianUser = lu.guardianUser;
         } catch (e) {
@@ -266,7 +280,7 @@ router.post('/:id/export-offer-pdf', requireAuth, writeOrdersLimiter, async (req
             investContractor: String(body.investContractor ?? ''),
             items,
             createdAt: String(body.date ?? new Date().toISOString()),
-            validityDays: 30,
+            validityDays: Number(body.validityDays ?? 30),
             notes: String(body.notes ?? ''),
             paymentTerms: String(body.paymentTerms ?? ''),
             validity: String(body.validity ?? ''),
@@ -275,8 +289,9 @@ router.post('/:id/export-offer-pdf', requireAuth, writeOrdersLimiter, async (req
         };
 
         const pdfBuffer = await generateRuryPDFFromContext(ctx);
+        const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_zamowienie_${(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf"`);
+        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_zamowienie_${safeOrder}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -288,9 +303,19 @@ router.post('/:id/export-offer-pdf', requireAuth, writeOrdersLimiter, async (req
 // POST /api/orders-rury/:id/export-offer-docx
 // Generuje DOCX oferty w formacie standardowym na podstawie bieżącego stanu edycji zamówienia.
 // Body: jak export-offer-pdf
-router.post('/:id/export-offer-docx', requireAuth, writeOrdersLimiter, async (req, res) => {
+router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
+        const parseResult = ruryOfferExportSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res.status(400).json({
+                error: 'Nieprawidłowe dane eksportu oferty',
+                details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
+            });
+        }
+        const body = parseResult.data as Record<string, unknown>;
+        const items = body.items as Array<Record<string, unknown>>;
+
         const docId = req.params.id;
         const o = await prisma.orders_rury_rel.findUnique({
             where: { id: docId },
@@ -305,13 +330,10 @@ router.post('/:id/export-offer-docx', requireAuth, writeOrdersLimiter, async (re
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
-        const body = (req.body || {}) as Record<string, unknown>;
-        const items = Array.isArray(body.items) ? (body.items as Array<Record<string, unknown>>) : [];
-
         let authorUser: UserContactInfo | null = null;
         let guardianUser: UserContactInfo | null = null;
         try {
-            const lu = await lookupOfferUsers(body as Record<string, unknown>, o.userId || '');
+            const lu = await lookupOfferUsers(body, o.userId || '');
             authorUser = lu.authorUser;
             guardianUser = lu.guardianUser;
         } catch (e) {
@@ -341,13 +363,14 @@ router.post('/:id/export-offer-docx', requireAuth, writeOrdersLimiter, async (re
         };
 
         const docxBuffer = await generateRuryDOCXFromContext(ctx);
+        const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="oferta_rury_zamowienie_${ctx.offerNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx"`
+            `attachment; filename="oferta_rury_zamowienie_${safeOrder}.docx"`
         );
         res.send(docxBuffer);
     } catch (e: unknown) {

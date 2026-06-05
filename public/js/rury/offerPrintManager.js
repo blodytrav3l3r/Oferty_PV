@@ -260,8 +260,9 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
             body: JSON.stringify(payload)
         });
         if (!res.ok) {
-            const errText = await res.text().catch(() => 'Unknown error');
-            throw new Error(errText);
+            const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
+            const details = Array.isArray(errBody.details) ? ` (${errBody.details.join('; ')})` : '';
+            throw new Error(`${errBody.error || 'Błąd serwera'}${details}`);
         }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
