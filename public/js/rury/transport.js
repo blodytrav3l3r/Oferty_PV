@@ -26,6 +26,23 @@ function getCostPerTrip() {
  * a suma wszystkich opłat = rzeczywisty całkowity koszt transportu.
  *
  * Zwraca obiekt: productId → transportPerUnit
+ *
+ * --- Pełna formuła ceny pozycji (per item) ---
+ *   unitPrice                           — cena z cennika (products[].price)
+ *     × (1 - discount/100)              — rabat % (item.discount, 0-100)
+ *     = basePriceAfterDiscount
+ *   basePriceAfterDiscount
+ *     + pehdCostPerUnit                 — wkład PEHD (button w tabeli, 0 jeśli brak)
+ *     + surcharge                       — dopłata żelbet (input ręczny w wierszu)
+ *     = priceAfterDiscount              ← "Po rabacie" w tabeli oferty
+ *   priceAfterDiscount
+ *     + transportPerUnit                ← wynik TEJ funkcji
+ *     = unitTotal
+ *   unitTotal × quantity
+ *     = netto                           ← "Razem netto" wiersza
+ *
+ * costPerTrip = transport-km × transport-rate (getCostPerTrip, transport.js:10)
+ * Jeśli costPerTrip <= 0 → zwraca pusty obiekt (brak transportu).
  */
 function calculateTransportDistribution(items, costPerTripOverride) {
     const costPerTrip = costPerTripOverride != null ? costPerTripOverride : getCostPerTrip();
@@ -60,6 +77,18 @@ function calculateTransportDistributionStandalone(items, costPerTrip) {
 
 /* ===== PODSUMOWANIE OFERTY ===== */
 
+/**
+ * Przelicza całą ofertę i aktualizuje sekcje UI: produkty, transport, RAZEM netto/VAT/brutto.
+ *
+ * Składniki sumy RAZEM Netto:
+ *   totalProductsNetto = Σ (priceAfterDiscount × quantity)            ← per pozycja
+ *   totalTransportCost = totalTransports (po konsolidacji) × costPerTrip
+ *   finalTotalNetto    = totalProductsNetto + totalTransportCost
+ *   totalVat (23%)     = finalTotalNetto × 0.23
+ *   totalBrutto        = finalTotalNetto + totalVat
+ *
+ * Efekty uboczne: renderuje breakdown transportu, zakładkę Oferta, sync tabeli kroku 5.
+ */
 function updateOfferSummary() {
     let totalProductsNetto = 0;
     const costPerTrip = getCostPerTrip();
@@ -122,6 +151,31 @@ function updateOfferSummary() {
 
 /* ===== KALKULACJA KURSÓW ===== */
 
+/**
+ * Liczy liczbę kursów transportu z bin-packing konsolidacją.
+ *
+ * MAX_TRANSPORT_WEIGHT = 24000 kg/kurs (stała na górze pliku).
+ *
+ * Per pozycja (po mapowaniu produktu):
+ *   maxByWeight = floor(24000 / currentWeight)
+ *   maxByCount  = product.transport   (limit z cennika)  lub maxByWeight
+ *   maxPerTransport = min(maxByWeight, maxByCount)
+ *   fullTransports  = floor(quantity / maxPerTransport)
+ *   remainder       = quantity %  maxPerTransport
+ *   dedicatedTransports = fullTransports + (remainder > 0 ? 1 : 0)
+ *
+ * Konsolidacja partials (bin-packing, sort malejąco po wadze):
+ *   Jeśli 2+ pozycje mają remainder > 0, pakuje je do wspólnych kursów
+ *   dopóki sumaryczna waga ≤ 24000. Oszczędność = Σ (group.length - 1).
+ *
+ * totalTransports = Σ dedicatedTransports - saved
+ *
+ * Filtruje autoAdded (uszczelki/zt) i pozycje z weight <= 0.
+ *
+ * @returns {{ lines: Array, totalTransports: number, saved: number, consolidated: Array }}
+ *   lines[i] = { productId, name, quantity, weightPerPiece, totalWeight,
+ *                maxPerTransport, fullTransports, remainder, dedicatedTransports }
+ */
 function calculateTransports(items) {
     // Mapuj pozycje do obliczeń z najnowszymi danymi z cennika
     const mappedItems = items.map((i) => {
