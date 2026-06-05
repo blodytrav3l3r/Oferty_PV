@@ -83,3 +83,13 @@ ECC/
 
 # Temp debug
 check_db_temp.js
+
+# === AI Agent configs (autogenerowane, NIE część WITROS) ===
+.kilo/
+.agents/
+.opencode/
+.graphifyignore
+
+# === Temp/working files ===
+scripts/tempRules.js
+data/app_database.sqlite.backup_*
