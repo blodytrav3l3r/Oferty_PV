@@ -1,5 +1,0 @@
-@echo off
-REM post-commit hook template — AST-only graphify update
-REM Copy to .git/hooks/post-commit to activate.
-REM Or run: git config core.hooksPath .githooks
-powershell -NoProfile -NonInteractive -Command "try { npm run graphify:ast-update --silent 2>$null } catch {}"

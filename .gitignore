@@ -93,3 +93,6 @@ check_db_temp.js
 # === Temp/working files ===
 scripts/tempRules.js
 data/app_database.sqlite.backup_*
+
+# === Local git hooks (powiązane z graphify które wykluczyliśmy) ===
+.githooks/
