@@ -3204,67 +3204,6 @@
                             >
                                 <i data-lucide="refresh-cw"></i> Nowa Oferta
                             </button>
-                            <button
-                                class="btn btn-primary btn-sm"
-                                id="btn-save-studnie-offer"
-                                onclick="saveOfferStudnie()"
-                                style="height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0; font-size: 0.75rem;"
-                            >
-                                <i data-lucide="save"></i> Zapisz ofertę
-                            </button>
-                            <button
-                                class="btn btn-sm"
-                                id="btn-create-order-offer"
-                                onclick="createOrderFromOffer()"
-                                style="
-                                    height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0 1rem; font-size: 0.75rem;
-                                    background: #0f3328;
-                                    border: 1px solid #0d2a20;
-                                    color: #34d399;
-                                    white-space: nowrap;
-                                "
-                            >
-                                <i data-lucide="package"></i> Utwórz zamówienie
-                            </button>
-                            <button
-                                class="btn btn-sm"
-                                onclick="openZleceniaProdukcyjne()"
-                                style="
-                                    display: none !important;
-                                    padding: 0.2rem 0.5rem;
-                                    font-size: 0.7rem;
-                                    background: #2d1a08;
-                                    border: 1px solid #5a3010;
-                                    color: #f97316;
-                                "
-                            >
-                                <i data-lucide="factory"></i> Zlecenia produkcyjne
-                            </button>
-                            <button
-                                class="btn btn-sm"
-                                onclick="showOfferExportChoice()"
-                                style="
-                                    height: 48px; min-width: 150px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0; font-size: 0.75rem;
-                                    background: rgba(220, 38, 38, 0.12);
-                                    border: 1px solid rgba(220, 38, 38, 0.3);
-                                    color: #f87171;
-                                "
-                            >
-                                <i data-lucide="file-text"></i> Wydruk
-                            </button>
-                            <button
-                                class="btn btn-sm ml-dashboard-btn"
-                                onclick="showMLDashboard()"
-                                style="
-                                    height: 48px; min-width: 48px; display: none; align-items: center; justify-content: center; gap: 0.4rem; padding: 0 0.6rem; font-size: 0.75rem;
-                                    background: rgba(99, 102, 241, 0.12);
-                                    border: 1px solid rgba(99, 102, 241, 0.3);
-                                    color: #a5b4fc;
-                                "
-                                title="Dashboard AI — statystyki systemu uczenia"
-                            >
-                                <i data-lucide="brain"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="card-content" style="margin-top: 0.5rem">
@@ -3357,8 +3296,6 @@
                             <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Studnie)
                         </h2>
                     </div>
-                    <!-- Transport breakdown will go here -->
-                    <div id="transport-breakdown" class="mb-1"></div>
                     <div id="offer-summary-body"></div>
                 </div>
 
@@ -3381,27 +3318,47 @@
                         class="summary-grid"
                         style="
                             margin: 0 auto;
-                            max-width: 1536px;
+                            max-width: 100%;
                             display: grid;
-                            grid-template-columns: minmax(220px, 1.2fr) 2.5fr minmax(220px, 1.2fr);
-                            gap: 0;
+                            grid-template-columns: 1fr 1.2fr 1.1fr 2.6fr 1.6fr;
+                            gap: 1rem;
                             align-items: stretch;
                             text-align: center;
                         "
                     >
+                        <!-- CENA NETTO -->
+                        <div
+                            class="summary-card"
+                            style="
+                                align-items: center;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                class="label"
+                                style="
+                                    font-size: 0.9rem;
+                                    text-transform: uppercase;
+                                    margin-bottom: 0.3rem;
+                                "
+                            >
+                                Cena Netto
+                            </div>
+                            <div
+                                class="value accent"
+                                id="sum-netto-products"
+                                style="color: var(--accent-hover); font-size: 1.4rem; font-weight: 700; margin: 0;"
+                            >
+                                0,00 PLN
+                            </div>
+                        </div>
                         <!-- TRANSPORT -->
                         <div
                             class="summary-card"
                             onclick="openTransportPopup()"
                             style="
-                                padding: 0.6rem 1rem;
-                                height: 100%;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
                                 align-items: center;
                                 text-align: center;
-                                border-right: 1px solid var(--border-glass);
                                 cursor: pointer;
                                 transition: background 0.2s;
                             "
@@ -3430,44 +3387,10 @@
                                 <!-- info o transporcie wg. JS -->
                             </div>
                         </div>
-                        <!-- RABATY -->
-                        <div
-                            class="summary-card"
-                            onclick="openOfferDiscountsPopup()"
-                            style="
-                                padding: 0.6rem 1rem;
-                                height: 100%;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: stretch;
-                                border-right: 1px solid var(--border-glass);
-                                cursor: pointer;
-                                transition: background 0.2s;
-                            "
-                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                            onmouseout="this.style.background='transparent'"
-                        >
-                            <!-- Header: Title -->
-                            <div style="text-align: center; margin-bottom: 0.35rem;">
-                                <span class="label" style="font-size: 0.9rem; text-transform: uppercase; margin: 0;">Zarządzanie Rabatami</span>
-                            </div>
-                            <!-- Body: Badges container -->
-                            <div id="offer-active-discounts-info" style="width: 100%; min-height: 22px;">
-                                <!-- Populated by updateOfferSummaryUI -->
-                            </div>
-                        </div>
                         <!-- RAZEM NETTO -->
                         <div
                             class="summary-card"
-                            style="
-                                padding: 0.6rem 1rem;
-                                height: 100%;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: center;
-                            "
+                            style="align-items: center;"
                         >
                             <div
                                 class="label"
@@ -3501,6 +3424,59 @@
                                 "
                             >
                                 Brutto: 0,00 PLN
+                            </div>
+                        </div>
+                        <!-- RABATY -->
+                        <div
+                            class="summary-card"
+                            onclick="openOfferDiscountsPopup()"
+                            style="
+                                align-items: stretch;
+                                cursor: pointer;
+                                transition: background 0.2s;
+                            "
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='transparent'"
+                        >
+                            <!-- Header: Title -->
+                            <div style="text-align: center; margin-bottom: 0.35rem;">
+                                <span class="label" style="font-size: 0.9rem; text-transform: uppercase; margin: 0;">Zarządzanie Rabatami</span>
+                            </div>
+                            <!-- Body: Badges container -->
+                            <div id="offer-active-discounts-info" style="width: 100%; min-height: 22px;">
+                                <!-- Populated by updateOfferSummaryUI -->
+                            </div>
+                        </div>
+                        <!-- AKCJE -->
+                        <div
+                            class="summary-card summary-card-actions"
+                        >
+                            <div class="summary-card-actions-grid">
+                                <button
+                                    class="summary-action-btn summary-action-btn--save"
+                                    onclick="saveOfferStudnie()"
+                                >
+                                    <i data-lucide="save"></i> Zapisz ofertę
+                                </button>
+                                <button
+                                    class="summary-action-btn summary-action-btn--order"
+                                    onclick="createOrderFromOffer()"
+                                >
+                                    <i data-lucide="package"></i> Utwórz zamówienie
+                                </button>
+                                <button
+                                    class="summary-action-btn summary-action-btn--print"
+                                    onclick="showOfferExportChoice()"
+                                >
+                                    <i data-lucide="printer"></i> Wydruk
+                                </button>
+                                <button
+                                    class="summary-action-btn summary-action-btn--ai"
+                                    onclick="showMLDashboard()"
+                                    title="Dashboard AI — statystyki systemu uczenia"
+                                >
+                                    <i data-lucide="brain"></i>
+                                </button>
                             </div>
                         </div>
                     </div>

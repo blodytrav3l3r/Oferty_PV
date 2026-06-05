@@ -776,16 +776,42 @@ tbody tr:hover {
 }
 
 .edit-input {
-    background: var(--bg-hover);
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    padding: 0.2rem 0.4rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.55rem;
     color: var(--text-primary);
-    font:
-        400 0.82rem 'Inter',
-        sans-serif;
+    font: 500 0.82rem 'Inter', sans-serif;
     width: 100%;
     outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.edit-input:hover {
+    border-color: var(--accent-border-dim);
+}
+
+.edit-input:focus {
+    border-color: var(--accent);
+    background: var(--bg-tertiary);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.edit-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.edit-input[type="number"]::-webkit-inner-spin-button,
+.edit-input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.edit-input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: none;
 }
 
 /* Wyszukiwarka */
@@ -2069,7 +2095,7 @@ tbody tr:hover {
 /* Komunikat Toast */
 .toast-container {
     position: fixed;
-    bottom: 1.5rem;
+    bottom: 4.5rem;
     right: 1.5rem;
     z-index: 1000000;
     display: flex;
@@ -2102,6 +2128,12 @@ tbody tr:hover {
 .toast-info {
     background: var(--bg-hover);
     color: #fff;
+}
+
+.toast-warning {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border: 1px solid var(--warn-border);
 }
 
 @keyframes slideIn {
@@ -2150,6 +2182,7 @@ tbody tr:hover {
     color: var(--text-primary);
     letter-spacing: 0.3px;
     text-transform: uppercase;
+    text-align: left;
 }
 
 .offer-cat-header:hover {
@@ -2164,6 +2197,7 @@ tbody tr:hover {
     border-left: 2px solid var(--success-bg);
     color: var(--success);
     letter-spacing: 0.2px;
+    text-align: left;
 }
 
 .offer-diam-header:hover {
@@ -2585,6 +2619,17 @@ svg.lucide {
 }
 
 .wizard-step-dot.disabled:hover {
+    opacity: 0.4;
+    transform: none;
+}
+
+.wizard-step-dot.wizard-step-locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.wizard-step-dot.wizard-step-locked:hover {
     opacity: 0.4;
     transform: none;
 }

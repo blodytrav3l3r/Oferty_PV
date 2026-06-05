@@ -107,7 +107,7 @@ function getCurrentOfferForExport() {
         notes,
         paymentTerms,
         validity,
-        items: currentOfferItems || []
+        items: (typeof getActiveItemsArray === 'function' ? getActiveItemsArray() : (window.orderEditMode ? orderCurrentItems : currentOfferItems)) || []
     };
 }
 

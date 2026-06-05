@@ -4,6 +4,56 @@ let pendingOrderCreationData = null;
 let _customPrzejscieRows = [];
 let _offerPrzejscieRows = [];
 let _przejsciaInitialized = false;
+let orderCurrentItems = [];
+let showPriceComparison = false;
+
+function getActiveItemsArray() {
+    return window.orderEditMode ? orderCurrentItems : currentOfferItems;
+}
+window.getActiveItemsArray = getActiveItemsArray;
+window.orderCurrentItems = orderCurrentItems;
+window.showPriceComparison = showPriceComparison;
+
+function isItemInAnyOrder(uid) {
+    if (!uid) return false;
+    if (typeof ordersRury === 'undefined' || !ordersRury) return false;
+    const offerId = window.editingOfferId;
+    if (!offerId) return false;
+    return ordersRury.some((o) =>
+        o && o.offerId === offerId &&
+        Array.isArray(o.items) &&
+        o.items.some((it) => it && it.uid === uid)
+    );
+}
+window.isItemInAnyOrder = isItemInAnyOrder;
+
+function isItemLocked(item) {
+    if (!item) return false;
+    if (window.orderEditMode) return false;
+    return isItemInAnyOrder(item.uid);
+}
+window.isItemLocked = isItemLocked;
+
+function togglePriceComparison() {
+    showPriceComparison = !showPriceComparison;
+    window.showPriceComparison = showPriceComparison;
+    if (typeof getCurrentRuryOrder === 'function') {
+        const order = getCurrentRuryOrder();
+        if (order && typeof updateRuryOrderSummary === 'function') {
+            updateRuryOrderSummary(order);
+        }
+    }
+    const btn = document.getElementById('btn-toggle-price-cmp');
+    if (btn) {
+        btn.classList.toggle('active', showPriceComparison);
+    }
+    const label = document.getElementById('btn-toggle-price-cmp-label');
+    if (label) {
+        label.textContent = showPriceComparison ? 'Ukryj porównanie' : 'Pokaż porównanie';
+    }
+    if (window.lucide) window.lucide.createIcons();
+}
+window.togglePriceComparison = togglePriceComparison;
 
 async function loadOrdersRury() {
     try {
@@ -69,13 +119,19 @@ async function createOrderFromOffer() {
         return;
     }
 
+    let selectedItemsClone;
+    try {
+        selectedItemsClone = structuredClone(selectedItems);
+    } catch (_e) {
+        showToast('Nie można przetworzyć wybranych elementów', 'error');
+        return;
+    }
+
     pendingOrderCreationData = {
         offer,
-        selectedItems,
+        selectedItems: selectedItemsClone,
         kartaBudowyTemplateOrders: existingOrdersForOffer
     };
-
-    initKartaBudowyStep4(offer.number);
 
     if (typeof showSection === 'function') showSection('builder');
     if (typeof goToPhase === 'function') {
@@ -130,8 +186,6 @@ function collectKartaBudowyDataStep4() {
 }
 
 function initKartaBudowyStep4(primaryOfferNumber) {
-    _przejsciaInitialized = false;
-
     const offerInput = document.getElementById('step4-offer-nr-input');
     const adresWysylkiInput = document.getElementById('step4-adres-wysylki');
     const osobaKontaktInput = document.getElementById('step4-osoba-kontakt');
@@ -155,7 +209,7 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     // Wyliczony transport — realna kalkulacja z wag i limitów (jak w studniach)
     const wyliczonyTransportInput = document.getElementById('step4-wyliczony-transport');
     if (wyliczonyTransportInput) {
-        const transportResult = typeof calculateTransports === 'function' ? calculateTransports(currentOfferItems || []) : null;
+        const transportResult = typeof calculateTransports === 'function' ? calculateTransports(getActiveItemsArray() || []) : null;
         const costPerTrip = typeof getCostPerTrip === 'function' ? getCostPerTrip() : 0;
         if (transportResult && transportResult.totalTransports > 0 && costPerTrip > 0) {
             const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -168,7 +222,8 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     // Auto-wybierz zabezpieczenie transportu na podstawie ZT w ofercie
     const zabezpSelect = document.getElementById('step4-zabezpieczenie-transportu');
     if (zabezpSelect) {
-        const hasZt = currentOfferItems && currentOfferItems.some(
+        const activeItems = getActiveItemsArray();
+        const hasZt = activeItems && activeItems.some(
             item => item.autoAdded && item.productId && item.productId.startsWith('ZT-') && item.quantity > 0
         );
         zabezpSelect.value = hasZt ? 'Podkłady jednorazowe' : 'Podkłady zwrotne';
@@ -189,8 +244,9 @@ function initKartaBudowyStep4(primaryOfferNumber) {
 
     // Auto-uzupełnij uwagi ogólne listą rabatów + zabezpieczeniem transportu (dopisz, nie kasuj ręcznych wpisów)
     const uwagiField = document.getElementById('step4-uwagi-ogolne');
-    if (uwagiField && currentOfferItems && currentOfferItems.length > 0) {
-        const discountLines = currentOfferItems
+    const activeItemsForUwagi = getActiveItemsArray();
+    if (uwagiField && activeItemsForUwagi && activeItemsForUwagi.length > 0) {
+        const discountLines = activeItemsForUwagi
             .filter(item => !item.autoAdded)
             .map(item => {
                 const name = item.name || 'Nieznany produkt';
@@ -207,7 +263,7 @@ function initKartaBudowyStep4(primaryOfferNumber) {
                 return `${name}${suffix}${pehdText}: ${discountStr}% | ${qty} szt. × ${fmtPLN(priceAfterDiscount)} PLN`;
             });
 
-        const ztLines = currentOfferItems
+        const ztLines = activeItemsForUwagi
             .filter(item => item.autoAdded && item.productId.startsWith('ZT-') && item.quantity > 0)
             .map(item => {
                 const fmtPLN = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -291,60 +347,92 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
     const transportKm = Number(document.getElementById('transport-km')?.value || 0);
     const transportRate = Number(document.getElementById('transport-rate')?.value || 0);
 
-    const snapshotItems = structuredClone(pendingOrderCreationData.selectedItems || currentOfferItems || []);
+    const assignedUserId =
+        (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
+        (offer && offer.userId) ||
+        (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ||
+        null;
 
-    const orderData = {
-        id: orderId,
-        offerId: offer.id || editingOfferId,
-        offerNumber: offerNumber,
-        originalSnapshot: {
-            items: snapshotItems,
-            transportKm,
-            transportRate
-        },
-        clientName,
-        clientNip,
-        clientAddress,
-        clientContact,
-        investName,
-        investAddress,
-        investContractor,
-        notes,
-        transportKm,
-        transportRate,
-        items: structuredClone(snapshotItems),
-        kartaBudowy: kartaBudowyData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: currentUser ? currentUser.id : ''
-    };
+    if (!assignedUserId) {
+        showToast('Brak opiekuna oferty — nie można nadać numeru zamówienia', 'error');
+        return;
+    }
+
+    let orderNumber = '';
+    try {
+        const claimResp = await fetch('/api/orders-rury/claim-rury-number/' + assignedUserId, {
+            method: 'POST',
+            headers: authHeaders()
+        });
+        const claimData = await claimResp.json();
+        if (claimResp.ok && claimData.number) {
+            orderNumber = claimData.number;
+        } else {
+            showToast('Błąd generowania numeru zamówienia: ' + (claimData.error || ''), 'error');
+            return;
+        }
+    } catch (e) {
+        showToast('Błąd połączenia przy generowaniu numeru zamówienia', 'error');
+        return;
+    }
 
     try {
-        await saveOrdersDataRury([orderData]);
-        showToast('Zamówienie utworzone', 'success');
+        const snapshotItems = structuredClone(pendingOrderCreationData.selectedItems || getActiveItemsArray() || []);
+
+        const orderedUids = new Set(snapshotItems.map(it => it.uid).filter(Boolean));
+
+        const orderData = {
+            id: orderId,
+            offerId: offer.id || editingOfferId,
+            offerNumber: offerNumber,
+            orderNumber: orderNumber,
+            userId: assignedUserId,
+            userName: (typeof editingOfferAssignedUserName !== 'undefined' && editingOfferAssignedUserName) ||
+                      (typeof currentUser !== 'undefined' && currentUser && (currentUser.username || '')) ||
+                      '',
+            originalSnapshot: {
+                items: snapshotItems,
+                transportKm,
+                transportRate
+            },
+            clientName,
+            clientNip,
+            clientAddress,
+            clientContact,
+            investName,
+            investAddress,
+            investContractor,
+            notes,
+            transportKm,
+            transportRate,
+            items: structuredClone(snapshotItems),
+            kartaBudowy: kartaBudowyData,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            createdBy: currentUser ? currentUser.id : ''
+        };
 
         if (!ordersRury) ordersRury = [];
         ordersRury.push(orderData);
 
-        // Oznacz zamówione itemy jako ordered w ofercie
-        const orderedUids = new Set((pendingOrderCreationData.selectedItems || []).map(it => it.uid).filter(Boolean));
-        if (orderedUids.size > 0 && typeof currentOfferItems !== 'undefined') {
-            currentOfferItems.forEach(item => {
-                if (item.uid && orderedUids.has(item.uid)) item.ordered = true;
-            });
-            if (typeof saveOffer === 'function') {
-                try { await saveOffer(); } catch (e) { console.warn('Nie udało się zapisać oferty z ordered flag:', e); }
-            }
-        }
+        await saveOrdersDataRury(ordersRury);
+        showToast('Zamówienie utworzone', 'success');
+
+        // UWAGA: NIE mutujemy currentOfferItems[i].ordered = true.
+        // Flaga 'ordered' jest obliczana na bieżąco z ordersRury przez isItemInAnyOrder(uid).
 
         editingRuryOrderId = orderId;
+        window.editingRuryOrderId = orderId;
         pendingOrderCreationData = null;
 
-        if (typeof goToPhase === 'function') {
-            goToPhase(5);
+        if (typeof enterRuryOrderEditMode === 'function') {
+            enterRuryOrderEditMode(orderId);
+        } else {
+            if (typeof goToPhase === 'function') {
+                goToPhase(5);
+            }
+            updateRuryOrderSummary(orderData);
         }
-
-        updateRuryOrderSummary(orderData);
     } catch (err) {
         console.error('Błąd tworzenia zamówienia:', err);
         showToast('Błąd tworzenia zamówienia', 'error');
@@ -352,116 +440,118 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
 }
 
 let editingRuryOrderId = null;
+window.editingRuryOrderId = null;
 
 function updateRuryOrderSummary(orderData) {
-    // Karta: Dane klienta i zamówienia (tylko jeśli przekazano dane)
-    const container = document.getElementById('rury-order-summary');
-    if (container && orderData) {
-        const kb = orderData.kartaBudowy || {};
-        const offerNumber = orderData.offerNumber || '—';
-        const clientName = orderData.clientName || '—';
-        const clientNip = orderData.clientNip || '—';
-        const adresWysylki = kb.adresWysylki || '—';
-        const warunki = kb.warunkiPlatnosci || '—';
-        const transportKm = orderData.transportKm || 0;
-        const transportRate = orderData.transportRate || 0;
+    const src = document.getElementById('offer-items-body');
+    const dst = document.getElementById('order-items-body');
+    if (!dst) return;
 
-        container.innerHTML = `
-            <div><span style="color:var(--text-muted);font-size:0.65rem">Oferta:</span> <span style="font-weight:600">${escapeHtml(offerNumber)}</span></div>
-            <div><span style="color:var(--text-muted);font-size:0.65rem">Firma:</span> <span style="font-weight:600">${escapeHtml(clientName)}</span></div>
-            <div><span style="color:var(--text-muted);font-size:0.65rem">NIP:</span> ${clientNip || '—'}</div>
-            <div><span style="color:var(--text-muted);font-size:0.65rem">Adres wysyłki:</span> ${escapeHtml(adresWysylki)}</div>
-            <div><span style="color:var(--text-muted);font-size:0.65rem">Warunki płatności:</span> ${warunki}</div>
-            <div><span style="color:var(--text-muted);font-size:0.65rem">Transport:</span> ${transportKm} km × ${transportRate} PLN/km</div>
-        `;
+    const theadRow = document.querySelector('#order-items-content .rury-table thead tr');
+    if (theadRow) {
+        theadRow.querySelectorAll('.cmp-th').forEach(el => el.remove());
+        theadRow.querySelectorAll('.cmp-td').forEach(el => el.remove());
     }
 
-    // Karta: Uwagi
-    const uwagiEl = document.getElementById('rury-order-uwagi');
-    if (uwagiEl) uwagiEl.textContent = '—';
+    const isOrderMode = !!(window.orderEditMode && orderData);
+    const showCmp = isOrderMode && window.showPriceComparison;
+    const colCount = isOrderMode ? (showCmp ? 15 : 13) : 13;
 
-    // Kopiuj zawartość tabeli i transportu z kroku 3
-    const offerItemsBody = document.getElementById('offer-items-body');
-    const orderItemsBody = document.getElementById('order-items-body');
-    if (offerItemsBody && orderItemsBody) {
-        // Wyczyść stare nagłówki porównania (thead jest stały w HTML, nie resetuje się)
-        const theadRow = document.querySelector('#order-items-content .rury-table thead tr');
-        if (theadRow) {
-            theadRow.querySelectorAll('.cmp-th').forEach(el => el.remove());
+    const orderColgroup = document.getElementById('order-colgroup');
+    if (orderColgroup && typeof buildRuryColgroup === 'function') {
+        orderColgroup.innerHTML = buildRuryColgroup(showCmp ? 2 : 0);
+    }
+
+    if (!src || (getActiveItemsArray() || []).length === 0) {
+        dst.innerHTML = `<tr class="rury-table-empty"><td colspan="${colCount}">Brak produktów</td></tr>`;
+        copyTransportBreakdown();
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    dst.innerHTML = src.innerHTML;
+
+    dst.querySelectorAll('tr:not(.offer-cat-header):not(.offer-diam-header)').forEach(row => {
+        const firstCell = row.querySelector('td');
+        if (!firstCell) return;
+        const checkbox = firstCell.querySelector('.item-order-checkbox');
+        if (!checkbox) return;
+        const uid = row.dataset.uid;
+        const ordered = isOrderMode || isItemInAnyOrder(uid);
+        const icon = ordered
+            ? '<i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i>'
+            : '<i data-lucide="circle" style="width:12px;height:12px;color:var(--text-muted);opacity:0.4"></i>';
+        firstCell.innerHTML = icon;
+        firstCell.setAttribute('data-status', ordered ? 'ordered' : 'available');
+    });
+
+    if (showCmp && theadRow) {
+        const snapItems = orderData.originalSnapshot?.items || [];
+
+        const nettoTh = theadRow.querySelector('th:nth-child(11)');
+        if (nettoTh) {
+            const offerTh = document.createElement('th');
+            offerTh.className = 'cmp-th';
+            offerTh.style.cssText = 'text-align:right; white-space:nowrap; padding:0.3rem 0.4rem; font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:var(--bg-tertiary); border-bottom:1px solid var(--border-glass);';
+            offerTh.innerHTML = '<span style="display:block;text-align:center">Cena z oferty</span>';
+
+            const diffTh = document.createElement('th');
+            diffTh.className = 'cmp-th';
+            diffTh.style.cssText = offerTh.style.cssText;
+            diffTh.innerHTML = '<span style="display:block;text-align:center">R\u00f3\u017cnica</span>';
+
+            nettoTh.after(offerTh);
+            offerTh.after(diffTh);
         }
 
-        orderItemsBody.innerHTML = offerItemsBody.innerHTML;
+        const rows = dst.querySelectorAll('tr:not(.offer-cat-header):not(.offer-diam-header)');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 11) return;
+            const nettoCell = cells[10];
+            const uid = row.dataset.uid;
 
-        // Dodaj kolumny porównania cen gdy tryb zamówienia z snapshotem
-        const showComparison = window.orderEditMode && orderData && orderData.originalSnapshot;
-        if (showComparison) {
-            const snapItems = orderData.originalSnapshot.items || [];
-
-            // Nagłówki porównania w thead (za kolumną Netto = 11)
-            if (theadRow) {
-                const nettoTh = theadRow.querySelector('th:nth-child(11)');
-                if (nettoTh) {
-                    const offerTh = document.createElement('th');
-                    offerTh.className = 'cmp-th';
-                    offerTh.style.cssText = 'text-align:right; white-space:nowrap; padding:0.3rem 0.4rem; font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:var(--bg-tertiary); border-bottom:1px solid var(--border-glass);';
-                    offerTh.textContent = 'Cena z oferty';
-
-                    const diffTh = document.createElement('th');
-                    diffTh.className = 'cmp-th';
-                    diffTh.style.cssText = offerTh.style.cssText;
-                    diffTh.textContent = 'Różnica';
-
-                    nettoTh.after(offerTh);
-                    offerTh.after(diffTh);
+            let offerNetto = null;
+            if (uid) {
+                const snapItem = snapItems.find(si => si.uid === uid);
+                if (snapItem && typeof calcSnapshotItemNetto === 'function') {
+                    offerNetto = calcSnapshotItemNetto(snapItem, orderData.originalSnapshot);
                 }
             }
 
-            const rows = orderItemsBody.querySelectorAll('tr');
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 11) return;
-                const nettoCell = cells[10];
-                const uidCell = row.querySelector('[data-uid]');
-                const uid = uidCell ? uidCell.dataset.uid : null;
+            const currText = nettoCell.textContent.replace(/[^0-9,.-]/g, '').replace(',', '.').trim();
+            const currNetto = parseFloat(currText) || 0;
+            const diff = currNetto - (offerNetto || 0);
+            const diffColor = diff > 0.01 ? '#34d399' : (diff < -0.01 ? '#f87171' : 'var(--text-muted)');
+            const diffSign = diff > 0 ? '+' : '';
 
-                let offerNetto = null;
-                if (uid) {
-                    const snapItem = snapItems.find(si => si.uid === uid);
-                    if (snapItem) {
-                        offerNetto = calcSnapshotItemNetto(snapItem, orderData.originalSnapshot);
-                    }
-                }
+            const offerTd = document.createElement('td');
+            offerTd.className = 'cmp-td';
+            offerTd.style.cssText = 'text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;';
+            offerTd.innerHTML = `<span style="display:block;text-align:center">${offerNetto !== null ? (typeof fmt === 'function' ? fmt(offerNetto) : offerNetto.toFixed(2)) + ' PLN' : '\u2014'}</span>`;
 
-                const currText = nettoCell.textContent.replace(/[^0-9,.-]/g, '').replace(',', '.').trim();
-                const currNetto = parseFloat(currText) || 0;
+            const diffTd = document.createElement('td');
+            diffTd.className = 'cmp-td';
+            diffTd.style.cssText = 'text-align:right; font-weight:700; color:' + diffColor + '; white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;';
+            diffTd.innerHTML = `<span style="display:block;text-align:center">${offerNetto !== null ? diffSign + (typeof fmt === 'function' ? fmt(diff) : diff.toFixed(2)) + ' PLN' : '\u2014'}</span>`;
 
-                const diff = currNetto - (offerNetto || 0);
-                const diffColor = diff > 0.01 ? '#34d399' : (diff < -0.01 ? '#f87171' : 'var(--text-muted)');
-                const diffSign = diff > 0 ? '+' : '';
-
-                const offerTd = document.createElement('td');
-                offerTd.className = 'cmp-td';
-                offerTd.style.cssText = 'text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;';
-                offerTd.textContent = offerNetto !== null ? fmt(offerNetto) + ' PLN' : '—';
-
-                const diffTd = document.createElement('td');
-                diffTd.className = 'cmp-td';
-                diffTd.style.cssText = `text-align:right; font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;`;
-                diffTd.textContent = offerNetto !== null ? diffSign + fmt(diff) + ' PLN' : '—';
-
-                nettoCell.after(offerTd);
-                offerTd.after(diffTd);
-            });
-        }
+            nettoCell.after(offerTd);
+            offerTd.after(diffTd);
+        });
     }
 
-    const offerTransportBreakdown = document.getElementById('transport-breakdown');
-    const orderTransportBreakdown = document.getElementById('order-transport-breakdown');
-    if (offerTransportBreakdown && orderTransportBreakdown) {
-        orderTransportBreakdown.innerHTML = offerTransportBreakdown.innerHTML;
-    }
+    dst.querySelectorAll('.offer-cat-header td, .offer-diam-header td').forEach(td => {
+        td.setAttribute('colspan', colCount);
+    });
 
+    copyTransportBreakdown();
     if (window.lucide) lucide.createIcons();
+}
+
+function copyTransportBreakdown() {
+    const src = document.getElementById('transport-breakdown');
+    const dst = document.getElementById('order-transport-breakdown');
+    if (src && dst) dst.innerHTML = src.innerHTML;
 }
 
 window.updateRuryOrderSummary = updateRuryOrderSummary;
@@ -533,7 +623,7 @@ async function saveRuryOrder() {
     }
 
     const orderData = ordersRury[orderIndex];
-    orderData.items = structuredClone(currentOfferItems || []);
+    orderData.items = structuredClone(orderCurrentItems || []);
     orderData.updatedAt = new Date().toISOString();
 
     try {
@@ -546,6 +636,16 @@ async function saveRuryOrder() {
 }
 
 window.saveRuryOrder = saveRuryOrder;
+
+/* ===== ZAPIS OFERTY LUB ZAMÓWIENIA ===== */
+
+window.saveOfferOrOrder = function () {
+    if (window.orderEditMode && editingRuryOrderId) {
+        saveRuryOrder();
+    } else {
+        saveOffer();
+    }
+};
 
 /* ===== TRYB EDYCJI ZAMÓWIENIA ===== */
 
@@ -572,6 +672,7 @@ async function enterRuryOrderEditMode(orderId) {
         orderEditMode = true;
         window.orderEditMode = true;
         editingRuryOrderId = orderId;
+        window.editingRuryOrderId = orderId;
         document.getElementById('btn-order-create')?.style.setProperty('display', 'none');
 
         const setVal = (id, val) => {
@@ -595,7 +696,7 @@ async function enterRuryOrderEditMode(orderId) {
         setVal('offer-payment-terms', orderData.paymentTerms);
 
         if (Array.isArray(orderData.items)) {
-            currentOfferItems = structuredClone(orderData.items);
+            orderCurrentItems = structuredClone(orderData.items);
         }
 
         if (orderData.kartaBudowy) {
@@ -605,14 +706,15 @@ async function enterRuryOrderEditMode(orderId) {
         if (orderData.offerId) editingOfferId = orderData.offerId;
 
         if (typeof showSection === 'function') showSection('builder');
-        if (typeof goToPhase === 'function') goToPhase(5);
-
         if (typeof renderOfferItems === 'function') renderOfferItems();
+        if (typeof goToPhase === 'function') goToPhase(5);
         updateRuryOrderSummary(orderData);
         renderOrderModeBanner(orderData);
         if (typeof updateTransportCostSummary === 'function') updateTransportCostSummary();
 
-        document.title = `Zamówienie: ${orderData.offerNumber || orderId}`;
+        if (window.lucide) lucide.createIcons();
+
+        document.title = `Zamówienie: ${orderData.orderNumber || orderData.offerNumber || orderId}`;
     } catch (err) {
         console.error('Błąd ładowania zamówienia:', err);
         showToast('Błąd ładowania zamówienia', 'error');
@@ -621,11 +723,16 @@ async function enterRuryOrderEditMode(orderId) {
 window.enterRuryOrderEditMode = enterRuryOrderEditMode;
 
 function exitOrderEditMode() {
-    orderEditMode = false;
-    window.orderEditMode = false;
-    editingRuryOrderId = null;
+    if (typeof clearOrderEditState === 'function') {
+        clearOrderEditState();
+    } else {
+        orderEditMode = false;
+        window.orderEditMode = false;
+        editingRuryOrderId = null;
+        window.editingRuryOrderId = null;
+    }
     document.getElementById('btn-order-create')?.style.removeProperty('display');
-    hideOrderModeBanner();
+    if (window.lucide) lucide.createIcons();
     if (typeof goToPhase === 'function') goToPhase(1);
     document.title = 'WITROS — Generator Ofert';
 }
@@ -640,7 +747,7 @@ function renderOrderModeBanner(orderData) {
         + '<span style="font-size:1.3rem;">📦</span>'
         + '<span style="font-weight:700;color:#34d399;">Tryb edycji zamówienia</span>'
         + '<span style="color:var(--text-muted);">|</span>'
-        + '<span style="color:var(--text-muted);font-size:0.82rem;">Zamówienie: <strong>' + escapeHtml(orderData.offerNumber || orderData.id || '') + '</strong></span>'
+        + '<span style="color:var(--text-muted);font-size:0.82rem;">Zamówienie: <strong>' + escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') + '</strong></span>'
         + '</div>'
         + '<button class="btn btn-sm" onclick="exitOrderEditMode()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:0.3rem 0.7rem;font-size:0.75rem;font-weight:600;border-radius:6px;cursor:pointer;">Wyjdź</button>';
     const indicator = document.querySelector('.wizard-indicator');
@@ -679,7 +786,7 @@ function renderKartaBudowyCopyOptions() {
     orders.forEach((order) => {
         const opt = document.createElement('option');
         opt.value = order.id;
-        const offerNum = order.offerNumber || order.number || '—';
+        const offerNum = order.orderNumber || order.offerNumber || order.number || '—';
         const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pl-PL') : '—';
         opt.textContent = `${offerNum} (${date})`;
         select.appendChild(opt);
@@ -890,3 +997,25 @@ function handlePrzejsciaZamowioneChange(select) {
 }
 
 window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;
+
+function syncOrderTableIfNeeded() {
+    if (typeof currentWizardStep === 'undefined' || currentWizardStep !== 5) return;
+    if (typeof updateRuryOrderSummary !== 'function') return;
+    const order = (window.orderEditMode && typeof getCurrentRuryOrder === 'function')
+        ? getCurrentRuryOrder()
+        : null;
+    updateRuryOrderSummary(order);
+}
+window.syncOrderTableIfNeeded = syncOrderTableIfNeeded;
+
+function clearOrderEditState() {
+    orderEditMode = false;
+    window.orderEditMode = false;
+    editingRuryOrderId = null;
+    window.editingRuryOrderId = null;
+    orderCurrentItems = [];
+    window.orderCurrentItems = orderCurrentItems;
+    pendingOrderCreationData = null;
+    if (typeof hideOrderModeBanner === 'function') hideOrderModeBanner();
+}
+window.clearOrderEditState = clearOrderEditState;

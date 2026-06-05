@@ -63,11 +63,12 @@ function calculateTransportDistributionStandalone(items, costPerTrip) {
 function updateOfferSummary() {
     let totalProductsNetto = 0;
     const costPerTrip = getCostPerTrip();
+    const activeItems = getActiveItemsArray();
 
     // Pre-calculate transport distribution
-    const transportDist = calculateTransportDistribution(currentOfferItems);
+    const transportDist = calculateTransportDistribution(activeItems);
 
-    currentOfferItems.forEach((item) => {
+    activeItems.forEach((item) => {
         const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
         const surcharge = item.surcharge || 0;
@@ -76,7 +77,7 @@ function updateOfferSummary() {
     });
 
     // Oblicz transporty dla zestawienia
-    const transportResult = calculateTransports(currentOfferItems);
+    const transportResult = calculateTransports(activeItems);
 
     const totalTransportCostCalc = transportResult.totalTransports * costPerTrip;
     const finalTotalNetto = totalProductsNetto + totalTransportCostCalc;
@@ -87,14 +88,16 @@ function updateOfferSummary() {
     if (elProducts) elProducts.textContent = fmt(totalProductsNetto) + ' PLN';
 
     const elTransport = document.getElementById('sum-transport-cost');
-    if (elTransport) elTransport.textContent = fmt(totalTransportCostCalc) + ' PLN';
+    if (elTransport) {
+        elTransport.innerHTML = `<i data-lucide="truck" style="width: 20px; height: 20px;"></i> ${fmt(totalTransportCostCalc)} PLN`;
+        if (window.lucide) window.lucide.createIcons({ root: elTransport.parentElement });
+    }
 
-    const elTransportDetails = document.getElementById('sum-transport-details');
-    if (elTransportDetails)
-        elTransportDetails.textContent =
-            costPerTrip > 0
-                ? `Ilość transportów: ${transportResult.totalTransports}. Koszt: ${fmt(costPerTrip)} PLN/kurs`
-                : 'Brak transportów / 0.00 PLN za kurs';
+    const elTransportCount = document.getElementById('rury-transport-count');
+    if (elTransportCount) elTransportCount.textContent = transportResult.totalTransports;
+
+    const elTransportRate = document.getElementById('rury-transport-rate');
+    if (elTransportRate) elTransportRate.textContent = fmt(costPerTrip) + ' PLN';
 
     const elTotalNetto = document.getElementById('sum-total-netto');
     if (elTotalNetto) elTotalNetto.textContent = fmt(finalTotalNetto) + ' PLN';
@@ -109,7 +112,12 @@ function updateOfferSummary() {
     if (typeof renderOfferSummaryTab === 'function') renderOfferSummaryTab();
 
     // Synchronizuj tabelę w kroku 5 (Zamówienie) — kopiuje z #offer-items-body do #order-items-body
-    if (typeof updateRuryOrderSummary === 'function') updateRuryOrderSummary();
+    if (typeof updateRuryOrderSummary === 'function') {
+        const order = (window.orderEditMode && typeof getCurrentRuryOrder === 'function')
+            ? getCurrentRuryOrder()
+            : null;
+        updateRuryOrderSummary(order);
+    }
 }
 
 /* ===== KALKULACJA KURSÓW ===== */
@@ -300,12 +308,188 @@ function renderTransportBreakdown(result, costPerTrip) {
 window.updateTransportCostSummary = function () {
     const input = document.getElementById('step4-wyliczony-transport');
     if (!input) return;
-    const transportResult = calculateTransports(currentOfferItems || []);
+    const transportResult = calculateTransports(getActiveItemsArray() || []);
     const costPerTrip = getCostPerTrip();
     if (transportResult.totalTransports > 0 && costPerTrip > 0) {
         const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         input.value = `${transportResult.totalTransports} x ${fmt(costPerTrip)} zł`;
     } else {
         input.value = 'Brak transportu';
+    }
+};
+
+/* ===== MODAL EDYCJI TRANSPORTU (Kliknięcie w kartę "Koszt transportu" na dolnym pasku) ===== */
+
+const ruryTransportSnapshot = { km: 0, rate: 0 };
+
+window.onRuryTransportFormChange = function () {
+    const modal = document.getElementById('rury-transport-modal');
+    if (modal && modal.style.display === 'flex') {
+        const kmVal = document.getElementById('transport-km')?.value;
+        const rateVal = document.getElementById('transport-rate')?.value;
+        const modalKm = document.getElementById('rury-transport-modal-km');
+        const modalRate = document.getElementById('rury-transport-modal-rate');
+        if (modalKm && kmVal != null) modalKm.value = kmVal;
+        if (modalRate && rateVal != null) modalRate.value = rateVal;
+        if (typeof window.updateRuryModalTransportDetails === 'function')
+            window.updateRuryModalTransportDetails();
+    }
+    if (typeof renderOfferItems === 'function' && typeof getActiveItemsArray === 'function'
+        && getActiveItemsArray().length > 0) {
+        renderOfferItems();
+    } else if (typeof updateOfferSummary === 'function') {
+        updateOfferSummary();
+    }
+};
+
+window.openRuryTransportPopup = function () {
+    const kmInput = document.getElementById('transport-km');
+    const rateInput = document.getElementById('transport-rate');
+    const modalKm = document.getElementById('rury-transport-modal-km');
+    const modalRate = document.getElementById('rury-transport-modal-rate');
+
+    ruryTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
+    ruryTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
+
+    if (kmInput && modalKm) modalKm.value = kmInput.value || 0;
+    if (rateInput && modalRate) modalRate.value = rateInput.value || 0;
+
+    const titleEl = document.getElementById('rury-transport-modal-title');
+    if (titleEl) {
+        titleEl.textContent = window.orderEditMode
+            ? 'Koszty Transportu (Edycja zamówienia)'
+            : 'Koszty Transportu';
+    }
+
+    if (typeof window.updateRuryModalTransportDetails === 'function') window.updateRuryModalTransportDetails();
+
+    document.getElementById('rury-transport-modal').style.display = 'flex';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+window.handleRuryTransportCancel = async function () {
+    const modalKm = parseFloat(document.getElementById('rury-transport-modal-km')?.value) || 0;
+    const modalRate = parseFloat(document.getElementById('rury-transport-modal-rate')?.value) || 0;
+
+    if (modalKm !== ruryTransportSnapshot.km || modalRate !== ruryTransportSnapshot.rate) {
+        if (typeof window.appConfirm === 'function') {
+            const confirmed = await window.appConfirm(
+                `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
+                 <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
+                { allowHtml: true, okText: 'Odrzuć zmiany', cancelText: 'Zostań' }
+            );
+
+            if (confirmed) {
+                const kmInput = document.getElementById('transport-km');
+                const rateInput = document.getElementById('transport-rate');
+                if (kmInput) kmInput.value = ruryTransportSnapshot.km;
+                if (rateInput) rateInput.value = ruryTransportSnapshot.rate;
+                if (typeof updateOfferSummary === 'function') updateOfferSummary();
+
+                document.getElementById('rury-transport-modal').style.display = 'none';
+            }
+        } else {
+            document.getElementById('rury-transport-modal').style.display = 'none';
+        }
+    } else {
+        document.getElementById('rury-transport-modal').style.display = 'none';
+    }
+};
+
+window.handleRuryTransportSave = async function () {
+    const isOrderMode = !!window.orderEditMode;
+    const confirmTitle = isOrderMode
+        ? 'Zapisz nową konfigurację transportu'
+        : 'Zapisz nową konfigurację transportu';
+    const confirmBody = isOrderMode
+        ? 'Czy na pewno chcesz zapisać te parametry przewozu do dokumentu zamówienia?'
+        : 'Czy na pewno chcesz zapisać te parametry przewozu do dokumentu oferty?';
+    const okText = isOrderMode ? 'Zapisz Zamówienie' : 'Zapisz Ofertę';
+
+    const persist = () => {
+        document.getElementById('rury-transport-modal').style.display = 'none';
+        if (isOrderMode) {
+            if (typeof saveRuryOrder === 'function') saveRuryOrder();
+            else if (typeof saveOffer === 'function') saveOffer();
+        } else {
+            if (typeof saveOffer === 'function') saveOffer();
+        }
+    };
+
+    if (typeof window.appConfirm === 'function') {
+        const confirmed = await window.appConfirm(
+            `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">${confirmTitle}</div>
+             <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">${confirmBody}</div>`,
+            { allowHtml: true, okText, cancelText: 'Anuluj' }
+        );
+
+        if (confirmed) persist();
+    } else {
+        persist();
+    }
+};
+
+window.syncRuryTransportFromModal = function () {
+    const kmInput = document.getElementById('transport-km');
+    const rateInput = document.getElementById('transport-rate');
+    const modalKm = document.getElementById('rury-transport-modal-km');
+    const modalRate = document.getElementById('rury-transport-modal-rate');
+
+    if (kmInput && modalKm) kmInput.value = modalKm.value || 0;
+    if (rateInput && modalRate) rateInput.value = modalRate.value || 0;
+
+    if (typeof updateOfferSummary === 'function') updateOfferSummary();
+    if (typeof window.updateRuryModalTransportDetails === 'function') window.updateRuryModalTransportDetails();
+
+    if (typeof renderOfferItems === 'function' && typeof getActiveItemsArray === 'function'
+        && getActiveItemsArray().length > 0) {
+        renderOfferItems();
+    }
+};
+
+window.updateRuryModalTransportDetails = function () {
+    const km = Number(document.getElementById('transport-km')?.value) || 0;
+    const rate = Number(document.getElementById('transport-rate')?.value) || 0;
+    const costPerTrip = km * rate;
+
+    const transportResult = (typeof calculateTransports === 'function')
+        ? calculateTransports(getActiveItemsArray() || [])
+        : { totalTransports: 0 };
+    const totalTransports = transportResult.totalTransports || 0;
+    const totalTransportCost = costPerTrip * totalTransports;
+
+    const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    const tripsInfo = document.getElementById('rury-transport-modal-trips-info');
+    if (tripsInfo) tripsInfo.innerHTML = `Łączna odległość: <strong>${km} km</strong> &bull; Stawka: <strong>${fmt(rate)} PLN/km</strong>`;
+
+    const costPerTripEl = document.getElementById('rury-transport-modal-cost-per-trip');
+    if (costPerTripEl) costPerTripEl.textContent = `${fmt(costPerTrip)} PLN`;
+
+    const countEl = document.getElementById('rury-transport-modal-count');
+    if (countEl) countEl.textContent = totalTransports;
+
+    const totalEl = document.getElementById('rury-transport-modal-total-cost');
+    if (totalEl) totalEl.textContent = `${fmt(totalTransportCost)} PLN`;
+
+    const totalValEl = document.getElementById('rury-transport-modal-total-val');
+    if (totalValEl) {
+        let productsNetto = 0;
+        try {
+            if (typeof getActiveItemsArray === 'function') {
+                const items = getActiveItemsArray();
+                productsNetto = items.reduce((s, it) => {
+                    const c = Number(it.unitPrice) || 0;
+                    const q = Number(it.quantity) || 0;
+                    const r = Number(it.discount ?? it.rabat) || 0;
+                    const pehdCost = Number(it.pehdCostPerUnit) || 0;
+                    const surcharge = Number(it.surcharge) || 0;
+                    const priceAfterDiscount = c * (1 - r / 100) + pehdCost + surcharge;
+                    return s + priceAfterDiscount * q;
+                }, 0);
+            }
+        } catch (_) {}
+        const finalNetto = productsNetto + totalTransportCost;
+        totalValEl.textContent = `${fmt(finalNetto)} PLN`;
     }
 };

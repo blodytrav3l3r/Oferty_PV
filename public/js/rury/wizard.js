@@ -4,6 +4,18 @@
 function goToPhase(step) {
     if (step < 1 || step > 5) return;
 
+    if (step === 1 && !window.orderEditMode && typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
+        pendingOrderCreationData = null;
+    }
+
+    if (step === 5 && !window.orderEditMode) {
+        if (typeof showToast === 'function') {
+            showToast('Zamówienie dostępne z karty Oferta (Zestawienie ofertowe)', 'info');
+        }
+        goToPhase(3);
+        return;
+    }
+
     currentWizardStep = step;
 
     document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
@@ -27,12 +39,16 @@ function goToPhase(step) {
         if (step === 3) {
             nextBtn.innerHTML = '<i data-lucide="check"></i> Zakończ';
             nextBtn.onclick = async function () {
+                if (window.orderEditMode) {
+                    showToast('Edycja oferty zablokowana w trybie edycji zamówienia', 'warning');
+                    return;
+                }
                 if (!validatePhase(3)) return;
                 await saveOffer();
                 showToast('Oferta zapisana', 'success');
             };
         } else if (step === 4) {
-            nextBtn.innerHTML = '<i data-lucide="arrow-right"></i> Przejdź do zamówienia';
+            nextBtn.innerHTML = '<i data-lucide="arrow-right"></i> Dalej';
             nextBtn.onclick = function () {
                 if (typeof step4NextAction === 'function') {
                     step4NextAction();
@@ -48,10 +64,22 @@ function goToPhase(step) {
 
     updateWizardIndicator();
 
-    // Pokaż/ukryj fixed pasek podsumowania tylko w kroku 3
+    // Pokaż/ukryj fixed pasek podsumowania
     const summaryBar = document.getElementById('rury-summary-bar');
     if (summaryBar) {
         summaryBar.style.display = (step === 3 || step === 5) ? 'block' : 'none';
+    }
+
+    // Aktualizuj etykietę przycisku zapisu w pasku podsumowania
+    if (step === 3 || step === 5) {
+        const saveBtn = document.getElementById('btn-save-offer-order');
+        if (saveBtn) {
+            const isOrderMode = window.orderEditMode && window.editingRuryOrderId;
+            saveBtn.innerHTML = isOrderMode
+                ? '<i data-lucide="save"></i> Zapisz zamówienie'
+                : '<i data-lucide="save"></i> Zapisz ofertę';
+        }
+        if (window.lucide) lucide.createIcons();
     }
 
     // Inicjalizacja karty budowy przy wejściu w krok 4
@@ -59,9 +87,27 @@ function goToPhase(step) {
         initKartaBudowyStep4();
     }
 
-    // Synchronizuj tabelę zamówienia przy wejściu w krok 5
-    if (step === 5 && typeof updateRuryOrderSummary === 'function') {
-        updateRuryOrderSummary();
+    // Wizualna blokada kropka 5 w trybie edycji oferty
+    const step5Dot = document.querySelector('.wizard-step-dot[data-step="5"]');
+    if (step5Dot) {
+        if (window.orderEditMode) {
+            step5Dot.classList.remove('wizard-step-locked');
+            step5Dot.style.opacity = '';
+            step5Dot.style.cursor = '';
+            step5Dot.removeAttribute('title');
+        } else {
+            step5Dot.classList.add('wizard-step-locked');
+            step5Dot.title = 'Otwórz zamówienie z karty Oferta';
+        }
+    }
+
+    // Odśwież tabelę zamówienia przy wejściu w krok 5 (tryb zamówienia)
+    if (step === 5 && window.orderEditMode) {
+        if (typeof renderOfferItems === 'function') renderOfferItems();
+        if (typeof updateRuryOrderSummary === 'function') {
+            const order = typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
+            if (order) updateRuryOrderSummary(order);
+        }
     }
 }
 
@@ -97,12 +143,14 @@ function validatePhase(step) {
             }
             return true;
         }
-        case 2:
-            if (!currentOfferItems || currentOfferItems.length === 0) {
+        case 2: {
+            const active = (typeof getActiveItemsArray === 'function') ? getActiveItemsArray() : (window.orderEditMode ? orderCurrentItems : currentOfferItems);
+            if (!active || active.length === 0) {
                 showToast('Dodaj co najmniej jeden produkt przed przejściem dalej', 'error');
                 return false;
             }
             return true;
+        }
         default:
             return true;
     }

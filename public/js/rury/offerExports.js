@@ -191,13 +191,14 @@ function exportOfferPDF(id) {
 let tempDiscounts = [];
 
 function showItemDiscountModal() {
-    if (currentOfferItems.length === 0) {
+    const items = getActiveItemsArray();
+    if (items.length === 0) {
         showToast('Brak produktów w ofercie.', 'error');
         return;
     }
 
     // Utwórz płytką kopię bieżących rabatów
-    tempDiscounts = currentOfferItems.map((item) => item.discount || 0);
+    tempDiscounts = items.map((item) => item.discount || 0);
 
     showModal({
         id: 'item-discount-modal',
@@ -248,7 +249,8 @@ function renderDiscountModalItems() {
     let totalNetto = 0;
 
     // Zbuduj posortowaną listę pasującą do kolejności w tabeli oferty
-    const sortedItems = currentOfferItems
+    const items = getActiveItemsArray();
+    const sortedItems = items
         .map((item, index) => {
             const product = products.find((p) => p.id === item.productId);
             const category = product ? product.category : 'Inne';
@@ -289,7 +291,7 @@ function renderDiscountModalItems() {
             pName +=
                 ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 4mm</span>';
         if (item.autoAdded)
-            pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(auto)</span>';
+            pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
 
         const isGasket =
             item.autoAdded ||
@@ -338,7 +340,7 @@ function updateTempDiscount(index, inputEl) {
     tempDiscounts[index] = v;
 
     // Aktualizacja DOM na żywo dla tego konkretnego wiersza
-    const item = currentOfferItems[index];
+    const item = getActiveItemsArray()[index];
 
     const basePriceAfterDiscount = item.unitPrice * (1 - v / 100);
     const pehdCost = item.pehdCostPerUnit || 0;
@@ -352,7 +354,7 @@ function updateTempDiscount(index, inputEl) {
 
     // Przelicz i zaktualizuj sumę końcową
     let totalNetto = 0;
-    currentOfferItems.forEach((it, idx) => {
+    getActiveItemsArray().forEach((it, idx) => {
         const d = tempDiscounts[idx];
         const bpad = it.unitPrice * (1 - d / 100);
         const pCost = it.pehdCostPerUnit || 0;
@@ -364,7 +366,7 @@ function updateTempDiscount(index, inputEl) {
 }
 
 function checkGasketDiscount(index, inputEl) {
-    const item = currentOfferItems[index];
+    const item = getActiveItemsArray()[index];
     const v = parseFloat(inputEl.value) || 0;
     const isGasket =
         item.autoAdded ||
@@ -376,7 +378,7 @@ function checkGasketDiscount(index, inputEl) {
 }
 
 function applyItemDiscounts() {
-    currentOfferItems.forEach((item, index) => {
+    getActiveItemsArray().forEach((item, index) => {
         item.discount = tempDiscounts[index];
     });
 

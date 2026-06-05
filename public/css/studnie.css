@@ -1874,3 +1874,93 @@ select.form-input option {
     transition: none !important;
   }
 }
+
+/* ── Akcje w dolnym pasku podsumowania ── */
+.summary-card-actions {
+    padding: 0.5rem 0.8rem !important;
+    display: flex;
+    align-items: stretch;
+}
+.summary-card-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.4rem;
+    width: 100%;
+    height: 100%;
+}
+.summary-action-btn {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font: 600 0.72rem 'Inter', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    white-space: nowrap;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.summary-action-btn:hover { transform: translateY(-1px); }
+.summary-action-btn--save {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+    grid-column: 1;
+    grid-row: 1;
+}
+.summary-action-btn--save:hover {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+    color: #a7f3d0;
+}
+.summary-action-btn--order {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+    grid-column: 2;
+    grid-row: 1 / 3;
+}
+.summary-action-btn--order:hover {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.6);
+    color: #fde68a;
+}
+.summary-action-btn--print {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #a5b4fc;
+    grid-column: 1;
+    grid-row: 2;
+}
+.summary-action-btn--print:hover {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: rgba(99, 102, 241, 0.6);
+    color: #c7d2fe;
+}
+.summary-action-btn--ai {
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    grid-column: 2;
+    grid-row: 2;
+    display: none;
+}
+
+/* ── Karty w dolnym pasku podsumowania (wzór rury) ── */
+#offer-summary-footer-fixed .summary-card {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#offer-summary-footer-fixed .summary-card-actions {
+    padding: 0.5rem 0.8rem;
+}

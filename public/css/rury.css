@@ -194,11 +194,12 @@
 }
 
 .rury-table tbody td {
-    padding: 0.25rem 0.4rem;
+    padding: 0.4rem 0.5rem;
     border-bottom: 1px solid #14171c;
     vertical-align: middle;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
 }
 
 .rury-table tbody tr {
@@ -206,15 +207,77 @@
 }
 
 .rury-table tbody tr:hover {
-    background: #0e0e25;
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.rury-table tbody td input.edit-input:disabled,
+.rury-table tbody td input[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.rury-table tbody td.rury-col-num,
+.rury-table tbody td.rury-col-num span {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.rury-table tbody tr:not(.offer-cat-header):not(.offer-diam-header) td:first-child {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.rury-table .pehd-btn-stack {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rury-table .pehd-btn {
+    font-size: 0.72rem !important;
+    padding: 0.3rem 0.6rem !important;
+    min-width: 88px;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.rury-table .length-editor {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.15rem 0.5rem;
+    margin-top: 4px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    font-size: 0.7rem;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.rury-table .length-editor:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+}
+
+.rury-table .length-editor .length-value {
+    color: var(--primary);
+    font-weight: 600;
 }
 
 .rury-table .text-right {
     text-align: right;
+    white-space: nowrap;
 }
 
 .rury-table .text-center {
     text-align: center;
+    white-space: nowrap;
 }
 
 .rury-table-empty td {
@@ -263,6 +326,21 @@
 
 .rury-row-1m td:first-child {
     border-left: 2px solid var(--highlight-bg);
+}
+
+/* ── Status ikon w kolumnie wyboru (krok 5) ── */
+.rury-table tbody td[data-status] {
+    text-align: center;
+    white-space: nowrap;
+}
+.rury-table tbody td[data-status="ordered"] i {
+    filter: drop-shadow(0 0 4px rgba(165, 180, 252, 0.3));
+}
+.rury-table tbody td[data-status="available"] {
+    opacity: 0.5;
+}
+.rury-table tbody td[data-status="available"]:hover {
+    opacity: 1;
 }
 
 /* ── Sticky footer z podsumowaniem ── */

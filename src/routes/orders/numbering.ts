@@ -40,7 +40,7 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
             where: { userId_year: { userId, year } }
         });
         const nextNumber = (counter?.lastNumber || 0) + 1;
-        const formatted = `${symbol}/${String(nextNumber).padStart(6, '0')}/${year}`;
+        const formatted = `${symbol}/ZS/${String(nextNumber).padStart(6, '0')}/${year}`;
 
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
     } catch (e: unknown) {
@@ -73,7 +73,7 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
             update: { lastNumber: nextNumber }
         });
 
-        const formatted = `${symbol}/${String(nextNumber).padStart(6, '0')}/${year}`;
+        const formatted = `${symbol}/ZS/${String(nextNumber).padStart(6, '0')}/${year}`;
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

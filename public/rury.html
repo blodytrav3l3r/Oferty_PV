@@ -198,11 +198,11 @@
                                 </div>
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="transport-km">Kilometry</label>
-                                    <input class="wizard-form-input" type="number" step="1" id="transport-km" value="100" />
+                                    <input class="wizard-form-input" type="number" step="1" id="transport-km" value="100" oninput="onRuryTransportFormChange()" />
                                 </div>
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="transport-rate">PLN/km</label>
-                                    <input class="wizard-form-input" type="number" step="0.1" id="transport-rate" value="10" />
+                                    <input class="wizard-form-input" type="number" step="0.1" id="transport-rate" value="10" oninput="onRuryTransportFormChange()" />
                                 </div>
                             </div>
                             <div class="wizard-form-grid" style="grid-template-columns: 1fr; margin-top: 0.3rem">
@@ -267,27 +267,27 @@
                         <div id="offer-items-content">
                             <div class="rury-table-wrap">
                                 <table class="rury-table">
+                                    <colgroup id="offer-colgroup"></colgroup>
                                     <thead>
                                         <tr>
                                             <th style="width:36px;text-align:center"><input type="checkbox" id="select-all-items" onchange="toggleAllItemsForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
-                                            <th>Lp.</th>
-                                            <th>Nazwa produktu</th>
-                                            <th class="text-right">Cena jedn.</th>
-                                            <th class="text-center">Metry</th>
-                                            <th class="text-center">Ilość</th>
-                                            <th class="text-center">Rabat</th>
-                                            <th class="text-right">Po rabacie</th>
-                                            <th class="text-center">Dopłata</th>
-                                            <th class="text-right">Transport</th>
-                                            <th class="text-right">Netto</th>
-                                            <th class="text-right">Brutto</th>
-                                            <th class="text-center">Wersja handlowa</th>
-                                            <th class="text-center">Akcje</th>
+                                            <th style="text-align:left">Lp.</th>
+                                            <th style="text-align:left">Nazwa produktu</th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Cena jedn.</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Metry</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Ilość</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Rabat</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Po rabacie</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Dopłata</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Transport</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Netto</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Wersja handlowa</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Akcje</span></th>
                                         </tr>
                                     </thead>
                                     <tbody id="offer-items-body">
                                         <tr class="rury-table-empty">
-                                            <td colspan="14">
+                                            <td colspan="13">
                                                 Wróć do kroku 2 aby dodać produkty
                                             </td>
                                         </tr>
@@ -667,35 +667,6 @@
 
                 <!-- ===== FAZA 5: ZAMÓWIENIE (PODGLĄD) ===== -->
                 <div class="wizard-step" id="wizard-step-5">
-                    <!-- Header -->
-                    <div class="rury-card-header" style="margin-bottom:1rem;">
-                        <span class="rury-card-title" style="margin:0;"><i data-lucide="package"></i> Zamówienie</span>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button class="btn btn-sm" onclick="saveRuryOrder()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;padding:0.4rem 0.8rem;font-size:0.75rem;font-weight:600;">
-                                <i data-lucide="save"></i> Zapisz zamówienie
-                            </button>
-                            <button class="btn btn-secondary btn-sm" onclick="handlePrintClick()" style="padding:0.4rem 0.8rem; font-size:0.75rem;">
-                                <i data-lucide="printer"></i> Wydruk
-                            </button>
-                            <button class="btn btn-primary btn-sm" onclick="phasePrev()" style="padding:0.4rem 0.8rem; font-size:0.75rem;">
-                                <i data-lucide="arrow-left"></i> Powrót do karty budowy
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Karta: Dane klienta i zamówienia -->
-                    <div class="card card-compact" style="margin-bottom:1rem;">
-                        <div class="card-title-sm"><i data-lucide="clipboard-list"></i> Dane klienta i zamówienia</div>
-                        <div id="rury-order-summary" class="card-content" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:0.4rem; font-size:0.78rem; color:var(--text-secondary);">
-                            <!-- orderManager.js wypełni -->
-                        </div>
-                    </div>
-
-                    <!-- Karta: Uwagi -->
-                    <div class="card card-compact" style="margin-bottom:1rem;">
-                        <div class="card-title-sm"><i data-lucide="edit-3"></i> Uwagi</div>
-                        <div id="rury-order-uwagi" style="font-size:0.75rem; color:var(--text-secondary); white-space:pre-wrap; min-height:1.5rem;"></div>
-                    </div>
 
                     <!-- Karta: Pozycje zamówienia -->
                     <div class="card" style="margin-bottom:1rem;">
@@ -703,27 +674,33 @@
                         <div id="order-items-content">
                             <div class="rury-table-wrap">
                                 <table class="rury-table">
+                                    <colgroup id="order-colgroup"></colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="width:36px;text-align:center"></th>
-                                            <th>Lp.</th>
-                                            <th>Nazwa produktu</th>
-                                            <th class="text-right">Cena jedn.</th>
-                                            <th class="text-center">Metry</th>
-                                            <th class="text-center">Ilość</th>
-                                            <th class="text-center">Rabat</th>
-                                            <th class="text-right">Po rabacie</th>
-                                            <th class="text-center">Dopłata</th>
-                                            <th class="text-right">Transport</th>
-                                            <th class="text-right">Netto</th>
-                                            <th class="text-right">Brutto</th>
-                                            <th class="text-center">Wersja handlowa</th>
-                                            <th class="text-center">Akcje</th>
+                                            <th style="width:36px;text-align:center" title="Status zamówienia"><i data-lucide="check-circle" style="width:12px;height:12px;opacity:0.6"></i></th>
+                                            <th style="text-align:left">Lp.</th>
+                                            <th style="text-align:left">Nazwa produktu</th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Cena jedn.</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Metry</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Ilość</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Rabat</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Po rabacie</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Dopłata</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Transport</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Netto</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Wersja handlowa</span></th>
+                                            <th style="text-align:right"><span style="display:block;text-align:center">Akcje</span></th>
+                                            <th style="width:1%; min-width:44px; text-align:center; padding:0.3rem;">
+                                                <button type="button" id="btn-toggle-price-cmp" onclick="togglePriceComparison()" title="Pokaż/ukryj porównanie z ofertą" style="background:none;border:1px solid var(--border-glass);border-radius:6px;padding:0.3rem 0.5rem;cursor:pointer;color:var(--text-secondary);display:inline-flex;align-items:center;gap:0.3rem;font-size:0.7rem;">
+                                                    <i data-lucide="scale" style="width:14px;height:14px"></i>
+                                                    <span id="btn-toggle-price-cmp-label">Pokaż porównanie</span>
+                                                </button>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody id="order-items-body">
                                         <tr class="rury-table-empty">
-                                            <td colspan="14">Brak produktów</td>
+                                            <td colspan="13">Brak produktów</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -837,7 +814,6 @@
                             <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Rury)
                         </h2>
                     </div>
-                    <div id="offer-tab-transport-breakdown" class="mb-1"></div>
                     <div id="offer-tab-summary-body"></div>
                 </div>
 
@@ -904,10 +880,22 @@
                         <div class="rury-summary-label">Cena Netto</div>
                         <div class="rury-summary-value accent" id="sum-netto-products">0,00 PLN</div>
                     </div>
-                    <div class="rury-summary-card has-borders">
+                    <div
+                        class="rury-summary-card has-borders"
+                        onclick="openRuryTransportPopup()"
+                        style="cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                        onmouseout="this.style.background='transparent'"
+                        title="Kliknij aby zmienić koszt transportu"
+                    >
                         <div class="rury-summary-label">Koszt transportu</div>
-                        <div class="rury-summary-value warn" id="sum-transport-cost">0,00 PLN</div>
-                        <div class="rury-summary-sub" id="sum-transport-details">0 × 0,00 PLN/kurs</div>
+                        <div class="rury-summary-value warn" id="sum-transport-cost" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                            <i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0,00 PLN
+                        </div>
+                        <div id="rury-active-transport-info" style="font-size: 0.72rem; color: #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; text-align: center; margin-top: 0.15rem;">
+                            <div style="margin-bottom: 2px;">Ilość aut: <span style="color: #cbd5e1; font-weight: 600;" id="rury-transport-count">0</span></div>
+                            <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;" id="rury-transport-rate">0,00 PLN</span></div>
+                        </div>
                     </div>
                     <div class="rury-summary-card">
                         <div class="rury-summary-label">RAZEM Netto</div>
@@ -922,7 +910,7 @@
                         <button class="rury-action-btn rury-action-btn--print" onclick="showUniversalPrintModalRury(editingOfferId)">
                             <i data-lucide="printer"></i> Wydruk
                         </button>
-                        <button class="rury-action-btn rury-action-btn--save" onclick="saveOffer()">
+                        <button class="rury-action-btn rury-action-btn--save" id="btn-save-offer-order" onclick="saveOfferOrOrder()">
                             <i data-lucide="save"></i> Zapisz ofertę
                         </button>
                         <button class="rury-action-btn rury-action-btn--order" id="btn-order-create" onclick="createOrderFromOffer()">
@@ -959,5 +947,53 @@
         <script src="js/rury/offerSummaryTab.js?v=3.0"></script>
         <script src="js/app.js?v=3.0"></script>
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
+
+        <!-- ===== OFFER TRANSPORT MODAL (Rury) ===== -->
+        <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 16px; width: 95%; max-width: 820px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
+                    <div id="rury-transport-modal-title" style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem; color: #eab308;">
+                        <i data-lucide="truck" style="width: 18px; height: 18px;"></i> Koszty Transportu
+                    </div>
+                    <button class="btn btn-icon" onclick="handleRuryTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
+                </div>
+                <div style="padding: 2rem 1.5rem;">
+                    <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.72rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi oferty i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
+                    <div style="display: flex; gap: 1.5rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
+                            <input type="number" id="rury-transport-modal-km" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncRuryTransportFromModal === 'function') syncRuryTransportFromModal()">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
+                            <input type="number" id="rury-transport-modal-rate" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncRuryTransportFromModal === 'function') syncRuryTransportFromModal()">
+                        </div>
+                    </div>
+                    <div id="rury-transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.7rem; color: var(--text-muted);"></div>
+                    <div id="rury-transport-modal-cost-details" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Koszt / transport</div>
+                            <div id="rury-transport-modal-cost-per-trip" style="font-size: 0.9rem; font-weight: 800; color: #fbbf24;">0 PLN</div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Ilość transportów</div>
+                            <div id="rury-transport-modal-count" style="font-size: 0.9rem; font-weight: 800; color: #60a5fa;">0</div>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Koszt transportu</div>
+                            <div id="rury-transport-modal-total-cost" style="font-size: 0.9rem; font-weight: 800; color: #34d399;">0 PLN</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.75rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 1rem; border-radius: 12px;">
+                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
+                        <div id="rury-transport-modal-total-val" style="font-size: 1.05rem; font-weight: 900; color: var(--success); letter-spacing: -1px;">0 PLN</div>
+                    </div>
+                </div>
+                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button class="btn btn-secondary" onclick="handleRuryTransportCancel()" style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
+                    <button class="btn btn-primary" onclick="handleRuryTransportSave()" style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800;"><i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem;"></i> Zastosuj</button>
+                </div>
+            </div>
+        </div>
 </body>
 </html>

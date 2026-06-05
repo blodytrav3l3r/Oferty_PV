@@ -77,3 +77,9 @@ graphify-out/
 
 # Embedded git repos (ECC submodule content on disk, not tracked)
 ECC/
+
+# Opencode auto-generated
+.kilo/skills/
+
+# Temp debug
+check_db_temp.js

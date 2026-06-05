@@ -24,6 +24,10 @@ function downloadOfferFile(offer) {
 /* ===== ZAPIS OFERTY ===== */
 
 async function saveOffer() {
+    if (window.orderEditMode) {
+        showToast('Edycja oferty zablokowana w trybie edycji zamówienia', 'warning');
+        return;
+    }
     const number = document.getElementById('offer-number').value.trim();
     const date = document.getElementById('offer-date').value;
     const clientName = document.getElementById('client-name').value.trim();
@@ -213,6 +217,7 @@ function clearOfferForm() {
         document.getElementById('offer-validity').value = '7 dni';
     document.getElementById('transport-km').value = '100';
     document.getElementById('transport-rate').value = '10';
+    if (typeof clearOrderEditState === 'function') clearOrderEditState();
     currentOfferItems = [];
 
     // Aktualizacja UI
@@ -315,7 +320,7 @@ function renderSavedOffers() {
         }
         ${_hasOrder ? `<div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
             ${_orderList.map(ord => {
-                const label = ord.offerNumber || (ord.id ? ord.id.substring(0, 8) : '—');
+                const label = ord.orderNumber || ord.offerNumber || (ord.id ? ord.id.substring(0, 8) : '—');
                 return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:#34d399;">
                     <i data-lucide="package" style="width:12px;height:12px;"></i> Zamówienie ${label}
                 </span>`;
@@ -331,7 +336,7 @@ function renderSavedOffers() {
         <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
         ${_hasOrder ? _orderList.map(ord => `
             <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
-                <i data-lucide="package"></i> Zam. ${ord.offerNumber || ord.id.substring(0, 8)}
+                <i data-lucide="package"></i> Zam. ${ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8)}
             </button>
             <button class="btn btn-sm" onclick="exportKartaDirect_action('${ord.id}', 'pdf')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
@@ -375,6 +380,7 @@ async function loadOffer(id) {
     // Normalizuj, jeśli są to dane archiwalne
     const normalized = srv && srv.normalizeOffer ? srv.normalizeOffer(offer) : offer;
 
+    if (typeof clearOrderEditState === 'function') clearOrderEditState();
     editingOfferId = id;
     editingOfferAssignedUserId = normalized.userId || null;
     editingOfferAssignedUserName = normalized.userName || '';
@@ -405,24 +411,12 @@ async function loadOffer(id) {
     document.getElementById('transport-rate').value = normalized.transportRate || 10;
     currentOfferItems = structuredClone(normalized.items || []);
 
-    // Backfill uid dla starych itemów + zaznacz jako ordered jeśli istnieją w zamówieniach
+    // Backfill uid dla starych itemów (flagi 'ordered' nie przechowujemy — obliczamy z ordersRury)
     if (typeof loadOrdersRury === 'function' && (!ordersRury || ordersRury.length === 0)) {
         try { await loadOrdersRury(); } catch (e) { /* ignore */ }
     }
-    const orderedUids = new Set();
-    if (ordersRury && ordersRury.length > 0) {
-        const offerOrders = ordersRury.filter(o => o.offerId === editingOfferId);
-        offerOrders.forEach(order => {
-            if (order.items) {
-                order.items.forEach(oi => {
-                    if (oi.uid) orderedUids.add(oi.uid);
-                });
-            }
-        });
-    }
     currentOfferItems.forEach(item => {
         if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-        if (orderedUids.has(item.uid)) item.ordered = true;
     });
 
     // Uprawnienia

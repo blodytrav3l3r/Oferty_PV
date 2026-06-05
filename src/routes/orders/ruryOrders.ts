@@ -69,6 +69,39 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
+router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        if (!userId) return res.status(400).json({ error: 'Brak userId' });
+
+        const year = new Date().getFullYear();
+
+        const user = await prisma.users.findUnique({
+            where: { id: userId },
+            select: { symbol: true }
+        });
+        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+
+        const symbol = user.symbol || '??';
+        const counter = await prisma.order_counters_rury.findUnique({
+            where: { userId_year: { userId, year } }
+        });
+        const nextNumber = (counter?.lastNumber || 0) + 1;
+
+        await prisma.order_counters_rury.upsert({
+            where: { userId_year: { userId, year } },
+            create: { userId, year, lastNumber: nextNumber },
+            update: { lastNumber: nextNumber }
+        });
+
+        const formatted = `${symbol}/ZR/${String(nextNumber).padStart(6, '0')}/${year}`;
+        res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
+    }
+});
+
 router.put('/', requireAuth, writeOrdersLimiter, validateData(ruryOrdersBatchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

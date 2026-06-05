@@ -40,43 +40,19 @@ function renderOfferSummaryTab() {
         tabValidity.value = '7 dni';
     }
 
-    // 2. Skopiuj widok transportu z kroku kreatora (jeśli istnieje, lub wyrenderuj na nowo)
-    const transportResult = calculateTransports(currentOfferItems);
+    // 2. Wygeneruj tabelę z produktami (podobnie jak do wydruku, ale w HTML)
+    const items = getActiveItemsArray();
+    const transportResult = calculateTransports(items);
     const costPerTrip = getCostPerTrip();
-    renderTransportBreakdownForSummaryTab(transportResult, costPerTrip);
-
-    // 3. Wygeneruj tabelę z produktami (podobnie jak do wydruku, ale w HTML)
     renderOfferSummaryTableTab(transportResult, costPerTrip);
-}
-
-function renderTransportBreakdownForSummaryTab(result, costPerTrip) {
-    const container = document.getElementById('offer-tab-transport-breakdown');
-    if (!container) return;
-    
-    if (result.lines.length === 0) {
-        container.innerHTML = '';
-        return;
-    }
-
-    const totalTransportCost = result.totalTransports * costPerTrip;
-
-    let html = `<div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:0.8rem; margin-bottom:1rem;">
-        <h3 style="font-size:0.85rem; font-weight:700; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem; color:var(--text);"><i data-lucide="truck" style="width:16px; height:16px;"></i> Koszty transportu</h3>`;
-    
-    html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem;">
-        <div>Zapotrzebowanie: <strong>${result.totalTransports} kursów</strong> (do 24t/kurs)</div>
-        ${costPerTrip > 0 ? `<div>Razem: <strong style="color:var(--warn);">${fmt(totalTransportCost)} PLN</strong></div>` : ''}
-    </div></div>`;
-
-    container.innerHTML = html;
-    if (window.lucide) window.lucide.createIcons({root: container});
 }
 
 function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     const container = document.getElementById('offer-tab-summary-body');
     if (!container) return;
 
-    if (currentOfferItems.length === 0) {
+    const items = getActiveItemsArray();
+    if (items.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak pozycji w ofercie</div>`;
         return;
     }
@@ -85,7 +61,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     const order = typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
     const snapItems = order && order.originalSnapshot ? order.originalSnapshot.items || [] : [];
 
-    const transportDist = calculateTransportDistribution(currentOfferItems, costPerTrip);
+    const transportDist = calculateTransportDistribution(items, costPerTrip);
 
     let html = `<div class="table-wrap"><table style="width:100%;">
       <thead>
@@ -108,7 +84,49 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     let totalNetto = 0;
     let totalOfferNetto = 0;
 
-    currentOfferItems.forEach((item, i) => {
+    const grouped = {};
+    items.forEach((item, i) => {
+        const product = products.find((p) => p.id === item.productId);
+        const category = product ? product.category : 'Inne';
+        if (!grouped[category]) grouped[category] = {};
+        let diameter = getProductDiameter(item.productId);
+        if (!diameter && item.productId) {
+            const parts = item.productId.split('-');
+            if (parts.length >= 5) {
+                const code = parseInt(parts[4]);
+                if (!isNaN(code) && code > 0) diameter = code * 100;
+            }
+        }
+        const diamKey = diameter ? `DN ${diameter}` : 'Inne';
+        if (!grouped[category][diamKey]) grouped[category][diamKey] = [];
+        grouped[category][diamKey].push({ item, originalIndex: i });
+    });
+
+    const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        const ia = CATEGORIES.indexOf(a);
+        const ib = CATEGORIES.indexOf(b);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+
+    const sortedItems = [];
+    sortedCategories.forEach((cat) => {
+        const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
+            const da = parseInt(a.replace('DN ', '')) || 99999;
+            const db = parseInt(b.replace('DN ', '')) || 99999;
+            return da - db;
+        });
+        diamKeys.forEach((diamKey) => {
+            grouped[cat][diamKey].sort((a, b) => {
+                const aBB = a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
+                const bBB = b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
+                if (aBB !== bBB) return aBB ? -1 : 1;
+                return (a.item.lengthM || 0) - (b.item.lengthM || 0);
+            });
+            grouped[cat][diamKey].forEach((entry) => sortedItems.push(entry));
+        });
+    });
+
+    sortedItems.forEach(({ item }, i) => {
         const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
         const surcharge = item.surcharge || 0;
@@ -135,7 +153,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         if (item.autoAdded) pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(uszczelka)</span>';
         if (item.surcharge) pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
 
-        const isOrdered = item.ordered === true;
+        const isOrdered = (typeof isItemInAnyOrder === 'function') ? isItemInAnyOrder(item.uid) : false;
         const summaryCheckboxCell = isOrdered
             ? '<td style="text-align:center;"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>'
             : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox" data-uid="${item.uid}" onchange="updateOfferSummarySelectionCount()" style="cursor:pointer;width:16px;height:16px"></td>`;
@@ -176,7 +194,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const tdColor = totalDiff > 0.01 ? '#34d399' : (totalDiff < -0.01 ? '#f87171' : 'var(--text-muted)');
         const tdSign = totalDiff > 0 ? '+' : '';
         html += `<tr style="font-weight:700; background:rgba(255,255,255,0.02); border-top:2px solid var(--border-glass);">
-            <td colspan="8" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
+            <td colspan="${snapItems.length > 0 ? 8 : 6}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem;">RAZEM</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--success);">${fmt(totalNetto)} PLN</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--text-secondary);">${fmt(totalOfferNetto)} PLN</td>
             <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:${tdColor};">${tdSign}${fmt(totalDiff)} PLN</td>

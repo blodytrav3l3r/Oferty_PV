@@ -189,7 +189,7 @@ function showPipeLengthModal(productId, editIndex = null) {
 
     let currentVal = getProductLength(product.id) / 1000 || 3;
     if (editIndex !== null) {
-        const item = currentOfferItems[editIndex];
+        const item = getActiveItemsArray()[editIndex];
         currentVal = item.customLengthM || item.lengthM || currentVal;
     }
 
@@ -252,15 +252,17 @@ function doAddOfferItem(productId, customLengthM) {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
 
+    const activeItems = getActiveItemsArray();
+
     // Sprawdź, czy dokładnie ten sam produkt (produkt + długość) został już dodany
-    const existingItemIndex = currentOfferItems.findIndex(
+    const existingItemIndex = activeItems.findIndex(
         (i) => i.productId === productId && (i.customLengthM || null) === (customLengthM || null)
     );
     if (existingItemIndex !== -1) {
         updateItem(
             existingItemIndex,
             'quantity',
-            currentOfferItems[existingItemIndex].quantity + 1
+            activeItems[existingItemIndex].quantity + 1
         );
         showToast(`Zwiększono ilość: ${product.name}`, 'info');
         document.getElementById('product-search').value = '';
@@ -289,10 +291,10 @@ function doAddOfferItem(productId, customLengthM) {
         customLengthM: null
     };
 
-    currentOfferItems.push(item);
+    activeItems.push(item);
 
     if (customLengthM && customLengthM !== lengthM) {
-        const newIndex = currentOfferItems.length - 1;
+        const newIndex = activeItems.length - 1;
         updatePipeLength(newIndex, customLengthM, true);
     } else {
         syncGaskets(); syncTransportSecurity();
@@ -306,14 +308,15 @@ function doAddOfferItem(productId, customLengthM) {
 /* ===== SYNCHRONIZACJA USZCZELEK ===== */
 
 function syncGaskets() {
-    if (!currentOfferItems.some(i => i.ordered && !i.autoAdded)) {
+    const activeItems = getActiveItemsArray();
+    if (!activeItems.some(i => i.ordered && !i.autoAdded)) {
         // no ordered non-auto items, proceed normally
     } else if (!window.orderEditMode) {
         return; // ordered items exist and we're not in order edit mode — skip gasket sync
     }
     const req = {};
 
-    currentOfferItems.forEach((item) => {
+    activeItems.forEach((item) => {
         if (!item.autoAdded && item.quantity > 0) {
             const product = products.find((p) => p.id === item.productId);
             if (product && product.category === 'Duże Żelbetowe II') {
@@ -335,21 +338,21 @@ function syncGaskets() {
         }
     });
 
-    for (let i = currentOfferItems.length - 1; i >= 0; i--) {
-        const item = currentOfferItems[i];
+    for (let i = activeItems.length - 1; i >= 0; i--) {
+        const item = activeItems[i];
         if (item.autoAdded && !item.productId.startsWith('ZT-')) {
             if (req[item.productId] && req[item.productId].qty > 0) {
                 item.quantity = req[item.productId].qty;
                 req[item.productId].qty = 0; // obsłużone
             } else {
-                currentOfferItems.splice(i, 1);
+                activeItems.splice(i, 1);
             }
         }
     }
 
     Object.values(req).forEach((r) => {
         if (r.qty > 0) {
-            currentOfferItems.push({
+            activeItems.push({
                 uid: 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
                 productId: r.product.id,
                 name: r.product.name,
@@ -394,13 +397,14 @@ window.updateZabezpieczenieTransportuUI = updateZabezpieczenieTransportuUI;
 /* ===== SYNCHRONIZACJA ZABEZPIECZENIA TRANSPORTU ===== */
 
 function syncTransportSecurity(forceRemove) {
-    const hasNonAutoOrdered = currentOfferItems.some(i => i.ordered && !i.autoAdded);
+    const activeItems = getActiveItemsArray();
+    const hasNonAutoOrdered = activeItems.some(i => i.ordered && !i.autoAdded);
     if (hasNonAutoOrdered && !window.orderEditMode && !forceRemove) return;
     if (forceRemove || !window.zabezpieczenieTransportuEnabled) {
         let removed = false;
-        for (let i = currentOfferItems.length - 1; i >= 0; i--) {
-            if (currentOfferItems[i].autoAdded && currentOfferItems[i].productId.startsWith('ZT-')) {
-                currentOfferItems.splice(i, 1);
+        for (let i = activeItems.length - 1; i >= 0; i--) {
+            if (activeItems[i].autoAdded && activeItems[i].productId.startsWith('ZT-')) {
+                activeItems.splice(i, 1);
                 removed = true;
             }
         }
@@ -409,7 +413,7 @@ function syncTransportSecurity(forceRemove) {
 
     const req = {};
 
-    currentOfferItems.forEach((item) => {
+    activeItems.forEach((item) => {
         if (!item.autoAdded && item.quantity > 0) {
             const product = products.find((p) => p.id === item.productId);
             if (product && product.category !== 'Zabezpieczenie transportu') {
@@ -426,21 +430,21 @@ function syncTransportSecurity(forceRemove) {
         }
     });
 
-    for (let i = currentOfferItems.length - 1; i >= 0; i--) {
-        const item = currentOfferItems[i];
+    for (let i = activeItems.length - 1; i >= 0; i--) {
+        const item = activeItems[i];
         if (item.autoAdded && item.productId.startsWith('ZT-')) {
             if (req[item.productId] && req[item.productId].qty > 0) {
                 item.quantity = req[item.productId].qty;
                 req[item.productId].qty = 0;
             } else {
-                currentOfferItems.splice(i, 1);
+                activeItems.splice(i, 1);
             }
         }
     }
 
     Object.values(req).forEach((r) => {
         if (r.qty > 0) {
-            currentOfferItems.push({
+            activeItems.push({
                 uid: 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
                 productId: r.product.id,
                 name: r.product.name,
@@ -458,8 +462,8 @@ function syncTransportSecurity(forceRemove) {
 }
 
 function addPehdToPipe(pipeIndex, pehdId) {
-    if (currentOfferItems[pipeIndex]?.ordered && !window.orderEditMode) return;
-    const pipe = currentOfferItems[pipeIndex];
+    if (isItemLocked(getActiveItemsArray()[pipeIndex])) return;
+    const pipe = getActiveItemsArray()[pipeIndex];
     const area = getPipeInnerArea(pipe.productId);
     if (area <= 0) return;
 
@@ -482,24 +486,53 @@ function addPehdToPipe(pipeIndex, pehdId) {
     }
 
     renderOfferItems();
+    if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
 
 /* ===== RENDEROWANIE POZYCJI OFERTY ===== */
 
+function buildRuryColgroup(extraCols = 0) {
+    const base = [
+        '36px',
+        '36px',
+        '',
+        '100px',
+        '140px',
+        '140px',
+        '120px',
+        '120px',
+        '130px',
+        '120px',
+        '160px',
+        '',
+        '160px',
+    ];
+    const extra = [];
+    for (let i = 0; i < extraCols; i++) extra.push('120px');
+    return [...base, ...extra].map((w) => `<col style="width:${w}">`).join('');
+}
+window.buildRuryColgroup = buildRuryColgroup;
+
 function renderOfferItems() {
+    let _items = getActiveItemsArray();
     const tbody = document.getElementById('offer-items-body');
-    if (currentOfferItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14" class="text-center" style="padding:2rem;color:var(--text-muted)">
+    if (_items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13" class="text-center" style="padding:2rem;color:var(--text-muted)">
       Wróć do kroku 2 aby dodać produkty</td></tr>`;
         updateOfferSummary();
         return;
     }
 
     // Odfiltruj wszelkie pozostałe samodzielne elementy PEHD z poprzednich wersji
-    currentOfferItems = currentOfferItems.filter((i) => !i.isPehd);
+    const filtered = _items.filter((i) => !i.isPehd);
+    if (filtered.length !== _items.length) {
+        if (window.orderEditMode) orderCurrentItems = filtered;
+        else currentOfferItems = filtered;
+        _items = filtered;
+    }
 
     // Synchronizuj wagi z cennika (aby zmiany w cenniku były widoczne natychmiast)
-    currentOfferItems.forEach((item) => {
+    _items.forEach((item) => {
         const product = products.find((p) => p.id === item.productId);
         if (product !== undefined) {
             if (!item.name) item.name = product.name;
@@ -535,27 +568,17 @@ function renderOfferItems() {
         }
     });
 
-    // Backfill uid + ordered status z istniejących zamówień
-    const orderedUids = new Set();
-    if (typeof ordersRury !== 'undefined' && ordersRury && editingOfferId) {
-        const offerOrders = ordersRury.filter(o => o.offerId === editingOfferId);
-        offerOrders.forEach(order => {
-            if (order.items) {
-                order.items.forEach(oi => { if (oi.uid) orderedUids.add(oi.uid); });
-            }
-        });
-    }
-    currentOfferItems.forEach(item => {
+    // Backfill uid dla pozycji bez uid (nie mutujemy już flagi 'ordered' — obliczamy ją na bieżąco z ordersRury)
+    _items.forEach(item => {
         if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-        if (orderedUids.has(item.uid)) item.ordered = true;
     });
 
     // Wstępnie oblicz rozkład transportu dla wszystkich pozycji
-    const transportDist = calculateTransportDistribution(currentOfferItems);
+    const transportDist = calculateTransportDistribution(_items);
 
     // Grupuj pozycje według kategorii, a następnie według średnicy
     const grouped = {};
-    currentOfferItems.forEach((item, i) => {
+    _items.forEach((item, i) => {
         const product = products.find((p) => p.id === item.productId);
         const category = product ? product.category : 'Inne';
         if (!grouped[category]) grouped[category] = {};
@@ -583,9 +606,12 @@ function renderOfferItems() {
     let html = '';
     let lp = 1;
 
+    const offerColgroup = document.getElementById('offer-colgroup');
+    if (offerColgroup) offerColgroup.innerHTML = buildRuryColgroup(0);
+
     sortedCategories.forEach((cat) => {
         // Wiersz nagłówka kategorii
-        html += `<tr class="offer-cat-header"><td colspan="14">${cat}</td></tr>`;
+        html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
 
         // Sortuj średnice numerycznie
         const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
@@ -596,7 +622,7 @@ function renderOfferItems() {
 
         diamKeys.forEach((diamKey) => {
             // Wiersz podnagłówka średnicy
-            html += `<tr class="offer-diam-header"><td colspan="14">⌀ ${diamKey}</td></tr>`;
+            html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${diamKey}</td></tr>`;
 
             grouped[cat][diamKey].sort((a, b) => {
                 // Bosy-Bosy zawsze pierwsze
@@ -618,22 +644,20 @@ function renderOfferItems() {
                 const transportPerUnit = transportDist[item.productId] || 0;
                 const unitTotal = priceAfterDiscount + transportPerUnit;
                 const netto = unitTotal * item.quantity;
-                const vat = netto * 0.23;
-                const brutto = netto + vat;
                 const hasLength = item.lengthM && item.lengthM > 0;
                 const metersVal = hasLength ? item.meters || 0 : '';
                 const autoTag = item.autoAdded
-                    ? ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(auto)</span>'
+                    ? ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>'
                     : '';
                 const is1m = isOneMetrePipe(item.productId);
 
                 let pName = escapeHtml(item.name);
                 if (item.pehdType === 'PEHD-3MM')
                     pName +=
-                        ' <span style="color:var(--primary);font-weight:bold">+ PEHD 3mm</span>';
+                        ' <span style="color:var(--warn);font-weight:bold">+ PEHD 3mm</span>';
                 if (item.pehdType === 'PEHD-4MM')
                     pName +=
-                        ' <span style="color:var(--primary);font-weight:bold">+ PEHD 4mm</span>';
+                        ' <span style="color:var(--warn);font-weight:bold">+ PEHD 4mm</span>';
 
                 let rowClass = '';
                 let rowStyle = '';
@@ -643,9 +667,9 @@ function renderOfferItems() {
                     rowClass = 'row-1m';
                 }
                 const activePehdStyle =
-                    'font-size:0.65rem; padding: 0.2rem 0.5rem; margin-top:2px; background:#10b981; color:white; border:none; box-shadow:0 0 10px rgba(16,185,129,0.3); font-weight:700; border-radius:4px;';
+                    'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--warn); color:#1a1a1a; border:none; box-shadow:0 0 12px rgba(245,158,11,0.5); font-weight:700; border-radius:4px; min-width:88px; text-align:center;';
                 const inactivePehdStyle =
-                    'font-size:0.6rem; padding: 0.2rem 0.4rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease;';
+                    'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease; min-width:88px; text-align:center; font-weight:600;';
 
                 const active3mm =
                     item.pehdType === 'PEHD-3MM'
@@ -656,54 +680,78 @@ function renderOfferItems() {
                         ? `style="${activePehdStyle}"`
                         : `style="${inactivePehdStyle}"`;
 
+                const isOrdered = isItemInAnyOrder(item.uid);
+                const isLocked = isItemLocked(item);
+
                 const isEditableLength =
                     cat === 'Rury Jajowe Betonowe' ||
                     cat === 'Rury Jajowe Żelbetowe' ||
                     cat === 'Duże Żelbetowe II';
                 const lengthEditor =
-                    isEditableLength && hasLength
-                        ? `<br><div style="margin-top:6px;"><button class="btn-icon" style="font-size:0.75rem; padding:0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text);" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport"><i data-lucide="ruler"></i> Dł. rury: <strong style="color:var(--primary)">${fmt(item.customLengthM || item.lengthM)}m</strong> <i data-lucide="pencil"></i></button></div>`
+                    isEditableLength && hasLength && !isLocked
+                        ? `<div class="length-editor" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
+                            <i data-lucide="ruler" style="width:11px;height:11px"></i>
+                            <span>Dł:</span>
+                            <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>
+                            <i data-lucide="pencil" style="width:10px;height:10px;opacity:0.5"></i>
+                        </div>`
                         : '';
 
-                const isOrdered = item.ordered === true;
-                const isLocked = isOrdered && !window.orderEditMode;
-                const checkboxCell = isOrdered
-                    ? '<td style="text-align:center;"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>'
-                    : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px"></td>`;
+                const itemDiamRaw = (() => {
+                    let d = getProductDiameter(item.productId);
+                    if (!d && item.productId) {
+                        const parts = item.productId.split('-');
+                        if (parts.length >= 5) {
+                            const code = parseInt(parts[4]);
+                            if (!isNaN(code) && code > 0) d = code * 100;
+                        }
+                    }
+                    return d || 0;
+                })();
+                const itemDiamAttr = itemDiamRaw > 0 ? `data-diameter="${itemDiamRaw}"` : '';
+                const isAuto = item.autoAdded === true;
+
+                let checkboxCell = '';
+                if (isOrdered) {
+                    checkboxCell = `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Element dodany do zamówienia — nie można odznaczyć"></td>`;
+                } else if (isAuto) {
+                    checkboxCell = `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
+                } else {
+                    checkboxCell = `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
+                }
                 const orderedRowStyle = isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
                 const lockAttr = isLocked ? ' disabled' : '';
 
-                html += `<tr class="${rowClass}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>
+                html += `<tr class="${rowClass}" data-uid="${item.uid}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>
           ${checkboxCell}
-          <td>${lp++}</td>
-          <td style="max-width:280px">${pName}${autoTag}${lengthEditor}</td>
-          <td class="text-right">${fmt(item.unitPrice)}</td>
-          <td class="text-center">${
+          <td class="rury-col-num" style="text-align:left">${lp++}</td>
+          <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>
+          <td class="rury-col-num" style="text-align:right"><span style="display:block;text-align:center">${fmt(item.unitPrice)}</span></td>
+          <td style="text-align:right"><span style="display:block;text-align:center">${
               hasLength
                   ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onfocus="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
                   : '—'
-          }</td>
-          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onfocus="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</td>
-          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onfocus="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</td>
-          <td class="text-right">${fmt(unitTotal)}</td>
-          <td class="text-center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onfocus="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></td>
-          <td class="text-right" style="color:var(--warn)">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</td>
-          <td class="text-right" style="font-weight:600">${fmt(netto)}</td>
-          <td class="text-right">${fmt(brutto)}</td>
-          <td class="text-center"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></td>
-          <td class="text-center" style="white-space:nowrap;">
+          }</span></td>
+          <td style="text-align:right"><span style="display:block;text-align:center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onfocus="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
+          <td style="text-align:right"><span style="display:block;text-align:center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onfocus="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
+          <td class="rury-col-num" style="text-align:right"><span style="display:block;text-align:center">${fmt(unitTotal)}</span></td>
+          <td style="text-align:right"><span style="display:block;text-align:center"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onfocus="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
+          <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span style="display:block;text-align:center">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
+          <td class="rury-col-num" style="text-align:right;font-weight:600"><span style="display:block;text-align:center">${fmt(netto)}</span></td>
+          <td style="text-align:right"><span style="display:block;text-align:center"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
+          <td style="text-align:right;white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
               ${
                   getPipeInnerArea(item.productId) > 0 && !item.autoAdded
                       ? `
-                <div style="display: flex; flex-direction: column; gap: 2px;${isLocked ? ' display:none;' : ''}">
-                  <button class="btn btn-sm btn-secondary" ${active3mm} onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
-                  <button class="btn btn-sm btn-secondary" ${active4mm} onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
+                <div class="pehd-btn-stack">
+                  <button class="btn btn-sm btn-secondary pehd-btn" ${active3mm} onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn" ${active4mm} onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
                 </div>
               `
                       : ''
               }
-              <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="removeOfferItem(${i})"${isLocked ? ' style="display:none"' : ''}><i data-lucide="x" aria-hidden="true"></i></button>
+              <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="removeOfferItem(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
           </td>
         </tr>`;
@@ -719,7 +767,8 @@ function renderOfferItems() {
 /* ===== AKTUALIZACJA POZYCJI ===== */
 
 function updatePipeLength(index, newLengthM, skipRender = false) {
-    const item = currentOfferItems[index];
+    const item = getActiveItemsArray()[index];
+    if (isItemLocked(item)) return;
     let newL = Number(newLengthM);
 
     const diameter = getProductDiameter(item.productId);
@@ -773,27 +822,30 @@ function updatePipeLength(index, newLengthM, skipRender = false) {
         syncGaskets(); syncTransportSecurity();
         renderOfferItems();
         updateOfferSummary();
+        if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
         showToast('Przeliczono uciętą rurę (waga, transport, nazwa)', 'info');
     } else {
         syncGaskets(); syncTransportSecurity();
         document.getElementById('product-search').value = '';
         document.getElementById('product-dropdown').classList.remove('show');
         renderOfferItems();
+        if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
         showToast('Dodano: ' + item.name.substring(0, 40) + '...', 'success');
     }
 }
 
 function updateItemText(index, field, value) {
-    const item = currentOfferItems[index];
-    if (item?.ordered && !window.orderEditMode) return;
+    const item = getActiveItemsArray()[index];
+    if (isItemLocked(item)) return;
     if (item) {
         item[field] = value;
     }
+    if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
 
 function updateItem(index, field, value) {
-    const item = currentOfferItems[index];
-    if (item?.ordered && !window.orderEditMode) return;
+    const item = getActiveItemsArray()[index];
+    if (isItemLocked(item)) return;
     const numVal = Number(value);
 
     // Ostrzeżenie o rabacie na uszczelki
@@ -815,11 +867,12 @@ function updateItem(index, field, value) {
 
     syncGaskets(); syncTransportSecurity();
     renderOfferItems();
+    if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
 
 function updateItemMeters(index, metersValue) {
-    const item = currentOfferItems[index];
-    if (item?.ordered && !window.orderEditMode) return;
+    const item = getActiveItemsArray()[index];
+    if (isItemLocked(item)) return;
     const meters = Number(metersValue);
     item.meters = meters;
     if (item.lengthM && item.lengthM > 0) {
@@ -830,26 +883,33 @@ function updateItemMeters(index, metersValue) {
 
     syncGaskets(); syncTransportSecurity();
     renderOfferItems();
+    if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
 
 function removeOfferItem(index) {
-    if (currentOfferItems[index]?.ordered && !window.orderEditMode) return;
-    currentOfferItems.splice(index, 1);
+    if (isItemLocked(getActiveItemsArray()[index])) return;
+    getActiveItemsArray().splice(index, 1);
     syncGaskets(); syncTransportSecurity();
     renderOfferItems();
+    if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
 
 /* ===== SELEKCJA POZYCJI DO ZAMÓWIENIA ===== */
 
 window.toggleAllItemsForOrder = function (checked) {
-    document.querySelectorAll('.item-order-checkbox').forEach(cb => {
-        cb.checked = checked;
+    const section = document.querySelector('.section.active');
+    if (!section) return;
+    section.querySelectorAll('.item-order-checkbox').forEach(cb => {
+        if (!cb.disabled) cb.checked = checked;
     });
 };
 
 window.updateOrderSelectionCount = function () {
-    const total = document.querySelectorAll('.item-order-checkbox').length;
-    const checked = document.querySelectorAll('.item-order-checkbox:checked').length;
+    const section = document.querySelector('.section.active');
+    if (!section) return;
+    const checkboxes = section.querySelectorAll('.item-order-checkbox');
+    const total = checkboxes.length;
+    const checked = section.querySelectorAll('.item-order-checkbox:checked').length;
     const selectAll = document.getElementById('select-all-items');
     if (selectAll) {
         selectAll.checked = total > 0 && checked === total;
@@ -858,13 +918,64 @@ window.updateOrderSelectionCount = function () {
 };
 
 window.collectSelectedItemsForOrder = function () {
-    const offerTabActive = document.getElementById('section-offer')?.classList?.contains('active');
+    const section = document.querySelector('.section.active');
+    if (!section) return [];
+    const offerTabActive = section.id === 'section-offer';
     const selector = offerTabActive ? '.offer-summary-checkbox:checked' : '.item-order-checkbox:checked';
     const selected = [];
-    document.querySelectorAll(selector).forEach(cb => {
+    const seen = new Set();
+    const items = getActiveItemsArray() || [];
+    section.querySelectorAll(selector).forEach(cb => {
+        if (cb.disabled) return;
         const uid = cb.dataset.uid;
-        const item = currentOfferItems.find(it => it.uid === uid);
+        if (!uid || seen.has(uid)) return;
+        seen.add(uid);
+        const item = items.find(it => it.uid === uid);
         if (item) selected.push(item);
     });
+    if (!offerTabActive) {
+        const selectedDiameters = new Set(
+            selected
+                .map(it => getProductDiameter(it.productId) || (() => {
+                    if (!it.productId) return 0;
+                    const parts = it.productId.split('-');
+                    if (parts.length >= 5) {
+                        const code = parseInt(parts[4]);
+                        if (!isNaN(code) && code > 0) return code * 100;
+                    }
+                    return 0;
+                })())
+                .filter(d => d > 0)
+        );
+        items.forEach(it => {
+            if (!it.autoAdded) return;
+            if (seen.has(it.uid)) return;
+            const d = getProductDiameter(it.productId) || (() => {
+                if (!it.productId) return 0;
+                const parts = it.productId.split('-');
+                if (parts.length >= 5) {
+                    const code = parseInt(parts[4]);
+                    if (!isNaN(code) && code > 0) return code * 100;
+                }
+                return 0;
+            })();
+            if (d > 0 && selectedDiameters.has(d)) {
+                selected.push(it);
+                seen.add(it.uid);
+            }
+        });
+    }
     return selected;
+};
+
+window.onPipeCheckboxChange = function (cb) {
+    const diameter = parseInt(cb.dataset.diameter || '0');
+    if (!diameter) return;
+    const checked = cb.checked;
+    document.querySelectorAll(`.item-order-auto[data-diameter="${diameter}"]:not(:disabled)`).forEach(autoCb => {
+        autoCb.checked = checked;
+    });
+    if (typeof window.updateOrderSelectionCount === 'function') {
+        window.updateOrderSelectionCount();
+    }
 };

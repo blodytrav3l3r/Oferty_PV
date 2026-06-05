@@ -108,6 +108,15 @@ model order_counters {
   @@id([userId, year])
 }
 
+// Liczniki numeracji zamówień rur (niezależne od studni)
+model order_counters_rury {
+  userId     String
+  year       Int
+  lastNumber Int?    @default(0)
+
+  @@id([userId, year])
+}
+
 // Zamówienia na studnie
 model orders_studnie_rel {
   id             String  @id

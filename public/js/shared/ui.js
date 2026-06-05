@@ -40,7 +40,7 @@ function trapFocus(container) {
 /**
  * Wyświetla powiadomienie toast.
  * @param {string} msg - treść powiadomienia
- * @param {'success'|'error'|'info'} type - typ powiadomienia
+ * @param {'success'|'error'|'info'|'warning'} type - typ powiadomienia
  */
 function showToast(msg, type = 'info') {
     const container =
