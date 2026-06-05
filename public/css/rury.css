@@ -770,20 +770,20 @@
 /* ── Fixed pasek podsumowania oferty (krok 3, nad dolną nawigacją) ── */
 .rury-summary-bar {
     position: fixed;
-    bottom: 65px;
+    bottom: 60px;
     left: 0;
     right: 0;
     z-index: 99;
     background: var(--bg-card, #111827);
     border-top: 1px solid var(--border-glass);
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid transparent;
     padding: 0.8rem 1.5rem;
     box-shadow: 0 -8px 30px #080808;
 }
 
 /* Większy padding-bottom dla kroku 3, by treść nie chowała się za fixed paskiem i nawigacją */
 .wizard-step#wizard-step-3.active {
-    padding-bottom: 140px;
+    padding-bottom: 150px;
 }
 
 /* ── Responsywność ── */
@@ -827,9 +827,11 @@
     .wizard-step-line { width: 24px; }
     .wizard-nav { flex-direction: column; gap: 0.5rem; }
     .wizard-nav .wizard-btn { width: 100%; justify-content: center; }
-    .wizard-nav-fixed { padding: 0.6rem 0.8rem; gap: 0.5rem; }
-    .wizard-nav-fixed .wizard-nav-left { left: 0.8rem; gap: 0.4rem; }
-    .wizard-nav-fixed .wizard-nav-right { right: 0.8rem; }
+    .wizard-nav-fixed { padding: 0 0.6rem; column-gap: 0.5rem; height: 56px; box-sizing: border-box; }
+    .wizard-nav-fixed .wizard-nav-left { gap: 0.4rem; }
+    .wizard-nav-fixed .wizard-nav-right { gap: 0.4rem; }
+    .wizard-nav-fixed .wizard-btn { min-width: 90px; height: 34px; padding: 0 0.7rem; font-size: 0.75rem; }
+    .wizard-nav-fixed .wizard-step-info { font-size: 0.6rem; padding: 0.2rem 0.6rem; height: 26px; letter-spacing: 0.4px; }
 
     .wizard-card { padding: 1rem 0.8rem; }
     .wizard-card-header { flex-wrap: wrap; }

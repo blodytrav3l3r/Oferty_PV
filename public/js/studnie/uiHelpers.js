@@ -277,13 +277,11 @@ function updateStudnieBottomNav() {
 
     const step = currentWizardStep;
 
-    // Ukryj nawigację w kroku 5 (zamówienie) i w trybie zamówienia
-    if (step === 5 || (typeof orderEditMode !== 'undefined' && orderEditMode)) {
-        nav.style.display = 'none';
-        return;
-    }
-
+    // Pasek nawigacji widoczny zawsze (w kroku 5 bez przycisków — sama etykieta "Zamówienie")
     nav.style.display = 'flex';
+    nav.classList.toggle('no-buttons', step === 5);
+
+    if (step === 5) return;
 
     if (prevBtn) prevBtn.style.display = step === 1 ? 'none' : 'flex';
     if (stepInfo) stepInfo.textContent = 'Krok ' + step + ' z 5';
