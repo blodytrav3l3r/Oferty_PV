@@ -7,6 +7,9 @@ import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
+import { generateRuryPDFFromContext, lookupOfferUsers } from '../../services/pdfGenerator';
+import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
+import { generateRuryDOCXFromContext } from '../../services/docx';
 
 const router = express.Router();
 
@@ -213,6 +216,143 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu Karty Budowy Rury DOCX', message);
+        res.status(500).json({ error: message });
+    }
+});
+
+// POST /api/orders-rury/:id/export-offer-pdf
+// Generuje PDF oferty w formacie standardowym na podstawie bieżącego stanu edycji zamówienia.
+// Body: { items, clientName, clientNip, clientAddress, clientContact, investName,
+//         investAddress, investContractor, notes, paymentTerms, validity, date,
+//         transportKm, transportRate, orderNumber, offerNumber, authorUser, guardianUser }
+router.post('/:id/export-offer-pdf', requireAuth, writeOrdersLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const docId = req.params.id;
+        const o = await prisma.orders_rury_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true }
+        });
+        const isOwner = o && o.userId === authReq.user?.id;
+        const isProParent =
+            o &&
+            authReq.user?.role === 'pro' &&
+            (authReq.user?.subUsers || []).includes(o.userId || '');
+        if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+            return res.status(404).json({ error: 'Zamówienie nie znalezione' });
+        }
+
+        const body = (req.body || {}) as Record<string, unknown>;
+        const items = Array.isArray(body.items) ? (body.items as Array<Record<string, unknown>>) : [];
+
+        let authorUser: UserContactInfo | null = null;
+        let guardianUser: UserContactInfo | null = null;
+        try {
+            const lu = await lookupOfferUsers(body as Record<string, unknown>, o.userId || '');
+            authorUser = lu.authorUser;
+            guardianUser = lu.guardianUser;
+        } catch (e) {
+            logger.warn('Orders', 'Błąd lookupOfferUsers w export-offer-pdf', e);
+        }
+
+        const ctx: RuryOfferData = {
+            offerNumber: String(body.orderNumber || body.offerNumber || docId.substring(0, 8)),
+            clientName: String(body.clientName ?? 'Klient niezidentyfikowany'),
+            clientNip: String(body.clientNip ?? ''),
+            clientAddress: String(body.clientAddress ?? ''),
+            clientPhone: String(body.clientContact ?? ''),
+            investName: String(body.investName ?? ''),
+            investAddress: String(body.investAddress ?? ''),
+            investContractor: String(body.investContractor ?? ''),
+            items,
+            createdAt: String(body.date ?? new Date().toISOString()),
+            validityDays: 30,
+            notes: String(body.notes ?? ''),
+            paymentTerms: String(body.paymentTerms ?? ''),
+            validity: String(body.validity ?? ''),
+            authorUser,
+            guardianUser
+        };
+
+        const pdfBuffer = await generateRuryPDFFromContext(ctx);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_zamowienie_${(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf"`);
+        res.send(pdfBuffer);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Orders', 'Błąd POST orders-rury export-offer-pdf', message);
+        res.status(500).json({ error: message });
+    }
+});
+
+// POST /api/orders-rury/:id/export-offer-docx
+// Generuje DOCX oferty w formacie standardowym na podstawie bieżącego stanu edycji zamówienia.
+// Body: jak export-offer-pdf
+router.post('/:id/export-offer-docx', requireAuth, writeOrdersLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const docId = req.params.id;
+        const o = await prisma.orders_rury_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true }
+        });
+        const isOwner = o && o.userId === authReq.user?.id;
+        const isProParent =
+            o &&
+            authReq.user?.role === 'pro' &&
+            (authReq.user?.subUsers || []).includes(o.userId || '');
+        if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+            return res.status(404).json({ error: 'Zamówienie nie znalezione' });
+        }
+
+        const body = (req.body || {}) as Record<string, unknown>;
+        const items = Array.isArray(body.items) ? (body.items as Array<Record<string, unknown>>) : [];
+
+        let authorUser: UserContactInfo | null = null;
+        let guardianUser: UserContactInfo | null = null;
+        try {
+            const lu = await lookupOfferUsers(body as Record<string, unknown>, o.userId || '');
+            authorUser = lu.authorUser;
+            guardianUser = lu.guardianUser;
+        } catch (e) {
+            logger.warn('Orders', 'Błąd lookupOfferUsers w export-offer-docx', e);
+        }
+
+        const offerData: Record<string, unknown> = {
+            date: body.date ?? new Date().toISOString(),
+            validity: body.validity ?? '',
+            clientName: body.clientName ?? 'Klient niezidentyfikowany',
+            clientNip: body.clientNip ?? '',
+            clientAddress: body.clientAddress ?? '',
+            clientContact: body.clientContact ?? '',
+            investName: body.investName ?? '',
+            investAddress: body.investAddress ?? '',
+            investContractor: body.investContractor ?? '',
+            notes: body.notes ?? '',
+            paymentTerms: body.paymentTerms ?? ''
+        };
+
+        const ctx = {
+            offerNumber: String(body.orderNumber || body.offerNumber || docId.substring(0, 8)),
+            offerData,
+            items,
+            authorUser,
+            guardianUser
+        };
+
+        const docxBuffer = await generateRuryDOCXFromContext(ctx);
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="oferta_rury_zamowienie_${ctx.offerNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx"`
+        );
+        res.send(docxBuffer);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Orders', 'Błąd POST orders-rury export-offer-docx', message);
         res.status(500).json({ error: message });
     }
 });

@@ -20,6 +20,15 @@ function fmtInt(val: number): string {
  * @throws Error gdy oferta nie zostanie znaleziona
  */
 export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
+    const ctx = await buildRuryOfferContextFromOfferId(offerId);
+    return generateRuryPDFFromContext(ctx);
+}
+
+/**
+ * Buduje kontekst oferty rur (RuryOfferData) z ID oferty w bazie.
+ * Wspólne dla endpointu /export-pdf oferty oraz wewnętrznych wywołań.
+ */
+export async function buildRuryOfferContextFromOfferId(offerId: string): Promise<RuryOfferData> {
     const offer = await prisma.offers_rel.findUnique({
         where: { id: offerId }
     });
@@ -28,7 +37,6 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
         throw new Error('Oferta nie znaleziona');
     }
 
-    // Parsowanie danych oferty z JSON data
     let offerData: Record<string, unknown> = {};
     try {
         if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
@@ -36,12 +44,10 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
         logger.warn('PdfRury', 'Nie udało się sparsować danych oferty', e);
     }
 
-    // Pobierz elementy oferty (podstawowe dane z offer_items_rel)
     const items = await prisma.offer_items_rel.findMany({
         where: { offerId }
     });
 
-    // Użyj rozszerzonych danych z offerData.items jeśli dostępne (zawiera name, weight, pehd itp.)
     const enhancedItems = (Array.isArray(offerData.items) ? offerData.items : items) as Record<string, unknown>[];
 
     const client = offer.clientId
@@ -50,7 +56,7 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
 
     const { authorUser, guardianUser } = await lookupOfferUsers(offerData, offer.userId);
 
-    const html = await generateRuryHTML({
+    return {
         offerNumber: offer.offer_number || 'N/A',
         clientName: String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany'),
         clientNip: String(client?.nip ?? offerData.clientNip ?? ''),
@@ -67,8 +73,16 @@ export async function generateOfferRuryPDF(offerId: string): Promise<Buffer> {
         validity: String(offerData.validity ?? ''),
         authorUser,
         guardianUser
-    });
+    };
+}
 
+/**
+ * Generuje PDF oferty rur z gotowego kontekstu (RuryOfferData).
+ * Używane zarówno przez /export-pdf oferty (po zbudowaniu kontekstu z DB),
+ * jak i przez endpoint /export-offer-pdf zamówienia (po zbudowaniu z payloadu klienta).
+ */
+export async function generateRuryPDFFromContext(data: RuryOfferData): Promise<Buffer> {
+    const html = await generateRuryHTML(data);
     return generatePDF(html);
 }
 

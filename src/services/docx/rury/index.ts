@@ -1,6 +1,7 @@
 import { Packer } from 'docx';
 import prisma from '../../../prismaClient';
-import { lookupOfferUsers } from '../../pdfGenerator';
+import { buildRuryOfferContextFromOfferId } from '../../pdfGenerator';
+import type { UserContactInfo } from '../../pdfGenerator';
 import { buildRuryDocument } from './builder';
 import { logger } from '../../../utils/logger';
 
@@ -16,6 +17,8 @@ import { logger } from '../../../utils/logger';
  * @throws Error gdy oferta nie zostanie znaleziona
  */
 export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
+    const ctx = await buildRuryOfferContextFromOfferId(offerId);
+
     const offer = await prisma.offers_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta nie znaleziona');
 
@@ -26,20 +29,47 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
         logger.warn('DocxRury', 'Nie udało się sparsować danych oferty', e);
     }
 
-    // Pobierz elementy oferty (podstawowe dane)
-    const items = await prisma.offer_items_rel.findMany({ where: { offerId } });
-
-    // Użyj rozszerzonych danych z offerData.items jeśli dostępne
-    const enhancedItems = (Array.isArray(offerData.items) ? offerData.items : items) as Record<string, unknown>[];
-
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
         : null;
 
-    const { authorUser, guardianUser } = await lookupOfferUsers(offerData, offer.userId);
+    logger.info('DocxRury', `Generowanie DOCX dla oferty ${offerId}, pozycji: ${ctx.items.length}`);
 
-    logger.info('DocxRury', `Generowanie DOCX dla oferty ${offerId}, pozycji: ${enhancedItems.length}`);
+    const doc = buildRuryDocument(
+        { offer_number: ctx.offerNumber },
+        offerData,
+        client,
+        ctx.items,
+        ctx.authorUser ?? null,
+        ctx.guardianUser ?? null
+    );
+    return Packer.toBuffer(doc);
+}
 
-    const doc = buildRuryDocument(offer, offerData, client, enhancedItems, authorUser, guardianUser);
+/**
+ * Generuje dokument DOCX dla zamówienia rur w trybie "oferty bieżącej".
+ * Używa tego samego szablonu co generateOfferRuryDOCX, ale z danymi przesłanymi
+ * przez klienta (aktualny stan edycji z orderCurrentItems).
+ *
+ * @param ctx - Kontekst oferty (items + metadane) zbudowany z bieżącego stanu zamówienia
+ * @returns Buffer zawierający wygenerowany dokument DOCX
+ */
+export async function generateRuryDOCXFromContext(ctx: {
+    offerNumber: string;
+    offerData: Record<string, unknown>;
+    items: Array<Record<string, unknown>>;
+    authorUser: UserContactInfo | null;
+    guardianUser: UserContactInfo | null;
+}): Promise<Buffer> {
+    logger.info('DocxRury', `Generowanie DOCX (order context) dla zamówienia ${ctx.offerNumber}, pozycji: ${ctx.items.length}`);
+
+    const doc = buildRuryDocument(
+        { offer_number: ctx.offerNumber },
+        ctx.offerData,
+        null,
+        ctx.items,
+        ctx.authorUser,
+        ctx.guardianUser
+    );
     return Packer.toBuffer(doc);
 }
