@@ -1922,3 +1922,23 @@ select.form-input option {
 #offer-summary-footer-fixed .summary-card-actions {
     padding: 0.5rem 0.8rem;
 }
+
+/* ── Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji (60px desktop / 56px mobile) ── */
+.offer-summary-footer-fixed {
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    background: #111827;
+    border-top: 1px solid var(--border-glass);
+    padding: 1.2rem 2.5rem;
+    z-index: 99;
+    box-shadow: 0 -8px 30px #080808;
+}
+
+@media (max-width: 768px) {
+    .offer-summary-footer-fixed {
+        bottom: 56px;
+        padding: 0.8rem 1rem;
+    }
+}
