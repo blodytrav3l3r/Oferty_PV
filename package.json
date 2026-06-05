@@ -26,8 +26,10 @@
         "graphify:query": "graphify query",
         "graphify:status": "graphify status .",
         "graphify:ci": "graphify build .",
-        "predev": "where graphify >nul 2>&1 || (echo [WARN] graphify nie znaleziony. Uruchom: npm i -g graphify && exit /b 0)",
-        "postinstall": "prisma generate"
+        "predev": "where graphify >nul 2>&1 || (echo [WARN] graphify nie znaleziony. Uruchom: npm i -g graphify && exit /b 0)"
+    },
+    "engines": {
+        "node": ">=20.0.0"
     },
     "keywords": [],
     "author": "",
