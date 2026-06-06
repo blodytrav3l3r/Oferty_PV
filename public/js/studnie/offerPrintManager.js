@@ -508,14 +508,6 @@ window.showUniversalPrintModal = function(offerId, orderId) {
             title: 'Wydruk Oferty',
             description: 'Wybierz format eksportu kalkulacji ofertowej:'
         } : null,
-        orderCurrentSection: (finalOrderId && typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) ? {
-            id: finalOrderId,
-            actionPdf: 'exportStudnieOrderAsOffer_action',
-            actionDocx: 'exportStudnieOrderAsOffer_action',
-            title: 'Oferta (stan bieżący zamówienia)',
-            description: 'Drukuje aktualne pozycje z edycji zamówienia, nie bazową ofertę.',
-            badge: 'POST'
-        } : null,
         ordersSection: relatedOrders.length > 0 ? {
             orders: relatedOrders,
             actionPdf: 'exportOrderDirect_action',

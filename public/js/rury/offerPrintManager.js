@@ -12,7 +12,6 @@ window.handlePrintClick = handlePrintClick;
 function showUniversalPrintModalRury(offerId, orderId) {
     const targetOfferId = offerId || (typeof editingOfferId !== 'undefined' ? editingOfferId : null);
     const targetOrderId = orderId || (typeof editingRuryOrderId !== 'undefined' ? editingRuryOrderId : null);
-    const inOrderMode = !!(window.orderEditMode && targetOrderId);
 
     let relatedOrders = [];
     if (targetOfferId && typeof getOrdersForOffer === 'function') {
@@ -27,20 +26,12 @@ function showUniversalPrintModalRury(offerId, orderId) {
 
     const config = {
         modalTitle: 'Wydruk Dokumentów',
-        offerSection: (!inOrderMode && targetOfferId) ? {
+        offerSection: targetOfferId ? {
             id: targetOfferId,
             actionPdf: 'exportOfferDirectRury_action',
             actionDocx: 'exportOfferDirectRury_action',
             title: 'Wydruk Oferty',
             description: 'Wybierz format eksportu oferty:'
-        } : null,
-        orderCurrentSection: inOrderMode ? {
-            id: targetOrderId,
-            actionPdf: 'exportRuryOrderAsOffer_action',
-            actionDocx: 'exportRuryOrderAsOffer_action',
-            title: 'Oferta (stan bieżący zamówienia)',
-            description: 'Drukuje aktualne pozycje z edycji zamówienia (krok 5), nie bazową ofertę.',
-            badge: 'stan bieżący'
         } : null,
         ordersSection: relatedOrders.length > 0 ? {
             orders: relatedOrders,
