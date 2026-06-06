@@ -1,4 +1,4 @@
-import { Packer, Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType, Header } from 'docx';
+import { Packer, Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType } from 'docx';
 import fs from 'fs';
 import path from 'path';
 import prisma from '../../../prismaClient';
@@ -6,7 +6,7 @@ import { logger } from '../../../utils/logger';
 import { textCell } from '../helpers';
 import {
   FONT, COLOR_BODY, COLOR_GRAY_HEADER, COLOR_WHITE, COLOR_LABEL,
-  SZ_TITLE, SZ_TABLE_BODY, SZ_TABLE_HEADER,
+  SZ_TABLE_BODY, SZ_TABLE_HEADER,
   BORDER_DOTTED, BORDER_NONE, NO_BORDERS, CELL_BORDERS, type CellBorders
 } from '../constants';
 
@@ -117,7 +117,6 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
 
     const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
 
-    const nrZamowienia = String(orderData.orderNumber || orderData.productionOrderNumber || String(order.id).substring(0, 8));
     const nrOferty = String(orderData.offerNumber || orderData.number || (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—'));
 
     const children: (Paragraph | Table)[] = [];
@@ -398,18 +397,6 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     const doc = new Document({
       sections: [{
         properties: {},
-        headers: {
-          default: new Header({
-            children: [new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 0 },
-              children: [new TextRun({
-                text: `KARTA BUDOWY - ZAMÓWIENIE ${nrZamowienia}`,
-                bold: true, size: SZ_TITLE, font: FONT, color: COLOR_BODY
-              })]
-            })]
-          })
-        },
         children
       }]
     });
