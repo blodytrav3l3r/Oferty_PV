@@ -461,7 +461,7 @@ function exportOfferXlsx(id) {
         let pehdLabel = '';
         if (item.pehdType === 'PEHD-3MM') pehdLabel = 'PEHD 3mm';
         if (item.pehdType === 'PEHD-4MM') pehdLabel = 'PEHD 4mm';
-        if (item.autoAdded) pName += ' (uszczelka)';
+        if (item.autoAdded) pName += ' (dodane automatycznie)';
 
         rows.push([
             i + 1,

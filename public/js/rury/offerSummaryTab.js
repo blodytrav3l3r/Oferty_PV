@@ -134,8 +134,14 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM') pName += ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:#10b981; color:white; font-weight:700;">+ PEHD 3mm</span>';
         if (item.pehdType === 'PEHD-4MM') pName += ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:#10b981; color:white; font-weight:700;">+ PEHD 4mm</span>';
-        if (item.autoAdded) pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(uszczelka)</span>';
-        if (item.surcharge) pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
+        if (item.autoAdded) pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
+        if (item.surcharge) {
+            const isPos = item.surcharge > 0;
+            const color = isPos ? '#34d399' : '#f87171';
+            const bg = isPos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+            const border = isPos ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.3)';
+            pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
+        }
 
         const isOrdered = (typeof isItemInAnyOrder === 'function') ? isItemInAnyOrder(item.uid) : false;
         const summaryCheckboxCell = isOrdered
