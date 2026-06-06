@@ -5,6 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { logger } from '../../utils/logger';
 import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { buildRoleWhereSql } from '../../utils/roleFilter';
 import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { productionOrdersBatchSchema, productionOrderCreateSchema } from '../../validators/offerSchemas';
@@ -19,22 +20,6 @@ const writeProductionLimiter = createRateLimiter({
 });
 
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
-
-// Buduje SQL WHERE clause na podstawie roli użytkownika
-// Wszystkie wartości pochodzą z sesji auth (zaufane), ale dla bezpieczeństwa walidujemy
-function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[] }): string {
-    if (user.role === 'admin') return '';
-    const isValidId = (id: string): boolean => typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
-    if (user.role === 'pro') {
-        const allowedIds = [user.id, ...(user.subUsers || [])]
-            .filter(isValidId)
-            .map(id => `'${id.replace(/'/g, "''")}'`)
-            .join(',');
-        return `WHERE production_orders_rel."userId" IN (${allowedIds})`;
-    }
-    const safeId = isValidId(user.id) ? user.id.replace(/'/g, "''") : '__invalid__';
-    return `WHERE production_orders_rel."userId" = '${safeId}'`;
-}
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

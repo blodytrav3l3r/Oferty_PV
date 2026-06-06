@@ -8,6 +8,7 @@ import { createRateLimiter } from '../../middleware/rateLimiter';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema, ruryOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
 import { canWriteDoc } from '../../utils/ownership';
+import { buildRoleWhereSql } from '../../utils/roleFilter';
 import { generateRuryPDFFromContext, lookupOfferUsers } from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
 import { generateRuryDOCXFromContext } from '../../services/docx';
@@ -26,20 +27,6 @@ const exportOrdersLimiter = createRateLimiter({
     maxHits: 20,
     message: 'Zbyt wiele eksportów. Odczekaj minutę.'
 });
-
-function buildRoleWhereSql(user: { role: string; id: string; subUsers?: string[] }): string {
-    if (user.role === 'admin') return '';
-    const isValidId = (id: string): boolean => typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
-    if (user.role === 'pro') {
-        const allowedIds = [user.id, ...(user.subUsers || [])]
-            .filter(isValidId)
-            .map(id => `'${id.replace(/'/g, "''")}'`)
-            .join(',');
-        return `WHERE "userId" IN (${allowedIds})`;
-    }
-    const safeId = isValidId(user.id) ? user.id.replace(/'/g, "''") : '__invalid__';
-    return `WHERE "userId" = '${safeId}'`;
-}
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
