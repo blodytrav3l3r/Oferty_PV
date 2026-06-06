@@ -4,18 +4,29 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
-import { WRITE_LIMITER } from '../../middleware/rateLimiters';
-import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
+import { WRITE_LIMITER, EXPORT_LIMITER } from '../../middleware/rateLimiters';
+import {
+    studnieOrdersBatchSchema,
+    studnieOrderUpdateSchema,
+    studnieOfferExportSchema
+} from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
 import { canWriteDoc } from '../../utils/ownership';
 import { buildRoleWhereSql } from '../../utils/roleFilter';
-import { generateKartaBudowyPDF } from '../../services/pdfGenerator';
-import { generateKartaBudowyDOCX } from '../../services/docx';
+import {
+    generateKartaBudowyPDF,
+    generateStudniePDFFromContext,
+    lookupOfferUsers
+} from '../../services/pdfGenerator';
+import type { StudnieOfferData, UserContactInfo } from '../../services/pdfGenerator';
+import { generateKartaBudowyDOCX, generateStudnieDOCXFromContext } from '../../services/docx';
 
 const router = express.Router();
 
 // Rate limiter dla operacji na zamówieniach (60 zapytań na minutę)
 const writeOrdersLimiter = WRITE_LIMITER;
+// Rate limiter dla eksportów (30 zapytań na minutę) — mirror rury
+const exportOrdersLimiter = EXPORT_LIMITER;
 
 /* ===== ZAMÓWIENIA STUDNIE ===== */
 
@@ -167,6 +178,183 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
         res.status(500).json({ error: message });
     }
 });
+
+/* ===== EKSPORT ZAMÓWIENIA JAKO OFERTY (PDF/DOCX) ===== */
+
+// POST /api/orders-studnie/:id/export-offer-pdf
+// Generuje PDF oferty w formacie standardowym na podstawie bieżącego stanu edycji zamówienia.
+// Body: { items, clientName, clientNip, clientAddress, clientContact, investName,
+//         investAddress, notes, paymentTerms, validity, validityDays, date,
+//         transportKm, transportRate, orderNumber, offerNumber }
+router.post(
+    '/:id/export-offer-pdf',
+    requireAuth,
+    exportOrdersLimiter,
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const parseResult = studnieOfferExportSchema.safeParse(req.body);
+            if (!parseResult.success) {
+                return res.status(400).json({
+                    error: 'Nieprawidłowe dane eksportu oferty',
+                    details: parseResult.error.issues.map(
+                        (i) => `${i.path.join('.')}: ${i.message}`
+                    )
+                });
+            }
+            const body = parseResult.data as Record<string, unknown>;
+            const items = body.items as Array<Record<string, unknown>>;
+
+            const docId = req.params.id;
+            const o = await prisma.orders_studnie_rel.findUnique({
+                where: { id: docId },
+                select: { id: true, userId: true }
+            });
+            const isOwner = o && o.userId === authReq.user?.id;
+            const isProParent =
+                o &&
+                authReq.user?.role === 'pro' &&
+                (authReq.user?.subUsers || []).includes(o.userId || '');
+            if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+                return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
+            }
+
+            let authorUser: UserContactInfo | null = null;
+            let guardianUser: UserContactInfo | null = null;
+            try {
+                const lu = await lookupOfferUsers(body, o.userId || '');
+                authorUser = lu.authorUser;
+                guardianUser = lu.guardianUser;
+            } catch (e) {
+                logger.warn('Orders', 'Błąd lookupOfferUsers w studnie export-offer-pdf', e);
+            }
+
+            const totalTransportCost = Number(body.transportKm ?? 0) * Number(body.transportRate ?? 0);
+
+            const ctx: StudnieOfferData = {
+                offerNumber: String(
+                    body.orderNumber || body.offerNumber || docId.substring(0, 8)
+                ),
+                clientName: String(body.clientName ?? 'Klient niezidentyfikowany'),
+                clientNip: String(body.clientNip ?? ''),
+                clientAddress: String(body.clientAddress ?? ''),
+                clientPhone: String(body.clientContact ?? ''),
+                investName: String(body.investName ?? ''),
+                investAddress: String(body.investAddress ?? ''),
+                items,
+                transportCost: totalTransportCost,
+                createdAt: String(body.date ?? new Date().toISOString()),
+                validityDays: Number(body.validityDays ?? 30),
+                notes: String(body.notes ?? ''),
+                paymentTerms: String(body.paymentTerms ?? ''),
+                validity: String(body.validity ?? ''),
+                authorUser,
+                guardianUser
+            };
+
+            const pdfBuffer = await generateStudniePDFFromContext(ctx);
+            const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="oferta_studnie_zamowienie_${safeOrder}.pdf"`
+            );
+            res.send(pdfBuffer);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('Orders', 'Błąd POST orders-studnie export-offer-pdf', message);
+            res.status(500).json({ error: message });
+        }
+    }
+);
+
+// POST /api/orders-studnie/:id/export-offer-docx
+// Generuje DOCX oferty w formacie standardowym na podstawie bieżącego stanu edycji zamówienia.
+// Body: jak export-offer-pdf
+router.post(
+    '/:id/export-offer-docx',
+    requireAuth,
+    exportOrdersLimiter,
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const parseResult = studnieOfferExportSchema.safeParse(req.body);
+            if (!parseResult.success) {
+                return res.status(400).json({
+                    error: 'Nieprawidłowe dane eksportu oferty',
+                    details: parseResult.error.issues.map(
+                        (i) => `${i.path.join('.')}: ${i.message}`
+                    )
+                });
+            }
+            const body = parseResult.data as Record<string, unknown>;
+            const items = body.items as Array<Record<string, unknown>>;
+
+            const docId = req.params.id;
+            const o = await prisma.orders_studnie_rel.findUnique({
+                where: { id: docId },
+                select: { id: true, userId: true }
+            });
+            const isOwner = o && o.userId === authReq.user?.id;
+            const isProParent =
+                o &&
+                authReq.user?.role === 'pro' &&
+                (authReq.user?.subUsers || []).includes(o.userId || '');
+            if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+                return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
+            }
+
+            let authorUser: UserContactInfo | null = null;
+            let guardianUser: UserContactInfo | null = null;
+            try {
+                const lu = await lookupOfferUsers(body, o.userId || '');
+                authorUser = lu.authorUser;
+                guardianUser = lu.guardianUser;
+            } catch (e) {
+                logger.warn('Orders', 'Błąd lookupOfferUsers w studnie export-offer-docx', e);
+            }
+
+            const offerData: Record<string, unknown> = {
+                date: body.date ?? new Date().toISOString(),
+                validity: body.validity ?? '',
+                clientName: body.clientName ?? 'Klient niezidentyfikowany',
+                clientNip: body.clientNip ?? '',
+                clientAddress: body.clientAddress ?? '',
+                clientContact: body.clientContact ?? '',
+                investName: body.investName ?? '',
+                investAddress: body.investAddress ?? '',
+                notes: body.notes ?? '',
+                paymentTerms: body.paymentTerms ?? ''
+            };
+
+            const ctx = {
+                offerNumber: String(
+                    body.orderNumber || body.offerNumber || docId.substring(0, 8)
+                ),
+                offerData,
+                wells: items,
+                authorUser,
+                guardianUser
+            };
+
+            const docxBuffer = await generateStudnieDOCXFromContext(ctx);
+            const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            );
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="oferta_studnie_zamowienie_${safeOrder}.docx"`
+            );
+            res.send(docxBuffer);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('Orders', 'Błąd POST orders-studnie export-offer-docx', message);
+            res.status(500).json({ error: message });
+        }
+    }
+);
 
 /* ===== ZAMÓWIENIE PO ID (ZAMÓWIENIE) ===== */
 

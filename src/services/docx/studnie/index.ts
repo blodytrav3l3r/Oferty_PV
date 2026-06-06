@@ -6,7 +6,8 @@
 
 import { Packer } from 'docx';
 import prisma from '../../../prismaClient';
-import { lookupOfferUsers } from '../../pdfGenerator';
+import { lookupOfferUsers, buildStudnieOfferContextFromOfferId } from '../../pdfGenerator';
+import type { UserContactInfo } from '../../pdfGenerator';
 import { buildStudnieDocument } from './builder';
 import { logger } from '../../../utils/logger';
 
@@ -56,3 +57,37 @@ export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer>
     const doc = buildStudnieDocument(offer, offerData, client, wells, authorUser, guardianUser);
     return Packer.toBuffer(doc);
 }
+
+/**
+ * Generuje dokument DOCX dla zamówienia studni w trybie "oferty bieżącej".
+ * Używa tego samego szablonu co generateOfferStudnieDOCX, ale z danymi przesłanymi
+ * przez klienta (aktualny stan edycji zamówienia z kroku 5).
+ *
+ * @param ctx - Kontekst oferty (offerData + wells + metadane) zbudowany z bieżącego stanu zamówienia
+ * @returns Buffer zawierający wygenerowany dokument DOCX
+ */
+export async function generateStudnieDOCXFromContext(ctx: {
+    offerNumber: string;
+    offerData: Record<string, unknown>;
+    wells: Array<Record<string, unknown>>;
+    authorUser: UserContactInfo | null;
+    guardianUser: UserContactInfo | null;
+}): Promise<Buffer> {
+    logger.info(
+        'DocxStudnie',
+        `Generowanie DOCX (order context) dla zamówienia ${ctx.offerNumber}, studni: ${ctx.wells.length}`
+    );
+
+    const doc = buildStudnieDocument(
+        { offer_number: ctx.offerNumber },
+        ctx.offerData,
+        null,
+        ctx.wells,
+        ctx.authorUser,
+        ctx.guardianUser
+    );
+    return Packer.toBuffer(doc);
+}
+
+// Re-export helpera do budowania kontekstu z DB (dla spójności API z rury)
+export { buildStudnieOfferContextFromOfferId };

@@ -454,6 +454,65 @@ export type RuryOfferExportItemInput = z.infer<typeof ruryOfferExportItemSchema>
 export type RuryOfferExportInput = z.infer<typeof ruryOfferExportSchema>;
 
 // =============================================================================
+// STUDNIE — EKSPORT ZAMÓWIENIA JAKO OFERTY (PDF/DOCX)
+// =============================================================================
+
+/**
+ * Schemat pozycji studni wysyłanej do eksportu PDF/DOCX
+ * z bieżącego stanu edycji zamówienia (krok 5).
+ *
+ * Pola opcjonalne akceptują null/'' jako "brak wartości"
+ * (dzięki helperom nullish*). Generator PDF/DOCX ma fallbacki
+ * dla brakujących danych (np. zwienczenie='—', height=0).
+ */
+export const studnieOfferExportItemSchema = z.object({
+    productId: nullishString,
+    productName: z.string().min(1, 'Nazwa studni jest wymagana'),
+    quantity: z.preprocess(
+        (v) => (v === null || v === '' ? 1 : v),
+        z.number().positive('Ilość musi być dodatnia')
+    ),
+    discount: nullishNumber,
+    price: z.preprocess(
+        (v) => (v === null || v === '' ? 0 : v),
+        z.number().nonnegative('Cena nie może być ujemna')
+    ),
+    DN: nullishString,
+    height: nullishNumber,
+    zwienczenie: nullishString,
+    transportCost: nullishNumber,
+    dodatkowe_info: nullishString
+});
+
+/**
+ * Schemat body dla POST /api/orders-studnie/:id/export-offer-pdf|docx
+ * Wymaga co najmniej jednej studni w items.
+ */
+export const studnieOfferExportSchema = z.object({
+    items: z
+        .array(studnieOfferExportItemSchema)
+        .min(1, 'Wymagana co najmniej jedna studnia w items'),
+    clientName: z.string().optional().default(''),
+    clientNip: z.string().optional().default(''),
+    clientAddress: z.string().optional().default(''),
+    clientContact: z.string().optional().default(''),
+    investName: z.string().optional().default(''),
+    investAddress: z.string().optional().default(''),
+    notes: z.string().optional().default(''),
+    paymentTerms: z.string().optional().default(''),
+    validity: z.string().optional().default(''),
+    validityDays: z.number().int().min(1).max(365).optional().default(30),
+    date: z.string().optional(),
+    transportKm: z.number().nonnegative().optional().default(0),
+    transportRate: z.number().nonnegative().optional().default(0),
+    orderNumber: z.string().optional(),
+    offerNumber: z.string().optional()
+});
+
+export type StudnieOfferExportItemInput = z.infer<typeof studnieOfferExportItemSchema>;
+export type StudnieOfferExportInput = z.infer<typeof studnieOfferExportSchema>;
+
+// =============================================================================
 // MARKETPLACE
 // =============================================================================
 

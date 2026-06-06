@@ -125,6 +125,28 @@ export async function generateRuryPDFFromContext(data: RuryOfferData): Promise<B
  * ```
  */
 export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> {
+    const ctx = await buildStudnieOfferContextFromOfferId(offerId);
+    return generateStudniePDFFromContext(ctx);
+}
+
+/**
+ * Generuje PDF oferty studni z gotowego kontekstu (StudnieOfferData).
+ * Używane zarówno przez /export-pdf oferty (po zbudowaniu kontekstu z DB),
+ * jak i przez endpoint /export-offer-pdf zamówienia (po zbudowaniu z payloadu klienta).
+ */
+export async function generateStudniePDFFromContext(data: StudnieOfferData): Promise<Buffer> {
+    const html = await generateStudnieHTML(data);
+    return generatePDF(html);
+}
+
+/**
+ * Buduje kontekst StudnieOfferData z oferty w bazie danych.
+ * Wyodrębnione z generateOfferStudniePDF, żeby umożliwić
+ * generowanie PDF/DOCX z już-zbudowanego kontekstu (np. z payloadu klienta).
+ */
+export async function buildStudnieOfferContextFromOfferId(
+    offerId: string
+): Promise<StudnieOfferData> {
     const offer = await prisma.offers_studnie_rel.findUnique({
         where: { id: offerId }
     });
@@ -204,7 +226,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
     // Pobierz dane autora i opiekuna handlowego z bazy danych (users)
     const { authorUser, guardianUser } = await lookupOfferUsers(offerData, offer.userId);
 
-    const html = await generateStudnieHTML({
+    return {
         offerNumber: offer.offer_number || 'N/A',
         clientName: String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany'),
         clientNip: String(client?.nip ?? offerData.clientNip ?? ''),
@@ -217,7 +239,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
             ''),
         investName: String(offerData.investName ?? offerData.budowa ?? ''),
         investAddress: String(offerData.investAddress ?? ''),
-        items,
+        items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
         validityDays: Number(offerData.validityDays ?? 30),
@@ -226,9 +248,7 @@ export async function generateOfferStudniePDF(offerId: string): Promise<Buffer> 
         validity: String(offerData.validity ?? ''),
         authorUser,
         guardianUser
-    });
-
-    return generatePDF(html);
+    };
 }
 
 export interface UserContactInfo {

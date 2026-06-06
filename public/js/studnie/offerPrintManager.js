@@ -531,6 +531,27 @@ window.showUniversalPrintModal = function(offerId, orderId) {
         `;
     }
 
+    // Sekcja "Oferta z bieżącego stanu zamówienia" (widoczna tylko w trybie edycji zamówienia)
+    let orderOfferSectionHtml = '';
+    if (finalOrderId && typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) {
+        orderOfferSectionHtml = `
+            <div style="margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;">
+                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #34d399; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="package" style="width: 16px; height: 16px;"></i> Oferta (stan bieżący zamówienia)
+                </h4>
+                <p style="font-size: 0.72rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Drukuje aktualne pozycje z edycji zamówienia, nie bazową ofertę.</p>
+                <div style="display: flex; gap: 0.8rem; justify-content: center;">
+                    <button onclick="window.exportStudnieOrderAsOffer_action('${finalOrderId}', 'pdf')" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 0.7rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                        <span style="font-size: 1.3rem;"><i data-lucide="file-text"></i></span> PDF
+                    </button>
+                    <button onclick="window.exportStudnieOrderAsOffer_action('${finalOrderId}', 'docx')" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 0.7rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                        <span style="font-size: 1.3rem;"><i data-lucide="edit"></i></span> Word
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
     // Sekcja Oferty
     let offerSectionHtml = '';
     if (finalOfferId) {
@@ -567,6 +588,7 @@ window.showUniversalPrintModal = function(offerId, orderId) {
             </div>
             
             ${offerSectionHtml}
+            ${orderOfferSectionHtml}
             ${ordersSectionHtml}
             
             <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
@@ -733,6 +755,102 @@ window.exportKartaDirect_action = async function(orderId, format) {
         }
     });
 };
+
+/**
+ * Akcja eksportu bieżącego stanu zamówienia studni jako oferty (PDF/DOCX).
+ * Mirror implementacji rury: czyta pozycje z globalnej `wells`,
+ * czyta pola formularza klienta/inwestora/transportu, POST do endpointu
+ * /api/orders-studnie/:id/export-offer-pdf|docx i pobiera plik.
+ */
+async function exportStudnieOrderAsOffer_action(orderId, format) {
+    if (!orderId) {
+        if (typeof showToast === 'function') {
+            showToast('Brak ID zamówienia do eksportu', 'error');
+        }
+        return;
+    }
+    if (format !== 'pdf' && format !== 'docx') {
+        if (typeof showToast === 'function') {
+            showToast('Nieobsługiwany format eksportu', 'error');
+        }
+        return;
+    }
+
+    const items = (typeof wells !== 'undefined' && Array.isArray(wells)) ? wells : [];
+    if (!items.length) {
+        if (typeof showToast === 'function') {
+            showToast('Brak pozycji w bieżącym zamówieniu', 'warning');
+        }
+        return;
+    }
+
+    const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
+    const transportKm = Number(document.getElementById('transport-km')?.value || 0);
+    const transportRate = Number(document.getElementById('transport-rate')?.value || 0);
+
+    const currentOrder = (typeof getCurrentOfferOrder === 'function') ? getCurrentOfferOrder() : null;
+    const orderNumber = currentOrder?.orderNumber || orderId;
+    const offerNumber = currentOrder?.offerNumber || getVal('offer-number') || '';
+
+    const payload = {
+        items,
+        clientName: getVal('client-name'),
+        clientNip: getVal('client-nip'),
+        clientAddress: getVal('client-address'),
+        clientContact: getVal('client-contact'),
+        investName: getVal('invest-name'),
+        investAddress: getVal('invest-address'),
+        notes: getVal('offer-notes'),
+        paymentTerms: getVal('offer-payment-terms'),
+        validity: getVal('offer-validity'),
+        date: document.getElementById('offer-date')?.value || new Date().toISOString(),
+        transportKm,
+        transportRate,
+        orderNumber,
+        offerNumber
+    };
+
+    try {
+        if (typeof showToast === 'function') {
+            showToast(`Generowanie oferty z zamówienia (${format.toUpperCase()})...`, 'info');
+        }
+        const endpoint = format === 'pdf' ? 'export-offer-pdf' : 'export-offer-docx';
+        const res = await fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(typeof authHeaders === 'function' ? authHeaders() : {})
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
+            const details = Array.isArray(errBody.details) ? ` (${errBody.details.join('; ')})` : '';
+            throw new Error(`${errBody.error || 'Błąd serwera'}${details}`);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const safeNumber = String(orderNumber).replace(/[^a-zA-Z0-9_-]/g, '_');
+        a.download = `oferta_studnie_zamowienie_${safeNumber}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        if (typeof showToast === 'function') {
+            showToast('Eksport oferty z bieżącego stanu zakończony', 'success');
+        }
+    } catch (err) {
+        console.error('exportStudnieOrderAsOffer_action error:', err);
+        if (typeof showToast === 'function') {
+            showToast('Błąd eksportu oferty z zamówienia: ' + (err instanceof Error ? err.message : err), 'error');
+        }
+    }
+}
+
+window.exportStudnieOrderAsOffer_action = exportStudnieOrderAsOffer_action;
 
 window.exportOfferToPDF_action = async function() {
     document.getElementById('offer-export-modal').remove();
