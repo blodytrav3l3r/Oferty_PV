@@ -21,19 +21,36 @@ router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const user = authReq.user;
-        let clients: any[];
+        let clients: Array<{
+            id: string;
+            userId: string | null;
+            name: string | null;
+            nip: string | null;
+            address: string | null;
+            email: string | null;
+            phone: string | null;
+            contact: string | null;
+            createdAt: string | null;
+            updatedAt: string | null;
+        }>;
 
         if (user?.role === 'admin') {
-            clients = await prisma.$queryRaw`SELECT * FROM clients_rel`;
+            clients = await prisma.clients_rel.findMany();
         } else if (user?.role === 'pro') {
-            const allowedIds = [user.id, ...(user.subUsers || [])];
-            clients = await prisma.$queryRaw`SELECT * FROM clients_rel WHERE userId IN (${allowedIds.join(',')})`;
+            const allowedIds = [user.id, ...(user.subUsers || [])].filter(
+                (id): id is string => typeof id === 'string' && id.length > 0
+            );
+            clients = await prisma.clients_rel.findMany({
+                where: { userId: { in: allowedIds } }
+            });
         } else {
-            clients = await prisma.$queryRaw`SELECT * FROM clients_rel WHERE userId = ${user?.id}`;
+            clients = await prisma.clients_rel.findMany({
+                where: { userId: user?.id || '' }
+            });
         }
 
         // Normalizuj pola dat — konwertuj numeryczne timestampy na stringi ISO
-        const normalized = (clients as any[]).map((c: any) => ({
+        const normalized = clients.map((c) => ({
             ...c,
             createdAt: c.createdAt && /^\d{10,}$/.test(String(c.createdAt))
                 ? new Date(parseInt(String(c.createdAt), 10)).toISOString()
