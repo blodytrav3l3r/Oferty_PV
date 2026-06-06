@@ -13,9 +13,13 @@ describe('Oferty rur — responsywność', () => {
     expect(mqMatch).not.toBeNull();
   });
 
-  test('rury.html ma tabelę w kroku 3 z colspan 12 i w kroku 5 z colspan 12', () => {
+  test('rury.html ma tabelę z dynamic colgroup (buildRuryColgroup)', () => {
     const html = fs.readFileSync('public/rury.html', 'utf-8');
-    expect(html).toContain('colspan="12"');
-    expect(html).toContain('class="rury-table-wrap"');
+    const hasOfferItemsBody = html.includes('id="offer-items-body"');
+    const hasOrderItemsBody = html.includes('id="order-items-body"');
+    const hasColgroup = html.includes('id="rury-colgroup"') || /<colgroup/.test(html);
+    expect(hasOfferItemsBody).toBe(true);
+    expect(hasOrderItemsBody).toBe(true);
+    expect(hasColgroup).toBe(true);
   });
 });
