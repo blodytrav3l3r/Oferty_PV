@@ -7,7 +7,7 @@ import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
-import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import {
     OfferMapped
 } from '../../types/models';
@@ -274,6 +274,69 @@ router.put('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema)
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
+    }
+});
+
+router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { id } = req.params;
+
+        const source = await prisma.offers_rel.findUnique({ where: { id } });
+        if (!source) {
+            return res.status(404).json({ error: 'Oferta źródłowa nie istnieje' });
+        }
+        if (!canReadDoc(authReq.user, source.userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do odczytu oferty źródłowej' });
+        }
+
+        const sourceItems = await prisma.offer_items_rel.findMany({ where: { offerId: id } });
+
+        const newId = uuidv4();
+        const resolved = resolveWriteUserId(authReq.user, undefined);
+        if (!resolved.allowed) {
+            return res.status(403).json({ error: 'Brak uprawnień do utworzenia oferty' });
+        }
+
+        await prisma.offers_rel.create({
+            data: {
+                id: newId,
+                userId: resolved.effectiveUserId,
+                offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
+                state: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                transportCost: source.transportCost ?? 0,
+                history: '[]',
+                data: source.data || '{}'
+            }
+        });
+
+        for (const item of sourceItems) {
+            await prisma.offer_items_rel.create({
+                data: {
+                    id: uuidv4(),
+                    offerId: newId,
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    discount: item.discount,
+                    price: item.price
+                }
+            });
+        }
+
+        logAudit('offer', newId, authReq.user?.id || '', 'duplicate', null, { sourceId: id });
+
+        logger.info(
+            'Offers',
+            `Oferta ${id} zduplikowana jako ${newId} przez ${authReq.user?.username}`
+        );
+
+        return res.json({ ok: true, data: { id: newId } });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Offers', 'Błąd POST /:id/duplicate', message);
         res.status(500).json({ error: message });
     }
 });

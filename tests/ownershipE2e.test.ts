@@ -38,7 +38,8 @@ jest.mock('../src/prismaClient', () => ({
             findMany: jest.fn(),
             findUnique: jest.fn(),
             upsert: jest.fn(),
-            delete: jest.fn()
+            delete: jest.fn(),
+            create: jest.fn()
         },
         offers_studnie_rel: {
             findMany: jest.fn(),
@@ -272,6 +273,79 @@ describe('Ownership E2E — offers routes', () => {
             (prisma.offers_rel.delete as jest.Mock).mockResolvedValue({});
             const res = await request(app).delete('/api/offers/o-other');
             expect(res.statusCode).toBe(200);
+        });
+    });
+
+    describe('POST /api/offers/:id/duplicate', () => {
+        const sourceOfferWithItems = {
+            ...myOffer,
+            offer_number: 'R1',
+            data: JSON.stringify({ foo: 'bar' })
+        };
+        const sourceItem = {
+            id: 'item-1',
+            offerId: 'o-mine',
+            productId: 'p-1',
+            quantity: 3,
+            discount: 5,
+            price: 100
+        };
+
+        it('owner CAN duplicate own offer (200, new id returned)', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(sourceOfferWithItems);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([sourceItem]);
+            (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app).post('/api/offers/o-mine/duplicate');
+            expect(res.statusCode).toBe(200);
+            expect(res.body.ok).toBe(true);
+            expect(res.body.data.id).toBeDefined();
+            expect(res.body.data.id).not.toBe('o-mine');
+
+            const createCall = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0];
+            expect(createCall.data.userId).toBe('user1');
+            expect(createCall.data.offer_number).toBe('R1-KOPIA');
+            expect(createCall.data.state).toBe('draft');
+            expect(createCall.data.data).toBe(JSON.stringify({ foo: 'bar' }));
+        });
+
+        it('duplicate copies all items', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(sourceOfferWithItems);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([
+                sourceItem,
+                { ...sourceItem, id: 'item-2', productId: 'p-2' }
+            ]);
+            (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
+
+            await request(app).post('/api/offers/o-mine/duplicate');
+            expect(prisma.offer_items_rel.create).toHaveBeenCalledTimes(2);
+        });
+
+        it('regular user CANNOT duplicate another user offer (403)', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(otherUsersOffer);
+
+            const res = await request(app).post('/api/offers/o-other/duplicate');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.create).not.toHaveBeenCalled();
+        });
+
+        it('admin CAN duplicate any offer', async () => {
+            currentUser = { id: 'admin1', role: 'admin', subUsers: [] };
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(otherUsersOffer);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app).post('/api/offers/o-other/duplicate');
+            expect(res.statusCode).toBe(200);
+        });
+
+        it('returns 404 for nonexistent source offer', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
+
+            const res = await request(app).post('/api/offers/nonexistent/duplicate');
+            expect(res.statusCode).toBe(404);
         });
     });
 });
