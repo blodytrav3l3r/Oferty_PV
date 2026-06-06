@@ -103,13 +103,42 @@ async function loadRecycledNumbers(user) {
     }
 }
 
-// Obsluga klawisza Enter w polach logowania
+// Obsluga klawiszy
 document.addEventListener('keydown', (e) => {
     if (
         e.key === 'Enter' &&
         !document.getElementById('login-section').classList.contains('hidden')
     ) {
         doLogin();
+        return;
+    }
+
+    // Ctrl+S / Cmd+S: zapisz bieżącą ofertę (rury lub studnie)
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        const active = document.activeElement;
+        const inForm = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+        if (inForm) {
+            return;
+        }
+        e.preventDefault();
+        if (typeof window.saveOfferRury === 'function') {
+            window.saveOfferRury();
+        } else if (typeof window.saveOfferStudnie === 'function') {
+            window.saveOfferStudnie();
+        } else if (typeof window.saveCurrentOrder === 'function') {
+            window.saveCurrentOrder();
+        }
+        return;
+    }
+
+    // Esc: zamknij górny modal
+    if (e.key === 'Escape') {
+        const visibleModal = document.querySelector('.modal.show, .modal:not(.hidden)');
+        if (visibleModal) {
+            const closeBtn = visibleModal.querySelector('[data-bs-dismiss="modal"], .modal-close, .btn-close');
+            if (closeBtn) closeBtn.click();
+            else visibleModal.classList.add('hidden');
+        }
     }
 });
 
