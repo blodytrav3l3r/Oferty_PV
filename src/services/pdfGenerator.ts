@@ -1162,28 +1162,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'kartaBudowy.html');
     let html = fs.readFileSync(templatePath, 'utf-8');
 
-    const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
-    const stopkaPath = path.join(process.cwd(), 'public', 'images', 'letterhead-footer.png');
-    let naglowekBase64 = '';
-    let stopkaBase64 = '';
-    try {
-        if (fs.existsSync(naglowekPath)) {
-            const naglowekBuf = fs.readFileSync(naglowekPath);
-            naglowekBase64 = `data:image/png;base64,${naglowekBuf.toString('base64')}`;
-        }
-    } catch (e) {
-        logger.warn('PdfAssets', 'Nie udało się załadować letterhead-header.png', e);
-    }
-    try {
-        if (fs.existsSync(stopkaPath)) {
-            const stopkaBuf = fs.readFileSync(stopkaPath);
-            stopkaBase64 = `data:image/png;base64,${stopkaBuf.toString('base64')}`;
-        }
-    } catch (e) {
-        logger.warn('PdfAssets', 'Nie udało się załadować letterhead-footer.png', e);
-    }
-
-    const nrZamowienia = String(orderData.orderNumber || orderData.productionOrderNumber || String(order.id).substring(0, 8));
+    const nrZamowienia = String(orderData.orderNumber || orderData.id || String(order.id).substring(0, 8));
     const nrOferty = String(orderData.offerNumber || orderData.number || (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—'));
 
     html = html.replace(/\{\{NR_ZAMOWIENIA\}\}/g, nrZamowienia);
@@ -1439,8 +1418,6 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
     }
     html = html.replace(/\{\{ILOSC_ELEMENTOW_ZAMOWIENIA\}\}/g, elemHTML);
 
-    html = html.replace(/\{\{BASE_URL\}\}\/images\/letterhead-header\.png/g, naglowekBase64);
-    html = html.replace(/\{\{BASE_URL\}\}\/images\/letterhead-footer\.png/g, stopkaBase64);
     html = html.replace(/\{\{BASE_URL\}\}/g, '');
 
     return generatePDF(html);
@@ -1468,27 +1445,6 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
 
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'kartaBudowy.html');
     let html = fs.readFileSync(templatePath, 'utf-8');
-
-    const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
-    const stopkaPath = path.join(process.cwd(), 'public', 'images', 'letterhead-footer.png');
-    let naglowekBase64 = '';
-    let stopkaBase64 = '';
-    try {
-        if (fs.existsSync(naglowekPath)) {
-            const naglowekBuf = fs.readFileSync(naglowekPath);
-            naglowekBase64 = `data:image/png;base64,${naglowekBuf.toString('base64')}`;
-        }
-    } catch (e) {
-        logger.warn('PdfAssets', 'Nie udało się załadować letterhead-header.png', e);
-    }
-    try {
-        if (fs.existsSync(stopkaPath)) {
-            const stopkaBuf = fs.readFileSync(stopkaPath);
-            stopkaBase64 = `data:image/png;base64,${stopkaBuf.toString('base64')}`;
-        }
-    } catch (e) {
-        logger.warn('PdfAssets', 'Nie udało się załadować letterhead-footer.png', e);
-    }
 
     const nrZamowienia = String(orderData.orderNumber || orderData.id || String(order.id).substring(0, 8));
     const nrOferty = String(orderData.offerNumber || orderData.number || (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—'));
@@ -1569,8 +1525,6 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
     html = html.replace(/\{\{RZECZYWISTA_ILOSC_PRZEJSC\}\}/g, '');
     html = html.replace(/\{\{ILOSC_ELEMENTOW_ZAMOWIENIA\}\}/g, '');
 
-    html = html.replace(/\{\{BASE_URL\}\}\/images\/letterhead-header\.png/g, naglowekBase64);
-    html = html.replace(/\{\{BASE_URL\}\}\/images\/letterhead-footer\.png/g, stopkaBase64);
     html = html.replace(/\{\{BASE_URL\}\}/g, '');
 
     return generatePDF(html);
