@@ -441,6 +441,19 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             fetch: mockFetch,
             showToast: jest.fn(),
             lucide: { createIcons: jest.fn() },
+            // studnieProducts — potrzebne dla getWellZwienczenieName (real fn w pliku)
+            studnieProducts: [
+                { id: 'P1', componentType: 'plyta_najazdowa', name: 'Płyta najazdowa' },
+                { id: 'P2', componentType: 'konus', name: 'Konus' },
+                { id: 'P3', componentType: 'plyta_din', name: 'Płyta DIN' },
+                { id: 'STUD-1', componentType: 'plyta_najazdowa', name: 'Płyta DIN DN1000' }
+            ],
+            calcWellStats: (well: any) => ({
+                price: well._mockPrice ?? 1500,
+                weight: well._mockWeight ?? 5000,
+                height: well._mockHeight ?? 2000
+            }),
+            getCurrentOfferOrder: () => null,
             console,
             setTimeout: setTimeout,
             setImmediate: setImmediate
@@ -495,15 +508,12 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         const { context } = loadStudniePrintManager();
         context.wells = [
             {
-                productId: 'STUD-1000',
-                productName: 'Studnia betonowa DN1000',
-                quantity: 2,
-                price: 1500,
-                DN: '1000',
-                height: 2000,
-                zwienczenie: 'Płyta najazdowa',
-                transportCost: 200,
-                dodatkowe_info: ''
+                id: 'well-1',
+                name: 'Studnia betonowa DN1000',
+                dn: '1000',
+                config: [{ productId: 'P1', quantity: 1 }],
+                _mockPrice: 1500,
+                _mockHeight: 2000
             }
         ];
         (context.fetch as jest.Mock).mockResolvedValue({
@@ -524,22 +534,25 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         expect(body.clientName).toBe('ACME Sp. z o.o.');
         expect(body.transportKm).toBe(50);
         expect(body.transportRate).toBe(5);
+        // Mapped from raw well to schema-items shape
         expect(body.items[0].productName).toBe('Studnia betonowa DN1000');
+        expect(body.items[0].price).toBe(1500);
+        expect(body.items[0].DN).toBe('1000');
+        expect(body.items[0].height).toBe(2000);
+        expect(body.items[0].quantity).toBe(1);
+        expect(body.items[0].zwienczenie).toBe('Płyta najazdowa');
     });
 
     it('uses /export-offer-docx endpoint for docx format', async () => {
         const { context } = loadStudniePrintManager();
         context.wells = [
             {
-                productId: 'STUD-1',
-                productName: 'Test',
-                quantity: 1,
-                price: 100,
-                DN: '1000',
-                height: 1500,
-                zwienczenie: '',
-                transportCost: 0,
-                dodatkowe_info: ''
+                id: 'well-1',
+                name: 'Test',
+                dn: '1000',
+                config: [{ productId: 'STUD-1', quantity: 1 }],
+                _mockPrice: 100,
+                _mockHeight: 1500
             }
         ];
         (context.fetch as jest.Mock).mockResolvedValue({
@@ -561,15 +574,11 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         const { context } = loadStudniePrintManager();
         context.wells = [
             {
-                productId: 'STUD-1',
-                productName: 'Test',
-                quantity: 1,
-                price: 100,
-                DN: '1000',
-                height: 1500,
-                zwienczenie: '',
-                transportCost: 0,
-                dodatkowe_info: ''
+                id: 'well-1',
+                name: 'Test',
+                dn: '1000',
+                config: [{ productId: 'STUD-1', quantity: 1 }],
+                _mockPrice: 100
             }
         ];
         (context.fetch as jest.Mock).mockResolvedValue({
@@ -595,15 +604,11 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         const { context } = loadStudniePrintManager();
         context.wells = [
             {
-                productId: 'STUD-1',
-                productName: 'Test',
-                quantity: 1,
-                price: 100,
-                DN: '1000',
-                height: 1500,
-                zwienczenie: '',
-                transportCost: 0,
-                dodatkowe_info: ''
+                id: 'well-1',
+                name: 'Test',
+                dn: '1000',
+                config: [{ productId: 'STUD-1', quantity: 1 }],
+                _mockPrice: 100
             }
         ];
         (context.fetch as jest.Mock).mockResolvedValue({
@@ -621,5 +626,98 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             expect.stringContaining('Zamówienie studni nie znalezione'),
             'error'
         );
+    });
+
+    it('maps multiple raw wells to schema-compliant items (regression for the original bug)', async () => {
+        const { context } = loadStudniePrintManager();
+        context.wells = [
+            {
+                id: 'w1',
+                name: 'Studnia A',
+                dn: '1000',
+                config: [{ productId: 'P1', quantity: 1 }],
+                _mockPrice: 1500,
+                _mockHeight: 2000
+            },
+            {
+                id: 'w2',
+                name: 'Studnia B',
+                dn: '1200',
+                config: [{ productId: 'P2', quantity: 1 }],
+                _mockPrice: 2200,
+                _mockHeight: 2500
+            },
+            {
+                id: 'w3',
+                name: 'Studnia C',
+                dn: '1500',
+                config: [{ productId: 'P3', quantity: 1 }],
+                _mockPrice: 3000,
+                _mockHeight: 3000
+            }
+        ];
+        (context.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            blob: async () => Buffer.from('PDF-X')
+        });
+        const source = fs.readFileSync(FILE_PATH, 'utf8');
+        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
+
+        await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
+
+        const call = (context.fetch as jest.Mock).mock.calls[0];
+        const body = JSON.parse(call[1].body);
+        expect(body.items).toHaveLength(3);
+
+        // Each item must have all required schema fields (the original bug)
+        body.items.forEach((item: any) => {
+            expect(typeof item.productName).toBe('string');
+            expect(item.productName.length).toBeGreaterThan(0);
+            expect(typeof item.quantity).toBe('number');
+            expect(typeof item.price).toBe('number');
+        });
+
+        expect(body.items[0]).toMatchObject({
+            productName: 'Studnia A',
+            quantity: 1,
+            price: 1500,
+            DN: '1000',
+            height: 2000,
+            zwienczenie: 'Płyta najazdowa'
+        });
+        expect(body.items[1]).toMatchObject({
+            productName: 'Studnia B',
+            DN: '1200',
+            price: 2200
+        });
+        expect(body.items[2]).toMatchObject({
+            productName: 'Studnia C',
+            DN: '1500',
+            price: 3000
+        });
+    });
+
+    it('falls back to "Studnia DN{dn}" when well.name missing', async () => {
+        const { context } = loadStudniePrintManager();
+        context.wells = [
+            {
+                id: 'w-anon',
+                dn: '1000',
+                config: [{ productId: 'NONEXISTENT', quantity: 1 }],
+                _mockPrice: 1500
+            }
+        ];
+        (context.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            blob: async () => Buffer.from('PDF-X')
+        });
+        const source = fs.readFileSync(FILE_PATH, 'utf8');
+        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
+
+        await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
+
+        const call = (context.fetch as jest.Mock).mock.calls[0];
+        const body = JSON.parse(call[1].body);
+        expect(body.items[0].productName).toBe('Studnia DN1000');
     });
 });

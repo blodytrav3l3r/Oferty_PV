@@ -792,8 +792,29 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
     const orderNumber = currentOrder?.orderNumber || orderId;
     const offerNumber = currentOrder?.offerNumber || getVal('offer-number') || '';
 
+    const exportItems = items.map((well) => {
+        const stats = (typeof calcWellStats === 'function')
+            ? calcWellStats(well)
+            : { price: 0, weight: 0, height: 0 };
+        const zwienczenieName = (typeof getWellZwienczenieName === 'function')
+            ? getWellZwienczenieName(well)
+            : '—';
+        return {
+            productId: (well.config && well.config[0] && well.config[0].productId) || '',
+            productName: well.name || `Studnia DN${well.dn}`,
+            quantity: 1,
+            discount: 0,
+            price: Number(stats.price) || 0,
+            DN: String(well.dn ?? ''),
+            height: Number(stats.height) || 0,
+            zwienczenie: zwienczenieName,
+            transportCost: 0,
+            dodatkowe_info: well.dodatkowe_info || ''
+        };
+    });
+
     const payload = {
-        items,
+        items: exportItems,
         clientName: getVal('client-name'),
         clientNip: getVal('client-nip'),
         clientAddress: getVal('client-address'),
