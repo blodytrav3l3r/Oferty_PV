@@ -172,8 +172,6 @@
 /* ── Tabela ofert (wzorowana na .well-config-table) ── */
 .rury-table-wrap {
     overflow-x: auto;
-    overflow-y: auto;
-    max-height: calc(100vh - 380px);
     border-radius: var(--radius-sm);
 }
 
@@ -185,7 +183,8 @@
 
 .rury-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.82rem;
 }
 
@@ -199,15 +198,17 @@
     letter-spacing: 0.5px;
     background: var(--bg-tertiary);
     border-bottom: 1px solid var(--border-glass);
+    border-right: 1px solid var(--border-glass);
     position: sticky;
-    top: 0;
-    z-index: 5;
+    top: 60px;
+    z-index: 50;
     white-space: nowrap;
 }
 
 .rury-table tbody td {
     padding: 0.4rem 0.5rem;
     border-bottom: 1px solid #14171c;
+    border-right: 1px solid transparent;
     vertical-align: middle;
     font-size: 0.82rem;
     color: var(--text-secondary);
@@ -446,7 +447,7 @@
 }
 
 #wizard-step-5 {
-    padding-bottom: 100px;
+    padding-bottom: 220px;
 }
 
 /* ── Przycisk edycji rabatu ── */
