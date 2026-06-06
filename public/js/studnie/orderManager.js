@@ -2089,6 +2089,33 @@ async function saveCurrentOrder() {
     order.totalNetto = totalNetto;
     order.totalBrutto = totalNetto * 1.23;
 
+    const offer = offersStudnie ? offersStudnie.find((o) => o.id === order.offerId) : null;
+    const transportKmVal = offer ? (parseFloat(offer.transportKm) || 0) : 0;
+    const transportRateVal = offer ? (parseFloat(offer.transportRate) || 0) : 0;
+    let totalTransportCostForOffer = 0;
+    if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
+        totalTransportCostForOffer = Math.ceil(totalWeight / 24000) * transportKmVal * transportRateVal;
+    }
+    order.wellsExport = wells.map((well) => {
+        const stats = calcWellStats(well);
+        const wellTransportCost = totalWeight > 0
+            ? totalTransportCostForOffer * (stats.weight / totalWeight)
+            : 0;
+        const zwienczenie = typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        return {
+            name: well.name,
+            dn: well.dn,
+            height: stats.height,
+            weight: stats.weight,
+            zwienczenie: zwienczenie,
+            price: stats.price,
+            transportCost: wellTransportCost,
+            totalPrice: stats.price + wellTransportCost,
+            config: well.config,
+            przejscia: well.przejscia
+        };
+    });
+
     // Zapisz przez PATCH
     try {
         await fetch(`/api/orders-studnie/${order.id}`, {
@@ -2099,6 +2126,7 @@ async function saveCurrentOrder() {
                 wellDiscounts: order.wellDiscounts,
                 kartaBudowy: order.kartaBudowy,
                 updatedAt: order.updatedAt,
+                wellsExport: order.wellsExport,
                 totalWeight: order.totalWeight,
                 totalNetto: order.totalNetto,
                 totalBrutto: order.totalBrutto
