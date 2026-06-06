@@ -139,7 +139,10 @@ async function exportOfferDirect_action(offerId, format) {
             const res = await fetch(`/api/offers-rury/${offerId}/export-pdf`, {
                 headers: authHeaders()
             });
-            if (!res.ok) throw new Error('Błąd eksportu PDF');
+            if (!res.ok) {
+                const errText = await res.text().catch(() => res.statusText);
+                throw new Error(`Eksport PDF (${res.status}): ${errText.slice(0, 200)}`);
+            }
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -153,7 +156,10 @@ async function exportOfferDirect_action(offerId, format) {
             const res = await fetch(`/api/offers-rury/${offerId}/export-docx`, {
                 headers: authHeaders()
             });
-            if (!res.ok) throw new Error('Błąd eksportu DOCX');
+            if (!res.ok) {
+                const errText = await res.text().catch(() => res.statusText);
+                throw new Error(`Eksport DOCX (${res.status}): ${errText.slice(0, 200)}`);
+            }
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -168,7 +174,7 @@ async function exportOfferDirect_action(offerId, format) {
         showToast('Eksport zakończony', 'success');
     } catch (err) {
         console.error('exportOfferDirect_action error:', err);
-        showToast('Błąd eksportu oferty', 'error');
+        showToast('Błąd eksportu oferty: ' + err.message, 'error');
     }
 }
 

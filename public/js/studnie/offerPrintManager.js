@@ -666,8 +666,11 @@ window.exportOfferDirect_action = async function(offerId, format) {
     fetch(`/api/offers-studnie/${offerId}/${endpoint}`, {
         headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
     })
-    .then((res) => {
-        if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
+    .then(async (res) => {
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`);
+        }
         return res.blob();
     })
     .then((blob) => {
@@ -703,8 +706,11 @@ window.exportKartaDirect_action = async function(orderId, format) {
     fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
         headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
     })
-    .then((res) => {
-        if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
+    .then(async (res) => {
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`);
+        }
         return res.blob();
     })
     .then((blob) => {
@@ -750,8 +756,11 @@ window.exportOfferToPDF_action = async function() {
     fetch(`/api/offers-studnie/${editingOfferIdStudnie}/export-pdf`, {
         headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
     })
-    .then((res) => {
-        if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
+    .then(async (res) => {
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Eksport PDF (${res.status}): ${errText.slice(0, 200)}`);
+        }
         return res.blob();
     })
     .then((blob) => {
@@ -797,8 +806,11 @@ window.exportOfferToWord_action = async function() {
     fetch(`/api/offers-studnie/${editingOfferIdStudnie}/export-docx`, {
         headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
     })
-    .then((res) => {
-        if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
+    .then(async (res) => {
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Eksport DOCX (${res.status}): ${errText.slice(0, 200)}`);
+        }
         return res.blob();
     })
     .then((blob) => {

@@ -345,7 +345,7 @@ class PVSalesUI {
                                     </button>
                                     <div class="offer-order-actions">
                                         ${changeInfo.changed ? '<span class="offer-change-chip"><i data-lucide="activity" aria-hidden="true"></i> zmiany</span>' : ''}
-                                        <button class="action-btn success btn-karta-budowy" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                                        <button class="action-btn success btn-karta-budowy" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
                                         <button class="action-btn secondary btn-history-order" data-order-id="${this.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
                                         <button class="action-btn danger btn-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
                                     </div>
@@ -551,7 +551,7 @@ class PVSalesUI {
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
                         <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
                         <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${this.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Historia</button>
                         <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
                     </div>
@@ -601,7 +601,10 @@ class PVSalesUI {
                 const buttonEl = e.target.closest('button');
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerIdAttr = buttonEl.getAttribute('data-offer-id');
-                if (typeof window.showUniversalPrintModal === 'function') {
+                const offerTypeAttr = buttonEl.getAttribute('data-offer-type');
+                if (offerTypeAttr === 'rura_oferta' && typeof window.showUniversalPrintModalRury === 'function') {
+                    window.showUniversalPrintModalRury(offerIdAttr, orderId);
+                } else if (typeof window.showUniversalPrintModal === 'function') {
                     window.showUniversalPrintModal(offerIdAttr, orderId);
                 } else {
                     closeModal();
@@ -738,7 +741,12 @@ class PVSalesUI {
             if (title.includes('wydruk') || title.includes('drukuj') || title.includes('karta budowy')) {
                 const printOfferId = btn.getAttribute('data-offer-id') || id;
                 const printOrderId = orderId || '';
-                // Rury — bezpośredni export karty budowy (showUniversalPrintModal jest studni-specyficzny)
+                // Rury: dedykowany modal (Karta Budowy + Oferta, Bootstrap-styled)
+                if (offerType === 'rura_oferta' && typeof window.showUniversalPrintModalRury === 'function') {
+                    window.showUniversalPrintModalRury(printOfferId, printOrderId);
+                    return;
+                }
+                // Rury (legacy 'offer' type): bezpośredni export karty budowy
                 if (offerType === 'offer' && printOrderId) {
                     if (typeof window.exportKartaDirect_action === 'function') {
                         window.exportKartaDirect_action(printOrderId, 'pdf');
