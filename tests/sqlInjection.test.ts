@@ -25,10 +25,17 @@ describe('SQL Injection Prevention', () => {
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            // Szukaj $executeRawUnsafe lub $queryRawUnsafe z interpolacją stringów
+            // 1) $executeRawUnsafe / $queryRawUnsafe z interpolacją — zawsze unsafe
             if (line.includes('$executeRawUnsafe') || line.includes('$queryRawUnsafe')) {
-                // Sprawdź czy używa interpolacji (${...} lub ' + var + ')
                 if (line.includes('${') || line.includes('+')) {
+                    results.push({ line: i + 1, content: line.trim() });
+                }
+            }
+            // 2) Tagged template $queryRaw`...${...join(',')}...` — unsafe, bo wartości
+            //    wklejane do SQL stringa bez parametryzacji (Prisma escapes
+            //    ${var} → ?  ale `${arr.join(',')}` → `${item1},${item2}` wklejone na surowo)
+            if (line.includes('$queryRaw`') || line.includes('$executeRaw`')) {
+                if (/\.\s*join\s*\(/.test(line) || /\+\s*['"`]/.test(line)) {
                     results.push({ line: i + 1, content: line.trim() });
                 }
             }
@@ -51,8 +58,10 @@ describe('SQL Injection Prevention', () => {
             }
         }
 
-        // Dopuszczamy $queryRawUnsafe tylko w GET list queries z sanitized whereSql (auth data)
-        // i static queries bez interpolacji
+        // Bezpieczne wzorce:
+        //  - $queryRawUnsafe BEZ interpolacji (stałe SQL)
+        //  - $queryRaw`...${singleValue}...` (Prisma parametryzuje ${var} automatycznie)
+        //  - $queryRaw`...${arr.join(',')}...` (UNSAFE — test łapie)
         expect(totalIssues).toBe(0);
     });
 
