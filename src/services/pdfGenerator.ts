@@ -472,7 +472,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
           <td class="text-center bold">${formatCurrency(catTotal)} PLN</td>
         </tr>`;
 
-        tabelaPozycji += `</tbody></table></div>`;
+        tabelaPozycji += '</tbody></table></div>';
     }
 
     // Podsumowanie

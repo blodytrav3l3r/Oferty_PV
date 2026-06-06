@@ -5,13 +5,13 @@ import globals from 'globals';
 
 export default tseslint.config(
     {
-        ignores: ['node_modules/', 'public/', 'data/', '*.sqlite']
+        ignores: ['node_modules/', 'data/', '*.sqlite', 'public/data/']
     },
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     eslintConfigPrettier,
     {
-        files: ['**/*.js', '**/*.ts'],
+        files: ['src/**/*.{js,ts}', 'server.ts', 'scripts/**/*.{js,ts}', 'tests/**/*.{js,ts}'],
         languageOptions: {
             parser: tseslint.parser,
             globals: {
@@ -35,6 +35,42 @@ export default tseslint.config(
             quotes: ['error', 'single', { avoidEscape: true }],
             'no-empty': 'off',
             'prefer-const': 'off'
+        }
+    },
+    {
+        files: ['public/js/**/*.{js,ts}'],
+        languageOptions: {
+            parser: tseslint.parser,
+            globals: {
+                ...globals.browser,
+                lucide: 'readonly',
+                html2pdf: 'readonly',
+                jspdf: 'readonly',
+                Papa: 'readonly',
+                Chart: 'readonly',
+                bootstrap: 'readonly',
+                Prism: 'readonly'
+            }
+        },
+        rules: {
+            'no-unused-vars': 'warn',
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_'
+                }
+            ],
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-expressions': 'off',
+            'no-empty': 'off',
+            'no-undef': 'off',
+            'no-global-assign': 'off',
+            semi: ['error', 'always'],
+            quotes: ['error', 'single', { avoidEscape: true }],
+            'prefer-const': 'warn',
+            'no-console': 'off'
         }
     }
 );
