@@ -151,6 +151,7 @@
         const modal = document.getElementById(MODAL_ID);
         if (!modal || !modal.contains(btn)) return;
         const action = btn.getAttribute('data-action');
+        if (action === '__upm_close') return;
         const id = btn.getAttribute('data-id');
         const format = btn.getAttribute('data-format');
         if (typeof window[action] !== 'function') {

@@ -220,6 +220,32 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
             } as any);
             expect(calls).toEqual([]);
         });
+
+        it('dispatcher NIE loguje bledu dla __upm_close (handled by dedykowany listener)', () => {
+            const { sandbox, documentMock, registeredListeners, calls } = loadPrintModalInSandbox();
+            sandbox.window.showUniversalPrintModal({
+                offerSection: { id: 'off-1', actionPdf: '__testAction1', actionDocx: '__testAction1' }
+            });
+
+            const modalEl: any = { id: 'universal-print-modal', contains: () => true };
+            documentMock._elements['universal-print-modal'] = modalEl;
+
+            const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            const btn: any = {
+                getAttribute: (n: string) => n === 'data-action' ? '__upm_close' : n === 'data-id' ? '' : ''
+            };
+
+            const clickHandler = registeredListeners[0];
+            clickHandler({
+                target: { closest: (sel: string) => sel === '[data-action]' ? btn : null }
+            } as any);
+
+            expect(errorSpy).not.toHaveBeenCalledWith('printModal: brak globalnej funkcji', '__upm_close');
+            expect(calls).toEqual([]);
+
+            errorSpy.mockRestore();
+        });
     });
 
     describe('Pusty stan i toast', () => {
