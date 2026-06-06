@@ -46,10 +46,12 @@
         const docxAction = escapeHtml(cfg.actionDocx);
         return `
             <div class="upm-section" data-section="offer">
-                <h4 class="upm-title upm-title-offer">
-                    <i data-lucide="file-text"></i> ${escapeHtml(cfg.title || 'Wydruk Oferty')}
-                </h4>
-                <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz format eksportu oferty:')}</p>
+                <div class="upm-section-header">
+                    <h4 class="upm-title upm-title-offer">
+                        <i data-lucide="file-text"></i> ${escapeHtml(cfg.title || 'Wydruk Oferty')}
+                    </h4>
+                    <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz format eksportu oferty:')}</p>
+                </div>
                 <div class="upm-actions">
                     <button class="upm-btn upm-btn-pdf" data-action="${pdfAction}" data-id="${idEsc}" data-format="pdf">
                         <span class="upm-btn-icon"><i data-lucide="file-text"></i></span> PDF
@@ -69,10 +71,12 @@
         const badge = cfg.badge ? `<span class="upm-badge">${escapeHtml(cfg.badge)}</span>` : '';
         return `
             <div class="upm-section" data-section="orderCurrent">
-                <h4 class="upm-title upm-title-orderCurrent">
-                    <i data-lucide="package"></i> ${escapeHtml(cfg.title || 'Oferta (stan bieżący zamówienia)')} ${badge}
-                </h4>
-                <p class="upm-desc">${escapeHtml(cfg.description || 'Drukuje aktualne pozycje z edycji zamówienia.')}</p>
+                <div class="upm-section-header">
+                    <h4 class="upm-title upm-title-orderCurrent">
+                        <i data-lucide="package"></i> ${escapeHtml(cfg.title || 'Oferta (stan bieżący zamówienia)')} ${badge}
+                    </h4>
+                    <p class="upm-desc">${escapeHtml(cfg.description || 'Drukuje aktualne pozycje z edycji zamówienia.')}</p>
+                </div>
                 <div class="upm-actions">
                     <button class="upm-btn upm-btn-pdf" data-action="${pdfAction}" data-id="${idEsc}" data-format="pdf">
                         <span class="upm-btn-icon"><i data-lucide="file-text"></i></span> PDF
@@ -93,7 +97,7 @@
             const ordNum = escapeHtml(ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—'));
             const status = ord.status ? `<span class="upm-status upm-status-${escapeHtml(ord.status)}">${escapeHtml(ord.status)}</span>` : '';
             return `
-                <div class="upm-row">
+                <div class="upm-row upm-row-orders">
                     <span class="upm-row-label" title="Zamówienie ${ordNum}">ZAM: ${ordNum}${status}</span>
                     <div class="upm-row-actions">
                         <button class="upm-btn-sm upm-btn-pdf" data-action="${pdfAction}" data-id="${idEsc}" data-format="pdf">PDF</button>
@@ -103,10 +107,12 @@
         }).join('');
         return `
             <div class="upm-section" data-section="orders">
-                <h4 class="upm-title upm-title-orders">
-                    <i data-lucide="package"></i> ${escapeHtml(cfg.title || 'Wydruk Zamówienia')}
-                </h4>
-                <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz zamówienie i format:')}</p>
+                <div class="upm-section-header">
+                    <h4 class="upm-title upm-title-orders">
+                        <i data-lucide="package"></i> ${escapeHtml(cfg.title || 'Wydruk Zamówienia')}
+                    </h4>
+                    <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz zamówienie i format:')}</p>
+                </div>
                 <div class="upm-orders-list">${rows}</div>
             </div>`;
     }
@@ -119,7 +125,7 @@
             const idEsc = escapeHtml(ord.id);
             const ordNum = escapeHtml(ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—'));
             return `
-                <div class="upm-row">
+                <div class="upm-row upm-row-karta">
                     <span class="upm-row-label" title="Karta Budowy ${ordNum}">KB: ${ordNum}</span>
                     <div class="upm-row-actions">
                         <button class="upm-btn-sm upm-btn-pdf" data-action="${pdfAction}" data-id="${idEsc}" data-format="pdf">PDF</button>
@@ -129,10 +135,12 @@
         }).join('');
         return `
             <div class="upm-section" data-section="karta">
-                <h4 class="upm-title upm-title-karta">
-                    <i data-lucide="hard-hat"></i> ${escapeHtml(cfg.title || 'Wydruk Karty Budowy')}
-                </h4>
-                <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz zamówienie i format Karty Budowy:')}</p>
+                <div class="upm-section-header">
+                    <h4 class="upm-title upm-title-karta">
+                        <i data-lucide="hard-hat"></i> ${escapeHtml(cfg.title || 'Wydruk Karty Budowy')}
+                    </h4>
+                    <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz zamówienie i format Karty Budowy:')}</p>
+                </div>
                 <div class="upm-orders-list">${rows}</div>
             </div>`;
     }
@@ -180,11 +188,14 @@
 
         const modalHtml = `
         <div id="${MODAL_ID}" class="upm-overlay">
-            <div class="upm-modal">
+            <div class="upm-modal" role="dialog" aria-modal="true" aria-labelledby="upm-modal-title">
                 <div class="upm-header">
-                    <h3 class="upm-modal-title">
-                        <i data-lucide="printer"></i> ${escapeHtml(config.modalTitle || 'Wydruk Dokumentów')}
-                    </h3>
+                    <div class="upm-header-text">
+                        <h3 class="upm-modal-title" id="upm-modal-title">
+                            <i data-lucide="printer"></i> ${escapeHtml(config.modalTitle || 'Wydruk Dokumentów')}
+                        </h3>
+                        ${config.subtitle ? `<p class="upm-modal-subtitle">${escapeHtml(config.subtitle)}</p>` : ''}
+                    </div>
                     <button class="upm-close" data-action="__upm_close" type="button" aria-label="Zamknij">
                         <i data-lucide="x"></i>
                     </button>
