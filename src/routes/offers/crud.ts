@@ -4,6 +4,7 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { logger } from '../../utils/logger';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
+import { canReadDoc } from '../../utils/ownership';
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.get('/:id', requireAuth, async (req, res) => {
             });
             if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
 
-            if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+            if (!canReadDoc(authReq.user, offer.userId)) {
                 return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
             }
 
@@ -53,7 +54,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         });
         if (!offer) return res.status(404).json({ error: 'Oferta nie istnieje' });
 
-        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+        if (!canReadDoc(authReq.user, offer.userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
         }
 

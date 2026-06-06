@@ -7,6 +7,7 @@ import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
+import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import {
     OfferMapped
 } from '../../types/models';
@@ -79,6 +80,21 @@ router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema
             const old = await prisma.offers_rel.findUnique({
                 where: { id: docId }
             });
+
+            let effectiveUserId: string;
+            if (old) {
+                if (!canWriteDoc(authReq.user, old.userId)) {
+                    return res.status(403).json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
+                }
+                effectiveUserId = old.userId || authReq.user?.id || '';
+            } else {
+                const resolved = resolveWriteUserId(authReq.user, o.userId);
+                if (!resolved.allowed) {
+                    return res.status(403).json({ error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika' });
+                }
+                effectiveUserId = resolved.effectiveUserId;
+            }
+
             if (old) {
                 try {
                     newHistory = JSON.parse(old.history || '[]');
@@ -139,7 +155,7 @@ router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema
                 where: { id: docId },
                 create: {
                     id: docId,
-                    userId: o.userId || authReq.user?.id,
+                    userId: effectiveUserId,
                     offer_number: offerNumber,
                     state: state,
                     createdAt: created,
@@ -149,7 +165,7 @@ router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema
                     data: dataStr
                 },
                 update: {
-                    userId: o.userId || authReq.user?.id,
+                    userId: effectiveUserId,
                     offer_number: offerNumber,
                     state: state,
                     updatedAt: updated,
