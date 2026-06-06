@@ -172,7 +172,15 @@
 /* ── Tabela ofert (wzorowana na .well-config-table) ── */
 .rury-table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 380px);
     border-radius: var(--radius-sm);
+}
+
+/* Scrollable wariant dla tabeli Oferty (max wysokość zostawia miejsce na bottom bars) */
+.table-wrap.table-wrap-scroll {
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
 }
 
 .rury-table {
@@ -787,7 +795,7 @@
 
 /* Większy padding-bottom dla kroku 3, by treść nie chowała się za fixed paskiem i nawigacją */
 .wizard-step#wizard-step-3.active {
-    padding-bottom: 150px;
+    padding-bottom: 220px;
 }
 
 /* ── Responsywność ── */

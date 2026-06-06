@@ -59,7 +59,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
     const transportDist = calculateTransportDistribution(items, costPerTrip);
 
-    let html = `<div class="table-wrap"><table style="width:100%; table-layout:auto;">
+    let html = `<div class="table-wrap table-wrap-scroll"><table style="width:100%; table-layout:auto;">
       <thead>
         <tr>
           <th style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" onchange="toggleAllOfferSummaryForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
