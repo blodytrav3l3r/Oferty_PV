@@ -16,10 +16,15 @@ import { buildRoleWhereSql } from '../../utils/roleFilter';
 import {
     generateKartaBudowyPDF,
     generateStudniePDFFromContext,
+    generateStudnieOrderPDF,
     lookupOfferUsers
 } from '../../services/pdfGenerator';
 import type { StudnieOfferData, UserContactInfo } from '../../services/pdfGenerator';
-import { generateKartaBudowyDOCX, generateStudnieDOCXFromContext } from '../../services/docx';
+import {
+    generateKartaBudowyDOCX,
+    generateStudnieDOCXFromContext,
+    generateStudnieOrderDOCX
+} from '../../services/docx';
 
 const router = express.Router();
 
@@ -175,6 +180,66 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu Karty Budowy DOCX', message);
+        res.status(500).json({ error: message });
+    }
+});
+
+/* ===== EKSPORT ZAMÓWIENIA (PDF/DOCX) — wariant Oferty ===== */
+
+// GET /api/orders-studnie/:id/export-pdf
+// Generuje PDF Zamówienia (wariant Oferty) z bieżącego stanu zamówienia w DB.
+router.get('/:id/export-pdf', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const docId = req.params.id;
+        const o = await prisma.orders_studnie_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true }
+        });
+        if (!o || !canWriteDoc(authReq.user, o.userId)) {
+            return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
+        }
+        const pdfBuffer = await generateStudnieOrderPDF(docId);
+        const safeId = docId.replace(/[^a-zA-Z0-9_-]/g, '_');
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="zamowienie_studnie_${safeId}.pdf"`
+        );
+        res.send(pdfBuffer);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Orders', 'Błąd GET orders-studnie export-pdf', message);
+        res.status(500).json({ error: message });
+    }
+});
+
+// GET /api/orders-studnie/:id/export-docx
+router.get('/:id/export-docx', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const docId = req.params.id;
+        const o = await prisma.orders_studnie_rel.findUnique({
+            where: { id: docId },
+            select: { id: true, userId: true }
+        });
+        if (!o || !canWriteDoc(authReq.user, o.userId)) {
+            return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
+        }
+        const docxBuffer = await generateStudnieOrderDOCX(docId);
+        const safeId = docId.replace(/[^a-zA-Z0-9_-]/g, '_');
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="zamowienie_studnie_${safeId}.docx"`
+        );
+        res.send(docxBuffer);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Orders', 'Błąd GET orders-studnie export-docx', message);
         res.status(500).json({ error: message });
     }
 });
