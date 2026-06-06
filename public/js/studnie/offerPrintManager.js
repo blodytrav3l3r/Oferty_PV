@@ -498,108 +498,46 @@ window.showUniversalPrintModal = function(offerId, orderId) {
         }
     }
 
-    // Tworzenie HTML modala
-    let ordersSectionHtml = '';
-    if (relatedOrders.length > 0) {
-        ordersSectionHtml = `
-            <div style="margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;">
-                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #34d399; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
-                    <i data-lucide="package" style="width: 16px; height: 16px;"></i> Wydruk Karty Budowy
-                </h4>
-                <p style="font-size: 0.75rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Wybierz format eksportu Karty Budowy:</p>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 2px;">
-        `;
-        relatedOrders.forEach(ord => {
-            const ordNum = ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—');
-            ordersSectionHtml += `
-                <div style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.2); padding: 0.5rem 0.6rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 0.75rem; color: #e2e8f0; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; text-align: left;" title="Zlecenie/Zamówienie ${ordNum}">ZAM: ${ordNum}</span>
-                    <div style="display: flex; gap: 0.4rem; flex-shrink: 0;">
-                        <button onclick="window.exportKartaDirect_action('${ord.id}', 'pdf')" style="background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                            PDF
-                        </button>
-                        <button onclick="window.exportKartaDirect_action('${ord.id}', 'docx')" style="background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                            Word
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        ordersSectionHtml += `
-                </div>
-            </div>
-        `;
+    // Buduj config dla uniwersalnego modala (printModal.js)
+    const config = {
+        modalTitle: 'Wydruk Dokumentów',
+        offerSection: finalOfferId ? {
+            id: finalOfferId,
+            actionPdf: 'exportOfferDirect_action',
+            actionDocx: 'exportOfferDirect_action',
+            title: 'Wydruk Oferty',
+            description: 'Wybierz format eksportu kalkulacji ofertowej:'
+        } : null,
+        orderCurrentSection: (finalOrderId && typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) ? {
+            id: finalOrderId,
+            actionPdf: 'exportStudnieOrderAsOffer_action',
+            actionDocx: 'exportStudnieOrderAsOffer_action',
+            title: 'Oferta (stan bieżący zamówienia)',
+            description: 'Drukuje aktualne pozycje z edycji zamówienia, nie bazową ofertę.',
+            badge: 'POST'
+        } : null,
+        ordersSection: relatedOrders.length > 0 ? {
+            orders: relatedOrders,
+            actionPdf: 'exportOrderDirect_action',
+            actionDocx: 'exportOrderDirect_action',
+            title: 'Wydruk Zamówienia',
+            description: 'Wybierz zamówienie i format eksportu:'
+        } : null,
+        kartaSection: relatedOrders.length > 0 ? {
+            orders: relatedOrders,
+            actionPdf: 'exportKartaDirect_action',
+            actionDocx: 'exportKartaDirect_action',
+            title: 'Wydruk Karty Budowy',
+            description: 'Wybierz zamówienie i format Karty Budowy:'
+        } : null
+    };
+
+    // Deleguj do wspólnego modala
+    if (typeof window.__upmHelperShow === 'function') {
+        window.__upmHelperShow(config);
+    } else if (typeof showToast === 'function') {
+        showToast('Helper printModal.js nie załadowany', 'error');
     }
-
-    // Sekcja "Oferta z bieżącego stanu zamówienia" (widoczna tylko w trybie edycji zamówienia)
-    let orderOfferSectionHtml = '';
-    if (finalOrderId && typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) {
-        orderOfferSectionHtml = `
-            <div style="margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;">
-                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #34d399; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
-                    <i data-lucide="package" style="width: 16px; height: 16px;"></i> Oferta (stan bieżący zamówienia)
-                </h4>
-                <p style="font-size: 0.72rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Drukuje aktualne pozycje z edycji zamówienia, nie bazową ofertę.</p>
-                <div style="display: flex; gap: 0.8rem; justify-content: center;">
-                    <button onclick="window.exportStudnieOrderAsOffer_action('${finalOrderId}', 'pdf')" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 0.7rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                        <span style="font-size: 1.3rem;"><i data-lucide="file-text"></i></span> PDF
-                    </button>
-                    <button onclick="window.exportStudnieOrderAsOffer_action('${finalOrderId}', 'docx')" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 0.7rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                        <span style="font-size: 1.3rem;"><i data-lucide="edit"></i></span> Word
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    // Sekcja Oferty
-    let offerSectionHtml = '';
-    if (finalOfferId) {
-        offerSectionHtml = `
-            <div>
-                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #818cf8; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
-                    <i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Wydruk Oferty
-                </h4>
-                <p style="font-size: 0.75rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Wybierz format eksportu kalkulacji ofertowej:</p>
-                <div style="display: flex; gap: 1rem; justify-content: center;">
-                    <button onclick="window.exportOfferDirect_action('${finalOfferId}', 'pdf')" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 0.8rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                        <span style="font-size: 1.5rem;"><i data-lucide="file-text"></i></span> PDF
-                    </button>
-                    <button onclick="window.exportOfferDirect_action('${finalOfferId}', 'docx')" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 0.8rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                        <span style="font-size: 1.5rem;"><i data-lucide="edit"></i></span> Word
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    // Usunięcie poprzedniego modala jeśli istnieje
-    const existingModal = document.getElementById('universal-print-modal');
-    if (existingModal) existingModal.remove();
-
-    const modalHtml = `
-    <div id="universal-print-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px);">
-        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 380px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 0.6rem;">
-                <h3 style="margin: 0; font-size: 1.1rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
-                    <i data-lucide="printer" style="width: 18px; height: 18px;"></i> Wydruk Dokumentów
-                </h3>
-                <button onclick="document.getElementById('universal-print-modal').remove()" style="background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i data-lucide="x" style="width: 18px; height: 18px;"></i></button>
-            </div>
-            
-            ${offerSectionHtml}
-            ${orderOfferSectionHtml}
-            ${ordersSectionHtml}
-            
-            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
-                <button style="padding: 0.5rem 1.2rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.1)'" onmouseleave="this.style.background='rgba(255,255,255,0.05)'" onclick="document.getElementById('universal-print-modal').remove()">Zamknij</button>
-            </div>
-        </div>
-    </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    if(typeof lucide !== 'undefined') lucide.createIcons();
 };
 
 /**
@@ -706,6 +644,61 @@ window.exportOfferDirect_action = async function(offerId, format) {
         a.remove();
         if (typeof showToast === 'function') {
             showToast(`Pobrano ofertę w ${format.toUpperCase()}`, 'success');
+        }
+    })
+    .catch((err) => {
+        console.error('[Export Error]', err);
+        if (typeof showToast === 'function') {
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        }
+    });
+};
+
+/**
+ * Akcja eksportu Zamowienia studni (PDF/DOCX) — wariant Oferty.
+ * Wywolywane z uniwersalnego modala (printModal.js) dla sekcji ZAMOWIENIA.
+ * GET /api/orders-studnie/:id/export-pdf|docx
+ */
+window.exportOrderDirect_action = async function(orderId, format) {
+    if (!orderId) {
+        if (typeof showToast === 'function') {
+            showToast('Brak ID zamówienia do eksportu', 'error');
+        }
+        return;
+    }
+    if (format !== 'pdf' && format !== 'docx') {
+        if (typeof showToast === 'function') {
+            showToast('Nieobsługiwany format eksportu', 'error');
+        }
+        return;
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(`Generowanie Zamówienia (${format.toUpperCase()})...`, 'info');
+    }
+
+    const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
+    fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
+        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+    })
+    .then(async (res) => {
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`);
+        }
+        return res.blob();
+    })
+    .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `zamowienie_studnie_${orderId.substring(0, 8)}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        if (typeof showToast === 'function') {
+            showToast(`Pobrano Zamówienie w ${format.toUpperCase()}`, 'success');
         }
     })
     .catch((err) => {

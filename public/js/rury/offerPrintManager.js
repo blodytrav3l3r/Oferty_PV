@@ -10,88 +10,59 @@ function handlePrintClick() {
 window.handlePrintClick = handlePrintClick;
 
 function showUniversalPrintModalRury(offerId, orderId) {
-    const targetOfferId = offerId || editingOfferId || null;
-    const targetOrderId = orderId || editingRuryOrderId || null;
+    const targetOfferId = offerId || (typeof editingOfferId !== 'undefined' ? editingOfferId : null);
+    const targetOrderId = orderId || (typeof editingRuryOrderId !== 'undefined' ? editingRuryOrderId : null);
     const inOrderMode = !!(window.orderEditMode && targetOrderId);
 
-    let html = `
-    <div class="modal" style="max-width: 500px; width: 95%; border-radius: 12px;">
-        <div class="modal-header">
-            <h3><i data-lucide="printer"></i> Wydruk dokumentów</h3>
-            <button class="btn-icon" onclick="closeModal()"><i data-lucide="x"></i></button>
-        </div>
-        <div style="padding: 1rem 0;">`;
-
-    // Sekcja zamówienia / karty budowy
-    if (targetOrderId) {
-        html += `
-            <div style="margin-bottom: 1rem;">
-                <h4 style="font-size:0.85rem; font-weight:700; color:#a78bfa; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
-                    <i data-lucide="file-text"></i> Karta Budowy
-                </h4>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="exportKartaDirectRury_action('${targetOrderId}', 'pdf')" style="flex:1; min-width:120px;">
-                        <i data-lucide="file-text"></i> PDF
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportKartaDirectRury_action('${targetOrderId}', 'docx')" style="flex:1; min-width:120px;">
-                        <i data-lucide="file-text"></i> Word (DOCX)
-                    </button>
-                </div>
-            </div>`;
-    } else {
-        html += `
-            <div style="margin-bottom: 1rem;">
-                <h4 style="font-size:0.85rem; font-weight:700; color:#a78bfa; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
-                    <i data-lucide="file-text"></i> Karta Budowy
-                </h4>
-                <p style="font-size:0.8rem; color:var(--text-muted);">Utwórz zamówienie, aby móc wydrukować Kartę Budowy.</p>
-            </div>`;
+    let relatedOrders = [];
+    if (targetOfferId && typeof getOrdersForOffer === 'function') {
+        relatedOrders = getOrdersForOffer(targetOfferId);
+    }
+    if (targetOrderId && relatedOrders.length === 0) {
+        if (typeof ordersRury !== 'undefined') {
+            const currentOrder = ordersRury.find(o => o.id === targetOrderId);
+            if (currentOrder) relatedOrders = [currentOrder];
+        }
     }
 
-    // Sekcja oferty (jeśli dostępna) — w trybie zamówienia przekierowuje na bieżący stan edycji
-    if (inOrderMode) {
-        html += `
-            <div style="margin-bottom: 0.5rem; padding-top: 0.8rem; border-top: 1px solid var(--border-glass);">
-                <h4 style="font-size:0.85rem; font-weight:700; color:#34d399; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
-                    <i data-lucide="package"></i> Oferta <span style="font-size:0.7rem; font-weight:600; color:#a5b4fc; background:rgba(165,180,252,0.12); padding:0.1rem 0.4rem; border-radius:4px;">stan bieżący zamówienia</span>
-                </h4>
-                <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">Drukuje aktualne pozycje z edycji zamówienia (krok 5), nie bazową ofertę.</p>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="exportRuryOrderAsOffer_action('${targetOrderId}', 'pdf')" style="flex:1; min-width:120px;">
-                        <i data-lucide="file-text"></i> PDF
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportRuryOrderAsOffer_action('${targetOrderId}', 'docx')" style="flex:1; min-width:120px;">
-                        <i data-lucide="file-text"></i> Word (DOCX)
-                    </button>
-                </div>
-            </div>`;
-    } else if (targetOfferId) {
-        html += `
-            <div style="margin-bottom: 0.5rem; padding-top: 0.8rem; border-top: 1px solid var(--border-glass);">
-                <h4 style="font-size:0.85rem; font-weight:700; color:#34d399; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
-                    <i data-lucide="file-text"></i> Oferta
-                </h4>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="exportOfferDirectRury_action('${targetOfferId}', 'pdf')" style="flex:1; min-width:120px;">
-                        <i data-lucide="file-text"></i> PDF
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportOfferDirectRury_action('${targetOfferId}', 'docx')" style="flex:1; min-width:120px;">
-                        <i data-lucide="file-text"></i> Word (DOCX)
-                    </button>
-                </div>
-            </div>`;
+    const config = {
+        modalTitle: 'Wydruk Dokumentów',
+        offerSection: (!inOrderMode && targetOfferId) ? {
+            id: targetOfferId,
+            actionPdf: 'exportOfferDirectRury_action',
+            actionDocx: 'exportOfferDirectRury_action',
+            title: 'Wydruk Oferty',
+            description: 'Wybierz format eksportu oferty:'
+        } : null,
+        orderCurrentSection: inOrderMode ? {
+            id: targetOrderId,
+            actionPdf: 'exportRuryOrderAsOffer_action',
+            actionDocx: 'exportRuryOrderAsOffer_action',
+            title: 'Oferta (stan bieżący zamówienia)',
+            description: 'Drukuje aktualne pozycje z edycji zamówienia (krok 5), nie bazową ofertę.',
+            badge: 'stan bieżący'
+        } : null,
+        ordersSection: relatedOrders.length > 0 ? {
+            orders: relatedOrders,
+            actionPdf: 'exportOrderDirectRury_action',
+            actionDocx: 'exportOrderDirectRury_action',
+            title: 'Wydruk Zamówienia',
+            description: 'Wybierz zamówienie i format eksportu:'
+        } : null,
+        kartaSection: relatedOrders.length > 0 ? {
+            orders: relatedOrders,
+            actionPdf: 'exportKartaDirectRury_action',
+            actionDocx: 'exportKartaDirectRury_action',
+            title: 'Wydruk Karty Budowy',
+            description: 'Wybierz zamówienie i format Karty Budowy:'
+        } : null
+    };
+
+    if (typeof window.__upmHelperShow === 'function') {
+        window.__upmHelperShow(config);
+    } else if (typeof showToast === 'function') {
+        showToast('Helper printModal.js nie załadowany', 'error');
     }
-
-    html += `
-        </div>
-    </div>`;
-
-    showModal({
-        id: 'rury-print-modal',
-        titleId: 'rury-print-title',
-        html
-    });
-    if (window.lucide) lucide.createIcons();
 }
 
 window.showUniversalPrintModalRury = showUniversalPrintModalRury;
@@ -214,6 +185,49 @@ async function exportKartaDirectRury_action(orderId, format) {
 }
 
 window.exportKartaDirectRury_action = exportKartaDirectRury_action;
+
+/**
+ * Akcja eksportu Zamowienia rur (PDF/DOCX) — wariant Oferty.
+ * Wywolywane z uniwersalnego modala (printModal.js) dla sekcji ZAMOWIENIA.
+ * GET /api/orders-rury/:id/export-pdf|docx
+ */
+async function exportOrderDirectRury_action(orderId, format) {
+    if (!orderId) {
+        showToast('Brak ID zamówienia do eksportu', 'error');
+        return;
+    }
+    if (format !== 'pdf' && format !== 'docx') {
+        showToast('Nieobsługiwany format eksportu', 'error');
+        return;
+    }
+
+    try {
+        showToast(`Generowanie Zamówienia (${format.toUpperCase()})...`, 'info');
+        const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
+        const res = await fetch(`/api/orders-rury/${orderId}/${endpoint}`, {
+            headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) {
+            const errText = await res.text().catch(() => res.statusText);
+            throw new Error(`Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `zamowienie_rury_${orderId.substring(0, 8)}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showToast(`Pobrano Zamówienie w ${format.toUpperCase()}`, 'success');
+    } catch (err) {
+        console.error('exportOrderDirectRury_action error:', err);
+        showToast('Błąd eksportu Zamówienia: ' + err.message, 'error');
+    }
+}
+
+window.exportOrderDirectRury_action = exportOrderDirectRury_action;
 
 async function exportRuryOrderAsOffer_action(orderId, format) {
     if (!orderId) {
