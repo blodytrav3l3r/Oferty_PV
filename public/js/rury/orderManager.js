@@ -466,7 +466,12 @@ function updateRuryOrderSummary(orderData) {
 function copyTransportBreakdown() {
     const src = document.getElementById('transport-breakdown');
     const dst = document.getElementById('order-transport-breakdown');
-    if (src && dst) dst.innerHTML = src.innerHTML;
+    if (!src || !dst) return;
+    dst.innerHTML = src.innerHTML
+        .replace(/id="transport-breakdown-content"/g, 'id="order-transport-breakdown-content"')
+        .replace(/id="transport-toggle-icon"/g, 'id="order-transport-toggle-icon"')
+        .replace(/onclick="toggleTransportBreakdown\(\)"/g, 'onclick="toggleOrderTransportBreakdown()"');
+    if (window.lucide) lucide.createIcons({root: dst});
 }
 
 window.updateRuryOrderSummary = updateRuryOrderSummary;

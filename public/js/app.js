@@ -54,12 +54,19 @@ async function changeOfferUser() {
 
 window.toggleTransportBreakdown = function () {
     isTransportBreakdownExpanded = !isTransportBreakdownExpanded;
-    const content = document.getElementById('transport-breakdown-content');
-    const icon = document.getElementById('transport-toggle-icon');
-    if (content) {
-        content.style.display = isTransportBreakdownExpanded ? 'block' : 'none';
-        icon.innerHTML = isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>';
-    }
+    const contents = document.querySelectorAll('#transport-breakdown-content, #order-transport-breakdown-content');
+    const icons = document.querySelectorAll('#transport-toggle-icon, #order-transport-toggle-icon');
+    contents.forEach(c => { c.style.display = isTransportBreakdownExpanded ? 'block' : 'none'; });
+    icons.forEach(i => {
+        i.innerHTML = isTransportBreakdownExpanded
+            ? '<i data-lucide="chevron-up"></i>'
+            : '<i data-lucide="chevron-down"></i>';
+    });
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.toggleOrderTransportBreakdown = function () {
+    window.toggleTransportBreakdown();
 };
 
 window.toggleCard = function (contentId, iconId) {
