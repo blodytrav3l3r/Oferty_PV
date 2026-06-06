@@ -45,7 +45,6 @@ function renderOfferSummary() {
     // Synchronizacja przycisku zapisu w podsumowaniu z trybem zamówienia
     const saveBtn = document.getElementById('btn-save-studnie-offer');
     const createOrderBtn = document.getElementById('btn-create-order-offer');
-    const newOfferBtn = document.getElementById('btn-new-offer-studnie');
 
     if (saveBtn) {
         if (orderEditMode) {
@@ -61,7 +60,6 @@ function renderOfferSummary() {
 
             // Ukryj przyciski ofertowe w trybie zamówienia
             if (createOrderBtn) createOrderBtn.style.display = 'none';
-            if (newOfferBtn) newOfferBtn.style.display = 'none';
         } else {
             saveBtn.innerHTML = `<i data-lucide="save" aria-hidden="true"></i> Zapisz ofertę`;
             saveBtn.onclick = () => {
@@ -74,8 +72,6 @@ function renderOfferSummary() {
 
             // Pokaż przycisk "Utwórz zamówienie" w trybie oferty
             if (createOrderBtn) createOrderBtn.style.display = 'flex';
-            // Ukrywamy "Nowa Oferta" zgodnie z prośbą
-            if (newOfferBtn) newOfferBtn.style.display = 'none';
         }
         if (window.lucide) window.lucide.createIcons({ root: saveBtn });
     }
