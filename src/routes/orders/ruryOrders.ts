@@ -81,9 +81,13 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
         if (!userId) return res.status(400).json({ error: 'Brak userId' });
+        if (!canWriteDoc(authReq.user, userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
+        }
 
         const year = new Date().getFullYear();
 

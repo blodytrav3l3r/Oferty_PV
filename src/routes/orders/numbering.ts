@@ -1,6 +1,7 @@
 import express from 'express';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
+import { canWriteDoc } from '../../utils/ownership';
 
 const router = express.Router();
 
@@ -24,8 +25,12 @@ router.get('/recycled', requireAuth, async (req, res) => {
 /* ===== GENEROWANIE NUMERU ZAMÓWIENIA ===== */
 
 router.get('/next-number/:userId', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
+        if (!canWriteDoc(authReq.user, userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
+        }
         const year = new Date().getFullYear();
 
         const user = await prisma.users.findUnique({
@@ -50,8 +55,12 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
 });
 
 router.post('/claim-number/:userId', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
+        if (!canWriteDoc(authReq.user, userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
+        }
         const year = new Date().getFullYear();
 
         const user = await prisma.users.findUnique({
@@ -84,8 +93,12 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
 /* ===== GENEROWANIE NUMERU ZLECENIA PRODUKCYJNEGO ===== */
 
 router.post('/claim-production-number/:userId', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
+        if (!canWriteDoc(authReq.user, userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
+        }
         const year = new Date().getFullYear();
         const yearShort = String(year).slice(-2);
 
