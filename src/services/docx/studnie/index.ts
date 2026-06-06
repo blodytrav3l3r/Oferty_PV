@@ -6,7 +6,11 @@
 
 import { Packer } from 'docx';
 import prisma from '../../../prismaClient';
-import { lookupOfferUsers, buildStudnieOfferContextFromOfferId } from '../../pdfGenerator';
+import {
+    lookupOfferUsers,
+    buildStudnieOfferContextFromOfferId,
+    buildStudnieOrderContextFromOrderId
+} from '../../pdfGenerator';
 import type { UserContactInfo } from '../../pdfGenerator';
 import { buildStudnieDocument } from './builder';
 import { logger } from '../../../utils/logger';
@@ -72,10 +76,12 @@ export async function generateStudnieDOCXFromContext(ctx: {
     wells: Array<Record<string, unknown>>;
     authorUser: UserContactInfo | null;
     guardianUser: UserContactInfo | null;
+    documentType?: 'offer' | 'order';
 }): Promise<Buffer> {
+    const documentType: 'offer' | 'order' = ctx.documentType ?? 'offer';
     logger.info(
         'DocxStudnie',
-        `Generowanie DOCX (order context) dla zamówienia ${ctx.offerNumber}, studni: ${ctx.wells.length}`
+        `Generowanie DOCX (${documentType} context) dla ${ctx.offerNumber}, studni: ${ctx.wells.length}`
     );
 
     const doc = buildStudnieDocument(
@@ -84,10 +90,57 @@ export async function generateStudnieDOCXFromContext(ctx: {
         null,
         ctx.wells,
         ctx.authorUser,
-        ctx.guardianUser
+        ctx.guardianUser,
+        documentType
+    );
+    return Packer.toBuffer(doc);
+}
+
+/**
+ * Generuje dokument DOCX dla ZAMÓWIENIA studni (wariant oferty).
+ * Buduje kontekst z orders_studnie_rel (z fallbackiem na offers_studnie_rel
+ * dla kalkulacji cen) i renderuje przez buildStudnieDocument z documentType='order'.
+ */
+export async function generateStudnieOrderDOCX(orderId: string): Promise<Buffer> {
+    logger.info('DocxStudnie', `Generowanie DOCX dla zamówienia ${orderId}`);
+
+    const ctx = await buildStudnieOrderContextFromOrderId(orderId);
+
+    // Znajdź client record (potrzebny do buildStudnieDocument)
+    const order = await prisma.orders_studnie_rel.findUnique({ where: { id: orderId } });
+    let orderData: Record<string, unknown> = {};
+    try {
+        if (order?.data) orderData = JSON.parse(order.data) as Record<string, unknown>;
+    } catch (e) {
+        logger.warn('DocxStudnie', 'Błąd parsowania order.data (order DOCX)', e);
+    }
+    const client = orderData.clientId
+        ? await prisma.clients_rel.findUnique({ where: { id: String(orderData.clientId) } })
+        : null;
+
+    const doc = buildStudnieDocument(
+        { offer_number: ctx.offerNumber, createdAt: order?.createdAt },
+        {
+            date: ctx.createdAt,
+            clientName: ctx.clientName,
+            clientNip: ctx.clientNip,
+            clientAddress: ctx.clientAddress,
+            clientContact: ctx.clientPhone,
+            investName: ctx.investName,
+            investAddress: ctx.investAddress,
+            notes: ctx.notes,
+            paymentTerms: ctx.paymentTerms,
+            orderNumber: ctx.orderNumber,
+            productionOrderNumber: ctx.productionOrderNumber
+        },
+        client,
+        ctx.items,
+        ctx.authorUser ?? null,
+        ctx.guardianUser ?? null,
+        'order'
     );
     return Packer.toBuffer(doc);
 }
 
 // Re-export helpera do budowania kontekstu z DB (dla spójności API z rury)
-export { buildStudnieOfferContextFromOfferId };
+export { buildStudnieOfferContextFromOfferId, buildStudnieOrderContextFromOrderId };

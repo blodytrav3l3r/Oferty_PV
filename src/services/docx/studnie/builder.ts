@@ -22,6 +22,10 @@ import { buildStaticTerms } from './content';
 
 /**
  * Buduje kompletny obiekt Document oferty studni na podstawie sparsowanych danych
+ *
+ * @param documentType 'offer' (domyślnie) — klasyczna oferta z terminem ważności;
+ *                    'order' — zamówienie (wariant oferty) — bez terminu ważności,
+ *                    tytuł zmieniony na "ZAMÓWIENIE {numer}", numer z orderNumber.
  */
 export function buildStudnieDocument(
     offer: Record<string, unknown>,
@@ -29,9 +33,14 @@ export function buildStudnieDocument(
     client: Record<string, unknown> | null,
     wells: unknown[],
     authorUser: UserContactInfo | null,
-    guardianUser: UserContactInfo | null
+    guardianUser: UserContactInfo | null,
+    documentType: 'offer' | 'order' = 'offer'
 ): Document {
-    const offerNumber = String(offer.offer_number ?? 'N/A');
+    const isOrder = documentType === 'order';
+    const rawNumber = isOrder && offerData.orderNumber
+        ? String(offerData.orderNumber)
+        : String(offer.offer_number ?? 'N/A');
+    const offerNumber = rawNumber;
     const offerDate = fmtDate(String(offerData.date ?? offer.createdAt ?? new Date().toISOString()));
     const validity = String(offerData.validity ?? '30 dni');
 
@@ -49,10 +58,10 @@ export function buildStudnieDocument(
     const children: (Paragraph | Table)[] = [];
 
     // 1. Tytuł
-    children.push(buildTitleParagraph(offerNumber));
+    children.push(buildTitleParagraph(offerNumber, documentType));
 
     // 2. Daty
-    children.push(...buildDateParagraphs(offerDate, validity));
+    children.push(...buildDateParagraphs(offerDate, validity, documentType));
 
     // 3. Info grid: Klient + Inwestycja
     children.push(

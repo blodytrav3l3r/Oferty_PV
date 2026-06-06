@@ -30,11 +30,14 @@ import {
 } from '../constants';
 import { fmtCurrency, textCell } from '../helpers';
 
-export function buildTitleParagraph(offerNumber: string): Paragraph {
+export function buildTitleParagraph(offerNumber: string, documentType: 'offer' | 'order' = 'offer'): Paragraph {
+    const titleText = documentType === 'order'
+        ? `ZAMÓWIENIE ${offerNumber}`
+        : `OFERTA HANDLOWA ${offerNumber}`;
     return new Paragraph({
         children: [
             new TextRun({
-                text: `OFERTA HANDLOWA ${offerNumber}`,
+                text: titleText,
                 bold: true,
                 size: SZ_TITLE,
                 font: FONT,
@@ -46,26 +49,38 @@ export function buildTitleParagraph(offerNumber: string): Paragraph {
     });
 }
 
-export function buildDateParagraphs(offerDate: string, validity: string): Paragraph[] {
-    return [
+export function buildDateParagraphs(
+    offerDate: string,
+    validity: string,
+    documentType: 'offer' | 'order' = 'offer'
+): Paragraph[] {
+    const paragraphs: Paragraph[] = [
         new Paragraph({
             children: [
                 new TextRun({ text: 'Data przygotowania oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
                 new TextRun({ text: offerDate, size: SZ_BODY, font: FONT })
             ],
             alignment: AlignmentType.RIGHT,
-            spacing: { after: 0 }
-        }),
-        new Paragraph({
-            children: [
-                new TextRun({ text: 'Data ważności oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
-                new TextRun({ text: validity, size: SZ_BODY, font: FONT })
-            ],
-            alignment: AlignmentType.RIGHT,
-            spacing: { after: 60 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_GRAY_HEADER } }
+            spacing: { after: documentType === 'order' ? 60 : 0 },
+            border: documentType === 'order'
+                ? { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_GRAY_HEADER } }
+                : undefined
         })
     ];
+    if (documentType === 'offer') {
+        paragraphs.push(
+            new Paragraph({
+                children: [
+                    new TextRun({ text: 'Data ważności oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
+                    new TextRun({ text: validity, size: SZ_BODY, font: FONT })
+                ],
+                alignment: AlignmentType.RIGHT,
+                spacing: { after: 60 },
+                border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_GRAY_HEADER } }
+            })
+        );
+    }
+    return paragraphs;
 }
 
 export function buildNotesParagraph(notes: string): Paragraph {

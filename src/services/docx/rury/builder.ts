@@ -20,9 +20,13 @@ export function buildRuryDocument(
     client: Record<string, unknown> | null,
     items: Record<string, unknown>[],
     authorUser: UserContactInfo | null,
-    guardianUser: UserContactInfo | null
+    guardianUser: UserContactInfo | null,
+    documentType: 'offer' | 'order' = 'offer'
 ): Document {
-    const offerNumber = String(offer.offer_number ?? 'N/A');
+    const isOrder = documentType === 'order';
+    const offerNumber = isOrder && offerData.orderNumber
+        ? String(offerData.orderNumber)
+        : String(offer.offer_number ?? 'N/A');
     const offerDate = fmtDate(String(offerData.date ?? offer.createdAt ?? new Date().toISOString()));
     const validity = String(offerData.validity ?? '30 dni');
 
@@ -39,10 +43,10 @@ export function buildRuryDocument(
     const children: (Paragraph | Table)[] = [];
 
     // 1. Tytuł
-    children.push(buildTitleParagraph(offerNumber));
+    children.push(buildTitleParagraph(offerNumber, documentType));
 
     // 2. Daty
-    children.push(...buildDateParagraphs(offerDate, validity));
+    children.push(...buildDateParagraphs(offerDate, validity, documentType));
 
     // 3. Info grid: Klient + Inwestycja
     children.push(
