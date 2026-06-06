@@ -31,28 +31,7 @@
             margin: 0 auto;
         }
 
-        /* ===== NAGŁÓWEK / STOPKA FIRMOWA ===== */
-        .letterhead-header {
-            width: 100%;
-            display: block;
-            margin-bottom: 12px;
-        }
-
-        .letterhead-footer {
-            width: 100%;
-            display: block;
-            margin-top: 20px;
-            page-break-inside: avoid;
-        }
-
-        /* ===== TYTUŁ W NAGŁÓWKU ===== */
-        .header-title {
-            font-size: 9pt;
-            font-weight: 700;
-            color: #1a1a2e;
-            text-align: center;
-            padding-bottom: 4px;
-        }
+        /* ===== KARTA BUDOWY (bez naglowka/stopki firmowej) ===== */
 
         /* ===== SEKCJE DANYCH ===== */
         .section-header {
@@ -157,14 +136,6 @@
 <body>
     <div class="page">
         <table class="report-container" style="width: 100%; border: none">
-            <thead class="report-header" style="display: table-header-group; border: none">
-                <tr>
-                    <td style="border: none; padding: 0">
-                        <div class="header-title">KARTA BUDOWY - ZAMÓWIENIE {{NR_ZAMOWIENIA}}</div>
-                        <img src="{{BASE_URL}}/images/letterhead-header.png" class="letterhead-header" />
-                    </td>
-                </tr>
-            </thead>
             <tbody>
                 <tr>
                     <td style="border: none; padding: 0">
@@ -234,13 +205,6 @@
                     </td>
                 </tr>
             </tbody>
-            <tfoot class="report-footer" style="display: table-footer-group; border: none">
-                <tr>
-                    <td style="border: none; padding: 0">
-                        <img src="{{BASE_URL}}/images/letterhead-footer.png" class="letterhead-footer" />
-                    </td>
-                </tr>
-            </tfoot>
         </table>
     </div>
 </body>
