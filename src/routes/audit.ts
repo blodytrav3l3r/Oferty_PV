@@ -1,6 +1,6 @@
 import express from 'express';
 import prisma from '../prismaClient';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
@@ -8,19 +8,38 @@ const router = express.Router();
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
+/**
+ * Buduje WHERE clause dla audit_logs respektujący rolę:
+ *  - admin: widzi wszystko
+ *  - pro:   widzi logi swoje + swoich subUsers
+ *  - user:  widzi tylko swoje
+ */
+function buildAuditUserFilter(user: { role: string; id: string; subUsers?: string[] }): { userId?: { in: string[] } | string } {
+    if (user.role === 'admin') return {};
+    if (user.role === 'pro') {
+        const ids = [user.id, ...(user.subUsers || [])].filter(
+            (id): id is string => typeof id === 'string' && id.length > 0
+        );
+        return { userId: { in: ids } };
+    }
+    return { userId: user.id };
+}
+
 // GET /api/audit/:entityType/:entityId?limit=20&offset=0
 router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const { entityType, entityId } = req.params;
         const limit = Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT);
         const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
-        const total = await prisma.audit_logs.count({
-            where: { entityType, entityId }
-        });
+        const userFilter = authReq.user ? buildAuditUserFilter(authReq.user) : { userId: '__none__' };
+        const where = { entityType, entityId, ...userFilter };
+
+        const total = await prisma.audit_logs.count({ where });
 
         const logs = await prisma.audit_logs.findMany({
-            where: { entityType, entityId },
+            where,
             orderBy: { createdAt: 'desc' },
             take: limit,
             skip: offset
@@ -75,11 +94,14 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
 
 // GET /api/audit/rebuild/:entityType/:entityId/:logId
 router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const { entityType, entityId, logId } = req.params;
 
+        const userFilter = authReq.user ? buildAuditUserFilter(authReq.user) : { userId: '__none__' };
+
         const targetLog = await prisma.audit_logs.findFirst({
-            where: { id: logId, entityType, entityId }
+            where: { id: logId, entityType, entityId, ...userFilter }
         });
         if (!targetLog)
             return res.status(404).json({ error: 'Nie znaleziono wpisu historycznego.' });
@@ -88,6 +110,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             where: {
                 entityType,
                 entityId,
+                ...userFilter,
                 createdAt: { lte: targetLog.createdAt ?? undefined }
             },
             orderBy: { createdAt: 'desc' }
@@ -138,6 +161,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             where: {
                 entityType,
                 entityId,
+                ...userFilter,
                 createdAt: {
                     gt: baseLogRow.createdAt ?? undefined,
                     lte: targetLog.createdAt ?? undefined
