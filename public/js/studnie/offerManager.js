@@ -1105,9 +1105,9 @@ function updateOfferSummaryUI(totals) {
         // Fixed grid layout: 4 columns × 2 rows
         // Wiersz 1: DN1000, DN1500, DN2500, PEHD
         // Wiersz 2: DN1200, DN2000, Styczna, Malowanie
-        const tileBase = 'padding:4px 6px; border-radius:6px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0;';
-        const labelStyle = 'font-size:0.85rem; font-weight:800; line-height:1.2;';
-        const detailStyle = 'font-size:0.75rem; font-weight:600; line-height:1.2;';
+        const tileBase = 'padding:2px 4px; border-radius:5px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; min-width:0;';
+        const labelStyle = 'font-size:0.72rem; font-weight:800; line-height:1.15;';
+        const detailStyle = 'font-size:0.65rem; font-weight:600; line-height:1.15;';
         const dimVal = 'opacity:0.3;';
         const disabledTile = `${tileBase} background:rgba(255,255,255,0.02); color:rgba(100,116,139,0.35); border:1px solid rgba(255,255,255,0.04);`;
 
@@ -1148,7 +1148,7 @@ function updateOfferSummaryUI(totals) {
             }
             const afterPrice = basePrice * (1 - pehdDisc / 100);
             const discDetail = pehdDisc > 0 ? `${afterPrice.toFixed(0)} zł/m² (-${Number(pehdDisc).toFixed(2)}%)` : `${afterPrice.toFixed(0)} zł/m²`;
-            return `<div style="${tileBase} background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3);"><span style="${labelStyle}"><i data-lucide="shield" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:2px;"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
+            return `<div style="${tileBase} background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3);"><span style="${labelStyle}"><i data-lucide="shield" style="width:9px;height:9px;display:inline;vertical-align:middle;margin-right:1px;"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
         };
 
         /** Buduje kafelek Malowania */
@@ -1161,11 +1161,11 @@ function updateOfferSummaryUI(totals) {
             let parts = [];
             if (anyW) parts.push(`W:${ref.malowanieWewCena || 0}`);
             if (anyZ) parts.push(`Z:${ref.malowanieZewCena || 0}`);
-            return `<div style="${tileBase} background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.3);"><span style="${labelStyle}"><i data-lucide="paintbrush" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:2px;"></i>Malowanie</span><span style="${detailStyle}">${parts.join(' ')} zł/m²</span></div>`;
+            return `<div style="${tileBase} background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.3);"><span style="${labelStyle}"><i data-lucide="paintbrush" style="width:9px;height:9px;display:inline;vertical-align:middle;margin-right:1px;"></i>Malowanie</span><span style="${detailStyle}">${parts.join(' ')} zł/m²</span></div>`;
         };
 
         discountsInfoEl.innerHTML = `
-            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; width:100%;">
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; width:100%;">
                 ${buildDnTile('1000')}
                 ${buildDnTile('1500')}
                 ${buildDnTile('2500')}

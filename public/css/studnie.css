@@ -1837,7 +1837,7 @@ select.form-input option {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 0.4rem;
+    gap: 0.3rem;
     width: 100%;
     height: 100%;
 }
@@ -1925,9 +1925,36 @@ select.form-input option {
     right: 0;
     background: #111827;
     border-top: 1px solid var(--border-glass);
-    padding: 1.2rem 2.5rem;
+    padding: 0.8rem 1.5rem;
     z-index: 99;
     box-shadow: 0 -8px 30px #080808;
+}
+
+/* ── Klasy kart w stopce (mirror .rury-summary-*) ── */
+.studnie-summary-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+}
+.studnie-summary-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.studnie-summary-value.accent { color: var(--accent-hover); }
+.studnie-summary-value.success {
+    color: var(--success);
+    font-weight: 800;
+    font-size: 1.6rem;
+}
+.studnie-summary-value.warn { color: var(--warn); }
+.studnie-summary-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
 }
 
 @media (max-width: 768px) {
