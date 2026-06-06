@@ -5,14 +5,12 @@ let _customPrzejscieRows = [];
 let _offerPrzejscieRows = [];
 let _przejsciaInitialized = false;
 let orderCurrentItems = [];
-let showPriceComparison = false;
 
 function getActiveItemsArray() {
     return window.orderEditMode ? orderCurrentItems : currentOfferItems;
 }
 window.getActiveItemsArray = getActiveItemsArray;
 window.orderCurrentItems = orderCurrentItems;
-window.showPriceComparison = showPriceComparison;
 
 function isItemInAnyOrder(uid) {
     if (!uid) return false;
@@ -33,27 +31,6 @@ function isItemLocked(item) {
     return isItemInAnyOrder(item.uid);
 }
 window.isItemLocked = isItemLocked;
-
-function togglePriceComparison() {
-    showPriceComparison = !showPriceComparison;
-    window.showPriceComparison = showPriceComparison;
-    if (typeof getCurrentRuryOrder === 'function') {
-        const order = getCurrentRuryOrder();
-        if (order && typeof updateRuryOrderSummary === 'function') {
-            updateRuryOrderSummary(order);
-        }
-    }
-    const btn = document.getElementById('btn-toggle-price-cmp');
-    if (btn) {
-        btn.classList.toggle('active', showPriceComparison);
-    }
-    const label = document.getElementById('btn-toggle-price-cmp-label');
-    if (label) {
-        label.textContent = showPriceComparison ? 'Ukryj porównanie' : 'Pokaż porównanie';
-    }
-    if (window.lucide) window.lucide.createIcons();
-}
-window.togglePriceComparison = togglePriceComparison;
 
 async function loadOrdersRury() {
     try {
@@ -447,19 +424,12 @@ function updateRuryOrderSummary(orderData) {
     const dst = document.getElementById('order-items-body');
     if (!dst) return;
 
-    const theadRow = document.querySelector('#order-items-content .rury-table thead tr');
-    if (theadRow) {
-        theadRow.querySelectorAll('.cmp-th').forEach(el => el.remove());
-        theadRow.querySelectorAll('.cmp-td').forEach(el => el.remove());
-    }
-
     const isOrderMode = !!(window.orderEditMode && orderData);
-    const showCmp = isOrderMode && window.showPriceComparison;
-    const colCount = isOrderMode ? (showCmp ? 15 : 13) : 13;
+    const colCount = 13;
 
     const orderColgroup = document.getElementById('order-colgroup');
     if (orderColgroup && typeof buildRuryColgroup === 'function') {
-        orderColgroup.innerHTML = buildRuryColgroup(showCmp ? 2 : 0);
+        orderColgroup.innerHTML = buildRuryColgroup(0);
     }
 
     if (!src || (getActiveItemsArray() || []).length === 0) {
@@ -485,61 +455,6 @@ function updateRuryOrderSummary(orderData) {
         firstCell.setAttribute('data-status', ordered ? 'ordered' : 'available');
     });
 
-    if (showCmp && theadRow) {
-        const snapItems = orderData.originalSnapshot?.items || [];
-
-        const nettoTh = theadRow.querySelector('th:nth-child(11)');
-        if (nettoTh) {
-            const offerTh = document.createElement('th');
-            offerTh.className = 'cmp-th';
-            offerTh.style.cssText = 'text-align:right; white-space:nowrap; padding:0.3rem 0.4rem; font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:var(--bg-tertiary); border-bottom:1px solid var(--border-glass);';
-            offerTh.innerHTML = '<span style="display:block;text-align:center">Cena z oferty</span>';
-
-            const diffTh = document.createElement('th');
-            diffTh.className = 'cmp-th';
-            diffTh.style.cssText = offerTh.style.cssText;
-            diffTh.innerHTML = '<span style="display:block;text-align:center">R\u00f3\u017cnica</span>';
-
-            nettoTh.after(offerTh);
-            offerTh.after(diffTh);
-        }
-
-        const rows = dst.querySelectorAll('tr:not(.offer-cat-header):not(.offer-diam-header)');
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length < 11) return;
-            const nettoCell = cells[10];
-            const uid = row.dataset.uid;
-
-            let offerNetto = null;
-            if (uid) {
-                const snapItem = snapItems.find(si => si.uid === uid);
-                if (snapItem && typeof calcSnapshotItemNetto === 'function') {
-                    offerNetto = calcSnapshotItemNetto(snapItem, orderData.originalSnapshot);
-                }
-            }
-
-            const currText = nettoCell.textContent.replace(/[^0-9,.-]/g, '').replace(',', '.').trim();
-            const currNetto = parseFloat(currText) || 0;
-            const diff = currNetto - (offerNetto || 0);
-            const diffColor = diff > 0.01 ? '#34d399' : (diff < -0.01 ? '#f87171' : 'var(--text-muted)');
-            const diffSign = diff > 0 ? '+' : '';
-
-            const offerTd = document.createElement('td');
-            offerTd.className = 'cmp-td';
-            offerTd.style.cssText = 'text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;';
-            offerTd.innerHTML = `<span style="display:block;text-align:center">${offerNetto !== null ? (typeof fmt === 'function' ? fmt(offerNetto) : offerNetto.toFixed(2)) + ' PLN' : '\u2014'}</span>`;
-
-            const diffTd = document.createElement('td');
-            diffTd.className = 'cmp-td';
-            diffTd.style.cssText = 'text-align:right; font-weight:700; color:' + diffColor + '; white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;';
-            diffTd.innerHTML = `<span style="display:block;text-align:center">${offerNetto !== null ? diffSign + (typeof fmt === 'function' ? fmt(diff) : diff.toFixed(2)) + ' PLN' : '\u2014'}</span>`;
-
-            nettoCell.after(offerTd);
-            offerTd.after(diffTd);
-        });
-    }
-
     dst.querySelectorAll('.offer-cat-header td, .offer-diam-header td').forEach(td => {
         td.setAttribute('colspan', colCount);
     });
@@ -556,8 +471,6 @@ function copyTransportBreakdown() {
 
 window.updateRuryOrderSummary = updateRuryOrderSummary;
 
-/* ===== POMOCNICY PORÓWNANIA CEN ===== */
-
 function getCurrentRuryOrder() {
     if (window.orderEditMode && editingRuryOrderId) {
         return (ordersRury || []).find(o => o.id === editingRuryOrderId) || null;
@@ -568,45 +481,6 @@ function getCurrentRuryOrder() {
     return null;
 }
 window.getCurrentRuryOrder = getCurrentRuryOrder;
-
-/** Uproszczony kalkulator transportu dla snapshotu — używa własnych wag itemów, bez lookupu w products[] */
-function calcSnapshotTransport(items, km, rate) {
-    const costPerTrip = (km || 0) * (rate || 0);
-    if (costPerTrip <= 0) return { totalWeight: 0, totalTransportCost: 0 };
-
-    const transportItems = items.filter(i => i.weight && i.weight > 0 && i.quantity > 0 && !i.autoAdded);
-    if (transportItems.length === 0) return { totalWeight: 0, totalTransportCost: 0 };
-
-    const MAX_WEIGHT = 24000;
-    let totalTransports = 0;
-    let totalWeight = 0;
-
-    transportItems.forEach(item => {
-        const w = item.weight || 0;
-        const maxPer = Math.min(Math.floor(MAX_WEIGHT / w), item.transport || Math.floor(MAX_WEIGHT / w));
-        if (maxPer <= 0) return;
-        const full = Math.floor(item.quantity / maxPer);
-        const rem = item.quantity % maxPer;
-        totalTransports += full + (rem > 0 ? 1 : 0);
-        totalWeight += w * item.quantity;
-    });
-
-    return { totalWeight, totalTransportCost: totalTransports * costPerTrip };
-}
-window.calcSnapshotTransport = calcSnapshotTransport;
-
-/** Oblicza netto pojedyńczego itemu z snapshotu wraz z proporcjonalnym transportem */
-function calcSnapshotItemNetto(item, snapshot) {
-    const transport = calcSnapshotTransport(snapshot.items || [], snapshot.transportKm, snapshot.transportRate);
-    const tpu = transport.totalWeight > 0
-        ? (transport.totalTransportCost / transport.totalWeight) * (item.weight || 0)
-        : 0;
-
-    const priceAfterDiscount = (item.unitPrice || 0) * (1 - (item.discount || 0) / 100);
-    const unitTotal = priceAfterDiscount + (item.pehdCostPerUnit || 0) + (item.surcharge || 0) + tpu;
-    return unitTotal * (item.quantity || 0);
-}
-window.calcSnapshotItemNetto = calcSnapshotItemNetto;
 
 /* ===== ZAPIS ZAMÓWIENIA Z KROKU 5 ===== */
 

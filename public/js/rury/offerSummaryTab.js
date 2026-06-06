@@ -57,13 +57,6 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         return;
     }
 
-    // Porównanie cen widoczne tylko w trybie zamówienia + jawnie włączone
-    const order = (window.orderEditMode && typeof getCurrentRuryOrder === 'function')
-        ? getCurrentRuryOrder()
-        : null;
-    const showCmp = !!(order && order.originalSnapshot && window.showPriceComparison);
-    const snapItems = showCmp ? (order.originalSnapshot.items || []) : [];
-
     const transportDist = calculateTransportDistribution(items, costPerTrip);
 
     let html = `<div class="table-wrap"><table style="width:100%; table-layout:auto;">
@@ -78,15 +71,12 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
           <th style="width:1%; min-width:90px; text-align:right; white-space:nowrap;">Transp/szt</th>
           <th style="width:1%; min-width:210px; text-align:right; white-space:nowrap;">Cena po rabacie + Transp/szt</th>
           <th style="width:1%; min-width:80px; text-align:center; white-space:nowrap;">Ilość szt.</th>
-          <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">RAZEM NETTO</th>${showCmp ? `
-          <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">Cena z oferty</th>
-          <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Różnica</th>` : ''}
+          <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">RAZEM NETTO</th>
         </tr>
       </thead>
       <tbody>`;
 
     let totalNetto = 0;
-    let totalOfferNetto = 0;
 
     const grouped = {};
     items.forEach((item, i) => {
@@ -141,16 +131,6 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         
         totalNetto += netto;
 
-        // Oblicz cenę z oferty (snapshot)
-        let offerNetto = null;
-        if (showCmp) {
-            const snapItem = snapItems.find(si => si.uid === item.uid);
-            if (snapItem && typeof calcSnapshotItemNetto === 'function') {
-                offerNetto = calcSnapshotItemNetto(snapItem, order.originalSnapshot);
-                totalOfferNetto += offerNetto;
-            }
-        }
-
         let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM') pName += ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:#10b981; color:white; font-weight:700;">+ PEHD 3mm</span>';
         if (item.pehdType === 'PEHD-4MM') pName += ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:#10b981; color:white; font-weight:700;">+ PEHD 4mm</span>';
@@ -161,22 +141,6 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const summaryCheckboxCell = isOrdered
             ? '<td style="text-align:center;"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>'
             : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox" data-uid="${item.uid}" onchange="updateOfferSummarySelectionCount()" style="cursor:pointer;width:16px;height:16px"></td>`;
-
-        // Komórki porównania
-        let offerPriceCell = '';
-        let diffCell = '';
-        if (showCmp) {
-            if (offerNetto !== null) {
-                const diff = netto - offerNetto;
-                const diffColor = diff > 0.01 ? '#34d399' : (diff < -0.01 ? '#f87171' : 'var(--text-muted)');
-                const diffSign = diff > 0 ? '+' : '';
-                offerPriceCell = `<td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;">${fmt(offerNetto)} PLN</td>`;
-                diffCell = `<td style="text-align:right; font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem; font-size:0.78rem;">${diffSign}${fmt(diff)} PLN</td>`;
-            } else {
-                offerPriceCell = '<td style="text-align:right; padding:0.5rem 0.75rem; font-size:0.78rem; color:var(--text-muted);">—</td>';
-                diffCell = '<td style="text-align:right; padding:0.5rem 0.75rem; font-size:0.78rem; color:var(--text-muted);">—</td>';
-            }
-        }
 
         html += `<tr style="border-bottom:1px solid var(--border-glass); ${isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : ''}">
             ${summaryCheckboxCell}
@@ -189,23 +153,10 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             <td style="text-align:right; color:var(--text-primary); font-weight:600; white-space:nowrap;">${fmt(unitTotal)}</td>
             <td style="text-align:center; font-weight:600; white-space:nowrap;">${item.quantity} szt.</td>
             <td style="text-align:right; font-weight:700; color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
-            ${offerPriceCell}${diffCell}
         </tr>`;
     });
 
     // Podsumowanie z różnicą
-    if (showCmp && totalOfferNetto > 0) {
-        const totalDiff = totalNetto - totalOfferNetto;
-        const tdColor = totalDiff > 0.01 ? '#34d399' : (totalDiff < -0.01 ? '#f87171' : 'var(--text-muted)');
-        const tdSign = totalDiff > 0 ? '+' : '';
-        html += `<tr style="font-weight:700; background:rgba(255,255,255,0.02); border-top:2px solid var(--border-glass);">
-            <td colspan="${showCmp ? 9 : 7}" style="text-align:right; padding:0.6rem 0.75rem; font-size:0.82rem; white-space:nowrap;">RAZEM</td>
-            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--success); white-space:nowrap;">${fmt(totalNetto)} PLN</td>
-            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">${fmt(totalOfferNetto)} PLN</td>
-            <td style="text-align:right; padding:0.6rem 0.75rem; font-size:0.85rem; color:${tdColor}; white-space:nowrap;">${tdSign}${fmt(totalDiff)} PLN</td>
-        </tr>`;
-    }
-
     html += `</tbody></table></div>`;
     container.innerHTML = html;
 
