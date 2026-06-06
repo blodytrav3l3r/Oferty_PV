@@ -42,6 +42,7 @@ jest.mock('../src/prismaClient', () => ({
         offer_items_rel: { findMany: jest.fn() },
         clients_rel: { findUnique: jest.fn() },
         offers_studnie_rel: { findUnique: jest.fn() },
+        orders_studnie_rel: { findUnique: jest.fn() },
         users: { findUnique: jest.fn() }
     }
 }));
@@ -157,6 +158,52 @@ describe('pdfGenerator Service', () => {
             const html = pdfGen.buildContactSectionHTML(auth, null);
             expect(html).toContain('Aut');
             expect(html).toContain('123');
+        });
+    });
+
+    describe('buildStudnieOrderContextFromOrderId (Zamowienie PDF items)', () => {
+        it('uses wellsExport from order.data when present (items populated)', async () => {
+            const orderWithExport = {
+                id: 'order-1',
+                userId: 'user1',
+                offerStudnieId: '',
+                data: JSON.stringify({
+                    wellsExport: [{
+                        name: 'Studnia DN1000', dn: '1000', height: 2000, weight: 1500,
+                        zwienczenie: 'Płyta', price: 5000, transportCost: 500, totalPrice: 5500,
+                        config: [], przejscia: []
+                    }]
+                }),
+                createdAt: new Date().toISOString(),
+                status: 'confirmed'
+            };
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(orderWithExport);
+
+            const ctx = await pdfGen.buildStudnieOrderContextFromOrderId('order-1');
+
+            expect(ctx.items).toHaveLength(1);
+            expect(ctx.items[0].productName).toBe('Studnia DN1000');
+            expect(ctx.items[0].price).toBe(5500);
+            expect(ctx.items[0].DN).toBe('1000');
+            expect(ctx.items[0].height).toBe(2000);
+            expect(ctx.items[0].zwienczenie).toBe('Płyta');
+            expect((ctx.items[0] as Record<string, unknown>).transportCost).toBe(500);
+        });
+
+        it('returns empty items when order.data has no wellsExport and no offerStudnieId column (regression)', async () => {
+            const orderEmpty = {
+                id: 'order-2',
+                userId: 'user1',
+                offerStudnieId: '',
+                data: JSON.stringify({ wells: [] }),
+                createdAt: new Date().toISOString(),
+                status: 'confirmed'
+            };
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(orderEmpty);
+
+            const ctx = await pdfGen.buildStudnieOrderContextFromOrderId('order-2');
+
+            expect(ctx.items).toEqual([]);
         });
     });
 });
