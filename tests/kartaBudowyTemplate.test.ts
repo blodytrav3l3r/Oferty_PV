@@ -34,4 +34,13 @@ describe('public/templates/kartaBudowy.html — brak naglowka i stopki', () => {
         expect(html).not.toMatch(/\.letterhead-footer\b/);
         expect(html).not.toMatch(/\.header-title\b/);
     });
+
+    it('ZAWIERA blok tytulu KARTA BUDOWY w tresci dokumentu', () => {
+        expect(html).toMatch(/<div class="karta-title"/);
+        expect(html).toMatch(/KARTA BUDOWY/);
+    });
+
+    it('ZAWIERA numer zamowienia {{NR_ZAMOWIENIA}} w bloku tytulu', () => {
+        expect(html).toMatch(/Nr zamówienia: \{\{NR_ZAMOWIENIA\}\}/);
+    });
 });
