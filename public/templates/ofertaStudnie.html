@@ -19,10 +19,10 @@
         html,
         body {
             font-family: Arial, sans-serif;
-            font-size: 10pt;
-            color: #1a1a2e;
+            font-size: 11pt;
+            color: #1e293b;
             background: #fff;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         .page {
@@ -35,114 +35,134 @@
         .letterhead-header {
             width: 100%;
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         .letterhead-footer {
             width: 100%;
             display: block;
-            margin-top: 20px;
+            margin-top: 24px;
             page-break-inside: avoid;
         }
 
-        /* ===== NAGŁÓWEK OFERTY ===== */
+        /* ===== TYTUL DOKUMENTU ===== */
         .offer-title {
-            font-size: 16pt;
-            font-weight: 700;
-            color: #000;
+            font-size: 20pt;
+            font-weight: 800;
+            color: #1e3a8a;
             text-align: center;
-            margin: 8px 0 4px;
+            margin: 16px 0 0;
+            letter-spacing: 0.3px;
         }
 
+        .offer-title-accent {
+            width: 80px;
+            height: 3px;
+            background: #2563eb;
+            margin: 8px auto 14px;
+        }
+
+        /* ===== META (daty) ===== */
         .offer-meta {
             display: flex;
             justify-content: space-between;
-            font-size: 10pt;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #999;
+            font-size: 10.5pt;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid #e2e8f0;
         }
 
         .offer-meta strong {
-            color: #333;
+            color: #1e3a8a;
+            font-weight: 700;
         }
 
         /* ===== INFO GRID (klient + inwestycja) ===== */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 14px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
         .info-box {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 8px 10px;
-            font-size: 9pt;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #2563eb;
+            border-radius: 6px;
+            padding: 10px 12px 10px 14px;
+            font-size: 10pt;
         }
 
         .info-box h3 {
-            font-size: 8pt;
-            color: #888;
+            font-size: 9pt;
+            color: #1e3a8a;
+            font-weight: 700;
             text-transform: uppercase;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            letter-spacing: 0.6px;
         }
 
         .info-box div {
-            margin-bottom: 1px;
+            margin-bottom: 2px;
         }
 
         /* ===== TABELE DN ===== */
         .dn-section {
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
 
         .dn-header {
             font-size: 11pt;
             font-weight: 700;
-            color: #999;
-            border-bottom: 1.5px solid #999;
-            padding-bottom: 3px;
-            margin-bottom: 6px;
+            color: #1e3a8a;
+            border-bottom: 1.5px solid #1e3a8a;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            letter-spacing: 0.2px;
         }
 
         table.offer-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 9pt;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         table.offer-table th {
-            background: #999;
+            background: #1e3a8a;
             color: #fff;
-            padding: 4px 6px;
+            padding: 6px;
             text-align: center;
-            font-size: 8pt;
+            font-size: 8.5pt;
             font-weight: 700;
-            border: 0.5pt solid #999;
+            border: 0.5pt solid #1e3a8a;
+            letter-spacing: 0.3px;
         }
 
         table.offer-table tr {
-            padding: 3px 6px;
             page-break-inside: avoid;
         }
 
         table.offer-table td {
-            padding: 3px 6px;
-            border: 0.5pt solid #ccc;
+            padding: 4px 6px;
+            border: 0.5pt solid #e2e8f0;
             vertical-align: middle;
         }
 
         table.offer-table tr:nth-child(even) {
-            background: #fafafa;
+            background: #f1f5f9;
+        }
+
+        table.offer-table td.num,
+        table.offer-table th.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }
 
         .text-right {
             text-align: right;
+            font-variant-numeric: tabular-nums;
         }
 
         .text-center {
@@ -155,70 +175,100 @@
 
         .zwienczenie-cell {
             white-space: nowrap;
-            font-size: 8.4pt;
+            font-size: 9pt;
         }
 
         /* Wiersz sumy DN */
         .dn-summary-row td {
-            background: #f0f0f0;
+            background: #e0e7ff;
             font-weight: 700;
-            border-top: 1.5px solid #999;
+            border-top: 1.5pt solid #1e3a8a;
             font-size: 9pt;
+            color: #1e3a8a;
         }
 
         /* ===== PODSUMOWANIE OGÓLNE ===== */
         .summary-section {
-            margin-top: 16px;
+            margin-top: 18px;
         }
 
         .summary-section h3 {
-            font-size: 11pt;
+            font-size: 12pt;
             font-weight: 700;
-            color: #999;
-            border-bottom: 1.5px solid #999;
-            padding-bottom: 3px;
-            margin-bottom: 6px;
+            color: #1e3a8a;
+            border-bottom: 1.5px solid #1e3a8a;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            letter-spacing: 0.2px;
         }
 
         table.summary-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10pt;
-            margin-bottom: 8px;
+            font-size: 10.5pt;
+            margin-bottom: 10px;
         }
 
         table.summary-table td {
-            padding: 4px 8px;
-            border: 0.5pt solid #ccc;
+            padding: 5px 10px;
+            border: 0.5pt solid #e2e8f0;
+        }
+
+        table.summary-table td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }
 
         table.summary-table tr.grand-total td {
-            background: #999;
+            background: #1e3a8a;
             color: #fff;
             font-weight: 800;
-            font-size: 11pt;
+            font-size: 12pt;
             border: none;
+            padding: 8px 10px;
         }
 
         /* ===== UWAGI / WARUNKI ===== */
         .notes-section {
-            margin-top: 12px;
-            font-size: 9pt;
+            margin-top: 14px;
+            font-size: 10pt;
             page-break-inside: avoid;
         }
 
         .notes-section .note-box {
             padding: 6px 0;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .conditions {
-            font-size: 9pt;
-            margin-top: 6px;
+            font-size: 10pt;
+            margin-top: 8px;
         }
 
         .conditions div {
-            margin-bottom: 2px;
+            margin-bottom: 3px;
+        }
+
+        /* ===== STANDARDOWE WARUNKI ===== */
+        .standard-terms {
+            font-size: 8.5pt;
+            margin-top: 18px;
+            color: #334155;
+            line-height: 1.55;
+            text-align: justify;
+            padding-bottom: 20px;
+        }
+
+        .standard-terms p {
+            margin-top: 8px;
+        }
+
+        .standard-terms > p:first-of-type {
+            color: #475569;
+        }
+
+        .standard-terms table {
+            font-size: 8pt;
         }
 
         /* Styl stopki usunięty zgodnie z żądaniem */
@@ -256,6 +306,7 @@
                     <td style="border: none; padding: 0">
                         <!-- ====== TYTUŁ OFERTY/ZAMÓWIENIA ====== -->
                         <div class="offer-title">{{TYTUL_DOKUMENTU}}</div>
+                        <div class="offer-title-accent"></div>
                         <div class="offer-meta">
                             <div style="flex-grow: 1">&nbsp;</div>
                             <div style="text-align: right">
