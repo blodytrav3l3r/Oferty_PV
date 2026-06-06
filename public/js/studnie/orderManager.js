@@ -1355,7 +1355,27 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     if (globalOfferWeight > 0 && totalWeight > 0) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
-    
+
+    order.wellsExport = selectedWellsCopy.map((well) => {
+        const stats = calcWellStats(well);
+        const wellTransportCost = totalWeight > 0
+            ? orderTransportCost * (stats.weight / totalWeight)
+            : 0;
+        const zwienczenie = typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        return {
+            name: well.name,
+            dn: well.dn,
+            height: stats.height,
+            weight: stats.weight,
+            zwienczenie: zwienczenie,
+            price: stats.price,
+            transportCost: wellTransportCost,
+            totalPrice: stats.price + wellTransportCost,
+            config: well.config,
+            przejscia: well.przejscia
+        };
+    });
+
     const finalOrderNetto = totalNetto + orderTransportCost;
 
     order.totalWeight = totalWeight;
@@ -1441,6 +1461,32 @@ function saveOrderStudnie() {
     order.totalWeight = totalWeight;
     order.totalNetto = totalNetto;
     order.totalBrutto = totalNetto * 1.23;
+
+    const transportKmVal = parseFloat(offer.transportKm) || 0;
+    const transportRateVal = parseFloat(offer.transportRate) || 0;
+    let totalTransportCostForOffer = 0;
+    if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
+        totalTransportCostForOffer = Math.ceil(totalWeight / 24000) * transportKmVal * transportRateVal;
+    }
+    order.wellsExport = wells.map((well) => {
+        const stats = calcWellStats(well);
+        const wellTransportCost = totalWeight > 0
+            ? totalTransportCostForOffer * (stats.weight / totalWeight)
+            : 0;
+        const zwienczenie = typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        return {
+            name: well.name,
+            dn: well.dn,
+            height: stats.height,
+            weight: stats.weight,
+            zwienczenie: zwienczenie,
+            price: stats.price,
+            transportCost: wellTransportCost,
+            totalPrice: stats.price + wellTransportCost,
+            config: well.config,
+            przejscia: well.przejscia
+        };
+    });
 
     saveOrdersDataStudnie(ordersStudnie);
     showToast('<i data-lucide="package"></i> Zamówienie zaktualizowane', 'success');
