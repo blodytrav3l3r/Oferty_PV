@@ -43,10 +43,12 @@ function updateSubUsers(checkbox) {
 }
 
 function escapeHtml(str) {
+    if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
 }
+window.escapeHtml = escapeHtml;
 
 function getToken() {
     return localStorage.getItem('authToken');

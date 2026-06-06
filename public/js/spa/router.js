@@ -70,10 +70,12 @@ const SpaRouter = (() => {
     // ── Pomocnicy ──
 
     function escapeHtml(str) {
+        if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
         const d = document.createElement('div');
         d.textContent = str;
         return d.innerHTML;
     }
+    if (typeof window.escapeHtml !== 'function') window.escapeHtml = escapeHtml;
 
     function parseHash() {
         const hash = window.location.hash || '#/rury';

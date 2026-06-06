@@ -14,11 +14,7 @@
 let editingClientId = null;
 
 /* ===== BEZPIECZEŃSTWO ===== */
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
-}
+// escapeHtml dostarczany przez shared/ui.js (ładowany wcześniej)
 
 /* ===== API KLIENTÓW ===== */
 async function loadClientsDb() {

@@ -73,10 +73,12 @@ const AppZlecenia = (() => {
 
     /** Escape for HTML body content */
     function escapeHtml(str) {
+        if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
         const d = document.createElement('div');
         d.textContent = str;
         return d.innerHTML;
     }
+    if (typeof window.escapeHtml !== 'function') window.escapeHtml = escapeHtml;
 
     /** Escape for JS single-quoted strings inside onclick attributes */
     function escapeJsStr(str) {

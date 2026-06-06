@@ -5,9 +5,10 @@
 
 function escapeHtml(str) {
   const div = document.createElement('div');
-  div.textContent = str;
+  div.textContent = str == null ? '' : str;
   return div.innerHTML;
 }
+window.escapeHtml = escapeHtml;
 
 function getUserDisplayName(user) {
   if (!user) return '';
