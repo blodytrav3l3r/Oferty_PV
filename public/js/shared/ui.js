@@ -361,6 +361,80 @@ function _escapeHtml(str) {
 window.appConfirm = appConfirm;
 
 /**
+ * SaveIndicator — wizualny wskaźnik zapisu (saving / saved / error).
+ * Sam zarządza własnym elementem DOM i cyklem życia.
+ *
+ * Użycie:
+ *   const indicator = createSaveIndicator(document.getElementById('my-header'));
+ *   indicator.setSaving();
+ *   await fetch(...);
+ *   indicator.setSaved();
+ *
+ * @param {HTMLElement} parent - element, do którego dopiąć wskaźnik
+ * @param {Object} [opts]
+ * @param {number} [opts.savedDuration=2000] - ile ms pokazywać "Zapisano" zanim zniknie
+ * @returns {{ setSaving, setSaved, setError, destroy }}
+ */
+function createSaveIndicator(parent, opts = {}) {
+    if (!parent) return null;
+    const { savedDuration = 2000 } = opts;
+
+    const el = document.createElement('span');
+    el.className = 'save-indicator';
+    el.setAttribute('aria-live', 'polite');
+    el.style.cssText = 'display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:#94a3b8; margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
+    parent.appendChild(el);
+
+    let savedTimer = null;
+
+    function render(state, text, color) {
+        el.style.opacity = '1';
+        el.style.color = color;
+        const icon =
+            state === 'saving' ? "<i data-lucide=\"loader\" style=\"width:14px;height:14px;animation:saveSpin 0.8s linear infinite\"></i>" :
+            state === 'saved'  ? '<i data-lucide="check" style="width:14px;height:14px"></i>' :
+            state === 'error'  ? '<i data-lucide="alert-circle" style="width:14px;height:14px"></i>' :
+                                 '<i data-lucide="circle" style="width:14px;height:14px"></i>';
+        el.innerHTML = `${icon}<span>${text}</span>`;
+        if (window.lucide) window.lucide.createIcons({ root: el });
+    }
+
+    function ensureSpinKeyframes() {
+        if (document.getElementById('save-indicator-spin')) return;
+        const s = document.createElement('style');
+        s.id = 'save-indicator-spin';
+        s.textContent = '@keyframes saveSpin { to { transform: rotate(360deg); } }';
+        document.head.appendChild(s);
+    }
+
+    return {
+        setSaving() {
+            if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
+            ensureSpinKeyframes();
+            render('saving', 'Zapisuję...', '#94a3b8');
+        },
+        setSaved() {
+            if (savedTimer) clearTimeout(savedTimer);
+            render('saved', 'Zapisano', '#10b981');
+            savedTimer = window.setTimeout(() => {
+                el.style.opacity = '0';
+                savedTimer = null;
+            }, savedDuration);
+        },
+        setError(message) {
+            if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
+            render('error', message || 'Błąd zapisu', '#ef4444');
+        },
+        destroy() {
+            if (savedTimer) clearTimeout(savedTimer);
+            el.remove();
+        }
+    };
+}
+
+window.createSaveIndicator = createSaveIndicator;
+
+/**
  * Create and show a modal overlay with standard ARIA attributes.
  * @param {Object} opts
  * @param {string} opts.id - Overlay element ID
