@@ -5,7 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
-import { createRateLimiter } from '../../middleware/rateLimiter';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import {
     offersStudnieBatchSchema
 } from '../../validators/offerSchemas';
@@ -13,11 +13,7 @@ import {
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
 
-const writeOffersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na ofertach. Odczekaj minutę.'
-});
+const writeOffersLimiter = WRITE_LIMITER;
 
 const isValidId = (id: string): boolean => typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
 

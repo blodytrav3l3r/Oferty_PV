@@ -3,18 +3,13 @@ import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 
 import { validateData } from '../validators/authSchema';
-import { createRateLimiter } from '../middleware/rateLimiter';
+import { WRITE_LIMITER } from '../middleware/rateLimiters';
 import { clientsBatchSchema } from '../validators/offerSchemas';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
 
-// Rate limiter dla operacji na klientach (60 zapytań na minutę)
-const writeClientsLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na klientach. Odczekaj minutę.'
-});
+const writeClientsLimiter = WRITE_LIMITER;
 
 // GET /api/clients - Pobiera klientów z bazy użytkownika
 router.get('/', requireAuth, async (req, res) => {

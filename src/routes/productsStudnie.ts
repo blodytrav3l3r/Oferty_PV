@@ -2,7 +2,7 @@ import express from 'express';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
-import { createRateLimiter } from '../middleware/rateLimiter';
+import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import {
     migrateFromLegacyIfNeeded,
@@ -13,12 +13,7 @@ import {
 
 const router = express.Router();
 
-// Rate limiter dla operacji na cennikach studni (30 zapytań na minutę)
-const writePricelistLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 30,
-    message: 'Zbyt wiele operacji na cennikach studni. Odczekaj minutę.'
-});
+const writePricelistLimiter = PRICELIST_WRITE_LIMITER;
 
 /* ===== CENNIK STUDNI — zapis/odczyt z tabeli settings (JSON) ===== */
 

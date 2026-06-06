@@ -4,7 +4,7 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
-import { createRateLimiter } from '../../middleware/rateLimiter';
+import { WRITE_LIMITER, EXPORT_LIMITER } from '../../middleware/rateLimiters';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema, ruryOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
 import { canWriteDoc } from '../../utils/ownership';
@@ -15,18 +15,8 @@ import { generateRuryDOCXFromContext } from '../../services/docx';
 
 const router = express.Router();
 
-const writeOrdersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na zamówieniach. Odczekaj minutę.'
-});
-
-// Osobny limit dla eksportów PDF/DOCX — generowanie jest kosztowne (puppeteer).
-const exportOrdersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 20,
-    message: 'Zbyt wiele eksportów. Odczekaj minutę.'
-});
+const writeOrdersLimiter = WRITE_LIMITER;
+const exportOrdersLimiter = EXPORT_LIMITER;
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

@@ -3,17 +3,12 @@ import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { validateData } from '../validators/authSchema';
-import { createRateLimiter } from '../middleware/rateLimiter';
+import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
 import { userUpdateSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
-// Rate limiter dla operacji admina na użytkownikach (30 zapytań na minutę)
-const adminUsersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 30,
-    message: 'Zbyt wiele operacji na użytkownikach. Odczekaj minutę.'
-});
+const adminUsersLimiter = ADMIN_USERS_LIMITER;
 
 /**
  * POMOCNICZE: Pobieranie licznika zamówień

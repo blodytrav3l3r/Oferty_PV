@@ -4,7 +4,7 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
-import { createRateLimiter } from '../../middleware/rateLimiter';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
 import { canWriteDoc } from '../../utils/ownership';
@@ -15,11 +15,7 @@ import { generateKartaBudowyDOCX } from '../../services/docx';
 const router = express.Router();
 
 // Rate limiter dla operacji na zamówieniach (60 zapytań na minutę)
-const writeOrdersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na zamówieniach. Odczekaj minutę.'
-});
+const writeOrdersLimiter = WRITE_LIMITER;
 
 /* ===== ZAMÓWIENIA STUDNIE ===== */
 

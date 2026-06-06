@@ -1,16 +1,12 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
-import { createRateLimiter } from '../middleware/rateLimiter';
+import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { readPricelist, writePricelist } from '../services/pricelistService';
 
 const router = express.Router();
 
-const writeLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 30,
-    message: 'Zbyt wiele operacji na cenniku PRECO. Odczekaj minutę.'
-});
+const writeLimiter = PRECO_PRICING_LIMITER;
 
 const SETTINGS_KEY = 'preco_pricing';
 

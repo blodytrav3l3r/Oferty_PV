@@ -7,17 +7,12 @@ import { logger } from '../../utils/logger';
 import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { buildRoleWhereSql } from '../../utils/roleFilter';
 import { validateData } from '../../validators/authSchema';
-import { createRateLimiter } from '../../middleware/rateLimiter';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { productionOrdersBatchSchema, productionOrderCreateSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
 
-// Rate limiter dla operacji na zleceniach produkcyjnych (60 zapytań na minutę)
-const writeProductionLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na zleceniach produkcyjnych. Odczekaj minutę.'
-});
+const writeProductionLimiter = WRITE_LIMITER;
 
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
 

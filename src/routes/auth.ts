@@ -9,7 +9,7 @@ import {
     SESSION_MAX_AGE_MS,
     AuthenticatedRequest
 } from '../middleware/auth';
-import { createRateLimiter } from '../middleware/rateLimiter';
+import { LOGIN_LIMITER } from '../middleware/rateLimiters';
 import {
     loginSchema,
     registerSchema,
@@ -20,11 +20,7 @@ import { logger } from '../utils/logger';
 
 const router = express.Router();
 
-const loginLimiter = createRateLimiter({
-    windowMs: 15 * 60 * 1000,
-    maxHits: 10,
-    message: 'Zbyt wiele prób logowania. Odczekaj 15 minut.'
-});
+const loginLimiter = LOGIN_LIMITER;
 
 // POST /api/auth/login
 router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) => {

@@ -3,15 +3,11 @@ import prisma from '../../prismaClient';
 import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { logger } from '../../utils/logger';
-import { createRateLimiter } from '../../middleware/rateLimiter';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 
 const router = express.Router();
 
-const writeOffersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na ofertach. Odczekaj minutę.'
-});
+const writeOffersLimiter = WRITE_LIMITER;
 
 router.get('/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

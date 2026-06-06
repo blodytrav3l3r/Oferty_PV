@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
-import { createRateLimiter } from '../../middleware/rateLimiter';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import {
     OfferMapped
 } from '../../types/models';
@@ -17,11 +17,7 @@ import {
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
 
-const writeOffersLimiter = createRateLimiter({
-    windowMs: 60 * 1000,
-    maxHits: 60,
-    message: 'Zbyt wiele operacji na ofertach. Odczekaj minutę.'
-});
+const writeOffersLimiter = WRITE_LIMITER;
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
