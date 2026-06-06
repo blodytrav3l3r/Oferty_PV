@@ -10,7 +10,7 @@ const router = express.Router();
 /**
  * SZUKAJ: Wyszukiwanie ofert
  */
-router.post('/search', validateData(marketplaceSearchSchema), async (req, res) => {
+router.post('/search', requireAuth, validateData(marketplaceSearchSchema), async (req, res) => {
     const {
         query,
         category: _category,

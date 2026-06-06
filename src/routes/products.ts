@@ -36,7 +36,7 @@ migrateFromLegacyIfNeeded(config);
 // ──────────────────────────────────────────
 // GET /api/products → Pobiera bieżący cennik rur
 // ──────────────────────────────────────────
-router.get('/', async (_req, res) => {
+router.get('/', requireAuth, async (_req, res) => {
     try {
         const data = await readPricelist(config.keyCurrent);
         res.json({ data });
