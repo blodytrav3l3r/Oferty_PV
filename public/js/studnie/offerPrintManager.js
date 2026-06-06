@@ -529,17 +529,6 @@ window.showUniversalPrintModal = function(offerId, orderId) {
                 </div>
             </div>
         `;
-    } else {
-        ordersSectionHtml = `
-            <div style="margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;">
-                <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #64748b; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
-                    <i data-lucide="package" style="width: 16px; height: 16px;"></i> Wydruk Karty Budowy
-                </h4>
-                <p style="font-size: 0.75rem; color: #64748b; text-align: left; font-style: italic; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); padding: 0.6rem; border-radius: 8px; line-height: 1.4;">
-                    Brak przypisanego zamówienia. Utwórz zamówienie z poziomu podglądu oferty, aby móc wyeksportować Kartę Budowy.
-                </p>
-            </div>
-        `;
     }
 
     // Sekcja Oferty
