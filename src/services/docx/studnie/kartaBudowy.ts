@@ -165,7 +165,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     children.push(...infoSection('Studnia i Beton', [
       infoRow('Rodzaj studni', String(kb.rodzajStudni || '—')),
       infoRow('Właściwości betonu', String(kb.wlasciwosciBetonu || '—')),
-      infoRow('Pozostałe właściwości', String(kb.pozostaleWlasciwosci || '—'), 22),
+      infoRow('Pozostałe właściwości', String(kb.pozostaleWlasciwosci || '—')),
       infoRow('Rodzaj stopni', String(kb.rodzajStopni || '—') + (kb.rodzajStopniInne ? ` (${kb.rodzajStopniInne})` : '')),
       infoRow('Uszczelka studni', String(kb.uszczelkaStudni || '—') + (kb.uszczelkaStudniInne ? ` (${kb.uszczelkaStudniInne})` : '')),
     ]));
@@ -184,7 +184,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     children.push(...infoSection('Przejścia', [
       infoRow('Przejścia szczelne', String(kb.przejsciaSzczelne || '—')),
       infoRow('Przejścia tulejowe', String(kb.przejsciaTulejowe || '—')),
-      infoRow('Przejścia zamówione w', String(kb.przejsciaZamowione || '—'), 22),
+      infoRow('Przejścia zamówione w', String(kb.przejsciaZamowione || '—')),
     ]));
 
     // 6. Transition table (conditional)
