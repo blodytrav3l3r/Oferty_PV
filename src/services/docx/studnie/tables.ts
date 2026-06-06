@@ -77,12 +77,12 @@ export function buildWellTables(wells: unknown[]): {
 
 // ─── Funkcje pomocnicze (Helpers) ───────────────────────────────────
 
-function groupWellsByDn(wells: unknown[]): Record<string, Record<string, unknown>[]> {
+export function groupWellsByDn(wells: unknown[]): Record<string, Record<string, unknown>[]> {
     const itemsByDN: Record<string, Record<string, unknown>[]> = {};
 
     wells.forEach((w) => {
         const well = w as Record<string, unknown>;
-        const dn = String(well.dn || 'Inne');
+        const dn = String(well.DN ?? well.dn ?? 'Inne');
         const wellPrice = Number(well.totalPrice ?? well.price ?? 0);
         const cleanZwienczenie = String(well.zwienczenie ?? '\u2014')
             .replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ')
@@ -91,7 +91,7 @@ function groupWellsByDn(wells: unknown[]): Record<string, Record<string, unknown
 
         if (!itemsByDN[dn]) itemsByDN[dn] = [];
         itemsByDN[dn].push({
-            name: String(well.name ?? `Studnia DN${dn}`),
+            name: String(well.productName ?? well.name ?? `Studnia DN${dn}`),
             price: wellPrice,
             dn,
             height: Number(well.height ?? 0),
