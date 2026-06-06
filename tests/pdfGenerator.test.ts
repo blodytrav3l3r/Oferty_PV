@@ -205,5 +205,31 @@ describe('pdfGenerator Service', () => {
 
             expect(ctx.items).toEqual([]);
         });
+
+        it('renders all wells when wellsExport is updated (e.g. new well added in order edit mode)', async () => {
+            const orderWithUpdatedExport = {
+                id: 'order-3',
+                userId: 'user1',
+                offerStudnieId: '',
+                data: JSON.stringify({
+                    wellsExport: [
+                        { name: 'Studnia DN1000 #1', dn: '1000', height: 2000, weight: 1500, zwienczenie: 'Płyta', price: 5000, transportCost: 250, totalPrice: 5250, config: [], przejscia: [] },
+                        { name: 'Studnia DN1500 #2 (nowa)', dn: '1500', height: 2200, weight: 2000, zwienczenie: 'Właz', price: 7000, transportCost: 350, totalPrice: 7350, config: [], przejscia: [] }
+                    ]
+                }),
+                createdAt: new Date().toISOString(),
+                status: 'confirmed'
+            };
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(orderWithUpdatedExport);
+
+            const ctx = await pdfGen.buildStudnieOrderContextFromOrderId('order-3');
+
+            expect(ctx.items).toHaveLength(2);
+            const dns = ctx.items.map((i) => i.DN).sort();
+            expect(dns).toEqual(['1000', '1500']);
+            const newWell = ctx.items.find((i) => i.DN === '1500');
+            expect(newWell?.productName).toBe('Studnia DN1500 #2 (nowa)');
+            expect(newWell?.price).toBe(7350);
+        });
     });
 });
