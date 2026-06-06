@@ -1,4 +1,4 @@
-import { Packer, Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType } from 'docx';
+import { Packer, Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType, BorderStyle } from 'docx';
 import fs from 'fs';
 import path from 'path';
 import prisma from '../../../prismaClient';
@@ -117,9 +117,29 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
 
     const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
 
+    const nrZamowienia = String(orderData.orderNumber || orderData.productionOrderNumber || String(order.id).substring(0, 8));
     const nrOferty = String(orderData.offerNumber || orderData.number || (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—'));
 
     const children: (Paragraph | Table)[] = [];
+
+    // 0. Tytuł dokumentu (raz, na pierwszej stronie)
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 0 },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: COLOR_GRAY_HEADER } },
+      children: [new TextRun({
+        text: 'KARTA BUDOWY',
+        bold: true, size: 28, font: FONT, color: COLOR_BODY
+      })]
+    }));
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 60, after: 200 },
+      children: [new TextRun({
+        text: `Nr zamówienia: ${nrZamowienia}`,
+        bold: true, size: 20, font: FONT, color: COLOR_LABEL
+      })]
+    }));
 
     // 1. Podstawowe Informacje
     children.push(...infoSection('Podstawowe Informacje', [
