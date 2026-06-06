@@ -338,10 +338,10 @@ function renderSavedOffers() {
             <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8)}
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirect_action('${ord.id}', 'pdf')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
+            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'pdf')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirect_action('${ord.id}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
+            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
                 <i data-lucide="edit"></i> Karta Word
             </button>
         `).join('') : ''}

@@ -551,7 +551,7 @@ class PVSalesUI {
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
                         <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(offer?.type || (/^offer_rury_/.test(offerKey) ? 'rura_oferta' : 'studnia_oferta'))}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
                         <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${this.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Historia</button>
                         <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
                     </div>
@@ -741,19 +741,21 @@ class PVSalesUI {
             if (title.includes('wydruk') || title.includes('drukuj') || title.includes('karta budowy')) {
                 const printOfferId = btn.getAttribute('data-offer-id') || id;
                 const printOrderId = orderId || '';
+                // Inferencja typu: explicit, legacy 'offer', lub prefix ID (gdy type brak w danych)
+                const isRuryOffer = offerType === 'rura_oferta'
+                    || offerType === 'offer'
+                    || (printOfferId && /^offer_rury_/.test(printOfferId));
                 // Rury: dedykowany modal (Karta Budowy + Oferta, Bootstrap-styled)
-                if (offerType === 'rura_oferta' && typeof window.showUniversalPrintModalRury === 'function') {
+                if (isRuryOffer && typeof window.showUniversalPrintModalRury === 'function') {
                     window.showUniversalPrintModalRury(printOfferId, printOrderId);
                     return;
                 }
-                // Rury (legacy 'offer' type): bezpośredni export karty budowy
-                if (offerType === 'offer' && printOrderId) {
-                    if (typeof window.exportKartaDirect_action === 'function') {
-                        window.exportKartaDirect_action(printOrderId, 'pdf');
-                    } else {
-                        showToast('Funkcja Karty Budowy niedostępna w tym widoku.', 'info');
-                    }
-                } else if (typeof window.showUniversalPrintModal === 'function') {
+                // Rury (legacy 'offer' type) — bezpośredni export karty budowy (szybsze bez modala)
+                if (isRuryOffer && printOrderId && typeof window.exportKartaDirectRury_action === 'function') {
+                    window.exportKartaDirectRury_action(printOrderId, 'pdf');
+                    return;
+                }
+                if (typeof window.showUniversalPrintModal === 'function') {
                     window.showUniversalPrintModal(printOfferId, printOrderId);
                 } else {
                     showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');

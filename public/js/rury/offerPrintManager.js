@@ -30,10 +30,10 @@ function showUniversalPrintModalRury(offerId, orderId) {
                     <i data-lucide="file-text"></i> Karta Budowy
                 </h4>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="exportKartaDirect_action('${targetOrderId}', 'pdf')" style="flex:1; min-width:120px;">
+                    <button class="btn btn-primary" onclick="exportKartaDirectRury_action('${targetOrderId}', 'pdf')" style="flex:1; min-width:120px;">
                         <i data-lucide="file-text"></i> PDF
                     </button>
-                    <button class="btn btn-secondary" onclick="exportKartaDirect_action('${targetOrderId}', 'docx')" style="flex:1; min-width:120px;">
+                    <button class="btn btn-secondary" onclick="exportKartaDirectRury_action('${targetOrderId}', 'docx')" style="flex:1; min-width:120px;">
                         <i data-lucide="file-text"></i> Word (DOCX)
                     </button>
                 </div>
@@ -72,10 +72,10 @@ function showUniversalPrintModalRury(offerId, orderId) {
                     <i data-lucide="file-text"></i> Oferta
                 </h4>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="exportOfferDirect_action('${targetOfferId}', 'pdf')" style="flex:1; min-width:120px;">
+                    <button class="btn btn-primary" onclick="exportOfferDirectRury_action('${targetOfferId}', 'pdf')" style="flex:1; min-width:120px;">
                         <i data-lucide="file-text"></i> PDF
                     </button>
-                    <button class="btn btn-secondary" onclick="exportOfferDirect_action('${targetOfferId}', 'docx')" style="flex:1; min-width:120px;">
+                    <button class="btn btn-secondary" onclick="exportOfferDirectRury_action('${targetOfferId}', 'docx')" style="flex:1; min-width:120px;">
                         <i data-lucide="file-text"></i> Word (DOCX)
                     </button>
                 </div>
@@ -128,7 +128,7 @@ function getCurrentOfferForExport() {
     };
 }
 
-async function exportOfferDirect_action(offerId, format) {
+async function exportOfferDirectRury_action(offerId, format) {
     if (!offerId) {
         showToast('Brak ID oferty do eksportu', 'error');
         return;
@@ -173,14 +173,14 @@ async function exportOfferDirect_action(offerId, format) {
         if (typeof closeModal === 'function') closeModal();
         showToast('Eksport zakończony', 'success');
     } catch (err) {
-        console.error('exportOfferDirect_action error:', err);
+        console.error('exportOfferDirectRury_action error:', err);
         showToast('Błąd eksportu oferty: ' + err.message, 'error');
     }
 }
 
-window.exportOfferDirect_action = exportOfferDirect_action;
+window.exportOfferDirectRury_action = exportOfferDirectRury_action;
 
-async function exportKartaDirect_action(orderId, format) {
+async function exportKartaDirectRury_action(orderId, format) {
     if (!orderId) {
         showToast('Brak ID zamówienia do eksportu', 'error');
         return;
@@ -208,12 +208,12 @@ async function exportKartaDirect_action(orderId, format) {
         if (typeof closeModal === 'function') closeModal();
         showToast('Pobrano Kartę Budowy', 'success');
     } catch (err) {
-        console.error('exportKartaDirect_action error:', err);
+        console.error('exportKartaDirectRury_action error:', err);
         showToast('Błąd eksportu Karty Budowy: ' + err.message, 'error');
     }
 }
 
-window.exportKartaDirect_action = exportKartaDirect_action;
+window.exportKartaDirectRury_action = exportKartaDirectRury_action;
 
 async function exportRuryOrderAsOffer_action(orderId, format) {
     if (!orderId) {

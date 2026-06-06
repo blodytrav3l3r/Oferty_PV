@@ -57,8 +57,8 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
-            // Wspiera oba warianty atrybutu i offerType === 'rura_oferta'
-            const pattern = /offerType\s*===\s*['"]rura_oferta['"][\s\S]{0,200}showUniversalPrintModalRury/;
+            // isRuryOffer musi obejmować 'rura_oferta', a blok if musi wywołać showUniversalPrintModalRury
+            const pattern = /isRuryOffer[\s\S]{0,200}showUniversalPrintModalRury\s*\(/;
             expect(src).toMatch(pattern);
         });
 
@@ -96,10 +96,10 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(src).toMatch(pattern);
         });
 
-        it('rury/offerPrintManager.js — exportOfferDirect_action ma res.text() w error', () => {
+        it('rury/offerPrintManager.js — exportOfferDirectRury_action ma res.text() w error', () => {
             const src = readFile(RURY_PM);
             const pattern =
-                /async function exportOfferDirect_action[\s\S]{0,3000}res\.text\(\)[\s\S]{0,200}errText/;
+                /async function exportOfferDirectRury_action[\s\S]{0,3000}res\.text\(\)[\s\S]{0,200}errText/;
             expect(src).toMatch(pattern);
         });
     });
@@ -110,11 +110,66 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(src).toMatch(/window\.showUniversalPrintModalRury\s*=\s*showUniversalPrintModalRury/);
         });
 
-        it('rury/offerPrintManager.js — exportKartaDirect_action używa /api/orders-rury/ (nie studnie)', () => {
+        it('rury/offerPrintManager.js — exportKartaDirectRury_action używa /api/orders-rury/ (nie studnie)', () => {
             const src = readFile(RURY_PM);
             const pattern =
-                /async function exportKartaDirect_action[\s\S]{0,800}\/api\/orders-rury\//;
+                /async function exportKartaDirectRury_action[\s\S]{0,800}\/api\/orders-rury\//;
             expect(src).toMatch(pattern);
+        });
+    });
+
+    describe('Static: brak kolizji nazw funkcji (studnie vs rury)', () => {
+        it('rury/offerPrintManager.js NIE eksportuje window.exportOfferDirect_action (kolizja z studnie)', () => {
+            const src = readFile(RURY_PM);
+            // Sprawdza czy NIE MA deklaracji window.exportOfferDirect_action = ...
+            // Pozwala na substring (np. "Rury" wewnątrz), ale NIE na `window.exportOfferDirect_action =`
+            expect(src).not.toMatch(/window\.exportOfferDirect_action\s*=/);
+        });
+
+        it('rury/offerPrintManager.js NIE eksportuje window.exportKartaDirect_action (kolizja z studnie)', () => {
+            const src = readFile(RURY_PM);
+            expect(src).not.toMatch(/window\.exportKartaDirect_action\s*=/);
+        });
+
+        it('rury/offerPrintManager.js EKSPORTUJE window.exportOfferDirectRury_action (nowa nazwa)', () => {
+            const src = readFile(RURY_PM);
+            expect(src).toMatch(/window\.exportOfferDirectRury_action\s*=\s*exportOfferDirectRury_action/);
+        });
+
+        it('rury/offerPrintManager.js EKSPORTUJE window.exportKartaDirectRury_action (nowa nazwa)', () => {
+            const src = readFile(RURY_PM);
+            expect(src).toMatch(/window\.exportKartaDirectRury_action\s*=\s*exportKartaDirectRury_action/);
+        });
+
+        it('rury/offerCrud.js onclick strings używają exportKartaDirectRury_action', () => {
+            const src = readFile(path.join(PUBLIC, 'js', 'rury', 'offerCrud.js'));
+            expect(src).toMatch(/onclick="exportKartaDirectRury_action/);
+        });
+    });
+
+    describe('Static: pvSalesUi.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
+        let src: string;
+        beforeAll(() => {
+            src = readFile(PV_SALES_UI);
+        });
+
+        it('dispatch inferuje rury z offerType === "offer" (legacy)', () => {
+            // isRuryOffer obejmuje 'rura_oferta', 'offer', oraz /^offer_rury_/ regex
+            expect(src).toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
+            expect(src).toMatch(/offerType\s*===\s*['"]offer['"]/);
+            expect(src).toMatch(/\^offer_rury_/);
+        });
+
+        it('dispatch wywołuje window.exportKartaDirectRury_action dla rury + orderId', () => {
+            // Nowa nazwa (nie stara exportKartaDirect_action)
+            expect(src).toMatch(/window\.exportKartaDirectRury_action\s*\(/);
+        });
+
+        it('fallback data-offer-type inferuje rury po ID prefix', () => {
+            // W kodzie źródłowym regex literal to /^offer_rury_/ — nie trzeba escape'ować /
+            expect(src).toMatch(/test\(offerKey\)/);
+            expect(src).toMatch(/rura_oferta/);
+            expect(src).toMatch(/studnia_oferta/);
         });
     });
 
@@ -194,9 +249,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(fetchCalls[0].url).toBe('/api/offers-studnie/stud_xyz/export-docx');
         });
 
-        it('RURY: exportOfferDirect_action wywołuje /api/offers-rury/{id}/export-pdf', async () => {
+        it('RURY: exportOfferDirectRury_action wywołuje /api/offers-rury/{id}/export-pdf', async () => {
             const { fetchCalls, window } = loadInVm(RURY_PM, () => okResponse());
-            const fn = window.exportOfferDirect_action as (id: string, fmt: string) => Promise<void>;
+            const fn = window.exportOfferDirectRury_action as (id: string, fmt: string) => Promise<void>;
             expect(fn).toBeDefined();
 
             await fn('rura_abc', 'pdf');
@@ -205,9 +260,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(fetchCalls[0].url).toBe('/api/offers-rury/rura_abc/export-pdf');
         });
 
-        it('RURY: exportKartaDirect_action → /api/orders-rury/{id}/export-karta-pdf', async () => {
+        it('RURY: exportKartaDirectRury_action → /api/orders-rury/{id}/export-karta-pdf', async () => {
             const { fetchCalls, window } = loadInVm(RURY_PM, () => okResponse());
-            const fn = window.exportKartaDirect_action as (id: string, fmt: string) => Promise<void>;
+            const fn = window.exportKartaDirectRury_action as (id: string, fmt: string) => Promise<void>;
             expect(fn).toBeDefined();
 
             await fn('rura_order_1', 'pdf');
@@ -297,7 +352,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             const context = vm.createContext(sandbox);
             vm.runInContext(readFile(RURY_PM), context, { filename: RURY_PM });
 
-            const fn = (sandbox.window as Record<string, unknown>).exportOfferDirect_action as (
+            const fn = (sandbox.window as Record<string, unknown>).exportOfferDirectRury_action as (
                 id: string,
                 fmt: string
             ) => Promise<void>;
