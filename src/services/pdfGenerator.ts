@@ -9,6 +9,22 @@ function fmtInt(val: number): string {
 }
 
 /**
+ * Escape HTML entities w stringu przed interpolacją w szablonie HTML.
+ * Zapobiega stored XSS: admin (lub inny wektor) może ustawić nazwę klienta
+ * / adres / notatki na `<script>...</script>` — bez escapa wykonuje się
+ * w kontekście puppeteer (headless Chromium).
+ */
+function escapeHtml(input: unknown): string {
+    if (input === null || input === undefined) return '';
+    return String(input)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
  * Generuje PDF oferty rur na podstawie danych z bazy.
  *
  * Pobiera ofertę z bazy danych, wczytuje dane JSON z oferty (offers_rel.data),
@@ -320,17 +336,17 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
 
     // Dane klienta
     const daneKlienta = `
-    <div><strong>${data.clientName}</strong></div>
-    ${data.clientAddress ? `<div>${data.clientAddress}</div>` : ''}
-    ${data.clientNip ? `<div>NIP: ${data.clientNip}</div>` : ''}
-    ${data.clientPhone ? `<div>Kontakt: ${data.clientPhone}</div>` : ''}
+    <div><strong>${escapeHtml(data.clientName)}</strong></div>
+    ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
+    ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
+    ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
   `.trim();
 
     // Dane inwestycji
     const daneInwestycji = `
-    ${data.investName ? `<div><strong>Budowa:</strong> ${data.investName}</div>` : '<div>\u2014</div>'}
-    ${data.investAddress ? `<div>Adres: ${data.investAddress}</div>` : ''}
-    ${data.investContractor ? `<div>Wykonawca: ${data.investContractor}</div>` : ''}
+    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>\u2014</div>'}
+    ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
+    ${data.investContractor ? `<div>Wykonawca: ${escapeHtml(data.investContractor)}</div>` : ''}
   `.trim();
 
     // Grupowanie pozycji po kategorii i średnicy
@@ -472,10 +488,10 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     // Uwagi
     let sekcjaUwagi = '';
     if (data.notes) {
-        sekcjaUwagi += `<div class="notes-section"><div class="note-box">${data.notes.replace(/\n/g, '<br>')}</div></div>`;
+        sekcjaUwagi += `<div class="notes-section"><div class="note-box">${escapeHtml(data.notes).replace(/\n/g, '<br>')}</div></div>`;
     }
     if (data.paymentTerms) {
-        sekcjaUwagi += `<div class="conditions" style="margin-top:10px;"><div><strong>Warunki płatności:</strong> ${data.paymentTerms.replace(/\n/g, '<br>')}</div></div>`;
+        sekcjaUwagi += `<div class="conditions" style="margin-top:10px;"><div><strong>Warunki płatności:</strong> ${escapeHtml(data.paymentTerms).replace(/\n/g, '<br>')}</div></div>`;
     }
 
     // Statyczne warunki handlowe
@@ -696,16 +712,16 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
 
     // Budowanie danych klienta
     const daneKlienta = `
-    <div><strong>${data.clientName}</strong></div>
-    ${data.clientAddress ? `<div>${data.clientAddress}</div>` : ''}
-    ${data.clientNip ? `<div>NIP: ${data.clientNip}</div>` : ''}
-    ${data.clientPhone ? `<div>Kontakt: ${data.clientPhone}</div>` : ''}
+    <div><strong>${escapeHtml(data.clientName)}</strong></div>
+    ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
+    ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
+    ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
   `.trim();
 
     // Budowanie danych inwestycji
     const daneInwestycji = `
-    ${data.investName ? `<div><strong>Budowa:</strong> ${data.investName}</div>` : '<div>—</div>'}
-    ${data.investAddress ? `<div>Adres: ${data.investAddress}</div>` : ''}
+    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>—</div>'}
+    ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
   `.trim();
 
     // Grupowanie elementów według średnicy DN
@@ -821,14 +837,14 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     if (data.notes) {
         sekcjaUwagi += `
     <div class="notes-section">
-      <div class="note-box">${data.notes.replace(/\n/g, '<br>')}</div>
+      <div class="note-box">${escapeHtml(data.notes).replace(/\n/g, '<br>')}</div>
     </div>
     `;
     }
     if (data.paymentTerms) {
         sekcjaUwagi += `
     <div class="conditions" style="margin-top: 10px;">
-      <div><strong>Warunki płatności:</strong> ${data.paymentTerms.replace(/\n/g, '<br>')}</div>
+      <div><strong>Warunki płatności:</strong> ${escapeHtml(data.paymentTerms).replace(/\n/g, '<br>')}</div>
     </div>
     `;
     }
