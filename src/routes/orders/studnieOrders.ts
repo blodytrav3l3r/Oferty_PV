@@ -2,11 +2,12 @@ import express from 'express';
 import prisma from '../../prismaClient';
 import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { parseJsonField } from '../../helpers';
+import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
+import { canWriteDoc } from '../../utils/ownership';
 import { generateKartaBudowyPDF } from '../../services/pdfGenerator';
 import { generateKartaBudowyDOCX } from '../../services/docx';
 
@@ -90,7 +91,7 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatch
             const {
                 id: _id,
                 type: _type,
-                userId: _userId,
+                userId: incomingUserId,
                 offerStudnieId,
                 createdAt: createdAtRaw,
                 status,
@@ -98,22 +99,17 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatch
             } = o;
             const dataStr = JSON.stringify(rest);
 
-            // Konwersja daty
-            const convertDate = (raw: unknown): string => {
-                if (typeof raw === 'number') return new Date(raw).toISOString();
-                if (raw instanceof Date) return raw.toISOString();
-                if (typeof raw === 'string') {
-                    if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
-                    return raw;
-                }
-                return new Date().toISOString();
-            };
-            const createdAt = convertDate(createdAtRaw);
+            const createdAt = normalizeDate(createdAtRaw);
 
             const old = await prisma.orders_studnie_rel.findUnique({
                 where: { id: docId },
-                select: { data: true }
+                select: { data: true, userId: true }
             });
+
+            const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
+            if (!canWriteDoc(authReq.user, targetUserId)) {
+                return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
+            }
             const newData = { ...rest };
 
             if (old) {
@@ -133,14 +129,14 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(studnieOrdersBatch
                 where: { id: docId },
                 create: {
                     id: docId,
-                    userId: authReq.user?.id || '',
+                    userId: targetUserId,
                     offerStudnieId: offerStudnieId || '',
                     createdAt: createdAt,
                     status: status || 'new',
                     data: dataStr
                 },
                 update: {
-                    userId: authReq.user?.id || '',
+                    userId: targetUserId,
                     offerStudnieId: offerStudnieId || '',
                     createdAt: createdAt,
                     status: status || 'new',
@@ -201,7 +197,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_studnie_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || (authReq.user?.role !== 'admin' && o.userId !== authReq.user?.id)) {
+        if (!o || !canWriteDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
@@ -232,12 +228,7 @@ router.patch('/:id', requireAuth, writeOrdersLimiter, validateData(studnieOrderU
             where: { id: docId },
             select: { id: true, userId: true, status: true, data: true }
         });
-        const isOwner = o && o.userId === authReq.user?.id;
-        const isProParent =
-            o &&
-            authReq.user?.role === 'pro' &&
-            (authReq.user?.subUsers || []).includes(o.userId || '');
-        if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+        if (!o || !canWriteDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
@@ -252,6 +243,9 @@ router.patch('/:id', requireAuth, writeOrdersLimiter, validateData(studnieOrderU
 
         const newStatus = req.body.status || o.status;
         const newUserId = req.body.userId || o.userId;
+        if (!canWriteDoc(authReq.user, newUserId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+        }
         const dataStr = JSON.stringify(updatedData);
 
         await prisma.orders_studnie_rel.update({
@@ -282,6 +276,9 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
             select: { id: true, userId: true, data: true }
         });
         if (!existing) return res.json({ ok: true });
+        if (!canWriteDoc(authReq.user, existing.userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego zamówienia' });
+        }
 
         const oldData = parseJsonField<Record<string, unknown>>(existing.data, {});
         const offerId = oldData.offerId || '';

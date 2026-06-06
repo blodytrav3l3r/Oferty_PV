@@ -2,11 +2,12 @@ import express from 'express';
 import prisma from '../../prismaClient';
 import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { parseJsonField } from '../../helpers';
+import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema, ruryOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
+import { canWriteDoc } from '../../utils/ownership';
 import { generateRuryPDFFromContext, lookupOfferUsers } from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
 import { generateRuryDOCXFromContext } from '../../services/docx';
@@ -126,7 +127,7 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(ruryOrdersBatchSch
             const {
                 id: _id,
                 type: _type,
-                userId: _userId,
+                userId: incomingUserId,
                 offerId,
                 createdAt: createdAtRaw,
                 status,
@@ -134,21 +135,17 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(ruryOrdersBatchSch
             } = o;
             const dataStr = JSON.stringify(rest);
 
-            const convertDate = (raw: unknown): string => {
-                if (typeof raw === 'number') return new Date(raw).toISOString();
-                if (raw instanceof Date) return raw.toISOString();
-                if (typeof raw === 'string') {
-                    if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
-                    return raw;
-                }
-                return new Date().toISOString();
-            };
-            const createdAt = convertDate(createdAtRaw);
+            const createdAt = normalizeDate(createdAtRaw);
 
             const old = await prisma.orders_rury_rel.findUnique({
                 where: { id: docId },
-                select: { data: true }
+                select: { data: true, userId: true }
             });
+
+            const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
+            if (!canWriteDoc(authReq.user, targetUserId)) {
+                return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
+            }
             const newData = { ...rest };
 
             if (old) {
@@ -168,14 +165,14 @@ router.put('/', requireAuth, writeOrdersLimiter, validateData(ruryOrdersBatchSch
                 where: { id: docId },
                 create: {
                     id: docId,
-                    userId: authReq.user?.id || '',
+                    userId: targetUserId,
                     offerId: offerId || '',
                     createdAt: createdAt,
                     status: status || 'new',
                     data: dataStr
                 },
                 update: {
-                    userId: authReq.user?.id || '',
+                    userId: targetUserId,
                     offerId: offerId || '',
                     createdAt: createdAt,
                     status: status || 'new',

@@ -2,8 +2,9 @@ import express from 'express';
 import prisma from '../../prismaClient';
 import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { parseJsonField } from '../../helpers';
+import { parseJsonField, normalizeDate } from '../../helpers';
 import { logger } from '../../utils/logger';
+import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { validateData } from '../../validators/authSchema';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { productionOrdersBatchSchema, productionOrderCreateSchema } from '../../validators/offerSchemas';
@@ -185,7 +186,7 @@ router.put('/', requireAuth, writeProductionLimiter, validateData(productionOrde
             const {
                 id: _id,
                 type: _type,
-                userId,
+                userId: incomingUserId,
                 orderId,
                 wellId,
                 elementIndex,
@@ -197,8 +198,14 @@ router.put('/', requireAuth, writeProductionLimiter, validateData(productionOrde
 
             const old = await prisma.production_orders_rel.findUnique({
                 where: { id: docId },
-                select: { data: true }
+                select: { data: true, userId: true }
             });
+
+            const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
+            if (!canWriteDoc(authReq.user, targetUserId)) {
+                return res.status(403).json({ error: 'Brak uprawnień do tego zlecenia' });
+            }
+
             if (old) {
                 logAudit(
                     'production_order',
@@ -216,7 +223,7 @@ router.put('/', requireAuth, writeProductionLimiter, validateData(productionOrde
                 where: { id: docId },
                 create: {
                     id: docId,
-                    userId: userId || authReq.user?.id,
+                    userId: targetUserId,
                     creatorId: authReq.user?.id,
                     orderId: orderId || '',
                     wellId: wellId || '',
@@ -226,7 +233,7 @@ router.put('/', requireAuth, writeProductionLimiter, validateData(productionOrde
                     data: dataStr
                 },
                 update: {
-                    userId: userId || authReq.user?.id,
+                    userId: targetUserId,
                     creatorId: authReq.user?.id,
                     orderId: orderId || '',
                     wellId: wellId || '',
@@ -258,7 +265,7 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
         const {
             id: _id,
             type: _type,
-            userId,
+            userId: incomingUserId,
             orderId,
             wellId,
             elementIndex,
@@ -268,23 +275,19 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
         } = o;
         const dataStr = JSON.stringify(rest);
 
-        // Konwersja dat z timestamp na ISO string
-        const convertDate = (raw: unknown): string => {
-            if (typeof raw === 'number') return new Date(raw).toISOString();
-            if (raw instanceof Date) return raw.toISOString();
-            if (typeof raw === 'string') {
-                if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
-                return raw;
-            }
-            return new Date().toISOString();
-        };
-        const createdAt = convertDate(createdAtRaw);
-        const updatedAt = convertDate(updatedAtRaw);
+        const createdAt = normalizeDate(createdAtRaw);
+        const updatedAt = normalizeDate(updatedAtRaw);
 
         const old = await prisma.production_orders_rel.findUnique({
             where: { id: docId },
-            select: { data: true }
+            select: { data: true, userId: true }
         });
+
+        const writeResult = resolveWriteUserId(authReq.user, old?.userId || incomingUserId);
+        if (!writeResult.allowed) {
+            return res.status(403).json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+        }
+        const targetUserId = writeResult.effectiveUserId;
 
         if (old) {
             logAudit(
@@ -303,7 +306,7 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
             where: { id: docId },
             create: {
                 id: docId,
-                userId: userId || authReq.user?.id || '',
+                userId: targetUserId,
                 creatorId: authReq.user?.id || '',
                 orderId: orderId || '',
                 wellId: wellId || '',
@@ -313,7 +316,7 @@ router.post('/', requireAuth, writeProductionLimiter, validateData(productionOrd
                 data: dataStr
             },
             update: {
-                userId: userId || authReq.user?.id || '',
+                userId: targetUserId,
                 creatorId: authReq.user?.id || '',
                 orderId: orderId || '',
                 wellId: wellId || '',
@@ -339,7 +342,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const order = await prisma.production_orders_rel.findUnique({
             where: { id: docId }
         });
-        if (!order || (authReq.user?.role !== 'admin' && order.userId !== authReq.user?.id)) {
+        if (!order || !canWriteDoc(authReq.user, order.userId)) {
             return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         }
 
@@ -374,6 +377,9 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
             select: { id: true, userId: true, data: true }
         });
         if (!existing) return res.json({ ok: true });
+        if (!canWriteDoc(authReq.user, existing.userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego zlecenia' });
+        }
 
         const oldData = parseJsonField<Record<string, unknown>>(existing.data, {});
 
