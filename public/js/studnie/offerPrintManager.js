@@ -446,8 +446,14 @@ window.showOfferExportChoice = function() {
 
 /**
  * Uniwersalny modal dający wybór wydruku oferty oraz karty budowy
+ *
+ * @param {string|null} offerId       ID oferty
+ * @param {string|null} orderId       ID zamówienia (opcjonalne)
+ * @param {Array|null}   relatedOrders Powiązane zamówienia — przekazywane przez dispatcher
+ *                                     (kartoteka PV ma `this.ordersMap`, edytor studni
+ *                                     ma `ordersStudnie` / `getOrdersForOffer`).
  */
-window.showUniversalPrintModal = function(offerId, orderId) {
+window.showUniversalPrintModal = function(offerId, orderId, relatedOrders) {
     let finalOfferId = offerId;
     let finalOrderId = orderId;
 
@@ -472,29 +478,20 @@ window.showUniversalPrintModal = function(offerId, orderId) {
         return;
     }
 
-    // Pobierz powiązane zamówienia
-    let relatedOrders = [];
-    if (finalOfferId && typeof getOrdersForOffer === 'function') {
-        relatedOrders = getOrdersForOffer(finalOfferId);
-    }
-    if (finalOrderId && relatedOrders.length === 0) {
-        if (typeof ordersStudnie !== 'undefined') {
-            const currentOrder = ordersStudnie.find(o => o.id === finalOrderId);
-            if (currentOrder) relatedOrders = [currentOrder];
+    // Powiązane zamówienia — priorytet: parametr relatedOrders (z dispatchera),
+    // potem getOrdersForOffer / ordersStudnie (kontekst edytora studni).
+    let orders = [];
+    if (Array.isArray(relatedOrders) && relatedOrders.length > 0) {
+        orders = relatedOrders;
+    } else {
+        if (finalOfferId && typeof getOrdersForOffer === 'function') {
+            orders = getOrdersForOffer(finalOfferId);
         }
-        // Fallback: pobierz zamówienie z API (np. z kartoteki PV gdzie ordersStudnie jest puste)
-        if (relatedOrders.length === 0) {
-            fetch(`/api/orders-studnie/${finalOrderId}`, {
-                headers: typeof authHeaders === 'function' ? authHeaders() : {}
-            })
-            .then(res => res.ok ? res.json() : null)
-            .then(json => {
-                if (json && json.data) {
-                    window._modalRelatedOrders = [json.data];
-                    if (typeof renderOrdersSection === 'function') renderOrdersSection();
-                }
-            })
-            .catch(() => {});
+        if (finalOrderId && orders.length === 0) {
+            if (typeof ordersStudnie !== 'undefined') {
+                const currentOrder = ordersStudnie.find(o => o.id === finalOrderId);
+                if (currentOrder) orders = [currentOrder];
+            }
         }
     }
 
@@ -508,15 +505,15 @@ window.showUniversalPrintModal = function(offerId, orderId) {
             title: 'Wydruk Oferty',
             description: 'Wybierz format eksportu kalkulacji ofertowej:'
         } : null,
-        ordersSection: relatedOrders.length > 0 ? {
-            orders: relatedOrders,
+        ordersSection: orders.length > 0 ? {
+            orders: orders,
             actionPdf: 'exportOrderDirect_action',
             actionDocx: 'exportOrderDirect_action',
             title: 'Wydruk Zamówienia',
             description: 'Wybierz zamówienie i format eksportu:'
         } : null,
-        kartaSection: relatedOrders.length > 0 ? {
-            orders: relatedOrders,
+        kartaSection: orders.length > 0 ? {
+            orders: orders,
             actionPdf: 'exportKartaDirect_action',
             actionDocx: 'exportKartaDirect_action',
             title: 'Wydruk Karty Budowy',
@@ -530,62 +527,6 @@ window.showUniversalPrintModal = function(offerId, orderId) {
     } else if (typeof showToast === 'function') {
         showToast('Helper printModal.js nie załadowany', 'error');
     }
-};
-
-/**
- * Przerysowuje sekcję Karty Budowy w otwartym modalu po asynchronicznym pobraniu zamówienia.
- * Wywoływana z API fallback w showUniversalPrintModal.
- */
-window.renderOrdersSection = function() {
-    const modal = document.getElementById('universal-print-modal');
-    if (!modal) return;
-
-    // Struktura: #universal-print-modal > div (inline styles, background:#1e293b)
-    const modalBody = modal.firstElementChild;
-    if (!modalBody) return;
-
-    // Pobierz zamówienia z globalnej zmiennej (ustawione przez fetch w showUniversalPrintModal)
-    const orders = window._modalRelatedOrders || [];
-    if (orders.length === 0) return;
-
-    // Usuń istniejącą sekcję Karty Budowy (jeśli jest)
-    const existingOrders = modalBody.querySelector('.orders-section');
-    if (existingOrders) existingOrders.remove();
-
-    const ordersSection = document.createElement('div');
-    ordersSection.className = 'orders-section';
-    ordersSection.style.cssText = 'margin-top: 1.2rem; border-top: 1px solid #334155; padding-top: 1.2rem;';
-
-    let innerHtml = `
-        <h4 style="margin: 0 0 0.6rem 0; font-size: 0.95rem; color: #34d399; font-weight: 700; text-align: left; display: flex; align-items: center; gap: 0.4rem;">
-            <i data-lucide="package" style="width: 16px; height: 16px;"></i> Wydruk Karty Budowy
-        </h4>
-        <p style="font-size: 0.75rem; color: #94a3b8; text-align: left; margin-bottom: 0.8rem; line-height: 1.3;">Wybierz format eksportu Karty Budowy:</p>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 2px;">
-    `;
-    orders.forEach(ord => {
-        const ordNum = ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—');
-        innerHtml += `
-            <div style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.2); padding: 0.5rem 0.6rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.75rem; color: #e2e8f0; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; text-align: left;" title="Zamówienie ${ordNum}">ZAM: ${ordNum}</span>
-                <div style="display: flex; gap: 0.4rem; flex-shrink: 0;">
-                    <button onclick="window.exportKartaDirect_action('${ord.id}', 'pdf')" style="background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800;">PDF</button>
-                    <button onclick="window.exportKartaDirect_action('${ord.id}', 'docx')" style="background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.5); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 800;">Word</button>
-                </div>
-            </div>
-        `;
-    });
-    innerHtml += `</div>`;
-    ordersSection.innerHTML = innerHtml;
-
-    // Wstaw przed przycisk "Zamknij" (div z justify-content: flex-end)
-    const closeBtn = modalBody.querySelector('div[style*="justify-content: flex-end"]');
-    if (closeBtn) {
-        modalBody.insertBefore(ordersSection, closeBtn);
-    } else {
-        modalBody.appendChild(ordersSection);
-    }
-    if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
 /**

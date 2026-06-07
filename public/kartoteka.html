@@ -109,18 +109,6 @@
         <main class="main">
             <!-- ===== KARTOTEKA: Full-width offers view ===== -->
             <div class="section active" id="section-kartoteka">
-                <div class="toolbar">
-                    <h2 style="font-size: 1rem; font-weight: 700"><i data-lucide="archive"></i> Kartoteka Ofert</h2>
-                    <div class="toolbar-spacer"></div>
-                    <button
-                        class="btn btn-secondary btn-sm"
-                        onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
-                        title="Odśwież bazę ofert"
-                    >
-                        <i data-lucide="refresh-cw"></i> Odśwież
-                    </button>
-                </div>
-
                 <div
                     class="app-container"
                     style="max-width: 1900px; margin: 0 auto; padding: 0 0.5rem"
@@ -228,9 +216,6 @@
                             <i data-lucide="panel-right-close"></i> Kompakt
                         </button>
 
-                        <!-- Spacer -->
-                        <div style="flex: 1; min-width: 20px;"></div>
-
                         <!-- Search -->
                         <div
                             class="search-box"
@@ -268,6 +253,15 @@
                                 oninput="window.pvSalesUI && window.pvSalesUI.filterLocalOffers && window.pvSalesUI.filterLocalOffers()"
                             />
                         </div>
+
+                        <button
+                            class="btn btn-secondary btn-sm"
+                            onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
+                            title="Odśwież bazę ofert"
+                            style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem; flex-shrink: 0;"
+                        >
+                            <i data-lucide="refresh-cw"></i> Odśwież
+                        </button>
                     </div>
 
                     <!-- Main Offers List -->

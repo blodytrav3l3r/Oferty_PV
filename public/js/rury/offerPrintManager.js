@@ -9,18 +9,22 @@ function handlePrintClick() {
 
 window.handlePrintClick = handlePrintClick;
 
-function showUniversalPrintModalRury(offerId, orderId) {
+function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
     const targetOfferId = offerId || (typeof editingOfferId !== 'undefined' ? editingOfferId : null);
     const targetOrderId = orderId || (typeof editingRuryOrderId !== 'undefined' ? editingRuryOrderId : null);
 
-    let relatedOrders = [];
-    if (targetOfferId && typeof getOrdersForOffer === 'function') {
-        relatedOrders = getOrdersForOffer(targetOfferId);
-    }
-    if (targetOrderId && relatedOrders.length === 0) {
-        if (typeof ordersRury !== 'undefined') {
-            const currentOrder = ordersRury.find(o => o.id === targetOrderId);
-            if (currentOrder) relatedOrders = [currentOrder];
+    let orders = [];
+    if (Array.isArray(relatedOrders) && relatedOrders.length > 0) {
+        orders = relatedOrders;
+    } else {
+        if (targetOfferId && typeof getOrdersForOffer === 'function') {
+            orders = getOrdersForOffer(targetOfferId);
+        }
+        if (targetOrderId && orders.length === 0) {
+            if (typeof ordersRury !== 'undefined') {
+                const currentOrder = ordersRury.find(o => o.id === targetOrderId);
+                if (currentOrder) orders = [currentOrder];
+            }
         }
     }
 
@@ -33,15 +37,15 @@ function showUniversalPrintModalRury(offerId, orderId) {
             title: 'Wydruk Oferty',
             description: 'Wybierz format eksportu oferty:'
         } : null,
-        ordersSection: relatedOrders.length > 0 ? {
-            orders: relatedOrders,
+        ordersSection: orders.length > 0 ? {
+            orders: orders,
             actionPdf: 'exportOrderDirectRury_action',
             actionDocx: 'exportOrderDirectRury_action',
             title: 'Wydruk Zamówienia',
             description: 'Wybierz zamówienie i format eksportu:'
         } : null,
-        kartaSection: relatedOrders.length > 0 ? {
-            orders: relatedOrders,
+        kartaSection: orders.length > 0 ? {
+            orders: orders,
             actionPdf: 'exportKartaDirectRury_action',
             actionDocx: 'exportKartaDirectRury_action',
             title: 'Wydruk Karty Budowy',

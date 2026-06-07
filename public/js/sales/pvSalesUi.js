@@ -26,7 +26,7 @@ function isRuryOfferFromTypeOrId(offerType, offerId) {
  * @param {string|null} orderId   ID zamówienia (lub '' jeśli brak)
  * @param {string|null} offerType 'rura_oferta' | 'offer' (legacy) | 'studnia_oferta' | null
  */
-function openPrintModal(offerId, orderId, offerType) {
+function openPrintModal(offerId, orderId, offerType, relatedOrders) {
     if (!offerId && !orderId) {
         if (typeof showToast === 'function') {
             showToast('Brak identyfikatora oferty/zamówienia do wydruku', 'error');
@@ -35,10 +35,11 @@ function openPrintModal(offerId, orderId, offerType) {
     }
     const isRury = isRuryOfferFromTypeOrId(offerType, offerId);
     const safeOrderId = orderId || '';
+    const safeRelatedOrders = Array.isArray(relatedOrders) ? relatedOrders : null;
     if (isRury && typeof window.showUniversalPrintModalRury === 'function') {
-        window.showUniversalPrintModalRury(offerId, safeOrderId);
+        window.showUniversalPrintModalRury(offerId, safeOrderId, safeRelatedOrders);
     } else if (typeof window.showUniversalPrintModal === 'function') {
-        window.showUniversalPrintModal(offerId, safeOrderId);
+        window.showUniversalPrintModal(offerId, safeOrderId, safeRelatedOrders);
     } else if (typeof showToast === 'function') {
         showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
     }
@@ -85,6 +86,118 @@ class PVSalesUI {
         );
         const changed = Math.abs(currentPrice - originalPrice) > 0.01;
         return { changed, currentPrice, originalPrice };
+    }
+
+    /**
+     * Przelicza koszt transportu dla zamówienia rur na podstawie aktualnych pozycji.
+     *
+     * Implementuje uproszczony bin-packing z `transport.js:calculateTransports` (dostępny
+     * tylko w kontekście edytora rur). Maksymalna ładowność transportu: 24 000 kg.
+     *
+     * @param {Array} items pozycje zamówienia (z `weight`, `transport`, `quantity`, `autoAdded`)
+     * @param {number} transportKm km na kurs
+     * @param {number} transportRate PLN/km
+     * @returns {number} łączny koszt transportu (PLN)
+     */
+    recalculateRuryTransportCost(items, transportKm, transportRate) {
+        const MAX_WEIGHT = 24000;
+        const costPerTrip = (Number(transportKm) || 0) * (Number(transportRate) || 0);
+        if (costPerTrip <= 0) return 0;
+        const transportItems = (items || []).filter(
+            (i) => !i.autoAdded && Number(i.weight) > 0 && Number(i.quantity) > 0
+        );
+        if (transportItems.length === 0) return 0;
+        const lines = [];
+        const partials = [];
+        transportItems.forEach((item) => {
+            const weight = Number(item.weight) || 0;
+            const maxByWeight = Math.floor(MAX_WEIGHT / weight);
+            const maxByCount = Number(item.transport) || maxByWeight;
+            const maxPerTransport = Math.min(maxByWeight, maxByCount);
+            if (maxPerTransport <= 0) return;
+            const qty = Number(item.quantity) || 0;
+            const fullTransports = Math.floor(qty / maxPerTransport);
+            const remainder = qty % maxPerTransport;
+            const dedicated = fullTransports + (remainder > 0 ? 1 : 0);
+            lines.push({ productId: item.productId, dedicated });
+            if (remainder > 0) {
+                partials.push({
+                    productId: item.productId,
+                    weight: remainder * weight,
+                });
+            }
+        });
+        const totalDedicated = lines.reduce((s, l) => s + l.dedicated, 0);
+        let saved = 0;
+        if (partials.length > 1) {
+            partials.sort((a, b) => b.weight - a.weight);
+            const used = new Set();
+            for (let i = 0; i < partials.length; i++) {
+                if (used.has(i)) continue;
+                const group = [partials[i]];
+                let groupWeight = partials[i].weight;
+                used.add(i);
+                for (let j = i + 1; j < partials.length; j++) {
+                    if (used.has(j)) continue;
+                    if (groupWeight + partials[j].weight <= MAX_WEIGHT) {
+                        group.push(partials[j]);
+                        groupWeight += partials[j].weight;
+                        used.add(j);
+                    }
+                }
+                if (group.length > 1) saved += group.length - 1;
+            }
+        }
+        const totalTrips = Math.max(0, totalDedicated - saved);
+        return totalTrips * costPerTrip;
+    }
+
+    /**
+     * Oblicza aktualną wartość netto zamówienia Z TRANSPORTEM włącznie.
+     *
+     * Studnie: suma `wellsExport[].totalPrice` (= price + transportCost per studnia).
+     *          Te pole jest aktualizowane przy każdym zapisie oferty i zawiera
+     *          zarówno cenę konfiguracji jak i koszt transportu rozdzielony na studnie.
+     *          Fallback: order.totalNetto (zachowane dla kompatybilności z legacy).
+     *
+     * Rury: suma produktów + przeliczony transport (bin-packing z wag pozycji).
+     *   - products = Σ (unitPrice * (1 - discount/100) + surcharge + pehdCostPerUnit) * quantity
+     *   - transport = recalculateRuryTransportCost(items, transportKm, transportRate)
+     *     (per-item `transport` z cennika może być nieaktualny po modyfikacji ilości,
+     *      więc liczymy koszt od zera z aktualnych wag i `transport` per-unit)
+     *   - final = products + transport
+     *   Zamówienia rur nie zapisują pola totalNetto — wartość musi być liczona w locie.
+     *
+     * @param {object} order obiekt zamówienia
+     * @param {string} [offerType] typ oferty ('rura_oferta' | 'offer' | 'studnia_oferta')
+     * @returns {number} wartość netto (z transportem)
+     */
+    computeOrderValueWithTransport(order, offerType) {
+        if (!order) return 0;
+        const isStudnie = offerType === 'studnia_oferta' || order.wells || order.wellsExport;
+        if (isStudnie) {
+            const exportData = order.wellsExport || (order.data && order.data.wellsExport);
+            if (Array.isArray(exportData) && exportData.length > 0) {
+                return exportData.reduce((sum, w) => sum + (Number(w.totalPrice) || 0), 0);
+            }
+            return Number(order.totalNetto || order.totalBrutto || 0);
+        }
+        const items = order.items || [];
+        if (items.length === 0) {
+            return Number(order.totalNetto || order.totalBrutto || 0);
+        }
+        const productsTotal = items.reduce((sum, item) => {
+            const unitBase = (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
+            const surcharge = Number(item.surcharge) || 0;
+            const pehdCost = Number(item.pehdCostPerUnit) || 0;
+            return sum + (unitBase + surcharge + pehdCost) * (Number(item.quantity) || 0);
+        }, 0);
+        const transportCost = this.recalculateRuryTransportCost(
+            items,
+            order.transportKm,
+            order.transportRate
+        );
+        return productsTotal + transportCost;
     }
 
     findOrderById(orderId) {
@@ -376,13 +489,14 @@ class PVSalesUI {
                             const createdAt = ord.createdAt
                                 ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
                                 : 'brak daty';
+                            const orderValue = this.computeOrderValueWithTransport(ord, offer.type);
                             const changeInfo = this.getOrderChangeInfo(ord);
                             return `
                                 <div class="offer-order-row">
                                     <button class="offer-order-main btn-edit-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Edytuj zamówienie ${label}">
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
-                                            <strong>${label}</strong>
+                                            <strong>${label} <span style="color: #34d399; font-weight: 600;">• ${orderValue.toFixed(2)} PLN</span></strong>
                                             <small>${createdAt}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
                                         </span>
                                     </button>
@@ -645,7 +759,10 @@ class PVSalesUI {
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerId = buttonEl.getAttribute('data-offer-id');
                 const offerType = buttonEl.getAttribute('data-offer-type');
-                openPrintModal(offerId, orderId, offerType);
+                const relatedOrders = (this.ordersMap && offerId)
+                    ? [...(this.ordersMap.get(this.normalizeId(offerId)) || [])]
+                    : null;
+                openPrintModal(offerId, orderId, offerType, relatedOrders);
             });
         });
 
@@ -778,7 +895,10 @@ class PVSalesUI {
                 const printOfferId = btn.getAttribute('data-offer-id') || id;
                 const printOrderId = btn.getAttribute('data-order-id') || orderId || '';
                 const printOfferType = btn.getAttribute('data-offer-type') || typeAttr;
-                openPrintModal(printOfferId, printOrderId, printOfferType);
+                const printRelatedOrders = (this.ordersMap && printOfferId)
+                    ? [...(this.ordersMap.get(this.normalizeId(printOfferId)) || [])]
+                    : null;
+                openPrintModal(printOfferId, printOrderId, printOfferType, printRelatedOrders);
                 return;
             }
 

@@ -57,8 +57,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
-            // isRuryOffer musi obejmować 'rura_oferta', a blok if musi wywołać showUniversalPrintModalRury
-            const pattern = /isRuryOffer[\s\S]{0,200}showUniversalPrintModalRury\s*\(/;
+            // openPrintModal: isRuryOfferFromTypeOrId → showUniversalPrintModalRury
+            // Sprawdza że wywołanie modal buildera dla rur przechodzi przez openPrintModal
+            const pattern = /isRuryOfferFromTypeOrId[\s\S]{0,500}showUniversalPrintModalRury\s*\(\s*offerId/;
             expect(src).toMatch(pattern);
         });
 
@@ -75,8 +76,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('modal .btn-print-order handler dispatchuje przez openPrintModal', () => {
             // Po unifikacji: btn-print-order wywołuje openPrintModal (nie inline logic)
+            // Listener jest w showOfferOrdersPopup (overlay), 596 chars dalej od forEach()
             const pattern =
-                /btn-print-order[\s\S]{0,400}openPrintModal\s*\(/;
+                /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
             expect(src).toMatch(pattern);
         });
     });
@@ -162,16 +164,18 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(src).toMatch(/\^offer_rury_/);
         });
 
-        it('jest WSPÓLNA funkcja openPrintModal(offerId, orderId, offerType)', () => {
+        it('jest WSPÓLNA funkcja openPrintModal(offerId, orderId, offerType, relatedOrders)', () => {
             // Unifikacja: wszystkie 4 ścieżki (Wydruk + Karta budowy × rury + studnie)
-            // idą przez jedną funkcję
-            expect(src).toMatch(/function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*\)/);
-            expect(src).toMatch(/openPrintModal\s*\(\s*printOfferId\s*,\s*printOrderId\s*,\s*printOfferType\s*\)/);
+            // idą przez jedną funkcję. 4. arg relatedOrders (z ordersMap) dodany dla kartoteki.
+            expect(src).toMatch(/function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/);
+            expect(src).toMatch(/openPrintModal\s*\(\s*printOfferId\s*,\s*printOrderId\s*,\s*printOfferType\s*,\s*printRelatedOrders\s*\)/);
         });
 
         it('główny wiersz i popup UŻYWAJĄ openPrintModal (nie inline logic)', () => {
-            const mainRow = /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,400}openPrintModal\s*\(/;
-            const popup = /btn-print-order[\s\S]{0,400}openPrintModal\s*\(/;
+            // Dispatch czyta printRelatedOrders z this.ordersMap, więc odległość do openPrintModal wzrosła do ~500
+            const mainRow = /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
+            // Popup btn-print-order handler jest w showOfferOrdersPopup (overlay)
+            const popup = /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
             expect(src).toMatch(mainRow);
             expect(src).toMatch(popup);
         });
@@ -202,6 +206,92 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(match).not.toBeNull();
             expect(match![0]).toMatch(/data-id=/);
             expect(match![0]).toMatch(/data-type=/);
+        });
+    });
+
+    describe('Static: openPrintModal przekazuje relatedOrders z ordersMap (kartoteka fix)', () => {
+        let src: string;
+        beforeAll(() => {
+            src = readFile(PV_SALES_UI);
+        });
+
+        it('openPrintModal akceptuje 4. param relatedOrders', () => {
+            expect(src).toMatch(/function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/);
+        });
+
+        it('openPrintModal przekazuje relatedOrders do showUniversalPrintModalRury', () => {
+            expect(src).toMatch(/showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/);
+        });
+
+        it('openPrintModal przekazuje relatedOrders do showUniversalPrintModal', () => {
+            expect(src).toMatch(/showUniversalPrintModal\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/);
+        });
+
+        it('dispatch czyta relatedOrders z this.ordersMap (kartoteka)', () => {
+            // Wydruk/Karta budowy dispatch musi czytać z this.ordersMap
+            expect(src).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*printOfferId\s*\)/);
+        });
+
+        it('popup .btn-print-order listener czyta relatedOrders z this.ordersMap', () => {
+            // W showOfferOrdersPopup listenerze btn-print-order musi czytać z this.ordersMap
+            expect(src).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*offerId\s*\)/);
+        });
+    });
+
+    describe('Static: showUniversalPrintModalRury akceptuje relatedOrders (rury modal fix)', () => {
+        let src: string;
+        beforeAll(() => {
+            src = readFile(RURY_PM);
+        });
+
+        it('showUniversalPrintModalRury ma sygnaturę (offerId, orderId, relatedOrders)', () => {
+            expect(src).toMatch(/function showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/);
+        });
+
+        it('rury modal preferuje przekazany relatedOrders nad getOrdersForOffer', () => {
+            // Kolejność: Array.isArray(relatedOrders) > getOrdersForOffer > ordersRury
+            expect(src).toMatch(/Array\.isArray\(\s*relatedOrders\s*\)/);
+        });
+
+        it('rury modal UŻYWA relatedOrders do budowy ordersSection i kartaSection', () => {
+            // Sprawdź czy oba sekcje korzystają z przekazanych orders (nie relatedOrders?)
+            expect(src).toMatch(/ordersSection:\s*orders\.length\s*>\s*0/);
+            expect(src).toMatch(/kartaSection:\s*orders\.length\s*>\s*0/);
+        });
+    });
+
+    describe('Static: showUniversalPrintModal (studnie) akceptuje relatedOrders (legacy fetch usunięty)', () => {
+        let src: string;
+        beforeAll(() => {
+            src = readFile(STUDNIE_PM);
+        });
+
+        it('showUniversalPrintModal ma sygnaturę (offerId, orderId, relatedOrders)', () => {
+            expect(src).toMatch(/window\.showUniversalPrintModal\s*=\s*function\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/);
+        });
+
+        it('studnie modal preferuje przekazany relatedOrders', () => {
+            expect(src).toMatch(/Array\.isArray\(\s*relatedOrders\s*\)/);
+        });
+
+        it('studnie modal USUNIĘTO legacy fetch fallback /api/orders-studnie', () => {
+            // Po refaktorze: brak fetch /api/orders-studnie/${...} w showUniversalPrintModal
+            expect(src).not.toMatch(/fetch\([`'"]\/api\/orders-studnie\/\$\{finalOrderId\}/);
+        });
+
+        it('studnie modal USUNIĘTO martwe _modalRelatedOrders global', () => {
+            // Stary mechanizm asynchronicznego renderOrdersSection — usunięty
+            expect(src).not.toMatch(/window\._modalRelatedOrders/);
+        });
+
+        it('studnie modal USUNIĘTO martwe window.renderOrdersSection (legacy)', () => {
+            // Cała funkcja window.renderOrdersSection była wstrzykiwaczem inline-stylowanego HTML
+            expect(src).not.toMatch(/window\.renderOrdersSection\s*=\s*function/);
+        });
+
+        it('studnie modal UŻYWA relatedOrders do budowy ordersSection i kartaSection', () => {
+            expect(src).toMatch(/ordersSection:\s*orders\.length\s*>\s*0/);
+            expect(src).toMatch(/kartaSection:\s*orders\.length\s*>\s*0/);
         });
     });
 
