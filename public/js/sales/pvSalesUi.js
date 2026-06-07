@@ -15,6 +15,35 @@ function isRuryOfferFromTypeOrId(offerType, offerId) {
     return false;
 }
 
+/**
+ * Wspólna funkcja otwierająca uniwersalny modal wydruku
+ * (public/js/shared/printModal.js). Wywoływana ze wszystkich
+ * przycisków wydruku w kartotece (główny wiersz, per-order
+ * "Karta budowy", popup "Karta") — gwarantuje identyczny popup
+ * niezależnie od ścieżki.
+ *
+ * @param {string|null} offerId   ID oferty (lub null jeśli niedostępne)
+ * @param {string|null} orderId   ID zamówienia (lub '' jeśli brak)
+ * @param {string|null} offerType 'rura_oferta' | 'offer' (legacy) | 'studnia_oferta' | null
+ */
+function openPrintModal(offerId, orderId, offerType) {
+    if (!offerId && !orderId) {
+        if (typeof showToast === 'function') {
+            showToast('Brak identyfikatora oferty/zamówienia do wydruku', 'error');
+        }
+        return;
+    }
+    const isRury = isRuryOfferFromTypeOrId(offerType, offerId);
+    const safeOrderId = orderId || '';
+    if (isRury && typeof window.showUniversalPrintModalRury === 'function') {
+        window.showUniversalPrintModalRury(offerId, safeOrderId);
+    } else if (typeof window.showUniversalPrintModal === 'function') {
+        window.showUniversalPrintModal(offerId, safeOrderId);
+    } else if (typeof showToast === 'function') {
+        showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
+    }
+}
+
 class PVSalesUI {
     constructor() {
         this.syncManager = null;
@@ -359,7 +388,7 @@ class PVSalesUI {
                                     </button>
                                     <div class="offer-order-actions">
                                         ${changeInfo.changed ? '<span class="offer-change-chip"><i data-lucide="activity" aria-hidden="true"></i> zmiany</span>' : ''}
-                                        <button class="action-btn success btn-karta-budowy" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                                        <button class="action-btn success btn-karta-budowy" data-id="${this.escapeHtml(offer.id)}" data-type="${this.escapeHtml(offer.type)}" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
                                         <button class="action-btn secondary btn-history-order" data-order-id="${this.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
                                         <button class="action-btn danger btn-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
                                     </div>
@@ -504,7 +533,7 @@ class PVSalesUI {
                                         <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
                                             <i data-lucide="clock" aria-hidden="true"></i>
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-order-id="${hasOrder ? order.id : ''}" title="Wydruk" aria-label="Wydruk">
+                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order.id : ''}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
                                         ${
@@ -614,17 +643,9 @@ class PVSalesUI {
             btn.addEventListener('click', (e) => {
                 const buttonEl = e.target.closest('button');
                 const orderId = buttonEl.getAttribute('data-order-id');
-                const offerIdAttr = buttonEl.getAttribute('data-offer-id');
-                const offerTypeAttr = buttonEl.getAttribute('data-offer-type');
-                const isRury = isRuryOfferFromTypeOrId(offerTypeAttr, offerIdAttr);
-                if (isRury && typeof window.showUniversalPrintModalRury === 'function') {
-                    window.showUniversalPrintModalRury(offerIdAttr, orderId);
-                } else if (typeof window.showUniversalPrintModal === 'function') {
-                    window.showUniversalPrintModal(offerIdAttr, orderId);
-                } else {
-                    closeModal();
-                    showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
-                }
+                const offerId = buttonEl.getAttribute('data-offer-id');
+                const offerType = buttonEl.getAttribute('data-offer-type');
+                openPrintModal(offerId, orderId, offerType);
             });
         });
 
@@ -755,17 +776,9 @@ class PVSalesUI {
             // ---- PRINT / EXPORT / KARTA BUDOWY ----
             if (title.includes('wydruk') || title.includes('drukuj') || title.includes('karta budowy')) {
                 const printOfferId = btn.getAttribute('data-offer-id') || id;
-                const printOrderId = orderId || '';
-                const isRuryOffer = isRuryOfferFromTypeOrId(offerType, printOfferId);
-                if (isRuryOffer && typeof window.showUniversalPrintModalRury === 'function') {
-                    window.showUniversalPrintModalRury(printOfferId, printOrderId);
-                    return;
-                }
-                if (typeof window.showUniversalPrintModal === 'function') {
-                    window.showUniversalPrintModal(printOfferId, printOrderId);
-                } else {
-                    showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
-                }
+                const printOrderId = btn.getAttribute('data-order-id') || orderId || '';
+                const printOfferType = btn.getAttribute('data-offer-type') || typeAttr;
+                openPrintModal(printOfferId, printOrderId, printOfferType);
                 return;
             }
 

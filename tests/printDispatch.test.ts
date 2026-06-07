@@ -73,10 +73,10 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(src).toMatch(pattern);
         });
 
-        it('modal .btn-print-order handler dispatchuje rury → showUniversalPrintModalRury (przez helper)', () => {
-            // Po refaktorze: btn-print-order wywołuje isRuryOfferFromTypeOrId, nie inline logic
+        it('modal .btn-print-order handler dispatchuje przez openPrintModal', () => {
+            // Po unifikacji: btn-print-order wywołuje openPrintModal (nie inline logic)
             const pattern =
-                /btn-print-order[\s\S]{0,800}isRuryOfferFromTypeOrId[\s\S]{0,400}showUniversalPrintModalRury/;
+                /btn-print-order[\s\S]{0,400}openPrintModal\s*\(/;
             expect(src).toMatch(pattern);
         });
     });
@@ -162,27 +162,46 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(src).toMatch(/\^offer_rury_/);
         });
 
-        it('główny wiersz i popup UŻYWAJĄ tego samego helpera (spójność dispatch)', () => {
-            // Oba miejsca muszą wywołać isRuryOfferFromTypeOrId (nie inline logic)
-            const mainRow = /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,400}isRuryOfferFromTypeOrId/;
-            const popup = /btn-print-order[\s\S]{0,400}isRuryOfferFromTypeOrId/;
+        it('jest WSPÓLNA funkcja openPrintModal(offerId, orderId, offerType)', () => {
+            // Unifikacja: wszystkie 4 ścieżki (Wydruk + Karta budowy × rury + studnie)
+            // idą przez jedną funkcję
+            expect(src).toMatch(/function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*\)/);
+            expect(src).toMatch(/openPrintModal\s*\(\s*printOfferId\s*,\s*printOrderId\s*,\s*printOfferType\s*\)/);
+        });
+
+        it('główny wiersz i popup UŻYWAJĄ openPrintModal (nie inline logic)', () => {
+            const mainRow = /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,400}openPrintModal\s*\(/;
+            const popup = /btn-print-order[\s\S]{0,400}openPrintModal\s*\(/;
             expect(src).toMatch(mainRow);
             expect(src).toMatch(popup);
         });
 
-        it('dispatch NIE używa już inline "isRuryOffer = offerType === ..." (zastąpione helperem)', () => {
-            expect(src).not.toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
-        });
-
         it('dispatch NIE wywołuje już window.exportKartaDirectRury_action bezpośrednio (usunięty bypass)', () => {
-            // Po refaktorze wszystkie ścieżki idą przez uniwersalny modal
+            // Po refaktorze wszystkie ścieżki idą przez openPrintModal → uniwersalny modal
             expect(src).not.toMatch(/window\.exportKartaDirectRury_action\s*\(/);
         });
 
-        it('fallback data-offer-type inferuje rury po ID prefix', () => {
-            expect(src).toMatch(/test\(offerKey\)/);
-            expect(src).toMatch(/rura_oferta/);
-            expect(src).toMatch(/studnia_oferta/);
+        it('dispatch NIE wywołuje już inline isRuryOffer (zastąpione przez openPrintModal)', () => {
+            // Wcześniej było "isRuryOffer = offerType === ..." — teraz jest w openPrintModal
+            expect(src).not.toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
+        });
+
+        it('przycisk "Wydruk" MA data-offer-id + data-offer-type (unifikacja atrybutów)', () => {
+            // Oba przyciski (Wydruk + Karta budowy) muszą mieć te same atrybuty
+            // Używamy [\\s\\S] z odwróconym kierunkiem bo atrybuty są PRZED title
+            const wydrukBlock = /class="action-btn secondary"[\s\S]{0,400}title="Wydruk"/;
+            const match = src.match(wydrukBlock);
+            expect(match).not.toBeNull();
+            expect(match![0]).toMatch(/data-offer-id=/);
+            expect(match![0]).toMatch(/data-offer-type=/);
+        });
+
+        it('przycisk "Karta budowy" MA data-id + data-type (unifikacja atrybutów)', () => {
+            const kartaBlock = /btn-karta-budowy[\s\S]{0,500}title="Karta budowy/;
+            const match = src.match(kartaBlock);
+            expect(match).not.toBeNull();
+            expect(match![0]).toMatch(/data-id=/);
+            expect(match![0]).toMatch(/data-type=/);
         });
     });
 
