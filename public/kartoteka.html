@@ -91,8 +91,8 @@
                                 transition: all 0.2s;
                             "
                             onmouseenter="
-                                this.style.color = '#f87171';
-                                this.style.borderColor = '#3a1a1a';
+                                this.style.color = 'var(--danger-hover)';
+                                this.style.borderColor = 'var(--danger-bg)';
                             "
                             onmouseleave="
                                 this.style.color = 'var(--text-muted)';
@@ -216,52 +216,54 @@
                             <i data-lucide="panel-right-close"></i> Kompakt
                         </button>
 
-                        <!-- Search -->
-                        <div
-                            class="search-box"
-                            style="margin: 0; width: 100%; max-width: 320px; position: relative;"
-                        >
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                style="
-                                    position: absolute;
-                                    left: 0.7rem;
-                                    top: 50%;
-                                    transform: translateY(-50%);
-                                    width: 1rem;
-                                    color: var(--text-muted);
-                                "
+                        <!-- Search + Refresh row -->
+                        <div style="display: flex; flex: 1; gap: 0.5rem; align-items: center; min-width: 200px;">
+                            <div
+                                class="search-box"
+                                style="margin: 0; flex: 1; max-width: none; position: relative;"
                             >
-                                <circle cx="11" cy="11" r="7" />
-                                <path d="m21 21-4.35-4.35" />
-                            </svg>
-                            <label for="pv-local-search-input" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Szukaj oferty</label>
-                            <input
-                                type="text"
-                                id="pv-local-search-input"
-                                class="form-input form-input-sm"
-                                placeholder="Szukaj: firma, NIP, budowa, nr..."
-                                style="
-                                    font-weight: normal;
-                                    padding-left: 2.4rem !important;
-                                    width: 100%;
-                                    font-size: 0.8rem;
-                                "
-                                oninput="window.pvSalesUI && window.pvSalesUI.filterLocalOffers && window.pvSalesUI.filterLocalOffers()"
-                            />
-                        </div>
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    style="
+                                        position: absolute;
+                                        left: 0.7rem;
+                                        top: 50%;
+                                        transform: translateY(-50%);
+                                        width: 1rem;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m21 21-4.35-4.35" />
+                                </svg>
+                                <label for="pv-local-search-input" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Szukaj oferty</label>
+                                <input
+                                    type="text"
+                                    id="pv-local-search-input"
+                                    class="form-input form-input-sm"
+                                    placeholder="Szukaj: firma, NIP, budowa, nr..."
+                                    style="
+                                        font-weight: normal;
+                                        padding-left: 2.4rem !important;
+                                        width: 100%;
+                                        font-size: 0.8rem;
+                                    "
+                                    oninput="window.pvSalesUI && window.pvSalesUI.filterLocalOffers && window.pvSalesUI.filterLocalOffers()"
+                                />
+                            </div>
 
-                        <button
-                            class="btn btn-secondary btn-sm"
-                            onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
-                            title="Odśwież bazę ofert"
-                            style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem; flex-shrink: 0;"
-                        >
-                            <i data-lucide="refresh-cw"></i> Odśwież
-                        </button>
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
+                                title="Odśwież bazę ofert"
+                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem; flex-shrink: 0;"
+                            >
+                                <i data-lucide="refresh-cw"></i> Odśwież
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Main Offers List -->
@@ -307,6 +309,7 @@
         <script src="js/shared/formatters.js?v=3.0"></script>
         <script src="js/shared/auth.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
+        <script>if (typeof fetchGlobalUsers === 'function') fetchGlobalUsers();</script>
         <script src="js/shared/printModal.js?v=3.0"></script>
         <link rel="stylesheet" href="css/printModal.css?v=3.0">
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>

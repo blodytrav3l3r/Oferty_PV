@@ -1,6 +1,9 @@
 /* ===== CRUD OFERT (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: zapis, ładowanie, duplikacja, usuwanie, historia ofert */
 /* Zależności: offers, currentOfferItems, editingOfferId, editingOfferAssignedUserId/Name, currentUser (globalne) */
+
+let editingOfferCreatedByUserId = null;
+let editingOfferCreatedByUserName = '';
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */
@@ -145,6 +148,18 @@ async function saveOffer() {
                     ? `${currentUser.firstName} ${currentUser.lastName}`
                     : currentUser.username
                 : ''),
+        createdByUserId:
+            editingOfferCreatedByUserId ||
+            existingDoc?.createdByUserId ||
+            (currentUser ? currentUser.id : null),
+        createdByUserName:
+            editingOfferCreatedByUserName ||
+            existingDoc?.createdByUserName ||
+            (currentUser
+                ? currentUser.firstName && currentUser.lastName
+                    ? `${currentUser.firstName} ${currentUser.lastName}`
+                    : currentUser.username
+                : ''),
         number,
         date,
         clientName,
@@ -200,6 +215,8 @@ function clearOfferForm() {
     editingOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
+    editingOfferCreatedByUserId = null;
+    editingOfferCreatedByUserName = '';
     document.getElementById('offer-number').value = generateOfferNumber();
     document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
     document.getElementById('client-name').value = '';
@@ -384,6 +401,8 @@ async function loadOffer(id) {
     editingOfferId = id;
     editingOfferAssignedUserId = normalized.userId || null;
     editingOfferAssignedUserName = normalized.userName || '';
+    editingOfferCreatedByUserId = normalized.createdByUserId || null;
+    editingOfferCreatedByUserName = normalized.createdByUserName || '';
     const finalNumber =
         normalized.number ||
         normalized.offerNumber ||

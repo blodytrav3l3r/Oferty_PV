@@ -73,7 +73,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 data: parsedData,
-                history: JSON.parse(offer.history || '[]')
+                history: JSON.parse(offer.history || '[]'),
+                ...(offer.data ? JSON.parse(offer.data) : {})
             };
         });
 

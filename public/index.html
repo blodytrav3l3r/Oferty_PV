@@ -161,7 +161,7 @@
                         <button class="btn-hero" onclick="showChangePassword()">
                             <i data-lucide="key"></i> Hasło
                         </button>
-                        <button class="btn-hero" onclick="doLogout()" style="color: #f87171">
+                        <button class="btn-hero" onclick="doLogout()" style="color: var(--danger-hover)">
                             <i data-lucide="log-out"></i> Wyloguj
                         </button>
                     </div>
@@ -192,7 +192,7 @@
                     <a
                         href="app.html#/zlecenia"
                         class="launch-card kartoteka"
-                        style="border-left-color: #ec4899"
+                        style="border-left-color: var(--warn)"
                     >
                         <span class="launch-icon"><i data-lucide="factory"></i></span>
                         <div class="launch-content">
@@ -211,14 +211,14 @@
                         </div>
                     </div>
                     <div class="admin-card system-card">
-                        <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.75rem">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem">
                             Gotowe do użycia przy następnym zleceniu
                         </div>
                         <div
                             id="recycled-numbers-list"
                             style="display: flex; flex-wrap: wrap; gap: 0.5rem"
                         >
-                            <span style="color: #64748b; font-size: 0.85rem"
+                            <span style="color: var(--text-muted); font-size: 0.85rem"
                                 >Brak odzyskanych numerów.</span
                             >
                         </div>
@@ -237,7 +237,7 @@
                     <div class="admin-card system-card">
                         <div style="display: flex; align-items: center; gap: 0.75rem">
                             <span style="font-size: 1.5rem"><i data-lucide="calendar"></i></span>
-                            <div style="font-size: 0.85rem; font-weight: 800; color: white">
+                            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-primary)">
                                 Litera roku:
                                 <span
                                     id="year-letter-preview"
@@ -250,7 +250,7 @@
                         <div style="display: flex; align-items: center; gap: 0.6rem">
                             <span
                                 id="year-letter-year"
-                                style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700"
+                                style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700"
                             ></span>
                             <input
                                 type="text"
@@ -262,9 +262,9 @@
                                     text-align: center;
                                     font-size: 1.1rem;
                                     font-weight: 900;
-                                    color: var(--primary-hover);
-                                    background: #0f172a;
-                                    border: 1px solid var(--glass-border);
+                                    color: var(--accent-hover);
+                                    background: var(--bg-secondary);
+                                    border: 1px solid var(--border-glass);
                                     border-radius: 8px;
                                 "
                             />
@@ -279,158 +279,162 @@
                     </div>
 
                     <!-- User Management Widget -->
-                    <div
-                        class="admin-header-row"
-                        style="display: flex; justify-content: center; margin: 1.5rem 0 1rem"
-                    >
+                    <div class="admin-header-row" style="justify-content: center; margin: 1.5rem 0 0.8rem">
                         <div class="admin-title-group" style="text-align: center">
-                            <h3>Zarządzanie Użytkownikami</h3>
+                            <h3><i data-lucide="users"></i> Zarządzanie Użytkownikami</h3>
                         </div>
                     </div>
 
-                    <div
-                        class="admin-card"
-                        style="padding: 0; display: flex; flex-direction: column"
-                    >
+                    <!-- Stats Bar -->
+                    <div class="admin-stats-row" id="admin-stats-row">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon admin"><i data-lucide="shield"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="stat-admin-count">0</div>
+                                <div class="admin-stat-label">Admin</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon pro"><i data-lucide="briefcase"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="stat-pro-count">0</div>
+                                <div class="admin-stat-label">Pro</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon user"><i data-lucide="user"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="stat-user-count">0</div>
+                                <div class="admin-stat-label">User</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="padding: 0; display: flex; flex-direction: column">
                         <div class="admin-table-wrap" style="flex: 1">
                             <table class="admin-table">
                                 <thead>
                                     <tr>
                                         <th style="width: 22%">Pracownik</th>
                                         <th style="width: 8%">Sym.</th>
-                                        <th style="width: 14%">Login</th>
-                                        <th style="width: 15%">Kontakt</th>
+                                        <th style="width: 13%">Login</th>
+                                        <th style="width: 14%">Kontakt</th>
                                         <th style="width: 8%">Rola</th>
                                         <th style="width: 8%">Nr Zam.</th>
                                         <th style="width: 8%">Nr Zlec.</th>
-                                        <th style="width: 17%">Akcje</th>
+                                        <th style="width: 12%">Akcje</th>
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body"></tbody>
                             </table>
+                            <div id="admin-empty-state" class="admin-empty-state hidden">
+                                <i data-lucide="users-x"></i>
+                                <div class="empty-title">Brak użytkowników</div>
+                                <div class="empty-desc">Dodaj pierwszego użytkownika poniżej</div>
+                            </div>
                         </div>
 
                         <!-- Inline User Form -->
                         <div class="admin-form-inline" id="user-form-container">
-                            <div class="form-grid">
-                                <input
-                                    type="text"
-                                    id="new-user-firstname"
-                                    placeholder="Imię"
-                                    class="glass-input"
-                                />
-                                <input
-                                    type="text"
-                                    id="new-user-lastname"
-                                    placeholder="Nazwisko"
-                                    class="glass-input"
-                                />
-                                <input
-                                    type="text"
-                                    id="new-user-symbol"
-                                    placeholder="Sym."
-                                    title="Symbol w numeracji"
-                                    class="glass-input"
-                                />
-                                <input
-                                    type="text"
-                                    id="new-user-login"
-                                    placeholder="Login"
-                                    autocomplete="username"
-                                    class="glass-input"
-                                />
-                                <input
-                                    type="password"
-                                    id="new-user-password"
-                                    placeholder="Hasło"
-                                    autocomplete="new-password"
-                                    class="glass-input"
-                                />
-
-                                <input
-                                    type="email"
-                                    id="new-user-email"
-                                    placeholder="Email"
-                                    class="glass-input"
-                                />
-                                <input
-                                    type="text"
-                                    id="new-user-phone"
-                                    placeholder="Telefon"
-                                    class="glass-input"
-                                />
-                                <select
-                                    id="new-user-role"
-                                    onchange="toggleSubUsersList()"
-                                    class="glass-input"
-                                >
-                                    <option value="user">USER</option>
-                                    <option value="pro">PRO</option>
-                                    <option value="admin">ADMIN</option>
-                                </select>
-                                <input
-                                    type="number"
-                                    id="new-user-order-start"
-                                    value="1"
-                                    title="Start Zamówień"
-                                    placeholder="Nr Zam."
-                                    class="glass-input"
-                                />
-                                <input
-                                    type="number"
-                                    id="new-user-prod-order-start"
-                                    value="1"
-                                    title="Start Zleceń"
-                                    placeholder="Nr Zlec."
-                                    class="glass-input"
-                                />
-                            </div>
-
-                            <!-- SubUsers container (only visible if role === 'pro') -->
-                            <div id="sub-users-container" class="hidden sub-users-compact">
-                                <span class="sub-users-title">Przypisani Użytkownicy:</span>
-                                <div id="sub-users-list" class="sub-users-list-compact">
-                                    <!-- Checkboxes will be rendered here -->
+                            <!-- Sekcja: Dane osobowe -->
+                            <div class="admin-form-section">
+                                <div class="admin-section-header">
+                                    <i data-lucide="contact"></i> Dane osobowe
+                                </div>
+                                <div class="admin-form-grid">
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-firstname">Imię</label>
+                                        <input type="text" id="new-user-firstname" placeholder="Imię" class="glass-input" />
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-lastname">Nazwisko</label>
+                                        <input type="text" id="new-user-lastname" placeholder="Nazwisko" class="glass-input" />
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-symbol">Symbol</label>
+                                        <input type="text" id="new-user-symbol" placeholder="Sym." title="Symbol w numeracji" class="glass-input" />
+                                    </div>
                                 </div>
                             </div>
 
+                            <!-- Sekcja: Dostęp -->
+                            <div class="admin-form-section">
+                                <div class="admin-section-header">
+                                    <i data-lucide="key-round"></i> Dostęp
+                                </div>
+                                <div class="admin-form-grid">
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-login">Login</label>
+                                        <input type="text" id="new-user-login" placeholder="Login" autocomplete="username" class="glass-input" />
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-password">Hasło</label>
+                                        <input type="password" id="new-user-password" placeholder="Hasło" autocomplete="new-password" class="glass-input" />
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-role">Rola</label>
+                                        <select id="new-user-role" onchange="toggleSubUsersList()" class="glass-input">
+                                            <option value="user">USER</option>
+                                            <option value="pro">PRO</option>
+                                            <option value="admin">ADMIN</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- SubUsers container (only visible if role === 'pro') -->
+                                <div id="sub-users-container" class="hidden sub-users-compact">
+                                    <span class="sub-users-title"><i data-lucide="link"></i> Przypisani:</span>
+                                    <div id="sub-users-list" class="sub-users-list-compact"></div>
+                                </div>
+                            </div>
+
+                            <!-- Sekcja: Kontakt -->
+                            <div class="admin-form-section">
+                                <div class="admin-section-header">
+                                    <i data-lucide="mail"></i> Kontakt
+                                </div>
+                                <div class="admin-form-grid">
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-email">Email</label>
+                                        <input type="email" id="new-user-email" placeholder="Email" class="glass-input" />
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-phone">Telefon</label>
+                                        <input type="text" id="new-user-phone" placeholder="Telefon" class="glass-input" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sekcja: Numeracja -->
+                            <div class="admin-form-section">
+                                <div class="admin-section-header">
+                                    <i data-lucide="hash"></i> Numeracja
+                                </div>
+                                <div class="admin-form-grid">
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-order-start">Nr Zamówień (start)</label>
+                                        <input type="number" id="new-user-order-start" value="1" title="Start Zamówień" class="glass-input" />
+                                    </div>
+                                    <div class="admin-form-group">
+                                        <label class="admin-form-label" for="new-user-prod-order-start">Nr Zleceń (start)</label>
+                                        <input type="number" id="new-user-prod-order-start" value="1" title="Start Zleceń" class="glass-input" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Akcje formularza -->
                             <div class="form-actions-inline">
-                                <span
-                                    id="form-mode-label"
-                                    style="
-                                        font-size: 0.75rem;
-                                        color: #94a3b8;
-                                        font-weight: 600;
-                                        margin-right: 1rem;
-                                        display: none;
-                                    "
-                                    >TRYB EDYCJI</span
-                                >
-                                <button
-                                    id="add-user-btn"
-                                    class="btn-hero btn-accent"
-                                    onclick="createUser()"
-                                >
+                                <span id="form-mode-label" class="admin-edit-badge hidden">
+                                    <i data-lucide="pencil"></i> TRYB EDYCJI
+                                </span>
+                                <button id="add-user-btn" class="btn-hero btn-accent" onclick="createUser()">
                                     <i data-lucide="plus"></i> Dodaj
                                 </button>
-                                <button
-                                    id="cancel-edit-btn"
-                                    class="btn-hero hidden"
-                                    onclick="cancelEditUser()"
-                                    style="
-                                        background: rgba(239, 68, 68, 0.1);
-                                        color: #f87171;
-                                        border: 1px solid rgba(239, 68, 68, 0.2);
-                                    "
-                                >
+                                <button id="cancel-edit-btn" class="btn-hero hidden" onclick="cancelEditUser()" style="background: var(--danger-bg); color: var(--danger-hover); border: 1px solid var(--danger-border);">
                                     Anuluj
                                 </button>
                             </div>
-                            <div
-                                id="admin-error"
-                                class="login-error"
-                                style="margin-top: 0.5rem; text-align: center"
-                            ></div>
+                            <div id="admin-error" class="login-error" style="padding: 0 1.1rem 0.5rem; text-align: center;"></div>
                         </div>
                     </div>
                 </div>

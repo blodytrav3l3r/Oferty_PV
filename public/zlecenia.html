@@ -23,19 +23,6 @@
 
         <main class="main">
             <div class="section active" id="section-zlecenia">
-                <div class="toolbar">
-                    <h2 style="font-size: 1rem; font-weight: 700">
-                        <i data-lucide="factory"></i> Kartoteka Zleceń Produkcyjnych
-                    </h2>
-                    <div class="toolbar-spacer"></div>
-                    <button
-                        class="btn btn-secondary btn-sm"
-                        onclick="AppZlecenia.loadOrders()"
-                        title="Odśwież bazę zleceń"
-                    >
-                        <i data-lucide="refresh-cw"></i> Odśwież
-                    </button>
-                </div>
 
                 <div class="zlecenia-page">
                     <!-- Summary stats -->
@@ -43,7 +30,7 @@
 
                     <!-- Main card -->
                     <section style="margin-bottom: 2rem">
-                        <!-- Header: filters + search -->
+                        <!-- Header: filters + search + refresh -->
                         <div class="zlecenia-header">
                             <div class="zlecenia-filters" id="zlecenia-filter-tabs">
                                 <button
@@ -102,6 +89,15 @@
                                     "
                                 />
                             </div>
+
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick="AppZlecenia.loadOrders()"
+                                title="Odśwież bazę zleceń"
+                                style="flex-shrink: 0"
+                            >
+                                <i data-lucide="refresh-cw"></i> Odśwież
+                            </button>
                         </div>
 
                         <!-- Batch action bar (visible when items selected) -->

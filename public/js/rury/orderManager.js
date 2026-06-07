@@ -621,12 +621,10 @@ function renderOrderModeBanner(orderData) {
     hideOrderModeBanner();
     const banner = document.createElement('div');
     banner.id = 'order-mode-banner';
-    banner.style.cssText = 'background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;';
+    banner.style.cssText = 'background:rgba(239,68,68,0.12);border:2px solid rgba(239,68,68,0.3);border-radius:10px;padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;';
     banner.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;">'
-        + '<span style="font-size:1.3rem;">📦</span>'
-        + '<span style="font-weight:700;color:#34d399;">Tryb edycji zamówienia</span>'
-        + '<span style="color:var(--text-muted);">|</span>'
-        + '<span style="color:var(--text-muted);font-size:0.82rem;">Zamówienie: <strong>' + escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') + '</strong></span>'
+        + '<span style="font-size:1.3rem;"><i data-lucide="package"></i></span>'
+        + '<span style="font-weight:800;color:#f87171;font-size:0.82rem;">TRYB ZAMÓWIENIA — <strong>' + escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') + '</strong></span>'
         + '</div>'
         + '<button class="btn btn-sm" onclick="exitOrderEditMode()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:0.3rem 0.7rem;font-size:0.75rem;font-weight:600;border-radius:6px;cursor:pointer;">Wyjdź</button>';
     const indicator = document.querySelector('.wizard-indicator');

@@ -42,13 +42,6 @@ function updateSubUsers(checkbox) {
     }
 }
 
-function escapeHtml(str) {
-    if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-}
-window.escapeHtml = escapeHtml;
 
 function getToken() {
     return localStorage.getItem('authToken');
@@ -240,24 +233,39 @@ async function loadUsers() {
         const res = await fetch('/api/users', { headers: authHeaders() });
         const data = await res.json();
         adminUsers = data.data || [];
+
+        updateStatsBar();
+
         const tbody = document.getElementById('users-table-body');
+        const emptyState = document.getElementById('admin-empty-state');
+
+        if (adminUsers.length === 0) {
+            tbody.innerHTML = '';
+            if (emptyState) emptyState.classList.remove('hidden');
+            return;
+        }
+
+        if (emptyState) emptyState.classList.add('hidden');
+
         tbody.innerHTML = adminUsers
             .map((u) => {
                 let html = `
       <tr>
         <td>
-            <div style="font-weight:700; color:white; text-align: center;">${escapeHtml((u.firstName || '') + ' ' + (u.lastName || ''))}</div>
-            <div style="font-size:0.65rem; color:var(--text-dim); text-align: center;">${escapeHtml(u.email || 'brak email')}</div>
+            <div class="user-name">${escapeHtml((u.firstName || '') + ' ' + (u.lastName || ''))}</div>
+            <div class="user-email">${escapeHtml(u.email || 'brak email')}</div>
         </td>
         <td><span class="token-badge" style="color:var(--warn);">${escapeHtml(u.symbol || '??')}</span></td>
-        <td style="font-family:monospace; color:var(--primary-hover);">${escapeHtml(u.username)}</td>
-        <td style="font-size:0.75rem;">${escapeHtml(u.phone || '—')}</td>
+        <td style="font-family:monospace; color:var(--primary-hover); font-size:0.78rem;">${escapeHtml(u.username)}</td>
+        <td style="font-size:0.75rem; color:var(--text-secondary);">${escapeHtml(u.phone || '—')}</td>
         <td><span class="badge-role ${escapeHtml(u.role)}">${escapeHtml(u.role.toUpperCase())}</span></td>
         <td style="color:#60a5fa; font-weight:800;">${escapeHtml(String(u.orderStartNumber || 1))}</td>
         <td style="color:var(--primary-hover); font-weight:800;">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
-        <td style="white-space:nowrap;">
-          <button class="btn-hero" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeHtml(u.id)}')" style="padding:0.4rem; display:inline-flex;"><i data-lucide="pencil" aria-hidden="true"></i></button>
-          ${u.username !== 'admin' ? `<button class="btn-hero" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeHtml(u.id)}')" style="padding:0.4rem; display:inline-flex; border-color:rgba(239,68,68,0.2); color:#f87171;"><i data-lucide="trash-2" aria-hidden="true"></i></button>` : ''}
+        <td>
+          <div class="admin-actions-cell">
+            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeHtml(u.id)}')"><i data-lucide="pencil"></i></button>
+            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeHtml(u.id)}')"><i data-lucide="trash-2"></i></button>` : ''}
+          </div>
         </td>
       </tr>`;
                 if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
@@ -272,7 +280,7 @@ async function loadUsers() {
                     html += `
       <tr class="subordinate-row">
         <td colspan="8">
-            <div class="subordinate-list" style="justify-content: center; display: flex; align-items: center; margin: 0.5rem auto; max-width: fit-content;">
+            <div class="subordinate-list">
                 <span class="subordinate-label"><i data-lucide="users"></i> POWIĄZANI HANDLOWCY:</span>
                 <div class="subordinate-badges">
                     ${subUsersNames.map((name) => `<span class="token-badge sub-token">${escapeHtml(name)}</span>`).join('')}
@@ -284,7 +292,24 @@ async function loadUsers() {
                 return html;
             })
             .join('');
-    } catch (e) {}
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons({ root: tbody });
+        }
+    } catch (e) { console.error('loadUsers error:', e); }
+}
+
+function updateStatsBar() {
+    const counts = { admin: 0, pro: 0, user: 0 };
+    adminUsers.forEach((u) => {
+        if (counts.hasOwnProperty(u.role)) counts[u.role]++;
+    });
+    const adminEl = document.getElementById('stat-admin-count');
+    const proEl = document.getElementById('stat-pro-count');
+    const userEl = document.getElementById('stat-user-count');
+    if (adminEl) adminEl.textContent = counts.admin;
+    if (proEl) proEl.textContent = counts.pro;
+    if (userEl) userEl.textContent = counts.user;
 }
 
 function startEditUser(id) {
@@ -307,17 +332,21 @@ function startEditUser(id) {
     selectedSubUsers = [...(u.subUsers || [])];
     toggleSubUsersList();
 
-    document.getElementById('form-mode-label').style.display = 'inline-block';
-    document.getElementById('form-mode-label').textContent =
-        'EDYCJA: ' + (u.firstName || u.username);
+    const modeLabel = document.getElementById('form-mode-label');
+    modeLabel.classList.remove('hidden');
+    modeLabel.innerHTML = '<i data-lucide="pencil"></i> EDYCJA: ' + escapeHtml(u.firstName || u.username);
     document.getElementById('add-user-btn').innerHTML =
         '<i data-lucide="save"></i> Zapisz';
     document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ root: modeLabel });
+    }
 }
 
 function cancelEditUser() {
     editingUserId = null;
-    document.getElementById('form-mode-label').style.display = 'none';
+    document.getElementById('form-mode-label').classList.add('hidden');
     document.getElementById('new-user-firstname').value = '';
     document.getElementById('new-user-lastname').value = '';
     document.getElementById('new-user-symbol').value = '';
@@ -336,6 +365,10 @@ function cancelEditUser() {
 
     selectedSubUsers = [];
     toggleSubUsersList();
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ root: document.getElementById('user-form-container') });
+    }
 }
 
 async function createUser() {
@@ -404,7 +437,7 @@ async function deleteUser(id) {
     try {
         await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
         loadUsers();
-    } catch (e) {}
+    } catch (e) { console.error('deleteUser error:', e); }
 }
 
 function showChangePassword() {

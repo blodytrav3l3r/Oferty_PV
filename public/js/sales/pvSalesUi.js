@@ -501,7 +501,6 @@ class PVSalesUI {
                                         </span>
                                     </button>
                                     <div class="offer-order-actions">
-                                        ${changeInfo.changed ? '<span class="offer-change-chip"><i data-lucide="activity" aria-hidden="true"></i> zmiany</span>' : ''}
                                         <button class="action-btn success btn-karta-budowy" data-id="${this.escapeHtml(offer.id)}" data-type="${this.escapeHtml(offer.type)}" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
                                         <button class="action-btn secondary btn-history-order" data-order-id="${this.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
                                         <button class="action-btn danger btn-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
@@ -565,8 +564,9 @@ class PVSalesUI {
                     (offer.data && (offer.data.investName || offer.data.budowa));
                 const rawUserName =
                     offer.userName ||
-                    offer.lastEditedBy ||
+                    (offer.data && offer.data.userName) ||
                     (offer.data && offer.data.creatorName) ||
+                    offer.lastEditedBy ||
                     '';
                 const rawCreatorName =
                     offer.createdByUserName ||
@@ -587,6 +587,7 @@ class PVSalesUI {
 
                 const userName = resolveUser(rawUserName);
                 const creatorName = resolveUser(rawCreatorName);
+                const isClickable = this.role === 'admin' || this.role === 'pro';
 
                 return `
                 <div class="modern-offer-card" data-offer-id="${offer.id}">
@@ -605,17 +606,8 @@ class PVSalesUI {
                                 <div class="offer-subtitle">
                                     <span class="offer-client">${clientInfo}</span>
                                     ${investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${investInfo}</span>` : ''}
-                                    ${(() => {
-                                        let html = '';
-                                        const isClickable = this.role === 'admin' || this.role === 'pro';
-                                        if (creatorName === userName && creatorName) {
-                                            html = `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> ${creatorName}</span>`;
-                                        } else {
-                                            if (creatorName) html += `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>`;
-                                            if (userName) html += `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>`;
-                                        }
-                                        return html;
-                                    })()}
+                                    ${creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>` : ''}
+                                    ${userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>` : ''}
                                 </div>
                             </div>
                             <div class="offer-price-section">
@@ -1792,7 +1784,7 @@ class PVSalesUI {
                     const orderEndpoint =
                         offerType === 'studnia_oferta'
                             ? `/api/orders-studnie/${linkedOrder.id}`
-                            : `/api/orders-pv/${linkedOrder.id}`;
+                            : `/api/orders-rury/${linkedOrder.id}`;
                     fetch(orderEndpoint, {
                         method: 'PATCH',
                         headers,
