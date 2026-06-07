@@ -1,6 +1,20 @@
 // Wersja 2.0 - Zarzadzanie zamowieniami w Kartotece
 import { storageService } from '../shared/StorageService.js';
 
+/**
+ * Inferuje, czy oferta jest rurą (vs studnią) na podstawie pola type
+ * oraz fallbacków dla legacy danych.
+ *  - 'rura_oferta' → rury (aktualny typ)
+ *  - 'offer'       → rury (legacy typ używany przed rename)
+ *  - id oferty zaczynające się od 'offer_rury_' → rury (heurystyka po ID)
+ * Wszystkie pozostałe (w tym 'studnia_oferta' i brak danych) → studnie.
+ */
+function isRuryOfferFromTypeOrId(offerType, offerId) {
+    if (offerType === 'rura_oferta' || offerType === 'offer') return true;
+    if (offerId && /^offer_rury_/.test(offerId)) return true;
+    return false;
+}
+
 class PVSalesUI {
     constructor() {
         this.syncManager = null;
@@ -602,7 +616,8 @@ class PVSalesUI {
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerIdAttr = buttonEl.getAttribute('data-offer-id');
                 const offerTypeAttr = buttonEl.getAttribute('data-offer-type');
-                if (offerTypeAttr === 'rura_oferta' && typeof window.showUniversalPrintModalRury === 'function') {
+                const isRury = isRuryOfferFromTypeOrId(offerTypeAttr, offerIdAttr);
+                if (isRury && typeof window.showUniversalPrintModalRury === 'function') {
                     window.showUniversalPrintModalRury(offerIdAttr, orderId);
                 } else if (typeof window.showUniversalPrintModal === 'function') {
                     window.showUniversalPrintModal(offerIdAttr, orderId);
@@ -741,18 +756,9 @@ class PVSalesUI {
             if (title.includes('wydruk') || title.includes('drukuj') || title.includes('karta budowy')) {
                 const printOfferId = btn.getAttribute('data-offer-id') || id;
                 const printOrderId = orderId || '';
-                // Inferencja typu: explicit, legacy 'offer', lub prefix ID (gdy type brak w danych)
-                const isRuryOffer = offerType === 'rura_oferta'
-                    || offerType === 'offer'
-                    || (printOfferId && /^offer_rury_/.test(printOfferId));
-                // Rury: dedykowany modal (Karta Budowy + Oferta, Bootstrap-styled)
+                const isRuryOffer = isRuryOfferFromTypeOrId(offerType, printOfferId);
                 if (isRuryOffer && typeof window.showUniversalPrintModalRury === 'function') {
                     window.showUniversalPrintModalRury(printOfferId, printOrderId);
-                    return;
-                }
-                // Rury (legacy 'offer' type) — bezpośredni export karty budowy (szybsze bez modala)
-                if (isRuryOffer && printOrderId && typeof window.exportKartaDirectRury_action === 'function') {
-                    window.exportKartaDirectRury_action(printOrderId, 'pdf');
                     return;
                 }
                 if (typeof window.showUniversalPrintModal === 'function') {
@@ -783,77 +789,6 @@ class PVSalesUI {
                 return;
             }
         });
-    }
-
-    openExportPopupUnified(id, type) {
-        let overlay = document.getElementById('export-offer-modal');
-        if (overlay) overlay.remove();
-
-        showModal({
-            id: 'export-offer-modal',
-            titleId: 'export-offer-title',
-            html: `
-            <div class="modal" style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:350px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
-                <h3 id="export-offer-title" style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wydruk Oferty</h3>
-                <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:1.5rem;">Do jakiego formatu chcesz wyeksportować tę ofertę?</p>
-                <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:1.5rem;">
-                    <!-- PDF -->
-                    <button onclick="if(window.pvSalesUI) window.pvSalesUI.handleExportClick('${id}', '${type}', 'pdf')" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:2px solid rgba(239,68,68,0.6); padding:1rem; border-radius:10px; cursor:pointer; font-weight:800; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                        <span style="font-size:2rem;"><i data-lucide="file-text"></i></span> PDF
-                    </button>
-                    <!-- Word -->
-                    <button onclick="if(window.pvSalesUI) window.pvSalesUI.handleExportClick('${id}', '${type}', 'word')" style="flex:1; background:rgba(59,130,246,0.2); color:#93c5fd; border:2px solid rgba(59,130,246,0.6); padding:1rem; border-radius:10px; cursor:pointer; font-weight:800; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                        <span style="font-size:2rem;"><i data-lucide="edit"></i></span> Word
-                    </button>
-                </div>
-                <button style="padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="closeModal()">Anuluj</button>
-            </div>
-        `
-        });
-    }
-
-    handleExportClick(id, type, format) {
-        closeModal();
-
-        const ext = format === 'pdf' ? 'pdf' : 'docx';
-        const endpoint =
-            type === 'offer'
-                ? `/api/offers-rury/${id}/export-${ext}`
-                : `/api/offers-studnie/${id}/export-${ext}`;
-
-        if (typeof window.showToast === 'function') {
-            window.showToast(`Generowanie pliku ${ext.toUpperCase()}...`, 'info');
-        }
-
-        fetch(endpoint, {
-            headers:
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' }
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error('Nie udało się wyeksportować oferty');
-                return res.blob();
-            })
-            .then((blob) => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `oferta_${type}_${id}.${ext}`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-                if (typeof window.showToast === 'function') {
-                    window.showToast(`Wyeksportowano ofertę do ${ext.toUpperCase()}`, 'success');
-                }
-            })
-            .catch((err) => {
-                console.error('[Export Error]', err);
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Błąd eksportu: ' + err.message, 'error');
-                }
-            });
     }
 
     async deleteOrderUnified(orderId, offerType) {

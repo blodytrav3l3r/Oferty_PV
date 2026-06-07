@@ -73,9 +73,10 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(src).toMatch(pattern);
         });
 
-        it('modal .btn-print-order handler dispatchuje rura_oferta → showUniversalPrintModalRury', () => {
+        it('modal .btn-print-order handler dispatchuje rury → showUniversalPrintModalRury (przez helper)', () => {
+            // Po refaktorze: btn-print-order wywołuje isRuryOfferFromTypeOrId, nie inline logic
             const pattern =
-                /btn-print-order[\s\S]{0,800}offerTypeAttr\s*===\s*['"]rura_oferta['"][\s\S]{0,200}showUniversalPrintModalRury/;
+                /btn-print-order[\s\S]{0,800}isRuryOfferFromTypeOrId[\s\S]{0,400}showUniversalPrintModalRury/;
             expect(src).toMatch(pattern);
         });
     });
@@ -153,23 +154,47 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             src = readFile(PV_SALES_UI);
         });
 
-        it('dispatch inferuje rury z offerType === "offer" (legacy)', () => {
-            // isRuryOffer obejmuje 'rura_oferta', 'offer', oraz /^offer_rury_/ regex
-            expect(src).toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
-            expect(src).toMatch(/offerType\s*===\s*['"]offer['"]/);
+        it('dispatch inferuje rury z offerType === "rura_oferta" + legacy "offer" + ID prefix', () => {
+            // Helper isRuryOfferFromTypeOrId obejmuje 3 warunki: 'rura_oferta' | 'offer' | /^offer_rury_/
+            expect(src).toMatch(/function isRuryOfferFromTypeOrId\s*\(/);
+            expect(src).toMatch(/['"]rura_oferta['"]/);
+            expect(src).toMatch(/['"]offer['"]/);
             expect(src).toMatch(/\^offer_rury_/);
         });
 
-        it('dispatch wywołuje window.exportKartaDirectRury_action dla rury + orderId', () => {
-            // Nowa nazwa (nie stara exportKartaDirect_action)
-            expect(src).toMatch(/window\.exportKartaDirectRury_action\s*\(/);
+        it('główny wiersz i popup UŻYWAJĄ tego samego helpera (spójność dispatch)', () => {
+            // Oba miejsca muszą wywołać isRuryOfferFromTypeOrId (nie inline logic)
+            const mainRow = /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,400}isRuryOfferFromTypeOrId/;
+            const popup = /btn-print-order[\s\S]{0,400}isRuryOfferFromTypeOrId/;
+            expect(src).toMatch(mainRow);
+            expect(src).toMatch(popup);
+        });
+
+        it('dispatch NIE używa już inline "isRuryOffer = offerType === ..." (zastąpione helperem)', () => {
+            expect(src).not.toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
+        });
+
+        it('dispatch NIE wywołuje już window.exportKartaDirectRury_action bezpośrednio (usunięty bypass)', () => {
+            // Po refaktorze wszystkie ścieżki idą przez uniwersalny modal
+            expect(src).not.toMatch(/window\.exportKartaDirectRury_action\s*\(/);
         });
 
         it('fallback data-offer-type inferuje rury po ID prefix', () => {
-            // W kodzie źródłowym regex literal to /^offer_rury_/ — nie trzeba escape'ować /
             expect(src).toMatch(/test\(offerKey\)/);
             expect(src).toMatch(/rura_oferta/);
             expect(src).toMatch(/studnia_oferta/);
+        });
+    });
+
+    describe('Static: martwy kod usunięty (openExportPopupUnified + handleExportClick)', () => {
+        it('pvSalesUi.js NIE zawiera już openExportPopupUnified', () => {
+            const src = readFile(PV_SALES_UI);
+            expect(src).not.toMatch(/openExportPopupUnified/);
+        });
+
+        it('pvSalesUi.js NIE zawiera już handleExportClick', () => {
+            const src = readFile(PV_SALES_UI);
+            expect(src).not.toMatch(/handleExportClick/);
         });
     });
 
