@@ -227,7 +227,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     }));
 
     // 8. Rzeczywista ilość przejść (z wells[], nie z kartaBudowy snapshota)
-    const allProducts = new Map<string, { componentType: string; category: string; dn: number; height: number }>();
+    const allProducts = new Map<string, { componentType: string; category: string; dn: number | string; height: number }>();
     try {
       const jsonPath = path.join(process.cwd(), 'public', 'data', 'products_studnie.json');
       const raw = fs.readFileSync(jsonPath, 'utf-8');
@@ -239,9 +239,16 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
       logger.warn('DocxKartaBudowy', 'Nie udało się załadować produktów', e);
     }
 
+    function _findPrzejscieByIdPrefix(products: Map<string, { componentType: string; category: string; dn: number | string; height: number }>, productId: string): { componentType: string; category: string; dn: number | string; height: number } | undefined {
+      for (const [id, p] of products) {
+        if (id.startsWith(productId) && p.componentType === 'przejscie') return p;
+      }
+      return undefined;
+    }
+
     const wsz = (Array.isArray(orderData.wells) ? orderData.wells : []) as any[];
 
-    interface TransSummary { cat: string; dn: number; cntD: number; cntOT: number; cntTotal: number }
+    interface TransSummary { cat: string; dn: number | string; cntD: number; cntOT: number; cntTotal: number }
     const tCounts = new Map<string, TransSummary>();
 
     for (const w of wsz) {
@@ -266,8 +273,11 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
 
       const pjs = (Array.isArray(w.przejscia) ? w.przejscia : []) as any[];
       for (const pj of pjs) {
-        const prod = allProducts.get(pj.productId);
-        if (!prod || prod.componentType !== 'przejscie') continue;
+        let prod = allProducts.get(pj.productId);
+        if (!prod || prod.componentType !== 'przejscie') {
+          prod = _findPrzejscieByIdPrefix(allProducts, pj.productId);
+          if (!prod) continue;
+        }
 
         const rzdPj = parseFloat(pj.rzednaWlaczenia);
         if (isNaN(rzdPj)) continue;
@@ -293,8 +303,14 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
       }
     }
 
+
     if (tCounts.size > 0) {
-      const sorted = [...tCounts.values()].sort((a, b) => a.cat.localeCompare(b.cat) || a.dn - b.dn);
+      const sorted = [...tCounts.values()].sort((a, b) => {
+        if (a.cat !== b.cat) return a.cat.localeCompare(b.cat);
+        const dnA = typeof a.dn === 'string' ? parseFloat(a.dn.split('/')[0]) || 0 : a.dn;
+        const dnB = typeof b.dn === 'string' ? parseFloat(b.dn.split('/')[0]) || 0 : b.dn;
+        return dnA - dnB;
+      });
       let gD = 0, gOT = 0, gTotal = 0;
       for (const r of sorted) { gD += r.cntD; gOT += r.cntOT; gTotal += r.cntTotal; }
 
@@ -309,7 +325,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
               textCell('Lp.', { width: 8, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
               textCell('Rodzaj przejścia', { width: 30, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
               textCell('Średnica (DN)', { width: 14, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
-              textCell('Dennica', { width: 16, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
+              textCell('Ilość', { width: 16, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
               textCell('Kręgi wiercone', { width: 16, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
               textCell('Suma', { width: 16, size: SZ_TABLE_HEADER, alignment: AlignmentType.CENTER, bold: true, fill: COLOR_GRAY_HEADER, color: COLOR_WHITE }),
             ]
@@ -318,7 +334,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
             children: [
               textCell(String(idx + 1), { width: 8, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER }),
               textCell(row.cat, { width: 30, size: SZ_TABLE_BODY }),
-              textCell(`DN${row.dn}`, { width: 14, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER }),
+              textCell(typeof row.dn === 'string' ? row.dn : `DN${row.dn}`, { width: 14, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER }),
               textCell(String(row.cntD), { width: 16, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER }),
               textCell(String(row.cntOT), { width: 16, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER }),
               textCell(String(row.cntTotal), { width: 16, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER }),

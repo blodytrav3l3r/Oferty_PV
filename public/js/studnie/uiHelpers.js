@@ -1,10 +1,24 @@
 /* ===== KREATOR ===== */
 function goToWizardStep(step) {
-    if (step <= 3 && typeof orderEditMode !== 'undefined' && orderEditMode) {
-        // Jeśli wracamy do kroku 1, 2 lub 3 z kroku 5, musimy wyjść z trybu zamówienia
-        // Przekazujemy krok docelowy, aby po załadowaniu poprawnie go ustawić
-        exitWizardOrderMode(step);
-        return; // exitWizardOrderMode wywoła goToWizardStep ponownie
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        if (step <= 2) {
+            // Kroki 1-2 dostępne w trybie zamówienia (podgląd danych)
+            currentWizardStep = step;
+            document.querySelectorAll('.wizard-step').forEach((s) => s.classList.remove('active'));
+            updateWizardIndicator();
+            updateStudnieBottomNav();
+            const target = document.getElementById('wizard-step-' + step);
+            if (target) target.classList.add('active');
+            const layout = document.querySelector('.well-app-layout');
+            if (layout) layout.classList.toggle('intro-mode', step === 1 || step === 2);
+            showSection('builder');
+            if (step === 2) validateWizardStep2();
+            return;
+        }
+        if (step === 3) {
+            showToast('Krok 3 (Oferta) jest niedostępny w trybie zamówienia', 'info');
+            return;
+        }
     }
 
     if (typeof startStudnieViewTransition === 'function') {
@@ -76,6 +90,14 @@ function enterWizardOrderMode() {
         // Aktywuj wizard-step-3 (builder) bo krok 4.2 nie ma własnego panelu
         const target = document.getElementById('wizard-step-3');
         if (target) target.classList.add('active');
+        return;
+    }
+
+    // W trybie oferty (edytujemy ofertę) blokuj przejście do zamówienia
+    if (editingOfferIdStudnie) {
+        showToast('Przejdź do zamówienia przez przycisk "Utwórz zamówienie" w podsumowaniu', 'info');
+        currentWizardStep = 3;
+        updateWizardIndicator();
         return;
     }
 
@@ -317,9 +339,17 @@ function updateWizardIndicator() {
     const dots = document.querySelectorAll('.wizard-step-dot');
     dots.forEach((dot) => {
         const step = parseInt(dot.dataset.step);
-        dot.classList.remove('active', 'completed');
+        dot.classList.remove('active', 'completed', 'disabled');
         if (step === currentWizardStep) dot.classList.add('active');
         else if (step < currentWizardStep) dot.classList.add('completed');
+
+        // Zablokuj kropkę kroku 5 w trybie oferty, kroku 3 w trybie zamówienia
+        if (step === 5 && editingOfferIdStudnie && !orderEditMode) {
+            dot.classList.add('disabled');
+        }
+        if (step === 3 && orderEditMode) {
+            dot.classList.add('disabled');
+        }
     });
     const line1 = document.getElementById('wizard-line-1');
     const line2 = document.getElementById('wizard-line-2');

@@ -1446,11 +1446,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => showSection(btn.dataset.section));
     });
 
-    // Ustawianie wyszukiwania
-    document
-        .getElementById('studnie-pricelist-search')
-        ?.addEventListener('input', renderStudniePriceList);
-
     // Ustawianie domyślnych parametrów oferty
     document.getElementById('offer-date').value = new Date().toISOString().slice(0, 10);
     document.getElementById('offer-number').value = generateOfferNumberStudnie();
@@ -1526,6 +1521,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+
+// ── Wyszukiwarka cennika (osobny listener, poza strażnikiem __STUDNIE_APP_ORCHESTRATOR__) ──
+document.addEventListener('DOMContentLoaded', () => {
+    document
+        .getElementById('studnie-pricelist-search')
+        ?.addEventListener('input', renderStudniePriceList);
+});
+
 /**
  * Automatycznie naprawia brakujące metadane w produktach (np. dodanych wcześniej ręcznie)
  */
