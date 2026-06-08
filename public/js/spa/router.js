@@ -24,45 +24,37 @@ const SpaRouter = (() => {
         rury: {
             src: 'rury.html',
             logo: 'Oferty rury',
-            logoColors: ['#6366f1', '#8b5cf6'],
             sections: [
                 {
                     id: 'builder',
                     icon: '<i data-lucide="edit"></i>',
                     label: 'Konfiguracja',
-                    accent: '#10b981',
-                    glow: '#0d2b22'
                 },
-                { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta', accent: '#3b82f6', glow: '#152040' },
-                { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
+                { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },
+                { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik' }
             ]
         },
         studnie: {
             src: 'studnie.html',
             logo: 'Kalkulator Studni',
-            logoColors: ['#10b981', '#34d399'],
             sections: [
                 {
                     id: 'builder',
                     icon: '<i data-lucide="cylinder"></i>',
                     label: 'Konfiguracja',
-                    accent: '#10b981',
-                    glow: '#0d2b22'
                 },
-                { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta', accent: '#3b82f6', glow: '#152040' },
-                { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik', accent: '#8b5cf6', glow: '#1e1540' }
+                { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },
+                { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik' }
             ]
         },
         kartoteka: {
             src: 'kartoteka.html',
             logo: 'Kartoteka Ofert',
-            logoColors: ['#f59e0b', '#fbbf24'],
             sections: []
         },
         zlecenia: {
             src: 'zlecenia.html',
             logo: 'Kartoteka Zleceń',
-            logoColors: ['#ec4899', '#f472b6'],
             sections: []
         }
     };
@@ -110,11 +102,7 @@ const SpaRouter = (() => {
 
         const lgSpa = document.getElementById('lg-spa');
         if (lgSpa) {
-            const stops = lgSpa.querySelectorAll('stop');
-            if (stops.length >= 2) {
-                stops[0].setAttribute('stop-color', config.logoColors[0]);
-                stops[1].setAttribute('stop-color', config.logoColors[1]);
-            }
+            lgSpa.className = 'logo logo-' + module;
         }
     }
 
@@ -125,9 +113,8 @@ const SpaRouter = (() => {
         nav.innerHTML = sections
             .map(
                 (s, i) => `
-            <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
+            <button class="nav-btn nav-tile nav-accent-${s.id}${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
-                style="--nav-accent:${s.accent}; --nav-glow:${s.glow}"
                 onclick="${s.isLink ? `window.location.hash='${s.href}'` : `SpaRouter.showSection('${s.id}')`}">
                 <span class="nav-tile-icon">${s.icon}</span>
                 <span class="nav-tile-text">${s.label}</span>
@@ -411,19 +398,19 @@ const SpaRouter = (() => {
                 roleEl.textContent = role === 'admin' ? 'ADMIN' : role === 'pro' ? 'PRO' : 'USER';
                 const colorMap = {
                     admin: {
-                        bg: 'rgba(245,158,11,0.15)',
-                        fg: '#f59e0b',
-                        border: 'rgba(245,158,11,0.3)'
+                        bg: 'rgba(var(--warn-rgb),0.15)',
+                        fg: 'var(--warn)',
+                        border: 'rgba(var(--warn-rgb),0.3)'
                     },
                     pro: {
-                        bg: 'rgba(16,185,129,0.15)',
-                        fg: '#10b981',
-                        border: 'rgba(16,185,129,0.3)'
+                        bg: 'rgba(var(--success-rgb),0.15)',
+                        fg: 'var(--success)',
+                        border: 'rgba(var(--success-rgb),0.3)'
                     },
                     user: {
-                        bg: 'rgba(59,130,246,0.15)',
-                        fg: '#60a5fa',
-                        border: 'rgba(59,130,246,0.3)'
+                        bg: 'rgba(var(--blue-rgb),0.15)',
+                        fg: 'var(--blue-hover)',
+                        border: 'rgba(var(--blue-rgb),0.3)'
                     }
                 };
                 const c = colorMap[role] || colorMap.user;

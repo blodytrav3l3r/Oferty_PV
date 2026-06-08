@@ -17,12 +17,12 @@
         <header class="header">
             <div class="header-inner">
                 <div class="header-left">
-                    <div class="logo rury-logo">
+                    <div class="logo logo-rury">
                         <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="2">
                             <defs>
                                 <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-                                    <stop offset="0%" stop-color="#6366f1" />
-                                    <stop offset="100%" stop-color="#8b5cf6" />
+                                    <stop offset="0%" class="logo-stop-start" />
+                                    <stop offset="100%" class="logo-stop-end" />
                                 </linearGradient>
                             </defs>
                             <circle cx="12" cy="12" r="9" />
@@ -44,7 +44,7 @@
                             href="app.html#/rury"
                             target="_parent"
                             class="nav-tile active"
-                            style="--nav-accent: #6366f1; --nav-glow: #1a1a3e"
+                            style="--nav-accent: var(--accent); --nav-glow: var(--accent-bg)"
                         >
                             <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
                             <span class="nav-tile-text">Rury</span>
@@ -59,28 +59,25 @@
                 <div class="header-center">
                     <nav class="nav">
                         <button
-                            class="nav-btn nav-tile active"
+                            class="nav-btn nav-tile active nav-accent-builder"
                             data-section="builder"
-                            id="nav-builder"
-                            style="--nav-accent: #10b981; --nav-glow: #0d2a20"
+                            id="nav-builder">
                         >
                             <span class="nav-tile-icon"><i data-lucide="edit"></i></span>
                             <span class="nav-tile-text">Konfiguracja</span>
                         </button>
                         <button
-                            class="nav-btn nav-tile"
+                            class="nav-btn nav-tile nav-accent-offer"
                             data-section="offer"
-                            id="nav-offer"
-                            style="--nav-accent: #3b82f6; --nav-glow: #152040"
+                            id="nav-offer">
                         >
                             <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
                             <span class="nav-tile-text">Oferta</span>
                         </button>
                         <button
-                            class="nav-btn nav-tile"
+                            class="nav-btn nav-tile nav-accent-pricelist"
                             data-section="pricelist"
-                            id="nav-pricelist"
-                            style="--nav-accent: #8b5cf6; --nav-glow: #1e1540"
+                            id="nav-pricelist">
                         >
                             <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
                             <span class="nav-tile-text">Cennik</span>
@@ -233,8 +230,8 @@
                             <div class="zt-toggle-wrap">
                                 <span class="zt-toggle-label">Zabezp. transp.</span>
                                 <div class="zt-toggle-group">
-                                    <button class="zt-toggle-btn active" id="zt-toggle-tak" onclick="setZabezpieczenieTransportu(true)">TAK</button>
-                                    <button class="zt-toggle-btn" id="zt-toggle-nie" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+<button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak" onclick="setZabezpieczenieTransportu(true)">TAK</button>
+                                        <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie" onclick="setZabezpieczenieTransportu(false)">NIE</button>
                                 </div>
                             </div>
                         </div>
@@ -263,7 +260,16 @@
                 <!-- ===== FAZA 3: OFERTA (PODSUMOWANIE) ===== -->
                 <div class="wizard-step" id="wizard-step-3">
                     <div class="rury-card" style="padding-bottom: 0">
-                        <div class="rury-card-title" style="margin-bottom: 0.8rem"><i data-lucide="package"></i> Pozycje oferty</div>
+                        <div class="rury-card-header" style="margin-bottom:0.8rem; border-bottom:none; padding-bottom:0;">
+                            <span class="rury-card-title"><i data-lucide="package"></i> Pozycje oferty</span>
+                            <div class="zt-toggle-wrap">
+                                <span class="zt-toggle-label">Zabezp. transp.</span>
+                                <div class="zt-toggle-group">
+                                    <button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak-3" onclick="setZabezpieczenieTransportu(true)">TAK</button>
+                                    <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie-3" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                                </div>
+                            </div>
+                        </div>
                         <div id="offer-items-content">
                             <div class="rury-table-wrap">
                                 <table class="rury-table">
@@ -669,7 +675,16 @@
 
                     <!-- Karta: Pozycje zamówienia -->
                     <div class="card" style="margin-bottom:1rem;">
-                        <div class="card-title-sm" style="margin-bottom:0.6rem;"><i data-lucide="bar-chart-2"></i> Pozycje zamówienia</div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:0.6rem;">
+                            <div class="card-title-sm" style="margin-bottom:0;"><i data-lucide="bar-chart-2"></i> Pozycje zamówienia</div>
+                            <div class="zt-toggle-wrap">
+                                <span class="zt-toggle-label">Zabezp. transp.</span>
+                                <div class="zt-toggle-group">
+                                    <button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak-5" onclick="setZabezpieczenieTransportu(true)">TAK</button>
+                                    <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie-5" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                                </div>
+                            </div>
+                        </div>
                         <div id="order-items-content">
                             <div class="rury-table-wrap">
                                 <table class="rury-table">
@@ -803,6 +818,14 @@
                         <h2 style="font-size: 1rem; font-weight: 700">
                             <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Rury)
                         </h2>
+                        <div class="toolbar-spacer"></div>
+                        <div class="zt-toggle-wrap">
+                            <span class="zt-toggle-label">Zabezp. transp.</span>
+                            <div class="zt-toggle-group">
+                                <button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak-oferta" onclick="setZabezpieczenieTransportu(true)">TAK</button>
+                                <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie-oferta" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="offer-tab-summary-body"></div>
                 </div>
@@ -886,6 +909,10 @@
                             <div style="margin-bottom: 2px;">Ilość aut: <span style="color: #cbd5e1; font-weight: 600;" id="rury-transport-count">0</span></div>
                             <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;" id="rury-transport-rate">0,00 PLN</span></div>
                         </div>
+                    </div>
+                    <div class="rury-summary-card">
+                        <div class="rury-summary-label">Zabezpieczenie transportu</div>
+                        <div class="rury-summary-value" id="sum-zabezpieczenie" style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">0,00 PLN</div>
                     </div>
                     <div class="rury-summary-card">
                         <div class="rury-summary-label">RAZEM Netto</div>

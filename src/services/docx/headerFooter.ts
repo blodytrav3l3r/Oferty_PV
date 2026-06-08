@@ -1,4 +1,5 @@
 import { Paragraph, TextRun, Header, Footer, PageNumber, ImageRun, AlignmentType } from 'docx';
+import { DOCX_COLORS } from './colors';
 import { FONT, COLOR_GRAY_HEADER } from './constants';
 import { loadImageData } from './helpers';
 
@@ -17,7 +18,7 @@ export function buildImageHeader(): Header {
                             bold: true,
                             size: 28,
                             font: FONT,
-                            color: 'CC0000'
+                            color: DOCX_COLORS.brandRed
                         })
                     ],
                     alignment: AlignmentType.CENTER

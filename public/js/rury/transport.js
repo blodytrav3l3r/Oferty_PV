@@ -91,6 +91,7 @@ function calculateTransportDistributionStandalone(items, costPerTrip) {
  */
 function updateOfferSummary() {
     let totalProductsNetto = 0;
+    let totalZabezpieczenie = 0;
     const costPerTrip = getCostPerTrip();
     const activeItems = getActiveItemsArray();
 
@@ -102,14 +103,19 @@ function updateOfferSummary() {
         const pehdCost = item.pehdCostPerUnit || 0;
         const surcharge = item.surcharge || 0;
         const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
-        totalProductsNetto += priceAfterDiscount * item.quantity;
+        const itemTotal = priceAfterDiscount * item.quantity;
+        if (item.productId && item.productId.startsWith('ZT-')) {
+            totalZabezpieczenie += itemTotal;
+        } else {
+            totalProductsNetto += itemTotal;
+        }
     });
 
     // Oblicz transporty dla zestawienia
     const transportResult = calculateTransports(activeItems);
 
     const totalTransportCostCalc = transportResult.totalTransports * costPerTrip;
-    const finalTotalNetto = totalProductsNetto + totalTransportCostCalc;
+    const finalTotalNetto = totalProductsNetto + totalTransportCostCalc + totalZabezpieczenie;
     const totalVat = finalTotalNetto * 0.23;
     const totalBrutto = finalTotalNetto + totalVat;
 
@@ -127,6 +133,9 @@ function updateOfferSummary() {
 
     const elTransportRate = document.getElementById('rury-transport-rate');
     if (elTransportRate) elTransportRate.textContent = fmt(costPerTrip) + ' PLN';
+
+    const elZabezpieczenie = document.getElementById('sum-zabezpieczenie');
+    if (elZabezpieczenie) elZabezpieczenie.textContent = fmt(totalZabezpieczenie) + ' PLN';
 
     const elTotalNetto = document.getElementById('sum-total-netto');
     if (elTotalNetto) elTotalNetto.textContent = fmt(finalTotalNetto) + ' PLN';

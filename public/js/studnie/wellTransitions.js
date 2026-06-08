@@ -114,7 +114,7 @@ function renderInlinePrzejsciaApp(containerId) {
                   if (p.category === 'Otwór KPED') return true;
                   let pDn = 160;
                   if (typeof p.dn === 'string' && p.dn.includes('/')) {
-                      pDn = parseFloat(p.dn.split('/')[1]) || 160;
+                      pDn = parseFloat(p.dn.split('/')[0]) || 160;
                   } else {
                       pDn = parseFloat(p.dn) || 160;
                   }
@@ -582,7 +582,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     if (pr.category === 'Otwór KPED') return true;
                     let pDn = 160;
                     if (typeof pr.dn === 'string' && pr.dn.includes('/')) {
-                        pDn = parseFloat(pr.dn.split('/')[1]) || 160;
+                        pDn = parseFloat(pr.dn.split('/')[0]) || 160;
                     } else {
                         pDn = parseFloat(pr.dn) || 160;
                     }

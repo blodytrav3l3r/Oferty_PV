@@ -172,7 +172,7 @@ const AppZlecenia = (() => {
             console.error(err);
             showToast('<i data-lucide="x-circle"></i> Błąd pobierania zleceń', 'error');
             if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:#ef4444;">Wystąpił błąd: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--danger);">Wystąpił błąd: ${err.message}</td></tr>`;
             }
         }
     }
@@ -207,21 +207,21 @@ const AppZlecenia = (() => {
 
         container.innerHTML = `
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(129,140,248,0.1); color:#818cf8;"><i data-lucide="layers" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(var(--accent-hover-rgb),0.1); color:var(--accent-hover);"><i data-lucide="layers" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${total}</div>
                     <div class="zlecenia-stat-label">Wszystkie zlecenia</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(16,185,129,0.1); color:#34d399;"><i data-lucide="check-check" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(var(--success-rgb),0.1); color:var(--success-hover);"><i data-lucide="check-check" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${accepted}</div>
                     <div class="zlecenia-stat-label">Zatwierdzone</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(245,158,11,0.1); color:#fbbf24;"><i data-lucide="hourglass-2" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(var(--warn-rgb),0.1); color:var(--warn-hover);"><i data-lucide="hourglass-2" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${draft}</div>
                     <div class="zlecenia-stat-label">Oczekujące</div>
@@ -360,7 +360,7 @@ const AppZlecenia = (() => {
                 return `
                 <tr>
                     <td style="width:40px; text-align:center;">
-                        <input type="checkbox" class="zlecenia-row-cb" data-id="${escapeJsStr(o.id)}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${escapeJsStr(o.id)}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:#818cf8;">
+                        <input type="checkbox" class="zlecenia-row-cb" data-id="${escapeJsStr(o.id)}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${escapeJsStr(o.id)}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--accent-hover);">
                     </td>
                     <td>${orderNum}</td>
                     <td class="date-cell">${formatDate(o.createdAt)}</td>

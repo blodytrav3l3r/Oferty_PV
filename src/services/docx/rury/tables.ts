@@ -9,6 +9,7 @@ import {
     BorderStyle,
     ShadingType
 } from 'docx';
+import { DOCX_COLORS } from '../colors';
 import {
     FONT,
     COLOR_GRAY_HEADER,
@@ -140,16 +141,16 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
                 const surcharge = Number(item.surcharge ?? 0);
                 const itemPrice = unitPrice * (1 - discount / 100) + pehdCost + surcharge;
                 const netto = itemPrice * quantity;
-                const rowFill = (globalLp % 2 !== 0) ? undefined : 'FAFAFA';
+                const rowFill = (globalLp % 2 !== 0) ? undefined : DOCX_COLORS.rowAlt;
 
                 catTotal += netto;
                 grandTotal += netto;
 
                 const nameRuns: TextRun[] = [
-                    new TextRun({ text: name, size: SZ_RURY_TB, font: FONT, color: '000000' })
+                    new TextRun({ text: name, size: SZ_RURY_TB, font: FONT, color: DOCX_COLORS.titleText })
                 ];
-                if (pehdType === 'PEHD-3MM') nameRuns.push(new TextRun({ text: ' PEHD 3mm', size: SZ_RURY_TB, font: FONT, color: '000000' }));
-                if (pehdType === 'PEHD-4MM') nameRuns.push(new TextRun({ text: ' PEHD 4mm', size: SZ_RURY_TB, font: FONT, color: '000000' }));
+                if (pehdType === 'PEHD-3MM') nameRuns.push(new TextRun({ text: ' PEHD 3mm', size: SZ_RURY_TB, font: FONT, color: DOCX_COLORS.titleText }));
+                if (pehdType === 'PEHD-4MM') nameRuns.push(new TextRun({ text: ' PEHD 4mm', size: SZ_RURY_TB, font: FONT, color: DOCX_COLORS.titleText }));
 
                 rows.push(
                     new TableRow({
@@ -158,7 +159,7 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
                             new TableCell({
                                 children: [
                                     new Paragraph({ children: nameRuns, spacing: { before: 15, after: 0 } }),
-                                    new Paragraph({ children: [new TextRun({ text: productId, size: SZ_RURY_PID, font: FONT, color: '999999' })], spacing: { before: 0, after: 15 } })
+                                    new Paragraph({ children: [new TextRun({ text: productId, size: SZ_RURY_PID, font: FONT, color: DOCX_COLORS.headerText })], spacing: { before: 0, after: 15 } })
                                 ],
                                 shading: rowFill ? { type: ShadingType.SOLID, color: rowFill, fill: rowFill } : undefined,
                                 borders: CELL_BORDERS

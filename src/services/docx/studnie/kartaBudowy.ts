@@ -4,6 +4,7 @@ import path from 'path';
 import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
 import { textCell } from '../helpers';
+import { DOCX_COLORS } from '../colors';
 import {
   FONT, COLOR_BODY, COLOR_GRAY_HEADER, COLOR_WHITE, COLOR_LABEL,
   SZ_TABLE_BODY, SZ_TABLE_HEADER,
@@ -16,7 +17,7 @@ const INFO_BOTTOM: CellBorders = {
   top: BORDER_NONE, bottom: BORDER_DOTTED, left: BORDER_NONE, right: BORDER_NONE
 };
 
-const EVEN_ROW_FILL = 'FAFAFA';
+const EVEN_ROW_FILL = DOCX_COLORS.rowAlt;
 const SPACER = new Paragraph({ spacing: { before: 240 }, children: [] });
 
 // ─── Section header row (merged cell, gray bg, white uppercase) ─
@@ -215,7 +216,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
         new TableRow({
           children: [new TableCell({
             borders: CELL_BORDERS,
-            shading: { type: ShadingType.SOLID, color: 'F9F9F9', fill: 'F9F9F9' },
+            shading: { type: ShadingType.SOLID, color: DOCX_COLORS.infoBg, fill: DOCX_COLORS.infoBg },
             children: [new Paragraph({
               spacing: { before: 60, after: 60 },
               children: uwagiRuns

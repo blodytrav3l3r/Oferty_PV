@@ -2,6 +2,7 @@ import { Packer, Document, Paragraph, TextRun, Table, TableRow, TableCell, Width
 import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
 import { textCell } from '../helpers';
+import { DOCX_COLORS } from '../colors';
 import {
   FONT, COLOR_BODY, COLOR_GRAY_HEADER, COLOR_WHITE, COLOR_LABEL,
   SZ_TABLE_BODY, SZ_TABLE_HEADER,
@@ -79,7 +80,7 @@ function transitionDataRow(p: Record<string, unknown>, idx: number): TableRow {
   return new TableRow({
     children: vals.map((v, ci) => textCell(v, {
       width: TBL_COLS[ci].width, size: SZ_TABLE_BODY, alignment: AlignmentType.CENTER,
-      fill: idx % 2 === 1 ? 'FAFAFA' : undefined
+      fill: idx % 2 === 1 ? DOCX_COLORS.rowAlt : undefined
     }))
   });
 }
@@ -200,7 +201,7 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
         new TableRow({
           children: [new TableCell({
             borders: CELL_BORDERS,
-            shading: { type: ShadingType.SOLID, color: 'F9F9F9', fill: 'F9F9F9' },
+            shading: { type: ShadingType.SOLID, color: DOCX_COLORS.infoBg, fill: DOCX_COLORS.infoBg },
             children: [new Paragraph({
               spacing: { before: 60, after: 60 },
               children: uwagiRuns

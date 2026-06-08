@@ -6,6 +6,7 @@ import {
     WidthType,
     AlignmentType
 } from 'docx';
+import { DOCX_COLORS } from '../colors';
 import {
     FONT,
     COLOR_GRAY_HEADER,
@@ -43,7 +44,7 @@ export function buildStaticTerms(): (Paragraph | Table)[] {
                         text,
                         size: SZ_TERMS,
                         font: FONT,
-                        color: '333333',
+                        color: DOCX_COLORS.labelText,
                         bold: opts?.bold
                     })
                 ],
@@ -68,7 +69,7 @@ export function buildStaticTerms(): (Paragraph | Table)[] {
                     bold: true,
                     size: SZ_THANKS,
                     font: FONT,
-                    color: '333333'
+                    color: DOCX_COLORS.labelText
                 })
             ],
             spacing: { before: 100, after: 40 }

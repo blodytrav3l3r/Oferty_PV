@@ -14,6 +14,7 @@ import { UserContactInfo } from '../../pdfGenerator';
 interface TextRunWithBreak extends IRunOptions {
     break?: number;
 }
+import { DOCX_COLORS } from '../colors';
 import {
     FONT,
     COLOR_GRAY_HEADER,
@@ -41,7 +42,7 @@ export function buildTitleParagraph(offerNumber: string, documentType: 'offer' |
                 bold: true,
                 size: SZ_TITLE,
                 font: FONT,
-                color: '000000'
+                color: DOCX_COLORS.titleText
             })
         ],
         alignment: AlignmentType.CENTER,
@@ -57,7 +58,7 @@ export function buildDateParagraphs(
     const paragraphs: Paragraph[] = [
         new Paragraph({
             children: [
-                new TextRun({ text: 'Data przygotowania oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
+                new TextRun({ text: 'Data przygotowania oferty: ', bold: true, size: SZ_BODY, font: FONT, color: DOCX_COLORS.labelText }),
                 new TextRun({ text: offerDate, size: SZ_BODY, font: FONT })
             ],
             alignment: AlignmentType.RIGHT,
@@ -71,7 +72,7 @@ export function buildDateParagraphs(
         paragraphs.push(
             new Paragraph({
                 children: [
-                    new TextRun({ text: 'Data ważności oferty: ', bold: true, size: SZ_BODY, font: FONT, color: '333333' }),
+                    new TextRun({ text: 'Data ważności oferty: ', bold: true, size: SZ_BODY, font: FONT, color: DOCX_COLORS.labelText }),
                     new TextRun({ text: validity, size: SZ_BODY, font: FONT })
                 ],
                 alignment: AlignmentType.RIGHT,
@@ -124,7 +125,7 @@ export function buildClientInvestTable(
             children: [new Paragraph({ children: runs, spacing: { before: 80, after: 80 } })],
             width: { size: 50, type: WidthType.PERCENTAGE },
             borders: CELL_BORDERS,
-            shading: { type: ShadingType.SOLID, color: 'F9F9F9', fill: 'F9F9F9' }
+            shading: { type: ShadingType.SOLID, color: DOCX_COLORS.infoBg, fill: DOCX_COLORS.infoBg }
         });
     };
 
@@ -146,19 +147,19 @@ export function buildClientInvestTable(
 
 function buildClientRuns(name: string, address: string, nip: string, contact: string): TextRun[] {
     const runs: TextRun[] = [
-        new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+        new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
     ];
     if (address) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     if (nip) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     if (contact) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: `Kontakt: ${contact}`, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: `Kontakt: ${contact}`, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     return runs;
 }
@@ -166,20 +167,20 @@ function buildClientRuns(name: string, address: string, nip: string, contact: st
 function buildInvestRuns(investName: string, investAddress: string, investContractor: string): TextRun[] {
     const runs: TextRun[] = [];
     if (investName) {
-        runs.push(new TextRun({ text: 'Budowa: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
-        runs.push(new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: 'Budowa: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     } else {
-        runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     if (investAddress) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: 'Adres: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
-        runs.push(new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: 'Adres: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     if (investContractor) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: 'Wykonawca: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
-        runs.push(new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: 'Wykonawca: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     return runs;
 }
@@ -249,7 +250,7 @@ export function buildContactSection(
         ];
         if (u.email) {
             runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-            runs.push(new TextRun({ text: `Email: ${u.email}`, size: SZ_TABLE_BODY, font: FONT, color: '0000FF', underline: { type: 'single', color: '0000FF' } }));
+            runs.push(new TextRun({ text: `Email: ${u.email}`, size: SZ_TABLE_BODY, font: FONT, color: DOCX_COLORS.linkUnderline, underline: { type: 'single', color: DOCX_COLORS.linkUnderline } }));
         }
         if (u.phone) {
             runs.push(new TextRun({ break: 1 } as TextRunWithBreak));

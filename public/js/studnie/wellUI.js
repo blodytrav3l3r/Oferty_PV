@@ -767,6 +767,13 @@ function switchBuilderTab(tab) {
     if (tab === 'transitions') {
         if (typeof renderInlinePrzejsciaApp === 'function') renderInlinePrzejsciaApp();
         if (typeof renderWellPrzejscia === 'function') renderWellPrzejscia();
+        const przejsciaContainer = document.getElementById('inline-przejscia-app-container');
+        const przejsciaIcon = document.getElementById('przejscia-app-icon');
+        if (przejsciaContainer && przejsciaContainer.style.display === 'none') {
+            przejsciaContainer.style.display = 'block';
+            if (przejsciaIcon) przejsciaIcon.innerHTML = '<span style="font-size:0.75rem;"><i data-lucide="chevron-up"></i></span>';
+            if (window.lucide) window.lucide.createIcons({ root: przejsciaIcon });
+        }
     }
 }
 

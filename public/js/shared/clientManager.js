@@ -121,7 +121,7 @@ function showClientsDb() {
             <input type="text" id="clients-search-input" placeholder="Szukaj po nazwie lub NIP..." 
               oninput="filterClientsDb(this.value)"
               style="width:100%; padding:0.6rem 0.8rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; outline:none; transition:border-color 0.2s;"
-              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           </div>
         </div>
       </div>
@@ -179,11 +179,11 @@ function renderClientsDbList(query) {
     filtered.forEach((c) => {
         const tr = document.createElement('tr');
         tr.style.cssText = 'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
-        tr.onmouseenter = () => { tr.style.background = 'rgba(99,102,241,0.06)'; };
+        tr.onmouseenter = () => { tr.style.background = 'rgba(var(--accent-rgb),0.06)'; };
         tr.onmouseleave = () => { tr.style.background = 'transparent'; };
 
         if (editingClientId === c.id) {
-            tr.style.background = 'rgba(99,102,241,0.05)';
+            tr.style.background = 'rgba(var(--accent-rgb),0.05)';
             const fields = ['name', 'nip', 'address', 'contact'];
             fields.forEach((field) => {
                 const td = document.createElement('td');
@@ -200,7 +200,7 @@ function renderClientsDbList(query) {
             });
             const actionTd = document.createElement('td');
             actionTd.style.cssText = 'padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--primary); font-size:1rem;"><i data-lucide="save" aria-hidden="true"></i></button>
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--accent); font-size:1rem;"><i data-lucide="save" aria-hidden="true"></i></button>
                 <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
         } else {

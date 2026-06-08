@@ -3,6 +3,7 @@ import prisma from '../prismaClient';
 import fs from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger';
+import { DOCX_COLORS } from './docx/colors';
 
 function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -682,7 +683,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
 
                 tabelaPozycji += `<tr>
               <td class="text-center">${globalLp}</td>
-              <td>${displayName}<br><span style="font-size:6.5pt;color:#999;">${productId}</span></td>
+              <td>${displayName}<br><span style="font-size:6.5pt;color:#${DOCX_COLORS.headerText};">${productId}</span></td>
               <td class="text-center">${hasLength ? displayMeters.toFixed(2) : '\u2014'}</td>
               <td class="text-center">${fmtInt(quantity)}</td>
               <td class="text-right">${formatCurrency(unitPrice)}</td>
@@ -755,27 +756,27 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
  */
 function buildRuryStaticTermsHTML(): string {
     return `
-    <span style="font-size:9pt;font-weight:700;color:#999;margin-bottom:5px;display:block;">Informacje dodatkowe i ogólne warunki:</span>
+    <span style="font-size:9pt;font-weight:700;color:#${DOCX_COLORS.headerText};margin-bottom:5px;display:block;">Informacje dodatkowe i ogólne warunki:</span>
 
     <p>Transport rur w średnicach DN 300 – DN 2200 odbywa się na jednorazowych podkładach drewnianych jako „Zabezpieczenie transportu". Koszt podkładów zostanie zafakturowany na fakturze VAT wg poniższego zestawienia (wartości w tabeli podają cenę Zabezpieczenia transportu do jednej sztuki rury).</p>
 
     <table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:7.5pt;">
       <thead>
-        <tr style="background:#f0f0f0;">
-          <th style="border:0.5pt solid #ccc;padding:4px;">Zabezpieczenie transportu wg średnicy rur</th>
-          <th style="border:0.5pt solid #ccc;padding:4px;">Cena netto [PLN]</th>
-          <th style="border:0.5pt solid #ccc;padding:4px;">Zabezpieczenie transportu wg średnicy rur</th>
-          <th style="border:0.5pt solid #ccc;padding:4px;">Cena netto [PLN]</th>
+        <tr style="background:#${DOCX_COLORS.headerBg};">
+          <th style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:4px;">Zabezpieczenie transportu wg średnicy rur</th>
+          <th style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:4px;">Cena netto [PLN]</th>
+          <th style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:4px;">Zabezpieczenie transportu wg średnicy rur</th>
+          <th style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:4px;">Cena netto [PLN]</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 300</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">13,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 1400</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">90,00</td></tr>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 400</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">13,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 1500</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">90,00</td></tr>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 500</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">14,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 1600</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">90,00</td></tr>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 600</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">20,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 1800</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">230,00</td></tr>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 800</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">20,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 2000</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">310,00</td></tr>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 1000</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">40,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 2200</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">310,00</td></tr>
-        <tr><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu DN 1200</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">50,00</td><td style="border:0.5pt solid #ccc;padding:3px;">Zabezpieczenie transportu WPUST ULICZNY</td><td style="border:0.5pt solid #ccc;padding:3px;text-align:center;">14,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 300</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">13,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 1400</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">90,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 400</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">13,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 1500</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">90,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 500</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">14,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 1600</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">90,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 600</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">20,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 1800</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">230,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 800</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">20,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 2000</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">310,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 1000</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">40,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 2200</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">310,00</td></tr>
+        <tr><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu DN 1200</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">50,00</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;">Zabezpieczenie transportu WPUST ULICZNY</td><td style="border:0.5pt solid #${DOCX_COLORS.tableBorder};padding:3px;text-align:center;">14,00</td></tr>
       </tbody>
     </table>
 
@@ -799,11 +800,11 @@ function buildRuryStaticTermsHTML(): string {
 
     <p style="margin-top:10px;">W przypadku wzrostu cen materiałów wsadowych (cement, kruszywa, usługi transportowe itp.) powyżej 3 % zastrzegamy sobie prawo zmiany cen.</p>
 
-    <p style="margin-top:10px;">Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36 miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu wyrobów do pobrania na stronie <a href="http://www.pv-prefabet.com.pl" style="color:#000;text-decoration:none;">www.pv-prefabet.com.pl</a>).<br />W zamówieniach prosimy powoływać się na nr niniejszej oferty.</p>
+    <p style="margin-top:10px;">Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36 miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu wyrobów do pobrania na stronie <a href="http://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl</a>).<br />W zamówieniach prosimy powoływać się na nr niniejszej oferty.</p>
 
-    <p style="margin-top:10px;">Parametry techniczne oferowanych wyrobów, według odpowiednich deklaracji dostępnych na <a href="https://www.pv-prefabet.com.pl" style="color:#000;text-decoration:none;">https://www.pv-prefabet.com.pl</a> lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork S.A.</p>
+    <p style="margin-top:10px;">Parametry techniczne oferowanych wyrobów, według odpowiednich deklaracji dostępnych na <a href="https://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">https://www.pv-prefabet.com.pl</a> lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork S.A.</p>
 
-    <p style="margin-top:10px;">Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne Warunki Sprzedaży dostępne na stronie internetowej <a href="http://www.pv-prefabet.com.pl" style="color:#000;text-decoration:none;">www.pv-prefabet.com.pl</a> oraz Polityka Prywatności dostępna na stronie internetowej <a href="http://www.pv-prefabet.com.pl/rodo-dane" style="color:#000;text-decoration:none;">www.pv-prefabet.com.pl/rodo-dane</a></p>
+    <p style="margin-top:10px;">Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne Warunki Sprzedaży dostępne na stronie internetowej <a href="http://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl</a> oraz Polityka Prywatności dostępna na stronie internetowej <a href="http://www.pv-prefabet.com.pl/rodo-dane" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl/rodo-dane</a></p>
 
     <p style="margin-top:15px;font-weight:bold;font-size:8.5pt;">Dziękujemy Państwu za zainteresowanie ofertą naszej firmy i mamy nadzieję na dalszą owocną współpracę.</p>
   `.trim();
@@ -870,17 +871,17 @@ export function buildContactSectionHTML(
 ): string {
     const renderUser = (title: string, u: UserContactInfo): string => {
         let ht = '<td style="vertical-align:top; width:50%; padding:4px 8px;">';
-        ht += `<strong style="color:#999;">${title}:</strong><br>`;
+        ht += `<strong style="color:#${DOCX_COLORS.headerText};">${title}:</strong><br>`;
         ht += `<strong>${u.name}</strong><br>`;
         if (u.email)
-            ht += `Email: <a href="mailto:${u.email}" style="color:#333;text-decoration:none;">${u.email}</a><br>`;
+            ht += `Email: <a href="mailto:${u.email}" style="color:#${DOCX_COLORS.labelText};text-decoration:none;">${u.email}</a><br>`;
         if (u.phone) ht += `Telefon: ${u.phone}`;
         ht += '</td>';
         return ht;
     };
 
     let html =
-        '<div style="margin-top:20px; padding-top:10px; border-top:1.5px solid #999; font-size:9pt;">';
+        '<div style="margin-top:20px; padding-top:10px; border-top:1.5px solid #${DOCX_COLORS.headerText}; font-size:9pt;">';
 
     if (!guardianUser && !authorUser) {
         html += '<p>W razie pytań prosimy o kontakt z opiekunem oferty.</p>';

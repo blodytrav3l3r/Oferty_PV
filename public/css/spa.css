@@ -70,7 +70,7 @@ body.spa-view-loading .spa-module-iframe[style*='display:block'] {
     width: 18px;
     height: 18px;
     border: 2px solid rgba(191, 219, 254, 0.24);
-    border-top-color: #8b5cf6;
+    border-top-color: var(--accent2);
     border-radius: 50%;
     animation: spaSpin 0.75s linear infinite;
 }

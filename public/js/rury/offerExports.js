@@ -115,7 +115,7 @@ function exportOfferPDF(id) {
     .summary-row{display:flex;justify-content:space-between;padding:4px 0}
     .summary-row.total{font-weight:bold;font-size:15px;border-top:2px solid #2d3561;padding-top:8px;margin-top:5px}
     .summary-row.transport{color:#b45309}
-    .notes{margin-top:15px;padding:10px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:4px;font-size:12px}
+    .notes{margin-top:15px;padding:10px;background:#fffbeb;border-left:3px solid var(--warn);border-radius:4px;font-size:12px}
     .footer{margin-top:10px;font-size:11px;color:#6b7280;text-align:center;padding-top:10px}
     .letterhead-header { width: 100%; object-fit: contain; margin-bottom: 20px; display: block; }
     .letterhead-footer { width: 100%; object-fit: contain; margin-top: 20px; display: block; page-break-inside: avoid; }
@@ -215,9 +215,15 @@ function showItemDiscountModal() {
       </div>
 
       <div class="modal-footer" style="margin-top:1rem; border-top: 1px solid var(--border); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-        <div style="text-align:left;">
-          <div style="font-size:0.9rem; color:var(--text-muted);">Suma Netto (po rabatach):</div>
-          <div id="discount-modal-total" style="font-size:1.4rem; font-weight:800; color:var(--success);">0,00 PLN</div>
+        <div style="text-align:left; display:flex; gap:1.5rem; align-items:baseline;">
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Suma Netto (po rabatach):</div>
+            <div id="discount-modal-total" style="font-size:1.3rem; font-weight:800; color:var(--success);">0,00 PLN</div>
+          </div>
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Zabezpieczenie transportu:</div>
+            <div id="discount-modal-zabezpieczenie" style="font-size:1rem; font-weight:700; color:var(--text-primary);">—</div>
+          </div>
         </div>
         <div style="display:flex; gap: 1rem;">
           <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
@@ -247,8 +253,8 @@ function renderDiscountModalItems() {
     <tbody>`;
 
     let totalNetto = 0;
+    let totalZabezpieczenie = 0;
 
-    // Zbuduj posortowaną listę pasującą do kolejności w tabeli oferty
     const items = getActiveItemsArray();
     const sortedItems = items
         .map((item, index) => {
@@ -275,6 +281,11 @@ function renderDiscountModalItems() {
         });
 
     sortedItems.forEach(({ item, index }) => {
+        if (item.productId && item.productId.startsWith('ZT-')) {
+            totalZabezpieczenie += item.unitPrice * item.quantity;
+            return;
+        }
+
         const d = tempDiscounts[index];
         const basePriceAfterDiscount = item.unitPrice * (1 - d / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
@@ -286,10 +297,10 @@ function renderDiscountModalItems() {
         let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM')
             pName +=
-                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 3mm</span>';
+                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb),0.3); vertical-align:middle;">+ PEHD 3mm</span>';
         if (item.pehdType === 'PEHD-4MM')
             pName +=
-                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:#10b981; color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(16,185,129,0.3); vertical-align:middle;">+ PEHD 4mm</span>';
+                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb),0.3); vertical-align:middle;">+ PEHD 4mm</span>';
         if (item.autoAdded)
             pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
 
@@ -312,7 +323,7 @@ function renderDiscountModalItems() {
             onfocus="this.select()"
             oninput="updateTempDiscount(${index}, this)"
             onchange="checkGasketDiscount(${index}, this)"
-            style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius:4px; font-weight:700; color:var(--primary); background:var(--bg);">
+            style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius:4px; font-weight:700; color:var(--accent); background:var(--bg);">
           ${warningText}
         </td>
         <td id="modal-price-${index}" style="padding:0.4rem; text-align:right; font-size:0.8rem;">${fmt(priceAfterDiscount)} PLN</td>
@@ -326,6 +337,9 @@ function renderDiscountModalItems() {
 
     const totalEl = document.getElementById('discount-modal-total');
     if (totalEl) totalEl.textContent = `${fmt(totalNetto)} PLN`;
+
+    const ztEl = document.getElementById('discount-modal-zabezpieczenie');
+    if (ztEl) ztEl.textContent = totalZabezpieczenie > 0 ? `${fmt(totalZabezpieczenie)} PLN` : '—';
 }
 
 function updateTempDiscount(index, inputEl) {
@@ -339,7 +353,6 @@ function updateTempDiscount(index, inputEl) {
     }
     tempDiscounts[index] = v;
 
-    // Aktualizacja DOM na żywo dla tego konkretnego wiersza
     const item = getActiveItemsArray()[index];
 
     const basePriceAfterDiscount = item.unitPrice * (1 - v / 100);
@@ -352,17 +365,25 @@ function updateTempDiscount(index, inputEl) {
     if (priceTd) priceTd.textContent = `${fmt(priceAfterDiscount)} PLN`;
     if (nettoTd) nettoTd.textContent = `${fmt(netto)} PLN`;
 
-    // Przelicz i zaktualizuj sumę końcową
     let totalNetto = 0;
+    let totalZabezpieczenie = 0;
     getActiveItemsArray().forEach((it, idx) => {
         const d = tempDiscounts[idx];
         const bpad = it.unitPrice * (1 - d / 100);
         const pCost = it.pehdCostPerUnit || 0;
-        totalNetto += (bpad + pCost) * it.quantity;
+        const itemTotal = (bpad + pCost) * it.quantity;
+        if (it.productId && it.productId.startsWith('ZT-')) {
+            totalZabezpieczenie += itemTotal;
+        } else {
+            totalNetto += itemTotal;
+        }
     });
 
     const totalEl = document.getElementById('discount-modal-total');
     if (totalEl) totalEl.textContent = `${fmt(totalNetto)} PLN`;
+
+    const ztEl = document.getElementById('discount-modal-zabezpieczenie');
+    if (ztEl) ztEl.textContent = totalZabezpieczenie > 0 ? `${fmt(totalZabezpieczenie)} PLN` : '—';
 }
 
 function checkGasketDiscount(index, inputEl) {

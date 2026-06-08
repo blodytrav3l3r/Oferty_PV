@@ -324,12 +324,12 @@ function renderOrderBanners(order, orderChanges) {
 
     if (order) {
         const changeCount = Object.keys(orderChanges).length;
-        html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'}; border:1px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}; border-radius:8px;">
+        html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(var(--danger-rgb),0.1)' : 'rgba(var(--success-rgb),0.1)'}; border:1px solid ${hasChanges ? 'rgba(var(--danger-rgb),0.3)' : 'rgba(var(--success-rgb),0.3)'}; border-radius:8px;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
                 <span style="font-size:1.1rem;"><i data-lucide="package"></i></span>
-                <span style="font-size:0.75rem; font-weight:700; color:${hasChanges ? '#f87171' : '#34d399'};">ZAMÓWIENIE ${hasChanges ? '— ' + changeCount + ' studni zmienionych' : '— bez zmian'}</span>
+                <span style="font-size:0.75rem; font-weight:700; color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">ZAMÓWIENIE ${hasChanges ? '— ' + changeCount + ' studni zmienionych' : '— bez zmian'}</span>
             </div>
-            <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
+            <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;
     }
 
@@ -350,8 +350,8 @@ function renderPartialOrderProgress() {
 
     if (progress.ordered === 0 && availableCount === wells.length) return '';
 
-    const progressColor = progress.percent >= 100 ? '#34d399' : '#60a5fa';
-    return `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:8px;">
+    const progressColor = progress.percent >= 100 ? 'var(--success-hover)' : 'var(--blue-hover)';
+    return `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb),0.08); border:1px solid rgba(var(--blue-rgb),0.2); border-radius:8px;">
         <div style="flex:1;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary);">
@@ -463,7 +463,7 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
     let checkbox = '';
     if (showOrderSelection) {
         checkbox = isOrdered
-            ? `<td style="text-align:center;"><i data-lucide="package-check" style="width:16px; height:16px; color:#a5b4fc;"></i></td>`
+            ? `<td style="text-align:center;"><i data-lucide="package-check" style="width:16px; height:16px; color:var(--accent-text);"></i></td>`
             : `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" style="cursor:pointer; width:16px; height:16px;"></td>`;
     }
 
@@ -472,7 +472,7 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
     let priceDiffCell = '';
     if (offerPrice !== null) {
         const priceDiff = stats.price - offerPrice;
-        const diffColor = priceDiff > 0 ? '#34d399' : (priceDiff < 0 ? '#f87171' : 'var(--text-muted)');
+        const diffColor = priceDiff > 0 ? 'var(--success-hover)' : (priceDiff < 0 ? 'var(--danger-hover)' : 'var(--text-muted)');
         const diffSign = priceDiff > 0 ? '+' : '';
         offerPriceCell = `<td class="text-right" style="font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(offerPrice)} PLN</td>`;
         priceDiffCell = `<td class="text-right" style="font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
@@ -486,7 +486,7 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? '#ef4444' : (well.doplata > 0 ? '#10b981' : 'var(--text-primary)')};">${well.name}</td>
+        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : (well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)')};">${well.name}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
@@ -503,18 +503,18 @@ function renderWellHeaderRow(well, i, stats, change, isOrdered, showOrderSelecti
 function getWellRowStyle(change, isOrdered) {
     if (change) {
         return change.type === 'added'
-            ? 'border-left:3px solid #34d399; background:rgba(16,185,129,0.05);'
-            : 'border-left:3px solid #ef4444; background:rgba(239,68,68,0.05);';
+            ? 'border-left:3px solid var(--success-hover); background:rgba(var(--success-rgb),0.05);'
+            : 'border-left:3px solid var(--danger); background:rgba(var(--danger-rgb),0.05);';
     }
-    return isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
+    return isOrdered ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);' : '';
 }
 
 function getWellBadges(change, isOrdered, well) {
     let html = '';
     if (change) {
         html += change.type === 'added'
-            ? `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWA</span>`
-            : `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#f87171; font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>`;
+            ? `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb),0.2); color:var(--success-hover); font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWA</span>`
+            : `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--danger-rgb),0.2); color:var(--danger-hover); font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>`;
     }
     if (isOrdered && well) {
         const wellOrder = typeof getOrderForWellId === 'function'
@@ -523,11 +523,11 @@ function getWellBadges(change, isOrdered, well) {
         if (wellOrder && wellOrder.orderNumber) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
                 title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
-                style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(16,185,129,0.15); color:#34d399; font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:3px;">
+                style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb),0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb),0.4); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}
             </span>`;
         } else {
-            html += `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(99,102,241,0.2); color:#a5b4fc; font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>`;
+            html += `<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--accent-rgb),0.2); color:var(--accent-text); font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>`;
         }
     }
     return html;
@@ -603,10 +603,10 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         }
 
         if (well.nadbudowa === 'zelbetowa' && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
-            badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+            badgesHtml += ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb),0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb),0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
         }
         if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica') {
-            badgesHtml += ' <span style="font-size:0.55rem; color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+            badgesHtml += ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb),0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb),0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
         }
         if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag' || p.componentType === 'krag_ot' || p.componentType === 'konus')) {
             badgesHtml += ' <span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
@@ -713,7 +713,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
     if (isBase && well.doplata) {
-        const doplataWellColor = well.doplata > 0 ? '#10b981' : '#ef4444';
+        const doplataWellColor = well.doplata > 0 ? 'var(--success)' : 'var(--danger)';
         const doplataWellSign = well.doplata > 0 ? '+' : '';
         html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplataWellColor};">
             <td colspan="3" style="padding-left:1.5rem;">↳ ${doplataWellSign} Dopłata indywidualna</td>
@@ -723,7 +723,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
 
     if (item._osadnikCost > 0) {
         // Zgodnie z nową logiką osadnika ta część zwykle jest ukryta, bo _osadnikCost zostało usunięte
-        html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f59e0b;">
+        html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--warn);">
             <td colspan="3" style="padding-left:1.5rem;">↳ + Wkładka osadnika (przestarzałe)</td>
             <td class="text-right">${fmt(item._osadnikCost)} PLN</td>
         </tr>`;
@@ -736,12 +736,12 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
 
             if (pr.frozenTransitionPrice != null) {
                 // TRYB ZAMÓWIENIA (zamrożone ceny)
-                html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
+                html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent-hover);">
                     <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${pr.frozenName || prProd.category} ${prProd.dn || ''} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
-                    const doplPrColor = pr.doplata > 0 ? '#10b981' : '#ef4444';
+                    const doplPrColor = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
                     const doplPrSign = pr.doplata > 0 ? '+' : '';
                     html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplPrColor};">
                         <td colspan="3" style="padding-left:2.0rem;">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
@@ -757,12 +757,12 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
             } else {
                 // TRYB OFERTY (dynamiczne ceny)
                 let prPrice = (prProd.price || 0) * nadbudowaMult;
-                html += `<tr style="opacity:0.6; font-size:0.7rem; color:#818cf8;">
+                html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent-hover);">
                     <td colspan="3" style="padding-left:1.5rem;">↳ + Przejście: ${prProd.category} ${prProd.dn} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
-                    const doplPrColor2 = pr.doplata > 0 ? '#10b981' : '#ef4444';
+                    const doplPrColor2 = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
                     const doplPrSign2 = pr.doplata > 0 ? '+' : '';
                     html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplPrColor2};">
                         <td colspan="3" style="padding-left:2.0rem;">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
@@ -828,12 +828,12 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
                     kinetaLabel = baseName + ` (${fracPerc ? fracPerc + '% uzupełnienia' : 'Wkładka uzupełniająca'})`;
                 }
             }
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#ef4444;">
-                <td colspan="3" style="padding-left:1.5rem;">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size:0.6rem; color:#10b981;">(-' + discPreco + '%)</span>' : ''}</td>
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--danger);">
+                <td colspan="3" style="padding-left:1.5rem;">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size:0.6rem; color:var(--success);">(-' + discPreco + '%)</span>' : ''}</td>
                 <td class="text-right">${fmt(precoCost)} PLN</td>
             </tr>`;
         } else if (precoAlloc.error && precoAlloc.isBottomMostDennica) {
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#ef4444;">
+            html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--danger);">
                 <td colspan="3" style="padding-left:1.5rem;">↳ ⚠ Wkładka PRECO — ${precoAlloc.error}</td>
                 <td class="text-right">—</td>
             </tr>`;
@@ -970,7 +970,7 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, nadbudowaM
 function getDiscountStr(p, disc) {
     const isDen = p.componentType === 'dennica' || p.componentType === 'kineta' || p.componentType === 'styczna';
     const val = isDen ? disc.dennica : disc.nadbudowa;
-    return val > 0 ? ` <span style="font-size:0.6rem; color:#10b981; margin-left:0.3rem;">(-${val}%)</span>` : '';
+    return val > 0 ? ` <span style="font-size:0.6rem; color:var(--success); margin-left:0.3rem;">(-${val}%)</span>` : '';
 }
 
 function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGroups, showPriceComparison) {
@@ -1000,7 +1000,7 @@ function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGr
             if (showPriceComparison) {
                 if (g.sumOfferPrice > 0) {
                     const priceDiff = g.sumPrice - g.sumOfferPrice;
-                    const diffColor = priceDiff > 0 ? '#34d399' : (priceDiff < 0 ? '#f87171' : 'var(--text-muted)');
+                    const diffColor = priceDiff > 0 ? 'var(--success-hover)' : (priceDiff < 0 ? 'var(--danger-hover)' : 'var(--text-muted)');
                     const diffSign = priceDiff > 0 ? '+' : '';
                     offerPriceCell = `<td class="text-right" style="font-size:0.8rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumOfferPrice)} PLN</td>`;
                     priceDiffCell = `<td class="text-right" style="font-size:0.8rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
@@ -1030,7 +1030,7 @@ function renderOfferSummaryFooter(count, weight, price, showOrderSelection, dnGr
         });
         if (totalOfferPrice > 0) {
             const totalDiff = price - totalOfferPrice;
-            const diffColor = totalDiff > 0 ? '#34d399' : (totalDiff < 0 ? '#f87171' : 'var(--text-muted)');
+            const diffColor = totalDiff > 0 ? 'var(--success-hover)' : (totalDiff < 0 ? 'var(--danger-hover)' : 'var(--text-muted)');
             const diffSign = totalDiff > 0 ? '+' : '';
             totalOfferPriceCell = `<td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(totalOfferPrice)} PLN</td>`;
             totalPriceDiffCell = `<td class="text-right" style="font-weight:700; font-size:0.85rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(totalDiff)} PLN</td>`;
@@ -1063,8 +1063,8 @@ function updateOfferSummaryUI(totals) {
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
             activeTransportInfo.innerHTML = `
-                <div style="margin-bottom: 2px;">Ilość aut: <span style="color: #cbd5e1; font-weight: 600;">${totals.totalTransports}</span></div>
-                <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;">${fmtInt(totals.transportCostPerTrip)} PLN</span></div>
+                <div style="margin-bottom: 2px;">Ilość aut: <span style="color: var(--border); font-weight: 600;">${totals.totalTransports}</span></div>
+                <div>Cena rejsu: <span style="color: var(--border); font-weight: 600;">${fmtInt(totals.transportCostPerTrip)} PLN</span></div>
             `;
         }
     } else {
@@ -1126,8 +1126,8 @@ function updateOfferSummaryUI(totals) {
 
             const d = activeDiscounts[dn] || {};
             const hasDisc = (d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0);
-            const bg = hasDisc ? 'background:rgba(99,102,241,0.12); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3);' : 'background:rgba(99,102,241,0.06); color:rgba(165,180,252,0.5); border:1px solid rgba(99,102,241,0.12);';
-            const details = `${fmtDisc('D:', d.dennica)} ${fmtDisc('N:', d.nadbudowa)} ${fmtDisc('P:', d.preco, d.preco > 0 ? '#f87171' : null)}`;
+            const bg = hasDisc ? 'background:rgba(var(--accent-rgb),0.12); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb),0.3);' : 'background:rgba(var(--accent-rgb),0.06); color:rgba(165,180,252,0.5); border:1px solid rgba(var(--accent-rgb),0.12);';
+            const details = `${fmtDisc('D:', d.dennica)} ${fmtDisc('N:', d.nadbudowa)} ${fmtDisc('P:', d.preco, d.preco > 0 ? 'var(--danger-hover)' : null)}`;
             return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span></div>`;
         };
 
@@ -1691,7 +1691,7 @@ function showTelemetryPopup(well, callback) {
     overlay.style.zIndex = '99999';
     overlay.innerHTML = `
     <div class="modal" style="max-width:500px; padding:1.5rem;">
-        <h3 style="color:#f59e0b; font-weight:700; margin-bottom:0.5rem;"><i data-lucide="bot"></i> Pętla Sprzężenia AI</h3>
+        <h3 style="color:var(--warn); font-weight:700; margin-bottom:0.5rem;"><i data-lucide="bot"></i> Pętla Sprzężenia AI</h3>
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">
             Zauważyliśmy, że w studni <strong>${well.name}</strong> odrzuciłeś autokonfigurację wygenerowaną przez system i ręcznie ułożyłeś własne elementy.
             <br/><br/>
@@ -1809,9 +1809,9 @@ function renderSavedOffersStudnie() {
 
             let orderBadge = '';
             if (hasOrder) {
-                const badgeColor = isFullyOrdered ? '#34d399' : '#60a5fa';
-                const badgeBg = isFullyOrdered ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)';
-                const badgeBorder = isFullyOrdered ? 'rgba(16,185,129,0.4)' : 'rgba(59,130,246,0.4)';
+                const badgeColor = isFullyOrdered ? 'var(--success-hover)' : 'var(--blue-hover)';
+                const badgeBg = isFullyOrdered ? 'rgba(var(--success-rgb),0.15)' : 'rgba(var(--blue-rgb),0.15)';
+                const badgeBorder = isFullyOrdered ? 'rgba(var(--success-rgb),0.4)' : 'rgba(var(--blue-rgb),0.4)';
 
                 orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius:6px; margin-top:0.3rem;">
                 <span style="font-size:0.85rem;"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
@@ -1822,7 +1822,7 @@ function renderSavedOffersStudnie() {
             }
 
             return `
-        <div class="offer-list-item" ${hasOrder ? `style="border-left:3px solid ${isFullyOrdered ? '#34d399' : '#60a5fa'};"` : ''}>
+        <div class="offer-list-item" ${hasOrder ? `style="border-left:3px solid ${isFullyOrdered ? 'var(--success-hover)' : 'var(--blue-hover)'};"` : ''}>
             <div class="offer-info" style="min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
                     <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
@@ -1866,7 +1866,7 @@ function renderSavedOffersStudnie() {
                 })()}
                     
                     <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size:0.65rem;">
-                        <span style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3);"><i data-lucide="save"></i> Zapisano</span>
+                        <span style="background: rgba(var(--success-hover-rgb), 0.1); color: var(--success-hover); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(var(--success-hover-rgb), 0.3);"><i data-lucide="save"></i> Zapisano</span>
                     </div>
                 </div>
                 ${o.clientName || o.investName || o.clientContact
@@ -1880,7 +1880,7 @@ function renderSavedOffersStudnie() {
             </div>
             <div class="offer-actions">
                 <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj" style="font-size:0.72rem; padding:0.3rem 0.6rem;">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); color: #f87171; font-weight: 700;" onclick="window.showUniversalPrintModal('${oId}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
+                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: 700;" onclick="window.showUniversalPrintModal('${oId}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
                 <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
                 ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
                 ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
@@ -1891,8 +1891,8 @@ function renderSavedOffersStudnie() {
                         let buttonsHtml = '';
                         offerOrders.forEach(order => {
                             buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
-                                    <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
                                 `;
                         });
                         return buttonsHtml;
@@ -2332,8 +2332,8 @@ document.addEventListener('mouseup', (ev) => {
 
         // Reset wizualny stanu kosza
         if (trash) {
-            trash.style.background = 'rgba(239,68,68,0.1)';
-            trash.style.borderColor = 'rgba(239,68,68,0.4)';
+            trash.style.background = 'rgba(var(--danger-rgb),0.1)';
+            trash.style.borderColor = 'rgba(var(--danger-rgb),0.4)';
         }
     }
 });
@@ -2376,19 +2376,19 @@ function renderAuditLogEntry(log) {
 
     if (isDelete) {
         cardClass = 'action-delete';
-        actionBadge = `<span style="background:rgba(239,68,68,0.15); color:#f87171; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>`;
+        actionBadge = `<span style="background:rgba(var(--danger-rgb),0.15); color:var(--danger-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>`;
         const oldData = log.oldData || {};
-        contentHtml = `<div style="font-size:0.9rem; color:#f87171;">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:#fff;">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
+        contentHtml = `<div style="font-size:0.9rem; color:var(--danger-hover);">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:#fff;">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
     } else if (log.action === 'create') {
         cardClass = 'action-create';
-        actionBadge = `<span style="background:rgba(99,102,241,0.15); color:#818cf8; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>`;
+        actionBadge = `<span style="background:rgba(var(--accent-rgb),0.15); color:var(--accent-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>`;
         const price = data.totalBrutto || 0;
-        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
+        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         if (data.wells)
             contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     } else if (isDiff) {
         cardClass = 'action-diff';
-        actionBadge = `<span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>`;
+        actionBadge = `<span style="background:rgba(251,191,36,0.15); color:var(--warn-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>`;
         const changedKeys = Object.keys(data).filter((k) => k !== '_diffMode');
         const changesHtml = changedKeys
             .map((k) => {
@@ -2409,13 +2409,13 @@ function renderAuditLogEntry(log) {
         contentHtml = `<div class="diff-container">${changesHtml}</div>`;
     } else {
         cardClass = 'action-update';
-        actionBadge = `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>`;
+        actionBadge = `<span style="background:rgba(var(--success-rgb),0.15); color:var(--success-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>`;
         const price = data.totalBrutto || 0;
         const oldPrice = log.oldData?.totalBrutto || 0;
         if (oldPrice && Math.abs(price - oldPrice) > 0.01) {
-            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
         } else {
-            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:#f8fafc;"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         }
         if (data.wells)
             contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
@@ -2443,7 +2443,7 @@ function renderAuditLogEntry(log) {
                     <span class="audit-date"><i data-lucide="calendar"></i> ${new Date(log.createdAt).toLocaleString()}</span>
                 </div>
                 <div class="audit-author">
-                    <i data-lucide="user"></i>‍<i data-lucide="monitor"></i> <strong style="color:#e2e8f0;">${log.userName || 'System'}</strong>
+                    <i data-lucide="user"></i>‍<i data-lucide="monitor"></i> <strong style="color:var(--text-primary);">${log.userName || 'System'}</strong>
                 </div>
             </div>
             <div class="audit-card-body">
@@ -2509,17 +2509,17 @@ async function showOfferHistoryStudnie(id) {
                 .audit-card::before {
                     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
                 }
-                .audit-card.action-create::before { background: #818cf8; }
-                .audit-card.action-update::before { background: #34d399; }
-                .audit-card.action-diff::before { background: #fbbf24; }
-                .audit-card.action-delete::before { background: #f87171; }
+                .audit-card.action-create::before { background: var(--accent-hover); }
+                .audit-card.action-update::before { background: var(--success-hover); }
+                .audit-card.action-diff::before { background: var(--warn-hover); }
+                .audit-card.action-delete::before { background: var(--danger-hover); }
                 
                 .audit-card-header {
                     display: flex; justify-content: space-between; align-items: center;
                     margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                 }
-                .audit-date { font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
-                .audit-author { font-size: 0.85rem; color: #cbd5e1; display:flex; align-items:center; gap:4px; }
+                .audit-date { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+                .audit-author { font-size: 0.85rem; color: var(--border); display:flex; align-items:center; gap:4px; }
                 
                 .audit-card-body {
                     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
@@ -2527,24 +2527,24 @@ async function showOfferHistoryStudnie(id) {
                 
                 .diff-container { display: flex; flex-direction: column; gap: 0.4rem; }
                 .diff-line { background: rgba(0,0,0,0.2); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; }
-                .diff-key { color: #f8fafc; font-weight: 600; font-family: monospace; }
-                .diff-old { color: #94a3b8; text-decoration: line-through; }
-                .diff-new { color: #34d399; font-weight: 700; }
+                .diff-key { color: var(--text-primary); font-weight: 600; font-family: monospace; }
+                .diff-old { color: var(--text-secondary); text-decoration: line-through; }
+                .diff-new { color: var(--success-hover); font-weight: 700; }
                 
                 .restore-btn, .preview-btn {
                     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-                    color: #f8fafc; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;
+                    color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;
                     transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 6px;
                 }
-                .preview-btn:hover { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #818cf8; }
-                .restore-btn:hover { background: rgba(52, 211, 153, 0.15); border-color: rgba(52, 211, 153, 0.3); color: #34d399; }
+                .preview-btn:hover { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: var(--accent-hover); }
+                .restore-btn:hover { background: rgba(var(--success-hover-rgb), 0.15); border-color: rgba(var(--success-hover-rgb), 0.3); color: var(--success-hover); }
                 
                 .load-more-btn {
-                    background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); 
-                    color: #818cf8; font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 30px;
+                    background: rgba(var(--accent-rgb),0.15); border: 1px solid rgba(var(--accent-rgb),0.3); 
+                    color: var(--accent-hover); font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 30px;
                     cursor: pointer; transition: all 0.2s;
                 }
-                .load-more-btn:hover { background: rgba(99,102,241,0.3); transform: scale(1.05); }
+                .load-more-btn:hover { background: rgba(var(--accent-rgb),0.3); transform: scale(1.05); }
             </style>
             <div class="modal audit-modal-inner">
                 <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1); padding:1.2rem 1.5rem; background: rgba(255,255,255,0.02); border-radius: 20px 20px 0 0;">
@@ -2909,18 +2909,18 @@ function renderOfferDiscountsPopupContent() {
         const hasPrecoInGroup = wells.filter(w => (dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn)).some(w => w.kineta === 'preco' || w.kineta === 'precotop');
 
         html += `
-        <div style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(99,102,241,0.2)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">
+        <div style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb),0.2)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6366f1; box-shadow: 0 0 6px rgba(99,102,241,0.4);"></span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb),0.4);"></span>
                     <span style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${displayDn}</span>
                 </div>
                 <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, '#818cf8', 'rgba(99,102,241,0.3)')}
-                ${buildInputBlock(dn, 'Nadbudowa', 'nadbudowa', disc.nadbudowa, '#818cf8', 'rgba(99,102,241,0.3)')}
-                ${hasPrecoInGroup ? buildInputBlock(dn, 'Wkładka PRECO', 'preco', disc.preco || 0, '#f87171', 'rgba(239,68,68,0.3)') : ''}
+                ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, 'var(--accent-hover)', 'rgba(var(--accent-rgb),0.3)')}
+                ${buildInputBlock(dn, 'Nadbudowa', 'nadbudowa', disc.nadbudowa, 'var(--accent-hover)', 'rgba(var(--accent-rgb),0.3)')}
+                ${hasPrecoInGroup ? buildInputBlock(dn, 'Wkładka PRECO', 'preco', disc.preco || 0, 'var(--danger-hover)', 'rgba(var(--danger-rgb),0.3)') : ''}
             </div>
         </div>`;
     });

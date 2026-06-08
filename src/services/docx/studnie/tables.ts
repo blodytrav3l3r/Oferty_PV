@@ -13,6 +13,7 @@ import {
     AlignmentType,
     BorderStyle
 } from 'docx';
+import { DOCX_COLORS } from '../colors';
 import {
     FONT,
     COLOR_GRAY_HEADER,
@@ -136,7 +137,7 @@ function buildDnDataRows(dnItems: unknown[], dn: string, globalLp: number): Tabl
     return dnItems.map((it, idx) => {
         const item = it as Record<string, unknown>;
         const dnDisplay = dn === 'styczna' ? 'Styczna' : `DN${dn}`;
-        const rowFill = idx % 2 === 1 ? 'FAFAFA' : undefined;
+        const rowFill = idx % 2 === 1 ? DOCX_COLORS.rowAlt : undefined;
 
         return new TableRow({
             children: [

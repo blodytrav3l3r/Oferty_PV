@@ -23,6 +23,7 @@ import { UserContactInfo } from '../../pdfGenerator';
 interface TextRunWithBreak extends IRunOptions {
     break?: number;
 }
+import { DOCX_COLORS } from '../colors';
 import {
     FONT,
     COLOR_GRAY_HEADER,
@@ -54,7 +55,7 @@ export function buildTitleParagraph(offerNumber: string, documentType: 'offer' |
                 bold: true,
                 size: SZ_TITLE,
                 font: FONT,
-                color: '000000'
+                color: DOCX_COLORS.titleText
             })
         ],
         alignment: AlignmentType.CENTER,
@@ -77,7 +78,7 @@ export function buildDateParagraphs(
                     bold: true,
                     size: SZ_BODY,
                     font: FONT,
-                    color: '333333'
+                    color: DOCX_COLORS.labelText
                 }),
                 new TextRun({ text: offerDate, size: SZ_BODY, font: FONT })
             ],
@@ -94,7 +95,7 @@ export function buildDateParagraphs(
                         bold: true,
                         size: SZ_BODY,
                         font: FONT,
-                        color: '333333'
+                        color: DOCX_COLORS.labelText
                     }),
                     new TextRun({ text: validity, size: SZ_BODY, font: FONT })
                 ],
@@ -173,7 +174,7 @@ export function buildClientInvestTable(
             children: [new Paragraph({ children: runs, spacing: { before: 80, after: 80 } })],
             width: { size: 50, type: WidthType.PERCENTAGE },
             borders: CELL_BORDERS,
-            shading: { type: ShadingType.SOLID, color: 'FFFFFF', fill: 'FFFFFF' }
+            shading: { type: ShadingType.SOLID, color: DOCX_COLORS.whiteText, fill: DOCX_COLORS.whiteText }
         });
     };
 
@@ -195,16 +196,16 @@ export function buildClientInvestTable(
 
 function buildClientRuns(name: string, address: string, nip: string, contact: string): TextRun[] {
     const runs: TextRun[] = [
-        new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+        new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
     ];
     if (address) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     if (nip) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(
-            new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+            new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
         );
     }
     if (contact) {
@@ -214,7 +215,7 @@ function buildClientRuns(name: string, address: string, nip: string, contact: st
                 text: `Kontakt: ${contact}`,
                 size: SZ_INFO_BOX,
                 font: FONT,
-                color: '000000'
+                color: DOCX_COLORS.titleText
             })
         );
     }
@@ -234,14 +235,14 @@ function buildInvestRuns(
                 bold: true,
                 size: SZ_INFO_BOX,
                 font: FONT,
-                color: '000000'
+                color: DOCX_COLORS.titleText
             })
         );
         runs.push(
-            new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+            new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
         );
     } else {
-        runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: '000000' }));
+        runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
     }
     if (investAddress) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
@@ -251,11 +252,11 @@ function buildInvestRuns(
                 bold: true,
                 size: SZ_INFO_BOX,
                 font: FONT,
-                color: '000000'
+                color: DOCX_COLORS.titleText
             })
         );
         runs.push(
-            new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+            new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
         );
     }
     if (investContractor) {
@@ -266,11 +267,11 @@ function buildInvestRuns(
                 bold: true,
                 size: SZ_INFO_BOX,
                 font: FONT,
-                color: '000000'
+                color: DOCX_COLORS.titleText
             })
         );
         runs.push(
-            new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: '000000' })
+            new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
         );
     }
     return runs;

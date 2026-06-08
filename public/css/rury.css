@@ -274,12 +274,12 @@
 }
 
 .rury-table .length-editor:hover {
-    border-color: var(--primary);
+    border-color: var(--accent);
     box-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
 }
 
 .rury-table .length-editor .length-value {
-    color: var(--primary);
+    color: var(--accent);
     font-weight: 600;
 }
 
@@ -360,17 +360,17 @@
 .rury-sticky-footer {
     position: sticky;
     bottom: 0;
-    background: var(--bg-card, #111827);
+    background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     margin: 0 -1.5rem -1.2rem -1.5rem;
     padding: 1.2rem 1.5rem;
     z-index: 100;
-    box-shadow: 0 -8px 30px #080808;
+    box-shadow: 0 -8px 30px var(--shadow-color);
 }
 
 .rury-summary-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 1rem;
     align-items: stretch;
     text-align: center;
@@ -439,11 +439,11 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-card, #111827);
+    background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     padding: 0.8rem 2rem;
     z-index: 9999;
-    box-shadow: 0 -8px 30px #080808;
+    box-shadow: 0 -8px 30px var(--shadow-color);
 }
 
 #wizard-step-5 {
@@ -511,7 +511,7 @@
 .rury-action-btn--print {
     background: rgba(99, 102, 241, 0.15);
     border: 1px solid rgba(99, 102, 241, 0.4);
-    color: #a5b4fc;
+    color: var(--accent-text);
     grid-column: 1;
     grid-row: 2;
 }
@@ -554,7 +554,7 @@
 .rury-btn-ghost {
     background: rgba(99, 102, 241, 0.1);
     border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #818cf8;
+    color: var(--accent-hover);
     font-size: 0.75rem;
     font-weight: 700;
     padding: 0.2rem 0.5rem;
@@ -578,7 +578,7 @@
 }
 
 .rury-btn-logout:hover {
-    color: #f87171;
+    color: var(--danger-hover);
     border-color: #3a1a1a;
 }
 
@@ -648,9 +648,9 @@
 }
 
 .rury-catalog-tab.active {
-    background: var(--primary);
+    background: var(--accent);
     color: #ffffff;
-    border-color: var(--primary);
+    border-color: var(--accent);
 }
 
 /* ── Header user info ── */
@@ -787,11 +787,11 @@
     left: 0;
     right: 0;
     z-index: 99;
-    background: var(--bg-card, #111827);
+    background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     border-bottom: 1px solid transparent;
     padding: 0.8rem 1.5rem;
-    box-shadow: 0 -8px 30px #080808;
+    box-shadow: 0 -8px 30px var(--shadow-color);
 }
 
 /* Większy padding-bottom dla kroku 3, by treść nie chowała się za fixed paskiem i nawigacją */

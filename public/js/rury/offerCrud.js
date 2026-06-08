@@ -292,7 +292,7 @@ function renderSavedOffers() {
             const _hasOrder = _orderList.length > 0;
 
             return `
-    <div class="offer-list-item"${_hasOrder ? ' style="border-left:3px solid #34d399;"' : ''}>
+    <div class="offer-list-item"${_hasOrder ? ' style="border-left:3px solid var(--success-hover);"' : ''}>
       <div class="offer-info" style="min-width:0;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
           <h3 style="margin-bottom:0.2rem; word-break:break-all;">${o.number}</h3>
@@ -338,7 +338,7 @@ function renderSavedOffers() {
         ${_hasOrder ? `<div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
             ${_orderList.map(ord => {
                 const label = ord.orderNumber || ord.offerNumber || (ord.id ? ord.id.substring(0, 8) : '—');
-                return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:#34d399;">
+                return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
                     <i data-lucide="package" style="width:12px;height:12px;"></i> Zamówienie ${label}
                 </span>`;
             }).join('')}
@@ -352,10 +352,10 @@ function renderSavedOffers() {
         <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
         <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
         ${_hasOrder ? _orderList.map(ord => `
-            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
+            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8)}
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'pdf')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
+            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'pdf')" style="background:rgba(var(--danger-rgb),0.15); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
             <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">

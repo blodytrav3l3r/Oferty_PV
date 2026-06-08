@@ -210,7 +210,7 @@ function showPipeLengthModal(productId, editIndex = null) {
         <div style="display:flex; justify-content:center; align-items:center; gap:1rem">
           <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
           <input class="form-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}" 
-            style="font-size:2.5rem; padding:1rem; width:140px; text-align:center; font-weight:800; border: 2px solid var(--primary); border-radius: 12px; color: var(--primary); background: transparent;">
+            style="font-size:2.5rem; padding:1rem; width:140px; text-align:center; font-weight:800; border: 2px solid var(--accent); border-radius: 12px; color: var(--accent); background: transparent;">
           <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
         </div>
         <div style="margin-top:1rem; font-size:0.9rem; color:var(--text-muted); display: flex; justify-content: center; gap: 1rem;">
@@ -385,12 +385,12 @@ window.setZabezpieczenieTransportu = function (enabled) {
 };
 
 function updateZabezpieczenieTransportuUI() {
-    const tak = document.getElementById('zt-toggle-tak');
-    const nie = document.getElementById('zt-toggle-nie');
-    if (tak && nie) {
-        tak.classList.toggle('active', !!window.zabezpieczenieTransportuEnabled);
-        nie.classList.toggle('active', !window.zabezpieczenieTransportuEnabled);
-    }
+    document.querySelectorAll('.zt-toggle-tak-btn').forEach(el => {
+        el.classList.toggle('active', !!window.zabezpieczenieTransportuEnabled);
+    });
+    document.querySelectorAll('.zt-toggle-nie-btn').forEach(el => {
+        el.classList.toggle('active', !window.zabezpieczenieTransportuEnabled);
+    });
 }
 window.updateZabezpieczenieTransportuUI = updateZabezpieczenieTransportuUI;
 
@@ -662,12 +662,12 @@ function renderOfferItems() {
                 let rowClass = '';
                 let rowStyle = '';
                 if (item.autoAdded) {
-                    rowStyle = 'background:rgba(245,158,11,0.04)';
+                    rowStyle = 'background:rgba(var(--warn-rgb),0.04)';
                 } else if (is1m) {
                     rowClass = 'row-1m';
                 }
                 const activePehdStyle =
-                    'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--warn); color:#1a1a1a; border:none; box-shadow:0 0 12px rgba(245,158,11,0.5); font-weight:700; border-radius:4px; min-width:88px; text-align:center;';
+                    'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--warn); color:#1a1a1a; border:none; box-shadow:0 0 12px rgba(var(--warn-rgb),0.5); font-weight:700; border-radius:4px; min-width:88px; text-align:center;';
                 const inactivePehdStyle =
                     'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease; min-width:88px; text-align:center; font-weight:600;';
 
@@ -719,7 +719,7 @@ function renderOfferItems() {
                 } else {
                     checkboxCell = `<td style="text-align:center;" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
                 }
-                const orderedRowStyle = isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : '';
+                const orderedRowStyle = isOrdered ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);' : '';
                 const lockAttr = isLocked ? ' disabled' : '';
 
                 html += `<tr class="${rowClass}" data-uid="${item.uid}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>

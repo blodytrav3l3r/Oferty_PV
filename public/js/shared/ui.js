@@ -128,8 +128,8 @@ function showUserSelectionPopup(users, defaultUserId) {
         let resolved = false;
         const once = (result) => { if (!resolved) { resolved = true; resolve(result); } };
 
-        let html = `<div id="user-selection-title" style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#f59e0b;"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
-        html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
+        let html = `<div id="user-selection-title" style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:var(--warn);"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
+        html += `<div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
         html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
 
         users.forEach((u) => {
@@ -141,30 +141,30 @@ function showUserSelectionPopup(users, defaultUserId) {
 
             html += `<button class="user-select-btn" data-user-id="${u.id}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
-                background:${isDefault ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
-                border:1px solid ${isDefault ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.06)'};
-                border-radius:10px; cursor:pointer; color:#e2e8f0; font:500 0.85rem Inter,sans-serif;
+                background:${isDefault ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(255,255,255,0.03)'};
+                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(255,255,255,0.06)'};
+                border-radius:10px; cursor:pointer; color:var(--text-primary); font:500 0.85rem Inter,sans-serif;
                 transition:all 0.15s; text-align:left; width:100%;
-            " onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)';this.style.background='rgba(99,102,241,0.1)'"
+            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb),0.4)';this.style.background='rgba(var(--accent-rgb),0.1)'"
                onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='rgba(255,255,255,0.03)'}">
                 <span style="font-size:1.1rem;">${roleBadge}</span>
                 <div style="flex:1;">
                     <div style="font-weight:700;">${displayName}</div>
-                    <div style="font-size:0.7rem; color:#94a3b8;">Symbol: ${symbol}</div>
+                    <div style="font-size:0.7rem; color:var(--text-secondary);">Symbol: ${symbol}</div>
                 </div>
-                ${isDefault ? '<span style="font-size:0.65rem; color:#818cf8; font-weight:700;">DOMYŚLNY</span>' : ''}
+                ${isDefault ? '<span style="font-size:0.65rem; color:var(--accent-hover); font-weight:700;">DOMYŚLNY</span>' : ''}
             </button>`;
         });
 
         html += `</div>`;
         html += `<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">`;
-        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:transparent; color:#94a3b8; cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
+        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:transparent; color:var(--text-secondary); cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
         html += `</div>`;
 
         const overlay = showModal({
             id: 'user-selection-overlay',
             titleId: 'user-selection-title',
-            html: `<div class="modal" style="background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:#e2e8f0; font-family:Inter,sans-serif;">${html}</div>`,
+            html: `<div class="modal" style="background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
             onClose: () => once(null)
         });
         if (window.lucide) lucide.createIcons();
@@ -258,8 +258,8 @@ function appConfirm(message, opts = {}) {
 
         _ensureConfirmStyles();
 
-        const iconMap = { info: '<i data-lucide="info" style="width: 32px; height: 32px; color: #6366f1;"></i>', warning: '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: #f59e0b;"></i>', danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: #ef4444;"></i>' };
-        const accentMap = { info: '#6366f1', warning: '#f59e0b', danger: '#ef4444' };
+        const iconMap = { info: '<i data-lucide="info" style="width: 32px; height: 32px; color: var(--accent);"></i>', warning: '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--warn);"></i>', danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--danger);"></i>' };
+        const accentMap = { info: 'var(--accent)', warning: 'var(--warn)', danger: 'var(--danger)' };
         const accent = accentMap[type] || accentMap.info;
 
         const safeTitle = opts.allowHtml ? title : _escapeHtml(title);
@@ -317,7 +317,7 @@ function _ensureConfirmStyles() {
             border-radius:16px;
             width:100%; max-width:800px;
             padding:1.5rem 3rem;
-            box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.08);
+            box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(var(--accent-rgb),0.08);
             text-align:center;
             animation:appConfirmIn 0.2s ease-out;
         }
@@ -331,7 +331,7 @@ function _ensureConfirmStyles() {
             margin-bottom:0.6rem;
         }
         .app-confirm-message {
-            font-size:0.85rem; color:#94a3b8;
+            font-size:0.85rem; color:var(--text-secondary);
             margin-bottom:1.5rem; line-height:1.55;
         }
         .app-confirm-actions {
@@ -342,11 +342,11 @@ function _ensureConfirmStyles() {
             font:600 0.85rem 'Inter',sans-serif;
             cursor:pointer; transition:all 0.15s; border:none;
         }
-        .app-confirm-btn:focus { outline:2px solid #818cf8; outline-offset:2px; }
+        .app-confirm-btn:focus { outline:2px solid var(--accent-hover); outline-offset:2px; }
         #app-confirm-ok { background:#4f46e5; color:white; }
         #app-confirm-ok:hover { filter:brightness(1.15); transform:translateY(-1px); }
         #app-confirm-cancel {
-            background:#1e2d42; color:#94a3b8;
+            background:#1e2d42; color:var(--text-secondary);
             border:1px solid rgba(255,255,255,0.08);
         }
         #app-confirm-cancel:hover { color:#fff; background:#2d3e5a; }
@@ -382,7 +382,7 @@ function createSaveIndicator(parent, opts = {}) {
     const el = document.createElement('span');
     el.className = 'save-indicator';
     el.setAttribute('aria-live', 'polite');
-    el.style.cssText = 'display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:#94a3b8; margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
+    el.style.cssText = 'display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
     parent.appendChild(el);
 
     let savedTimer = null;
@@ -411,11 +411,11 @@ function createSaveIndicator(parent, opts = {}) {
         setSaving() {
             if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
             ensureSpinKeyframes();
-            render('saving', 'Zapisuję...', '#94a3b8');
+            render('saving', 'Zapisuję...', 'var(--text-secondary)');
         },
         setSaved() {
             if (savedTimer) clearTimeout(savedTimer);
-            render('saved', 'Zapisano', '#10b981');
+            render('saved', 'Zapisano', 'var(--success)');
             savedTimer = window.setTimeout(() => {
                 el.style.opacity = '0';
                 savedTimer = null;
@@ -423,7 +423,7 @@ function createSaveIndicator(parent, opts = {}) {
         },
         setError(message) {
             if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
-            render('error', message || 'Błąd zapisu', '#ef4444');
+            render('error', message || 'Błąd zapisu', 'var(--danger)');
         },
         destroy() {
             if (savedTimer) clearTimeout(savedTimer);

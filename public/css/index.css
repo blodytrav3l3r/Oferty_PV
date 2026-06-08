@@ -306,7 +306,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .btn-hero:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--glass-border);
     border-color: rgba(255, 255, 255, 0.15);
     color: var(--text-primary);
     transform: translateY(-1px);
@@ -618,17 +618,17 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .admin-stat-icon.admin {
     background: var(--warn-bg);
-    color: #fbbf24;
+    color: var(--warn-hover);
 }
 
 .admin-stat-icon.pro {
     background: var(--accent-bg);
-    color: #a78bfa;
+    color: var(--accent2-hover);
 }
 
 .admin-stat-icon.user {
     background: var(--success-bg);
-    color: #34d399;
+    color: var(--success-hover);
 }
 
 .admin-stat-info {
@@ -782,17 +782,17 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .badge-role.admin {
     background: var(--warn-bg);
-    color: #fbbf24;
+    color: var(--warn-hover);
     border: 1px solid var(--warn-border);
 }
 .badge-role.pro {
     background: var(--accent-bg);
-    color: #a78bfa;
+    color: var(--accent2-hover);
     border: 1px solid var(--accent-border-dim);
 }
 .badge-role.user {
     background: var(--success-bg);
-    color: #34d399;
+    color: var(--success-hover);
     border: 1px solid var(--success-bg);
 }
 

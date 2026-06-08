@@ -950,13 +950,13 @@ function renderPrzejsciaDetailsTable(existingData) {
     let html = `<div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
             <thead>
-                <tr style="border-bottom:1px solid rgba(139,92,246,0.2);">
-                    <th style="text-align:left; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Rodzaj</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN od</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN do</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Ilość</th>
-                    <th style="text-align:left; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Uwagi</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:#a78bfa; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Czy przejście?</th>
+                <tr style="border-bottom:1px solid rgba(var(--accent2-rgb),0.2);">
+                    <th style="text-align:left; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Rodzaj</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN od</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN do</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Ilość</th>
+                    <th style="text-align:left; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Uwagi</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Czy przejście?</th>
                     <th style="width:36px;"></th>
                 </tr>
             </thead>
@@ -1033,8 +1033,8 @@ function updatePrzejscieDnOptions(prefix, category) {
 
 function buildPrzejscieRowHTML(row, idx, source) {
     const prefix = `step4-psz-${source}-${idx}`;
-    const rowBg = source === 'custom' ? 'rgba(245,158,11,0.04)' : 'transparent';
-    const borderLeft = source === 'custom' ? '2px solid rgba(245,158,11,0.3)' : 'none';
+    const rowBg = source === 'custom' ? 'rgba(var(--warn-rgb),0.04)' : 'transparent';
+    const borderLeft = source === 'custom' ? '2px solid rgba(var(--warn-rgb),0.3)' : 'none';
 
     const cats = new Set();
     const dns = new Set();
@@ -1103,13 +1103,13 @@ function buildPrzejscieRowHTML(row, idx, source) {
             <input type="text" id="${prefix}-uwagi" class="form-input" value="${(row.uwagi || '').toString().replace(/"/g, '&quot;')}" placeholder="Uwagi..." style="width:100%; font-size:0.75rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript}">
         </td>
         <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">
-            <select id="${prefix}-czy" class="form-input" style="width:80px; font-size:0.75rem; padding:0.3rem; text-align:center; font-weight:700; border-radius:4px; ${row.czyPrzejscie === 'TAK' ? 'color:#4ade80; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3);' : 'color:#f87171; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">
+            <select id="${prefix}-czy" class="form-input" style="width:80px; font-size:0.75rem; padding:0.3rem; text-align:center; font-weight:700; border-radius:4px; ${row.czyPrzejscie === 'TAK' ? 'color:var(--success-hover); background:rgba(var(--success-rgb),0.1); border:1px solid rgba(var(--success-rgb),0.3);' : 'color:var(--danger-hover); background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">
                 <option value="TAK"${row.czyPrzejscie === 'TAK' ? ' selected' : ''}>TAK</option>
                 <option value="NIE"${row.czyPrzejscie === 'NIE' ? ' selected' : ''}>NIE</option>
             </select>
         </td>
         <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
-            <button type="button" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; width:26px; height:26px; border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s;" onmouseenter="this.style.background='rgba(239,68,68,0.25)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+            <button type="button" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.25); color:var(--danger-hover); width:26px; height:26px; border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--danger-rgb),0.25)'" onmouseleave="this.style.background='rgba(var(--danger-rgb),0.1)'"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
         </td>
     </tr>`;
 }
@@ -1117,13 +1117,13 @@ function buildPrzejscieRowHTML(row, idx, source) {
 /** Aktualizuje styl selecta TAK/NIE po zmianie wartości */
 function updatePrzejscieSelectStyle(selectEl) {
     if (selectEl.value === 'TAK') {
-        selectEl.style.color = '#4ade80';
-        selectEl.style.background = 'rgba(34,197,94,0.1)';
-        selectEl.style.border = '1px solid rgba(34,197,94,0.3)';
+        selectEl.style.color = 'var(--success-hover)';
+        selectEl.style.background = 'rgba(var(--success-rgb),0.1)';
+        selectEl.style.border = '1px solid rgba(var(--success-rgb),0.3)';
     } else {
         selectEl.style.color = 'var(--danger-hover)';
-        selectEl.style.background = 'rgba(239,68,68,0.1)';
-        selectEl.style.border = '1px solid rgba(239,68,68,0.3)';
+        selectEl.style.background = 'rgba(var(--danger-rgb),0.1)';
+        selectEl.style.border = '1px solid rgba(var(--danger-rgb),0.3)';
     }
 }
 
@@ -1891,9 +1891,9 @@ window.applyPreviewLockUI = function () {
         banner = document.createElement('div');
         banner.id = 'preview-lock-banner';
         banner.innerHTML = `
-            <div style="position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(15, 23, 42, 0.95); border:2px solid #fbbf24; color:#fbbf24; padding:0.8rem 2.5rem; border-radius:40px; z-index:99999; box-shadow:0 20px 40px rgba(0,0,0,0.6); font-weight:800; display:flex; align-items:center; gap:1.5rem; backdrop-filter:blur(10px);">
+            <div style="position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(15, 23, 42, 0.95); border:2px solid var(--warn-hover); color:var(--warn-hover); padding:0.8rem 2.5rem; border-radius:40px; z-index:99999; box-shadow:0 20px 40px rgba(0,0,0,0.6); font-weight:800; display:flex; align-items:center; gap:1.5rem; backdrop-filter:blur(10px);">
                 <span style="font-size:1.2rem;"><i data-lucide="eye"></i>️ HISTORIA — TYLKO DO ODCZYTU</span>
-                <button onclick="window.exitPreviewMode()" class="btn btn-sm" style="background:#fbbf24; color:#000; border:none; padding:0.4rem 1rem; border-radius:20px; font-weight:700;">ZAMKNIJ PODGLĄD</button>
+                <button onclick="window.exitPreviewMode()" class="btn btn-sm" style="background:var(--warn-hover); color:#000; border:none; padding:0.4rem 1rem; border-radius:20px; font-weight:700;">ZAMKNIJ PODGLĄD</button>
             </div>
         `;
         document.body.appendChild(banner);
@@ -2036,15 +2036,15 @@ function renderOrderModeBanner() {
     banner.style.cssText = `
         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
         padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
-        background: ${hasChanges ? 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06))' : 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06))'};
-        border: 2px solid ${hasChanges ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'};
+        background: ${hasChanges ? 'linear-gradient(135deg, rgba(var(--danger-rgb),0.12), rgba(var(--danger-rgb),0.06))' : 'linear-gradient(135deg, rgba(var(--success-rgb),0.12), rgba(var(--success-rgb),0.06))'};
+        border: 2px solid ${hasChanges ? 'rgba(var(--danger-rgb),0.3)' : 'rgba(var(--success-rgb),0.3)'};
     `;
 
     banner.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
             <span style="font-size:1.3rem;"><i data-lucide="package"></i></span>
             <div>
-                <div style="font-size:0.82rem; font-weight:800; color:${hasChanges ? '#f87171' : '#34d399'};">
+                <div style="font-size:0.82rem; font-weight:800; color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">
                     TRYB ZAMÓWIENIA — ${order.number || ''}
                 </div>
                 <div style="font-size:0.65rem; color:var(--text-muted);">
@@ -2529,7 +2529,7 @@ function renderZleceniaList() {
 
         // Nagłówek studni
         html += `<div style="background:var(--bg-secondary); padding:0.6rem 0.8rem; border-bottom:1px solid var(--border-glass); border-top:1px solid var(--border-glass); position:sticky; top:0; z-index:5; display:flex; justify-content:space-between; align-items:center; margin-top:-1px;">
-            <div style="font-size:0.75rem; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="tag"></i> ${group.wellName}</div>
+            <div style="font-size:0.75rem; font-weight:800; color:var(--accent-hover); text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="tag"></i> ${group.wellName}</div>
             <div style="font-size:0.65rem; font-weight:700; color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius:12px; border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + group.wellDn}</div>
         </div>
         <div style="padding: 0.4rem;">`; // wrapper for elements in this well
@@ -2558,11 +2558,11 @@ function renderZleceniaList() {
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${el.product.name}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
-                        ${prodOrderNum ? `<div style="font-size:0.6rem; font-weight:800; color:#818cf8; background:rgba(129,140,248,0.1); padding:0.1rem 0.4rem; border-radius:4px; border:1px solid rgba(129,140,248,0.2);">${prodOrderNum}</div>` : ''}
-                        ${isSaved && !isAccepted ? `<button onclick="event.stopPropagation(); deleteProductionOrder('${savedOrder.id}')" title="Usuń zlecenie" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:4px; cursor:pointer; padding:0.1rem 0.3rem; font-size:0.6rem; line-height:1; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)'"><i data-lucide="trash-2"></i></button>` : ''}
+                        ${prodOrderNum ? `<div style="font-size:0.6rem; font-weight:800; color:var(--accent-hover); background:rgba(var(--accent-hover-rgb),0.1); padding:0.1rem 0.4rem; border-radius:4px; border:1px solid rgba(var(--accent-hover-rgb),0.2);">${prodOrderNum}</div>` : ''}
+                        ${isSaved && !isAccepted ? `<button onclick="event.stopPropagation(); deleteProductionOrder('${savedOrder.id}')" title="Usuń zlecenie" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); border-radius:4px; cursor:pointer; padding:0.1rem 0.3rem; font-size:0.6rem; line-height:1; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb),0.3)'" onmouseleave="this.style.background='rgba(var(--danger-rgb),0.1)'"><i data-lucide="trash-2"></i></button>` : ''}
                     </div>
                 </div>
-                ${isAccepted ? '<div style="font-size:0.55rem; color:#34d399; margin-top:0.2rem; font-weight:700;">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:#fbbf24; margin-top:0.2rem; font-weight:700;">Wersja robocza</div>' : ''}
+                ${isAccepted ? '<div style="font-size:0.55rem; color:var(--success-hover); margin-top:0.2rem; font-weight:700;">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:var(--warn-hover); margin-top:0.2rem; font-weight:700;">Wersja robocza</div>' : ''}
             </div>`;
         });
 
@@ -2651,7 +2651,7 @@ function renderZleceniaWellConfig() {
             zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
 
         html += `<div data-zl-idx="${index}" class="config-tile" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)" 
-                      style="background:rgba(30,41,59,0.7); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}; border-left:4px solid ${badge.bg}; border-radius:6px; padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(99,102,241,0.2); border-color:#818cf8;' : ''}">
+                      style="background:rgba(30,41,59,0.7); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}; border-left:4px solid ${badge.bg}; border-radius:6px; padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(var(--accent-rgb),0.2); border-color:var(--accent-hover);' : ''}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
                 <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.1rem; border-radius:3px;">
@@ -2664,7 +2664,7 @@ function renderZleceniaWellConfig() {
                   <div style="font-size:0.55rem; color:var(--text-muted);">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
                 </div>
             </div>
-            ${isCurrentlyEdited ? '<span style="font-size:0.6rem; color:#818cf8;"><i data-lucide="pencil"></i></span>' : ''}
+            ${isCurrentlyEdited ? '<span style="font-size:0.6rem; color:var(--accent-hover);"><i data-lucide="pencil"></i></span>' : ''}
           </div>
         </div>`;
     });
@@ -3059,10 +3059,10 @@ function populateZleceniaForm(el) {
     let bannerHtml = '';
     if (isAccepted) {
         bannerHtml = `
-            <div style="background:rgba(239,68,68,0.15); border:2px solid rgba(239,68,68,0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
+            <div style="background:rgba(var(--danger-rgb),0.15); border:2px solid rgba(var(--danger-rgb),0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
                 <span style="font-size:1.5rem;"><i data-lucide="lock"></i></span>
                 <div style="flex:1;">
-                    <div style="font-size:0.85rem; font-weight:800; color:#f87171; text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
                     <div style="font-size:0.7rem; color:var(--text-muted);">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
                 </div>
             </div>
@@ -3078,10 +3078,10 @@ function populateZleceniaForm(el) {
             <div style="
                 margin-bottom: 0.5rem;
                 padding: 0.4rem 0.6rem;
-                background: rgba(239, 68, 68, 0.08);
-                border: 1px solid rgba(239, 68, 68, 0.3);
+                background: rgba(var(--danger-rgb), 0.08);
+                border: 1px solid rgba(var(--danger-rgb), 0.3);
                 border-radius: 6px;
-                color: #ef4444;
+                color: var(--danger);
                 font-size: 0.75rem;
                 font-weight: 600;
                 line-height: 1.4;
@@ -3117,7 +3117,7 @@ function populateZleceniaForm(el) {
     <!-- Dane zlecenia -->
     <div class="card card-compact" style="margin-bottom:0.5rem;">
         <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
-            <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:#818cf8; font-weight:800;">${existing?.productionOrderNumber || '— nowy —'}</span></span>
+            <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight:800;">${existing?.productionOrderNumber || '— nowy —'}</span></span>
             <span class="zl-toggle" style="font-size:0.75rem;">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
@@ -3127,7 +3127,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${existing?.data || todayStr}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${existing?.data || todayStr}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Adres</label>
@@ -3135,7 +3135,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${existing?.nazwisko || userName}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${existing?.nazwisko || userName}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Wykonawca</label>
@@ -3147,7 +3147,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
                 <label class="form-label-sm ui-text-sec">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${existing?.fakturowane || clientName}" readonly style="background:rgba(255,255,255,0.02); color:#818cf8; font-weight:700;">
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${existing?.fakturowane || clientName}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
             </div>
         </div>
     </div>
@@ -3169,7 +3169,7 @@ function populateZleceniaForm(el) {
                 <!-- Numer Studni -->
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <span style="color:var(--text-secondary); font-size:0.75rem; text-transform:uppercase; font-weight:600;">Numer studni</span>
-                    <span style="font-weight:bold; color:#818cf8; font-size:0.85rem;">${well.name || ''}</span>
+                    <span style="font-weight:bold; color:var(--accent-hover); font-size:0.85rem;">${well.name || ''}</span>
                 </div>
                 
                 <!-- Lista poniżej -->
@@ -3268,7 +3268,7 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Studnia wd. DIN</label>
                     <div class="ui-row-gap zl-param-group">
-                        <input type="text" id="zl-din" class="form-input form-input-sm" value="${dinVal}" style="width:100%; color:#818cf8; font-weight:700;">
+                        <input type="text" id="zl-din" class="form-input form-input-sm" value="${dinVal}" style="width:100%; color:var(--accent-hover); font-weight:700;">
                     </div>
                 </div>
 
@@ -3297,7 +3297,7 @@ function populateZleceniaForm(el) {
                     <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem; align-items:center;" class="zl-param-group">
                         <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" onfocus="this.value=''" oninput="onZleceniaKatChange()" style="width:70px;">
                         <span style="font-size:1.2rem; color:var(--text-muted); margin: 0 4px;">→</span>
-                        <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:#818cf8; font-weight:700; margin-right:5px; pointer-events:none;">
+                        <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:var(--accent-hover); font-weight:700; margin-right:5px; pointer-events:none;">
                         ${katOptions
                             .map(
                                 (v) =>
@@ -4277,8 +4277,8 @@ function openBulkOrderSequencePopup() {
             return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}"
                     draggable="${!disabled}" data-well-index="${g.wellIndex}"
                     style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
-                    background:${disabled ? 'rgba(255,255,255,0.02)' : 'rgba(139,92,246,0.08)'};
-                    border:1px solid ${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(139,92,246,0.25)'};
+                    background:${disabled ? 'rgba(255,255,255,0.02)' : 'rgba(var(--accent2-rgb),0.08)'};
+                    border:1px solid ${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(var(--accent2-rgb),0.25)'};
                     border-radius:8px; cursor:${disabled ? 'default' : 'grab'};
                     opacity:${disabled ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;">
                 <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled ? 'disabled' : ''} value=""
@@ -4286,15 +4286,15 @@ function openBulkOrderSequencePopup() {
                     onblur="reorderBulkSeqList(this)"
                     onkeydown="if(event.key === 'Enter') this.blur();"
                     style="width:72px; height:28px; text-align:center; padding:0;
-                    background:${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(139,92,246,0.15)'}; 
-                    border:1px solid ${disabled ? 'transparent' : 'rgba(139,92,246,0.4)'}; border-radius:6px;
+                    background:${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(var(--accent2-rgb),0.15)'}; 
+                    border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb),0.4)'}; border-radius:6px;
                     font-size:0.75rem; font-weight:800; color:${disabled ? 'var(--text-muted)' : '#c4b5fd'}; outline:none;">
-                <span style="font-size:1rem; color:${disabled ? 'var(--text-muted)' : '#a78bfa'}; cursor:grab;">⠿</span>
+                <span style="font-size:1rem; color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
                 <div style="flex:1;">
                     <div style="font-weight:700; font-size:0.8rem; color:var(--text-primary);">${g.wellName}</div>
                     <div style="font-size:0.65rem; color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
                 </div>
-                ${!disabled ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:#f87171; padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
+                ${!disabled ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
                     <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
                 </button>` : ''}
             </div>`;
@@ -4309,18 +4309,18 @@ function openBulkOrderSequencePopup() {
     overlay.style.cssText =
         'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
     overlay.innerHTML = `
-        <div style="background:var(--bg-secondary); border:1px solid rgba(139,92,246,0.3); border-radius:14px; padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="background:var(--bg-secondary); border:1px solid rgba(var(--accent2-rgb),0.3); border-radius:14px; padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                 <div>
-                    <div style="font-size:1rem; font-weight:800; color:#a78bfa;"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
+                    <div style="font-size:1rem; font-weight:800; color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
                     <div style="font-size:0.7rem; color:var(--text-muted);">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
                 </div>
-                <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:0.3rem 0.6rem;">
+                <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
-            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(139,92,246,0.2); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
+            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb),0.2); border:1px solid rgba(var(--accent2-rgb),0.4); color:var(--accent2-hover); font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
             </button>
         </div>
@@ -4428,7 +4428,7 @@ function toggleBulkSeqItem(btn) {
         
         const input = item.querySelector('.bulk-seq-num');
         input.removeAttribute('disabled');
-        input.style.background = 'rgba(139,92,246,0.15)';
+        input.style.background = 'rgba(var(--accent2-rgb),0.15)';
         
         btn.innerHTML = '<i data-lucide="trash-2" style="width:16px; height:16px;"></i>';
         btn.style.color = 'var(--danger-hover)';
@@ -4445,7 +4445,7 @@ function toggleBulkSeqItem(btn) {
         input.style.background = 'rgba(255,255,255,0.05)';
         
         btn.innerHTML = '<i data-lucide="plus" style="width:16px; height:16px;"></i>';
-        btn.style.color = '#34d399';
+        btn.style.color = 'var(--success-hover)';
         btn.title = "Przywróć studnię";
     }
     
@@ -4611,12 +4611,12 @@ window.showKartaBudowyExportChoice = function() {
     <div id="karta-export-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px);">
         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 350px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Wydruk Karty Budowy</h3>
-            <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 1.5rem;">Wybierz format eksportu karty budowy zamówienia</p>
+            <p style="font-size: 0.8rem; color: var(--border); margin-bottom: 1.5rem;">Wybierz format eksportu karty budowy zamówienia</p>
             <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
-                <button onclick="exportKartaToPDF_action('${orderId}')" style="flex: 1; background: rgba(239,68,68,0.2); color: #fca5a5; border: 2px solid rgba(239,68,68,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
+                <button onclick="exportKartaToPDF_action('${orderId}')" style="flex: 1; background: rgba(var(--danger-rgb),0.2); color: #fca5a5; border: 2px solid rgba(var(--danger-rgb),0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb),0.4)'" onmouseleave="this.style.background='rgba(var(--danger-rgb),0.2)'">
                     <span style="font-size: 2rem;"><i data-lucide="file-text"></i></span> PDF
                 </button>
-                <button onclick="exportKartaToWord_action('${orderId}')" style="flex: 1; background: rgba(59,130,246,0.2); color: #93c5fd; border: 2px solid rgba(59,130,246,0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
+                <button onclick="exportKartaToWord_action('${orderId}')" style="flex: 1; background: rgba(var(--blue-rgb),0.2); color: #93c5fd; border: 2px solid rgba(var(--blue-rgb),0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb),0.4)'" onmouseleave="this.style.background='rgba(var(--blue-rgb),0.2)'">
                     <span style="font-size: 2rem;"><i data-lucide="edit"></i></span> Word
                 </button>
             </div>

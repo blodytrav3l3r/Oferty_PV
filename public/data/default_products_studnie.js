@@ -9702,11 +9702,11 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         'zapasGoraMin': 150
     },
     {
-        id: 'Jajowa-600',
-        name: 'Jajowa',
+        id: 'Jajowa-600900',
+        name: 'Jajowa 600/900',
         category: 'Jajowa',
         componentType: 'przejscie',
-        dn: 600,
+        dn: '600/900',
         weight: -102,
         price: 0,
         magazynWL: 0,
@@ -9719,11 +9719,11 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         'zapasGoraMin': 150
     },
     {
-        id: 'Jajowa-700',
-        name: 'Jajowa',
+        id: 'Jajowa-7001250',
+        name: 'Jajowa 700/1250',
         category: 'Jajowa',
         componentType: 'przejscie',
-        dn: 700,
+        dn: '700/1250',
         weight: -139,
         price: 0,
         magazynWL: 0,
@@ -9736,11 +9736,11 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         'zapasGoraMin': 150
     },
     {
-        id: 'Jajowa-800',
-        name: 'Jajowa',
+        id: 'Jajowa-8001200',
+        name: 'Jajowa 800/1200',
         category: 'Jajowa',
         componentType: 'przejscie',
-        dn: 800,
+        dn: '800/1200',
         weight: -181,
         price: 0,
         magazynWL: 0,
@@ -9753,11 +9753,11 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         'zapasGoraMin': 150
     },
     {
-        id: 'Jajowa-1000',
-        name: 'Jajowa',
+        id: 'Jajowa-10001500',
+        name: 'Jajowa 1000/1500',
         category: 'Jajowa',
         componentType: 'przejscie',
-        dn: 1000,
+        dn: '1000/1500',
         weight: -283,
         price: 0,
         magazynWL: 0,
@@ -9770,11 +9770,11 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         'zapasGoraMin': 150
     },
     {
-        id: 'Jajowa-1200',
-        name: 'Jajowa',
+        id: 'Jajowa-12001800',
+        name: 'Jajowa 1200/1800',
         category: 'Jajowa',
         componentType: 'przejscie',
-        dn: 1200,
+        dn: '1200/1800',
         weight: -407,
         price: 0,
         magazynWL: 0,

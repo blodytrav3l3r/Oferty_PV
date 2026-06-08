@@ -496,7 +496,7 @@ class PVSalesUI {
                                     <button class="offer-order-main btn-edit-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Edytuj zamówienie ${label}">
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
-                                            <strong>${label} <span style="color: #34d399; font-weight: 600;">• ${orderValue.toFixed(2)} PLN</span></strong>
+                                            <strong>${label} <span style="color: var(--success-hover); font-weight: 600;">• ${orderValue.toFixed(2)} PLN</span></strong>
                                             <small>${createdAt}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
                                         </span>
                                     </button>
@@ -509,7 +509,7 @@ class PVSalesUI {
                         })
                         .join('');
                 } else {
-                    orderBadge = `<span style="background:rgba(100,116,139,0.1); color:#94a3b8; padding:4px 10px; border-radius:6px;
+                    orderBadge = `<span style="background:rgba(100,116,139,0.1); color:var(--text-secondary); padding:4px 10px; border-radius:6px;
                     border:1px solid rgba(100,116,139,0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
                 }
 
@@ -1323,14 +1323,14 @@ class PVSalesUI {
                     }
                     .audit-modal-header h3 {
                         margin: 0;
-                        color: #f8fafc;
+                        color: var(--text-primary);
                         font-size: 1rem;
                         display: flex;
                         align-items: center;
                         gap: 0.55rem;
                     }
                     .audit-modal-subtitle {
-                        color: #94a3b8;
+                        color: var(--text-secondary);
                         font-size: 0.78rem;
                         margin-top: 0.18rem;
                     }
@@ -1354,10 +1354,10 @@ class PVSalesUI {
                         bottom: 0;
                         width: 4px;
                     }
-                    .audit-card.action-create::before { background: #818cf8; }
-                    .audit-card.action-update::before { background: #34d399; }
-                    .audit-card.action-diff::before { background: #fbbf24; }
-                    .audit-card.action-delete::before { background: #f87171; }
+                    .audit-card.action-create::before { background: var(--accent-hover); }
+                    .audit-card.action-update::before { background: var(--success-hover); }
+                    .audit-card.action-diff::before { background: var(--warn-hover); }
+                    .audit-card.action-delete::before { background: var(--danger-hover); }
                     .audit-card-header {
                         display: flex;
                         justify-content: space-between;
@@ -1383,18 +1383,18 @@ class PVSalesUI {
                         white-space: nowrap;
                     }
                     .audit-badge i { width: 13px; height: 13px; }
-                    .audit-badge.create { background: rgba(129, 140, 248, 0.14); color: #a5b4fc; border: 1px solid rgba(129, 140, 248, 0.25); }
-                    .audit-badge.update { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.22); }
-                    .audit-badge.diff { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
-                    .audit-badge.danger { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+                    .audit-badge.create { background: rgba(var(--accent-hover-rgb), 0.14); color: var(--accent-text); border: 1px solid rgba(var(--accent-hover-rgb), 0.25); }
+                    .audit-badge.update { background: rgba(var(--success-rgb), 0.12); color: var(--success-hover); border: 1px solid rgba(var(--success-rgb), 0.22); }
+                    .audit-badge.diff { background: rgba(var(--warn-rgb), 0.12); color: var(--warn-hover); border: 1px solid rgba(var(--warn-rgb), 0.25); }
+                    .audit-badge.danger { background: rgba(var(--danger-rgb), 0.12); color: var(--danger-hover); border: 1px solid rgba(var(--danger-rgb), 0.25); }
                     .audit-entry-title {
-                        color: #f8fafc;
+                        color: var(--text-primary);
                         font-size: 0.92rem;
                         font-weight: 750;
                         line-height: 1.25;
                     }
                     .audit-entry-subtitle {
-                        color: #94a3b8;
+                        color: var(--text-secondary);
                         font-size: 0.76rem;
                         margin-top: 0.2rem;
                     }
@@ -1414,7 +1414,7 @@ class PVSalesUI {
                         background: rgba(15, 23, 42, 0.5);
                     }
                     .audit-change-name {
-                        color: #cbd5e1;
+                        color: var(--border);
                         font-size: 0.78rem;
                         font-weight: 700;
                     }
@@ -1423,25 +1423,25 @@ class PVSalesUI {
                         align-items: center;
                         gap: 0.45rem;
                         min-width: 0;
-                        color: #e2e8f0;
+                        color: var(--text-primary);
                         font-size: 0.8rem;
                     }
-                    .audit-change-values i { width: 13px; height: 13px; color: #64748b; flex: 0 0 auto; }
+                    .audit-change-values i { width: 13px; height: 13px; color: var(--text-muted); flex: 0 0 auto; }
                     .audit-old {
-                        color: #94a3b8;
+                        color: var(--text-secondary);
                         text-decoration: line-through;
                         overflow: hidden;
                         text-overflow: ellipsis;
                         white-space: nowrap;
                     }
                     .audit-new {
-                        color: #34d399;
+                        color: var(--success-hover);
                         font-weight: 800;
                         overflow: hidden;
                         text-overflow: ellipsis;
                         white-space: nowrap;
                     }
-                    .audit-muted { color: #cbd5e1; font-size: 0.84rem; }
+                    .audit-muted { color: var(--border); font-size: 0.84rem; }
                     .danger-text { color: #fca5a5; }
                     .audit-actions {
                         display: flex;
@@ -1456,9 +1456,9 @@ class PVSalesUI {
                         font-weight: 700;
                     }
                     .load-more-btn {
-                        background: rgba(99,102,241,0.14);
-                        border: 1px solid rgba(99,102,241,0.3);
-                        color: #a5b4fc;
+                        background: rgba(var(--accent-rgb),0.14);
+                        border: 1px solid rgba(var(--accent-rgb),0.3);
+                        color: var(--accent-text);
                         padding: 0.55rem 1.1rem;
                         cursor: pointer;
                     }
@@ -1613,14 +1613,14 @@ class PVSalesUI {
             <style>
                 #audit-snapshot-modal .audit-modal-inner { width:100vw; height:100vh; max-width:none; max-height:none; background:#0f172a; border:0; border-radius:0; box-shadow:none; display:flex; flex-direction:column; }
                 #audit-snapshot-modal .audit-modal-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid rgba(148,163,184,0.12); }
-                #audit-snapshot-modal .audit-modal-header h3 { margin:0; color:#f8fafc; font-size:1rem; display:flex; align-items:center; gap:0.55rem; }
-                #audit-snapshot-modal .audit-modal-subtitle { color:#94a3b8; font-size:0.78rem; margin-top:0.18rem; }
+                #audit-snapshot-modal .audit-modal-header h3 { margin:0; color:var(--text-primary); font-size:1rem; display:flex; align-items:center; gap:0.55rem; }
+                #audit-snapshot-modal .audit-modal-subtitle { color:var(--text-secondary); font-size:0.78rem; margin-top:0.18rem; }
                 #audit-snapshot-modal .audit-list { padding:1rem 1.25rem 1.25rem; overflow-y:auto; }
                 #audit-snapshot-modal .audit-change-row { display:grid; grid-template-columns:minmax(130px,210px) 1fr; gap:0.75rem; align-items:center; padding:0.45rem 0.55rem; border-radius:7px; background:rgba(15,23,42,0.5); }
-                #audit-snapshot-modal .audit-change-name { color:#cbd5e1; font-size:0.78rem; font-weight:700; }
-                #audit-snapshot-modal .audit-change-values { min-width:0; color:#e2e8f0; font-size:0.8rem; }
-                #audit-snapshot-modal .audit-new { color:#34d399; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
-                #audit-snapshot-modal .audit-muted { color:#cbd5e1; font-size:0.84rem; }
+                #audit-snapshot-modal .audit-change-name { color:var(--border); font-size:0.78rem; font-weight:700; }
+                #audit-snapshot-modal .audit-change-values { min-width:0; color:var(--text-primary); font-size:0.8rem; }
+                #audit-snapshot-modal .audit-new { color:var(--success-hover); font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
+                #audit-snapshot-modal .audit-muted { color:var(--border); font-size:0.84rem; }
             </style>
             <div class="modal audit-modal-inner" style="width:100vw; height:100vh; max-width:none; max-height:none; overflow:hidden;">
                 <div class="audit-modal-header">

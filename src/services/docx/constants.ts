@@ -1,17 +1,18 @@
 import { BorderStyle } from 'docx';
+import { DOCX_COLORS } from './colors';
 
 // ─── Stałe stylów (dopasowane 1:1 do oferta_studnie.html) ──────────
 
 export const FONT = 'Arial';
-export const COLOR_BODY = '1a1a2e';
-export const COLOR_GRAY_HEADER = '999999'; // .dn-header, tło th tabeli, tło .grand-total
-export const COLOR_WHITE = 'FFFFFF';
-export const COLOR_LABEL = '888888'; // .info-box h3
-export const COLOR_BORDER = 'CCCCCC'; // obramowanie td tabeli (border)
+export const COLOR_BODY = DOCX_COLORS.bodyText;
+export const COLOR_GRAY_HEADER = DOCX_COLORS.headerText; // .dn-header, tło th tabeli, tło .grand-total
+export const COLOR_WHITE = DOCX_COLORS.whiteText;
+export const COLOR_LABEL = DOCX_COLORS.mutedText; // .info-box h3
+export const COLOR_BORDER = DOCX_COLORS.tableBorder; // obramowanie td tabeli (border)
 
-export const COLOR_BG_SUMMARY = 'F0F0F0'; // .dn-summary-row, nagłówki tabel transportowych
-export const COLOR_BG_NOTE = 'FFFBE6'; // .note-box
-export const COLOR_NOTE_BORDER = 'F5A623'; // lewe obramowanie .note-box
+export const COLOR_BG_SUMMARY = DOCX_COLORS.summaryBg; // .dn-summary-row, nagłówki tabel transportowych
+export const COLOR_BG_NOTE = DOCX_COLORS.noteBg; // .note-box
+export const COLOR_NOTE_BORDER = DOCX_COLORS.noteBorder; // lewe obramowanie .note-box
 
 export type BorderDef = {
     style: (typeof BorderStyle)[keyof typeof BorderStyle];

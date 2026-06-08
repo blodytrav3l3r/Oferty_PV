@@ -14,7 +14,7 @@ function toggleSubUsersList() {
         );
         if (regularUsers.length === 0) {
             listObj.innerHTML =
-                '<span style="color:#64748b;">Brak innych użytkowników do przypisania</span>';
+                '<span style="color:var(--text-muted);">Brak innych użytkowników do przypisania</span>';
         } else {
             listObj.innerHTML = regularUsers
                 .map(
@@ -84,12 +84,12 @@ async function loadRecycledNumbers(user) {
             container.innerHTML = data.recycled
                 .map(
                     (num) =>
-                        `<span class="token-badge" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); padding:0.25rem 0.6rem; font-family:monospace; font-size:0.95rem;">${u.symbol || '?'}/.../${String(num).padStart(5, '0')}/${yearShort}</span>`
+                        `<span class="token-badge" style="background:rgba(var(--success-rgb),0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb),0.3); padding:0.25rem 0.6rem; font-family:monospace; font-size:0.95rem;">${u.symbol || '?'}/.../${String(num).padStart(5, '0')}/${yearShort}</span>`
                 )
                 .join('');
         } else {
             container.innerHTML =
-                '<span style="color:#64748b; font-size:0.85rem;">Brak odzyskanych numerów.</span>';
+                '<span style="color:var(--text-muted); font-size:0.85rem;">Brak odzyskanych numerów.</span>';
         }
     } catch (e) {
         console.error('Failed to load recycled numbers', e);
@@ -172,7 +172,7 @@ function showLoggedIn(user) {
     if (dashRole) {
         dashRole.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
         dashRole.style.background = user.role === 'admin' ? '#2d2208' : '#152040';
-        dashRole.style.color = user.role === 'admin' ? '#f59e0b' : '#60a5fa';
+        dashRole.style.color = user.role === 'admin' ? 'var(--warn)' : 'var(--blue-hover)';
         dashRole.style.border =
             user.role === 'admin' ? '1px solid #2d2208' : '1px solid #152040';
     }
@@ -259,7 +259,7 @@ async function loadUsers() {
         <td style="font-family:monospace; color:var(--primary-hover); font-size:0.78rem;">${escapeHtml(u.username)}</td>
         <td style="font-size:0.75rem; color:var(--text-secondary);">${escapeHtml(u.phone || '—')}</td>
         <td><span class="badge-role ${escapeHtml(u.role)}">${escapeHtml(u.role.toUpperCase())}</span></td>
-        <td style="color:#60a5fa; font-weight:800;">${escapeHtml(String(u.orderStartNumber || 1))}</td>
+        <td style="color:var(--blue-hover); font-weight:800;">${escapeHtml(String(u.orderStartNumber || 1))}</td>
         <td style="color:var(--primary-hover); font-weight:800;">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td>
           <div class="admin-actions-cell">
