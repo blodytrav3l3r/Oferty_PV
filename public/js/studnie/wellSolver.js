@@ -190,8 +190,9 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
     const timeoutId = setTimeout(() => controller.abort(), 2000);
 
     try {
+        const effDn = well.dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : well.dn;
         const payload = {
-            dn: well.dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : well.dn,
+            dn: effDn,
             target_height_mm: requiredMm,
             use_reduction: well.redukcjaDN1000 || false,
             target_dn: well.redukcjaDN1000 ? (well.redukcjaTargetDN || 1000) : null,
@@ -216,23 +217,33 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
                 ? well.redukcjaZakonczenie || null
                 : well.zakonczenie || null,
             wkladkaZwienczenie: well.wkladkaZwienczenie || 'brak',
-            available_products: availProducts.map((p) => ({
-                id: p.id || '',
-                name: p.name || '',
-                componentType: p.componentType || '',
-                dn:
-                    typeof p.dn === 'string' && p.dn.includes('/')
-                        ? parseFloat(p.dn.split('/')[0]) || p.dn
-                        : parseFloat(p.dn) || null,
-                height: parseFloat(p.height) || 0,
-                formaStandardowaKLB: parseInt(p.formaStandardowaKLB) || 0,
-                formaStandardowaWL:
-                    parseInt(p.formaStandardowa) || parseInt(p.formaStandardowaWL) || 0,
-                zapasDol: parseFloat(p.zapasDol) || 0,
-                zapasGora: parseFloat(p.zapasGora) || 0,
-                zapasDolMin: parseFloat(p.zapasDolMin) || 0,
-                zapasGoraMin: parseFloat(p.zapasGoraMin) || 0
-            }))
+            available_products: (() => {
+                // Dołącz wszystkie konusy dla danej DN (pomija filtr stopni)
+                const availIds = new Set(availProducts.map(p => p.id));
+                const extraKonus = studnieProducts.filter(
+                    p => p.componentType === 'konus' &&
+                         parseInt(p.dn) === parseInt(effDn) &&
+                         !availIds.has(p.id)
+                );
+                const allProducts = extraKonus.length > 0 ? [...availProducts, ...extraKonus] : availProducts;
+                return allProducts.map((p) => ({
+                    id: p.id || '',
+                    name: p.name || '',
+                    componentType: p.componentType || '',
+                    dn:
+                        typeof p.dn === 'string' && p.dn.includes('/')
+                            ? parseFloat(p.dn.split('/')[0]) || p.dn
+                            : parseFloat(p.dn) || null,
+                    height: parseFloat(p.height) || 0,
+                    formaStandardowaKLB: parseInt(p.formaStandardowaKLB) || 0,
+                    formaStandardowaWL:
+                        parseInt(p.formaStandardowa) || parseInt(p.formaStandardowaWL) || 0,
+                    zapasDol: parseFloat(p.zapasDol) || 0,
+                    zapasGora: parseFloat(p.zapasGora) || 0,
+                    zapasDolMin: parseFloat(p.zapasDolMin) || 0,
+                    zapasGoraMin: parseFloat(p.zapasGoraMin) || 0
+                }));
+        })()
         };
         const apiUrl = `http://${window.location.hostname}:8000/api/v1/configure`;
         const response = await fetch(apiUrl, {
@@ -331,6 +342,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     }
 
     const dn = well.dn;
+    const effectiveDn = dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
     const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
 
     if (well.rzednaWlazu == null || well.rzednaWlazu <= rzDna) {
@@ -368,7 +380,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 
         // === WERYFIKACJA DENNICY ===
         const dnProducts = availProducts.filter((p) => filterByWellParams(p, well));
-        const correctDennica = getLowestDennicaHybrid(dnProducts, dn, well.magazyn || 'Kluczbork', well.przejscia, well.rzednaDna).dennica;
+        const correctDennica = getLowestDennicaHybrid(dnProducts, dn, well.magazyn || 'Kluczbork', well.przejscia, well.rzednaDna, well.stycznaDn).dennica;
         const configDennica = findDennicaInConfig(newConfig);
         const dennicaWrong = correctDennica && configDennica && configDennica.id !== correctDennica.id;
         if (dennicaWrong) {
@@ -389,7 +401,40 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             });
         })();
 
-        if (!dennicaWrong && redukcjaOk) {
+        // Sprawdź czy backend uwzględnił wymuszone zakończenie
+        const forcedClosureId = well.redukcjaDN1000
+            ? well.redukcjaZakonczenie
+            : well.zakonczenie;
+        const forcedClosureOk = !forcedClosureId || newConfig.some(item => item.productId === forcedClosureId);
+        if (!forcedClosureOk) {
+            console.warn('[AutoSelect] Backend pominął wymuszone zakończenie. Fallback do JS.');
+        }
+
+        // Sprawdź czy istnieje jakiekolwiek zakończenie górne w configu
+        const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
+        const hasTopClosure = newConfig.some(item => {
+            const prod = studnieProducts.find(p => p.id === item.productId);
+            return prod && topClosureTypes.includes(prod.componentType);
+        });
+        if (!hasTopClosure) {
+            console.warn('[AutoSelect] Backend nie zawiera zakończenia górnego. Fallback do JS.');
+        }
+
+        // Sprawdź czy backend wybrał konus gdy dostępny (bez PEHD)
+        const isPEHD = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+        const konusAvailable = !isPEHD && studnieProducts.some(
+            p => p.componentType === 'konus' && parseInt(p.dn) === parseInt(effectiveDn)
+        );
+        const hasKonus = newConfig.some(item => {
+            const prod = studnieProducts.find(p => p.id === item.productId);
+            return prod && prod.componentType === 'konus';
+        });
+        const konusOk = !konusAvailable || hasKonus || !!forcedClosureId;
+        if (!konusOk) {
+            console.warn('[AutoSelect] Backend pominął konus mimo dostępności. Fallback do JS.');
+        }
+
+        if (!dennicaWrong && redukcjaOk && forcedClosureOk && hasTopClosure && konusOk) {
             applyBackendConfig(well, newConfig, backendResult, autoTriggered);
             return;
         }
@@ -527,7 +572,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // KROK 1: Dennica
     const dnResult = getLowestDennicaHybrid(
         availProducts.filter((p) => filterByWellParams(p, well)),
-        dn, mag, well.przejscia, well.rzednaDna
+        dn, mag, well.przejscia, well.rzednaDna, well.stycznaDn
     );
     const dennica = dnResult.dennica;
     if (!dennica) return { error: 'Brak dennic w magazynie.' };
@@ -540,9 +585,27 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         effectiveDn, forcedZak, isWkladkaZwienczenie, mag
     );
 
+    // Jeśli getTopClosure zwrócił coś innego niż konus (np. Płyta DIN),
+    // a konus jest dostępny w katalogu i nie ma PEHD → nadpisz konusem
+    if (topProd && topProd.componentType !== 'konus' && !isWkladkaZwienczenie) {
+        const konusFromCatalog = studnieProducts.find(
+            p => p.componentType === 'konus' &&
+                 (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
+        );
+        if (konusFromCatalog) {
+            console.log('[AutoSelect] Nadpisanie ' + topProd.id + ' konusem ' + konusFromCatalog.id);
+            topProd = konusFromCatalog;
+        }
+    }
+
     if (!topProd && forcedZak) {
         topProd = studnieProducts.find(
-            (p) => p.id === forcedZak && (parseInt(p.dn) === dn || p.dn === null)
+            (p) => p.id === forcedZak && (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
+        );
+    }
+    if (!topProd) {
+        topProd = studnieProducts.find(
+            (p) => p.componentType === 'konus' && (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
         );
     }
     if (!topProd) return { error: 'Nie znaleziono domyślnego zakończenia studni.' };
@@ -614,7 +677,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     if (isRelief || topProd.componentType === 'konus') {
         const dinProd = getTopClosure(
             availProducts.filter((p) => filterByWellParams(p, well)),
-            dn, null, true, mag
+            effectiveDn, null, true, mag
         );
         if (dinProd && dinProd.id !== topProd.id) {
             const fbCfg = buildTopConfig(dinProd);
@@ -669,10 +732,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     let dennicy = availProducts
         .filter((p) => {
             if (dn === 'styczna') {
-                return (
-                    (p.componentType === 'styczna' || p.category === 'Studnie styczne') &&
-                    filterByWellParams(p, well)
-                );
+                const isStyczna = (p.componentType === 'styczna' || p.category === 'Studnie styczne') &&
+                    filterByWellParams(p, well);
+                if (!isStyczna) return false;
+                if (well.stycznaDn) return parseInt(p.dn) === parseInt(well.stycznaDn);
+                return true;
             }
             return (
                 p.componentType === 'dennica' &&
@@ -710,7 +774,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         availProducts.filter(
             (p) => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)
         ),
-        dn, mag
+        effectiveDn, mag
     );
     const kregi =
         kregiFromEngine.length > 0
@@ -718,7 +782,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             : availProducts
                   .filter(
                       (p) =>
-                          p.componentType === 'krag' && parseInt(p.dn) === dn && !isDrilledRing(p)
+                          p.componentType === 'krag' && parseInt(p.dn) === parseInt(effectiveDn) && !isDrilledRing(p)
                   )
                   .sort((a, b) => b.height - a.height);
 
@@ -993,6 +1057,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     isOutOfBounds,
                     isMinimal: conf.isMinimal || denIsMin,
                     isFallbackClosure: topCfg.label.includes('zamiennik'),
+                    isKonus: topCfg.prod && topCfg.prod.componentType === 'konus',
                     reductionForced: !!well.redukcjaDN1000,
                     hasReduction: false,
                     otCount
@@ -1038,17 +1103,19 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
             const rZak = well.redukcjaZakonczenie
                 ? redTopProducts.find((p) => p.id === well.redukcjaZakonczenie)
-                : getTopClosure(
-                      redTargetProducts.filter((p) => filterByWellParams(p, well)),
-                      targetDn, null, isWkladkaZwienczenie, mag
-                  );
-            if (rZak) {
-                topRedItems.push({ productId: rZak.id, quantity: 1 });
-                topRedH += rZak.height;
+                : null;
+            // Fallback: jeśli wymuszone nie znalezione lub auto — użyj getTopClosure
+            const rZakFinal = rZak || getTopClosure(
+                redTargetProducts.filter((p) => filterByWellParams(p, well)),
+                targetDn, null, isWkladkaZwienczenie, mag
+            );
+            if (rZakFinal) {
+                topRedItems.push({ productId: rZakFinal.id, quantity: 1 });
+                topRedH += rZakFinal.height;
 
                 // AUTOMATYCZNE PAROWANIE (Płyta + Pierścień)
-                const isPlate = ['plyta_najazdowa', 'plyta_zamykajaca'].includes(rZak.componentType);
-                const isRing = rZak.componentType === 'pierscien_odciazajacy';
+                const isPlate = ['plyta_najazdowa', 'plyta_zamykajaca'].includes(rZakFinal.componentType);
+                const isRing = rZakFinal.componentType === 'pierscien_odciazajacy';
 
                 if (isPlate || isRing) {
                     const partnerType = isPlate ? ['pierscien_odciazajacy'] : ['plyta_najazdowa', 'plyta_zamykajaca'];

@@ -608,6 +608,13 @@ function scoreLayout(opts = {}) {
         breakdown.push({ factor: 'fallbackClosure', value: 100000 });
     }
 
+    // konus_bonus: preferuj konus nad zamiennikiem (np. DIN)
+    // Bez tego solver wybiera DIN+gorsza dennica bo kara denH (2000/mm) przewyższa karę fallbacku
+    if (opts.isKonus) {
+        score -= 500000;
+        breakdown.push({ factor: 'konus_bonus', value: -500000 });
+    }
+
     // reduction-specific: bottom section height
     if (opts.hasReduction && opts.bottomSectionH > 0) {
         const dnFactor = (parseInt(opts.dn) || 1200) / 400;

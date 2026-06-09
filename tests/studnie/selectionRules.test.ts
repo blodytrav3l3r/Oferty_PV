@@ -628,3 +628,155 @@ describe('Recalculation — forced items preservation', () => {
         }
     });
 });
+
+/* ============ 6. findClosureForDn + zakonczenieByDn (styczne toggle) ============ */
+
+function findClosureForDn(products: MockProduct[], productId: string, targetDn: number): string | null {
+    if (!productId) return null;
+    const prod = products.find(p => p.id === productId);
+    if (!prod || !prod.componentType) return null;
+    const match = products.find(p =>
+        p.componentType === prod.componentType &&
+        (parseInt(String(p.dn)) === targetDn || p.dn === null)
+    );
+    return match ? match.id : null;
+}
+
+const CLOSURE_PRODUCTS: MockProduct[] = [
+    { id: 'PDD-10-62-00', name: 'Płyta DIN DN1000', componentType: 'plyta_din', dn: 1000, height: 0 },
+    { id: 'PDD-12-62-00', name: 'Płyta DIN DN1200', componentType: 'plyta_din', dn: 1200, height: 0 },
+    { id: 'PDD-15-62-00', name: 'Płyta DIN DN1500', componentType: 'plyta_din', dn: 1500, height: 0 },
+    { id: 'PDD-20-62-00', name: 'Płyta DIN DN2000', componentType: 'plyta_din', dn: 2000, height: 0 },
+    { id: 'JZW-10-625-D', name: 'Konus DN1000', componentType: 'konus', dn: 1000, height: 0 },
+    { id: 'JZW-12-625-D', name: 'Konus DN1200', componentType: 'konus', dn: 1200, height: 0 },
+    { id: 'PZE-16-10', name: 'Płyta zamyk DN1000', componentType: 'plyta_zamykajaca', dn: 1000, height: 0 },
+    { id: 'PZE-18-12', name: 'Płyta zamyk DN1200', componentType: 'plyta_zamykajaca', dn: 1200, height: 0 },
+];
+
+describe('findClosureForDn — zamiana zakończenia przy przełączaniu nadbudowy', () => {
+    it('plyta_din DN1000 → plyta_din DN1200', () => {
+        const result = findClosureForDn(CLOSURE_PRODUCTS, 'PDD-10-62-00', 1200);
+        expect(result).toBe('PDD-12-62-00');
+    });
+
+    it('plyta_din DN1200 → plyta_din DN1000', () => {
+        const result = findClosureForDn(CLOSURE_PRODUCTS, 'PDD-12-62-00', 1000);
+        expect(result).toBe('PDD-10-62-00');
+    });
+
+    it('konus DN1000 → konus DN1200', () => {
+        const result = findClosureForDn(CLOSURE_PRODUCTS, 'JZW-10-625-D', 1200);
+        expect(result).toBe('JZW-12-625-D');
+    });
+
+    it('plyta_zamykajaca DN1000 → plyta_zamykajaca DN1200', () => {
+        const result = findClosureForDn(CLOSURE_PRODUCTS, 'PZE-16-10', 1200);
+        expect(result).toBe('PZE-18-12');
+    });
+
+    it('zwraca null jeśli brak typu dla nowego DN', () => {
+        const result = findClosureForDn(CLOSURE_PRODUCTS, 'PDD-10-62-00', 9999);
+        expect(result).toBeNull();
+    });
+
+    it('zwraca null dla pustego productId', () => {
+        const result = findClosureForDn(CLOSURE_PRODUCTS, '', 1200);
+        expect(result).toBeNull();
+    });
+});
+
+describe('zakonczenieByDn — pamięć per-DN przy przełączaniu', () => {
+    interface MockWell {
+        dn: string;
+        stycznaNadbudowa1200: boolean;
+        zakonczenie: string | null;
+        zakonczenieByDn: Record<number, string>;
+    }
+
+    function simulateToggle(well: MockWell): void {
+        const oldDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+        well.stycznaNadbudowa1200 = !well.stycznaNadbudowa1200;
+        const newDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+        if (well.zakonczenie) well.zakonczenieByDn[oldDn] = well.zakonczenie;
+        well.zakonczenie = well.zakonczenieByDn[newDn] || null;
+        if (!well.zakonczenie) {
+            well.zakonczenie = findClosureForDn(CLOSURE_PRODUCTS, well.zakonczenieByDn[oldDn], newDn);
+            if (well.zakonczenie) well.zakonczenieByDn[newDn] = well.zakonczenie;
+        }
+    }
+
+    it('symuluje toggle: wybierz plyta_din DN1000, toggle DN1200, toggle DN1000', () => {
+        const well: MockWell = {
+            dn: 'styczna',
+            stycznaNadbudowa1200: false,
+            zakonczenie: null,
+            zakonczenieByDn: {},
+        };
+
+        // 1. Ręczny wybór plyta_din DN1000
+        well.zakonczenie = 'PDD-10-62-00';
+        well.zakonczenieByDn[1000] = 'PDD-10-62-00';
+        expect(well.zakonczenie).toBe('PDD-10-62-00');
+
+        // 2. Toggle do DN1200
+        simulateToggle(well);
+        expect(well.stycznaNadbudowa1200).toBe(true);
+        expect(well.zakonczenie).toBe('PDD-12-62-00');
+        expect(well.zakonczenieByDn[1000]).toBe('PDD-10-62-00');
+        expect(well.zakonczenieByDn[1200]).toBe('PDD-12-62-00');
+
+        // 3. Toggle z powrotem do DN1000
+        simulateToggle(well);
+        expect(well.stycznaNadbudowa1200).toBe(false);
+        expect(well.zakonczenie).toBe('PDD-10-62-00');
+    });
+
+    it('ręczny wybór konus jest nadrzędny — toggle DN1200 → konus DN1200', () => {
+        const well: MockWell = {
+            dn: 'styczna',
+            stycznaNadbudowa1200: false,
+            zakonczenie: 'JZW-10-625-D',
+            zakonczenieByDn: { 1000: 'JZW-10-625-D' },
+        };
+
+        simulateToggle(well);
+        expect(well.zakonczenie).toBe('JZW-12-625-D');
+    });
+
+    it('ręczny wybór plyta_zamykajaca jest nadrzędny — toggle DN1200 → plyta_zamykajaca DN1200', () => {
+        const well: MockWell = {
+            dn: 'styczna',
+            stycznaNadbudowa1200: false,
+            zakonczenie: 'PZE-16-10',
+            zakonczenieByDn: { 1000: 'PZE-16-10' },
+        };
+
+        simulateToggle(well);
+        expect(well.zakonczenie).toBe('PZE-18-12');
+    });
+
+    it('zachowuje wybór gdy user zmienia zakończenie na DN1200, potem toggle do DN1000 i z powrotem', () => {
+        const well: MockWell = {
+            dn: 'styczna',
+            stycznaNadbudowa1200: false,
+            zakonczenie: 'PDD-10-62-00',
+            zakonczenieByDn: { 1000: 'PDD-10-62-00' },
+        };
+
+        // Toggle do DN1200
+        simulateToggle(well);
+        expect(well.zakonczenie).toBe('PDD-12-62-00');
+
+        // User ręcznie zmienia na konus DN1200
+        well.zakonczenie = 'JZW-12-625-D';
+        well.zakonczenieByDn[1200] = 'JZW-12-625-D';
+
+        // Toggle do DN1000
+        simulateToggle(well);
+        expect(well.zakonczenie).toBe('PDD-10-62-00');
+
+        // Toggle do DN1200 — powinienwrócićć konus DN1200
+        simulateToggle(well);
+        expect(well.zakonczenie).toBe('JZW-12-625-D');
+    });
+});

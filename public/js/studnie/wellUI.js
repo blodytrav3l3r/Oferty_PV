@@ -797,7 +797,7 @@ window.renderWellsList = function renderWellsList() {
         if (well.rzednaWlazu != null && well.rzednaDna != null) {
             const req = Math.round((well.rzednaWlazu - well.rzednaDna) * 1000);
             const stats = calcWellStats(well);
-            if (Math.abs(stats.height - req) > 50) isError = true;
+            if (stats.height - req > 20 || req - stats.height > 100) isError = true;
         }
 
         // 2. Status 'ERROR' nakazany przez główną funkcję updateHeightIndicator lub backend OR-TOOLS

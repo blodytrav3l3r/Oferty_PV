@@ -8,7 +8,7 @@ function openZakonczeniePopup() {
     }
 
     const dn = well.dn;
-    const effectiveDn = dn === 'styczna' ? 1000 : dn;
+    const effectiveDn = dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
     const topClosureTypes = [
         'konus',
         'plyta_din',
@@ -17,24 +17,27 @@ function openZakonczeniePopup() {
         'pierscien_odciazajacy'
     ];
 
-    // Znajdź wszystkie produkty zamknięcia górnego dla tego DN (lub uniwersalne z dn=null)
-    const candidates = studnieProducts.filter(
+    const candidates = getAvailableProducts(well).filter(
         (p) =>
             topClosureTypes.includes(p.componentType) &&
             (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null) &&
             filterByWellParams(p, well)
     );
 
-    // Grupuj według componentType dla ładniejszego wyświetlania
+    const typeIcons = {
+        konus: 'diamond',
+        plyta_din: 'chevron-down',
+        plyta_najazdowa: 'chevron-down',
+        plyta_zamykajaca: 'chevron-down',
+        pierscien_odciazajacy: 'settings'
+    };
+
     const typeLabels = {
-        konus: '<i data-lucide="diamond"></i> Konus',
-        plyta_din:
-            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta DIN',
-        plyta_najazdowa:
-            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
-        plyta_zamykajaca:
-            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
-        pierscien_odciazajacy: '<i data-lucide="settings"></i> Pierścień Odciążający'
+        konus: 'Konus',
+        plyta_din: 'Płyta DIN',
+        plyta_najazdowa: 'Płyta Odciążająca',
+        plyta_zamykajaca: 'Płyta Odciążająca',
+        pierscien_odciazajacy: 'Pierścień Odciążający'
     };
 
     const typeColors = {
@@ -46,69 +49,92 @@ function openZakonczeniePopup() {
     };
 
     const currentZak = well.zakonczenie;
+    const dnLabel = dn === 'styczna' ? 'styczna (1000)' : dn;
+
+    const renderTile = (p) => {
+        const isActive = currentZak === p.id;
+        const isKonus = p.componentType === 'konus';
+        const wkladkaPEHDZwienczenieActive = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+        const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
+        const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
+        const icon = typeIcons[p.componentType] || 'circle';
+        const typeLabel = typeLabels[p.componentType] || p.componentType;
+
+        if (isDisabled) {
+            return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
+                padding:0.7rem 0.9rem; border-radius:10px; cursor:not-allowed; opacity:0.5;
+                border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
+            ">
+                <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;">
+                    <i data-lucide="${icon}" style="width:16px; height:16px; color:var(--text-muted);"></i>
+                    <span style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</span>
+                    <span style="margin-left:auto; font-size:0.55rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> ZABLOKOWANE</span>
+                </div>
+                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${p.name}</div>
+                <div style="font-size:0.6rem; color:var(--warning); margin-top:0.2rem;">Brak możliwości wykonania wkładki PEHD</div>
+            </div>`;
+        }
+
+        return `<div onclick="selectZakonczenie('${p.id}')" style="
+            padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
+            border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
+            background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
+            ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
+        " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
+           onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
+            <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                <i data-lucide="${icon}" style="width:16px; height:16px; color:${isActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
+                <span style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</span>
+                ${isActive ? '<span style="margin-left:auto; font-size:0.55rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">${p.name}</div>
+            <div style="display:flex; justify-content:space-between; margin-top:0.3rem; font-size:0.62rem; color:var(--text-muted);">
+                ${p.height ? '<span>H: ' + p.height + 'mm</span>' : '<span></span>'}
+                <span style="color:var(--success); font-weight:600;">${fmtInt(p.price)} PLN</span>
+            </div>
+        </div>`;
+    };
 
     let tilesHtml = '';
     if (candidates.length === 0) {
-        const errorDn = dn === 'styczna' ? 'styczna (1000)' : dn;
-        tilesHtml =
-            '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' +
-            errorDn +
-            '</div>';
+        tilesHtml = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' + dnLabel + '</div>';
     } else {
         const isAutoActive = !currentZak;
-        const wkladkaPEHDZwienczenieActive = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+        const sectionStyle = 'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
 
         tilesHtml += `<div onclick="selectZakonczenie(null)" style="
-            padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
+            grid-column:1/ -1;
+            padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
             background:${isAutoActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
             ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
         " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
            onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Zależnie od warunków)</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Automatyczny dobór zakończenia studni</div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+                <i data-lucide="refresh-cw" style="width:16px; height:16px; color:${isAutoActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
+                <span style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">Auto (Zakończenie DN${effectiveDn})</span>
+            </div>
+            <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem; margin-left:1.4rem;">Automatyczny dobór zakończenia dla średnicy DN${effectiveDn}</div>
         </div>`;
 
-        candidates.forEach((p) => {
-            const isActive = currentZak === p.id;
-            const isKonus = p.componentType === 'konus';
-            const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
-            const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
-            const typeLabel = typeLabels[p.componentType] || p.componentType;
-            
-            if (isDisabled) {
-                tilesHtml += `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
-                    padding:0.6rem 0.8rem; border-radius:8px; cursor:not-allowed; opacity:0.5;
-                    border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
-                ">
-                    <div class="ui-flex-between">
-                        <div style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</div>
-                        <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> ZABLOKOWANE</span>
-                    </div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.15rem;">${p.name}</div>
-                    <div style="font-size:0.6rem; color:var(--warning); margin-top:0.3rem;">Brak możliwości wykonania wkładki PEHD</div>
-                </div>`;
-            } else {
-                tilesHtml += `<div onclick="selectZakonczenie('${p.id}')" style="
-                padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
-                border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
-                background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
-                ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-            " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-               onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-                <div class="ui-flex-between">
-                    <div style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</div>
-                    ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
-                </div>
-                <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:0.15rem; font-weight:600;">${p.name}</div>
-                <div style="display:flex; gap:0.8rem; margin-top:0.2rem; font-size:0.62rem; color:var(--text-muted);">
-                    <span>ID: ${p.id}</span>
-                    ${p.height ? '<span>H: ' + p.height + 'mm</span>' : ''}
-                    <span style="color:var(--success);">${fmtInt(p.price)} PLN</span>
-                </div>
-            </div>`;
-            }
-        });
+        const konuses = candidates.filter(p => p.componentType === 'konus');
+        const dinPlates = candidates.filter(p => p.componentType === 'plyta_din');
+        const odcParts = candidates.filter(p => ['plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].includes(p.componentType));
+
+        if (konuses.length) {
+            tilesHtml += `<div style="${sectionStyle}">Konus</div>`;
+            konuses.forEach(p => { tilesHtml += renderTile(p); });
+            if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
+        }
+        if (dinPlates.length) {
+            tilesHtml += `<div style="${sectionStyle}">Płyta DIN</div>`;
+            dinPlates.forEach(p => { tilesHtml += renderTile(p); });
+            if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
+        }
+        if (odcParts.length) {
+            tilesHtml += `<div style="${sectionStyle}">Płyta / Pierścień Odciążający</div>`;
+            odcParts.forEach(p => { tilesHtml += renderTile(p); });
+        }
     }
 
     showModal({
@@ -116,14 +142,19 @@ function openZakonczeniePopup() {
         titleId: 'zakonczenie-title',
         html: `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
-      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 id="zakonczenie-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie studni <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${well.name} — DN ${dn === 'styczna' ? 'styczna (1000)' : dn})</span></h3>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
+      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; display:flex; align-items:flex-start; gap:0.8rem;">
+        <div style="flex:1;">
+          <h3 id="zakonczenie-title" style="font-size:1.05rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="chevron-down" style="width:18px; height:18px;"></i> Zakończenie studni
+            <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">DN${dnLabel}</span>
+          </h3>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
+        </div>
       </div>
-      <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr; gap:0.5rem;">
+      <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
         ${tilesHtml}
       </div>
-      <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem;">
+      <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem; text-align:right;">
         <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
       </div>
     </div>`
@@ -278,15 +309,19 @@ function openRedukcjaZakonczeniePopup() {
         .filter((p) => topClosureTypes.includes(p.componentType) && parseInt(p.dn) === parseInt(targetDn))
         .filter((p) => filterByWellParams(p, well));
 
+    const typeIcons = {
+        konus: 'diamond',
+        plyta_din: 'chevron-down',
+        plyta_najazdowa: 'chevron-down',
+        plyta_zamykajaca: 'chevron-down',
+        pierscien_odciazajacy: 'settings'
+    };
     const typeLabels = {
-        konus: '<i data-lucide="diamond"></i> Konus',
-        plyta_din:
-            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta DIN',
-        plyta_najazdowa:
-            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
-        plyta_zamykajaca:
-            '<span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Płyta Odciążająca',
-        pierscien_odciazajacy: '<i data-lucide="settings"></i> Pierścień Odciążający'
+        konus: 'Konus',
+        plyta_din: 'Płyta DIN',
+        plyta_najazdowa: 'Płyta Odciążająca',
+        plyta_zamykajaca: 'Płyta Odciążająca',
+        pierscien_odciazajacy: 'Pierścień Odciążający'
     };
     const typeColors = {
         konus: 'rgba(124,58,237,0.15)',
@@ -305,38 +340,37 @@ function openRedukcjaZakonczeniePopup() {
         const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
         const isActive = currentZak === p.id;
         const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
+        const icon = typeIcons[p.componentType] || 'circle';
         const typeLabel = overrideLabel || typeLabels[p.componentType] || p.componentType;
-        
+
         if (isDisabled) {
             return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
-                padding:0.6rem 0.8rem; border-radius:8px; cursor:not-allowed; opacity:0.5;
+                padding:0.7rem 0.9rem; border-radius:10px; cursor:not-allowed; opacity:0.5;
                 border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
-                display:flex; flex-direction:column; justify-content:space-between;
             ">
-                <div class="ui-flex-between">
-                    <div style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</div>
-                    <span style="font-size:0.6rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA</span>
+                <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;">
+                    <i data-lucide="${icon}" style="width:16px; height:16px; color:var(--text-muted);"></i>
+                    <span style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</span>
+                    <span style="margin-left:auto; font-size:0.55rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA</span>
                 </div>
-                <div style="flex-grow:1;"></div>
-                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.3rem;">${p.name}</div>
-                <div style="font-size:0.6rem; color:var(--warning); margin-top:0.3rem;">Brak możliwości wkładki PEHD</div>
+                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${p.name}</div>
+                <div style="font-size:0.6rem; color:var(--warning); margin-top:0.2rem;">Brak możliwości wkładki PEHD</div>
             </div>`;
         }
 
         return `<div onclick="selectRedukcjaZakonczenie('${p.id}')" style="
-            padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
+            padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
             background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
             ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-            display:flex; flex-direction:column; justify-content:space-between;
         " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
            onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div class="ui-flex-between">
-                <div style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</div>
-                ${isActive ? '<span style="font-size:0.6rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
+            <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                <i data-lucide="${icon}" style="width:16px; height:16px; color:${isActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
+                <span style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</span>
+                ${isActive ? '<span style="margin-left:auto; font-size:0.55rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
             </div>
-            <div style="flex-grow:1;"></div>
-            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:0.3rem; font-weight:600;">${p.name}</div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">${p.name}</div>
             <div style="display:flex; justify-content:space-between; margin-top:0.3rem; font-size:0.62rem; color:var(--text-muted);">
                 ${p.height ? '<span>H: ' + p.height + 'mm</span>' : '<span></span>'}
                 <span style="color:var(--success); font-weight:600;">${fmtInt(p.price)} PLN</span>
@@ -345,56 +379,61 @@ function openRedukcjaZakonczeniePopup() {
     };
 
     let tilesHtml = '';
-    // Auto default tile spans 2 columns
     const isAutoActive = !currentZak;
     tilesHtml += `<div onclick="selectRedukcjaZakonczenie(null)" style="
-        grid-column: 1 / -1;
-        padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer; transition:all 0.15s;
+        grid-column:1/ -1;
+        padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
         border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
         background:${isAutoActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
         ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
     " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
        onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-        <div style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};"><i data-lucide="refresh-cw"></i> Auto (Zakończenie DN${targetDn})</div>
-        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem;">Automatyczny dobór zakończenia dla średnicy DN${targetDn}</div>
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="refresh-cw" style="width:16px; height:16px; color:${isAutoActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
+            <span style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">Auto (Zakończenie DN${targetDn})</span>
+        </div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem; margin-left:1.4rem;">Automatyczny dobór zakończenia dla średnicy DN${targetDn}</div>
     </div>`;
 
-    // Grupuj elementy
-    const konuses = candidates.filter((p) => p.componentType === 'konus');
-    const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
-    const odcPlates = candidates.filter(
-        (p) => p.componentType === 'plyta_najazdowa' || p.componentType === 'plyta_zamykajaca'
-    );
-    const rings = candidates.filter((p) => p.componentType === 'pierscien_odciazajacy');
+    const sectionStyle = 'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
 
-    // Wiersz 1: Konusy
-    konuses.forEach((p) => (tilesHtml += renderTile(p)));
-    // Jesli nieparzysta liczba, dodaj niewidoczny pusty div, aby zachowac wyrownanie siatki
-    if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
+    const konuses = candidates.filter(p => p.componentType === 'konus');
+    const dinPlates = candidates.filter(p => p.componentType === 'plyta_din');
+    const odcParts = candidates.filter(p => ['plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].includes(p.componentType));
 
-    // Wiersz 2: Plyty DIN
-    dinPlates.forEach((p) => (tilesHtml += renderTile(p)));
-    if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
-
-    // Row 3: Płyty odciążające and Pierścienie
-    // Zazwyczaj jest płyta i pierścień, połączmy je razem
-    odcPlates.forEach((p) => (tilesHtml += renderTile(p)));
-    rings.forEach((p) => (tilesHtml += renderTile(p)));
+    if (konuses.length) {
+        tilesHtml += `<div style="${sectionStyle}">Konus</div>`;
+        konuses.forEach(p => { tilesHtml += renderTile(p); });
+        if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
+    }
+    if (dinPlates.length) {
+        tilesHtml += `<div style="${sectionStyle}">Płyta DIN</div>`;
+        dinPlates.forEach(p => { tilesHtml += renderTile(p); });
+        if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
+    }
+    if (odcParts.length) {
+        tilesHtml += `<div style="${sectionStyle}">Płyta / Pierścień Odciążający</div>`;
+        odcParts.forEach(p => { tilesHtml += renderTile(p); });
+    }
 
     showModal({
         id: 'redukcja-zak-modal',
         titleId: 'redukcja-zak-title',
         html: `
     <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
-      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 id="redukcja-zak-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><span style="font-size:0.75rem;"><i data-lucide="chevron-down"></i></span> Zakończenie redukcji DN${targetDn}</h3>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN${targetDn}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
+      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; display:flex; align-items:flex-start; gap:0.8rem;">
+        <div style="flex:1;">
+          <h3 id="redukcja-zak-title" style="font-size:1.05rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="chevron-down" style="width:18px; height:18px;"></i> Zakończenie redukcji DN${targetDn}
+          </h3>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN${targetDn}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
+        </div>
       </div>
-      <div style="overflow-y:auto; padding:0.8rem; display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem;">
+      <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
         ${tilesHtml}
       </div>
-      <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.6rem; text-align:right;">
-        <button class="btn btn-secondary btn-sm" onclick="closeModal()" style="font-size:0.8rem;">Zamknij</button>
+      <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem; text-align:right;">
+        <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
       </div>
     </div>`
     });
@@ -463,9 +502,28 @@ function handleStycznaProductChoice(productId, mode) {
     const isKorek = productId.includes('KOREK');
     const variant = isKorek ? 'korek' : 'standard';
 
+    const stycznaDn = parseInt(product.dn);
+
     if (mode === 'add') {
         const well = createNewWell(null, 'styczna');
         well.stycznaVariant = variant;
+        well.stycznaDn = product.dn;
+        // Domyślne zakończenie wg średnicy podstawy stycznej
+        const effDn = 1000; // nowa studnia zawsze startuje z DN1000
+        if (stycznaDn >= 1400) {
+            const plate = studnieProducts.find(p =>
+                p.componentType === 'plyta_zamykajaca' && parseInt(p.dn) === effDn
+            );
+            if (plate) {
+                well.zakonczenie = plate.id;
+                offerDefaultZakonczenie = plate.id;
+                well.zakonczenieByDn = well.zakonczenieByDn || {};
+                well.zakonczenieByDn[effDn] = plate.id;
+            }
+        } else {
+            well.zakonczenie = null;
+            offerDefaultZakonczenie = null;
+        }
         well.name = isKorek
             ? 'St. Styczna z korkiem DN' + product.dn + ' (#' + wellCounter + ')'
             : 'St. Styczna DN' + product.dn + ' (#' + wellCounter + ')';
@@ -482,7 +540,22 @@ function handleStycznaProductChoice(productId, mode) {
         const well = getCurrentWell();
         if (!well) return;
         well.stycznaVariant = variant;
+        well.stycznaDn = product.dn;
         well.dn = 'styczna';
+        // Domyślne zakończenie wg nowej średnicy podstawy
+        const effDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+        if (stycznaDn >= 1400) {
+            const plate = studnieProducts.find(p =>
+                p.componentType === 'plyta_zamykajaca' && parseInt(p.dn) === effDn
+            );
+            if (plate) {
+                well.zakonczenie = plate.id;
+                well.zakonczenieByDn = well.zakonczenieByDn || {};
+                well.zakonczenieByDn[effDn] = plate.id;
+            }
+        } else if (stycznaDn <= 1200) {
+            well.zakonczenie = null;
+        }
         // Zamień istniejący element stycznej (jeśli jest) lub dodaj nowy
         const existingIdx = well.config.findIndex((c) => {
             const p = studnieProducts.find((pr) => pr.id === c.productId);

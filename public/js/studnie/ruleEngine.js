@@ -264,12 +264,15 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
  * @param {number} [rzDna] - rzędna dna studni
  * @returns {Object} { dennica: Object|null, reason: string }
  */
-function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna) {
+function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, preferredDn) {
     const ff = getFormaField(warehouse);
 
     const dennicy = products.filter((p) => {
         if (dn === 'styczna') {
-            return p.componentType === 'styczna' || p.category === 'Studnie styczne';
+            const isStyczna = p.componentType === 'styczna' || p.category === 'Studnie styczne';
+            if (!isStyczna) return false;
+            if (preferredDn) return parseInt(p.dn) === parseInt(preferredDn);
+            return true;
         }
         return p.componentType === 'dennica' && parseInt(p.dn) === parseInt(dn) && parseFloat(p.height) > 0;
     });
@@ -402,12 +405,14 @@ function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
     // Przekazany fallbackToDin z reguły oznacza wkładkę PEHD. Użyjmy go jako flagi do całkowitej blokady Konusa, bo PEHD tego wymaga.
     const blockKonus = fallbackToDin;
 
-    // 1. Wymuszony przez użytkownika
+    // 1. Wymuszony przez użytkownika — jeśli nie znaleziony, zwróć null
+    //    (caller ma fallback do pełnego katalogu + zwykłego konusa)
     if (forcedId && !fallbackToDin) {
         const forced = products.find((p) => p.id === forcedId);
         if (forced && (parseInt(forced.dn) === dn || forced.dn === null)) {
             return forced;
         }
+        return null;
     }
 
     // Kandydaci

@@ -1333,6 +1333,14 @@ async function selectZakonczenie(productId) {
     if (!well) return;
 
     well.zakonczenie = productId;
+
+    // Zapisz do per-DN mapy dla stycznych (zapamiętaj wybór na potem)
+    if (well.dn === 'styczna') {
+        const currentDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+        well.zakonczenieByDn = well.zakonczenieByDn || {};
+        well.zakonczenieByDn[currentDn] = productId;
+    }
+
     closeModal();
 
     // Zapisz jako domyślne na poziomie oferty dla nowych studni
@@ -1452,13 +1460,52 @@ async function togglePsiaBuda() {
     refreshAll();
 }
 
+/* ===== ZNAJDŹ ZAKOŃCZENIE TEGO SAMEGO TYPU DLA INNEJ ŚREDNICY ===== */
+function findClosureForDn(productId, targetDn) {
+    if (!productId) return null;
+    const prod = studnieProducts.find(p => p.id === productId);
+    if (!prod || !prod.componentType) return null;
+    const match = studnieProducts.find(p =>
+        p.componentType === prod.componentType &&
+        (parseInt(p.dn) === targetDn || p.dn === null)
+    );
+    return match ? match.id : null;
+}
+
 /* ===== NADBUDOWA STYCZNA DN1200 ===== */
 async function toggleStyczna1200() {
     const well = getCurrentWell();
     if (!well || well.dn !== 'styczna') return;
 
+    const oldDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
     well.stycznaNadbudowa1200 = !well.stycznaNadbudowa1200;
     updateStyczna1200Button();
+
+    const newDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+
+    // Zakończenie studni — zapamiętaj dla starego DN, przywróć dla nowego
+    well.zakonczenieByDn = well.zakonczenieByDn || {};
+    if (well.zakonczenie) well.zakonczenieByDn[oldDn] = well.zakonczenie;
+    well.zakonczenie = well.zakonczenieByDn[newDn] || null;
+    // Jeśli brak zapisanego dla nowego DN, znajdź ten sam typ co w starym
+    if (!well.zakonczenie && well.zakonczenieByDn[oldDn]) {
+        well.zakonczenie = findClosureForDn(well.zakonczenieByDn[oldDn], newDn);
+        if (well.zakonczenie) well.zakonczenieByDn[newDn] = well.zakonczenie;
+    }
+    if (typeof updateZakonczenieButton === 'function') updateZakonczenieButton();
+
+    // Redukcja
+    if (well.redukcjaDN1000) {
+        well.redukcjaTargetDN = newDn;
+        well.redukcjaZakonczenieByDn = well.redukcjaZakonczenieByDn || {};
+        if (well.redukcjaZakonczenie) well.redukcjaZakonczenieByDn[oldDn] = well.redukcjaZakonczenie;
+        well.redukcjaZakonczenie = well.redukcjaZakonczenieByDn[newDn] || null;
+        if (!well.redukcjaZakonczenie && well.redukcjaZakonczenieByDn[oldDn]) {
+            well.redukcjaZakonczenie = findClosureForDn(well.redukcjaZakonczenieByDn[oldDn], newDn);
+            if (well.redukcjaZakonczenie) well.redukcjaZakonczenieByDn[newDn] = well.redukcjaZakonczenie;
+        }
+        if (typeof updateRedukcjaZakButton === 'function') updateRedukcjaZakButton();
+    }
 
     if (well.stycznaNadbudowa1200) {
         showToast('Nadbudowa dla studni stycznej: DN1200', 'success');
@@ -1504,6 +1551,14 @@ async function selectRedukcjaZakonczenie(productId) {
 
     well.redukcjaZakonczenie = productId;
     offerDefaultRedukcjaZak = productId;
+
+    // Zapisz do per-DN mapy dla stycznych
+    if (well.dn === 'styczna') {
+        const currentDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+        well.redukcjaZakonczenieByDn = well.redukcjaZakonczenieByDn || {};
+        well.redukcjaZakonczenieByDn[currentDn] = productId;
+    }
+
     closeModal();
 
     if (typeof updateRedukcjaZakButton === 'function') {
@@ -1967,12 +2022,16 @@ function sortWellConfigByOrder() {
         let orderA = typeOrder[pA.componentType] ?? 100;
         let orderB = typeOrder[pB.componentType] ?? 100;
 
-        // Reguła redukcji: DN1000 nad płytą redukcyjną (order 4)
-        if ((pA.componentType === 'krag' || pA.componentType === 'krag_ot') && parseInt(pA.dn) === 1000) {
-            orderA = 3.5;
-        }
-        if ((pB.componentType === 'krag' || pB.componentType === 'krag_ot') && parseInt(pB.dn) === 1000) {
-            orderB = 3.5;
+        // Reguła redukcji: kręgi nad redukcją (nad płytą redukcyjną = order 4)
+        // Kręgi o DN = redukcjaTargetDN (np. DN1200) powinny być nad płytą
+        const targetDn = well.redukcjaDN1000 ? (well.redukcjaTargetDN || 1000) : null;
+        if (targetDn) {
+            if ((pA.componentType === 'krag' || pA.componentType === 'krag_ot') && parseInt(pA.dn) === parseInt(targetDn)) {
+                orderA = 3.5;
+            }
+            if ((pB.componentType === 'krag' || pB.componentType === 'krag_ot') && parseInt(pB.dn) === parseInt(targetDn)) {
+                orderB = 3.5;
+            }
         }
 
         if (orderA !== orderB) return orderA - orderB;
