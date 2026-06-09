@@ -587,7 +587,8 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
     // Jeśli getTopClosure zwrócił coś innego niż konus (np. Płyta DIN),
     // a konus jest dostępny w katalogu i nie ma PEHD → nadpisz konusem
-    if (topProd && topProd.componentType !== 'konus' && !isWkladkaZwienczenie) {
+    // Nie nadpisuj gdy użytkownik ręcznie wybrał zakończenie (forcedZak)
+    if (!forcedZak && topProd && topProd.componentType !== 'konus' && !isWkladkaZwienczenie) {
         const konusFromCatalog = studnieProducts.find(
             p => p.componentType === 'konus' &&
                  (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
