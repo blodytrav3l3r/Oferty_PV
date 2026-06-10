@@ -1668,7 +1668,7 @@ async function deleteOrderStudnie(orderId) {
 
     // Odśwież listę UI globalnie
     if (window.pvSalesUI) {
-        window.pvSalesUI.loadOrdersMap().then(() => window.pvSalesUI.filterLocalOffers());
+        window.pvSalesUI.loadOrdersMap().then(() => window.pvSalesUI.filterLocalOffers()).catch(e => logger.error('orderManager', e));
     }
 }
 

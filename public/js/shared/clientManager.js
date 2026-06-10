@@ -90,7 +90,7 @@ function saveClientToDb() {
                 saveClientsDbData(clientsDb);
                 showToast('Zaktualizowano dane klienta', 'success');
             }
-        });
+        }).catch(e => logger.error('clientManager', e));
     } else {
         clientsDb.push({
             id: Date.now().toString(),

@@ -28,11 +28,21 @@ router.get('/', requireAuth, async (req, res) => {
             where: roleClause
         });
 
+        const offerIds = offers.map(o => o.id);
+        const allItemsRaw = await prisma.offer_items_rel.findMany({
+            where: { offerId: { in: offerIds } }
+        });
+        const itemsByOffer = new Map<string, typeof allItemsRaw>();
+        for (const item of allItemsRaw) {
+            if (!item.offerId) continue;
+            const arr = itemsByOffer.get(item.offerId) || [];
+            arr.push(item);
+            itemsByOffer.set(item.offerId, arr);
+        }
+
         const mapped: OfferMapped[] = [];
         for (const offer of offers) {
-            const itemsRaw = await prisma.offer_items_rel.findMany({
-                where: { offerId: offer.id }
-            });
+            const itemsRaw = itemsByOffer.get(offer.id) || [];
             const items = itemsRaw.map((i) => ({
                 id: i.id,
                 productId: i.productId,

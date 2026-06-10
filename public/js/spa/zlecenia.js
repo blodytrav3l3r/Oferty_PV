@@ -172,7 +172,7 @@ const AppZlecenia = (() => {
             logger.error('zlecenia', err);
             showToast('<i data-lucide="x-circle"></i> Błąd pobierania zleceń', 'error');
             if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--danger);">Wystąpił błąd: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--danger);">Wystąpił błąd: ${escapeHtml(err.message)}</td></tr>`;
             }
         }
     }
@@ -786,10 +786,10 @@ const AppZlecenia = (() => {
 
         // Zastąp ID SVG w szablonie unikalnymi dla każdej strony
         let html = renderTemplate(template, payload);
-        html = html.replace('id="snr-svg"', `id="${snrSvgId}"`);
-        html = html.replace('id="order-svg"', `id="${orderSvgId}"`);
-        html = html.replace("fitSvgText('snr-svg')", `fitSvgText('${snrSvgId}')`);
-        html = html.replace("fitSvgText('order-svg')", `fitSvgText('${orderSvgId}')`);
+        html = html.replaceAll('id="snr-svg"', `id="${snrSvgId}"`);
+        html = html.replaceAll('id="order-svg"', `id="${orderSvgId}"`);
+        html = html.replaceAll("fitSvgText('snr-svg')", `fitSvgText('${snrSvgId}')`);
+        html = html.replaceAll("fitSvgText('order-svg')", `fitSvgText('${orderSvgId}')`);
 
         return html;
     }
@@ -1075,8 +1075,8 @@ setTimeout(runAllFit, 400);
         let html = renderTemplate(pageTemplate, payload);
 
         // Zastąp ID SVG unikalnymi ID dla każdej strony
-        html = html.replace('id="snr-svg"', `id="snr-svg-${pageIndex}"`);
-        html = html.replace('id="order-svg"', `id="order-svg-${pageIndex}"`);
+        html = html.replaceAll('id="snr-svg"', `id="snr-svg-${pageIndex}"`);
+        html = html.replaceAll('id="order-svg"', `id="order-svg-${pageIndex}"`);
 
         return html;
     }

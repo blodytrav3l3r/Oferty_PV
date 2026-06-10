@@ -690,9 +690,9 @@ class PVSalesUI {
         });
         
         try {
-            if (typeof window.lucide !== 'undefined') window.lucide.replace();
+            if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
         } catch (err) {
-            logger.error('pvSalesUi', 'Lucide replace error in showOfferOrdersPopup:', err);
+            logger.error('pvSalesUi', 'Lucide icons error in showOfferOrdersPopup:', err);
         }
 
         // Attach modal closing event listeners
@@ -1458,7 +1458,7 @@ class PVSalesUI {
                 titleId: 'offer-history-title',
                 html: overlayHtml
             });
-            if (typeof window.lucide !== 'undefined') window.lucide.replace();
+            if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
 
             this.currentAuditLogs = logs;
             this.currentAuditOffset = logs.length;
@@ -1511,7 +1511,7 @@ class PVSalesUI {
                 `
                 );
             }
-            if (typeof window.lucide !== 'undefined') window.lucide.replace();
+            if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
         } catch (e) {
             logger.error('pvSalesUi', 'Błąd ładowania logów:', e);
         }
@@ -1604,7 +1604,7 @@ class PVSalesUI {
             </div>
         `
         });
-        if (typeof window.lucide !== 'undefined') window.lucide.replace();
+        if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
     }
 
     async viewHistorySnapshotUnified(id, logId, type) {

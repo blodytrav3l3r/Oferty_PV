@@ -278,9 +278,9 @@ function renderTransportBreakdown(result, costPerTrip) {
 
     let html = `<div class="cat-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" onclick="toggleTransportBreakdown()">
     <div><i data-lucide="truck"></i> Kalkulacja transportu <span class="cat-count">(max ${fmtInt(MAX_TRANSPORT_WEIGHT)} kg / transport)</span></div>
-    <span id="transport-toggle-icon">${isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
+    <span id="transport-toggle-icon">${window.appState?.isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
   </div>`;
-    html += `<div id="transport-breakdown-content" style="display:${isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
+    html += `<div id="transport-breakdown-content" style="display:${window.appState?.isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
     html += `<div class="table-wrap"><table>
     <thead><tr>
       <th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th>
@@ -443,13 +443,13 @@ window.handleRuryTransportSave = async function () {
         : 'Czy na pewno chcesz zapisać te parametry przewozu do dokumentu oferty?';
     const okText = isOrderMode ? 'Zapisz Zamówienie' : 'Zapisz Ofertę';
 
-    const persist = () => {
+    const persist = async () => {
         document.getElementById('rury-transport-modal').style.display = 'none';
         if (isOrderMode) {
-            if (typeof saveRuryOrder === 'function') saveRuryOrder();
-            else if (typeof saveOffer === 'function') saveOffer();
+            if (typeof saveRuryOrder === 'function') await saveRuryOrder();
+            else if (typeof saveOffer === 'function') await saveOffer();
         } else {
-            if (typeof saveOffer === 'function') saveOffer();
+            if (typeof saveOffer === 'function') await saveOffer();
         }
     };
 
@@ -460,9 +460,9 @@ window.handleRuryTransportSave = async function () {
             { allowHtml: true, okText, cancelText: 'Anuluj' }
         );
 
-        if (confirmed) persist();
+        if (confirmed) await persist();
     } else {
-        persist();
+        await persist();
     }
 };
 
@@ -531,15 +531,14 @@ window.updateRuryModalTransportDetails = function () {
     }
 };
 
-let isTransportBreakdownExpanded = false;
-
 window.toggleTransportBreakdown = function () {
-    isTransportBreakdownExpanded = !isTransportBreakdownExpanded;
+    const expanded = !window.appState?.isTransportBreakdownExpanded;
+    if (window.appState) window.appState.isTransportBreakdownExpanded = expanded;
     const contents = document.querySelectorAll('#transport-breakdown-content, #order-transport-breakdown-content');
     const icons = document.querySelectorAll('#transport-toggle-icon, #order-transport-toggle-icon');
-    contents.forEach(c => { c.style.display = isTransportBreakdownExpanded ? 'block' : 'none'; });
+    contents.forEach(c => { c.style.display = expanded ? 'block' : 'none'; });
     icons.forEach(i => {
-        i.innerHTML = isTransportBreakdownExpanded
+        i.innerHTML = expanded
             ? '<i data-lucide="chevron-up"></i>'
             : '<i data-lucide="chevron-down"></i>';
     });

@@ -40,7 +40,7 @@ async function changeOfferUser() {
                     btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
 
                 if (editingOfferId) {
-                    saveOffer();
+                    await saveOffer();
                 }
             }
         }

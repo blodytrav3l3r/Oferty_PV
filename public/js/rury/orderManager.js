@@ -524,11 +524,11 @@ window.saveRuryOrder = saveRuryOrder;
 
 /* ===== ZAPIS OFERTY LUB ZAMÓWIENIA ===== */
 
-window.saveOfferOrOrder = function () {
+window.saveOfferOrOrder = async function () {
     if (window.orderEditMode && editingRuryOrderId) {
-        saveRuryOrder();
+        await saveRuryOrder();
     } else {
-        saveOffer();
+        await saveOffer();
     }
 };
 
@@ -585,7 +585,7 @@ async function enterRuryOrderEditMode(orderId) {
         }
 
         if (orderData.kartaBudowy) {
-            setTimeout(() => applyCopiedKartaBudowyData(orderData.kartaBudowy), 50);
+            setTimeout(() => applyCopiedKartaBudowyData(orderData.kartaBudowy), 200);
         }
 
         if (orderData.offerId) editingOfferId = orderData.offerId;

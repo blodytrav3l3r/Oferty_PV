@@ -158,7 +158,7 @@ function estimateBottomSection(transitions, rzDna, mode) {
 function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
     const ff = getFormaField(warehouse);
 
-    const dennicy = products.filter((p) => {
+    let dennicy = products.filter((p) => {
         if (dn === 'styczna') {
             return p.componentType === 'styczna' || p.category === 'Studnie styczne';
         }
@@ -169,7 +169,7 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
 
     // Sortowanie: (height, -forma_std) — najniższa dennica PRIORYTET, potem forma standardowa
     // Spójne z backend: rules.py → get_lowest_dennica() linia 73
-    dennicy.sort((a, b) => {
+    dennicy = [...dennicy].sort((a, b) => {
         const hA = parseFloat(a.height) || 0;
         const hB = parseFloat(b.height) || 0;
         if (hA !== hB) return hA - hB; // najniższa najpierw
@@ -267,7 +267,7 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
 function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, preferredDn) {
     const ff = getFormaField(warehouse);
 
-    const dennicy = products.filter((p) => {
+    let dennicy = products.filter((p) => {
         if (dn === 'styczna') {
             const isStyczna = p.componentType === 'styczna' || p.category === 'Studnie styczne';
             if (!isStyczna) return false;
@@ -279,7 +279,7 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
 
     if (dennicy.length === 0) return { dennica: null, reason: 'no_dennice' };
 
-    dennicy.sort((a, b) => {
+    dennicy = [...dennicy].sort((a, b) => {
         const hA = parseFloat(a.height) || 0;
         const hB = parseFloat(b.height) || 0;
         if (hA !== hB) return hA - hB;
@@ -460,12 +460,12 @@ function getKregiList(products, dn, warehouse) {
     );
 
     // Sortowanie: (-forma_std, -height) — standardowe i najwyższe na górze
-    kregi.sort((a, b) => {
+    const kregiSorted = [...kregi].sort((a, b) => {
         const fA = parseInt(a[ff]) || 0;
         const fB = parseInt(b[ff]) || 0;
         if (fA !== fB) return fB - fA;
         return (parseFloat(b.height) || 0) - (parseFloat(a.height) || 0);
     });
 
-    return kregi;
+    return kregiSorted;
 }

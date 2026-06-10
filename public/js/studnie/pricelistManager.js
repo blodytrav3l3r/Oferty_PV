@@ -201,7 +201,7 @@ function renderStudniePriceList() {
     let hasAnyItems = false;
 
     groupOrder.forEach((groupKey) => {
-        const items = groups[groupKey];
+        let items = groups[groupKey];
         if (!items || items.length === 0) return;
         hasAnyItems = true;
         const label = groupLabels[groupKey] || groupKey;
@@ -223,7 +223,7 @@ function renderStudniePriceList() {
 
         // Sortuj rosnąco według DN dla przejść
         if (isPrzejscia) {
-            items.sort((a, b) => {
+            items = [...items].sort((a, b) => {
                 const dnA = typeof a.dn === 'string' ? parseInt(a.dn) || 0 : a.dn || 0;
                 const dnB = typeof b.dn === 'string' ? parseInt(b.dn) || 0 : b.dn || 0;
                 return dnA - dnB;
@@ -1071,7 +1071,7 @@ function exportStudnieToExcel() {
         Object.keys(categories).forEach((cat) => {
             // Sortuj przejścia rosnąco według DN w każdym arkuszu
             if (cat === 'Przejścia') {
-                categories[cat].sort((a, b) => {
+                categories[cat] = [...categories[cat]].sort((a, b) => {
                     // Grupuj najpierw według kategorii, a następnie sortuj według DN
                     if (a.category !== b.category)
                         return (a.category || '').localeCompare(b.category || '');
@@ -1500,7 +1500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 price: 500,
                 weight: 0
             });
-            saveStudnieProducts(studnieProducts);
+            await saveStudnieProducts(studnieProducts);
         }
 
         // Zacznij bez studni — użytkownik sam dodaje pierwszą studnię
@@ -1554,7 +1554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Automatycznie naprawia brakujące metadane w produktach (np. dodanych wcześniej ręcznie)
  */
-function fixIncompleteProducts() {
+async function fixIncompleteProducts() {
     let changed = false;
     studnieProducts.forEach((p) => {
         // Napraw magazyny
@@ -1598,7 +1598,7 @@ function fixIncompleteProducts() {
     });
 
     if (changed) {
-        saveStudnieProducts(studnieProducts);
+        await saveStudnieProducts(studnieProducts);
         logger.info('pricelistManager', 'Zastosowano automatyczne poprawki metadanych do produktów studni');
     }
 }
