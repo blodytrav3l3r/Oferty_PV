@@ -39,22 +39,28 @@ async function loadOrdersRury() {
         ordersRury = json.data || [];
         return ordersRury;
     } catch (err) {
-        console.error('Błąd ładowania zamówień rur:', err);
+        logger.error('orderManager', 'Błąd ładowania zamówień rur:', err);
         return [];
     }
 }
 
 async function saveOrdersDataRury(data) {
-    const res = await fetch('/api/orders-rury', {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ data })
-    });
-    if (!res.ok) {
-        const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errBody.error || `HTTP ${res.status}`);
+    try {
+        const res = await fetch('/api/orders-rury', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ data })
+        });
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        return res;
+    } catch (err) {
+        logger.error('orderManager', 'Błąd zapisu zamówień rur:', err);
+        showToast('Błąd zapisu zamówień', 'error');
+        throw err;
     }
-    return res;
 }
 
 function getOrdersForOffer(offerId) {
@@ -411,7 +417,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             updateRuryOrderSummary(orderData);
         }
     } catch (err) {
-        console.error('Błąd tworzenia zamówienia:', err);
+        logger.error('orderManager', 'Błąd tworzenia zamówienia:', err);
         showToast('Błąd tworzenia zamówienia', 'error');
     }
 }
@@ -509,7 +515,7 @@ async function saveRuryOrder() {
         await saveOrdersDataRury(ordersRury);
         showToast('Zamówienie zaktualizowane', 'success');
     } catch (err) {
-        console.error('Błąd zapisu zamówienia:', err);
+        logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
         showToast('Błąd zapisu zamówienia', 'error');
     }
 }
@@ -595,7 +601,7 @@ async function enterRuryOrderEditMode(orderId) {
 
         document.title = `Zamówienie: ${orderData.orderNumber || orderData.offerNumber || orderId}`;
     } catch (err) {
-        console.error('Błąd ładowania zamówienia:', err);
+        logger.error('orderManager', 'Błąd ładowania zamówienia:', err);
         showToast('Błąd ładowania zamówienia', 'error');
     }
 }

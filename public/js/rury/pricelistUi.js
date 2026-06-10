@@ -237,7 +237,7 @@ async function manuallySaveProductsDB() {
         if (typeof renderTiles === 'function') renderTiles();
         showToast('Zapisano produkty jako wartości fabryczne', 'success');
     } catch (err) {
-        console.error('manuallySaveProductsDB: wyjątek', err);
+        logger.error('pricelistUi', 'manuallySaveProductsDB: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');
     }
 }
@@ -346,7 +346,7 @@ function exportRuryToExcel() {
             'success'
         );
     } catch (err) {
-        console.error('Export error:', err);
+        logger.error('pricelistUi', 'Export error:', err);
         showToast('Błąd podczas eksportu do Excela', 'error');
     }
 }
@@ -388,13 +388,13 @@ function importRuryFromExcel(event) {
 
                     // Sprawdź wymagane pola
                     if (!product.id || !product.name) {
-                        console.warn(`[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`);
+                        logger.warn('pricelistUi', `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`);
                         return null;
                     }
 
                     // Sprawdź duplikaty w pliku importu
                     if (seenIds.has(product.id)) {
-                        console.warn(
+                        logger.warn('pricelistUi', 
                             `[Import] Wiersz ${index + 2} pominięty: duplikat ID ${product.id}`
                         );
                         return null;
@@ -439,7 +439,7 @@ function importRuryFromExcel(event) {
                 'success'
             );
         } catch (err) {
-            console.error('Import error:', err);
+            logger.error('pricelistUi', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
         }
         event.target.value = ''; // Reset input

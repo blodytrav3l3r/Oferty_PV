@@ -23,7 +23,7 @@ async function getTemplate(path) {
         return html;
     } catch (err) {
         showToast(`Błąd szablonu: ${err.message}`, 'error');
-        console.error(err);
+        logger.error('printManager', err);
         return null;
     }
 }
@@ -290,7 +290,7 @@ function buildPrzejsciaRows(data) {
     for (let i = 0; i < totalSlots; i++) {
         const p = assignedPrzejscia.find(t => t.displayIndex === i);
         if (p) {
-            const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+const prefix = p.flowType === FLOW_TYPES.WYLOT ? 'Wylot' : 'Wlot';
             rows.push(formatPrzejscieRow(`${prefix} ${i}`, p, findProductFn, rzDna));
             continue;
         }
@@ -502,7 +502,7 @@ function generateWellSvg(data) {
     svgParts.push(`<line x1="${center}" y1="${center + radius}" x2="${center}" y2="${center + radius + 10}" stroke="#777" stroke-width="1.5" />`);
     svgParts.push(`<text x="${center}" y="${center + radius + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#666">0°</text>`);
 
-    const wylot = przejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
+    const wylot = przejscia.find(p => p.flowType === FLOW_TYPES.WYLOT || parseFloat(p.angle) === 0);
     ensureDisplayIndices(przejscia);
 
     // Nadaj displayIndex ślepym kinetom (zachowują oryginalny displayIndex z well.przejscia)
@@ -512,7 +512,7 @@ function generateWellSvg(data) {
 
     const labelsMap = new Map();
     przejscia.forEach(p => {
-        const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
+        const prefix = p.flowType === FLOW_TYPES.WYLOT ? 'Wylot' : 'Wlot';
         labelsMap.set(p, `${prefix} ${p.displayIndex}`);
     });
     blindKinetaPrzejscia.forEach(p => {

@@ -112,7 +112,7 @@ async function saveOffer() {
                 if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
-            console.error('Błąd wyboru opiekuna:', e);
+            logger.error('offerCrud', 'Błąd wyboru opiekuna:', e);
         }
     }
 
@@ -121,7 +121,7 @@ async function saveOffer() {
         const mod = await import('../shared/StorageService.js');
         storageService = mod.storageService;
     } catch (e) {
-        console.error('[App] Błąd importu StorageService:', e);
+        logger.error('offerCrud', '[App] Błąd importu StorageService:', e);
         showToast('Błąd ładowania modułu zapisu oferty', 'error');
         return;
     }
@@ -131,7 +131,7 @@ async function saveOffer() {
         try {
             existingDoc = await storageService.getOfferById(editingOfferId);
         } catch (e) {
-            console.warn('[App] Nie udało się pobrać istniejącej oferty do edycji:', e);
+            logger.warn('offerCrud', '[App] Nie udało się pobrać istniejącej oferty do edycji:', e);
         }
     }
 
@@ -207,7 +207,7 @@ async function saveOffer() {
 
         renderSavedOffers();
     } catch (err) {
-        console.error('[App] Save error:', err);
+        logger.error('offerCrud', '[App] Save error:', err);
         showToast('Błąd zapisu oferty', 'error');
     } finally {
         isSavingOffer = false;
@@ -386,7 +386,7 @@ async function loadOffer(id) {
         const { storageService } = await import('../shared/StorageService.js');
         srv = storageService;
     } catch (e) {
-        console.warn('Could not import storageService', e);
+        logger.warn('offerCrud', 'Could not import storageService', e);
     }
 
     if (!offer) {
@@ -437,7 +437,7 @@ async function loadOffer(id) {
 
     // Backfill uid dla starych itemów (flagi 'ordered' nie przechowujemy — obliczamy z ordersRury)
     if (typeof loadOrdersRury === 'function' && (!ordersRury || ordersRury.length === 0)) {
-        try { await loadOrdersRury(); } catch (e) { console.error('Błąd ładowania zamówień rur:', e); showToast('Nie udało się załadować zamówień', 'warning'); }
+        try { await loadOrdersRury(); } catch (e) { logger.error('offerCrud', 'Błąd ładowania zamówień rur:', e); showToast('Nie udało się załadować zamówień', 'warning'); }
     }
     currentOfferItems.forEach(item => {
         if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -543,7 +543,7 @@ async function deleteOffer(id) {
         renderSavedOffers();
         showToast('Oferta usunięta', 'info');
     } catch (err) {
-        console.error('deleteOffer error:', err);
+        logger.error('offerCrud', 'deleteOffer error:', err);
         showToast('Błąd połączenia z serwerem', 'error');
     }
 }

@@ -252,7 +252,7 @@ const SpaRouter = (() => {
                 iframeDoc.documentElement.style.background = 'transparent';
             } catch (e) {
                 // Ograniczenie cross-origin — nie powinno wystąpić, bo ta sama domena
-                console.warn('[SpaRouter] Could not modify iframe content:', e);
+                logger.warn('router', '[SpaRouter] Could not modify iframe content:', e);
             }
         });
 
@@ -272,7 +272,7 @@ const SpaRouter = (() => {
                 iframeWin.showSection(sectionId);
             }
         } catch (e) {
-            console.warn('[SpaRouter] Cannot call showSection in iframe:', e);
+            logger.warn('router', '[SpaRouter] Cannot call showSection in iframe:', e);
         }
 
         // Aktualizacja stanów aktywności przycisków nawigacji w rodzicu
@@ -482,7 +482,7 @@ const SpaRouter = (() => {
                 }
             }
         } catch (e) {
-            console.warn('[SpaRouter] Could not refresh module:', module, e);
+            logger.warn('router', '[SpaRouter] Could not refresh module:', module, e);
         }
     }
 

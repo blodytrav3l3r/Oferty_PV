@@ -27,7 +27,7 @@ async function loadClientsDb() {
         const json = await res.json();
         return json.data || [];
     } catch (err) {
-        console.error('loadClientsDb error:', err);
+        logger.error('clientManager', 'loadClientsDb error:', err);
         showToast('Błąd ładowania klientów: ' + (err.message || 'błąd sieci'), 'error');
         return [];
     }
@@ -46,7 +46,7 @@ async function saveClientsDbData(data) {
         }
         return true;
     } catch (err) {
-        console.error('saveClientsDbData error:', err);
+        logger.error('clientManager', 'saveClientsDbData error:', err);
         showToast('Błąd zapisu klientów: ' + (err.message || 'błąd sieci'), 'error');
         return false;
     }

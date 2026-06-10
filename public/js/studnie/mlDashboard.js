@@ -17,7 +17,7 @@ async function fetchMLStats() {
         });
         return await res.json();
     } catch (e) {
-        console.error('[ML Dashboard] Błąd pobierania statystyk:', e);
+        logger.error('mlDashboard', '[ML Dashboard] Błąd pobierania statystyk:', e);
         return null;
     }
 }

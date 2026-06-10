@@ -16,10 +16,10 @@ class PVMarketplaceManager {
     async createOffer(offerData) {
         try {
             const result = await storageService.saveOffer(offerData);
-            console.log(`[PV Marketplace] Offer created/saved via REST.`);
+            logger.info('pvMarketplaceManager', `[PV Marketplace] Offer created/saved via REST.`);
             return result;
         } catch (err) {
-            console.error('[PV Marketplace] Create error:', err);
+            logger.error('pvMarketplaceManager', '[PV Marketplace] Create error:', err);
             throw err;
         }
     }
@@ -36,10 +36,10 @@ class PVMarketplaceManager {
             const updatedOffer = { ...existingOffer, ...updateData };
 
             const result = await storageService.saveOffer(updatedOffer);
-            console.log(`[PV Marketplace] Offer updated: ${offerId}`);
+            logger.info('pvMarketplaceManager', `[PV Marketplace] Offer updated: ${offerId}`);
             return result;
         } catch (err) {
-            console.error('[PV Marketplace] Update error:', err);
+            logger.error('pvMarketplaceManager', '[PV Marketplace] Update error:', err);
             throw err;
         }
     }
@@ -50,10 +50,10 @@ class PVMarketplaceManager {
     async deleteOffer(offerId) {
         try {
             const result = await storageService.deleteOffer(offerId);
-            console.log(`[PV Marketplace] Offer deleted: ${offerId}`);
+            logger.info('pvMarketplaceManager', `[PV Marketplace] Offer deleted: ${offerId}`);
             return result;
         } catch (err) {
-            console.error('[PV Marketplace] Delete error:', err);
+            logger.error('pvMarketplaceManager', '[PV Marketplace] Delete error:', err);
             throw err;
         }
     }

@@ -742,7 +742,7 @@ function importOfferFromXlsx() {
                     );
                 }
             } catch (err) {
-                console.error(err);
+                logger.error('offerExports', err);
                 showToast('Błąd odczytu pliku XLSX: ' + err.message, 'error');
             }
         };

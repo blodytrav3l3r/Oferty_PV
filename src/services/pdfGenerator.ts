@@ -5,6 +5,8 @@ import path from 'path';
 import { logger } from '../utils/logger';
 import { DOCX_COLORS } from './docx/colors';
 
+const MAX_TRANSPORT_WEIGHT = 24000;
+
 function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
@@ -265,7 +267,7 @@ export async function buildStudnieOfferContextFromOfferId(
     const totalWeight = Number(offerData.totalWeight ?? 0);
     let totalTransportCost = 0;
     if (transportKm > 0 && transportRate > 0) {
-        const totalTransports = Math.ceil(totalWeight / 24000);
+        const totalTransports = Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT);
         totalTransportCost = totalTransports * transportKm * transportRate;
     }
 
@@ -375,7 +377,7 @@ export async function buildStudnieOrderContextFromOrderId(
     const totalWeight = Number(orderData.totalWeight ?? 0);
     const totalTransportCost =
         transportKm > 0 && transportRate > 0
-            ? Math.ceil(totalWeight / 24000) * transportKm * transportRate
+            ? Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT) * transportKm * transportRate
             : 0;
 
     // Mapuj wells → items (identycznie jak w offer flow)

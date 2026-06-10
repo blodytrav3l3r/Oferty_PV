@@ -300,7 +300,7 @@ async function generateOfferHtml() {
         const usersData = await usersResp.json();
         usersList = usersData?.data || usersData?.users || [];
     } catch (e) {
-        console.warn('Nie udało się pobrać danych operatorów', e);
+        logger.warn('offerPrintManager', 'Nie udało się pobrać danych operatorów', e);
     }
 
     // Opiekun handlowy — z editingOfferAssignedUserId
@@ -581,7 +581,7 @@ window.exportOfferDirect_action = async function(offerId, format) {
         }
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('offerPrintManager', '[Export Error]', err);
         if (typeof showToast === 'function') {
             showToast('Błąd eksportu: ' + err.message, 'error');
         }
@@ -636,7 +636,7 @@ window.exportOrderDirect_action = async function(orderId, format) {
         }
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('offerPrintManager', '[Export Error]', err);
         if (typeof showToast === 'function') {
             showToast('Błąd eksportu: ' + err.message, 'error');
         }
@@ -676,7 +676,7 @@ window.exportKartaDirect_action = async function(orderId, format) {
         }
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('offerPrintManager', '[Export Error]', err);
         if (typeof showToast === 'function') {
             showToast('Błąd eksportu: ' + err.message, 'error');
         }
@@ -791,7 +791,7 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
             showToast('Eksport oferty z bieżącego stanu zakończony', 'success');
         }
     } catch (err) {
-        console.error('exportStudnieOrderAsOffer_action error:', err);
+        logger.error('offerPrintManager', 'exportStudnieOrderAsOffer_action error:', err);
         if (typeof showToast === 'function') {
             showToast('Błąd eksportu oferty z zamówienia: ' + (err instanceof Error ? err.message : err), 'error');
         }
@@ -843,7 +843,7 @@ window.exportOfferToPDF_action = async function() {
         }
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('offerPrintManager', '[Export Error]', err);
         if (typeof showToast === 'function') {
             showToast('Błąd eksportu: ' + err.message, 'error');
         }
@@ -893,7 +893,7 @@ window.exportOfferToWord_action = async function() {
         }
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('offerPrintManager', '[Export Error]', err);
         if (typeof showToast === 'function') {
             showToast('Błąd eksportu: ' + err.message, 'error');
         }

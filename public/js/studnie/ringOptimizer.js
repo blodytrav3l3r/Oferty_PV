@@ -165,7 +165,7 @@ function optimizeRingsForDistance(
             }
             // Fallback: zwróć oryginalne rozwiązanie (bez walidacji)
             // — solver wyżej (checkConflicts) i tak to sprawdzi
-            console.warn('[ringOptimizer] Żadne rozwiązanie DP nie przeszło walidacji przejść — fallback do najlepszego DP');
+            logger.warn('ringOptimizer', '[ringOptimizer] Żadne rozwiązanie DP nie przeszło walidacji przejść — fallback do najlepszego DP');
         }
     }
 
@@ -229,7 +229,7 @@ function findAlternativeDPSolution(
         );
 
         if (isValid) {
-            console.log('[ringOptimizer] Znaleziono alternatywne rozwiązanie DP bez kolizji przejść');
+            logger.info('ringOptimizer', '[ringOptimizer] Znaleziono alternatywne rozwiązanie DP bez kolizji przejść');
             return { success: true, selectedRings };
         }
     }

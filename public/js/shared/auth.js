@@ -44,7 +44,7 @@ async function appLogout() {
             credentials: 'include'
         });
     } catch (e) {
-        console.error('Logout request failed:', e);
+        logger.error('auth', 'Logout request failed:', e);
     }
     localStorage.removeItem('authToken');
     document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';

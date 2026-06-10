@@ -68,10 +68,10 @@
             return await res.text();
         } catch (err) {
             if (err.name === 'AbortError') {
-                console.error('[API] Timeout:', url);
+                logger.error('api', 'Timeout:', url);
                 if (!opts.silent) showToast('Przekroczono czas żądania: ' + url, 'error');
             } else {
-                console.error('[API] Błąd:', url, err.message);
+                logger.error('api', 'Błąd:', url, err.message);
                 if (!opts.silent) showToast('Błąd: ' + err.message, 'error');
             }
             return null;

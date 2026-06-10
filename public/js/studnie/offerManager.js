@@ -1245,13 +1245,13 @@ async function loadOffersStudnie() {
         const res = await fetchWithTimeout('/api/offers-studnie', { headers: authHeaders() });
         const json = await res.json();
         const rawOffers = json.data || [];
-        console.log('[loadOffersStudnie] API response:', { count: rawOffers.length, ids: rawOffers.map(o => o.id) });
+        logger.info('offerManager', '[loadOffersStudnie] API response:', { count: rawOffers.length, ids: rawOffers.map(o => o.id) });
         // Normalizuj każdą ofertę, aby spłaszczyć właściwości .data (numer, data, studnie itp.)
         const normalized = rawOffers.map((o) => normalizeOfferData(o));
-        console.log('[loadOffersStudnie] Normalized:', { count: normalized.length, ids: normalized.map(o => o.id) });
+        logger.info('offerManager', '[loadOffersStudnie] Normalized:', { count: normalized.length, ids: normalized.map(o => o.id) });
         return normalized;
     } catch (e) {
-        console.error('Błąd ładowania ofert:', e);
+        logger.error('offerManager', 'Błąd ładowania ofert:', e);
         return [];
     }
 }
@@ -1265,7 +1265,7 @@ async function saveOffersDataStudnie(data) {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (e) {
-        console.error('Błąd zapisu ofert studni:', e);
+        logger.error('offerManager', 'Błąd zapisu ofert studni:', e);
         throw e;
     }
 }
@@ -1320,14 +1320,14 @@ async function changeOfferUser() {
                                 userName: linkedOrder.userName
                             })
                         }).catch((e) =>
-                            console.error('Błąd aktualizacji opiekuna w zamówieniu:', e)
+                            logger.error('offerManager', 'Błąd aktualizacji opiekuna w zamówieniu:', e)
                         );
                     }
                 }
             }
         }
     } catch (e) {
-        console.error('Błąd pobierania użytkowników:', e);
+        logger.error('offerManager', 'Błąd pobierania użytkowników:', e);
         showToast('Błąd pobierania listy użytkowników', 'error');
     }
 }
@@ -1376,7 +1376,7 @@ async function changeOfferUserFromListStudnie(offerId) {
                             userId: linkedOrder.userId,
                             userName: linkedOrder.userName
                         })
-                    }).catch((e) => console.error('Błąd aktualizacji opiekuna w zamówieniu:', e));
+                    }).catch((e) => logger.error('offerManager', 'Błąd aktualizacji opiekuna w zamówieniu:', e));
                 }
 
                 showToast(`Opiekun zmieniony na: ${offer.userName}`, 'success');
@@ -1391,7 +1391,7 @@ async function changeOfferUserFromListStudnie(offerId) {
             }
         }
     } catch (e) {
-        console.error('Błąd zmiany opiekuna z listy:', e);
+        logger.error('offerManager', 'Błąd zmiany opiekuna z listy:', e);
         showToast('Wystąpił błąd przy zmianie opiekuna', 'error');
     }
 }
@@ -1474,7 +1474,7 @@ async function saveOfferStudnie() {
                     })
                 });
             } catch (e) {
-                console.error('Błąd wysyłki telemetrii:', e);
+                logger.error('offerManager', 'Błąd wysyłki telemetrii:', e);
             }
 
             // Wznów zapis
@@ -1513,7 +1513,7 @@ async function saveOfferStudnie() {
                     btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
             }
         } catch (e) {
-            console.error('Błąd wyboru opiekuna:', e);
+            logger.error('offerManager', 'Błąd wyboru opiekuna:', e);
         }
     }
 
@@ -1524,7 +1524,7 @@ async function saveOfferStudnie() {
         try {
             existingDoc = await storageService.getOfferById(editingOfferIdStudnie);
         } catch (e) {
-            console.warn('[OfferManager] Nie udało się pobrać istniejącej oferty studni do edycji:', e);
+            logger.warn('offerManager', '[OfferManager] Nie udało się pobrać istniejącej oferty studni do edycji:', e);
         }
     }
 
@@ -1648,7 +1648,7 @@ async function saveOfferStudnie() {
 
         return true;
     } catch (err) {
-        console.error('[OfferManager] Save error:', err);
+        logger.error('offerManager', '[OfferManager] Save error:', err);
         showToast('Błąd zapisu oferty', 'error');
         return false;
     } finally {
@@ -2158,7 +2158,7 @@ async function deleteOfferStudnie(id) {
         renderSavedOffersStudnie();
         showToast('Oferta usunięta', 'info');
     } catch (err) {
-        console.error('deleteOfferStudnie error:', err);
+        logger.error('offerManager', 'deleteOfferStudnie error:', err);
         showToast('Błąd połączenia z serwerem', 'error');
     }
 }
@@ -2577,7 +2577,7 @@ async function showOfferHistoryStudnie(id) {
         window.currentAuditLogs = logs;
         window.currentAuditOffset = logs.length;
     } catch (e) {
-        console.error('Błąd pobierania historii:', e);
+        logger.error('offerManager', 'Błąd pobierania historii:', e);
         showToast('Błąd pobierania historii', 'error');
     }
 }
@@ -2616,7 +2616,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
             );
         }
     } catch (e) {
-        console.error('Błąd ładowania kolejnych logów:', e);
+        logger.error('offerManager', 'Błąd ładowania kolejnych logów:', e);
     }
 }
 
@@ -2650,7 +2650,7 @@ async function viewHistorySnapshot(logId) {
 
         closeModal();
     } catch (e) {
-        console.error('Błąd podglądu:', e);
+        logger.error('offerManager', 'Błąd podglądu:', e);
         showToast('Błąd podglądu: ' + e.message, 'error');
     }
 }

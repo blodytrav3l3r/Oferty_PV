@@ -12,7 +12,7 @@ async function loadProducts() {
         const result = await api.get('/api/products');
         if (!result) return structuredClone(DEFAULT_PRODUCTS);
         let saved = result.data && result.data.length > 0
-            ? json.data
+            ? result.data
             : structuredClone(DEFAULT_PRODUCTS);
 
         // Synchronizuj brakujące produkty z cennika domyślnego
@@ -25,7 +25,7 @@ async function loadProducts() {
             } else {
                 // Napraw uszkodzoną kategorię, jeśli została ustawiona na 'studnie' przez błąd backendu
                 if (sp.category === undefined || sp.category === 'studnie') {
-                    console.warn(`[App] Naprawiono uszkodzoną kategorię produktu "${sp.id}": "${sp.category}" → "${dp.category}". Źródło błędu: backend/migracja.`);
+                    logger.warn('dataService', `[App] Naprawiono uszkodzoną kategorię produktu "${sp.id}": "${sp.category}" → "${dp.category}". Źródło błędu: backend/migracja.`);
                     sp.category = dp.category;
                     modified = true;
                 }
@@ -38,7 +38,7 @@ async function loadProducts() {
 
         return saved;
     } catch (err) {
-        console.error('Błąd loadProducts:', err);
+        logger.error('dataService', 'Błąd loadProducts:', err);
         return structuredClone(DEFAULT_PRODUCTS);
     }
 }
@@ -67,7 +67,7 @@ async function loadOffers() {
         const json = await res.json();
         return json.data || [];
     } catch (err) {
-        console.error('Błąd loadOffers REST API:', err);
+        logger.error('dataService', 'Błąd loadOffers REST API:', err);
         return [];
     }
 }
@@ -84,6 +84,6 @@ async function saveOffersData(data) {
             await storageService.saveOffer(doc);
         }
     } catch (err) {
-        console.error('Błąd saveOffersData:', err);
+        logger.error('dataService', 'Błąd saveOffersData:', err);
     }
 }

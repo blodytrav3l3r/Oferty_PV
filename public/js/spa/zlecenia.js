@@ -169,7 +169,7 @@ const AppZlecenia = (() => {
             renderTable(searchInput ? searchInput.value.toLowerCase().trim() : '');
             startAutoRefresh();
         } catch (err) {
-            console.error(err);
+            logger.error('zlecenia', err);
             showToast('<i data-lucide="x-circle"></i> Błąd pobierania zleceń', 'error');
             if (tbody) {
                 tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--danger);">Wystąpił błąd: ${err.message}</td></tr>`;
@@ -1129,7 +1129,7 @@ setTimeout(runAllFit, 400);
                 /* ignore */
             }
         } catch (e) {
-            console.error('deleteOrder error:', e);
+            logger.error('zlecenia', 'deleteOrder error:', e);
             showToast(e.message, 'error');
         }
     }

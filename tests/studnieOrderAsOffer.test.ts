@@ -440,6 +440,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             },
             fetch: mockFetch,
             showToast: jest.fn(),
+            logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
             lucide: { createIcons: jest.fn() },
             // studnieProducts — potrzebne dla getWellZwienczenieName (real fn w pliku)
             studnieProducts: [

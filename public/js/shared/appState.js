@@ -11,7 +11,7 @@
  *
  * @example
  *   AppState.products = await loadProducts();
- *   console.log(AppState.products.length);
+ *   logger.info('appState', AppState.products.length);
  */
 const AppState = {
     /* ===== PRYWATNE POLA ===== */
@@ -36,7 +36,7 @@ const AppState = {
      */
     _validateArray(value, fieldName) {
         if (!Array.isArray(value)) {
-            console.warn(`[AppState] ${fieldName} musi być tablicą, otrzymano:`, typeof value);
+            logger.warn('appState', `[AppState] ${fieldName} musi być tablicą, otrzymano:`, typeof value);
             return false;
         }
         return true;
@@ -50,7 +50,7 @@ const AppState = {
      */
     _validateStringOrNull(value, fieldName) {
         if (value !== null && typeof value !== 'string') {
-            console.warn(`[AppState] ${fieldName} musi być stringiem lub null, otrzymano:`, typeof value);
+            logger.warn('appState', `[AppState] ${fieldName} musi być stringiem lub null, otrzymano:`, typeof value);
             return false;
         }
         return true;
@@ -62,7 +62,7 @@ const AppState = {
     get currentUser() { return this._currentUser; },
     set currentUser(value) {
         if (value !== null && typeof value !== 'object') {
-            console.warn('[AppState] currentUser musi być obiektem lub null, otrzymano:', typeof value);
+            logger.warn('appState', '[AppState] currentUser musi być obiektem lub null, otrzymano:', typeof value);
             return;
         }
         this._currentUser = value;
@@ -114,7 +114,7 @@ const AppState = {
     get editingOfferAssignedUserName() { return this._editingOfferAssignedUserName; },
     set editingOfferAssignedUserName(value) {
         if (typeof value !== 'string') {
-            console.warn('[AppState] editingOfferAssignedUserName musi być stringiem, otrzymano:', typeof value);
+            logger.warn('appState', '[AppState] editingOfferAssignedUserName musi być stringiem, otrzymano:', typeof value);
             return;
         }
         this._editingOfferAssignedUserName = value;

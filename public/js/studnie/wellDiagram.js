@@ -167,7 +167,7 @@ function upgradeToOtRing(seg, currentProd, currentId) {
     if (otProd) {
         if (seg.configItem.productId !== otProd.id) {
             seg.configItem.productId = otProd.id;
-            console.log(`[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`);
+            logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`);
             return true;
         }
         return false;
@@ -186,7 +186,7 @@ function upgradeToOtRing(seg, currentProd, currentId) {
     }
     if (seg.configItem.productId !== dynamicOtId) {
         seg.configItem.productId = dynamicOtId;
-        console.log(`[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`);
+        logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`);
         return true;
     }
     return false;
@@ -207,7 +207,7 @@ function degradeFromOtRing(seg, currentProd, currentId) {
     if (stdProd) {
         if (seg.configItem.productId !== stdProd.id) {
             seg.configItem.productId = stdProd.id;
-            console.log(`[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`);
+            logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`);
             return true;
         }
         return false;
@@ -218,7 +218,7 @@ function degradeFromOtRing(seg, currentProd, currentId) {
     const baseProduct = studnieProducts.find((p) => p.id === baseStripped);
     if (baseProduct && seg.configItem.productId !== baseProduct.id) {
         seg.configItem.productId = baseProduct.id;
-        console.log(`[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`);
+        logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`);
         return true;
     }
     // BARDZO WAŻNE: Jeśli nie znaleziono bazy, NIE nadpisujemy na nieistniejące ID,

@@ -91,8 +91,7 @@ class PVSalesUI {
     /**
      * Przelicza koszt transportu dla zamówienia rur na podstawie aktualnych pozycji.
      *
-     * Implementuje uproszczony bin-packing z `transport.js:calculateTransports` (dostępny
-     * tylko w kontekście edytora rur). Maksymalna ładowność transportu: 24 000 kg.
+     * Deleguje do calculateTransports() z transport.js (bin-packing z konsolidacją).
      *
      * @param {Array} items pozycje zamówienia (z `weight`, `transport`, `quantity`, `autoAdded`)
      * @param {number} transportKm km na kurs
@@ -100,56 +99,18 @@ class PVSalesUI {
      * @returns {number} łączny koszt transportu (PLN)
      */
     recalculateRuryTransportCost(items, transportKm, transportRate) {
-        const MAX_WEIGHT = 24000;
         const costPerTrip = (Number(transportKm) || 0) * (Number(transportRate) || 0);
         if (costPerTrip <= 0) return 0;
-        const transportItems = (items || []).filter(
+        const calcItems = (items || []).filter(
             (i) => !i.autoAdded && Number(i.weight) > 0 && Number(i.quantity) > 0
-        );
-        if (transportItems.length === 0) return 0;
-        const lines = [];
-        const partials = [];
-        transportItems.forEach((item) => {
-            const weight = Number(item.weight) || 0;
-            const maxByWeight = Math.floor(MAX_WEIGHT / weight);
-            const maxByCount = Number(item.transport) || maxByWeight;
-            const maxPerTransport = Math.min(maxByWeight, maxByCount);
-            if (maxPerTransport <= 0) return;
-            const qty = Number(item.quantity) || 0;
-            const fullTransports = Math.floor(qty / maxPerTransport);
-            const remainder = qty % maxPerTransport;
-            const dedicated = fullTransports + (remainder > 0 ? 1 : 0);
-            lines.push({ productId: item.productId, dedicated });
-            if (remainder > 0) {
-                partials.push({
-                    productId: item.productId,
-                    weight: remainder * weight,
-                });
-            }
-        });
-        const totalDedicated = lines.reduce((s, l) => s + l.dedicated, 0);
-        let saved = 0;
-        if (partials.length > 1) {
-            partials.sort((a, b) => b.weight - a.weight);
-            const used = new Set();
-            for (let i = 0; i < partials.length; i++) {
-                if (used.has(i)) continue;
-                const group = [partials[i]];
-                let groupWeight = partials[i].weight;
-                used.add(i);
-                for (let j = i + 1; j < partials.length; j++) {
-                    if (used.has(j)) continue;
-                    if (groupWeight + partials[j].weight <= MAX_WEIGHT) {
-                        group.push(partials[j]);
-                        groupWeight += partials[j].weight;
-                        used.add(j);
-                    }
-                }
-                if (group.length > 1) saved += group.length - 1;
-            }
-        }
-        const totalTrips = Math.max(0, totalDedicated - saved);
-        return totalTrips * costPerTrip;
+        ).map((i) => ({
+            weight: Number(i.weight),
+            transport: Number(i.transport),
+            quantity: Number(i.quantity)
+        }));
+        if (calcItems.length === 0) return 0;
+        const result = calculateTransportTrips(calcItems);
+        return result.totalTrips * costPerTrip;
     }
 
     /**
@@ -215,7 +176,7 @@ class PVSalesUI {
         try {
             const userStr = sessionStorage.getItem('user');
             if (!userStr) {
-                console.log(
+                logger.info('pvSalesUi', 
                     '[PVSalesUI] Czekam na dane użytkownika w sessionStorage (ponowienie za 500ms)...'
                 );
                 setTimeout(() => this.init(), 500);
@@ -224,7 +185,7 @@ class PVSalesUI {
 
             const user = JSON.parse(userStr);
             this.role = user.role || 'user';
-            console.log('[PVSalesUI] Inicjalizacja dla użytkownika:', user.username);
+            logger.info('pvSalesUi', 'Inicjalizacja dla użytkownika:', user.username);
 
             // Inicjalizacja StorageService
             await storageService.init();
@@ -238,7 +199,7 @@ class PVSalesUI {
 
             this.initialized = true;
         } catch (error) {
-            console.error('[PVSalesUI] Błąd inicjalizacji UI Sprzedaży:', error);
+            logger.error('pvSalesUi', 'Błąd inicjalizacji UI Sprzedaży:', error);
             const listDiv = document.getElementById('pv-local-offers-list');
             if (listDiv)
                 listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${this.escapeHtml(error.message)}</div>`;
@@ -290,9 +251,9 @@ class PVSalesUI {
                 });
             }
 
-            console.log(`[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`);
+            logger.info('pvSalesUi', `[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`);
         } catch (error) {
-            console.warn('[PVSalesUI] Nie udało się pobrać zamówień:', error.message);
+            logger.warn('pvSalesUi', 'Nie udało się pobrać zamówień:', error.message);
         }
     }
 
@@ -319,20 +280,20 @@ class PVSalesUI {
     async loadLocalOffers() {
         const listDiv = document.getElementById('pv-local-offers-list');
         if (!listDiv) {
-            console.warn('[PVSalesUI] Nie znaleziono elementu listy ofert (id: pv-local-offers-list)');
+            logger.warn('pvSalesUi', 'Nie znaleziono elementu listy ofert (id: pv-local-offers-list)');
             return;
         }
 
-        console.log('[PVSalesUI] loadLocalOffers: Rozpoczęcie pobierania...');
+        logger.info('pvSalesUi', 'loadLocalOffers: Rozpoczęcie pobierania...');
         try {
             // Zawsze najpierw pobierzmy najświeższą mapę zamówień (omijanie cache'u)
-            console.log('[PVSalesUI] loadLocalOffers: Pobieranie mapy zamówień...');
+            logger.info('pvSalesUi', 'loadLocalOffers: Pobieranie mapy zamówień...');
             await this.loadOrdersMap();
 
             // Pobieramy oferty przez StorageService
-            console.log('[PVSalesUI] loadLocalOffers: Wywołanie storageService.getOffers()...');
+            logger.info('pvSalesUi', 'loadLocalOffers: Wywołanie storageService.getOffers()...');
             const docs = await storageService.getOffers();
-            console.log(`[PVSalesUI] loadLocalOffers: Pobrano ${docs.length} dokumentów.`);
+            logger.info('pvSalesUi', `[PVSalesUI] loadLocalOffers: Pobrano ${docs.length} dokumentów.`);
 
             if (docs.length === 0) {
                 listDiv.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Nie masz jeszcze żadnych zapisanych ofert.</div>`;
@@ -340,11 +301,11 @@ class PVSalesUI {
             }
 
             this.allLocalOffers = docs;
-            console.log('[PVSalesUI] loadLocalOffers: Filtrowanie i renderowanie...');
+            logger.info('pvSalesUi', 'loadLocalOffers: Filtrowanie i renderowanie...');
             this.filterLocalOffers(); // Używa zintegrowanej logiki filtrowania z uwzględnieniem wyszukiwarki i filtrów statusu
-            console.log('[PVSalesUI] loadLocalOffers: Gotowe.');
+            logger.info('pvSalesUi', 'loadLocalOffers: Gotowe.');
         } catch (error) {
-            console.error('[PVSalesUI] Błąd pobierania ofert:', error);
+            logger.error('pvSalesUi', 'Błąd pobierania ofert:', error);
             listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">
                 <strong>Błąd pobierania ofert:</strong><br/>
                 <span style="font-size:0.85rem; opacity:0.8;">${this.escapeHtml(error.message || 'Wystąpił nieoczekiwany błąd sieciowy')}</span><br/>
@@ -731,7 +692,7 @@ class PVSalesUI {
         try {
             if (typeof window.lucide !== 'undefined') window.lucide.replace();
         } catch (err) {
-            console.error('Lucide replace error in showOfferOrdersPopup:', err);
+            logger.error('pvSalesUi', 'Lucide replace error in showOfferOrdersPopup:', err);
         }
 
         // Attach modal closing event listeners
@@ -831,7 +792,7 @@ class PVSalesUI {
                         window.location.href = `app.html#/${editOfferType === 'studnia_oferta' ? 'studnie' : 'rury'}?order=${editOrderId}`;
                     }
                 } catch (err) {
-                    console.error('[PVSalesUI] Błąd nawigacji do zamówienia:', err);
+                    logger.error('pvSalesUi', 'Błąd nawigacji do zamówienia:', err);
                     window.location.href = `app.html#/${editOfferType === 'studnia_oferta' ? 'studnie' : 'rury'}?order=${editOrderId}`;
                 }
                 return;
@@ -872,7 +833,7 @@ class PVSalesUI {
                     const doc = await storageService.getOfferById(id);
                     this.openOfferForEdit(doc, id, typeAttr);
                 } catch (err) {
-                    console.error('[PVSalesUI] Błąd pobierania do edycji:', err);
+                    logger.error('pvSalesUi', 'Błąd pobierania do edycji:', err);
                 }
                 return;
             }
@@ -970,7 +931,7 @@ class PVSalesUI {
                 const rawOffer = offerWrapper?.data || offerWrapper;
 
                 if (rawOffer) {
-                    console.log('[PVSalesUI] Odblokowywanie oferty:', offerWrapper.id);
+                    logger.info('pvSalesUi', 'Odblokowywanie oferty:', offerWrapper.id);
                     rawOffer.id = offerWrapper.id;
                     rawOffer.type = offerWrapper.type || offerType;
                     rawOffer.state =
@@ -994,7 +955,7 @@ class PVSalesUI {
 
             await this.loadLocalOffers();
         } catch (error) {
-            console.error('[PVSalesUI] Błąd podczas usuwania zamówienia:', error);
+            logger.error('pvSalesUi', 'Błąd podczas usuwania zamówienia:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas usuwania zamówienia: ' + error.message, 'error');
             }
@@ -1018,7 +979,7 @@ class PVSalesUI {
             }
             this.loadLocalOffers(); // Odświeżenie listy ofert
         } catch (error) {
-            console.error('[PVSalesUI] Błąd podczas usuwania:', error);
+            logger.error('pvSalesUi', 'Błąd podczas usuwania:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas usuwania oferty.', 'error');
             }
@@ -1505,7 +1466,7 @@ class PVSalesUI {
             this.currentAuditEntityType = type;
             this._renderEntry = (log) => this.renderAuditEntry(log, id, type);
         } catch (error) {
-            console.error('[PVSalesUI] Błąd wyświetlania historii:', error);
+            logger.error('pvSalesUi', 'Błąd wyświetlania historii:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd pobierania historii', 'error');
             }
@@ -1552,7 +1513,7 @@ class PVSalesUI {
             }
             if (typeof window.lucide !== 'undefined') window.lucide.replace();
         } catch (e) {
-            console.error('[PVSalesUI] Błąd ładowania logów:', e);
+            logger.error('pvSalesUi', 'Błąd ładowania logów:', e);
         }
     }
 
@@ -1593,7 +1554,7 @@ class PVSalesUI {
             if (typeof window.showToast === 'function')
                 window.showToast('Wersja przywrócona do edytora.', 'success');
         } catch (error) {
-            console.error('[PVSalesUI] Błąd przywracania wersji:', error);
+            logger.error('pvSalesUi', 'Błąd przywracania wersji:', error);
         }
     }
 
@@ -1679,7 +1640,7 @@ class PVSalesUI {
 
             this.openOfferForEdit(rebuiltData, id, type);
         } catch (error) {
-            console.error('[PVSalesUI] Błąd podglądu historii:', error);
+            logger.error('pvSalesUi', 'Błąd podglądu historii:', error);
             if (typeof window.showToast === 'function') window.showToast(error.message, 'error');
             else if (typeof window.showToast === 'function')
                 window.showToast(error.message, 'error');
@@ -1737,7 +1698,7 @@ class PVSalesUI {
             await this.loadLocalOffers();
             this.filterLocalOffers(); // Zaaplikuj aktualny filtr jeśli istnieje
         } catch (error) {
-            console.error('[PVSalesUI] Błąd podczas kopiowania oferty:', error);
+            logger.error('pvSalesUi', 'Błąd podczas kopiowania oferty:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas kopiowania oferty.', 'error');
             }
@@ -1800,7 +1761,7 @@ class PVSalesUI {
                             userName: currentOffer.userName
                         })
                     }).catch((e) =>
-                        console.error('[PVSalesUI] Błąd aktualizacji opiekuna w zamówieniu:', e)
+                        logger.error('pvSalesUi', 'Błąd aktualizacji opiekuna w zamówieniu:', e)
                     );
                 }
 
@@ -1810,7 +1771,7 @@ class PVSalesUI {
                 await this.loadLocalOffers();
             }
         } catch (error) {
-            console.error('[PVSalesUI] Błąd zmiany opiekuna:', error);
+            logger.error('pvSalesUi', 'Błąd zmiany opiekuna:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas zmiany opiekuna: ' + error.message, 'error');
             }

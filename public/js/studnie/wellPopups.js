@@ -842,7 +842,7 @@ window.applyGlobalRecalc = async function () {
         showToast('Wszystkie studnie przeliczone poprawnie', 'success');
         window.closeGlobalRecalcModal();
     } catch (e) {
-        console.error(e);
+        logger.error('wellPopups', e);
         showToast('Wystąpił błąd podczas przeliczania', 'error');
         if (btn) {
             btn.innerHTML = 'Spróbuj ponownie';
@@ -1158,7 +1158,7 @@ window.tmRefreshWellData = function() {
                     productId: tr.productId,
                     material: p ? p.category : 'Nieznany',
                     dnRaw: p ? p.dn : '?',
-                    flowType: tr.flowType || 'wlot'
+                    flowType: tr.flowType || FLOW_TYPES.WLOT
                 };
             });
         }
@@ -1334,7 +1334,7 @@ window.tmRenderTable = function() {
                 <span style="opacity:0.3;">·</span>
                 <span style="color:#fcd34d; font-weight:600;">${tr.angle}°</span>
                 <span style="opacity:0.3;">·</span>
-                <span style="background:${tr.flowType === 'wlot' ? 'rgba(52,211,153,0.18)' : 'rgba(251,191,36,0.18)'}; color:${tr.flowType === 'wlot' ? '#34d399' : '#fbbf24'}; padding:0.02rem 0.3rem; border-radius:3px; font-size:0.6rem; font-weight:700;">${tr.flowType === 'wlot' ? 'WLOT' : 'WYLOT'}</span>
+                <span style="background:${tr.flowType === FLOW_TYPES.WLOT ? 'rgba(52,211,153,0.18)' : 'rgba(251,191,36,0.18)'}; color:${tr.flowType === FLOW_TYPES.WLOT ? '#34d399' : '#fbbf24'}; padding:0.02rem 0.3rem; border-radius:3px; font-size:0.6rem; font-weight:700;">${tr.flowType === FLOW_TYPES.WLOT ? 'WLOT' : 'WYLOT'}</span>
               </div>
             </div>`;
         }).join('');
@@ -1563,7 +1563,7 @@ async function tmEditApply(wellIdx, trIdx) {
         await autoSelectComponents(true);
         refreshAll();
     } catch (e) {
-        console.error('tmEditApply error:', e);
+        logger.error('wellPopups', 'tmEditApply error:', e);
     }
     tmRefreshWellData();
     tmRenderTable();

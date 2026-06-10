@@ -334,6 +334,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                     }),
                     body: { appendChild: () => {}, removeChild: () => {} },
                 },
+                logger: { error: () => {}, warn: () => {}, info: () => {} },
                 URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
                 fetch: mockFetch,
                 console,
@@ -424,6 +425,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             const toastMessages: { msg: string; type: string }[] = [];
             const sandbox: Record<string, unknown> = {
                 window: {},
+                logger: { error: () => {}, warn: () => {}, info: () => {} },
                 document: {
                     getElementById: () => null,
                     createElement: () => ({ href: '', download: '', click: () => {} }),
@@ -471,6 +473,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                     createElement: () => ({ href: '', download: '', click: () => {} }),
                     body: { appendChild: () => {}, removeChild: () => {} },
                 },
+                logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
                 URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
                 fetch: makeFailingFetch(404, 'Oferta rur nie znaleziona w bazie'),
                 console,

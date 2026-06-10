@@ -92,7 +92,7 @@ async function loadRecycledNumbers(user) {
                 '<span style="color:var(--text-muted); font-size:0.85rem;">Brak odzyskanych numerów.</span>';
         }
     } catch (e) {
-        console.error('Failed to load recycled numbers', e);
+        logger.error('dashboard', 'Failed to load recycled numbers', e);
     }
 }
 
@@ -296,7 +296,7 @@ async function loadUsers() {
         if (typeof lucide !== 'undefined') {
             lucide.createIcons({ root: tbody });
         }
-    } catch (e) { console.error('loadUsers error:', e); }
+    } catch (e) { logger.error('dashboard', 'loadUsers error:', e); }
 }
 
 function updateStatsBar() {
@@ -437,7 +437,7 @@ async function deleteUser(id) {
     try {
         await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
         loadUsers();
-    } catch (e) { console.error('deleteUser error:', e); }
+    } catch (e) { logger.error('dashboard', 'deleteUser error:', e); }
 }
 
 function showChangePassword() {
@@ -480,7 +480,7 @@ async function loadYearLetter() {
         if (yearEl) yearEl.textContent = 'Rok: ' + (data.year || '');
         if (preview) preview.textContent = data.letter || '?';
     } catch (e) {
-        console.error('loadYearLetter:', e);
+        logger.error('dashboard', 'loadYearLetter:', e);
     }
 }
 

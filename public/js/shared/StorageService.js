@@ -11,7 +11,7 @@ class StorageService {
 
     async init() {
         this.initialized = true;
-        console.log('[StorageService] Ujednolicony magazyn zainicjowany (tryb REST).');
+        logger.info('StorageService', '[StorageService] Ujednolicony magazyn zainicjowany (tryb REST).');
     }
 
     /**
@@ -71,13 +71,13 @@ class StorageService {
             const data = await resp.json();
             if (!resp.ok) throw new Error(data.error || 'Błąd zapisu oferty');
 
-            console.log(`[StorageService] Oferta ${offerData.id} została zapisana pomyślnie.`);
+            logger.info('StorageService', `[StorageService] Oferta ${offerData.id} została zapisana pomyślnie.`);
 
             // Pobierz ponownie, aby uzyskać pola wygenerowane po stronie serwera, jeśli to konieczne,
             // lub po prostu zwróć zaktualizowane dane.
             return offerData;
         } catch (error) {
-            console.error('[StorageService] Błąd podczas zapisywania oferty:', error);
+            logger.error('StorageService', '[StorageService] Błąd podczas zapisywania oferty:', error);
             throw error;
         }
     }
@@ -113,7 +113,7 @@ class StorageService {
             // Sortuj według createdAt malejąco
             return results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         } catch (error) {
-            console.error('[StorageService] Błąd podczas pobierania ofert:', error);
+            logger.error('StorageService', '[StorageService] Błąd podczas pobierania ofert:', error);
             throw error;
         }
     }
@@ -129,7 +129,7 @@ class StorageService {
         const stringId = String(id);
         const isStudnie = stringId.startsWith('offer_studnie_');
 
-        console.log(`[StorageService] Usuwanie oferty ${id}...`);
+        logger.info('StorageService', `[StorageService] Usuwanie oferty ${id}...`);
 
         // Ustal kolejność prób na podstawie prefiksu ID
         const endpoints = isStudnie
@@ -143,7 +143,7 @@ class StorageService {
                 
                 if (res.ok) {
                     const type = url.includes('/studnie/') ? 'studni' : 'rur';
-                    console.log(`[StorageService] Oferta ${id} została usunięta z ${type}.`);
+                    logger.info('StorageService', `[StorageService] Oferta ${id} została usunięta z ${type}.`);
                     return true;
                 }
 
@@ -154,7 +154,7 @@ class StorageService {
                 }
             }
         } catch (error) {
-            console.error(`[StorageService] Błąd podczas usuwania oferty ${id}:`, error);
+            logger.error('StorageService', `[StorageService] Błąd podczas usuwania oferty ${id}:`, error);
             throw error;
         }
     }
@@ -186,7 +186,7 @@ class StorageService {
         }
 
         // Fallback: pobierz wszystkie (kompatybilność wsteczna)
-        console.warn(
+        logger.warn('StorageService', 
             '[StorageService] Dedykowane endpointy GET /:id niedostępne. Fallback do pełnego pobierania.'
         );
         const allOffers = await this.getOffers();

@@ -14,7 +14,7 @@
 // ──────────────────────────────────────
 
 function getFlowVisuals(flowType) {
-    const isWylot = flowType === 'wylot';
+    const isWylot = flowType === FLOW_TYPES.WYLOT;
     return {
         label: isWylot ? 'Wylot' : 'Wlot',
         bg: isWylot ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)',
@@ -80,11 +80,11 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const price = product ? product.price : 0;
 
     if (!item.flowTypeManual) {
-        item.flowType = (item.angle === 0 || item.angle === '0') ? 'wylot' : 'wlot';
+        item.flowType = (item.angle === 0 || item.angle === '0') ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
     }
     if (!item.flowType) {
         item.flowType =
-            globalIndex === 0 && (item.angle === 0 || item.angle === '0') ? 'wylot' : 'wlot';
+            globalIndex === 0 && (item.angle === 0 || item.angle === '0') ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
     }
 
     const flow = getFlowVisuals(item.flowType);

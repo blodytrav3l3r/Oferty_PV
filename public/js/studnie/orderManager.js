@@ -5,7 +5,7 @@ async function loadOrdersStudnie() {
         const json = await res.json();
         return json.data || [];
     } catch (err) {
-        console.error('Błąd ładowania zamówień studni:', err);
+        logger.error('orderManager', 'Błąd ładowania zamówień studni:', err);
         return [];
     }
 }
@@ -19,7 +19,7 @@ async function saveOrdersDataStudnie(data) {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {
-        console.error('Błąd zapisu zamówień studni:', err);
+        logger.error('orderManager', 'Błąd zapisu zamówień studni:', err);
         showToast('Błąd zapisu zamówień', 'error');
     }
 }
@@ -106,10 +106,10 @@ async function createOrderFromOffer() {
         return;
     }
 
-    console.log('[createOrderFromOffer] editingOfferIdStudnie =', editingOfferIdStudnie);
-    console.log('[createOrderFromOffer] offersStudnie count =', offersStudnie.length);
+    logger.info('orderManager', '[createOrderFromOffer] editingOfferIdStudnie =', editingOfferIdStudnie);
+    logger.info('orderManager', '[createOrderFromOffer] offersStudnie count =', offersStudnie.length);
     const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
-    console.log('[createOrderFromOffer] offer found =', !!offer);
+    logger.info('orderManager', '[createOrderFromOffer] offer found =', !!offer);
 
     if (!offer) {
         showToast(
@@ -1301,7 +1301,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
                         : selectedUser.displayName || selectedUser.username;
             }
         } catch (e) {
-            console.error('Błąd pobierania użytkowników:', e);
+            logger.error('orderManager', 'Błąd pobierania użytkowników:', e);
         }
     }
 
@@ -1642,7 +1642,7 @@ async function deleteOrderStudnie(orderId) {
             return;
         }
     } catch (e) {
-        console.error('Błąd usuwania zamówienia przez API:', e);
+        logger.error('orderManager', 'Błąd usuwania zamówienia przez API:', e);
         showToast('Błąd połączenia z serwerem', 'error');
         return;
     }
@@ -1807,7 +1807,7 @@ function getCurrentOfferOrder() {
 /** Wejdź w tryb edycji zamówienia — ładuje zamówienie do głównego edytora */
 async function enterOrderEditMode(orderId) {
     try {
-        console.log('[enterOrderEditMode] START orderId=', orderId);
+        logger.info('orderManager', '[enterOrderEditMode] START orderId=', orderId);
         const res = await fetchWithTimeout(`/api/orders-studnie/${orderId}`, { headers: authHeaders() }, 15000);
         if (!res.ok) {
             showToast('Zamówienie nie znalezione', 'error');
@@ -1820,7 +1820,7 @@ async function enterOrderEditMode(orderId) {
             return;
         }
 
-        console.log(
+        logger.info('orderManager', 
             '[enterOrderEditMode] order loaded, wells count:',
             order.wells ? order.wells.length : 'NO WELLS'
         );
@@ -1850,7 +1850,7 @@ async function enterOrderEditMode(orderId) {
             if (typeof syncKineta === 'function') syncKineta(w);
         });
 
-        console.log('[enterOrderEditMode] wells migrated, count:', wells.length);
+        logger.info('orderManager', '[enterOrderEditMode] wells migrated, count:', wells.length);
 
         // Automatyczne odblokowanie widoku kategorii dla użytych przejść
         wells.forEach((w) => {
@@ -1879,7 +1879,7 @@ async function enterOrderEditMode(orderId) {
         document.getElementById('invest-address').value = order.investAddress || '';
         document.getElementById('invest-contractor').value = order.investContractor || '';
 
-        console.log('[enterOrderEditMode] fields filled, calling skipWizardToStep3...');
+        logger.info('orderManager', '[enterOrderEditMode] fields filled, calling skipWizardToStep3...');
 
         // Pomiń kreatora → przejdź bezpośrednio do kroku 5 (Zamówienie = 4.2)
         wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
@@ -1895,22 +1895,22 @@ async function enterOrderEditMode(orderId) {
 
         showSection('builder');
 
-        console.log('[enterOrderEditMode] calling refreshAll...');
+        logger.info('orderManager', '[enterOrderEditMode] calling refreshAll...');
         // Aktualizuj UI
         refreshAll();
 
-        console.log('[enterOrderEditMode] calling renderOrderModeBanner...');
+        logger.info('orderManager', '[enterOrderEditMode] calling renderOrderModeBanner...');
         renderOrderModeBanner();
         if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
 
         // Aktualizuj tytuł strony
         document.title = `📦 Zamówienie: ${order.number || orderId}`;
 
-        console.log('[enterOrderEditMode] DONE');
+        logger.info('orderManager', '[enterOrderEditMode] DONE');
         showToast('<i data-lucide="package"></i> Zamówienie wczytane do edycji', 'success');
     } catch (err) {
-        console.error('Błąd ładowania zamówienia:', err);
-        console.error('Stack:', err.stack);
+        logger.error('orderManager', 'Błąd ładowania zamówienia:', err);
+        logger.error('orderManager', 'Stack:', err.stack);
         showToast('Błąd ładowania zamówienia: ' + err.message, 'error');
     }
 }
@@ -2019,7 +2019,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         window.applyPreviewLockUI();
     } catch (err) {
         window.isPreviewMode = false;
-        console.error('Błąd ładowania podglądu zamówienia:', err);
+        logger.error('orderManager', 'Błąd ładowania podglądu zamówienia:', err);
         showToast('Błąd ładowania podglądu zamówienia', 'error');
     }
 }
@@ -2167,7 +2167,7 @@ async function saveCurrentOrder() {
         showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
         renderOrderModeBanner();
     } catch (err) {
-        console.error('Błąd zapisu zamówienia:', err);
+        logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
         showToast('Błąd zapisu zamówienia', 'error');
     }
 }
@@ -2197,7 +2197,7 @@ async function syncSourceData() {
             }
         }
     } catch (err) {
-        console.error('syncSourceData error:', err);
+        logger.error('orderManager', 'syncSourceData error:', err);
     }
     return synced;
 }
@@ -2236,7 +2236,7 @@ async function loadProductionOrders() {
             productionOrders = json.data || [];
         }
     } catch (e) {
-        console.error('loadProductionOrders error:', e);
+        logger.error('orderManager', 'loadProductionOrders error:', e);
     }
     return productionOrders;
 }
@@ -2254,7 +2254,7 @@ async function saveProductionOrdersData(data) {
             if (!res.ok) throw new Error(resData.error || 'Server error');
             results.push(resData);
         } catch (e) {
-            console.error('saveProductionOrdersData error:', e);
+            logger.error('orderManager', 'saveProductionOrdersData error:', e);
             throw e; // Rethrow to handle in caller
         }
     }
@@ -2334,7 +2334,7 @@ function buildEtykietaElementsSnapshot(well) {
 let wellsSnapshotBeforeZlecenia = null;
 
 function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null) {
-    console.log('[openZleceniaProdukcyjne] Initializing modal...', {
+    logger.info('orderManager', '[openZleceniaProdukcyjne] Initializing modal...', {
         targetWellId,
         targetElementIndex,
         wellsCount: wells.length,
@@ -2440,7 +2440,7 @@ async function closeZleceniaModal() {
 }
 
 function buildZleceniaWellList() {
-    console.log('[buildZleceniaWellList] Building list from', wells.length, 'wells');
+    logger.info('orderManager', '[buildZleceniaWellList] Building list from', wells.length, 'wells');
     zleceniaElementsList = [];
     wells.forEach((well, wIdx) => {
         if (!well.config) return;
@@ -2450,7 +2450,7 @@ function buildZleceniaWellList() {
 
             // Zabezpieczenie na wypadek brakujących produktów na różnych serwerach
             if (!p && item.productId) {
-                console.warn(
+                logger.warn('orderManager', 
                     `[buildZleceniaWellList] Produkt o ID ${item.productId} nie został znaleziony w bazie! Próbuję dopasować po nazwie...`
                 );
                 // Jeśli jest zapisane w trybie zamówienia, być może mamy zapisany tymczasowy produkt?
@@ -2484,7 +2484,7 @@ function buildZleceniaWellList() {
         }
     });
 
-    console.log('[buildZleceniaWellList] Done. Elements found:', zleceniaElementsList.length);
+    logger.info('orderManager', '[buildZleceniaWellList] Done. Elements found:', zleceniaElementsList.length);
     renderZleceniaList();
 }
 
@@ -3713,7 +3713,7 @@ async function saveProductionOrder() {
                 }
             }
         } catch (e) {
-            console.error('Błąd poboru numeru zlecenia dla wersji roboczej', e);
+            logger.error('orderManager', 'Błąd poboru numeru zlecenia dla wersji roboczej', e);
         }
     }
 
@@ -3845,7 +3845,7 @@ async function saveProductionOrder() {
         refreshGlobalMetrics();
         showToast(`<i data-lucide="check-circle-2"></i> Zlecenie produkcyjne zapisane${extraMsg}`, 'success');
     } catch (err) {
-        console.error('saveProductionOrder error:', err);
+        logger.error('orderManager', 'saveProductionOrder error:', err);
         showToast('<i data-lucide="x-circle"></i> Błąd zapisu: ' + err.message, 'error');
     }
 }
@@ -3885,7 +3885,7 @@ async function deleteProductionOrder(id) {
         await syncSourceData();
         showToast('Zlecenie usunięte', 'info');
     } catch (e) {
-        console.error('deleteProductionOrder error:', e);
+        logger.error('orderManager', 'deleteProductionOrder error:', e);
         showToast(e.message, 'error');
     }
 }
@@ -3972,7 +3972,7 @@ async function acceptProductionOrder() {
         refreshGlobalMetrics();
         showToast('<i data-lucide="lock"></i> Zlecenie zaakceptowane — ' + po.productionOrderNumber, 'success');
     } catch (err) {
-        console.error('acceptProductionOrder error:', err);
+        logger.error('orderManager', 'acceptProductionOrder error:', err);
         showToast('<i data-lucide="x-circle"></i> Błąd akceptacji: ' + err.message, 'error');
     }
 }
@@ -4545,7 +4545,7 @@ async function executeBulkGeneration(elements) {
             productionOrders.push(saved);
             newOrders.push(saved);
         } catch (e) {
-            console.error('Błąd generowania zlecenia dla', el.product.name, ':', e);
+            logger.error('orderManager', 'Błąd generowania zlecenia dla', el.product.name, ':', e);
             errorCount++;
         }
     }
@@ -4682,7 +4682,7 @@ window.exportKartaToPDF_action = async function(orderId) {
         showToast('Pobrano Kartę Budowy w PDF', 'success');
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('orderManager', '[Export Error]', err);
         showToast('Błąd eksportu: ' + err.message, 'error');
     });
 };
@@ -4709,7 +4709,7 @@ window.exportKartaToWord_action = async function(orderId) {
         showToast('Pobrano Kartę Budowy w DOCX', 'success');
     })
     .catch((err) => {
-        console.error('[Export Error]', err);
+        logger.error('orderManager', '[Export Error]', err);
         showToast('Błąd eksportu: ' + err.message, 'error');
     });
 };

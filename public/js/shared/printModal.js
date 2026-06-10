@@ -155,14 +155,14 @@
         const id = btn.getAttribute('data-id');
         const format = btn.getAttribute('data-format');
         if (typeof window[action] !== 'function') {
-            console.error('printModal: brak globalnej funkcji', action);
+            logger.error('printModal', 'printModal: brak globalnej funkcji', action);
             if (typeof showToast === 'function') showToast('Akcja eksportu niedostępna', 'error');
             return;
         }
         try {
             window[action](id, format);
         } catch (e) {
-            console.error('printModal: błąd wywołania', action, e);
+            logger.error('printModal', 'printModal: błąd wywołania', action, e);
         }
     }
 

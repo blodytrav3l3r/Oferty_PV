@@ -3,7 +3,6 @@
 /* Zależności: products (globalna), getProductDiameter() z productHelpers.js */
 /* fmt(), fmtInt() z shared/formatters.js */
 
-const MAX_TRANSPORT_WEIGHT = 24000; // kg — max ładowność transportu
 
 /* ===== POMOCNICY KOSZTU TRANSPORTU NA JEDNOSTKĘ ===== */
 
@@ -249,43 +248,18 @@ function calculateTransports(items) {
         }
     });
 
-    // Spróbuj skonsolidować częściowe transporty
-    let totalDedicated = lines.reduce((s, l) => s + l.dedicatedTransports, 0);
-    let saved = 0;
-    const consolidated = [];
+    const totalDedicated = lines.reduce((s, l) => s + l.dedicatedTransports, 0);
 
-    if (partials.length > 1) {
-        // Sortuj częściowe transporty według wagi malejąco (bin-packing)
-        partials.sort((a, b) => b.weight - a.weight);
-        const used = new Set();
-
-        for (let i = 0; i < partials.length; i++) {
-            if (used.has(i)) continue;
-            const group = [partials[i]];
-            let groupWeight = partials[i].weight;
-            used.add(i);
-
-            for (let j = i + 1; j < partials.length; j++) {
-                if (used.has(j)) continue;
-                if (groupWeight + partials[j].weight <= MAX_TRANSPORT_WEIGHT) {
-                    group.push(partials[j]);
-                    groupWeight += partials[j].weight;
-                    used.add(j);
-                }
-            }
-
-            if (group.length > 1) {
-                consolidated.push({ items: group, totalWeight: groupWeight });
-                saved += group.length - 1; // oszczędność (n-1) transportów
-            }
-        }
-    }
+    // Deleguj bin-packing do współdzielonej funkcji
+    const tripItems = partials.map((p) => ({ weight: p.weight, transport: 0, quantity: 1 }));
+    const tripsResult = calculateTransportTrips(tripItems);
+    const saved = tripsResult.saved;
 
     return {
         lines,
         totalTransports: totalDedicated - saved,
         saved,
-        consolidated
+        consolidated: []
     };
 }
 

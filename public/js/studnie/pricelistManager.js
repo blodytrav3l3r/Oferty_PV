@@ -1156,7 +1156,7 @@ function exportStudnieToExcel() {
             'success'
         );
     } catch (err) {
-        console.error('Export error:', err);
+        logger.error('pricelistManager', 'Export error:', err);
         showToast('Błąd podczas eksportu do Excela', 'error');
     }
 }
@@ -1287,14 +1287,14 @@ function importStudnieFromExcel(event) {
                     product.name = String(product.name || '').trim();
 
                     if (!product.id || !product.name) {
-                        console.warn(
+                        logger.warn('pricelistManager', 
                             `[Import Studnie] Row ${index + 2} skipped: missing ID or Name`
                         );
                         return null;
                     }
 
                     if (seenIds.has(product.id)) {
-                        console.warn(
+                        logger.warn('pricelistManager', 
                             `[Import Studnie] Row ${index + 2} skipped: duplicate ID ${product.id}`
                         );
                         return null;
@@ -1385,7 +1385,7 @@ function importStudnieFromExcel(event) {
             renderTiles();
             showToast(`Pomyślnie zaimportowano cennik z Excela`, 'success');
         } catch (err) {
-            console.error('Import error:', err);
+            logger.error('pricelistManager', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
         }
         event.target.value = ''; // Resetuj pole
@@ -1510,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('offer-number').value = generateOfferNumberStudnie();
         }
     } catch (err) {
-        console.error('Błąd podczas inicjalizacji danych:', err);
+        logger.error('pricelistManager', 'Błąd podczas inicjalizacji danych:', err);
         showToast('Wystąpił błąd podczas ładowania danych. Nawigacja jest dostępna.', 'error');
         if (!orderEditMode) {
             document.getElementById('offer-number').value = generateOfferNumberStudnie();
@@ -1573,7 +1573,7 @@ function fixIncompleteProducts() {
 
     if (changed) {
         saveStudnieProducts(studnieProducts);
-        console.log('Zastosowano automatyczne poprawki metadanych do produktów studni');
+        logger.info('pricelistManager', 'Zastosowano automatyczne poprawki metadanych do produktów studni');
     }
 }
 

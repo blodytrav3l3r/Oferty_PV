@@ -139,7 +139,7 @@ async function exportOfferDirectRury_action(offerId, format) {
         if (typeof closeModal === 'function') closeModal();
         showToast('Eksport zakończony', 'success');
     } catch (err) {
-        console.error('exportOfferDirectRury_action error:', err);
+        logger.error('offerPrintManager', 'exportOfferDirectRury_action error:', err);
         showToast('Błąd eksportu oferty: ' + err.message, 'error');
     }
 }
@@ -174,7 +174,7 @@ async function exportKartaDirectRury_action(orderId, format) {
         if (typeof closeModal === 'function') closeModal();
         showToast('Pobrano Kartę Budowy', 'success');
     } catch (err) {
-        console.error('exportKartaDirectRury_action error:', err);
+        logger.error('offerPrintManager', 'exportKartaDirectRury_action error:', err);
         showToast('Błąd eksportu Karty Budowy: ' + err.message, 'error');
     }
 }
@@ -217,7 +217,7 @@ async function exportOrderDirectRury_action(orderId, format) {
         a.remove();
         showToast(`Pobrano Zamówienie w ${format.toUpperCase()}`, 'success');
     } catch (err) {
-        console.error('exportOrderDirectRury_action error:', err);
+        logger.error('offerPrintManager', 'exportOrderDirectRury_action error:', err);
         showToast('Błąd eksportu Zamówienia: ' + err.message, 'error');
     }
 }
@@ -293,7 +293,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         if (typeof closeModal === 'function') closeModal();
         showToast('Eksport oferty z bieżącego stanu zakończony', 'success');
     } catch (err) {
-        console.error('exportRuryOrderAsOffer_action error:', err);
+        logger.error('offerPrintManager', 'exportRuryOrderAsOffer_action error:', err);
         showToast('Błąd eksportu oferty z zamówienia: ' + (err instanceof Error ? err.message : err), 'error');
     }
 }

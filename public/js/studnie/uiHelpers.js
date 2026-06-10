@@ -419,18 +419,18 @@ async function getDefaultProductsStudnie() {
         const res = await fetchWithTimeout('/data/products_studnie.json', {}, 5000);
         if (res.ok) {
             _defaultProductsStudnieCache = await res.json();
-            console.log(`[Studnie] Załadowano ${_defaultProductsStudnieCache.length} domyślnych produktów z JSON`);
+            logger.info('uiHelpers', `[Studnie] Załadowano ${_defaultProductsStudnieCache.length} domyślnych produktów z JSON`);
             return _defaultProductsStudnieCache;
         }
     } catch (e) {
-        console.warn('[Studnie] Nie udało się załadować products_studnie.json:', e);
+        logger.warn('uiHelpers', '[Studnie] Nie udało się załadować products_studnie.json:', e);
     }
     // 3. Fallback — stara globalna zmienna (kompatybilność wsteczna)
     if (typeof DEFAULT_PRODUCTS_STUDNIE !== 'undefined') {
         _defaultProductsStudnieCache = DEFAULT_PRODUCTS_STUDNIE;
         return _defaultProductsStudnieCache;
     }
-    console.error('[Studnie] Brak danych domyślnych produktów!');
+    logger.error('uiHelpers', '[Studnie] Brak danych domyślnych produktów!');
     return [];
 }
 
@@ -705,14 +705,14 @@ async function loadPrecoPricing() {
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
-            console.log('[PRECO] Załadowano cennik z bazy');
+            logger.info('uiHelpers', '[PRECO] Załadowano cennik z bazy');
             return;
         }
     } catch (e) {
-        console.warn('[PRECO] Błąd pobierania cennika z API:', e);
+        logger.warn('uiHelpers', '[PRECO] Błąd pobierania cennika z API:', e);
     }
     precoPricing = getDefaultPrecoPricing();
-    console.log('[PRECO] Użyto domyślnego cennika');
+    logger.info('uiHelpers', '[PRECO] Użyto domyślnego cennika');
 }
 
 /**
@@ -727,14 +727,14 @@ async function savePrecoPricing(data) {
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            console.error('[PRECO] Błąd zapisu:', res.status, err);
+            logger.error('uiHelpers', '[PRECO] Błąd zapisu:', res.status, err);
             showToast('Błąd zapisu cennika PRECO: ' + (err.error || res.status), 'error');
             return false;
         }
         showToast('Cennik PRECO zapisany', 'success');
         return true;
     } catch (err) {
-        console.error('[PRECO] Błąd sieci:', err);
+        logger.error('uiHelpers', '[PRECO] Błąd sieci:', err);
         showToast('Błąd sieci przy zapisie cennika PRECO', 'error');
         return false;
     }

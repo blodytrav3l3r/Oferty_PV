@@ -256,7 +256,7 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
         const data = await response.json();
         return data.length > 0 ? data[0] : null;
     } catch (err) {
-        console.warn('[wellSolver] Backend ML nie odpowiada — używam solvera JS:', err);
+        logger.warn('wellSolver', 'Backend ML nie odpowiada — używam solvera JS:', err);
         return null;
     } finally {
         clearTimeout(timeoutId);
@@ -317,16 +317,16 @@ const __MAX_AUTO_SELECT_CALLS = 10;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
     window.__autoSelectCallCount++;
     if (window.__autoSelectCallCount > __MAX_AUTO_SELECT_CALLS) {
-        console.error('========================================');
-        console.error('DETEKCJA NIESKOŃCZONEJ PĘTLI autoSelectComponents!');
-        console.error('Licznik wywołań:', window.__autoSelectCallCount);
-        console.error('Stack trace:', new Error().stack);
-        console.error('========================================');
+        logger.error('wellSolver', '========================================');
+        logger.error('wellSolver', 'DETEKCJA NIESKOŃCZONEJ PĘTLI autoSelectComponents!');
+        logger.error('wellSolver', 'Licznik wywołań:', window.__autoSelectCallCount);
+        logger.error('wellSolver', 'Stack trace:', new Error().stack);
+        logger.error('wellSolver', '========================================');
         window.__autoSelectCallCount = 0;
         return;
     }
     if (isAutoSelectRunning) {
-        console.warn('[AutoSelect] Pomijam — już trwa auto-dobór');
+        logger.warn('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
         return;
     }
     isAutoSelectRunning = true;
@@ -373,7 +373,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
     // === KROK 1: Backend AI (OR-Tools, 10s timeout) ===
-    console.log('[AutoSelect] Wywołanie backendu OR-Tools...');
+    logger.info('wellSolver', '[AutoSelect] Wywołanie backendu OR-Tools...');
     const backendResult = await fetchConfigFromBackend(well, requiredMm, availProducts);
 
     if (backendResult && backendResult.is_valid && backendResult.items.length > 0) {
@@ -385,7 +385,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         const configDennica = findDennicaInConfig(newConfig);
         const dennicaWrong = correctDennica && configDennica && configDennica.id !== correctDennica.id;
         if (dennicaWrong) {
-            console.warn(`[AutoSelect] AI wybrało złą dennicę ${configDennica.id} (h=${configDennica.height}). Wymagana: ${correctDennica.id} (h=${correctDennica.height}). Fallback do JS.`);
+            logger.warn('wellSolver', `[AutoSelect] AI wybrało złą dennicę ${configDennica.id} (h=${configDennica.height}). Wymagana: ${correctDennica.id} (h=${correctDennica.height}). Fallback do JS.`);
         }
 
         // Walidacja redukcji
@@ -408,7 +408,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             : well.zakonczenie;
         const forcedClosureOk = !forcedClosureId || newConfig.some(item => item.productId === forcedClosureId);
         if (!forcedClosureOk) {
-            console.warn('[AutoSelect] Backend pominął wymuszone zakończenie. Fallback do JS.');
+            logger.warn('wellSolver', '[AutoSelect] Backend pominął wymuszone zakończenie. Fallback do JS.');
         }
 
         // Sprawdź czy istnieje jakiekolwiek zakończenie górne w configu
@@ -418,7 +418,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             return prod && topClosureTypes.includes(prod.componentType);
         });
         if (!hasTopClosure) {
-            console.warn('[AutoSelect] Backend nie zawiera zakończenia górnego. Fallback do JS.');
+            logger.warn('wellSolver', '[AutoSelect] Backend nie zawiera zakończenia górnego. Fallback do JS.');
         }
 
         // Sprawdź czy backend wybrał konus gdy dostępny (bez PEHD)
@@ -432,7 +432,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         });
         const konusOk = !konusAvailable || hasKonus || !!forcedClosureId;
         if (!konusOk) {
-            console.warn('[AutoSelect] Backend pominął konus mimo dostępności. Fallback do JS.');
+            logger.warn('wellSolver', '[AutoSelect] Backend pominął konus mimo dostępności. Fallback do JS.');
         }
 
         if (!dennicaWrong && redukcjaOk && forcedClosureOk && hasTopClosure && konusOk) {
@@ -442,7 +442,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     }
 
     // === KROK 2: Fallback do JS solvera ===
-    console.warn('[AutoSelect] Backend niedostępny lub odrzucił. Fallback do JS solvera.');
+    logger.warn('wellSolver', '[AutoSelect] Backend niedostępny lub odrzucił. Fallback do JS solvera.');
     const jsResult = runJsAutoSelection(well, requiredMm, availProducts);
     if (jsResult.error) {
         showToast(jsResult.error, 'error');
@@ -451,8 +451,8 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         refreshAll();
         return;
     }
-    console.log('[AutoSelect] JS solver OK. config.length=', jsResult.config?.length, 'totalHeight=', jsResult.totalHeight, 'diff=', jsResult.diff, 'topLabel=', jsResult.topLabel, 'fallback=', jsResult.fallback);
-    if (jsResult.config) console.log('[AutoSelect] config[0]=', JSON.stringify(jsResult.config[0]));
+    logger.info('wellSolver', '[AutoSelect] JS solver OK. config.length=', jsResult.config?.length, 'totalHeight=', jsResult.totalHeight, 'diff=', jsResult.diff, 'topLabel=', jsResult.topLabel, 'fallback=', jsResult.fallback);
+    if (jsResult.config) logger.info('wellSolver', '[AutoSelect] config[0]=', JSON.stringify(jsResult.config[0]));
 
     well.config = jsResult.config;
     const errors = [...(jsResult.errors || [])];
@@ -476,15 +476,15 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         sortWellConfigByOrder();
         if (typeof recalcGaskets === 'function') recalcGaskets(well);
         if (typeof syncKineta === 'function') syncKineta(well);
-        console.log('[AutoSelect] Przed render. config.length=', well.config?.length);
+        logger.info('wellSolver', '[AutoSelect] Przed render. config.length=', well.config?.length);
         renderWellConfig();
         renderWellDiagram();
         updateSummary();
         refreshAll();
-        console.log('[AutoSelect] Render OK.');
+        logger.info('wellSolver', '[AutoSelect] Render OK.');
     } catch (renderErr) {
-        console.error('[AutoSelect] Błąd renderowania:', renderErr);
-        console.error('[AutoSelect] Stack:', renderErr.stack);
+        logger.error('wellSolver', '[AutoSelect] Błąd renderowania:', renderErr);
+        logger.error('wellSolver', '[AutoSelect] Stack:', renderErr.stack);
     }
 
     const diffStr = jsResult.diff >= 0 ? `+${jsResult.diff}mm` : `${jsResult.diff}mm`;
@@ -595,7 +595,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                  (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
         );
         if (konusFromCatalog) {
-            console.log('[AutoSelect] Nadpisanie ' + topProd.id + ' konusem ' + konusFromCatalog.id);
+            logger.info('wellSolver', '[AutoSelect] Nadpisanie ' + topProd.id + ' konusem ' + konusFromCatalog.id);
             topProd = konusFromCatalog;
         }
     }
@@ -829,9 +829,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     function fillKregiDP(target, kList, tolBelow, tolAbove, fixedBelowHeight = 0) {
         if (target <= 0) return { kItems: [], filled: 0 };
 
-        console.log('[fillKregiDP] target=', target, 'kList.length=', kList.length, 'dn=', dn, 'mag=', mag);
+        logger.info('wellSolver', '[fillKregiDP] target=', target, 'kList.length=', kList.length, 'dn=', dn, 'mag=', mag);
         if (kList.length === 0) {
-            console.warn('[fillKregiDP] Pusta lista kręgów! dn=', dn);
+            logger.warn('wellSolver', '[fillKregiDP] Pusta lista kręgów! dn=', dn);
             return fillKregiGreedy(target, kList);
         }
 
@@ -839,7 +839,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             target, kList, tolBelow, tolAbove,
             transitionsForDP, availProducts, fixedBelowHeight
         );
-        console.log('[fillKregiDP] dpResult.success=', dpResult.success, 'selectedRings=', dpResult.selectedRings?.length);
+        logger.info('wellSolver', '[fillKregiDP] dpResult.success=', dpResult.success, 'selectedRings=', dpResult.selectedRings?.length);
         
         if (dpResult.success && dpResult.selectedRings.length > 0) {
             const kItems = dpResult.selectedRings.map((ring) => ({
@@ -1295,7 +1295,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     for (const stage of STAGES) {
         solution = solve(stage.tolBelow, stage.tolAbove, stage.maxAvr, stage.skip);
         if (solution) {
-            console.log('[AutoSelect] Rozwiązanie znalezione w stage:', stage.name, 'items:', solution.kregItems?.length, 'dennica:', solution.dennica?.productId);
+            logger.info('wellSolver', '[AutoSelect] Rozwiązanie znalezione w stage:', stage.name, 'items:', solution.kregItems?.length, 'dennica:', solution.dennica?.productId);
             if (stage.name !== 'Standard') {
                 fallback = true;
                 fallbackReason = `tryb ${stage.name}`;
@@ -1379,9 +1379,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     if (solution.errors && solution.errors.length > 0) {
-        console.warn('[AutoSelect] Uwagi:', solution.errors.join('; '));
+        logger.warn('wellSolver', '[AutoSelect] Uwagi:', solution.errors.join('; '));
     }
-    console.log('[AutoSelect] runJsAutoSelection zwraca config.length=', newConfig.length, 'pierwszy=', newConfig[0]?.productId);
+    logger.info('wellSolver', '[AutoSelect] runJsAutoSelection zwraca config.length=', newConfig.length, 'pierwszy=', newConfig[0]?.productId);
 
     return {
         config: newConfig,
@@ -1473,7 +1473,7 @@ function recalculateWellErrors(well) {
                 const hole_center = hc_invert + dn_val / 2;  // Python: hole_center
                 const hole_top = hc_invert + dn_val;  // Python: hole_top
 
-                const typStr = pr.flowType === 'wylot' ? 'wylot' : 'dolot';
+                const typStr = pr.flowType === FLOW_TYPES.WYLOT ? FLOW_TYPES.WYLOT : FLOW_TYPES.DOLOT;
                 const displayType = `nr ${porzadekIdx + 1} (${typStr} DN${dn_val}, rodzaj: ${pprod.name})`;
 
                 // Python: używa hole_center do znalezienia segmentu, nie hole_bottom

@@ -502,9 +502,9 @@ function calcPrecoPricing(well) {
     allPipes.forEach(p => {
         let type;
         if (p.flowTypeManual) {
-            type = p.flowType || 'wlot';
+            type = p.flowType || FLOW_TYPES.WLOT;
         } else {
-            type = (p.kat === 0 || p.kat === 360) ? 'wylot' : 'wlot';
+            type = (p.kat === 0 || p.kat === 360) ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
         }
         p._flowLabel = `${type} ${p.displayIndex}`;
     });
@@ -681,7 +681,7 @@ function calcPrecoPricing(well) {
                         label: p._flowLabel,
                         mm: Math.round(uniesienieMm),
                         cena: kwota,
-                        opis: (p === glowne || p === przelot) ? 'kanał główny' : 'dolot'
+                        opis: (p === glowne || p === przelot) ? 'kanał główny' : FLOW_TYPES.DOLOT
                     });
                 }
             }
@@ -876,11 +876,11 @@ const __MAX_REFRESH_DEPTH = 5;
 function refreshAll(skipSummary = false) {
     __refreshAllDepth++;
     if (__refreshAllDepth > __MAX_REFRESH_DEPTH) {
-        console.error('========================================');
-        console.error('DETEKCJA NIESKOŃCZONEJ PĘTLI refreshAll!');
-        console.error('Głębokość:', __refreshAllDepth);
-        console.error('Stack trace:', new Error().stack);
-        console.error('========================================');
+        logger.error('wellManager', '========================================');
+        logger.error('wellManager', 'DETEKCJA NIESKOŃCZONEJ PĘTLI refreshAll!');
+        logger.error('wellManager', 'Głębokość:', __refreshAllDepth);
+        logger.error('wellManager', 'Stack trace:', new Error().stack);
+        logger.error('wellManager', '========================================');
         __refreshAllDepth = 0;
         return;
     }

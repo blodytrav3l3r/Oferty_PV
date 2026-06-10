@@ -353,7 +353,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     well.przejscia[index].angleGony = ((numVal * 400) / 360).toFixed(2);
 
                     if (!well.przejscia[index].flowTypeManual) {
-                        well.przejscia[index].flowType = numVal === 0 ? 'wylot' : 'wlot';
+                        well.przejscia[index].flowType = numVal === 0 ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
                     }
                 } else if (field === 'rzednaWlaczenia') {
                     if (isNaN(numVal)) {
@@ -1077,7 +1077,7 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     if (!well.przejscia) well.przejscia = [];
 
     const isFirst = well.przejscia ? well.przejscia.length === 0 : true;
-    const flowType = isFirst && angle === 0 ? 'wylot' : 'wlot';
+    const flowType = isFirst && angle === 0 ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
 
     well.przejscia.push({
         id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -1137,7 +1137,7 @@ window.openFlowTypePopup = function (index) {
     document.getElementById('flow-type-modal').style.display = 'flex';
 
     document.getElementById('flow-wlot-btn').onclick = () => {
-        well.przejscia[index].flowType = 'wlot';
+        well.przejscia[index].flowType = FLOW_TYPES.WLOT;
         well.przejscia[index].flowTypeManual = true;
         document.getElementById('flow-type-modal').style.display = 'none';
         renderWellPrzejscia();
@@ -1145,7 +1145,7 @@ window.openFlowTypePopup = function (index) {
     };
 
     document.getElementById('flow-wylot-btn').onclick = () => {
-        well.przejscia[index].flowType = 'wylot';
+        well.przejscia[index].flowType = FLOW_TYPES.WYLOT;
         well.przejscia[index].flowTypeManual = true;
         document.getElementById('flow-type-modal').style.display = 'none';
         renderWellPrzejscia();

@@ -45,7 +45,7 @@ async function changeOfferUser() {
             }
         }
     } catch (e) {
-        console.error('Błąd pobierania użytkowników:', e);
+        logger.error('app', 'Błąd pobierania użytkowników:', e);
         showToast('Błąd pobierania listy użytkowników', 'error');
     }
 }
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const restoreIdx = params.get('restore');
 
                     if (restoreIdx !== null && doc.history && doc.history[restoreIdx]) {
-                        console.log('[App] Przywracanie wersji historycznej:', restoreIdx);
+                        logger.info('app', '[App] Przywracanie wersji historycznej:', restoreIdx);
                         window.loadSavedOfferData(doc.history[restoreIdx], editId);
                         showToast('Wersja historyczna oferty załadowana', 'success');
                     } else if (typeof window.loadSavedOfferData === 'function') {
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         showToast('Oferta załadowana do edycji', 'success');
                     }
                 } catch (err) {
-                    console.error('[App] Błąd auto-ładowania oferty:', err);
+                    logger.error('app', '[App] Błąd auto-ładowania oferty:', err);
                 }
             }
         }, 100);

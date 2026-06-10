@@ -1230,7 +1230,7 @@ function renderWellConfig() {
 
                 precoCalc.dodWloty.forEach(d => {
                     const typLabel = d.typ === 'kaskada' ? 'kaskada' : d.typ === 'sciana' ? 'ślepa kineta' : 'dopływ';
-                    const flowTypeName = d.label && d.label.startsWith('wylot') ? 'wylot' : 'wlot';
+                    const flowTypeName = d.label && d.label.startsWith(FLOW_TYPES.WYLOT) ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
                     const fLabel = d.label ? ` [${d.label}]` : '';
                     html += `<span>Dod. ${flowTypeName} DN${d.dn} (${typLabel})${fLabel}</span><span style="text-align:right; font-weight:600;">${fmtInt(d.cena)} PLN</span>`;
                     
@@ -1828,7 +1828,7 @@ window.handleCfgDrop = function (e) {
                 renderWellDiagram();
                 updateSummary();
             } catch (e) {
-                console.error('Błąd w dropWellComponent:', e);
+                logger.error('wellActions', 'Błąd w dropWellComponent:', e);
                 showToast('Wystąpił błąd podczas upuszczania elementu', 'error');
             } finally {
                 window.currentDraggedPlaceholderId = null;

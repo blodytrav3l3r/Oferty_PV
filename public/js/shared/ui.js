@@ -47,7 +47,7 @@ function showToast(msg, type = 'info') {
     const container =
         document.getElementById('toast-container') || document.querySelector('.toast-container');
     if (!container) {
-        console.warn('showToast: brak #toast-container w HTML');
+        logger.warn('ui', 'showToast: brak #toast-container w HTML');
         return;
     }
     const toast = document.createElement('div');
@@ -230,9 +230,9 @@ async function fetchGlobalUsers() {
             window.globalUsersMap.set(u.id, displayName);
             window.globalUsersMap.set(u.username, displayName);
         });
-        console.log(`[SharedUI] Załadowano ${users.length} użytkowników do globalnej mapy.`);
+        logger.info('ui', `[SharedUI] Załadowano ${users.length} użytkowników do globalnej mapy.`);
     } catch (e) {
-        console.warn('[SharedUI] fetchGlobalUsers error:', e);
+        logger.warn('ui', '[SharedUI] fetchGlobalUsers error:', e);
     }
 }
 

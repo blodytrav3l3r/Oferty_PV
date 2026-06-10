@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (orderId) {
         if (ordersStudnie.length === 0) {
-            console.warn('[AppStudnie] Zamówienia nie załadowały się za pierwszym razem, ponawiam...');
+            logger.warn('appStudnie', '[AppStudnie] Zamówienia nie załadowały się za pierwszym razem, ponawiam...');
             ordersStudnie = await loadOrdersStudnie();
         }
         if (typeof enterOrderEditMode === 'function') {
@@ -125,20 +125,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } else {
-            console.error('[AppStudnie] enterOrderEditMode nie jest dostępna');
+            logger.error('appStudnie', '[AppStudnie] enterOrderEditMode nie jest dostępna');
             showToast('Błąd: nie można otworzyć zamówienia', 'error');
         }
     } else if (editId) {
         let doc = offersStudnie.find((o) => String(o.id) === String(editId));
         if (!doc && offersStudnie.length === 0) {
-            console.warn('[AppStudnie] Oferty nie załadowały się za pierwszym razem, ponawiam...');
+            logger.warn('appStudnie', '[AppStudnie] Oferty nie załadowały się za pierwszym razem, ponawiam...');
             offersStudnie = await loadOffersStudnie();
             doc = offersStudnie.find((o) => String(o.id) === String(editId));
         }
         const restoreIdx = urlParams.get('restore');
 
         if (!doc) {
-            console.error('[AppStudnie] Nie znaleziono oferty o ID:', editId, 'w', offersStudnie.length, 'ofertach');
+            logger.error('appStudnie', '[AppStudnie] Nie znaleziono oferty o ID:', editId, 'w', offersStudnie.length, 'ofertach');
             showToast('Nie znaleziono oferty do edycji.', 'error');
             showSection('builder');
         } else {
@@ -183,7 +183,7 @@ function waitForWellsAndOpen(targetWellId, targetElementIndex) {
 
             elapsed += POLL_INTERVAL;
             if (elapsed >= MAX_WAIT_MS) {
-                console.error(
+                logger.error('appStudnie', 
                     '[waitForWellsAndOpen] Timeout — wells[] puste po',
                     MAX_WAIT_MS,
                     'ms'
@@ -215,22 +215,22 @@ async function loadDataInBackground() {
     ]);
 
     if (productsP.status === 'fulfilled') { studnieProducts = productsP.value; }
-    else { console.error('[AppStudnie] Błąd produktów:', productsP.reason); }
+    else { logger.error('appStudnie', '[AppStudnie] Błąd produktów:', productsP.reason); }
 
     if (offersP.status === 'fulfilled') { offersStudnie = offersP.value; }
-    else { console.error('[AppStudnie] Błąd ofert:', offersP.reason); }
+    else { logger.error('appStudnie', '[AppStudnie] Błąd ofert:', offersP.reason); }
 
     if (ordersP.status === 'fulfilled') { ordersStudnie = ordersP.value; }
-    else { console.error('[AppStudnie] Błąd zamówień:', ordersP.reason); }
+    else { logger.error('appStudnie', '[AppStudnie] Błąd zamówień:', ordersP.reason); }
 
     if (prodOrdersP.status === 'fulfilled') { productionOrders = prodOrdersP.value; }
-    else { console.warn('[AppStudnie] Błąd zleceń produkcyjnych:', prodOrdersP.reason); }
+    else { logger.warn('appStudnie', '[AppStudnie] Błąd zleceń produkcyjnych:', prodOrdersP.reason); }
 
     if (clientsP.status === 'fulfilled') { AppState.clientsDb = clientsP.value; }
-    else { console.warn('[AppStudnie] Błąd klientów:', clientsP.reason); }
+    else { logger.warn('appStudnie', '[AppStudnie] Błąd klientów:', clientsP.reason); }
 
     if (precoP.status === 'fulfilled') { /* ustawione wewnątrz loadPrecoPricing */ }
-    else { console.warn('[AppStudnie] Błąd cennika PRECO:', precoP.reason); }
+    else { logger.warn('appStudnie', '[AppStudnie] Błąd cennika PRECO:', precoP.reason); }
 
     // Odśwież UI z nowymi danymi
     if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
@@ -246,10 +246,10 @@ async function loadDataInBackground() {
     if (typeof getCurrentWell === 'function') {
         const w = getCurrentWell();
         if (w && w.rzednaWlazu != null && w.rzednaDna != null && (!w.config || w.config.length === 0) && studnieProducts.length > 0) {
-            console.log('[AppStudnie] Dane załadowane — uruchamiam auto-dobór dla istniejącej studni.');
+            logger.info('appStudnie', '[AppStudnie] Dane załadowane — uruchamiam auto-dobór dla istniejącej studni.');
             if (typeof autoSelectComponents === 'function') autoSelectComponents(true);
         }
     }
     if (typeof refreshAll === 'function') refreshAll();
-    console.log('[AppStudnie] Dane załadowane, UI odświeżone.');
+    logger.info('appStudnie', '[AppStudnie] Dane załadowane, UI odświeżone.');
 }

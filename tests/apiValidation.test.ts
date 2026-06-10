@@ -60,7 +60,7 @@ jest.mock('../src/prismaClient', () => ({
         pricelists: { upsert: jest.fn() },
         ai_telemetry_logs: { create: jest.fn() },
         users: { update: jest.fn(), findUnique: jest.fn() },
-        settings: { upsert: jest.fn() }
+        settings: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() }
     }
 }));
 

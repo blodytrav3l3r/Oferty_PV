@@ -144,7 +144,7 @@ function filterByWellParams(p, well) {
         // 4. Inne elementy (płyty DIN, zamykające, pierścienie odciążające) są uniwersalne
         return true;
     } catch (e) {
-        console.error('Błąd w filterByWellParams:', e, p, well);
+        logger.error('wellConfigRules', 'Błąd w filterByWellParams:', e, p, well);
         return true;
     }
 }
