@@ -241,30 +241,7 @@ async function savePriceList() {
     }
 }
 
-async function savePriceListAsDefault() {
-    if (
-        !(await appConfirm(
-            'Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?',
-            { title: 'Zapis fabr.', type: 'warning' }
-        ))
-    )
-        return;
-    try {
-        const ok = await saveProducts(products);
-        if (!ok) return;
-        const result = await api.put('/api/products/default', { data: products });
-        if (!result) {
-            showToast('Błąd zapisu wartości fabrycznych', 'error');
-            return;
-        }
-        renderPriceList();
-        if (typeof renderTiles === 'function') renderTiles();
-        showToast('Zapisano produkty jako wartości fabryczne', 'success');
-    } catch (err) {
-        logger.error('pricelistUi', 'savePriceListAsDefault: wyjątek', err);
-        showToast('Błąd zapisu: ' + err.message, 'error');
-    }
-}
+
 
 /* ===== MODAL DODAWANIA PRODUKTU ===== */
 
@@ -475,4 +452,3 @@ function importRuryFromExcel(event) {
 }
 
 window.savePriceList = savePriceList;
-window.savePriceListAsDefault = savePriceListAsDefault;

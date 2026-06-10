@@ -971,25 +971,6 @@ async function saveStudniePriceList() {
     }
 }
 
-async function saveStudniePriceListAsDefault() {
-    if (
-        !(await appConfirm(
-            'Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?',
-            { title: 'Zapis fabr.', type: 'warning' }
-        ))
-    )
-        return;
-    try {
-        await saveStudnieProducts(studnieProducts);
-        await api.put('/api/products-studnie/default', { data: studnieProducts });
-        renderStudniePriceList();
-        renderTiles();
-        showToast('Zapisano produkty studni jako wartości fabryczne', 'success');
-    } catch (err) {
-        showToast('Błąd zapisu jako wartości fabryczne', 'error');
-    }
-}
-
 /* ===== IMPORT / EKSPORT EXCEL ===== */
 
 // Definicje kolumn dla eksportu/importu - kolejność ma znaczenie
