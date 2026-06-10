@@ -530,3 +530,22 @@ window.updateRuryModalTransportDetails = function () {
         totalValEl.textContent = `${fmt(finalNetto)} PLN`;
     }
 };
+
+let isTransportBreakdownExpanded = false;
+
+window.toggleTransportBreakdown = function () {
+    isTransportBreakdownExpanded = !isTransportBreakdownExpanded;
+    const contents = document.querySelectorAll('#transport-breakdown-content, #order-transport-breakdown-content');
+    const icons = document.querySelectorAll('#transport-toggle-icon, #order-transport-toggle-icon');
+    contents.forEach(c => { c.style.display = isTransportBreakdownExpanded ? 'block' : 'none'; });
+    icons.forEach(i => {
+        i.innerHTML = isTransportBreakdownExpanded
+            ? '<i data-lucide="chevron-up"></i>'
+            : '<i data-lucide="chevron-down"></i>';
+    });
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.toggleOrderTransportBreakdown = function () {
+    window.toggleTransportBreakdown();
+};

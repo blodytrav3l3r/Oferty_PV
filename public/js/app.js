@@ -50,25 +50,6 @@ async function changeOfferUser() {
     }
 }
 
-/* ===== TOGGLE HELPERS ===== */
-
-window.toggleTransportBreakdown = function () {
-    isTransportBreakdownExpanded = !isTransportBreakdownExpanded;
-    const contents = document.querySelectorAll('#transport-breakdown-content, #order-transport-breakdown-content');
-    const icons = document.querySelectorAll('#transport-toggle-icon, #order-transport-toggle-icon');
-    contents.forEach(c => { c.style.display = isTransportBreakdownExpanded ? 'block' : 'none'; });
-    icons.forEach(i => {
-        i.innerHTML = isTransportBreakdownExpanded
-            ? '<i data-lucide="chevron-up"></i>'
-            : '<i data-lucide="chevron-down"></i>';
-    });
-    if (window.lucide) window.lucide.createIcons();
-};
-
-window.toggleOrderTransportBreakdown = function () {
-    window.toggleTransportBreakdown();
-};
-
 window.toggleCard = function (contentId, iconId) {
     const content = document.getElementById(contentId);
     const icon = document.getElementById(iconId);
@@ -92,65 +73,6 @@ function setupNavigation() {
     document.querySelectorAll('.nav-btn').forEach((btn) => {
         btn.addEventListener('click', () => showSection(btn.dataset.section));
     });
-}
-
-function showSection(id) {
-    document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
-
-    const targetSection = document.getElementById('section-' + id);
-    if (targetSection) targetSection.classList.add('active');
-
-    const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
-    if (targetBtn) targetBtn.classList.add('active');
-
-    if (id === 'pricelist') renderPriceList();
-
-    // Wspólna belka podsumowania dla builder i oferta
-    const summaryBar = document.getElementById('rury-summary-bar');
-    if (id === 'offer') {
-        if (summaryBar) summaryBar.style.display = 'block';
-        if (typeof updateOfferSummary === 'function') updateOfferSummary();
-
-        // Baner kontekstu
-        const ctxBanner = document.getElementById('offer-context-banner');
-        const ctxBadge = document.getElementById('offer-context-badge');
-        const ctxText = document.getElementById('offer-context-text');
-        if (ctxBanner && ctxBadge && ctxText) {
-            ctxBanner.style.display = 'block';
-            if (window.orderEditMode) {
-                ctxBadge.innerHTML = '<i data-lucide="package" style="width:14px;height:14px;"></i> Zamówienie (krok 5)';
-                ctxBadge.style.background = 'rgba(52,211,153,0.15)';
-                ctxBadge.style.color = '#34d399';
-                ctxBadge.style.border = '1px solid rgba(52,211,153,0.3)';
-                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
-            } else if (window.editingOfferId) {
-                ctxBadge.innerHTML = '<i data-lucide="edit" style="width:14px;height:14px;"></i> Oferta (krok 3)';
-                ctxBadge.style.background = 'rgba(59,130,246,0.15)';
-                ctxBadge.style.color = '#3b82f6';
-                ctxBadge.style.border = '1px solid rgba(59,130,246,0.3)';
-                ctxText.textContent = 'Podgląd oferty — edytuj pozycje w zakładce Konfiguracja.';
-            } else {
-                ctxBadge.innerHTML = '<i data-lucide="file-text" style="width:14px;height:14px;"></i> Nowa oferta';
-                ctxBadge.style.background = 'rgba(156,163,175,0.15)';
-                ctxBadge.style.color = '#9ca3af';
-                ctxBadge.style.border = '1px solid rgba(156,163,175,0.3)';
-                ctxText.textContent = 'Dodaj produkty w zakładce Konfiguracja.';
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-    } else if (id === 'builder') {
-        const activeStep = document.querySelector('.wizard-step.active');
-        const step = activeStep ? parseInt(activeStep.id.replace('wizard-step-', '')) : 1;
-        if (summaryBar) summaryBar.style.display = (step === 3 || step === 5) ? 'block' : 'none';
-    } else {
-        if (summaryBar) summaryBar.style.display = 'none';
-    }
-
-    // Aktualizuj URL, aby przeładowanie nie powodowało utraty stanu
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('tab', id);
-    window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 }
 
 /* closeModal — przeniesione do shared/ui.js */

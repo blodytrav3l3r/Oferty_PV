@@ -123,47 +123,9 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     let totalNetto = 0;
     let totalOffer = 0;
 
-    const grouped = {};
-    items.forEach((item, i) => {
-        const product = products.find((p) => p.id === item.productId);
-        const category = product ? product.category : 'Inne';
-        if (!grouped[category]) grouped[category] = {};
-        let diameter = getProductDiameter(item.productId);
-        if (!diameter && item.productId) {
-            const parts = item.productId.split('-');
-            if (parts.length >= 5) {
-                const code = parseInt(parts[4]);
-                if (!isNaN(code) && code > 0) diameter = code * 100;
-            }
-        }
-        const diamKey = diameter ? `DN ${diameter}` : 'Inne';
-        if (!grouped[category][diamKey]) grouped[category][diamKey] = [];
-        grouped[category][diamKey].push({ item, originalIndex: i });
-    });
-
-    const sortedCategories = Object.keys(grouped).sort((a, b) => {
-        const ia = CATEGORIES.indexOf(a);
-        const ib = CATEGORIES.indexOf(b);
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-    });
-
+    const { flat } = getSortedRuryItems(items);
     const sortedItems = [];
-    sortedCategories.forEach((cat) => {
-        const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
-            const da = parseInt(a.replace('DN ', '')) || 99999;
-            const db = parseInt(b.replace('DN ', '')) || 99999;
-            return da - db;
-        });
-        diamKeys.forEach((diamKey) => {
-            grouped[cat][diamKey].sort((a, b) => {
-                const aBB = a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
-                const bBB = b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
-                if (aBB !== bBB) return aBB ? -1 : 1;
-                return (a.item.lengthM || 0) - (b.item.lengthM || 0);
-            });
-            grouped[cat][diamKey].forEach((entry) => sortedItems.push(entry));
-        });
-    });
+    flat.forEach(g => g.entries.forEach(e => sortedItems.push(e)));
 
     const catGroups = {};
 

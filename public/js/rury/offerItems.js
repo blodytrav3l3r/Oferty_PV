@@ -577,32 +577,7 @@ function renderOfferItems() {
     // Wstępnie oblicz rozkład transportu dla wszystkich pozycji
     const transportDist = calculateTransportDistribution(_items);
 
-    // Grupuj pozycje według kategorii, a następnie według średnicy
-    const grouped = {};
-    _items.forEach((item, i) => {
-        const product = products.find((p) => p.id === item.productId);
-        const category = product ? product.category : 'Inne';
-        if (!grouped[category]) grouped[category] = {};
-        let diameter = getProductDiameter(item.productId);
-        // ID uszczelek takich jak Y-U-GZ-U-14-BU mają średnicę w części parts[4]
-        if (!diameter && item.productId) {
-            const parts = item.productId.split('-');
-            if (parts.length >= 5) {
-                const code = parseInt(parts[4]);
-                if (!isNaN(code) && code > 0) diameter = code * 100;
-            }
-        }
-        const diamKey = diameter ? `DN ${diameter}` : 'Inne';
-        if (!grouped[category][diamKey]) grouped[category][diamKey] = [];
-        grouped[category][diamKey].push({ item, originalIndex: i, diameter });
-    });
-
-    // Sortuj kategorie według ich kolejności w CATEGORIES
-    const sortedCategories = Object.keys(grouped).sort((a, b) => {
-        const ia = CATEGORIES.indexOf(a);
-        const ib = CATEGORIES.indexOf(b);
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-    });
+    const { flat } = getSortedRuryItems(_items);
 
     let html = '';
     let lp = 1;
@@ -610,33 +585,14 @@ function renderOfferItems() {
     const offerColgroup = document.getElementById('offer-colgroup');
     if (offerColgroup) offerColgroup.innerHTML = buildRuryColgroup(0);
 
-    sortedCategories.forEach((cat) => {
-        // Wiersz nagłówka kategorii
-        html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
-
-        // Sortuj średnice numerycznie
-        const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
-            const da = parseInt(a.replace('DN ', '')) || 99999;
-            const db = parseInt(b.replace('DN ', '')) || 99999;
-            return da - db;
-        });
-
-        diamKeys.forEach((diamKey) => {
-            // Wiersz podnagłówka średnicy
-            html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${diamKey}</td></tr>`;
-
-            grouped[cat][diamKey].sort((a, b) => {
-                // Bosy-Bosy zawsze pierwsze
-                const aBB =
-                    a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
-                const bBB =
-                    b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
-                if (aBB !== bBB) return aBB ? -1 : 1;
-                // Następnie według długości rosnąco
-                return (a.item.lengthM || 0) - (b.item.lengthM || 0);
-            });
-
-            grouped[cat][diamKey].forEach(({ item, originalIndex: i }) => {
+    let lastCat;
+    flat.forEach(({ cat, dk, entries }) => {
+        if (cat !== lastCat) {
+            html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
+            lastCat = cat;
+        }
+        html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${dk}</td></tr>`;
+        entries.forEach(({ item, originalIndex: i }) => {
                 const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
                 const pehdCost = item.pehdCostPerUnit || 0;
                 const surcharge = item.surcharge || 0;
@@ -756,7 +712,6 @@ function renderOfferItems() {
             </div>
           </td>
         </tr>`;
-            });
         });
     });
 
@@ -980,3 +935,63 @@ window.onPipeCheckboxChange = function (cb) {
         window.updateOrderSelectionCount();
     }
 };
+
+/* ===== NAWIGACJA SEKCJI (przeniesione z app.js) ===== */
+
+function showSection(id) {
+    document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
+
+    const targetSection = document.getElementById('section-' + id);
+    if (targetSection) targetSection.classList.add('active');
+
+    const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    if (id === 'pricelist') renderPriceList();
+
+    const summaryBar = document.getElementById('rury-summary-bar');
+    if (id === 'offer') {
+        if (summaryBar) summaryBar.style.display = 'block';
+        if (typeof updateOfferSummary === 'function') updateOfferSummary();
+
+        const ctxBanner = document.getElementById('offer-context-banner');
+        const ctxBadge = document.getElementById('offer-context-badge');
+        const ctxText = document.getElementById('offer-context-text');
+        if (ctxBanner && ctxBadge && ctxText) {
+            ctxBanner.style.display = 'block';
+            if (window.orderEditMode) {
+                ctxBadge.innerHTML = '<i data-lucide="package" style="width:14px;height:14px;"></i> Zamówienie (krok 5)';
+                ctxBadge.style.background = 'rgba(52,211,153,0.15)';
+                ctxBadge.style.color = '#34d399';
+                ctxBadge.style.border = '1px solid rgba(52,211,153,0.3)';
+                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+            } else if (window.editingOfferId) {
+                ctxBadge.innerHTML = '<i data-lucide="edit" style="width:14px;height:14px;"></i> Oferta (krok 3)';
+                ctxBadge.style.background = 'rgba(59,130,246,0.15)';
+                ctxBadge.style.color = '#3b82f6';
+                ctxBadge.style.border = '1px solid rgba(59,130,246,0.3)';
+                ctxText.textContent = 'Podgląd oferty — edytuj pozycje w zakładce Konfiguracja.';
+            } else {
+                ctxBadge.innerHTML = '<i data-lucide="file-text" style="width:14px;height:14px;"></i> Nowa oferta';
+                ctxBadge.style.background = 'rgba(156,163,175,0.15)';
+                ctxBadge.style.color = '#9ca3af';
+                ctxBadge.style.border = '1px solid rgba(156,163,175,0.3)';
+                ctxText.textContent = 'Dodaj produkty w zakładce Konfiguracja.';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+    } else if (id === 'builder') {
+        const activeStep = document.querySelector('.wizard-step.active');
+        const step = activeStep ? parseInt(activeStep.id.replace('wizard-step-', '')) : 1;
+        if (summaryBar) summaryBar.style.display = (step === 3 || step === 5) ? 'block' : 'none';
+    } else {
+        if (summaryBar) summaryBar.style.display = 'none';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('tab', id);
+    window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+}
+
+window.showSection = showSection;
