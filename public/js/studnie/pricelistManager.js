@@ -12,6 +12,17 @@ const CENNIK_TAB_FILTERS = {
     kinety: (p) => p.componentType === 'kineta' || (p.category && p.category.startsWith('Kinety'))
 };
 
+let _studniePricelistDirty = false;
+
+function updateStudnieSaveBtn() {
+    const btn = document.getElementById('btn-save-studnie-pricelist');
+    if (!btn) return;
+    btn.innerHTML = _studniePricelistDirty
+        ? '<i data-lucide="save"></i> Zapisz <span style="color:var(--warn)">(!)</span>'
+        : '<i data-lucide="save"></i> Zapisz';
+    if (window.lucide) lucide.createIcons({ root: btn });
+}
+
 function selectCennikTab(tab) {
     currentCennikTab = tab;
     document.querySelectorAll('.cennik-tab').forEach((b) => {
@@ -307,7 +318,8 @@ window.recalculatePEHD = async function() {
         }
     });
     
-    saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast(`Przeliczono wkładkę PEHD dla ${count} elementów.`, 'success');
 };
@@ -358,7 +370,12 @@ async function generateDefaultKinety(auto = false) {
     });
 
     if (added > 0) {
-        saveStudnieProducts(studnieProducts);
+        if (auto) {
+            await saveStudnieProducts(studnieProducts);
+        } else {
+            _studniePricelistDirty = true;
+            updateStudnieSaveBtn();
+        }
         renderStudniePriceList();
         if (!auto) showToast(`Dodano ${added} elementów kinet do uzupełnienia.`, 'success');
     } else {
@@ -400,7 +417,8 @@ function addPrzejsciaCategory() {
         });
     });
 
-    saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast(`Utworzono kategorię ${catName}`, 'success');
 }
@@ -469,7 +487,8 @@ function addStudnieCategory() {
     };
 
     studnieProducts.push(newProduct);
-    saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast(`Utworzono kategorię "${catName}" z 1 elementem`, 'success');
 }
@@ -542,7 +561,8 @@ async function addStudnieElement(groupKey) {
     }
 
     studnieProducts.push(newProduct);
-    await saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast(`Dodano element "${name.trim()}"`, 'success');
 }
@@ -577,7 +597,8 @@ async function deleteStudnieCategory(groupKey) {
         });
     }
 
-    saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast(`Usunięto kategorię ${label}`, 'info');
 }
@@ -593,8 +614,8 @@ function toggleMagazynField(el, field, id) {
     el.textContent = newVal;
     el.style.color = newVal === 1 ? '#34d399' : 'var(--danger-hover)';
 
-    saveStudnieProducts(studnieProducts);
-    // Usuwamy renderStudniePriceList() tutaj, aby uniknąć mignięcia tabeli
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
 }
 
 /* ===== EDYCJA W MIEJSCU ===== */
@@ -614,10 +635,7 @@ function editStudnieCell(el, field, id) {
     input.focus();
     input.select();
 
-    let isSaving = false;
-    const save = async () => {
-        if (isSaving) return;
-        isSaving = true;
+    const save = () => {
         let val = input.value.trim();
         if (!isTextField) {
             val = val === '' ? null : Number(val);
@@ -640,9 +658,9 @@ function editStudnieCell(el, field, id) {
         }
 
         product[field] = val;
-        await saveStudnieProducts(studnieProducts);
+        _studniePricelistDirty = true;
+        updateStudnieSaveBtn();
         renderStudniePriceList();
-        showToast('Zaktualizowano cennik studni', 'success');
     };
     input.addEventListener('blur', save);
     input.addEventListener('keydown', (e) => {
@@ -661,7 +679,8 @@ async function deleteStudnieProduct(id) {
     )
         return;
     studnieProducts = studnieProducts.filter((p) => p.id !== id);
-    await saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast('Element usunięty', 'info');
 }
@@ -680,7 +699,8 @@ async function copyStudnieProduct(id) {
     copied.name = copied.name + ' (Kopia)';
     const index = studnieProducts.findIndex((p) => p.id === id);
     studnieProducts.splice(index + 1, 0, copied);
-    await saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     showToast('Element skopiowany', 'success');
 }
@@ -876,7 +896,8 @@ async function addStudnieProduct() {
     }
 
     studnieProducts.push(newProduct);
-    await saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     closeModal();
     renderStudniePriceList();
     showToast('Dodano nowy element', 'success');
@@ -921,16 +942,39 @@ async function resetStudniePriceList() {
         const defaultData2 = await getDefaultProductsStudnie();
         studnieProducts = structuredClone(defaultData2);
     }
-    await saveStudnieProducts(studnieProducts);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
     renderStudniePriceList();
     renderTiles();
-    showToast('Cennik studni przywrócony', 'info');
+    showToast('Cennik studni przywrócony — kliknij Zapisz by zachować', 'info');
 }
 
-async function manuallySaveStudnieProductsDB() {
+async function saveStudniePriceList() {
+    if (!_studniePricelistDirty) {
+        showToast('Brak zmian do zapisania', 'info');
+        return;
+    }
+    try {
+        const ok = await saveStudnieProducts(studnieProducts);
+        if (!ok) {
+            showToast('Błąd zapisu cennika studni', 'error');
+            return;
+        }
+        _studniePricelistDirty = false;
+        updateStudnieSaveBtn();
+        renderStudniePriceList();
+        renderTiles();
+        showToast('Zapisano cennik studni', 'success');
+    } catch (err) {
+        logger.error('pricelistManager', 'saveStudniePriceList: wyjątek', err);
+        showToast('Błąd zapisu: ' + err.message, 'error');
+    }
+}
+
+async function saveStudniePriceListAsDefault() {
     if (
         !(await appConfirm(
-            'Czy na pewno chcesz zapisać listę produktów studni jako wartości fabryczne (do resetu)?',
+            'Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?',
             { title: 'Zapis fabr.', type: 'warning' }
         ))
     )
@@ -1373,7 +1417,8 @@ function importStudnieFromExcel(event) {
 
             if (normalized.length > 0) {
                 studnieProducts = normalized;
-                saveStudnieProducts(studnieProducts);
+                _studniePricelistDirty = true;
+                updateStudnieSaveBtn();
             }
             
             if (hasPrecoData) {

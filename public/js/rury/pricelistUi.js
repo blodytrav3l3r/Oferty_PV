@@ -4,6 +4,17 @@
 /* renderOfferItems z offerItems.js; fmt, fmtInt z shared/formatters.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js */
 
+let _pricelistDirty = false;
+
+function updateSaveBtn() {
+    const btn = document.getElementById('btn-save-pricelist');
+    if (!btn) return;
+    btn.innerHTML = _pricelistDirty
+        ? '<i data-lucide="save"></i> Zapisz <span style="color:var(--warn)">(!)</span>'
+        : '<i data-lucide="save"></i> Zapisz';
+    if (window.lucide) lucide.createIcons({ root: btn });
+}
+
 /* ===== RENDEROWANIE CENNIKA ===== */
 
 function renderPriceList() {
@@ -91,11 +102,7 @@ function editCell(el, field, id) {
     input.focus();
     input.select();
 
-    let isSaving = false;
-    const save = async () => {
-        if (isSaving) return;
-        isSaving = true;
-
+    const save = () => {
         const val =
             field === 'name' || field === 'id'
                 ? input.value.trim()
@@ -117,14 +124,10 @@ function editCell(el, field, id) {
         }
 
         product[field] = val;
-        const ok = await saveProducts(products);
-        if (ok) {
-            renderPriceList();
-            renderOfferItems(); // Przelicz transport na wypadek zmiany wagi lub pojemności
-            showToast('Zaktualizowano cennik', 'success');
-        } else {
-            renderPriceList();
-        }
+        _pricelistDirty = true;
+        updateSaveBtn();
+        renderPriceList();
+        renderOfferItems();
     };
     input.addEventListener('blur', save);
     input.addEventListener('keydown', (e) => {
@@ -155,7 +158,8 @@ function copyProduct(id) {
     const index = products.findIndex((p) => p.id === id);
     products.splice(index + 1, 0, copied);
 
-    saveProducts(products);
+    _pricelistDirty = true;
+    updateSaveBtn();
     renderPriceList();
     showToast('Produkt skopiowany', 'success');
 }
@@ -169,7 +173,8 @@ async function deleteProduct(id) {
     )
         return;
     products = products.filter((p) => p.id !== id);
-    saveProducts(products);
+    _pricelistDirty = true;
+    updateSaveBtn();
     renderPriceList();
     showToast('Produkt usunięty', 'info');
 }
@@ -208,12 +213,35 @@ async function resetPriceList() {
             return;
         products = structuredClone(DEFAULT_PRODUCTS);
     }
-    await saveProducts(products);
+    _pricelistDirty = true;
+    updateSaveBtn();
     renderPriceList();
-    showToast('Cennik przywrócony', 'info');
+    showToast('Cennik przywrócony — kliknij Zapisz by zachować', 'info');
 }
 
-async function manuallySaveProductsDB() {
+async function savePriceList() {
+    if (!_pricelistDirty) {
+        showToast('Brak zmian do zapisania', 'info');
+        return;
+    }
+    try {
+        const ok = await saveProducts(products);
+        if (!ok) {
+            showToast('Błąd zapisu cennika', 'error');
+            return;
+        }
+        _pricelistDirty = false;
+        updateSaveBtn();
+        renderPriceList();
+        if (typeof renderTiles === 'function') renderTiles();
+        showToast('Zapisano cennik', 'success');
+    } catch (err) {
+        logger.error('pricelistUi', 'savePriceList: wyjątek', err);
+        showToast('Błąd zapisu: ' + err.message, 'error');
+    }
+}
+
+async function savePriceListAsDefault() {
     if (
         !(await appConfirm(
             'Czy na pewno chcesz zapisać aktualny cennik jako wartości fabryczne (do resetu)?',
@@ -222,22 +250,18 @@ async function manuallySaveProductsDB() {
     )
         return;
     try {
-        // 1. Zapis bieżącego cennika
-        const saveOk = await saveProducts(products);
-        if (!saveOk) return;
-
-        // 2. Zapis jako wartości fabryczne
+        const ok = await saveProducts(products);
+        if (!ok) return;
         const result = await api.put('/api/products/default', { data: products });
         if (!result) {
             showToast('Błąd zapisu wartości fabrycznych', 'error');
             return;
         }
-
         renderPriceList();
         if (typeof renderTiles === 'function') renderTiles();
         showToast('Zapisano produkty jako wartości fabryczne', 'success');
     } catch (err) {
-        logger.error('pricelistUi', 'manuallySaveProductsDB: wyjątek', err);
+        logger.error('pricelistUi', 'savePriceListAsDefault: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');
     }
 }
@@ -295,7 +319,8 @@ function addProduct() {
     }
 
     products.push({ id, name, price, area, transport, weight, category });
-    saveProducts(products);
+    _pricelistDirty = true;
+    updateSaveBtn();
     closeModal();
     renderPriceList();
     showToast('Dodano nowy produkt', 'success');
@@ -432,10 +457,11 @@ function importRuryFromExcel(event) {
             if (!confirmImport) return;
 
             products = normalized;
-            saveProducts(products);
+            _pricelistDirty = true;
+            updateSaveBtn();
             renderPriceList();
             showToast(
-                'Pomyślnie zaimportowano ' + normalized.length + ' pozycji z Excela',
+                'Pomyślnie zaimportowano ' + normalized.length + ' pozycji — kliknij Zapisz by zachować',
                 'success'
             );
         } catch (err) {
@@ -447,3 +473,6 @@ function importRuryFromExcel(event) {
     reader.onerror = () => showToast('Błąd odczytu pliku', 'error');
     reader.readAsArrayBuffer(file);
 }
+
+window.savePriceList = savePriceList;
+window.savePriceListAsDefault = savePriceListAsDefault;
