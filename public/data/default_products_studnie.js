@@ -1861,6 +1861,23 @@ const DEFAULT_PRODUCTS_STUDNIE = [
         formaStandardowaKLB: 1
     },
     {
+        id: 'JZW-10-850-D',
+        name: 'Konus+ DN1000 H=850',
+        category: 'Studnie DN1000',
+        componentType: 'konus',
+        dn: 1000,
+        height: 850,
+        weight: 884,
+        'Pow. wewn. m²': 2.669,
+        'Pow. zewn. m²': 4.08,
+        transport: 4,
+        price: 690,
+        magazynWL: 1,
+        magazynKLB: 1,
+        formaStandardowa: 1,
+        formaStandardowaKLB: 1
+    },
+    {
         id: 'JZW-10-850-B',
         name: 'Konus+ DN1000 H=850 bez stopni',
         category: 'Studnie DN1000',
