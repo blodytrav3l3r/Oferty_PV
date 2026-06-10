@@ -58,6 +58,14 @@ describe('getTopClosure', () => {
     const DIN: MockProduct = { id: 'PDD-10', name: 'Plyta DIN 1000', componentType: 'plyta_din', dn: 1000, height: 150, formaStandardowaKLB: 1 };
     const PRODS = [KONUS, KONUS_PLUS, DIN];
 
+    // Produkty dla wszystkich DN
+    const KON1200: MockProduct = { id: 'JZW-12-625-D', name: 'Konus 1200', componentType: 'konus', dn: 1200, height: 625, formaStandardowaKLB: 1 };
+    const DIN1200: MockProduct = { id: 'PDD-12-62-00', name: 'Plyta DIN 1200', componentType: 'plyta_din', dn: 1200, height: 200, formaStandardowaKLB: 1 };
+    const KON1500: MockProduct = { id: 'JZW-15-625-D', name: 'Konus 1500', componentType: 'konus', dn: 1500, height: 625, formaStandardowaKLB: 1 };
+    const DIN1500: MockProduct = { id: 'PDD-15-62-00', name: 'Plyta DIN 1500', componentType: 'plyta_din', dn: 1500, height: 200, formaStandardowaKLB: 1 };
+    const DIN2000: MockProduct = { id: 'PDD-20-62-00', name: 'Plyta DIN 2000', componentType: 'plyta_din', dn: 2000, height: 200, formaStandardowaKLB: 1 };
+    const DIN2500: MockProduct = { id: 'PDD-25-62-00', name: 'Plyta DIN 2500', componentType: 'plyta_din', dn: 2500, height: 200, formaStandardowaKLB: 1 };
+
     it('preferuje Konus nad Płytą DIN (domyślnie)', () => {
         expect(getTopClosure(PRODS, 1000, null, false, 'Kluczbork')!.id).toBe('KON-10-625');
     });
@@ -103,8 +111,36 @@ describe('getTopClosure', () => {
     });
 
     it('DN1200 → szuka konusa DN1200', () => {
-        const KON1200: MockProduct = { id: 'KON-12-625', name: 'Konus 1200', componentType: 'konus', dn: 1200, height: 625, formaStandardowaKLB: 1 };
-        expect(getTopClosure([KONUS, DIN, KON1200], 1200, null, false, 'Kluczbork')!.id).toBe('KON-12-625');
+        expect(getTopClosure([KONUS, DIN, KON1200], 1200, null, false, 'Kluczbork')!.id).toBe('JZW-12-625-D');
+    });
+
+    it('DN1500 → Konus DN1500 preferowany (gdy istnieje)', () => {
+        expect(getTopClosure([KON1500, DIN1500], 1500, null, false, 'Kluczbork')!.id).toBe('JZW-15-625-D');
+    });
+
+    it('DN1500 → forcedZak=Plyta DIN respektowany (test fixa override)', () => {
+        expect(getTopClosure([KON1500, DIN1500], 1500, 'PDD-15-62-00', false, 'Kluczbork')!.id).toBe('PDD-15-62-00');
+    });
+
+    it('DN2000 → Plyta DIN (brak konusa)', () => {
+        expect(getTopClosure([DIN2000], 2000, null, false, 'Kluczbork')!.id).toBe('PDD-20-62-00');
+    });
+
+    it('DN2500 → Plyta DIN (brak konusa)', () => {
+        expect(getTopClosure([DIN2500], 2500, null, false, 'Kluczbork')!.id).toBe('PDD-25-62-00');
+    });
+
+    it('DN2000 → forcedZak respektowany', () => {
+        const DIN2000_ALT: MockProduct = { id: 'PO-20-62-00', name: 'Plyta DIN 2000 (alternatywna)', componentType: 'plyta_din', dn: 2000, height: 210, formaStandardowaKLB: 1 };
+        expect(getTopClosure([DIN2000, DIN2000_ALT], 2000, 'PO-20-62-00', false, 'Kluczbork')!.id).toBe('PO-20-62-00');
+    });
+
+    it('DN1200 → forcedZak respektowany', () => {
+        expect(getTopClosure([KON1200, DIN1200], 1200, 'PDD-12-62-00', false, 'Kluczbork')!.id).toBe('PDD-12-62-00');
+    });
+
+    it('DN1200 → forcedZak=null → Konus (domyslny)', () => {
+        expect(getTopClosure([KON1200, DIN1200], 1200, null, false, 'Kluczbork')!.id).toBe('JZW-12-625-D');
     });
 });
 
@@ -157,6 +193,16 @@ describe('getReductionPlate', () => {
     it('DN2000 z redukcją do 1000', () => {
         const p1: MockProduct = { id: 'PR-2000-1000', name: 'Plyta redukcyjna DN2000 na 1000', componentType: 'plyta_redukcyjna', dn: 2000, height: 200, formaStandardowaKLB: 1 };
         expect(getReductionPlate([p1], 2000, true, 1000)!.id).toBe('PR-2000-1000');
+    });
+
+    it('DN1200 z redukcją do 1000', () => {
+        const p1: MockProduct = { id: 'PR-1200-1000', name: 'Plyta redukcyjna 1200/1000', componentType: 'plyta_redukcyjna', dn: 1200, height: 150, formaStandardowaKLB: 1 };
+        expect(getReductionPlate([p1], 1200, true, 1000)!.id).toBe('PR-1200-1000');
+    });
+
+    it('DN2500 z redukcją do 1000', () => {
+        const p1: MockProduct = { id: 'PR-2500-1000', name: 'Redukcja 2500 na 1000', componentType: 'plyta_redukcyjna', dn: 2500, height: 250, formaStandardowaKLB: 1 };
+        expect(getReductionPlate([p1], 2500, true, 1000)!.id).toBe('PR-2500-1000');
     });
 });
 
@@ -778,5 +824,116 @@ describe('zakonczenieByDn — pamięć per-DN przy przełączaniu', () => {
         // Toggle do DN1200 — powinienwrócićć konus DN1200
         simulateToggle(well);
         expect(well.zakonczenie).toBe('JZW-12-625-D');
+    });
+});
+
+/* ================= 6. Full fallback flow (DN1500 scenario) ================= */
+
+function getAvailableProducts(products: MockProduct[], mag: string): MockProduct[] {
+    const field = (mag || '').includes('oc') || (mag || '').includes('Włoc') ? 'magazynWL' : 'magazynKLB';
+    return products.filter(p => {
+        const val = p[field];
+        return val === 1 || val === undefined;
+    });
+}
+
+// Symulacja przekazania forcedZak do solvera
+function getClosureWithFallback(
+    availFiltered: MockProduct[], effectiveDn: number, forcedZak: string | null,
+    isWkladka: boolean, warehouse: string, fullCatalog: MockProduct[]
+): MockProduct | null {
+    let topProd = getTopClosure(availFiltered, effectiveDn, forcedZak, isWkladka, warehouse);
+    // override (tylko gdy forcedZak=null)
+    if (!forcedZak && topProd && topProd.componentType !== 'konus' && !isWkladka) {
+        const konusFromCatalog = fullCatalog.find(
+            p => p.componentType === 'konus' && parseInt(String(p.dn)) === effectiveDn
+        );
+        if (konusFromCatalog) topProd = konusFromCatalog;
+    }
+    // fallback: szukaj w pełnym katalogu
+    if (!topProd && forcedZak) {
+        topProd = fullCatalog.find(p => p.id === forcedZak && parseInt(String(p.dn)) === effectiveDn) || null;
+    }
+    if (!topProd) {
+        topProd = fullCatalog.find(p => p.componentType === 'konus' && parseInt(String(p.dn)) === effectiveDn) || null;
+    }
+    return topProd;
+}
+
+describe('full fallback flow (DN1500)', () => {
+    const KON1500_KLB: MockProduct = {
+        id: 'JZW-15-625-D', name: 'Konus 1500 (drabinka)', componentType: 'konus', dn: 1500,
+        height: 625, formaStandardowaKLB: 1, magazynKLB: 1
+    };
+    const DIN1500_KLB: MockProduct = {
+        id: 'PDD-15-62-00', name: 'Plyta DIN 1500', componentType: 'plyta_din', dn: 1500,
+        height: 200, formaStandardowaKLB: 1, magazynKLB: 1
+    };
+    const KON1500_WL: MockProduct = {
+        id: 'JZW-15-625-D', name: 'Konus 1500 (drabinka)', componentType: 'konus', dn: 1500,
+        height: 625, formaStandardowa: 1, magazynWL: 1
+    };
+    const DIN1500_WL: MockProduct = {
+        id: 'PDD-15-62-00', name: 'Plyta DIN 1500', componentType: 'plyta_din', dn: 1500,
+        height: 200, formaStandardowa: 1, magazynWL: 1
+    };
+    const FULL_CATALOG = [KON1500_KLB, DIN1500_KLB];
+
+    // stopnie=brak konfiguracja
+    const wellStopnieBrak = {
+        dn: 1500, magazyn: 'Kluczbork', stopnie: 'brak' as const,
+        wkladkaZwienczenie: 'brak', zakonczenie: null, redukcjaDN1000: false,
+        rzednaDna: 0, rzednaWlazu: 5.0, nadbudowa: 'betonowa', dennicaMaterial: 'betonowa'
+    };
+
+    it('DN1500, stopnie=brak: filterByWellParams usuwa konus (-D odrzucony)', () => {
+        const avail = getAvailableProducts(FULL_CATALOG, 'Kluczbork');
+        const filtered = avail.filter(p => filterByWellParams(p, wellStopnieBrak));
+        expect(filtered.find(p => p.id === 'JZW-15-625-D')).toBeUndefined();
+        expect(filtered.find(p => p.id === 'PDD-15-62-00')).toBeDefined();
+    });
+
+    it('DN1500, stopnie=brak: getTopClosure zwraca Płyte DIN', () => {
+        const filtered = FULL_CATALOG.filter(p => filterByWellParams(p, wellStopnieBrak));
+        expect(getTopClosure(filtered, 1500, null, false, 'Kluczbork')!.id).toBe('PDD-15-62-00');
+    });
+
+    it('DN1500, stopnie=brak: fallback znajduje konus z katalogu (gdy forcedZak=null)', () => {
+        const filtered = FULL_CATALOG.filter(p => filterByWellParams(p, wellStopnieBrak));
+        const result = getClosureWithFallback(filtered, 1500, null, false, 'Kluczbork', FULL_CATALOG);
+        expect(result!.id).toBe('JZW-15-625-D'); // override działa
+    });
+
+    it('DN1500, stopnie=brak: forcedZak=PDD-15-62-00 respektowany (override pominiety)', () => {
+        const filtered = FULL_CATALOG.filter(p => filterByWellParams(p, wellStopnieBrak));
+        const result = getClosureWithFallback(filtered, 1500, 'PDD-15-62-00', false, 'Kluczbork', FULL_CATALOG);
+        expect(result!.id).toBe('PDD-15-62-00');
+    });
+
+    it('DN1500, Kluczbork: magazynKLB=1 → oba produkty dostepne', () => {
+        const avail = getAvailableProducts(FULL_CATALOG, 'Kluczbork');
+        expect(avail.length).toBe(2);
+    });
+
+    it('DN1500, Wloclawek: magazynWL=1 → oba produkty dostepne', () => {
+        const fullWL = [KON1500_WL, DIN1500_WL];
+        const avail = getAvailableProducts(fullWL, 'Włocławek');
+        expect(avail.length).toBe(2);
+    });
+
+    it('DN2000, Kluczbork: plyta_din (brak konusa), forcedZak respektowany', () => {
+        const PRODS: MockProduct[] = [
+            { id: 'PDD-20-62-00', name: 'Plyta DIN 2000', componentType: 'plyta_din', dn: 2000, height: 200, formaStandardowaKLB: 1 },
+        ];
+        const result = getClosureWithFallback(PRODS, 2000, null, false, 'Kluczbork', PRODS);
+        expect(result!.id).toBe('PDD-20-62-00');
+    });
+
+    it('DN2500, Kluczbork: plyta_din (brak konusa)', () => {
+        const PRODS: MockProduct[] = [
+            { id: 'PDD-25-62-00', name: 'Plyta DIN 2500', componentType: 'plyta_din', dn: 2500, height: 200, formaStandardowaKLB: 1 },
+        ];
+        const result = getClosureWithFallback(PRODS, 2500, null, false, 'Kluczbork', PRODS);
+        expect(result!.id).toBe('PDD-25-62-00');
     });
 });

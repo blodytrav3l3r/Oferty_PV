@@ -256,6 +256,7 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
         const data = await response.json();
         return data.length > 0 ? data[0] : null;
     } catch (err) {
+        console.warn('[wellSolver] Backend ML nie odpowiada — używam solvera JS:', err);
         return null;
     } finally {
         clearTimeout(timeoutId);

@@ -222,7 +222,7 @@ export type ClientsBatchInput = z.infer<typeof clientsBatchSchema>;
  * Schemat walidacji danych cennika (tablica pozycji)
  */
 export const pricelistDataSchema = z.object({
-    data: z.array(z.record(z.string(), z.unknown())).min(1, 'Wymagana co najmniej jedna pozycja cennika')
+    data: z.array(z.record(z.string(), z.unknown()))
 });
 
 export type PricelistDataInput = z.infer<typeof pricelistDataSchema>;

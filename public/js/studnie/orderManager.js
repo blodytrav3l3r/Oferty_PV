@@ -12,13 +12,15 @@ async function loadOrdersStudnie() {
 
 async function saveOrdersDataStudnie(data) {
     try {
-        await fetch('/api/orders-studnie', {
+        const res = await fetch('/api/orders-studnie', {
             method: 'PUT',
             headers: authHeaders(),
             body: JSON.stringify({ data })
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {
         console.error('Błąd zapisu zamówień studni:', err);
+        showToast('Błąd zapisu zamówień', 'error');
     }
 }
 
@@ -180,71 +182,52 @@ let pendingOrderCreationData = null;
  * Inicjalizuje formularz Karty Budowy w Kroku 4.
  * Może załadować dane nowej oferty lub istniejącego zamówienia.
  */
-function initKartaBudowyStep4(primaryOfferNumber) {
-    _przejsciaInitialized = false;
-    const emailFakturaInput = document.getElementById('step4-email-faktura');
-    const emailEfakturaInput = document.getElementById('step4-email-efaktura');
-    const offerInput = document.getElementById('step4-offer-nr-input');
-    const adresWysylkiInput = document.getElementById('step4-adres-wysylki');
-    const warunkiPlatnosciInput = document.getElementById('step4-warunki-platnosci');
-    const iloscDniInput = document.getElementById('step4-ilosc-dni');
-    const ubezpieczenieInput = document.getElementById('step4-ubezpieczenie');
-    const osobaKontaktInput = document.getElementById('step4-osoba-kontakt');
-    const zabezpieczenieTransportuInput = document.getElementById('step4-zabezpieczenie-transportu');
-    const rodzajTransportuInput = document.getElementById('step4-rodzaj-transportu');
-    const wyliczonyTransportInput = document.getElementById('step4-wyliczony-transport');
-    const rodzajStopniInput = document.getElementById('step4-rodzaj-stopni');
-    const rodzajStopniInneInput = document.getElementById('step4-rodzaj-stopni-inne');
-    const rodzajStudniInput = document.getElementById('step4-rodzaj-studni');
-    const uszczelkaStudniInput = document.getElementById('step4-uszczelka-studni');
-    const uszczelkaStudniInneInput = document.getElementById('step4-uszczelka-studni-inne');
-    const kinetaInput = document.getElementById('step4-kineta');
-    const kinetaInneInput = document.getElementById('step4-kineta-inne');
-    const wysokoscSpocznikaInput = document.getElementById('step4-wysokosc-spocznika');
-    const usytuowanieInput = document.getElementById('step4-usytuowanie');
-    const kaskadaInput = document.getElementById('step4-kaskada');
-    const kaskadaUwagiInput = document.getElementById('step4-kaskada-uwagi');
-    const slepaKinetaInput = document.getElementById('step4-slepa-kineta');
-    const slepaKinetaUwagiInput = document.getElementById('step4-slepa-kineta-uwagi');
-    const redukcjaKinetyInput = document.getElementById('step4-redukcja-kinety');
-    const przejsciaTulejoweInput = document.getElementById('step4-przejscia-tulejowe');
-    const przejsciaSzczelneInput = document.getElementById('step4-przejscia-szczelne');
-    const wlasciwosciBetonuInput = document.getElementById('step4-wlasciwosci-betonu');
-    const pozostaleWlasciwosciInput = document.getElementById('step4-pozostale-wlasciwosci');
-    const przejsciaZamowioneInput = document.getElementById('step4-przejscia-zamowione');
-    const dataZamowieniaInput = document.getElementById('step4-data-zamowienia');
-    
-    if (emailFakturaInput) emailFakturaInput.value = '';
-    if (emailEfakturaInput) emailEfakturaInput.value = '';
-    if (offerInput) offerInput.value = '';
-    if (adresWysylkiInput) adresWysylkiInput.value = '';
-    if (warunkiPlatnosciInput) warunkiPlatnosciInput.value = 'przelew';
-    if (iloscDniInput) iloscDniInput.value = '';
-    if (ubezpieczenieInput) ubezpieczenieInput.value = '';
-    if (osobaKontaktInput) osobaKontaktInput.value = '';
-    if (zabezpieczenieTransportuInput) zabezpieczenieTransportuInput.value = 'Nie dotyczy';
-    if (rodzajTransportuInput) rodzajTransportuInput.value = 'Transport P.V.';
-    if (rodzajStopniInneInput) {
-        rodzajStopniInneInput.value = '';
-        const wrap = document.getElementById('step4-rodzaj-stopni-inne-wrap');
+/* ===== PODFUNKCJE KARTY BUDOWY KROK 4 ===== */
+
+function _resetKartaBudowyForm() {
+    const fields = [
+        'step4-email-faktura', 'step4-email-efaktura', 'step4-offer-nr-input',
+        'step4-adres-wysylki', 'step4-ilosc-dni', 'step4-ubezpieczenie',
+        'step4-osoba-kontakt', 'step4-kaskada-uwagi', 'step4-slepa-kineta-uwagi',
+        'step4-data-zamowienia'
+    ];
+    fields.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+    const textDefaults = {
+        'step4-warunki-platnosci': 'przelew',
+        'step4-zabezpieczenie-transportu': 'Nie dotyczy',
+        'step4-rodzaj-transportu': 'Transport P.V.',
+        'step4-wlasciwosci-betonu': 'C40/50',
+        'step4-rodzaj-stopni': 'Nie dotyczy',
+        'step4-rodzaj-studni': 'Nie dotyczy',
+        'step4-uszczelka-studni': 'Brak',
+        'step4-kineta': 'Brak',
+        'step4-wysokosc-spocznika': 'Nie dotyczy',
+        'step4-usytuowanie': 'Linia dolna',
+        'step4-kaskada': 'Nie dotyczy',
+        'step4-slepa-kineta': 'Nie dotyczy',
+        'step4-redukcja-kinety': 'Nie dotyczy',
+        'step4-przejscia-tulejowe': 'Nie dotyczy',
+        'step4-przejscia-szczelne': 'Nie dotyczy',
+        'step4-przejscia-zamowione': 'Nie dotyczy',
+        'step4-pozostale-wlasciwosci': ''
+    };
+    Object.keys(textDefaults).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = textDefaults[id];
+    });
+
+    ['step4-rodzaj-stopni-inne', 'step4-uszczelka-studni-inne', 'step4-kineta-inne'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+        const wrap = document.getElementById(id + '-wrap');
         if (wrap) wrap.style.display = 'none';
-    }
-    if (uszczelkaStudniInneInput) {
-        uszczelkaStudniInneInput.value = '';
-        const wrap = document.getElementById('step4-uszczelka-studni-inne-wrap');
-        if (wrap) wrap.style.display = 'none';
-    }
-    if (kinetaInneInput) {
-        kinetaInneInput.value = '';
-        const wrap = document.getElementById('step4-kineta-inne-wrap');
-        if (wrap) wrap.style.display = 'none';
-    }
-    
-    // Oblicz i wyświetl dane o transporcie (podział na pełne + niepełne kursy)
-    let tCost = 0;
-    let tWeight = 0;
-    let costPerTrip = 0;
-    
+    });
+}
+
+function _calcTransportCosts() {
+    let tCost = 0, tWeight = 0, costPerTrip = 0;
+
     if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
         const o = orderEditMode.order;
         tWeight = o.totalWeight || 0;
@@ -263,279 +246,263 @@ function initKartaBudowyStep4(primaryOfferNumber) {
         const gWeight = off.totalWeight || 0;
         const gKm = parseFloat(off.transportKm) || 0;
         const gRate = parseFloat(off.transportRate) || 0;
-        const gCost = (gKm > 0 && gRate > 0) ? Math.ceil(gWeight / 24000) * gKm * gRate : 0;
+        const gCost = (gKm > 0 && gRate > 0) ? Math.ceil(gWeight / MAX_TRANSPORT_WEIGHT) * gKm * gRate : 0;
         if (gWeight > 0 && tWeight > 0) {
             tCost = gCost * (tWeight / gWeight);
         }
         costPerTrip = gKm * gRate;
     }
-    
-    if (wyliczonyTransportInput) {
-        const t = Math.max(0, tCost);
-        if (t > 0 && costPerTrip > 0) {
-            const full = Math.floor(t / costPerTrip);
-            const part = t - full * costPerTrip;
-            const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-            if (full > 0 && part > 0.01) {
-                wyliczonyTransportInput.value = `${full} x ${fmt(costPerTrip)} zł + ${fmt(part)} zł`;
-            } else if (full > 0) {
-                wyliczonyTransportInput.value = `${full} x ${fmt(costPerTrip)} zł`;
-            } else {
-                wyliczonyTransportInput.value = `${fmt(part)} zł`;
-            }
-        } else if (t > 0) {
-            const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-            wyliczonyTransportInput.value = `${fmt(t)} zł`;
+
+    return { tCost: Math.max(0, tCost), costPerTrip };
+}
+
+function _displayTransportCost(tCost, costPerTrip) {
+    const wyliczonyTransportInput = document.getElementById('step4-wyliczony-transport');
+    if (!wyliczonyTransportInput) return;
+    const t = Math.max(0, tCost);
+    const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    if (t > 0 && costPerTrip > 0) {
+        const full = Math.floor(t / costPerTrip);
+        const part = t - full * costPerTrip;
+        if (full > 0 && part > 0.01) {
+            wyliczonyTransportInput.value = `${full} x ${fmt(costPerTrip)} zł + ${fmt(part)} zł`;
+        } else if (full > 0) {
+            wyliczonyTransportInput.value = `${full} x ${fmt(costPerTrip)} zł`;
         } else {
-            wyliczonyTransportInput.value = 'Brak transportu';
+            wyliczonyTransportInput.value = `${fmt(part)} zł`;
         }
-    }
-    
-    // Auto-detect Rodzaj stopni, Rodzaj studni, i Kineta
-    let detectedStopnie = 'Nie dotyczy';
-    let detectedRodzajStudni = 'Nie dotyczy';
-    let detectedKineta = 'Brak';
-    let detectedWysokoscSpocznika = 'Nie dotyczy';
-    let detectedPozostale = [];
-    const wellsToDetect = (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) ? orderEditMode.order.wells : ((typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) ? pendingOrderCreationData.selectedWells : []);
-    
-    if (wellsToDetect && wellsToDetect.length > 0) {
-        let hasNierdzewna = false;
-        let hasDrabinka = false;
-        let hasBrak = false;
-        
-        let hasZelbet = false;
-        let hasBetonStudnia = false;
-        
-        let hasPrecoTop = false;
-        let hasPreco = false;
-        let hasBetonKineta = false;
-        
-        let spocznikHFound = null;
-        
-        wellsToDetect.forEach(w => {
-            // Stopnie
-            if (w.stopnie === 'nierdzewna') hasNierdzewna = true;
-            else if (w.stopnie === 'drabinka') hasDrabinka = true;
-            else if (w.stopnie === 'brak') hasBrak = true;
-            
-            // Rodzaj studni
-            if (w.dennicaMaterial === 'zelbetowa' || w.nadbudowa === 'zelbetowa' || w.material === 'zelbetowa') hasZelbet = true;
-            else if (w.dennicaMaterial === 'betonowa' || w.nadbudowa === 'betonowa' || w.material === 'betonowa') hasBetonStudnia = true;
-            
-            // Kineta
-            if (w.kineta === 'precotop') hasPrecoTop = true;
-            else if (w.kineta === 'preco') hasPreco = true;
-            else if (w.kineta === 'beton') hasBetonKineta = true;
-            
-            // Wysokość spocznika
-            if (w.spocznikH && w.spocznikH !== 'brak') {
-                spocznikHFound = w.spocznikH;
-            }
-
-            // Agresja
-            if (w.agresjaChemiczna && w.agresjaChemiczna !== 'brak' && !detectedPozostale.includes(w.agresjaChemiczna)) {
-                detectedPozostale.push(w.agresjaChemiczna);
-            }
-            if (w.agresjaMrozowa && w.agresjaMrozowa !== 'brak' && !detectedPozostale.includes(w.agresjaMrozowa)) {
-                detectedPozostale.push(w.agresjaMrozowa);
-            }
-        });
-        
-        if (hasNierdzewna) detectedStopnie = 'Drabinka nierdzewna';
-        else if (hasDrabinka) detectedStopnie = 'Drabinka';
-        else if (hasBrak) detectedStopnie = 'Brak';
-        
-        if (hasZelbet) detectedRodzajStudni = 'Żelbet';
-        else if (hasBetonStudnia) detectedRodzajStudni = 'Beton';
-        
-        if (hasPrecoTop) detectedKineta = 'PrecoTop';
-        else if (hasPreco) detectedKineta = 'Preco';
-        else if (hasBetonKineta) detectedKineta = 'Beton';
-        
-        if (spocznikHFound) detectedWysokoscSpocznika = spocznikHFound;
-    }
-    if (rodzajStopniInput) rodzajStopniInput.value = detectedStopnie;
-    if (rodzajStudniInput) rodzajStudniInput.value = detectedRodzajStudni;
-    if (uszczelkaStudniInput) uszczelkaStudniInput.value = 'Brak';
-    if (kinetaInput) kinetaInput.value = detectedKineta;
-    if (wysokoscSpocznikaInput) wysokoscSpocznikaInput.value = detectedWysokoscSpocznika;
-    if (usytuowanieInput) usytuowanieInput.value = 'Linia dolna';
-    if (kaskadaInput) kaskadaInput.value = 'Nie dotyczy';
-    if (kaskadaUwagiInput) kaskadaUwagiInput.value = '';
-    if (slepaKinetaInput) slepaKinetaInput.value = 'Nie dotyczy';
-    if (slepaKinetaUwagiInput) slepaKinetaUwagiInput.value = '';
-    if (redukcjaKinetyInput) redukcjaKinetyInput.value = 'Nie dotyczy';
-    if (przejsciaTulejoweInput) przejsciaTulejoweInput.value = 'Nie dotyczy';
-    if (przejsciaSzczelneInput) przejsciaSzczelneInput.value = 'Nie dotyczy';
-    if (wlasciwosciBetonuInput) wlasciwosciBetonuInput.value = 'C40/50';
-    if (pozostaleWlasciwosciInput) pozostaleWlasciwosciInput.value = detectedPozostale ? detectedPozostale.join(', ') : '';
-    if (przejsciaZamowioneInput) przejsciaZamowioneInput.value = 'Nie dotyczy';
-    if (dataZamowieniaInput) dataZamowieniaInput.value = '';
-    
-    let existingData = null;
-    
-    // Jeśli edytujemy zamówienie, wczytaj jego dane
-    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.kartaBudowy) {
-        existingData = orderEditMode.order.kartaBudowy;
-    }
-
-    if (!existingData && typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData && pendingOrderCreationData.kartaBudowyTemplate) {
-        existingData = pendingOrderCreationData.kartaBudowyTemplate;
-    }
-    
-    if (existingData) {
-        if (emailFakturaInput) emailFakturaInput.value = existingData.emailFaktura || '';
-        if (emailEfakturaInput) emailEfakturaInput.value = existingData.emailEfaktura || '';
-        if (adresWysylkiInput) adresWysylkiInput.value = existingData.adresWysylki || '';
-        if (warunkiPlatnosciInput && existingData.warunkiPlatnosci) warunkiPlatnosciInput.value = existingData.warunkiPlatnosci;
-        if (iloscDniInput) iloscDniInput.value = existingData.iloscDni || '';
-        if (ubezpieczenieInput) ubezpieczenieInput.value = existingData.ubezpieczenie || '';
-        if (osobaKontaktInput) osobaKontaktInput.value = existingData.osobaKontakt || '';
-        if (zabezpieczenieTransportuInput && existingData.zabezpieczenieTransportu) zabezpieczenieTransportuInput.value = existingData.zabezpieczenieTransportu;
-        if (rodzajTransportuInput && existingData.rodzajTransportu) rodzajTransportuInput.value = existingData.rodzajTransportu;
-        if (rodzajStopniInput && existingData.rodzajStopni) {
-            rodzajStopniInput.value = existingData.rodzajStopni;
-            if (existingData.rodzajStopni === 'Inne') {
-                const wrap = document.getElementById('step4-rodzaj-stopni-inne-wrap');
-                if (wrap) wrap.style.display = 'block';
-                if (rodzajStopniInneInput) rodzajStopniInneInput.value = existingData.rodzajStopniInne || '';
-            }
-        }
-        if (rodzajStudniInput && existingData.rodzajStudni) {
-            rodzajStudniInput.value = existingData.rodzajStudni;
-        }
-        if (uszczelkaStudniInput && existingData.uszczelkaStudni) {
-            uszczelkaStudniInput.value = existingData.uszczelkaStudni;
-            if (existingData.uszczelkaStudni === 'Inne') {
-                const wrap = document.getElementById('step4-uszczelka-studni-inne-wrap');
-                if (wrap) wrap.style.display = 'block';
-                if (uszczelkaStudniInneInput) uszczelkaStudniInneInput.value = existingData.uszczelkaStudniInne || '';
-            }
-        }
-        if (kinetaInput && existingData.kineta) {
-            kinetaInput.value = existingData.kineta;
-            if (existingData.kineta === 'Inne') {
-                const wrap = document.getElementById('step4-kineta-inne-wrap');
-                if (wrap) wrap.style.display = 'block';
-                if (kinetaInneInput) kinetaInneInput.value = existingData.kinetaInne || '';
-            }
-        }
-        if (wysokoscSpocznikaInput && existingData.wysokoscSpocznika) {
-            wysokoscSpocznikaInput.value = existingData.wysokoscSpocznika;
-        }
-        if (usytuowanieInput && existingData.usytuowanie) {
-            usytuowanieInput.value = existingData.usytuowanie;
-        }
-        if (kaskadaInput && existingData.kaskada) {
-            kaskadaInput.value = existingData.kaskada;
-        }
-        if (kaskadaUwagiInput && existingData.kaskadaUwagi) {
-            kaskadaUwagiInput.value = existingData.kaskadaUwagi;
-        }
-        if (slepaKinetaInput && existingData.slepaKineta) {
-            slepaKinetaInput.value = existingData.slepaKineta;
-        }
-        if (slepaKinetaUwagiInput && existingData.slepaKinetaUwagi) {
-            slepaKinetaUwagiInput.value = existingData.slepaKinetaUwagi;
-        }
-        if (redukcjaKinetyInput && existingData.redukcjaKinety) {
-            redukcjaKinetyInput.value = existingData.redukcjaKinety;
-        }
-        if (przejsciaTulejoweInput && existingData.przejsciaTulejowe) {
-            przejsciaTulejoweInput.value = existingData.przejsciaTulejowe;
-        }
-        if (przejsciaSzczelneInput && existingData.przejsciaSzczelne) {
-            przejsciaSzczelneInput.value = existingData.przejsciaSzczelne;
-        }
-        if (wlasciwosciBetonuInput && existingData.wlasciwosciBetonu) {
-            wlasciwosciBetonuInput.value = existingData.wlasciwosciBetonu;
-        }
-        if (pozostaleWlasciwosciInput && existingData.pozostaleWlasciwosci) {
-            pozostaleWlasciwosciInput.value = existingData.pozostaleWlasciwosci;
-        }
-        if (przejsciaZamowioneInput && existingData.przejsciaZamowione) {
-            przejsciaZamowioneInput.value = existingData.przejsciaZamowione;
-        }
-        if (dataZamowieniaInput && existingData.dataZamowienia) {
-            dataZamowieniaInput.value = existingData.dataZamowienia;
-        }
-        
-        if (existingData.offerNumbers && existingData.offerNumbers.length > 0) {
-            if (offerInput) offerInput.value = existingData.offerNumbers.join(', ');
-        } else if (primaryOfferNumber) {
-            if (offerInput) offerInput.value = primaryOfferNumber;
-        }
+    } else if (t > 0) {
+        wyliczonyTransportInput.value = `${fmt(t)} zł`;
     } else {
-        if (primaryOfferNumber && offerInput) {
-            offerInput.value = primaryOfferNumber;
-        }
+        wyliczonyTransportInput.value = 'Brak transportu';
     }
+}
+
+function _detectWellParams() {
+    const result = {
+        stopnie: 'Nie dotyczy',
+        rodzajStudni: 'Nie dotyczy',
+        kineta: 'Brak',
+        wysokoscSpocznika: 'Nie dotyczy',
+        pozostale: []
+    };
+
+    const wellsToDetect = (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order)
+        ? orderEditMode.order.wells
+        : ((typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData)
+            ? pendingOrderCreationData.selectedWells : []);
+
+    if (!wellsToDetect || wellsToDetect.length === 0) return result;
+
+    let hasNierdzewna = false, hasDrabinka = false, hasBrak = false;
+    let hasZelbet = false, hasBetonStudnia = false;
+    let hasPrecoTop = false, hasPreco = false, hasBetonKineta = false;
+    let spocznikHFound = null;
+
+    wellsToDetect.forEach(w => {
+        if (w.stopnie === 'nierdzewna') hasNierdzewna = true;
+        else if (w.stopnie === 'drabinka') hasDrabinka = true;
+        else if (w.stopnie === 'brak') hasBrak = true;
+
+        if (w.dennicaMaterial === 'zelbetowa' || w.nadbudowa === 'zelbetowa' || w.material === 'zelbetowa') hasZelbet = true;
+        else if (w.dennicaMaterial === 'betonowa' || w.nadbudowa === 'betonowa' || w.material === 'betonowa') hasBetonStudnia = true;
+
+        if (w.kineta === 'precotop') hasPrecoTop = true;
+        else if (w.kineta === 'preco') hasPreco = true;
+        else if (w.kineta === 'beton') hasBetonKineta = true;
+
+        if (w.spocznikH && w.spocznikH !== 'brak') spocznikHFound = w.spocznikH;
+
+        if (w.agresjaChemiczna && w.agresjaChemiczna !== 'brak' && !result.pozostale.includes(w.agresjaChemiczna)) {
+            result.pozostale.push(w.agresjaChemiczna);
+        }
+        if (w.agresjaMrozowa && w.agresjaMrozowa !== 'brak' && !result.pozostale.includes(w.agresjaMrozowa)) {
+            result.pozostale.push(w.agresjaMrozowa);
+        }
+    });
+
+    if (hasNierdzewna) result.stopnie = 'Drabinka nierdzewna';
+    else if (hasDrabinka) result.stopnie = 'Drabinka';
+    else if (hasBrak) result.stopnie = 'Brak';
+
+    if (hasZelbet) result.rodzajStudni = 'Żelbet';
+    else if (hasBetonStudnia) result.rodzajStudni = 'Beton';
+
+    if (hasPrecoTop) result.kineta = 'PrecoTop';
+    else if (hasPreco) result.kineta = 'Preco';
+    else if (hasBetonKineta) result.kineta = 'Beton';
+
+    if (spocznikHFound) result.wysokoscSpocznika = spocznikHFound;
+
+    return result;
+}
+
+function _applyDetectedParams(detected) {
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('step4-rodzaj-stopni', detected.stopnie);
+    setVal('step4-rodzaj-studni', detected.rodzajStudni);
+    setVal('step4-uszczelka-studni', 'Brak');
+    setVal('step4-kineta', detected.kineta);
+    setVal('step4-wysokosc-spocznika', detected.wysokoscSpocznika);
+    setVal('step4-usytuowanie', 'Linia dolna');
+    setVal('step4-kaskada', 'Nie dotyczy');
+    setVal('step4-kaskada-uwagi', '');
+    setVal('step4-slepa-kineta', 'Nie dotyczy');
+    setVal('step4-slepa-kineta-uwagi', '');
+    setVal('step4-redukcja-kinety', 'Nie dotyczy');
+    setVal('step4-przejscia-tulejowe', 'Nie dotyczy');
+    setVal('step4-przejscia-szczelne', 'Nie dotyczy');
+    setVal('step4-wlasciwosci-betonu', 'C40/50');
+    setVal('step4-pozostale-wlasciwosci', detected.pozostale ? detected.pozostale.join(', ') : '');
+    setVal('step4-przejscia-zamowione', 'Nie dotyczy');
+    setVal('step4-data-zamowienia', '');
+}
+
+function _getExistingKartaBudowyData() {
+    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.kartaBudowy) {
+        return orderEditMode.order.kartaBudowy;
+    }
+    if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData && pendingOrderCreationData.kartaBudowyTemplate) {
+        return pendingOrderCreationData.kartaBudowyTemplate;
+    }
+    return null;
+}
+
+function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
+    if (!existingData) {
+        if (primaryOfferNumber) {
+            const el = document.getElementById('step4-offer-nr-input');
+            if (el) el.value = primaryOfferNumber;
+        }
+        return;
+    }
+
+    const mappings = [
+        'emailFaktura', 'emailEfaktura', 'adresWysylki', 'iloscDni',
+        'ubezpieczenie', 'osobaKontakt', 'wysokoscSpocznika', 'usytuowanie',
+        'kaskada', 'kaskadaUwagi', 'slepaKineta', 'slepaKinetaUwagi',
+        'redukcjaKinety', 'przejsciaTulejowe', 'przejsciaSzczelne',
+        'wlasciwosciBetonu', 'pozostaleWlasciwosci', 'przejsciaZamowione',
+        'dataZamowienia', 'uwagiOgolne'
+    ];
+    mappings.forEach(field => {
+        const inputId = 'step4-' + field.replace(/([A-Z])/g, '-$1').toLowerCase();
+        const el = document.getElementById(inputId);
+        if (el && existingData[field]) el.value = existingData[field];
+    });
+
+    const selectMappings = [
+        { field: 'warunkiPlatnosci', id: 'step4-warunki-platnosci' },
+        { field: 'zabezpieczenieTransportu', id: 'step4-zabezpieczenie-transportu' },
+        { field: 'rodzajTransportu', id: 'step4-rodzaj-transportu' },
+        { field: 'rodzajStudni', id: 'step4-rodzaj-studni' }
+    ];
+    selectMappings.forEach(({ field, id }) => {
+        const el = document.getElementById(id);
+        if (el && existingData[field]) el.value = existingData[field];
+    });
+
+    ['rodzajStopni', 'uszczelkaStudni', 'kineta'].forEach(field => {
+        const inputId = 'step4-' + field.replace(/([A-Z])/g, '-$1').toLowerCase();
+        const el = document.getElementById(inputId);
+        if (el && existingData[field]) {
+            el.value = existingData[field];
+            if (existingData[field] === 'Inne') {
+                const wrap = document.getElementById(inputId + '-inne-wrap');
+                if (wrap) wrap.style.display = 'block';
+                const inneInput = document.getElementById(inputId + '-inne');
+                if (inneInput) inneInput.value = existingData[field + 'Inne'] || '';
+            }
+        }
+    });
+
+    if (existingData.offerNumbers && existingData.offerNumbers.length > 0) {
+        const el = document.getElementById('step4-offer-nr-input');
+        if (el) el.value = existingData.offerNumbers.join(', ');
+    } else if (primaryOfferNumber) {
+        const el = document.getElementById('step4-offer-nr-input');
+        if (el) el.value = primaryOfferNumber;
+    }
+}
+
+function _generateDefaultUwagi() {
+    const uwagiEl = document.getElementById('step4-uwagi-ogolne');
+    if (!uwagiEl || uwagiEl.value) return;
+
+    const selectedWells = pendingOrderCreationData
+        ? pendingOrderCreationData.selectedWells
+        : (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order
+            ? orderEditMode.order.wells : []);
+    if (selectedWells.length === 0 || typeof wellDiscounts === 'undefined') return;
+
+    let lines = [];
+    let precoDiscounts = new Set();
+    let pehdDiscounts = new Set();
+    let paintingLines = new Set();
+
+    const uniqueDns = [...new Set(selectedWells.map(w => w.dn))];
+    uniqueDns.forEach(dn => {
+        const discountKey = dn === 'styczna' ? 'styczne' : dn;
+        const d = wellDiscounts[discountKey];
+        if (d) {
+            const den = parseFloat(d.dennica || 0);
+            const nad = parseFloat(d.nadbudowa || 0);
+            const pre = parseFloat(d.preco || 0);
+            const pehd = parseFloat(d.pehd || 0);
+
+            let parts = [];
+            if (den > 0) parts.push(`Dennica: ${den.toFixed(2).replace('.', ',')}%`);
+            if (nad > 0) parts.push(`Nadbudowa: ${nad.toFixed(2).replace('.', ',')}%`);
+
+            if (parts.length > 0) {
+                const label = dn === 'styczna' ? 'Styczne' : `DN${dn}`;
+                lines.push(`${label} ${parts.join(', ')}`);
+            }
+            if (pre > 0) precoDiscounts.add(pre);
+            if (pehd > 0) pehdDiscounts.add(pehd);
+        }
+    });
+
+    selectedWells.forEach(w => {
+        if (w.malowanieW && w.malowanieW !== 'brak') {
+            const price = parseFloat(w.malowanieWewCena || 0).toFixed(2).replace('.', ',');
+            paintingLines.add(`Malowanie wewnątrz (${w.malowanieW}): ${price} PLN/m²`);
+        }
+        if (w.malowanieZ && w.malowanieZ !== 'brak') {
+            const price = parseFloat(w.malowanieZewCena || 0).toFixed(2).replace('.', ',');
+            paintingLines.add(`Malowanie zewnątrz (${w.malowanieZ}): ${price} PLN/m²`);
+        }
+    });
+
+    precoDiscounts.forEach(pre => lines.push(`Preco: ${pre.toFixed(2).replace('.', ',')}%`));
+    pehdDiscounts.forEach(pehd => lines.push(`Wkładka PEHD: ${pehd.toFixed(2).replace('.', ',')}%`));
+    paintingLines.forEach(pl => lines.push(pl));
+
+    if (lines.length > 0) {
+        uwagiEl.value = lines.join('\n');
+    }
+}
+
+function initKartaBudowyStep4(primaryOfferNumber) {
+    _przejsciaInitialized = false;
+    _resetKartaBudowyForm();
+
+    const transport = _calcTransportCosts();
+    _displayTransportCost(transport.tCost, transport.costPerTrip);
+
+    const detected = _detectWellParams();
+    _applyDetectedParams(detected);
+
+    const existingData = _getExistingKartaBudowyData();
+    _applyExistingKartaBudowyData(existingData, primaryOfferNumber);
 
     if (typeof renderKartaBudowyCopyOptions === 'function') {
         renderKartaBudowyCopyOptions();
     }
-
-    // Renderuj szczegóły przejść szczelnych
     renderPrzejsciaDetailsTable(existingData ? existingData.przejsciaDetails : null);
 
-    const uwagiEl = document.getElementById('step4-uwagi-ogolne');
-    
-    if (existingData) {
-        if (uwagiEl) uwagiEl.value = existingData.uwagiOgolne || '';
-    }
-    
-    if (uwagiEl && (!existingData || !existingData.uwagiOgolne)) {
-        const selectedWells = pendingOrderCreationData ? pendingOrderCreationData.selectedWells : (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order ? orderEditMode.order.wells : []);
-        if (selectedWells.length > 0 && typeof wellDiscounts !== 'undefined') {
-            let lines = [];
-            let precoDiscounts = new Set();
-            let pehdDiscounts = new Set();
-            let paintingLines = new Set();
-
-            const uniqueDns = [...new Set(selectedWells.map(w => w.dn))];
-            uniqueDns.forEach(dn => {
-                const discountKey = dn === 'styczna' ? 'styczne' : dn;
-                const d = wellDiscounts[discountKey];
-                if (d) {
-                    const den = parseFloat(d.dennica || 0);
-                    const nad = parseFloat(d.nadbudowa || 0);
-                    const pre = parseFloat(d.preco || 0);
-                    const pehd = parseFloat(d.pehd || 0);
-                    
-                    let parts = [];
-                    if (den > 0) parts.push(`Dennica: ${den.toFixed(2).replace('.', ',')}%`);
-                    if (nad > 0) parts.push(`Nadbudowa: ${nad.toFixed(2).replace('.', ',')}%`);
-                    
-                    if (parts.length > 0) {
-                        const label = dn === 'styczna' ? 'Styczne' : `DN${dn}`;
-                        lines.push(`${label} ${parts.join(', ')}`);
-                    }
-                    if (pre > 0) precoDiscounts.add(pre);
-                    if (pehd > 0) pehdDiscounts.add(pehd);
-                }
-            });
-            
-            selectedWells.forEach(w => {
-                if (w.malowanieW && w.malowanieW !== 'brak') {
-                    const price = parseFloat(w.malowanieWewCena || 0).toFixed(2).replace('.', ',');
-                    paintingLines.add(`Malowanie wewnątrz (${w.malowanieW}): ${price} PLN/m²`);
-                }
-                if (w.malowanieZ && w.malowanieZ !== 'brak') {
-                    const price = parseFloat(w.malowanieZewCena || 0).toFixed(2).replace('.', ',');
-                    paintingLines.add(`Malowanie zewnątrz (${w.malowanieZ}): ${price} PLN/m²`);
-                }
-            });
-            
-            precoDiscounts.forEach(pre => lines.push(`Preco: ${pre.toFixed(2).replace('.', ',')}%`));
-            pehdDiscounts.forEach(pehd => lines.push(`Wkładka PEHD: ${pehd.toFixed(2).replace('.', ',')}%`));
-            paintingLines.forEach(pl => lines.push(pl));
-
-            if (lines.length > 0) {
-                uwagiEl.value = lines.join('\n');
-            }
-        }
-    }
+    _generateDefaultUwagi();
 }
 
 async function step4NextAction() {
@@ -1317,6 +1284,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
         try {
             const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
+            if (!usersResp.ok) throw new Error(`HTTP ${usersResp.status}`);
             const usersData = await usersResp.json();
             const allUsers = usersData.data || [];
 
@@ -1415,7 +1383,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     const globalOfferWeight = offer.totalWeight || 0;
     const gKm = parseFloat(offer.transportKm) || 0;
     const gRate = parseFloat(offer.transportRate) || 0;
-    const globalOfferTransport = (gKm > 0 && gRate > 0) ? Math.ceil(globalOfferWeight / 24000) * gKm * gRate : 0;
+    const globalOfferTransport = (gKm > 0 && gRate > 0) ? Math.ceil(globalOfferWeight / MAX_TRANSPORT_WEIGHT) * gKm * gRate : 0;
     if (globalOfferWeight > 0 && totalWeight > 0) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
@@ -1530,7 +1498,7 @@ function saveOrderStudnie() {
     const transportRateVal = parseFloat(offer.transportRate) || 0;
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
-        totalTransportCostForOffer = Math.ceil(totalWeight / 24000) * transportKmVal * transportRateVal;
+        totalTransportCostForOffer = Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT) * transportKmVal * transportRateVal;
     }
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);
@@ -2158,7 +2126,7 @@ async function saveCurrentOrder() {
     const transportRateVal = offer ? (parseFloat(offer.transportRate) || 0) : 0;
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
-        totalTransportCostForOffer = Math.ceil(totalWeight / 24000) * transportKmVal * transportRateVal;
+        totalTransportCostForOffer = Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT) * transportKmVal * transportRateVal;
     }
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);

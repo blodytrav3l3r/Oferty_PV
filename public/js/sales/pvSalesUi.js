@@ -411,13 +411,20 @@ class PVSalesUI {
                 ''
             ).toLowerCase();
 
+            const offerOrders = this.ordersMap.get(this.normalizeId(offer.id));
+            const matchesOrderNumber = offerOrders && offerOrders.some(o => {
+                const on = o?.orderNumber || o?.data?.orderNumber || '';
+                return on.toLowerCase().includes(query);
+            });
+
             const matchesText =
                 !query ||
                 num.includes(query) ||
                 client.includes(query) ||
                 nip.includes(query) ||
                 budowa.includes(query) ||
-                userStr.includes(query);
+                userStr.includes(query) ||
+                matchesOrderNumber;
 
             // Filtr statusu
             if (!matchesText) return false;

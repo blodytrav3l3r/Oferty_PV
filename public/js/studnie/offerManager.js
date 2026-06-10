@@ -310,7 +310,7 @@ function calculateOfferTotals() {
 
     let totalTransports = 0, transportCostPerTrip = 0, totalTransportCost = 0;
     if (transportKm > 0 && transportRate > 0) {
-        totalTransports = Math.ceil(globalWeight / 24000);
+        totalTransports = Math.ceil(globalWeight / MAX_TRANSPORT_WEIGHT);
         transportCostPerTrip = transportKm * transportRate;
         totalTransportCost = totalTransports * transportCostPerTrip;
     }
@@ -1257,8 +1257,17 @@ async function loadOffersStudnie() {
 }
 
 async function saveOffersDataStudnie(data) {
-    // Ta funkcja nie jest już używana, ponieważ oferty są zapisywane indywidualnie za pomocą saveOfferStudnie
-    // i pobierane za pomocą loadOffersStudnie, które teraz bezpośrednio korzysta z REST API.
+    try {
+        const res = await fetch('/api/offers-studnie', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({ data })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (e) {
+        console.error('Błąd zapisu ofert studni:', e);
+        throw e;
+    }
 }
 
 /* ===== PODSUMOWANIE OFERTY (Studnie) ===== */
@@ -1528,7 +1537,7 @@ async function saveOfferStudnie() {
     const transportRateVal = parseFloat(document.getElementById('transport-rate').value) || 0;
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0) {
-        const totalTransportsCount = Math.ceil(globalWeightForTransport / 24000);
+        const totalTransportsCount = Math.ceil(globalWeightForTransport / MAX_TRANSPORT_WEIGHT);
         const costPerTrip = transportKmVal * transportRateVal;
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
@@ -2175,21 +2184,21 @@ function importOfferFromFileStudnie() {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const imported = JSON.parse(event.target.result);
                 if (imported && imported.wells) {
                     imported.id = 'offer_studnie_' + Date.now();
                     migrateWellData(imported.wells);
                     offersStudnie.push(imported);
-                    saveOffersDataStudnie(offersStudnie);
+                    await saveOffersDataStudnie(offersStudnie);
                     renderSavedOffersStudnie();
                     showToast('Oferta zaimportowana', 'success');
                 } else {
                     showToast('Nieprawidłowy plik studni', 'error');
                 }
             } catch (err) {
-                showToast('Błąd parsowania', 'error');
+                showToast('Błąd zapisu zaimportowanej oferty', 'error');
             }
         };
         reader.readAsText(file);
@@ -2812,7 +2821,7 @@ function updateOfferDiscountsPopupPrices() {
     const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0) {
-        const totalTransportsCount = Math.ceil(globalWeightForTransport / 24000);
+        const totalTransportsCount = Math.ceil(globalWeightForTransport / MAX_TRANSPORT_WEIGHT);
         const costPerTrip = transportKmVal * transportRateVal;
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
@@ -2869,7 +2878,7 @@ function renderOfferDiscountsPopupContent() {
     const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0) {
-        const totalTransportsCount = Math.ceil(globalWeightForTransport / 24000);
+        const totalTransportsCount = Math.ceil(globalWeightForTransport / MAX_TRANSPORT_WEIGHT);
         const costPerTrip = transportKmVal * transportRateVal;
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
@@ -3070,7 +3079,7 @@ window.updateTransportCostSummary = function () {
         wells.forEach(w => totalWeight += calcWellStats(w).weight);
     }
     if (transportKm > 0 && transportRate > 0 && totalWeight > 0) {
-        const totalTransports = Math.ceil(totalWeight / 24000);
+        const totalTransports = Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT);
         const costPerTrip = transportKm * transportRate;
         const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         input.value = `${totalTransports} x ${fmt(costPerTrip)} zł`;
@@ -3096,7 +3105,7 @@ window.updateModalTransportDetails = function () {
     if (modalKm > 0 && modalRate > 0) {
         costPerTrip = modalKm * modalRate;
         if (globalWeight > 0) {
-            totalTransports = Math.ceil(globalWeight / 24000);
+            totalTransports = Math.ceil(globalWeight / MAX_TRANSPORT_WEIGHT);
             totalTransportCost = totalTransports * costPerTrip;
         }
     }

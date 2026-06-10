@@ -497,17 +497,13 @@ async function loadStudnieProducts() {
         return arr;
     }
     try {
-        const res = await fetchWithTimeout('/api/products-studnie');
-        const json = await res.json();
+        const json = await api.get('/api/products-studnie');
+        if (!json) throw new Error('Nie udało się pobrać cennika');
         let saved = json.data;
         if (!saved || saved.length === 0) {
             const data = structuredClone(defaultProducts);
             migrateProducts(data);
-            await fetch('/api/products-studnie', {
-                method: 'PUT',
-                headers: authHeaders(),
-                body: JSON.stringify({ data })
-            });
+            await api.put('/api/products-studnie', { data });
             return data;
         }
         // Wykryj błąd uszczelek DN2500 przed naprawą przez migrację
@@ -531,24 +527,8 @@ function renamePłyty(p) {
 }
 
 async function saveStudnieProducts(data) {
-    try {
-        const res = await fetch('/api/products-studnie', {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ data })
-        });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.error('saveStudnieProducts: serwer zwrócił błąd', res.status, err);
-            showToast('Błąd zapisu cennika studni: ' + (err.error || res.status), 'error');
-            return false;
-        }
-        return true;
-    } catch (err) {
-        console.error('saveStudnieProducts: błąd sieci', err);
-        showToast('Błąd sieci przy zapisie cennika studni', 'error');
-        return false;
-    }
+    const result = await api.put('/api/products-studnie', { data });
+    return result !== null;
 }
 
 /* ===== SPRAWDZANIE STATUSU BACKENDU ===== */

@@ -176,8 +176,8 @@ async function deleteProduct(id) {
 
 async function resetPriceList() {
     try {
-        const res = await fetch('/api/products/default');
-        const json = await res.json();
+        const json = await api.get('/api/products/default');
+        if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = json.data;
         if (customDefault && customDefault.length > 0) {
             if (
@@ -227,18 +227,9 @@ async function manuallySaveProductsDB() {
         if (!saveOk) return;
 
         // 2. Zapis jako wartości fabryczne
-        const res = await fetch('/api/products/default', {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ data: products })
-        });
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error('manuallySaveProductsDB: błąd zapisu default', res.status, errData);
-            showToast(
-                'Błąd zapisu wartości fabrycznych: ' + (errData.error || res.status),
-                'error'
-            );
+        const result = await api.put('/api/products/default', { data: products });
+        if (!result) {
+            showToast('Błąd zapisu wartości fabrycznych', 'error');
             return;
         }
 

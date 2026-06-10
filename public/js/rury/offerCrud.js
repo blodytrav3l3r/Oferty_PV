@@ -4,6 +4,7 @@
 
 let editingOfferCreatedByUserId = null;
 let editingOfferCreatedByUserName = '';
+let isSavingOffer = false;
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */
@@ -31,6 +32,7 @@ async function saveOffer() {
         showToast('Edycja oferty zablokowana w trybie edycji zamówienia', 'warning');
         return;
     }
+    if (isSavingOffer) return;
     const number = document.getElementById('offer-number').value.trim();
     const date = document.getElementById('offer-date').value;
     const clientName = document.getElementById('client-name').value.trim();
@@ -188,6 +190,7 @@ async function saveOffer() {
             : ''
     };
 
+    isSavingOffer = true;
     try {
         if (offerDoc.items.length === 0) {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
@@ -206,6 +209,8 @@ async function saveOffer() {
     } catch (err) {
         console.error('[App] Save error:', err);
         showToast('Błąd zapisu oferty', 'error');
+    } finally {
+        isSavingOffer = false;
     }
 }
 
@@ -432,7 +437,7 @@ async function loadOffer(id) {
 
     // Backfill uid dla starych itemów (flagi 'ordered' nie przechowujemy — obliczamy z ordersRury)
     if (typeof loadOrdersRury === 'function' && (!ordersRury || ordersRury.length === 0)) {
-        try { await loadOrdersRury(); } catch (e) { /* ignore */ }
+        try { await loadOrdersRury(); } catch (e) { console.error('Błąd ładowania zamówień rur:', e); showToast('Nie udało się załadować zamówień', 'warning'); }
     }
     currentOfferItems.forEach(item => {
         if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);

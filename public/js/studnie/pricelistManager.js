@@ -474,7 +474,7 @@ function addStudnieCategory() {
     showToast(`Utworzono kategorię "${catName}" z 1 elementem`, 'success');
 }
 
-function addStudnieElement(groupKey) {
+async function addStudnieElement(groupKey) {
     const defaults = _tabDefaults();
 
     // Jeśli podano groupKey, znajdź przykładowy produkt w tej grupie, aby skopiować domyślne wartości
@@ -542,7 +542,7 @@ function addStudnieElement(groupKey) {
     }
 
     studnieProducts.push(newProduct);
-    saveStudnieProducts(studnieProducts);
+    await saveStudnieProducts(studnieProducts);
     renderStudniePriceList();
     showToast(`Dodano element "${name.trim()}"`, 'success');
 }
@@ -615,7 +615,7 @@ function editStudnieCell(el, field, id) {
     input.select();
 
     let isSaving = false;
-    const save = () => {
+    const save = async () => {
         if (isSaving) return;
         isSaving = true;
         let val = input.value.trim();
@@ -640,7 +640,7 @@ function editStudnieCell(el, field, id) {
         }
 
         product[field] = val;
-        saveStudnieProducts(studnieProducts);
+        await saveStudnieProducts(studnieProducts);
         renderStudniePriceList();
         showToast('Zaktualizowano cennik studni', 'success');
     };
@@ -661,12 +661,12 @@ async function deleteStudnieProduct(id) {
     )
         return;
     studnieProducts = studnieProducts.filter((p) => p.id !== id);
-    saveStudnieProducts(studnieProducts);
+    await saveStudnieProducts(studnieProducts);
     renderStudniePriceList();
     showToast('Element usunięty', 'info');
 }
 
-function copyStudnieProduct(id) {
+async function copyStudnieProduct(id) {
     const original = studnieProducts.find((p) => p.id === id);
     if (!original) return;
     let finalId = original.id + '-KOP';
@@ -680,7 +680,7 @@ function copyStudnieProduct(id) {
     copied.name = copied.name + ' (Kopia)';
     const index = studnieProducts.findIndex((p) => p.id === id);
     studnieProducts.splice(index + 1, 0, copied);
-    saveStudnieProducts(studnieProducts);
+    await saveStudnieProducts(studnieProducts);
     renderStudniePriceList();
     showToast('Element skopiowany', 'success');
 }
@@ -761,7 +761,7 @@ function showAddStudnieProductModal() {
     setTimeout(() => window.togglePrzejsciaFields(), 10);
 }
 
-function addStudnieProduct() {
+async function addStudnieProduct() {
     const id = document.getElementById('np-id').value.trim();
     const name = document.getElementById('np-name').value.trim();
     const price = parseFloat(document.getElementById('np-price').value);
@@ -876,7 +876,7 @@ function addStudnieProduct() {
     }
 
     studnieProducts.push(newProduct);
-    saveStudnieProducts(studnieProducts);
+    await saveStudnieProducts(studnieProducts);
     closeModal();
     renderStudniePriceList();
     showToast('Dodano nowy element', 'success');
@@ -887,8 +887,8 @@ function addStudnieProduct() {
 /* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
     try {
-        const res = await fetch('/api/products-studnie/default');
-        const json = await res.json();
+        const json = await api.get('/api/products-studnie/default');
+        if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = json.data;
         if (customDefault && customDefault.length > 0) {
             if (
@@ -937,11 +937,7 @@ async function manuallySaveStudnieProductsDB() {
         return;
     try {
         await saveStudnieProducts(studnieProducts);
-        await fetch('/api/products-studnie/default', {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ data: studnieProducts })
-        });
+        await api.put('/api/products-studnie/default', { data: studnieProducts });
         renderStudniePriceList();
         renderTiles();
         showToast('Zapisano produkty studni jako wartości fabryczne', 'success');

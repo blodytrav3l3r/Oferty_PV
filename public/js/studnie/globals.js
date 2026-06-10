@@ -16,6 +16,8 @@ let offerDefaultRedukcja = false; // true = redukcja do DN1000
 let offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
 let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
 
+const MAX_TRANSPORT_WEIGHT = 24000; // kg — maksymalna ładowność transportu
+
 // System wielu ofert
 let offersStudnie = [];
 let ordersStudnie = [];

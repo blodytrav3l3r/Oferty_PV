@@ -9,13 +9,9 @@
  */
 async function loadProducts() {
     try {
-        const res = await fetch('/api/products', { headers: authHeaders() });
-        if (res.status === 401) {
-            window.location.href = 'index.html';
-            return [];
-        }
-        const json = await res.json();
-        let saved = json.data && json.data.length > 0
+        const result = await api.get('/api/products');
+        if (!result) return structuredClone(DEFAULT_PRODUCTS);
+        let saved = result.data && result.data.length > 0
             ? json.data
             : structuredClone(DEFAULT_PRODUCTS);
 
@@ -37,11 +33,7 @@ async function loadProducts() {
         });
 
         if (modified) {
-            await fetch('/api/products', {
-                method: 'PUT',
-                headers: authHeaders(),
-                body: JSON.stringify({ data: saved })
-            });
+            await api.put('/api/products', { data: saved });
         }
 
         return saved;
@@ -57,24 +49,8 @@ async function loadProducts() {
  * @returns {Promise<boolean>} true jeśli zapis się powiódł
  */
 async function saveProducts(data) {
-    try {
-        const res = await fetch('/api/products', {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ data })
-        });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.error('saveProducts: serwer zwrócił błąd', res.status, err);
-            showToast('Błąd zapisu cennika: ' + (err.error || res.status), 'error');
-            return false;
-        }
-        return true;
-    } catch (err) {
-        console.error('saveProducts: błąd sieci', err);
-        showToast('Błąd sieci przy zapisie cennika', 'error');
-        return false;
-    }
+    const result = await api.put('/api/products', { data });
+    return result !== null;
 }
 
 /**

@@ -227,7 +227,7 @@ function calculateWellTransportMap(wellsList) {
         globalWeight += calcWellStats(w).weight;
     });
 
-    const totalTransports = Math.ceil(globalWeight / 24000);
+    const totalTransports = Math.ceil(globalWeight / MAX_TRANSPORT_WEIGHT);
     const costPerTrip = transportKm * transportRate;
     const totalTransportCost = totalTransports * costPerTrip;
 
@@ -296,6 +296,7 @@ async function generateOfferHtml() {
         const usersResp = await fetch('/api/users-for-assignment', {
             headers: typeof authHeaders === 'function' ? authHeaders() : {}
         });
+        if (!usersResp.ok) throw new Error(`HTTP ${usersResp.status}`);
         const usersData = await usersResp.json();
         usersList = usersData?.data || usersData?.users || [];
     } catch (e) {

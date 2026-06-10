@@ -202,14 +202,14 @@ describe('API Validation Tests', () => {
     });
 
     describe('PUT /api/products - walidacja cenników', () => {
-        it('powinien zwrócić 400 gdy data jest pusta', async () => {
+        it('powinien zaakceptować pustą tablicę (reset cennika)', async () => {
             const res = await request(app)
                 .put('/api/products')
                 .set(authHeader)
                 .send({
                     data: []
                 });
-            expect(res.statusCode).toBe(400);
+            expect(res.statusCode).toBe(200);
         });
 
         it('powinien zwrócić 400 gdy brakuje data', async () => {
@@ -271,7 +271,7 @@ describe('API Validation Tests', () => {
     describe('GET /api/clients - pobieranie klientów', () => {
         it('powinien zwrócić 200 z tablicą klientów', async () => {
             const { default: prismaMock } = require('../src/prismaClient');
-            prismaMock.$queryRaw.mockResolvedValue([
+            prismaMock.clients_rel.findMany.mockResolvedValue([
                 { id: '1', name: 'Firma ABC', nip: '1234567890', userId: 'user-id', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: null },
                 { id: '2', name: 'Firma XYZ', nip: '9876543210', userId: 'user-id', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: null }
             ]);
@@ -287,7 +287,7 @@ describe('API Validation Tests', () => {
 
         it('powinien zwrócić 200 z pustą tablicą gdy brak klientów', async () => {
             const { default: prismaMock } = require('../src/prismaClient');
-            prismaMock.$queryRaw.mockResolvedValue([]);
+            prismaMock.clients_rel.findMany.mockResolvedValue([]);
 
             const res = await request(app)
                 .get('/api/clients')
@@ -299,7 +299,7 @@ describe('API Validation Tests', () => {
 
         it('powinien zwrócić 500 gdy baza zwraca błąd', async () => {
             const { default: prismaMock } = require('../src/prismaClient');
-            prismaMock.$queryRaw.mockRejectedValue(new Error('DB connection failed'));
+            prismaMock.clients_rel.findMany.mockRejectedValue(new Error('DB connection failed'));
 
             const res = await request(app)
                 .get('/api/clients')
@@ -311,7 +311,7 @@ describe('API Validation Tests', () => {
 
         it('powinien normalizować timestampy do ISO', async () => {
             const { default: prismaMock } = require('../src/prismaClient');
-            prismaMock.$queryRaw.mockResolvedValue([
+            prismaMock.clients_rel.findMany.mockResolvedValue([
                 { id: '1', name: 'Firma ABC', createdAt: '1779296688240', updatedAt: '1779296688306' }
             ]);
 

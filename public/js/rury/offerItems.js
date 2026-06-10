@@ -165,6 +165,7 @@ function generateOfferNumber() {
 /* ===== DODAWANIE POZYCJI ===== */
 
 function addOfferItem(productId) {
+    if (!Array.isArray(products)) { showToast('Katalog produktów jeszcze niezaładowany', 'error'); return; }
     const product = products.find((p) => p.id === productId);
     if (!product) return;
 
@@ -802,7 +803,7 @@ function updatePipeLength(index, newLengthM, skipRender = false) {
             const weightPerMeter = product.weight / originalLengthM;
             item.weight = Math.round(weightPerMeter * newL);
 
-            const truckCapacity = product.weight * product.transport || 24000;
+            const truckCapacity = product.weight * product.transport || MAX_TRANSPORT_WEIGHT;
             item.transport = Math.max(1, Math.floor(truckCapacity / item.weight));
         }
 
