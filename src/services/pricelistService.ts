@@ -1,11 +1,13 @@
 /**
- * PricelistService — Współdzielona logika CRUD i migracji cenników
+ * PricelistService — Współdzielona logika CRUD i seedowania cenników
  *
- * Zapewnia reużywalne operacje do odczytu, zapisu i migracji
+ * Zapewnia reużywalne operacje do odczytu, zapisu i seedowania
  * cenników opartych na formacie JSON przechowywanych w tabeli settings.
  * Używane zarówno przez trasy produktów rur (rury), jak i studni (productsStudnie).
  */
 
+import fs from 'fs';
+import path from 'path';
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
 
@@ -14,85 +16,100 @@ export interface PricelistConfig {
     keyCurrent: string;
     /** Klucz w tabeli settings dla domyślnego/fabrycznego cennika (np. 'pricelist_rury_default') */
     keyDefault: string;
-    /** Nazwa starego modelu Prisma dla migracji (np. 'products_rury_rel') */
-    legacyTable: string;
-    /** Stary klucz domyślny, z którego należy migrować (np. 'default_rury') */
-    legacyDefaultKey: string;
+    /** Ścieżka do pliku seed (np. 'data/seed_rury.json') */
+    seedPath: string;
     /** Czytelna etykieta dla logowania (np. 'rury', 'studnie') */
     label: string;
 }
 
-// ─── Migracja ──────────────────────────────────────────────────────
+// ─── Sprzątanie legacy kluczy ────────────────────────────────────────
 
-/**
- * Jednorazowa migracja: kopiuje dane ze starej tabeli relacyjnej do ustawień JSON.
- * Bezpieczne przy wielokrotnym wywołaniu — pomija, jeśli już zmigrowano.
- */
-export async function migrateFromLegacyIfNeeded(config: PricelistConfig): Promise<void> {
-    await migrateLegacyData(config);
-    await migrateLegacyDefaults(config);
+const LEGACY_KEYS = ['default_rury', 'default_studnie'];
+
+async function cleanupLegacyDefaultKeys(): Promise<void> {
+    try {
+        const deleted = await prisma.settings.deleteMany({
+            where: { key: { in: LEGACY_KEYS } }
+        });
+        if (deleted.count > 0) {
+            logger.info('Seed', `Usunięto ${deleted.count} legacy kluczy domyślnych`);
+        }
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.warn('Seed', 'Błąd przy usuwaniu legacy kluczy:', message);
+    }
 }
 
-async function migrateLegacyData(config: PricelistConfig): Promise<void> {
+// ─── Seedowanie ──────────────────────────────────────────────────────
+
+/**
+ * Jednorazowe seedowanie: jeśli brak bieżącego cennika w settings,
+ * ładuje produkty z pliku seed i zapisuje jako bieżący oraz domyślny.
+ */
+export async function ensurePrecoSeeded(): Promise<void> {
     try {
+        await cleanupLegacyDefaultKeys();
+        const existing = await prisma.settings.findUnique({
+            where: { key: 'preco_pricing' }
+        });
+        if (existing) return;
+
+        const seedPath = path.resolve('data/seed_preco.json');
+        if (!fs.existsSync(seedPath)) {
+            logger.warn('Seed', `Brak pliku seed: data/seed_preco.json dla PRECO`);
+            return;
+        }
+
+        const raw = fs.readFileSync(seedPath, 'utf-8');
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data) || data.length === 0) {
+            logger.warn('Seed', `Pusty plik seed: data/seed_preco.json`);
+            return;
+        }
+
+        const json = JSON.stringify(data);
+        await upsertSetting('preco_pricing', json);
+        await upsertSetting('preco_pricing_default', json);
+
+        logger.info('Seed', `Zainicjalizowano cennik PRECO z pliku seed.`);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Seed', `Błąd seedowania PRECO`, message);
+    }
+}
+
+export async function ensureProductsSeeded(config: PricelistConfig): Promise<void> {
+    try {
+        await cleanupLegacyDefaultKeys();
         const existing = await prisma.settings.findUnique({
             where: { key: config.keyCurrent }
         });
         if (existing) return;
 
-        let rows: Record<string, unknown>[] = [];
-        try {
-            rows = await (prisma as unknown as Record<string, { findMany: () => Promise<Record<string, unknown>[]> }>)[config.legacyTable].findMany();
-        } catch (_e) {
-            return; // Tabela nie istnieje
+        const seedPath = path.resolve(config.seedPath);
+        if (!fs.existsSync(seedPath)) {
+            logger.warn('Seed', `Brak pliku seed: ${seedPath} dla ${config.label}`);
+            return;
         }
 
-        if (rows.length === 0) return;
+        const raw = fs.readFileSync(seedPath, 'utf-8');
+        const products = JSON.parse(raw);
+        if (!Array.isArray(products) || products.length === 0) {
+            logger.warn('Seed', `Pusty plik seed: ${seedPath} dla ${config.label}`);
+            return;
+        }
 
-        const products = rows.map((row) => {
-            let extra = {};
-            try {
-                if (typeof row.data === 'string') extra = JSON.parse(row.data);
-            } catch (_e) {}
-            const { data: _data, ...rest } = row;
-            return { ...rest, ...extra };
-        });
+        const json = JSON.stringify(products);
+        await upsertSetting(config.keyCurrent, json);
+        await upsertSetting(config.keyDefault, json);
 
-        await upsertSetting(config.keyCurrent, JSON.stringify(products));
         logger.info(
-            'Migration',
-            `Przeniesiono ${products.length} produktów ${config.label} do nowego formatu JSON.`
+            'Seed',
+            `Zainicjalizowano ${products.length} produktów ${config.label} z pliku seed.`
         );
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('Migration', `Błąd migracji ${config.label}`, message);
-    }
-}
-
-async function migrateLegacyDefaults(config: PricelistConfig): Promise<void> {
-    try {
-        const oldDefault = await prisma.settings.findUnique({
-            where: { key: config.legacyDefaultKey }
-        });
-        if (!oldDefault?.value) return;
-
-        const existingNew = await prisma.settings.findUnique({
-            where: { key: config.keyDefault }
-        });
-        if (existingNew) return;
-
-        await prisma.settings.upsert({
-            where: { key: config.keyDefault },
-            update: { value: oldDefault.value },
-            create: { key: config.keyDefault, value: oldDefault.value }
-        });
-        logger.info(
-            'Migration',
-            `Przeniesiono wartości fabryczne ${config.label} do nowego klucza.`
-        );
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('Migration', `Błąd migracji default_${config.label}`, message);
+        logger.error('Seed', `Błąd seedowania ${config.label}`, message);
     }
 }
 

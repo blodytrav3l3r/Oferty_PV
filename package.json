@@ -22,7 +22,8 @@
         "backup": "ts-node scripts/backup.ts",
         "backup:install-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-backup-cron.ps1",
         "backup:uninstall-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-backup-cron.ps1",
-        "prisma:generate": "prisma generate",
+        "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
         "prisma:deploy": "prisma migrate deploy",
         "prisma:status": "prisma migrate status",
@@ -83,5 +84,8 @@
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.58.1",
         "vite": "^8.0.14"
+    },
+    "prisma": {
+        "seed": "ts-node prisma/seed.ts"
     }
 }

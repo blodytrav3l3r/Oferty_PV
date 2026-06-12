@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /* ===== Załaduj produkty ===== */
-const productsPath = join(__dirname, '..', '..', 'public', 'data', 'products_studnie.json');
+const productsPath = join(__dirname, '..', '..', 'data', 'seed_studnie.json');
 const studnieProducts = JSON.parse(readFileSync(productsPath, 'utf8'));
 console.log(`Załadowano ${studnieProducts.length} produktów\n`);
 

@@ -108,7 +108,7 @@ docs/examples/
 
 # === Assets — źródłowe cenniki (CSV/XLSX) ===
 # Backup danych źródłowych (NIE serwowany przez aplikację).
-# Główne dane produktowe są w public/data/products_studnie.json.
+# Produkty seedowane z data/seed_rury.json i data/seed_studnie.json przez serwer.
 assets/
 
 # === Archived scripts (lokalne kopie starych wersji) ===

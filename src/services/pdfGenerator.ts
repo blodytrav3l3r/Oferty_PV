@@ -1244,7 +1244,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
     // ── Products catalog ──────────────────────────────────────
     const allProducts = new Map<string, { componentType: string; category: string; dn: number | string; height: number }>();
     try {
-      const jsonPath = path.join(process.cwd(), 'public', 'data', 'products_studnie.json');
+      const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
       const raw = fs.readFileSync(jsonPath, 'utf-8');
       const products: any[] = JSON.parse(raw);
       for (const p of products) {

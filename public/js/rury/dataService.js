@@ -1,46 +1,18 @@
 /* ===== DATA SERVICE (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: komunikacja REST API z backendem */
 /* Zależności: authHeaders() z shared/auth.js, showToast() z shared/ui.js */
-/* Globalne: products, DEFAULT_PRODUCTS z pricelist.js */
 
 /**
- * Pobiera produkty z serwera i naprawia ewentualne uszkodzenia kategorii.
+ * Pobiera produkty z serwera. W przypadku błędu zwraca pustą tablicę.
  * @returns {Promise<Array>} Tablica produktów
  */
 async function loadProducts() {
-    try {
-        const result = await api.get('/api/products');
-        if (!result) return structuredClone(DEFAULT_PRODUCTS);
-        let saved = result.data && result.data.length > 0
-            ? result.data
-            : structuredClone(DEFAULT_PRODUCTS);
-
-        // Synchronizuj brakujące produkty z cennika domyślnego
-        let modified = false;
-        DEFAULT_PRODUCTS.forEach((dp) => {
-            const sp = saved.find((s) => s.id === dp.id);
-            if (!sp) {
-                saved.push(structuredClone(dp));
-                modified = true;
-            } else {
-                // Napraw uszkodzoną kategorię, jeśli została ustawiona na 'studnie' przez błąd backendu
-                if (sp.category === undefined || sp.category === 'studnie') {
-                    logger.warn('dataService', `[App] Naprawiono uszkodzoną kategorię produktu "${sp.id}": "${sp.category}" → "${dp.category}". Źródło błędu: backend/migracja.`);
-                    sp.category = dp.category;
-                    modified = true;
-                }
-            }
-        });
-
-        if (modified) {
-            await api.put('/api/products', { data: saved });
-        }
-
-        return saved;
-    } catch (err) {
-        logger.error('dataService', 'Błąd loadProducts:', err);
-        return structuredClone(DEFAULT_PRODUCTS);
+    var result = await api.getWithRetry('/api/products', { silent: true }, 3, 1000);
+    if (!result || !Array.isArray(result.data)) {
+        logger.error('dataService', 'Błąd loadProducts: brak danych po 3 próbach');
+        return [];
     }
+    return result.data;
 }
 
 /**

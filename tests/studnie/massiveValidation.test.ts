@@ -51,7 +51,7 @@ interface LayoutResult {
 }
 
 // ============================================================
-// PRODUKTY — katalog wzorcowy (symuluje products_studnie.json)
+// PRODUKTY — katalog wzorcowy (symuluje seed_studnie.json z DB)
 // ============================================================
 const DENNICA_HEIGHTS: Record<number, number[]> = {
   1000: [300, 400, 500, 600, 800, 1000],

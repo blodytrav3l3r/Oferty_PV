@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "ai_telemetry_logs" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT,
@@ -144,51 +144,6 @@ CREATE TABLE "production_orders_rel" (
 );
 
 -- CreateTable
-CREATE TABLE "products_rury_rel" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT,
-    "price" REAL,
-    "category" TEXT,
-    "weight" REAL,
-    "transport" INTEGER,
-    "area" REAL,
-    "data" TEXT DEFAULT '{}',
-    "unit" TEXT DEFAULT 'szt'
-);
-
--- CreateTable
-CREATE TABLE "products_studnie_rel" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT,
-    "price" REAL,
-    "category" TEXT,
-    "weight" REAL,
-    "componentType" TEXT,
-    "dn" REAL,
-    "h" INTEGER,
-    "grubosc" INTEGER,
-    "wewnetrzna" INTEGER,
-    "l" INTEGER,
-    "element" TEXT,
-    "index_k" TEXT,
-    "index_p" TEXT,
-    "formaStandardowa" INTEGER,
-    "spocznikH" TEXT,
-    "data" TEXT,
-    "magazynWL" INTEGER DEFAULT 1,
-    "magazynKLB" INTEGER DEFAULT 1,
-    "height" REAL DEFAULT 0,
-    "formaStandardowaKLB" INTEGER DEFAULT 1,
-    "area" REAL,
-    "areaExt" REAL,
-    "transport" INTEGER,
-    "zapasDol" REAL,
-    "zapasGora" REAL,
-    "zapasDolMin" REAL,
-    "zapasGoraMin" REAL
-);
-
--- CreateTable
 CREATE TABLE "recycled_production_numbers" (
     "userId" TEXT NOT NULL,
     "year" INTEGER NOT NULL,
@@ -235,4 +190,3 @@ CREATE INDEX "idx_clients_user" ON "clients_rel"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
-

@@ -14,15 +14,15 @@ jest.mock('../src/utils/logger', () => ({
 }));
 
 import prisma from '../src/prismaClient';
-import { readPricelist, writePricelist, migrateFromLegacyIfNeeded } from '../src/services/pricelistService';
+import fs from 'fs';
+import { readPricelist, writePricelist, ensureProductsSeeded } from '../src/services/pricelistService';
 
 const mockSettings = prisma.settings as jest.Mocked<typeof prisma.settings>;
 
 const TEST_CONFIG = {
     keyCurrent: 'test_pricelist',
     keyDefault: 'test_pricelist_default',
-    legacyTable: 'products_test_rel',
-    legacyDefaultKey: 'default_test',
+    seedPath: 'data/test_seed.json',
     label: 'test'
 };
 
@@ -77,11 +77,41 @@ describe('writePricelist', () => {
     });
 });
 
-describe('migrateFromLegacyIfNeeded', () => {
-    it('pomija migrację gdy cennik już istnieje', async () => {
+describe('ensureProductsSeeded', () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('pomija seedowanie gdy cennik już istnieje', async () => {
         mockSettings.findUnique.mockResolvedValue({ key: 'test_pricelist', value: '[]' });
-        await migrateFromLegacyIfNeeded(TEST_CONFIG);
+        const existsSyncSpy = jest.spyOn(fs, 'existsSync');
+        await ensureProductsSeeded(TEST_CONFIG);
+        expect(existsSyncSpy).not.toHaveBeenCalled();
         expect(mockSettings.update).not.toHaveBeenCalled();
         expect(mockSettings.create).not.toHaveBeenCalled();
+        existsSyncSpy.mockRestore();
+    });
+
+    it('seeduje z pliku gdy cennik nie istnieje', async () => {
+        mockSettings.findUnique.mockResolvedValue(null);
+        mockSettings.update.mockResolvedValue({} as any);
+        jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+        jest.spyOn(fs, 'readFileSync').mockReturnValue('[{"id":"P1","name":"Test"}]');
+        await ensureProductsSeeded(TEST_CONFIG);
+        expect(mockSettings.update).toHaveBeenCalledTimes(2);
+        mockSettings.update.mock.calls.forEach(call => {
+            expect(call[0].data.value).toBe('[{"id":"P1","name":"Test"}]');
+        });
+        jest.restoreAllMocks();
+    });
+
+    it('pomija seedowanie gdy brak pliku seed', async () => {
+        mockSettings.findUnique.mockResolvedValue(null);
+        mockSettings.update.mockResolvedValue({} as any);
+        jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+        await ensureProductsSeeded(TEST_CONFIG);
+        expect(mockSettings.update).not.toHaveBeenCalled();
+        expect(mockSettings.create).not.toHaveBeenCalled();
+        jest.restoreAllMocks();
     });
 });

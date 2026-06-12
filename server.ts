@@ -101,8 +101,9 @@ const apiLimiter = createRateLimiter({
 /* ===== ŚCIEŻKI (ROUTES) ===== */
 import authRoutes from './src/routes/auth';
 import userRoutes from './src/routes/users';
-import productRoutes from './src/routes/products';
-import productStudnieRoutes from './src/routes/productsStudnie';
+import productRoutes from './src/routes/productsV2';
+import productStudnieRoutes from './src/routes/productsStudnieV2';
+import precoPricingRoutes from './src/routes/precoPricingV2';
 import offerRoutes from './src/routes/offers/index';
 import orderRoutes from './src/routes/orders/index';
 import ruryOrdersRoutes from './src/routes/orders/ruryOrders';
@@ -111,7 +112,6 @@ import pvMarketplaceRoutes from './src/routes/pvMarketplace';
 import auditRoutes from './src/routes/audit';
 import settingsRoutes from './src/routes/settings';
 import telemetryRoutes from './src/routes/telemetry';
-import precoPricingRoutes from './src/routes/precoPricing';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);

@@ -194,24 +194,12 @@ async function resetPriceList() {
                 return;
             products = structuredClone(customDefault);
         } else {
-            if (
-                !(await appConfirm(
-                    'Brak zapisanego własnego cennika. Przywrócić do wartości fabrycznych producenta? Utracisz wszystkie zmiany.',
-                    { title: 'Reset cennika', type: 'warning' }
-                ))
-            )
-                return;
-            products = structuredClone(DEFAULT_PRODUCTS);
+            showToast('Brak zapisanych wartości fabrycznych cennika', 'error');
+            return;
         }
     } catch {
-        if (
-            !(await appConfirm(
-                'Przywrócić cennik do wartości fabrycznych? Utracisz wszystkie zmiany.',
-                { title: 'Reset cennika', type: 'warning' }
-            ))
-        )
-            return;
-        products = structuredClone(DEFAULT_PRODUCTS);
+        showToast('Nie udało się pobrać domyślnego cennika z serwera', 'error');
+        return;
     }
     _pricelistDirty = true;
     updateSaveBtn();

@@ -402,124 +402,29 @@ function skipWizardToStep3() {
 
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
-/**
- * Lazy-loading danych domyślnych studni z pliku JSON.
- * Zastępuje globalną stałą DEFAULT_PRODUCTS_STUDNIE z pricelist_studnie.js.
- * Cache'uje dane po pierwszym załadowaniu.
- */
-let _defaultProductsStudnieCache = null;
-
-async function getDefaultProductsStudnie() {
-    // 1. Sprawdź cache
-    if (_defaultProductsStudnieCache) {
-        return _defaultProductsStudnieCache;
-    }
-    // 2. Załaduj z JSON
-    try {
-        const res = await fetchWithTimeout('/data/products_studnie.json', {}, 5000);
-        if (res.ok) {
-            _defaultProductsStudnieCache = await res.json();
-            logger.info('uiHelpers', `[Studnie] Załadowano ${_defaultProductsStudnieCache.length} domyślnych produktów z JSON`);
-            return _defaultProductsStudnieCache;
-        }
-    } catch (e) {
-        logger.warn('uiHelpers', '[Studnie] Nie udało się załadować products_studnie.json:', e);
-    }
-    // 3. Fallback — stara globalna zmienna (kompatybilność wsteczna)
-    if (typeof DEFAULT_PRODUCTS_STUDNIE !== 'undefined') {
-        _defaultProductsStudnieCache = DEFAULT_PRODUCTS_STUDNIE;
-        return _defaultProductsStudnieCache;
-    }
-    logger.error('uiHelpers', '[Studnie] Brak danych domyślnych produktów!');
-    return [];
-}
-
 async function loadStudnieProducts() {
-    const defaultProducts = await getDefaultProductsStudnie();
-
-    function migrateProducts(arr) {
-        arr.forEach((p) => {
-            // Mapuj polskie klucze z pliku JSON na angielskie używane w kodzie
-            const KEY_MAP = {
-                'Zapas dół mm': 'zapasDol',
-                'Zapas góra mm': 'zapasGora',
-                'Zapas dół min mm': 'zapasDolMin',
-                'Zapas góra min mm': 'zapasGoraMin',
-                'Dopłata Żelbet': 'doplataZelbet',
-            };
-            for (const [plKey, enKey] of Object.entries(KEY_MAP)) {
-                if (p[plKey] !== undefined) {
-                    p[enKey] = p[plKey];
-                    delete p[plKey];
-                }
-            }
-
-            if (p.formaStandardowa == null) p.formaStandardowa = 1;
-            if (p.formaStandardowaKLB == null) p.formaStandardowaKLB = 1;
-
-            // Napraw uszkodzone kategorie z poprzedniego błędu backendu
-            if (p.category === 'studnie' || !p.category) {
-                const def = defaultProducts.find((dp) => dp.id === p.id);
-                if (def) p.category = def.category;
-            }
-
-            // Napraw uszczelki DN2500, które zostały błędnie zapisane z dn=2000
-            if (p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000) {
-                p.dn = 2500;
-            }
-
-            // Napraw brakujące pola magazynu (produkty dodane ręcznie)
-            if (p.magazynKLB === undefined || p.magazynKLB === null) p.magazynKLB = 1;
-            if (p.magazynWL === undefined || p.magazynWL === null) p.magazynWL = 1;
-
-            // Napraw brakujący componentType na podstawie nazwy
-            if (!p.componentType || (p.componentType === 'krag' && !p.id?.startsWith('KD'))) {
-                const n = (p.name || '').toUpperCase();
-                if (n.includes('REDUKCYJNA')) p.componentType = 'plyta_redukcyjna';
-                else if (n.includes('DENNICA')) p.componentType = 'dennica';
-                else if (n.includes('KONUS') || n.includes('STOŻEK')) p.componentType = 'konus';
-                else if (n.includes('PŁYTA DIN') || n.includes('NAKRYW')) p.componentType = 'plyta_din';
-                else if (n.includes('NAJAZDOWA')) p.componentType = 'plyta_najazdowa';
-                else if (n.includes('ZAMYKAJĄCA')) p.componentType = 'plyta_zamykajaca';
-                else if (n.includes('ODCIĄŻAJĄCY')) p.componentType = 'pierscien_odciazajacy';
-                else if (n.includes('USZCZELKA')) p.componentType = 'uszczelka';
-                else if (n.includes('WŁAZ')) p.componentType = 'wlaz';
-                else if (n.includes('AVR') || n.includes('PIERŚCIEŃ AVR')) p.componentType = 'avr';
-            }
-
-            // Napraw brakujące DN na podstawie nazwy/kategorii
-            if (p.dn === null || p.dn === undefined) {
-                const searchStr = ((p.category || '') + ' ' + (p.name || '')).toUpperCase();
-                const dnMatch = searchStr.match(/DN(\d+)/i);
-                if (dnMatch) p.dn = parseInt(dnMatch[1]);
-            }
-        });
-        return arr;
+    var result = await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000);
+    if (!result || !Array.isArray(result.data)) {
+        logger.error('uiHelpers', '[Studnie] Błąd loadStudnieProducts: brak danych po 3 próbach');
+        showToast('Nie udało się załadować cennika studni z serwera', 'error');
+        return [];
     }
-    try {
-        const json = await api.get('/api/products-studnie');
-        if (!json) throw new Error('Nie udało się pobrać cennika');
-        let saved = json.data;
-        if (!saved || saved.length === 0) {
-            const data = structuredClone(defaultProducts);
-            migrateProducts(data);
-            await api.put('/api/products-studnie', { data });
-            return data;
+    const saved = result.data;
+
+    // Napraw uszczelki DN2500 dla kompatybilności z istniejącymi danymi
+    const hadDn2500Bug = saved.some(
+        (p) => p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000
+    );
+    saved.forEach((p) => {
+        if (p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000) {
+            p.dn = 2500;
         }
-        // Wykryj błąd uszczelek DN2500 przed naprawą przez migrację
-        const hadDn2500Bug = saved.some(
-            (p) => p.componentType === 'uszczelka' && p.id && p.id.includes('2500') && p.dn === 2000
-        );
-        const migrated = migrateProducts(saved);
-        // Utrwal poprawki migracji z powrotem do API
-        if (hadDn2500Bug) {
-            saveStudnieProducts(migrated).catch(() => {});
-        }
-        return migrated;
-    } catch {
-        const data = structuredClone(defaultProducts);
-        return migrateProducts(data);
+    });
+    if (hadDn2500Bug) {
+        saveStudnieProducts(saved).catch(() => {});
     }
+
+    return saved;
 }
 
 function renamePłyty(p) {
@@ -571,133 +476,7 @@ setInterval(checkBackendStatus, 15000); // Sprawdź co 15 sekund (pierwsze spraw
 /* ===== CENNIK PRECO — load / save / defaults ===== */
 
 /**
- * Zwraca domyślny cennik PRECO (hardcoded z Excela).
- * Struktura: { [dnStudni]: { kinety, spadekKineta, spadekMufa, uniesienie, redukcja, skrzynkaWlazowa } }
- */
-function getDefaultPrecoPricing() {
-    // Grupy DN rury do wyszukiwania w tabelach zakresowych
-    // Wspólna tabela kinet (cena prosta + dopływ) — per DN studni
-    const kinetyDn = {
-        1000: [
-            { dn: 150, prosta: 920, dodWlot: 300 },
-            { dn: 200, prosta: 1100, dodWlot: 350 },
-            { dn: 250, prosta: 1350, dodWlot: 400 },
-            { dn: 300, prosta: 1750, dodWlot: 500 },
-            { dn: 400, prosta: 2500, dodWlot: 700 },
-            { dn: 500, prosta: 4000, dodWlot: 1000 },
-            { dn: 600, prosta: 5200, dodWlot: 1300 }
-        ],
-        1200: [
-            { dn: 150, prosta: 1050, dodWlot: 350 },
-            { dn: 200, prosta: 1250, dodWlot: 400 },
-            { dn: 250, prosta: 1550, dodWlot: 450 },
-            { dn: 300, prosta: 2000, dodWlot: 550 },
-            { dn: 400, prosta: 2900, dodWlot: 800 },
-            { dn: 500, prosta: 4500, dodWlot: 1100 },
-            { dn: 600, prosta: 5800, dodWlot: 1400 }
-        ],
-        1500: [
-            { dn: 150, prosta: 1250, dodWlot: 400 },
-            { dn: 200, prosta: 1500, dodWlot: 450 },
-            { dn: 250, prosta: 1800, dodWlot: 550 },
-            { dn: 300, prosta: 2400, dodWlot: 650 },
-            { dn: 400, prosta: 3500, dodWlot: 950 },
-            { dn: 500, prosta: 5200, dodWlot: 1300 },
-            { dn: 600, prosta: 6800, dodWlot: 1700 }
-        ],
-        2000: [
-            { dn: 150, prosta: 1700, dodWlot: 550 },
-            { dn: 200, prosta: 2000, dodWlot: 600 },
-            { dn: 250, prosta: 2400, dodWlot: 700 },
-            { dn: 300, prosta: 3100, dodWlot: 850 },
-            { dn: 400, prosta: 4500, dodWlot: 1200 },
-            { dn: 500, prosta: 6500, dodWlot: 1600 },
-            { dn: 600, prosta: 8500, dodWlot: 2100 }
-        ],
-        2500: [
-            { dn: 150, prosta: 2200, dodWlot: 700 },
-            { dn: 200, prosta: 2600, dodWlot: 800 },
-            { dn: 250, prosta: 3100, dodWlot: 900 },
-            { dn: 300, prosta: 4000, dodWlot: 1100 },
-            { dn: 400, prosta: 5800, dodWlot: 1500 },
-            { dn: 500, prosta: 8500, dodWlot: 2100 },
-            { dn: 600, prosta: 11000, dodWlot: 2700 }
-        ]
-    };
-
-    // Spadek w kinecie — zakresy procentowe → dopłata per grupa DN rury
-    const spadekKineta = [
-        { min: 2, max: 4, grupy: { '150-200': 200, '250-300': 250, '400-600': 350 } },
-        { min: 5, max: 7, grupy: { '150-200': 300, '250-300': 380, '400-600': 500 } },
-        { min: 8, max: 10, grupy: { '150-200': 460, '250-300': 550, '400-600': 700 } }
-    ];
-
-    // Spadek w mufie — takie same zakresy
-    const spadekMufa = [
-        { min: 2, max: 4, grupy: { '150-200': 150, '250-300': 200, '400-600': 300 } },
-        { min: 5, max: 7, grupy: { '150-200': 250, '250-300': 320, '400-600': 450 } },
-        { min: 8, max: 10, grupy: { '150-200': 380, '250-300': 460, '400-600': 600 } }
-    ];
-
-    // Uniesienie kinety — zakresy mm → dopłata per grupa DN rury głównej
-    const uniesienie = [
-        { min: 0, max: 100, grupy: { '150-300': 150, '400-600': 200 } },
-        { min: 101, max: 200, grupy: { '150-300': 250, '400-600': 350 } },
-        { min: 201, max: 400, grupy: { '150-300': 400, '400-600': 550 } },
-        { min: 401, max: 600, grupy: { '150-300': 550, '400-600': 750 } }
-    ];
-
-    // Redukcja kinety — zakresy mm → dopłata per grupa DN
-    const redukcja = [
-        { min: 0, max: 50, grupy: { '150-300': 340, '400-600': 500 } },
-        { min: 51, max: 100, grupy: { '150-300': 500, '400-600': 700 } }
-    ];
-
-    // Skrzynka włazowa — cena per DN studni (null = brak)
-    const skrzynkaWlazowa = {
-        1000: 400,
-        1200: 450,
-        1500: 500,
-        2000: 600,
-        2500: 750
-    };
-
-    // Cena za 1 mb wkładki do pełnej wysokości per DN studni
-    const cenaPelnaWysMB = {
-        1000: 1000,
-        1200: 1200,
-        1500: 1500,
-        2000: 2000,
-        2500: 2500
-    };
-
-    // Cena za samo dno osadnika per DN studni
-    const cenaDnoOsadnika = {
-        1000: 800,
-        1200: 1000,
-        1500: 1400,
-        2000: 2000,
-        2500: 2800
-    };
-
-    const result = {};
-    [1000, 1200, 1500, 2000, 2500].forEach(dn => {
-        result[dn] = {
-            kinety: kinetyDn[dn] || [],
-            spadekKineta,
-            spadekMufa,
-            uniesienie,
-            redukcja,
-            skrzynkaWlazowa: skrzynkaWlazowa[dn] || null,
-            cenaPelnaWysMB: cenaPelnaWysMB[dn] || 0,
-            cenaDnoOsadnika: cenaDnoOsadnika[dn] || 0
-        };
-    });
-    return result;
-}
-
-/**
- * Ładuje cennik PRECO z backendu, z fallbackiem do domyślnych wartości.
+ * Ładuje cennik PRECO z backendu.
  */
 async function loadPrecoPricing() {
     try {
@@ -711,8 +490,8 @@ async function loadPrecoPricing() {
     } catch (e) {
         logger.warn('uiHelpers', '[PRECO] Błąd pobierania cennika z API:', e);
     }
-    precoPricing = getDefaultPrecoPricing();
-    logger.info('uiHelpers', '[PRECO] Użyto domyślnego cennika');
+    precoPricing = {};
+    logger.warn('uiHelpers', '[PRECO] Brak cennika w bazie');
 }
 
 /**

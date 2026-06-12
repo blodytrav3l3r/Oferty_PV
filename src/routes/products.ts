@@ -5,7 +5,7 @@ import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import {
-    migrateFromLegacyIfNeeded,
+    ensureProductsSeeded,
     readPricelist,
     writePricelist,
     PricelistConfig
@@ -20,13 +20,12 @@ const writePricelistLimiter = PRICELIST_WRITE_LIMITER;
 const config: PricelistConfig = {
     keyCurrent: 'pricelist_rury',
     keyDefault: 'pricelist_rury_default',
-    legacyTable: 'products_rury_rel',
-    legacyDefaultKey: 'default_rury',
+    seedPath: 'data/seed_rury.json',
     label: 'rury'
 };
 
-// Uruchom migrację przy starcie
-migrateFromLegacyIfNeeded(config);
+// Zainicjalizuj cennik z pliku seed przy starcie
+ensureProductsSeeded(config);
 
 // ──────────────────────────────────────────
 // GET /api/products → Pobiera bieżący cennik rur

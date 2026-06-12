@@ -82,7 +82,21 @@
         get: function (url, opts) { return request(url, Object.assign({}, opts, { method: 'GET' })); },
         post: function (url, body, opts) { return request(url, Object.assign({}, opts, { method: 'POST', body: body })); },
         put: function (url, body, opts) { return request(url, Object.assign({}, opts, { method: 'PUT', body: body })); },
+        patch: function (url, body, opts) { return request(url, Object.assign({}, opts, { method: 'PATCH', body: body })); },
         del: function (url, opts) { return request(url, Object.assign({}, opts, { method: 'DELETE' })); },
-        request: request
+        request: request,
+        getWithRetry: async function (url, opts, retries, delayMs) {
+            if (retries == null) retries = 3;
+            if (delayMs == null) delayMs = 1000;
+            for (var i = 0; i < retries; i++) {
+                var result = await request(url, Object.assign({}, opts, { method: 'GET' }));
+                if (result != null) return result;
+                if (i < retries - 1) {
+                    logger.info('api', 'Retry ' + (i + 1) + '/' + retries + ': ' + url);
+                    await new Promise(function (r) { setTimeout(r, delayMs); });
+                }
+            }
+            return null;
+        }
     };
 })();

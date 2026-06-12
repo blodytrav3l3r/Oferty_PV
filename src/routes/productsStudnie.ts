@@ -5,7 +5,7 @@ import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import {
-    migrateFromLegacyIfNeeded,
+    ensureProductsSeeded,
     readPricelist,
     writePricelist,
     PricelistConfig
@@ -20,13 +20,12 @@ const writePricelistLimiter = PRICELIST_WRITE_LIMITER;
 const config: PricelistConfig = {
     keyCurrent: 'pricelist_studnie',
     keyDefault: 'pricelist_studnie_default',
-    legacyTable: 'products_studnie_rel',
-    legacyDefaultKey: 'default_studnie',
+    seedPath: 'data/seed_studnie.json',
     label: 'studnie'
 };
 
-// Uruchom migrację przy starcie
-migrateFromLegacyIfNeeded(config);
+// Zainicjalizuj cennik z pliku seed przy starcie
+ensureProductsSeeded(config);
 
 // ──────────────────────────────────────────
 // GET /api/products-studnie → Pobiera bieżący cennik studni

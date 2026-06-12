@@ -7,6 +7,8 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
+
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
@@ -157,50 +159,6 @@ model production_orders_rel {
   creatorId    String? @default("")
 }
 
-model products_rury_rel {
-  id        String  @id
-  name      String?
-  price     Float?
-  category  String?
-  weight    Float?
-  transport Int?
-  area      Float?
-  data      String? @default("{}")
-  unit      String? @default("szt")
-}
-
-// Katalog produktów (studnie i elementy)
-model products_studnie_rel {
-  id                  String   @id
-  name                String?
-  price               Float?
-  category            String?
-  weight              Float?
-  componentType       String?
-  dn                  Float?
-  h                   Int?
-  grubosc             Int?
-  wewnetrzna          Int?
-  l                   Int?
-  element             String?
-  index_k             String?
-  index_p             String?
-  formaStandardowa    Int?
-  spocznikH           String?
-  data                String?
-  magazynWL           Int?     @default(1)
-  magazynKLB          Int?     @default(1)
-  height              Float?   @default(0)
-  formaStandardowaKLB Int?     @default(1)
-  area                Float?
-  areaExt             Float?
-  transport           Int?
-  zapasDol            Float?
-  zapasGora           Float?
-  zapasDolMin         Float?
-  zapasGoraMin        Float?
-}
-
 model recycled_production_numbers {
   userId    String
   year      Int
@@ -218,6 +176,112 @@ model sessions {
 model settings {
   key   String @id
   value String?
+}
+
+// ─── Produkty rury ─────────────────────────────────────────────────
+
+model CategoriesRury {
+  name  String @id
+  order Int
+
+  products ProductsRury[]
+}
+
+model ProductsRury {
+  id        String  @id
+  name      String
+  category  String
+  price     Float
+  transport Float?
+  weight    Float?
+  area      Float?
+
+  category_rel CategoriesRury @relation(fields: [category], references: [name])
+}
+
+// ─── Produkty studnie ──────────────────────────────────────────────
+
+model CategoriesStudnie {
+  name          String @id
+  componentType String?
+  order         Int
+
+  products ProductsStudnie[]
+}
+
+model ProductsStudnie {
+  id                   String  @id
+  name                 String
+  category             String
+  componentType        String
+  dn                   String?
+  height               Int?
+  weight               Float?
+  price                Float   @default(0)
+  area                 Float?
+  areaExt              Float?
+  transport            Float?
+  magazynWL            Boolean @default(false)
+  magazynKLB           Boolean @default(false)
+  formaStandardowa     Boolean @default(false)
+  formaStandardowaKLB  Boolean @default(false)
+
+  // przejscie-specific
+  active               Boolean @default(false)
+  zapasDol             Int?
+  zapasGora            Int?
+  zapasDolMin          Int?
+  zapasGoraMin         Int?
+  spocznikH            String?
+
+  // kineta-specific (3 zakresy wysokosci x cena)
+  hMin1  Int?
+  hMax1  Int?
+  cena1  Float?
+  hMin2  Int?
+  hMax2  Int?
+  cena2  Float?
+  hMin3  Int?
+  hMax3  Int?
+  cena3  Float?
+
+  // doplaty (dennica + styczna + active przejscie)
+  doplataPEHD           Float?
+  doplataZelbet         Float?
+  doplataDrabNierdzewna Float?
+  malowanieWewnetrzne   Float?
+  malowanieZewnetrzne   Float?
+
+  category_rel CategoriesStudnie @relation(fields: [category], references: [name])
+}
+
+// ─── PRECO ─────────────────────────────────────────────────────────
+
+model PrecoKonfig {
+  dnStudni       Int    @id
+  skrzynkaWlazowa Float
+  cenaPelnaWysMB Float
+  cenaDnoOsadnika Float
+}
+
+model PrecoKinety {
+  id       Int    @id @default(autoincrement())
+  dnStudni Int
+  dnRury   Int
+  prosta   Float
+  dodWlot  Float
+
+  @@unique([dnStudni, dnRury])
+}
+
+model PrecoZakresy {
+  id      Int    @id @default(autoincrement())
+  dnStudni Int?
+  typ     String
+  minVal  Int
+  maxVal  Int
+  grupaDn String
+  cena    Float
 }
 
 // Użytkownicy systemu

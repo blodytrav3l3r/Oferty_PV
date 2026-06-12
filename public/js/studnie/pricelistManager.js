@@ -324,65 +324,6 @@ window.recalculatePEHD = async function() {
     showToast(`Przeliczono wkładkę PEHD dla ${count} elementów.`, 'success');
 };
 
-/* ===== ZARZĄDZANIE KATEGORIAMI KINET ===== */
-async function generateDefaultKinety(auto = false) {
-    if (
-        !auto &&
-        !(await appConfirm(
-            'Wygenerować szablon cennika kinet dla wszystkich średnic? (nie nadpisze to istniejących ze zgodnym id)',
-            { title: 'Generowanie kinet', type: 'info' }
-        ))
-    )
-        return;
-
-    const dns = [1000, 1200, 1500, 2000, 2500];
-    const heights = ['1/2', '2/3', '3/4', '1/1'];
-    let added = 0;
-
-    dns.forEach((dn) => {
-        heights.forEach((h) => {
-            const hId = h.replace('/', '');
-            const id = `KINETA-DN${dn}-${hId}`;
-
-            if (!studnieProducts.find((p) => p.id === id)) {
-                studnieProducts.push({
-                    id: id,
-                    name: `Kineta DN${dn} wys. ${h}`,
-                    category: `Kinety DN${dn}`,
-                    componentType: 'kineta',
-                    dn: dn,
-                    spocznikH: h,
-                    area: 0,
-                    hMin1: null,
-                    hMax1: null,
-                    cena1: 100,
-                    hMin2: null,
-                    hMax2: null,
-                    cena2: 100,
-                    hMin3: null,
-                    hMax3: null,
-                    cena3: 100,
-                    price: 100
-                });
-                added++;
-            }
-        });
-    });
-
-    if (added > 0) {
-        if (auto) {
-            await saveStudnieProducts(studnieProducts);
-        } else {
-            _studniePricelistDirty = true;
-            updateStudnieSaveBtn();
-        }
-        renderStudniePriceList();
-        if (!auto) showToast(`Dodano ${added} elementów kinet do uzupełnienia.`, 'success');
-    } else {
-        if (!auto) showToast('Wszystkie kinety już istnieją.', 'info');
-    }
-}
-
 /* ===== ZARZĄDZANIE KATEGORIAMI PRZEJŚĆ ===== */
 function addPrzejsciaCategory() {
     let name = prompt('Podaj nazwę nowej kategorii (np. GRP, Incor):');
@@ -921,26 +862,12 @@ async function resetStudniePriceList() {
                 return;
             studnieProducts = structuredClone(customDefault);
         } else {
-            if (
-                !(await appConfirm('Brak własnego cennika. Przywrócić do wartości fabrycznych?', {
-                    title: 'Reset cennika',
-                    type: 'warning'
-                }))
-            )
-                return;
-            const defaultData1 = await getDefaultProductsStudnie();
-            studnieProducts = structuredClone(defaultData1);
+            showToast('Brak zapisanych wartości fabrycznych cennika studni', 'error');
+            return;
         }
     } catch {
-        if (
-            !(await appConfirm('Przywrócić cennik do wartości fabrycznych?', {
-                title: 'Reset cennika',
-                type: 'warning'
-            }))
-        )
-            return;
-        const defaultData2 = await getDefaultProductsStudnie();
-        studnieProducts = structuredClone(defaultData2);
+        showToast('Nie udało się pobrać domyślnego cennika studni z serwera', 'error');
+        return;
     }
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
@@ -1482,25 +1409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         studnieProducts = await loadStudnieProducts();
 
         if (!studnieProducts.some((p) => p.componentType === 'kineta')) {
-            generateDefaultKinety(true);
-        }
-
-        // Dodanie kategorii Otwór KPED jeśli nie istnieje
-        if (!studnieProducts.some((p) => p.id === 'Otwor-KPED' || p.category === 'Otwór KPED')) {
-            studnieProducts.push({
-                id: 'Otwor-KPED',
-                name: 'Otwór KPED',
-                category: 'Otwór KPED',
-                dn: '1020/500', // szerokość/wysokość
-                componentType: 'przejscie',
-                zapasDol: 300,
-                zapasGora: 300,
-                zapasDolMin: 150,
-                zapasGoraMin: 150,
-                price: 500,
-                weight: 0
-            });
-            await saveStudnieProducts(studnieProducts);
+            logger.warn('pricelistManager', '[Studnie] Brak kinet w cenniku');
         }
 
         // Zacznij bez studni — użytkownik sam dodaje pierwszą studnię
@@ -1616,7 +1525,9 @@ function renderPrecoPriceList() {
     if (!container) return;
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
-        precoPricing = getDefaultPrecoPricing();
+        html = '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
+        container.innerHTML = html;
+        return;
     }
 
     const dns = [1000, 1200, 1500, 2000, 2500];
@@ -1886,7 +1797,7 @@ function collectPrecoFromUI() {
         let target = data[dn];
         for (let i = 0; i < parts.length - 1; i++) {
             const key = isNaN(Number(parts[i])) ? parts[i] : Number(parts[i]);
-            if (target[key] === undefined) return;
+            if (target[key] === undefined) continue;
             target = target[key];
         }
         const lastKey = parts[parts.length - 1];
@@ -1899,14 +1810,25 @@ function collectPrecoFromUI() {
 async function savePrecoFromUI() {
     const data = collectPrecoFromUI();
     precoPricing = data;
-    await savePrecoPricing(data);
-    refreshAll();
+    const ok = await savePrecoPricing(data);
+    if (ok) refreshAll();
 }
 
-/** Ładuje domyślne wartości PRECO */
+/** Ładuje domyślne wartości PRECO z API */
 async function loadPrecoDefaults() {
     if (!await appConfirm('Załadować domyślne ceny PRECO? Obecne wartości zostaną nadpisane.', { title: 'Reset cennika PRECO', type: 'warning' })) return;
-    precoPricing = getDefaultPrecoPricing();
-    renderPrecoPriceList();
-    showToast('Załadowano domyślne ceny PRECO', 'info');
+    try {
+        const res = await fetchWithTimeout('/api/preco-pricing/default');
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+            precoPricing = json.data[0];
+            renderPrecoPriceList();
+            showToast('Załadowano domyślne ceny PRECO', 'info');
+        } else {
+            showToast('Brak domyślnych cen PRECO na serwerze', 'error');
+        }
+    } catch (e) {
+        logger.error('pricelistManager', 'Błąd ładowania domyślnych PRECO:', e);
+        showToast('Błąd sieci przy ładowaniu domyślnych cen PRECO', 'error');
+    }
 }
