@@ -2,13 +2,13 @@
 /* Kategorie i mapa uszczelek — bez danych produktów (te pochodzą z API) */
 
 const CATEGORIES = [
+    'Akcesoria PEHD',
     'Rury Betonowe',
     'Żelbetowe KL. A (II)',
     'Żelbetowe KL. S (I)',
     'Duże Żelbetowe II',
     'Rury Jajowe Betonowe',
     'Rury Jajowe Żelbetowe',
-    'Akcesoria PEHD',
     'Uszczelki',
     'Zabezpieczenie transportu'
 ];
