@@ -775,6 +775,15 @@ function renderTiles() {
             items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
         }
 
+        // Sortowanie wg kolejności zadeklarowanej w group.types
+        if (group.types.length > 1 && !group.types.includes('dennica') && !group.types.includes('krag') && !group.types.includes('krag_ot') && !group.types.includes('styczna')) {
+            items.sort((a, b) => {
+                const idxA = group.types.indexOf(a.componentType);
+                const idxB = group.types.indexOf(b.componentType);
+                return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+            });
+        }
+
         html += `<div class="tiles-section">
       <div class="tiles-section-title">${group.title}</div>
       <div class="tiles-grid">`;
@@ -932,6 +941,15 @@ function renderTiles() {
                 // Dodano sortowanie dla sekcji redukcji, analogicznie do głównej sekcji
                 if (g.types.includes('dennica') || g.types.includes('krag') || g.types.includes('krag_ot')) {
                     items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
+                }
+
+                // Sortowanie wg kolejności zadeklarowanej w group.types
+                if (g.types.length > 1 && !g.types.includes('dennica') && !g.types.includes('krag') && !g.types.includes('krag_ot') && !g.types.includes('styczna')) {
+                    items.sort((a, b) => {
+                        const idxA = g.types.indexOf(a.componentType);
+                        const idxB = g.types.indexOf(b.componentType);
+                        return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+                    });
                 }
 
                 if (items.length > 0) {

@@ -121,8 +121,8 @@ function filterByWellParams(p, well) {
             const hasStepSuffix = isNierdzewna || isDrabinka || isBrak;
 
             if (well.stopnie === 'brak') {
-                // Brak stopni: pokaż tylko warianty -B, odrzuć -D i -N-D
-                if (hasStepSuffix && !isBrak) return false;
+                // Brak stopni: pokaż tylko warianty -B, odrzuć -D, -N-D i produkty bez suffixu
+                if (!isBrak) return false;
             } else if (well.stopnie === 'nierdzewna') {
                 // Drabinka nierdzewna: pokaż tylko -N-D, odrzuć -D i -B
                 if (isBrak || isDrabinka) return false;
