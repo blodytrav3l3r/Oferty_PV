@@ -424,13 +424,6 @@ function _excelRenderTable(dn) {
 
     html += '</tr></thead><tbody>';
 
-    if (tabWells.length === 0) {
-        html += `<tr><td colspan="50" style="padding:2.5rem;text-align:center;color:#475569;border:${_EXCEL_BORDER};">
-            <div style="font-size:0.75rem;margin-bottom:0.6rem;">Brak studni dla ${dn === 'styczne' ? 'stycznych' : 'DN' + dn}</div>
-            <button onclick="excelAddWellToTab()" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);padding:0.4rem 1.2rem;border-radius:3px;font-size:0.7rem;font-weight:600;cursor:pointer;">+ Dodaj studnię</button>
-        </td></tr>`;
-    }
-
     tabWells.forEach((well, idx) => {
         const wIdx = wells.indexOf(well);
         const isEven = idx % 2 === 0;
