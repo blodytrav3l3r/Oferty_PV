@@ -464,8 +464,117 @@ function _excelRenderTable(dn) {
         html += '</tr>';
     });
 
+    /* ===== EMPTY ROW — wiersz na nową studnię ===== */
+    const emptyRowBg = '#0a0c10';
+    html += `<tr id="excel-empty-row" style="background:${emptyRowBg};border-top:2px dashed rgba(255,255,255,0.08);">`;
+
+    const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
+    const tdEmpty = `${tdBase}color:#334155;`;
+
+    /* Nazwa — sticky left */
+    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni…" id="excel-empty-name" onchange="excelOnEmptyRowChange()" onkeydown="if(event.key==='Enter'){excelOnEmptyRowChange()}" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+
+    /* Rz. Włazu */
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onchange="excelOnEmptyRowChange()" onkeydown="if(event.key==='Enter'){excelOnEmptyRowChange()}" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+
+    /* Rz. Dna */
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onchange="excelOnEmptyRowChange()" onkeydown="if(event.key==='Enter'){excelOnEmptyRowChange()}" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+
+    /* Wys. — placeholder */
+    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
+
+    /* Przejścia — puste */
+    for (let i = 0; i < maxTr; i++) {
+        html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" disabled style="${_excelCellInp(72)}opacity:0.3;" /></td>`;
+        html += `<td style="${tdEmpty}text-align:center;"><input type="number" step="1" placeholder="—" disabled style="${_excelCellInp(50)}opacity:0.3;" /></td>`;
+        html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(120)}opacity:0.3;"><option value="">—</option></select></td>`;
+    }
+
+    /* Właz */
+    html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(125)}opacity:0.3;"><option value="">—</option></select></td>`;
+
+    /* Komponenty */
+    compCols.forEach(col => {
+        if (col.type === 'select') return;
+        html += `<td style="${tdEmpty}text-align:center;"><input type="number" min="0" step="1" placeholder="—" disabled style="${_excelCellInp(50)}opacity:0.3;" /></td>`;
+    });
+
+    /* Redukcja */
+    if (hasReduction) {
+        html += `<td style="${tdEmpty}text-align:center;"><input type="checkbox" disabled style="opacity:0.3;" /></td>`;
+        html += `<td style="${tdEmpty}text-align:center;"><input type="number" min="0" step="100" placeholder="2500" disabled style="${_excelCellInp(60)}opacity:0.3;" /></td>`;
+    }
+
+    /* Auto-kolumny — placeholder */
+    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="denn-empty">—</td>`;
+    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="uszcz-empty">—</td>`;
+
+    /* Kineta */
+    html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(90)}opacity:0.3;"><option value="">—</option></select></td>`;
+
+    /* P.Buda */
+    html += `<td style="${tdEmpty}text-align:center;"><input type="checkbox" disabled style="opacity:0.3;" /></td>`;
+
+    /* Param */
+    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;font-size:0.6rem;">nowa</td>`;
+
+    html += '</tr>';
+
     html += '</tbody></table>';
     container.innerHTML = html;
+}
+
+/* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
+function excelOnEmptyRowChange() {
+    const nameEl = document.getElementById('excel-empty-name');
+    const rzwEl = document.getElementById('excel-empty-rzw');
+    const rzdEl = document.getElementById('excel-empty-rzd');
+    if (!nameEl) return;
+
+    const name = (nameEl.value || '').trim();
+    const rzw = rzwEl ? parseFloat(rzwEl.value) : null;
+    const rzd = rzdEl ? parseFloat(rzdEl.value) : null;
+
+    /* Twórz studnię dopiero gdy jest nazwa LUB co najmniej jedna rzędna */
+    if (!name && rzw === null && rzd === null) return;
+
+    const dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab);
+    const autoName = name || ((dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')');
+
+    let well;
+    if (typeof createNewWell === 'function') {
+        well = createNewWell(autoName, dn);
+    } else {
+        well = {
+            id: 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+            name: autoName,
+            dn: dn,
+            config: [],
+            przejscia: [],
+            rzednaWlazu: rzw,
+            rzednaDna: rzd,
+            kineta: 'brak',
+            psiaBuda: false,
+            redukcjaDN1000: false,
+            redukcjaMinH: 2500
+        };
+    }
+
+    if (rzw !== null) well.rzednaWlazu = rzw;
+    if (rzd !== null) well.rzednaDna = rzd;
+
+    wells.push(well);
+    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    showToast('Dodano: ' + autoName, 'success');
+
+    /* Focus na pustym wierszu ponownie */
+    setTimeout(() => {
+        const newName = document.getElementById('excel-empty-name');
+        if (newName) newName.focus();
+    }, 50);
 }
 
 /* ===== CELL FOCUS (Excel highlight) ===== */
