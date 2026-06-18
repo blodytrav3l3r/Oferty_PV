@@ -1781,6 +1781,11 @@ select.form-input option {
     margin: 0.3rem auto;
 }
 
+#excel-table-container tbody tr:focus-within {
+    outline: 2px solid rgba(99,102,241,0.7) !important;
+    background: rgba(99,102,241,0.1) !important;
+}
+
 #excel-table-container td[data-cell] {
     padding: 0.3rem 0.45rem !important;
 }
