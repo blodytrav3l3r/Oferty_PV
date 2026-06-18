@@ -1763,6 +1763,14 @@ select.form-input option {
     appearance: none;
 }
 
+#excel-table-container input[type="text"],
+#excel-table-container input[type="number"],
+#excel-table-container select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+}
+
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .fs-inputs-pane,
