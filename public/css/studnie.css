@@ -5,9 +5,7 @@
     gap: 0;
     margin: -0.8rem -1.5rem -2rem -1.5rem;
     align-items: stretch;
-    height: calc(100vh - 58px);
-    /* 100vh minus nag��wek */
-    overflow: hidden;
+    min-height: calc(100vh - 58px);
     background: var(--bg-primary);
 }
 
@@ -137,7 +135,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .well-center-column {
@@ -146,25 +144,21 @@
     padding: 0 1rem 4.5rem;
 }
 
-.well-center-column::-webkit-scrollbar,
-#wells-list::-webkit-scrollbar {
+.well-center-column::-webkit-scrollbar {
     width: 6px;
 }
 
-.well-center-column::-webkit-scrollbar-track,
-#wells-list::-webkit-scrollbar-track {
+.well-center-column::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
     border-radius: 4px;
 }
 
-.well-center-column::-webkit-scrollbar-thumb,
-#wells-list::-webkit-scrollbar-thumb {
+.well-center-column::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 
-.well-center-column::-webkit-scrollbar-thumb:hover,
-#wells-list::-webkit-scrollbar-thumb:hover {
+.well-center-column::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
 }
 
@@ -191,11 +185,7 @@
 
 #wells-list {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 4px;
-    /* dla paska przewijania */
-    margin-right: -4px;
+    overflow: visible;
 }
 
 .wells-sidebar-header .wells-count {
