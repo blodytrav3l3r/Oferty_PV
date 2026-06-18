@@ -1,0 +1,188 @@
+﻿<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="WITROS — Kartoteka Zleceń Produkcyjnych." />
+        <title>WITROS — Kartoteka Zleceń</title>
+        <link rel="stylesheet" href="css/style.css?v=3.0" />
+        <link rel="stylesheet" href="css/zlecenia.css?v=3.0" />
+    </head>
+
+    <body>
+        <!-- HEADER (hidden when inside SPA iframe) -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <span>Kartoteka Zleceń</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="section active" id="section-zlecenia">
+
+                <div class="zlecenia-page">
+                    <!-- Summary stats -->
+                    <div class="zlecenia-stats" id="zlecenia-stats"></div>
+
+                    <!-- Main card -->
+                    <section style="margin-bottom: 2rem">
+                        <!-- Header: filters + search + refresh -->
+                        <div class="zlecenia-header">
+                            <div class="zlecenia-filters" id="zlecenia-filter-tabs">
+                                <button
+                                    class="zlecenia-filter-tab active"
+                                    data-filter="all"
+                                    onclick="AppZlecenia.setFilter('all')"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    class="zlecenia-filter-tab"
+                                    data-filter="draft"
+                                    onclick="AppZlecenia.setFilter('draft')"
+                                >
+                                    <i data-lucide="hourglass-2"></i> Oczekujące
+                                </button>
+                                <button
+                                    class="zlecenia-filter-tab"
+                                    data-filter="accepted"
+                                    onclick="AppZlecenia.setFilter('accepted')"
+                                >
+                                    <i data-lucide="check-check"></i> Zatwierdzone
+                                </button>
+                            </div>
+
+                            <div
+                                class="search-box"
+                                style="margin: 0; position: relative; flex: 1; min-width: 300px"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    style="
+                                        position: absolute;
+                                        left: 0.7rem;
+                                        top: 50%;
+                                        transform: translateY(-50%);
+                                        width: 1rem;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m21 21-4.35-4.35" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    id="zlecenia-search-input"
+                                    class="form-input form-input-sm"
+                                    placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
+                                    style="
+                                        font-weight: normal;
+                                        padding-left: 2.4rem !important;
+                                        width: 100%;
+                                    "
+                                />
+                            </div>
+
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick="AppZlecenia.loadOrders()"
+                                title="Odśwież bazę zleceń"
+                                style="flex-shrink: 0"
+                            >
+                                <i data-lucide="refresh-cw"></i> Odśwież
+                            </button>
+                        </div>
+
+                        <!-- Batch action bar (visible when items selected) -->
+                        <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
+                            <div class="batch-info">
+                                <i data-lucide="check-check"></i> Zaznaczono: <span class="batch-count">0</span>
+                            </div>
+                            <div class="batch-actions">
+                                <button
+                                    class="batch-btn batch-btn-print"
+                                    onclick="AppZlecenia.printBatchZlecenia()"
+                                >
+                                    <i data-lucide="printer"></i> Drukuj zlecenia
+                                </button>
+                                <button
+                                    class="batch-btn batch-btn-label"
+                                    onclick="AppZlecenia.printBatchEtykiety()"
+                                >
+                                    <i data-lucide="tag"></i> Drukuj etykiety
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="zlecenia-table-container">
+                            <table class="zlecenia-table" id="zlecenia-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px; text-align: center">
+                                            <input
+                                                type="checkbox"
+                                                id="zlecenia-select-all"
+                                                onclick="AppZlecenia.toggleSelectAll(this)"
+                                                style="
+                                                    cursor: pointer;
+                                                    width: 16px;
+                                                    height: 16px;
+                                                    accent-color: #818cf8;
+                                                "
+                                                title="Zaznacz wszystkie"
+                                            />
+                                        </th>
+                                        <th style="width: 140px">Nr zlecenia</th>
+                                        <th style="width: 130px">Data</th>
+                                        <th>Budowa / Studnia</th>
+                                        <th style="width: 150px">Nr zamówienia</th>
+                                        <th>Element</th>
+                                        <th>Opiekun</th>
+                                        <th>Wygenerował</th>
+                                        <th style="width: 105px">Status</th>
+                                        <th style="width: 150px; text-align: right">Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="zlecenia-table-body">
+                                    <tr>
+                                        <td
+                                            colspan="10"
+                                            style="
+                                                text-align: center;
+                                                padding: 2rem;
+                                                color: var(--text-muted);
+                                                font-style: italic;
+                                            "
+                                        >
+                                            Ładowanie danych z serwera...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Dependencies -->
+        <script src="js/shared/formatters.js?v=3.0"></script>
+        <script src="js/shared/auth.js?v=3.0"></script>
+        <script src="js/shared/logger.js?v=3.0"></script>
+        <script src="js/shared/constants.js?v=3.0"></script>
+        <script src="js/shared/ui.js?v=3.0"></script>
+        <script src="js/spa/zlecenia.js?v=3.1"></script>
+        <script src="js/shared/iconsSlim.js?v=3.0"></script>
+</body>
+</html>

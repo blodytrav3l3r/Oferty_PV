@@ -1,0 +1,491 @@
+/* ===== Kartoteka Zleceń — Premium Design ===== */
+
+.zlecenia-page {
+    max-width: 1860px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Pasek statystyk podsumowania */
+.zlecenia-stats {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.zlecenia-stat-card {
+    flex: 1;
+    min-width: 160px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, var(--glass) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 0.55rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    cursor: default;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+.zlecenia-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.zlecenia-stat-card:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -5px rgba(0, 0, 0, 0.3), 0 0 12px rgba(99, 102, 241, 0.1);
+}
+.zlecenia-stat-icon {
+    font-size: 1.1rem;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+.zlecenia-stat-info {
+    flex: 1;
+}
+.zlecenia-stat-value {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+    font-family: 'Inter', sans-serif;
+}
+.zlecenia-stat-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-top: 1px;
+}
+
+/* Zak�adki filtr�w */
+.zlecenia-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    gap: 0.8rem;
+}
+.zlecenia-filters {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+.zlecenia-filter-tab {
+    flex: 1;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+}
+.zlecenia-filter-tab:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+}
+.zlecenia-filter-tab.active {
+    background: rgba(129, 140, 248, 0.12);
+    border-color: rgba(129, 140, 248, 0.4);
+    color: var(--accent-hover);
+}
+
+.zlecenia-header .search-box {
+    max-width: none;
+}
+
+/* Stylowanie tabeli */
+.zlecenia-table-container {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(17, 24, 39, 0.4);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    scrollbar-width: thin;
+}
+.zlecenia-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.zlecenia-table th {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-glass);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    white-space: nowrap;
+}
+.zlecenia-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    vertical-align: middle;
+    transition: background-color 0.2s;
+}
+.zlecenia-table tbody tr {
+    transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+.zlecenia-table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.08);
+    box-shadow: inset 4px 0 0 var(--accent);
+}
+.zlecenia-table tbody tr:hover td {
+    color: #fff;
+}
+.zlecenia-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Kolumna numeru zam�wienia */
+.order-num {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--purple-alt);
+}
+.order-num-missing {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.35rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+.status-badge svg {
+    width: 14px;
+    height: 14px;
+}
+.status-draft {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+    color: var(--warn-hover);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+    animation: pulse-draft 3s infinite;
+}
+@keyframes pulse-draft {
+    0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
+    50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+    100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
+}
+.status-accepted {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    color: var(--success-hover);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+}
+
+/* Odznaka zam�wienia sprzeda�y */
+.sales-order-badge {
+    background: rgba(129, 140, 248, 0.08);
+    color: var(--accent-hover);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.78rem;
+    font-family: monospace;
+    font-weight: 800;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+/* Person badges */
+.person-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.person-handler {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--cyan);
+    border-color: rgba(6, 182, 212, 0.2);
+}
+.person-creator {
+    background: rgba(148, 163, 184, 0.08);
+    color: var(--text-secondary);
+    border-color: rgba(148, 163, 184, 0.15);
+}
+
+/* Action buttons */
+.action-btn {
+    padding: 0.3rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-glass);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    color: var(--text-secondary);
+    line-height: 1;
+    white-space: nowrap;
+}
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.action-btn-edit {
+    border-color: rgba(var(--blue-rgb), 0.3);
+    color: var(--blue-alt);
+}
+.action-btn-edit:hover {
+    background: rgba(14, 165, 233, 0.1);
+}
+.action-btn-delete {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger-hover);
+}
+.action-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+/* Well name + project */
+.well-cell-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+.well-cell-project {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+/* Element cell */
+.element-cell {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Date cell */
+.date-cell {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* Batch action bar */
+.zlecenia-batch-bar {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1.2rem;
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.25) 0%,
+        rgba(129, 140, 248, 0.15) 100%
+    );
+    border: 1px solid rgba(129, 140, 248, 0.4);
+    border-radius: 14px;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes batchBarIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.batch-info {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent-hover);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.batch-count {
+    background: rgba(129, 140, 248, 0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.85rem;
+}
+.batch-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+.batch-btn {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.batch-btn:hover {
+    background: var(--glass-border);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.batch-btn-print {
+    border-color: rgba(14, 165, 233, 0.4);
+    color: var(--blue-alt);
+}
+.batch-btn-print:hover {
+    background: rgba(14, 165, 233, 0.12);
+}
+.batch-btn-label {
+    border-color: rgba(168, 85, 247, 0.4);
+    color: var(--purple-alt);
+}
+.batch-btn-label:hover {
+    background: rgba(168, 85, 247, 0.12);
+}
+
+/* Widok responsywny — Kartoteka Zleceń */
+
+@media (max-width: 900px) {
+    .zlecenia-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .zlecenia-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+    }
+    .zlecenia-filters {
+        justify-content: stretch;
+    }
+    .zlecenia-filter-tab {
+        flex: 1;
+        text-align: center;
+    }
+    .zlecenia-header .search-box {
+        max-width: 100%;
+    }
+    /* Ukryj mniej ważne kolumny */
+    .zlecenia-table th:nth-child(4),  /* Element */
+    .zlecenia-table td:nth-child(4),
+    .zlecenia-table th:nth-child(6),  /* Wygenerował */
+    .zlecenia-table td:nth-child(6),
+    .zlecenia-table th:nth-child(7),  /* Data */
+    .zlecenia-table td:nth-child(7) {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .zlecenia-stats {
+        grid-template-columns: 1fr;
+    }
+    .zlecenia-stat-card {
+        min-width: auto;
+    }
+    /* Ukryj więcej kolumn */
+    .zlecenia-table th:nth-child(3),  /* Nr zamówienia */
+    .zlecenia-table td:nth-child(3),
+    .zlecenia-table th:nth-child(5),  /* Opiekun */
+    .zlecenia-table td:nth-child(5) {
+        display: none;
+    }
+    .zlecenia-batch-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .batch-actions {
+        margin-left: 0;
+        justify-content: stretch;
+    }
+    .batch-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .zlecenia-table th:nth-child(1),  /* Checkbox */
+    .zlecenia-table td:nth-child(1) {
+        display: none;
+    }
+    .zlecenia-table th,
+    .zlecenia-table td {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .status-draft,
+  .zlecenia-batch-bar {
+    animation: none !important;
+    transition: none !important;
+  }
+}

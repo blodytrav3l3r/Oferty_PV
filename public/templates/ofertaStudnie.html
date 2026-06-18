@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Oferta {{NR_OFERTY}}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0mm 10mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a2e;
+            background: #fff;
+            line-height: 1.4;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 190mm;
+            margin: 0 auto;
+        }
+
+        /* ===== NAGŁÓWEK / STOPKA FIRMOWA ===== */
+        .letterhead-header {
+            width: 100%;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .letterhead-footer {
+            width: 100%;
+            display: block;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }
+
+        /* ===== NAGŁÓWEK OFERTY ===== */
+        .offer-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            margin: 8px 0 4px;
+        }
+
+        .offer-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10pt;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #999;
+        }
+
+        .offer-meta strong {
+            color: #333;
+        }
+
+        /* ===== INFO GRID (klient + inwestycja) ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .info-box {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 9pt;
+        }
+
+        .info-box h3 {
+            font-size: 8pt;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-box div {
+            margin-bottom: 1px;
+        }
+
+        /* ===== TABELE DN ===== */
+        .dn-section {
+            margin-bottom: 14px;
+        }
+
+        .dn-header {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #999;
+            border-bottom: 1.5px solid #999;
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+        }
+
+        table.offer-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin-bottom: 4px;
+        }
+
+        table.offer-table th {
+            background: #999;
+            color: #fff;
+            padding: 4px 6px;
+            text-align: center;
+            font-size: 8pt;
+            font-weight: 700;
+            border: 0.5pt solid #999;
+        }
+
+        table.offer-table tr {
+            padding: 3px 6px;
+            page-break-inside: avoid;
+        }
+
+        table.offer-table td {
+            padding: 3px 6px;
+            border: 0.5pt solid #ccc;
+            vertical-align: middle;
+        }
+
+        table.offer-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: 700;
+        }
+
+        .zwienczenie-cell {
+            white-space: nowrap;
+            font-size: 8.4pt;
+        }
+
+        /* Wiersz sumy DN */
+        .dn-summary-row td {
+            background: #f0f0f0;
+            font-weight: 700;
+            border-top: 1.5px solid #999;
+            font-size: 9pt;
+        }
+
+        /* ===== PODSUMOWANIE OGÓLNE ===== */
+        .summary-section {
+            margin-top: 16px;
+        }
+
+        .summary-section h3 {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #999;
+            border-bottom: 1.5px solid #999;
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+        }
+
+        table.summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            margin-bottom: 8px;
+        }
+
+        table.summary-table td {
+            padding: 4px 8px;
+            border: 0.5pt solid #ccc;
+        }
+
+        table.summary-table tr.grand-total td {
+            background: #999;
+            color: #fff;
+            font-weight: 800;
+            font-size: 11pt;
+            border: none;
+        }
+
+        /* ===== UWAGI / WARUNKI ===== */
+        .notes-section {
+            margin-top: 12px;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        .notes-section .note-box {
+            padding: 6px 0;
+            margin-bottom: 6px;
+        }
+
+        .conditions {
+            font-size: 9pt;
+            margin-top: 6px;
+        }
+
+        .conditions div {
+            margin-bottom: 2px;
+        }
+
+        /* Styl stopki usunięty zgodnie z żądaniem */
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <table class="report-container" style="width: 100%; border: none">
+            <thead class="report-header" style="display: table-header-group; border: none">
+                <tr>
+                    <td style="border: none; padding: 0">
+                        <!-- ====== HEADER ====== -->
+                        <img src="data:image/png;base64,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" class="letterhead-header" style="width: 100%; display: block;" />
+                    </td>
+                </tr>
+            </thead>
+            <tfoot class="report-footer" style="display: table-footer-group; border: none">
+                <tr>
+                    <td style="border: none; padding: 0">
+                        <!-- ====== FOOTER ====== -->
+                        <img src="data:image/png;base64,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" class="letterhead-footer" style="width: 100%; display: block;" />
+                    </td>
+                </tr>
+            </tfoot>
+            <tbody class="report-content" style="border: none">
+                <tr>
+                    <td style="border: none; padding: 0">
+                        <!-- ====== TYTUŁ OFERTY/ZAMÓWIENIA ====== -->
+                        <div class="offer-title">{{TYTUL_DOKUMENTU}}</div>
+                        <div class="offer-meta">
+                            <div style="flex-grow: 1">&nbsp;</div>
+                            <div style="text-align: right">
+                                <div>
+                                    <strong>Data przygotowania oferty:</strong> {{DATA_OFERTY}}
+                                </div>
+                                {{VALIDITY_SECTION}}
+                            </div>
+                        </div>
+
+                        <!-- ====== DANE KLIENTA I INWESTYCJI ====== -->
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <h3>Dane klienta</h3>
+                                {{DANE_KLIENTA}}
+                            </div>
+                            <div class="info-box">
+                                <h3>Dane inwestycji</h3>
+                                {{DANE_INWESTYCJI}}
+                            </div>
+                        </div>
+
+                        <!-- ====== TABELE PER ŚREDNICA ====== -->
+                        {{TABELE_DN}}
+
+                        <!-- ====== PODSUMOWANIE OGÓLNE ====== -->
+                        {{PODSUMOWANIE}}
+
+                        <!-- ====== UWAGI / WARUNKI ====== -->
+                        {{SEKCJA_UWAGI}}
+
+                        <!-- ====== STANDARDOWE WARUNKI (STATYCZNE) ====== -->
+                        <div class="standard-terms" style="
+                                    font-size: 8pt;
+                                    margin-top: 15px;
+                                    color: #333;
+                                    line-height: 1.35;
+                                    text-align: justify;
+                                    padding-bottom: 20px;
+                                ">
+                            <span style="
+                                        font-size: 9pt;
+                                        font-weight: 700;
+                                        color: #999;
+                                        margin-bottom: 5px;
+                                        display: block;
+                                    ">Informacje dodatkowe i ogólne warunki:</span>
+                            <p>
+                                Transport rur w średnicach DN 300 – DN 2200 odbywa się na
+                                jednorazowych podkładach drewnianych jako „Zabezpieczenie
+                                transportu”. Koszt podkładów zostanie zafakturowany na fakturze
+                                VAT wg poniższego zestawienia (wartości w tabeli podają cenę
+                                Zabezpieczenia transportu do jednej sztuki rury).
+                            </p>
+
+                            <table style="
+                                        width: 100%;
+                                        border-collapse: collapse;
+                                        margin: 8px 0;
+                                        font-size: 7.5pt;
+                                    ">
+                                <thead>
+                                    <tr style="background: #f0f0f0">
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Zabezpieczenie transportu wg średnicy rur
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Cena netto [PLN]
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Zabezpieczenie transportu wg średnicy rur
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Cena netto [PLN]
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 300
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            13,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 1400
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            90,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 400
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            13,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 1500
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            90,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 500
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            14,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 1600
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            90,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 600
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            20,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 1800
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            230,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 800
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            20,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 2000
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            310,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 1000
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            40,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 2200
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            310,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu DN 1200
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            50,00
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Zabezpieczenie transportu WPUST ULICZNY
+                                        </td>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px; text-align: center;">
+                                            14,00
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <p style="margin-top: 10px">
+                                Rozładunek studni w średnicach DN 1000 – DN 2500 i kręgów DN
+                                1500 - DN 2500 odbywa się za pomocą pętli transportowych zgodnie
+                                z instrukcją montażu PV.
+                            </p>
+
+                            <table style="
+                                        width: 100%;
+                                        border-collapse: collapse;
+                                        margin: 8px 0;
+                                        font-size: 7.5pt;
+                                    ">
+                                <thead>
+                                    <tr style="background: #f0f0f0">
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Pętle transportowe wg średnic studni
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Oznaczenie pętli
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Cena za sztukę [PLN]
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Liczba szt. na komplet
+                                        </th>
+                                        <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            Cena kompletu [PLN]
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla studni DN1000
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD16
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            65,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            3
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            195,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla studni DN1200
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD18
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            70,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            3
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            210,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla studni DN1500
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD24
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            80,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            4
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            320,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla studni DN2000
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD36
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            135,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            4
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            540,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla studni DN2500
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD36
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            135,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            4
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            540,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla kręgów DN1500
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD16
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            65,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            3
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            195,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla kręgów DN2000
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD16
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            65,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            3
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            195,00
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            Pętle transportowe dla kręgów DN2500
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            RD16
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            65,00
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            3
+                                        </td>
+                                        <td style="
+                                                    border: 0.5pt solid #ccc;
+                                                    padding: 3px;
+                                                    text-align: center;
+                                                ">
+                                            195,00
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <p style="margin-top: 10px">
+                                Dla rur powyżej średnicy DN1200 oferujemy kotwy montażowe 45
+                                PLN/szt. w rurze są montowane dwie kotwy.<br />
+                                Sprzęgi uniwersalne mogą być przez nas dostarczane za kaucją
+                                2300 PLN/szt., na wyraźne zamówienie. Po zwrocie w stanie
+                                nieuszkodzonym zostanie z kaucji potrącone 40% jako koszty
+                                własne P.V. Prefabet S.A. i amortyzacja.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Do montażu studni i rur P.V. Prefabet Kluczbork S.A. oferuje
+                                środek poślizgowy w wiaderkach 5kg w cenie 225 PLN.<br />
+                                Dedykowany środek poślizgowy ułatwia montaż, nie wpływa
+                                negatywnie na uszczelki przez co gwarantujemy szczelność naszych
+                                wyrobów. W celu prawidłowego montażu rur i studni do każdego
+                                transportu studni i co do drugiego transportu rur należy
+                                uwzględnić 5kg środka poślizgowego. Koszt środka poślizgowego
+                                stanowi osobną pozycję na fakturze. Zastosowanie innych środków
+                                o nieznanym składzie chemicznym może negatywnie wpłynąć na
+                                szczelność połączeń, a tym samym wyklucza odpowiedzialność
+                                gwarancyjną Producenta.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                <strong>Termin realizacji zamówienia:</strong> I partia towaru
+                                według indywidualnych ustaleń z doradcą techniczno-handlowym.
+                                Zamówienie należy złożyć w formie pisemnej z wszystkimi
+                                istotnymi parametrami potrzebnymi do zrealizowania zamówienia.
+                            </p>
+
+                            <p style="margin-top: 5px">
+                                Odstąpienie od złożonego zamówienia powoduje konieczność zapłaty
+                                100% wartości wyprodukowanego towaru oraz pokrycie kosztów
+                                przygotowania produkcji.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Technologia produkcji studni P.V. Prefabet Kluczbork S.A.
+                                pozwala na uformowanie przejścia szczelnego w betonie.
+                                Zastrzegamy sobie prawo dostawy studni z tego typu przejściami.
+                                Powyższe rozwiązanie gwarantuje pełną funkcjonalność i
+                                szczelność studni.<br />
+                                Na wyraźną mailową prośbę zamawiającego P.V. Prefabet przygotuje
+                                ofertę z uwzględnieniem w wycenie oryginalnych przejść
+                                producenta rur lub zamienników tworzywowych w zależności od
+                                zapytania. Oferta wówczas zawiera odpowiedni zapis „przejścia
+                                producenta” lub „zamienniki tworzywowe”.<br />
+                                P.V. Prefabet oferuje przejścia szczelne z betonu dla rur:<br />
+                                K2KAN, Incor, Pragma ID - DN600; DN500; DN400; DN300; DN250;
+                                DN200; X-Stream; Magnacor – DN300; DN250; DN200; PCV – DN600;
+                                GRP/GRK - DN600; DN500; DN400; DN300.<br />
+                                Zastrzegamy sobie prawo do produkcji studni z przejściami
+                                betonowymi dla innych rodzajów rur i średnic.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Włączenia kanałów w studniach monolitycznych „Unolith” oraz
+                                studnie z wkładką „PRECO” są wykonywane w linii górnej.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Ceny podane w ofercie uwzględniają rabat obowiązujący przy
+                                terminowym uregulowaniu należności oraz przy zamówieniu całości
+                                asortymentu objętego ofertą.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Po otrzymaniu zamówienia na kwotę wyższą niż 50 tys. PLN netto
+                                P.V. Prefabet Kluczbork S.A. przedstawi umowę określającą
+                                warunki dostaw, która zostanie podpisana przed rozpoczęciem
+                                dostaw.<br />
+                                P.V. Prefabet Kluczbork S.A. ubezpiecza wszystkie transakcje z
+                                odroczonym terminem płatności, w związku z tym sprzedaż na
+                                przelew może nastąpić po weryfikacji przez firmę ubezpieczeniową
+                                i ubezpieczeniu transakcji. Procedura ubezpieczenia trwa do 10
+                                dni roboczych, a wszelkie formalności i koszty leżą po stronie
+                                P.V. Prefabet Kluczbork S.A.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Wszelkie spory mogące wyniknąć w związku z realizacją
+                                zamówienia, Strony poddają pod rozstrzygnięcie sądu powszechnego
+                                właściwego dla siedziby Dostawcy.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Niewymienione elementy dodatkowe (elementy do wbudowania,
+                                powłoki itp.) nie są częścią tej oferty.<br />
+                                Wszelkie zmiany ilościowe bądź jakościowe w zamówieniu
+                                korygowane będą poprzez wystawienie kolejnej oferty cenowej lub
+                                ustaleniach między stronami.<br />
+                                Cena loco budowa przy zamówieniu na całość zadania i dostawie
+                                pełnych transportów 24-tonowych. W przypadku niepełnych dostaw
+                                zostanie doliczony dodatkowy koszt transportu.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Drogi dojazdowe do miejsca budowy muszą być przejezdne dla
+                                pojazdów ciężkich (ładowność 24 tony). Zleceniodawca jest
+                                odpowiedzialny za zapewnienie odpowiedniego dojazdu i miejsca
+                                rozładunku na budowie. Rozładunek oraz wynajęcie dźwigu na
+                                miejscu budowy leży po stronie zamawiającego.<br />
+                                Oferta standardowa obejmuje jedno miejsce rozładunku. W
+                                przypadku, gdy miejsc rozładunku jest więcej - za każde
+                                dodatkowe miejsce rozładunku klient płaci 500 PLN.<br />
+                                Standardowy czas rozładunku wyrobów wynosi maksymalnie do 1,5
+                                godz. Za każdą następną rozpoczętą godzinę klient zapłaci 200
+                                PLN netto. Czas liczony jest od momentu zgłoszenia przez
+                                kierowcę osobie upoważnionej gotowości do rozładunku.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                W przypadku wzrostu cen materiałów wsadowych (cement, kruszywa,
+                                usługi transportowe itp.) powyżej 3 % zastrzegamy sobie prawo
+                                zmiany cen.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36
+                                miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod
+                                warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją
+                                techniczną producenta (instrukcje montażu wyrobów do pobrania na
+                                stronie
+                                <a href="http://www.pv-prefabet.com.pl"
+                                    style="color: #000; text-decoration: none">www.pv-prefabet.com.pl</a>).<br />
+                                W zamówieniach prosimy powoływać się na nr niniejszej oferty.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Parametry techniczne oferowanych wyrobów, według odpowiednich
+                                deklaracji dostępnych na
+                                <a href="https://www.pv-prefabet.com.pl"
+                                    style="color: #000; text-decoration: none">https://www.pv-prefabet.com.pl</a>
+                                lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork
+                                S.A.
+                            </p>
+
+                            <p style="margin-top: 10px">
+                                Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne
+                                Warunki Sprzedaży dostępne na stronie internetowej
+                                <a href="http://www.pv-prefabet.com.pl"
+                                    style="color: #000; text-decoration: none">www.pv-prefabet.com.pl</a>
+                                oraz Polityka Prywatności dostępna na stronie internetowej
+                                <a href="http://www.pv-prefabet.com.pl/rodo-dane"
+                                    style="color: #000; text-decoration: none">www.pv-prefabet.com.pl/rodo-dane</a>
+                            </p>
+
+                            <p style="margin-top: 15px; font-weight: bold; font-size: 8.5pt">
+                                Dziękujemy Państwu za zainteresowanie ofertą naszej firmy i mamy
+                                nadzieję na dalszą owocną współpracę.
+                            </p>
+                        </div>
+
+                        <!-- ====== DANE KONTAKTOWE OPERATORÓW ====== -->
+                        {{DANE_KONTAKTOWE}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script src="../js/shared/iconsSlim.js?v=3.0"></script>
+</body>
+
+</html>

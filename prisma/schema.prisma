@@ -1,0 +1,273 @@
+// Schemat bazy danych Prisma dla systemu WITROS Oferty
+// Ten plik definiuje modele danych dla SQLite
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Logi telemetryczne AI o nadpisaniach użytkownika
+model ai_telemetry_logs {
+  id                   String   @id
+  userId               String?
+  original_auto_config String?
+  final_user_config    String?
+  override_reason      String?
+  createdAt            String?
+}
+
+// Logi audytowe (śledzenie zmian w bazie)
+model audit_logs {
+  id         String   @id
+  entityType String
+  entityId   String
+  userId     String?
+  action     String
+  oldData    String?
+  newData    String?
+  createdAt  String?
+
+  @@index([entityType, entityId], map: "idx_audit_entity")
+}
+
+// Baza klientów
+model clients_rel {
+  id        String  @id
+  userId    String?
+  name      String?
+  nip       String?
+  address   String?
+  email     String?
+  phone     String?
+  contact   String? @default("")
+  createdAt String?
+  updatedAt String?
+
+  @@index([userId], map: "idx_clients_user")
+}
+
+model offer_items_rel {
+  id        String  @id
+  offerId   String?
+  productId String?
+  quantity  Float?
+  discount  Float?
+  price     Float?
+}
+
+model offer_studnie_items_rel {
+  id             String  @id
+  offerId        String?
+  productId      String?
+  quantity       Float?
+  discount       Float?
+  price          Float?
+  dodatkowe_info String?
+}
+
+// Główne dokumenty ofert (typ rury/ogólne)
+model offers_rel {
+  id            String   @id
+  userId        String?
+  clientId      String?
+  state         String?
+  createdAt     String?
+  transportCost Float?
+  offer_number  String?
+  data          String?
+  updatedAt     String?
+  history       String?  @default("[]")
+}
+
+// Główne dokumenty ofert (typ studnie)
+model offers_studnie_rel {
+  id            String   @id
+  userId        String?
+  clientId      String?
+  state         String?
+  createdAt     String?
+  transportCost Float?
+  offer_number  String?
+  data          String?
+  updatedAt     String?
+  history       String?  @default("[]")
+}
+
+// Liczniki numeracji ofert
+model order_counters {
+  userId     String
+  year       Int
+  lastNumber Int?    @default(0)
+
+  @@id([userId, year])
+}
+
+// Liczniki numeracji zamówień rur (niezależne od studni)
+model order_counters_rury {
+  userId     String
+  year       Int
+  lastNumber Int?    @default(0)
+
+  @@id([userId, year])
+}
+
+// Zamówienia na studnie
+model orders_studnie_rel {
+  id             String  @id
+  userId         String?
+  offerStudnieId String?
+  createdAt      String?
+  status         String?
+  data           String?
+}
+
+// Zamówienia na rury
+model orders_rury_rel {
+  id        String  @id
+  userId    String?
+  offerId   String?
+  createdAt String?
+  status    String?
+  data      String?
+}
+
+model production_order_counters {
+  userId     String
+  year       Int
+  lastNumber Int?   @default(0)
+
+  @@id([userId, year])
+}
+
+model production_orders_rel {
+  id           String  @id
+  userId       String?
+  orderId      String?
+  wellId       String?
+  elementIndex Int?
+  createdAt    String?
+  updatedAt    String?
+  data         String?
+  creatorId    String? @default("")
+}
+
+model recycled_production_numbers {
+  userId    String
+  year      Int
+  seqNumber Int
+
+  @@id([userId, year, seqNumber])
+}
+
+model sessions {
+  token     String @id
+  userId    String
+  createdAt BigInt
+}
+
+model settings {
+  key   String @id
+  value String?
+}
+
+// ─── Produkty rury ─────────────────────────────────────────────────
+
+model CategoriesRury {
+  name  String @id
+  order Int
+
+  products ProductsRury[]
+}
+
+model ProductsRury {
+  id        String  @id
+  name      String
+  category  String
+  price     Float
+  transport Float?
+  weight    Float?
+  area      Float?
+
+  category_rel CategoriesRury @relation(fields: [category], references: [name])
+}
+
+// ─── Produkty studnie ──────────────────────────────────────────────
+
+model CategoriesStudnie {
+  name          String @id
+  componentType String?
+  order         Int
+
+  products ProductsStudnie[]
+}
+
+model ProductsStudnie {
+  id                   String  @id
+  name                 String
+  category             String
+  componentType        String
+  dn                   String?
+  height               Int?
+  weight               Float?
+  price                Float   @default(0)
+  area                 Float?
+  areaExt              Float?
+  transport            Float?
+  magazynWL            Boolean @default(false)
+  magazynKLB           Boolean @default(false)
+  formaStandardowa     Boolean @default(false)
+  formaStandardowaKLB  Boolean @default(false)
+
+  // przejscie-specific
+  active               Boolean @default(false)
+  zapasDol             Int?
+  zapasGora            Int?
+  zapasDolMin          Int?
+  zapasGoraMin         Int?
+  spocznikH            String?
+
+  // kineta-specific (3 zakresy wysokosci x cena)
+  hMin1  Int?
+  hMax1  Int?
+  cena1  Float?
+  hMin2  Int?
+  hMax2  Int?
+  cena2  Float?
+  hMin3  Int?
+  hMax3  Int?
+  cena3  Float?
+
+  // doplaty (dennica + styczna + active przejscie)
+  doplataPEHD           Float?
+  doplataZelbet         Float?
+  doplataDrabNierdzewna Float?
+  malowanieWewnetrzne   Float?
+  malowanieZewnetrzne   Float?
+
+  category_rel CategoriesStudnie @relation(fields: [category], references: [name])
+}
+
+// Użytkownicy systemu
+model users {
+  id                         String   @id
+  username                   String   @unique
+  password                   String
+  role                       String
+  firstName                  String?
+  lastName                   String?
+  phone                      String?
+  email                      String?
+  symbol                     String?
+  subUsers                   String?
+  createdAt                  String?
+  orderStartNumber           Int?     @default(1)
+  productionOrderStartNumber Int?     @default(1)
+}
