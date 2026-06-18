@@ -1090,13 +1090,13 @@ function updateOfferSummaryUI(totals) {
     const transCostEl = document.getElementById('sum-transport-cost');
 
     if (totals.totalTransportCost > 0) {
-        if (transCostEl) transCostEl.innerHTML = `<i data-lucide="truck" class="icon-md"></i> ${fmtInt(totals.totalTransportCost)} PLN`;
+        if (transCostEl) transCostEl.innerHTML = `<i data-lucide="truck" class="icon-md"></i> ${fmt(totals.totalTransportCost)} PLN`;
 
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
             activeTransportInfo.innerHTML = `
                 <div style="margin-bottom: 2px;">Ilość aut: <span style="color: #cbd5e1; font-weight: 600;">${typeof formatTransportCount === 'function' ? formatTransportCount(totals.totalTransports, typeof orderEditMode !== 'undefined' && orderEditMode ? 'fractional' : currentTransportMode) : totals.totalTransports}</span></div>
-                <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;">${fmtInt(totals.transportCostPerTrip)} PLN</span></div>
+                <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;">${fmt(totals.transportCostPerTrip)} PLN</span></div>
             `;
         }
     } else {
@@ -1116,18 +1116,18 @@ function updateOfferSummaryUI(totals) {
         finalWeight += s.weight;
     });
 
-    if (totalEl) totalEl.textContent = fmtInt(finalNetto) + ' PLN';
-    if (bruttoEl) bruttoEl.textContent = 'Brutto: ' + fmtInt(finalNetto * 1.23) + ' PLN';
+    if (totalEl) totalEl.textContent = fmt(finalNetto) + ' PLN';
+    if (bruttoEl) bruttoEl.textContent = 'Brutto: ' + fmt(finalNetto * 1.23) + ' PLN';
     if (weightEl) weightEl.textContent = fmtInt(finalWeight) + ' kg';
 
     const productsEl = document.getElementById('sum-netto-products');
     if (productsEl) {
         const productsNetto = Math.max(0, finalNetto - (totals.totalTransportCost || 0));
-        productsEl.textContent = fmtInt(productsNetto) + ' PLN';
+        productsEl.textContent = fmt(productsNetto) + ' PLN';
     }
 
     const transportModalTotalEl = document.getElementById('transport-modal-total-val');
-    if (transportModalTotalEl) transportModalTotalEl.textContent = fmtInt(finalNetto) + ' PLN';
+    if (transportModalTotalEl) transportModalTotalEl.textContent = fmt(finalNetto) + ' PLN';
 
     const discountsInfoEl = document.getElementById('offer-active-discounts-info');
     if (discountsInfoEl) {
