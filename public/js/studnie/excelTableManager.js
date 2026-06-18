@@ -586,6 +586,19 @@ function _excelRenderTable(dn) {
 
     html += '</tbody></table>';
     container.innerHTML = html;
+
+    /* DEBUG — weryfikacja liczby kolumn */
+    const table = container.querySelector('table');
+    if (table) {
+        const thCount = table.querySelectorAll('thead tr th').length;
+        const firstRowTds = table.querySelector('tbody tr:not(#excel-empty-row)');
+        const tdCount = firstRowTds ? firstRowTds.querySelectorAll('td').length : 0;
+        const emptyRow = table.querySelector('#excel-empty-row');
+        const emptyTdCount = emptyRow ? emptyRow.querySelectorAll('td').length : 0;
+        console.log('[Excel] th:', thCount, 'td(data):', tdCount, 'td(empty):', emptyTdCount, 'compCols:', compCols.length);
+        if (thCount !== tdCount) console.warn('[Excel] MISMATCH header vs data!');
+        if (thCount !== emptyTdCount) console.warn('[Excel] MISMATCH header vs empty row!');
+    }
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
