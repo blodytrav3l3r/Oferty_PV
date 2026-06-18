@@ -601,6 +601,7 @@ function excelCreateFromEmpty() {
     let well;
     if (typeof createNewWell === 'function') {
         well = createNewWell(autoName, dn);
+        if (name) { well.numer = name; well.name = name; }
     } else {
         well = {
             id: 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
