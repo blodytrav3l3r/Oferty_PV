@@ -1768,7 +1768,21 @@ select.form-input option {
 #excel-table-container select {
     width: 100% !important;
     box-sizing: border-box !important;
+    padding: 0.3rem 0.45rem;
+    background: transparent;
+}
+
+#excel-table-container td {
     padding: 0 !important;
+}
+
+#excel-table-container input[type="checkbox"] {
+    display: block;
+    margin: 0.3rem auto;
+}
+
+#excel-table-container td[data-cell] {
+    padding: 0.3rem 0.45rem !important;
 }
 
 /* prefers-reduced-motion */
