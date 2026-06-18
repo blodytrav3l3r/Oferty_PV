@@ -529,7 +529,7 @@ function _excelRenderTable(dn) {
     const tdEmpty = `${tdBase}color:#334155;`;
 
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni…" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni…" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
     html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
@@ -582,10 +582,7 @@ function _excelRenderTable(dn) {
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
-let _excelCreatingFromEmpty = false;
-
 function excelCreateFromEmpty() {
-    if (_excelCreatingFromEmpty) return;
     const nameEl = document.getElementById('excel-empty-name');
     const rzwEl = document.getElementById('excel-empty-rzw');
     const rzdEl = document.getElementById('excel-empty-rzd');
@@ -596,8 +593,6 @@ function excelCreateFromEmpty() {
     const rzd = rzdEl ? parseFloat(rzdEl.value) : null;
 
     if (!name && rzw === null && rzd === null) return;
-
-    _excelCreatingFromEmpty = true;
 
     const dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab);
     const autoName = name || ((dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')');
@@ -624,7 +619,6 @@ function excelCreateFromEmpty() {
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
     showToast('Dodano: ' + autoName, 'success');
-    _excelCreatingFromEmpty = false;
 
     setTimeout(() => {
         const el = document.getElementById('excel-empty-name');
