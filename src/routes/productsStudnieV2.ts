@@ -25,6 +25,22 @@ const config: PricelistConfig = {
 
 export async function initStudnieProductsTable() {
     await ensureProductsSeeded(config);
+
+    // Usuń przejścia z prefiksem "W +" (pozostałości po starym UI)
+    try {
+        const wCount = await prisma.productsStudnie.deleteMany({
+            where: { componentType: 'przejscie', category: { startsWith: 'W +' } }
+        });
+        if (wCount.count > 0) {
+            await prisma.categoriesStudnie.deleteMany({
+                where: { name: { startsWith: 'W +' } }
+            });
+            logger.info('ProductsStudnieV2', `Usunięto ${wCount.count} produktów W+ z bazy`);
+        }
+    } catch (e) {
+        logger.warn('ProductsStudnieV2', 'Błąd czyszczenia W+:', e instanceof Error ? e.message : e);
+    }
+
     try {
         const cnt = await prisma.productsStudnie.count();
         if (cnt > 0) return;

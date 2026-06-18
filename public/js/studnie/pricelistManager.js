@@ -326,7 +326,7 @@ function addPrzejsciaCategory() {
     name = name.trim();
     if (!name) return;
 
-    const catName = name.startsWith('W + ') ? name : `W + ${name}`;
+    const catName = name;
 
     if (studnieProducts.some((p) => p.componentType === 'przejscie' && p.category === catName)) {
         showToast('Taka kategoria już istnieje', 'error');
