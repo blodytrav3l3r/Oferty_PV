@@ -1,14 +1,4 @@
 ﻿/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
-html {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-html::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
-}
-
 .well-app-layout {
     display: grid;
     grid-template-columns: 350px 1fr 350px;
@@ -158,30 +148,24 @@ html::-webkit-scrollbar {
 
 .well-center-column::-webkit-scrollbar,
 #wells-list::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
+    width: 6px;
 }
 
 .well-center-column::-webkit-scrollbar-track,
 #wells-list::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--scrollbar-track);
+    border-radius: 4px;
 }
 
 .well-center-column::-webkit-scrollbar-thumb,
 #wells-list::-webkit-scrollbar-thumb {
-    background: transparent;
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
 }
 
 .well-center-column::-webkit-scrollbar-thumb:hover,
 #wells-list::-webkit-scrollbar-thumb:hover {
-    background: transparent;
-}
-
-.well-center-column,
-#wells-list {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    background: var(--scrollbar-thumb-hover);
 }
 
 .wells-sidebar-header {
