@@ -77,50 +77,108 @@ function _excelBuildComponentColumns(dn) {
     const groups = _excelGetComponentsForDn(dn);
     const cols = [];
 
+    /* 1. Właz */
     const wlazProducts = groups['wlaz'] || [];
     if (wlazProducts.length > 0) {
         cols.push({ key: 'wlaz', label: 'Właz', type: 'select', componentType: 'wlaz', products: wlazProducts });
     }
 
+    /* 2. AVR / Pierścienie — per produkt (osobna kolumna każdy) */
     const avrProducts = groups['avr'] || [];
-    if (avrProducts.length > 0) {
-        avrProducts.forEach(p => {
-            const nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
-            cols.push({ key: 'avr_' + p.id, label: 'AVR ' + nameShort, type: 'number', componentType: 'avr', productId: p.id, height: p.height });
+    avrProducts.forEach(p => {
+        const nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
+        cols.push({ key: 'avr_' + p.id, label: 'AVR ' + nameShort, type: 'number', componentType: 'avr', productId: p.id, height: p.height });
+    });
+
+    /* 3. Konus / Stożek */
+    const konusProducts = groups['konus'] || [];
+    konusProducts.forEach(p => {
+        cols.push({ key: 'konus_' + p.id, label: p.name, type: 'number', componentType: 'konus', productId: p.id, height: p.height });
+    });
+
+    /* 4. Płyty nakrywające — per componentType per wysokość */
+    ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].forEach(ct => {
+        const prods = (groups[ct] || []).sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
+        const seenH = new Set();
+        const ctLabels = {
+            plyta_din: 'Pł. DIN', plyta_najazdowa: 'Pł. najazd.', plyta_zamykajaca: 'Pł. zamyk.', pierscien_odciazajacy: 'Pierśc. odciąż.'
+        };
+        prods.forEach(p => {
+            const h = parseInt(p.height) || 0;
+            if (h > 0 && !seenH.has(h)) {
+                seenH.add(h);
+                const matching = prods.filter(k => parseInt(k.height) === h);
+                cols.push({ key: ct + '_' + h, label: (ctLabels[ct] || ct) + ' H=' + h, type: 'number', componentType: ct, height: h, products: matching });
+            }
         });
-    }
+        /* produkty bez wysokości — osobna kolumna */
+        const noHeight = prods.filter(p => !parseInt(p.height));
+        noHeight.forEach(p => {
+            cols.push({ key: ct + '_' + p.id, label: (ctLabels[ct] || ct) + ' ' + (p.name.length > 15 ? p.name.substring(0, 13) + '…' : p.name), type: 'number', componentType: ct, productId: p.id });
+        });
+    });
 
-    const plytaDin = groups['plyta_din'] || [];
-    if (plytaDin.length > 0) {
-        cols.push({ key: 'plyta_din', label: 'Płyta DIN', type: 'number', componentType: 'plyta_din', products: plytaDin });
-    }
+    /* 5. Płyty redukcyjne */
+    const plytaRedProducts = groups['plyta_redukcyjna'] || [];
+    plytaRedProducts.forEach(p => {
+        cols.push({ key: 'plyta_redukcyjna_' + p.id, label: p.name, type: 'number', componentType: 'plyta_redukcyjna', productId: p.id, height: p.height });
+    });
 
-    const pierscienOdc = groups['pierscien_odciazajacy'] || [];
-    if (pierscienOdc.length > 0) {
-        cols.push({ key: 'pierscien_odciazajacy', label: 'Pierśc. odciąż.', type: 'number', componentType: 'pierscien_odciazajacy', products: pierscienOdc });
-    }
-
+    /* 6. Kręgi — per wysokość */
     const kregProducts = (groups['krag'] || []).sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
-    const seenHeights = new Set();
+    const seenKregH = new Set();
     kregProducts.forEach(p => {
         const h = parseInt(p.height) || 0;
-        if (h > 0 && !seenHeights.has(h)) {
-            seenHeights.add(h);
+        if (h > 0 && !seenKregH.has(h)) {
+            seenKregH.add(h);
             const matching = kregProducts.filter(k => parseInt(k.height) === h);
             cols.push({ key: 'krag_' + h, label: 'Krąg H=' + h, type: 'number', componentType: 'krag', height: h, products: matching });
         }
     });
 
+    /* 7. Kręgi OT — per wysokość */
     const kragOtProducts = (groups['krag_ot'] || []).sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
-    const seenOtHeights = new Set();
+    const seenOtH = new Set();
     kragOtProducts.forEach(p => {
         const h = parseInt(p.height) || 0;
-        if (h > 0 && !seenOtHeights.has(h)) {
-            seenOtHeights.add(h);
+        if (h > 0 && !seenOtH.has(h)) {
+            seenOtH.add(h);
             const matching = kragOtProducts.filter(k => parseInt(k.height) === h);
             cols.push({ key: 'krag_ot_' + h, label: 'Krąg OT H=' + h, type: 'number', componentType: 'krag_ot', height: h, products: matching });
         }
     });
+
+    /* 8. Dennica — per wysokość lub per produkt */
+    const dennicaProducts = (groups['dennica'] || []).sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
+    const seenDenH = new Set();
+    dennicaProducts.forEach(p => {
+        const h = parseInt(p.height) || 0;
+        if (h > 0 && !seenDenH.has(h)) {
+            seenDenH.add(h);
+            const matching = dennicaProducts.filter(k => parseInt(k.height) === h);
+            cols.push({ key: 'dennica_' + h, label: 'Dennica H=' + h, type: 'number', componentType: 'dennica', height: h, products: matching });
+        }
+    });
+    dennicaProducts.filter(p => !parseInt(p.height)).forEach(p => {
+        cols.push({ key: 'dennica_' + p.id, label: 'Dennica ' + (p.name.length > 12 ? p.name.substring(0, 10) + '…' : p.name), type: 'number', componentType: 'dennica', productId: p.id });
+    });
+
+    /* 9. Osadniki */
+    const osadnikProducts = groups['osadnik'] || [];
+    osadnikProducts.forEach(p => {
+        cols.push({ key: 'osadnik_' + p.id, label: p.name, type: 'number', componentType: 'osadnik', productId: p.id, height: p.height });
+    });
+
+    /* 10. Studnie Styczne (tylko dla dn='styczna') */
+    if (dn === 'styczna') {
+        const stycznaProducts = groups['styczna'] || [];
+        stycznaProducts.forEach(p => {
+            cols.push({ key: 'styczna_' + p.id, label: p.name, type: 'number', componentType: 'styczna', productId: p.id, dn: p.dn });
+        });
+    }
+
+    /* 11. Uszczelki — ilość (auto: kręgi + 1) */
+    cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
     return cols;
 }
@@ -343,7 +401,13 @@ function _excelRenderTable(dn) {
     html += `<th style="${thBase}background:#0f1a15;color:#6ee7b7;min-width:130px;text-align:left;">Właz</th>`;
 
     compCols.forEach(col => {
-        const hc = col.componentType === 'avr' ? '#fbbf24' : (col.componentType === 'krag' || col.componentType === 'krag_ot') ? '#34d399' : '#93c5fd';
+        if (col.type === 'auto') return; /* uszczelka — osobny nagłówek niżej */
+        const ct = col.componentType;
+        const hc = ct === 'avr' ? '#fbbf24' : (ct === 'krag' || ct === 'krag_ot') ? '#34d399'
+            : ct === 'dennica' ? '#f97316' : ct === 'konus' ? '#fb923c'
+            : (ct === 'plyta_din' || ct === 'plyta_najazdowa' || ct === 'plyta_zamykajaca' || ct === 'pierscien_odciazajacy') ? '#60a5fa'
+            : ct === 'plyta_redukcyjna' ? '#f472b6' : ct === 'osadnik' ? '#a78bfa'
+            : ct === 'styczna' ? '#f472b6' : '#93c5fd';
         html += `<th style="${thBase}background:#13151f;color:${hc};min-width:62px;text-align:center;">${col.label}</th>`;
     });
 
@@ -426,7 +490,7 @@ function _excelRenderTable(dn) {
 
         /* Komponenty — ilości */
         compCols.forEach(col => {
-            if (col.type === 'select') return;
+            if (col.type === 'select' || col.type === 'auto') return;
             const count = _excelCountProductInConfig(well, col.componentType, col.height, col.productId);
             const pidArg = col.productId ? `'${col.productId}'` : 'null';
             const hArg = col.height != null ? col.height : 'null';
@@ -443,9 +507,9 @@ function _excelRenderTable(dn) {
         const dennH = _excelCalcDennicaHeight(well);
         html += `<td style="${tdBase}text-align:center;color:#fbbf24;font-weight:600;background:rgba(245,158,11,0.03);" data-cell="denn-${wIdx}">${dennH || '—'}</td>`;
 
-        /* Uszczelki — auto */
+        /* Uszczelki — auto (z compCols) */
         const uszczCount = _excelCalcUszczelkaCount(well);
-        html += `<td style="${tdBase}text-align:center;color:#fbbf24;font-weight:600;background:rgba(245,158,11,0.03);" data-cell="uszcz-${wIdx}">${uszczCount}</td>`;
+        html += `<td style="${tdBase}text-align:center;color:#f97316;font-weight:600;background:rgba(249,115,22,0.04);" data-cell="uszcz-${wIdx}">${uszczCount}</td>`;
 
         /* Kineta */
         let kinSel = `<select onchange="excelOnKinetaChange(${wIdx},this.value)" style="${_excelCellInp(90)}text-align:left;cursor:pointer;">`;
@@ -495,7 +559,7 @@ function _excelRenderTable(dn) {
 
     /* Komponenty */
     compCols.forEach(col => {
-        if (col.type === 'select') return;
+        if (col.type === 'select' || col.type === 'auto') return;
         html += `<td style="${tdEmpty}text-align:center;"><input type="number" min="0" step="1" placeholder="—" disabled style="${_excelCellInp(50)}opacity:0.3;" /></td>`;
     });
 
