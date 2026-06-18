@@ -401,7 +401,7 @@ function _excelRenderTable(dn) {
     html += `<th style="${thBase}background:#0f1a15;color:#6ee7b7;min-width:130px;text-align:left;">Właz</th>`;
 
     compCols.forEach(col => {
-        if (col.type === 'auto') return; /* uszczelka — osobny nagłówek niżej */
+        if (col.type === 'auto' || col.type === 'select') return; /* uszczelka + właz — osobne nagłówki niżej */
         const ct = col.componentType;
         const hc = ct === 'avr' ? '#fbbf24' : (ct === 'krag' || ct === 'krag_ot') ? '#34d399'
             : ct === 'dennica' ? '#f97316' : ct === 'konus' ? '#fb923c'
@@ -586,19 +586,6 @@ function _excelRenderTable(dn) {
 
     html += '</tbody></table>';
     container.innerHTML = html;
-
-    /* DEBUG — weryfikacja liczby kolumn */
-    const table = container.querySelector('table');
-    if (table) {
-        const thCount = table.querySelectorAll('thead tr th').length;
-        const firstRowTds = table.querySelector('tbody tr:not(#excel-empty-row)');
-        const tdCount = firstRowTds ? firstRowTds.querySelectorAll('td').length : 0;
-        const emptyRow = table.querySelector('#excel-empty-row');
-        const emptyTdCount = emptyRow ? emptyRow.querySelectorAll('td').length : 0;
-        console.log('[Excel] th:', thCount, 'td(data):', tdCount, 'td(empty):', emptyTdCount, 'compCols:', compCols.length);
-        if (thCount !== tdCount) console.warn('[Excel] MISMATCH header vs data!');
-        if (thCount !== emptyTdCount) console.warn('[Excel] MISMATCH header vs empty row!');
-    }
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
