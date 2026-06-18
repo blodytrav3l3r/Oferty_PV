@@ -1,7 +1,8 @@
-/* ===== EXCEL TABLE MANAGER — Tabela konfiguracyjna studni ===== */
+/* ===== EXCEL TABLE MANAGER — Tabela konfiguracyjna studni (Excel-style) ===== */
 
 let _excelMaxTransitions = 1;
 let _excelActiveTab = '1000';
+let _excelFocusedCell = null;
 
 const KINETA_OPTIONS = [
     ['brak', 'Brak'],
@@ -17,13 +18,17 @@ const KINETA_OPTIONS = [
 
 const DN_TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
 const DN_COLORS = {
-    '1000': { bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.4)', text: '#93c5fd' },
-    '1200': { bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.4)', text: '#6ee7b7' },
-    '1500': { bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.4)', text: '#fbbf24' },
-    '2000': { bg: 'rgba(168,85,247,0.15)', border: 'rgba(168,85,247,0.4)', text: '#c4b5fd' },
-    '2500': { bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.4)', text: '#fca5a5' },
-    'styczne': { bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.4)', text: '#f9a8d4' }
+    '1000': { bg: 'rgba(59,130,246,0.12)', border: '#3b82f6', text: '#93c5fd', activeBg: 'rgba(59,130,246,0.25)' },
+    '1200': { bg: 'rgba(16,185,129,0.12)', border: '#10b981', text: '#6ee7b7', activeBg: 'rgba(16,185,129,0.25)' },
+    '1500': { bg: 'rgba(245,158,11,0.12)', border: '#f59e0b', text: '#fbbf24', activeBg: 'rgba(245,158,11,0.25)' },
+    '2000': { bg: 'rgba(168,85,247,0.12)', border: '#a855f7', text: '#c4b5fd', activeBg: 'rgba(168,85,247,0.25)' },
+    '2500': { bg: 'rgba(239,68,68,0.12)', border: '#ef4444', text: '#fca5a5', activeBg: 'rgba(239,68,68,0.25)' },
+    'styczne': { bg: 'rgba(236,72,153,0.12)', border: '#ec4899', text: '#f9a8d4', activeBg: 'rgba(236,72,153,0.25)' }
 };
+
+const _EXCEL_BORDER = '1px solid rgba(255,255,255,0.07)';
+const _EXCEL_CELL_PADD = '0.3rem 0.45rem';
+const _EXCEL_FONT = 'font-size:0.67rem;font-family:Consolas,Menlo,monospace;';
 
 function _excelWellMatchesTab(well, tab) {
     if (tab === 'styczne') return well.dn === 'styczna';
@@ -41,7 +46,7 @@ function _excelGetMaxTransitions() {
 }
 
 function _excelGetComponentsForDn(dn) {
-    if (typeof studnieProducts === 'undefined' || !studnieProducts) return [];
+    if (typeof studnieProducts === 'undefined' || !studnieProducts) return {};
     const mag = (typeof wells !== 'undefined' && wells.length > 0) ? (wells[0].magazyn || 'Kluczbork') : 'Kluczbork';
     const isWl = mag.includes('oc') || mag.includes('Włoc');
     const field = isWl ? 'magazynWL' : 'magazynKLB';
@@ -169,58 +174,62 @@ function _excelGetWlazFromConfig(well) {
     return '';
 }
 
+/* ===== CELL STYLES (Excel-like) ===== */
+function _excelCellTxt(isRight, color) {
+    return `padding:${_EXCEL_CELL_PADD};border:${_EXCEL_BORDER};${_EXCEL_FONT}white-space:nowrap;${isRight ? 'text-align:right;' : ''}${color ? 'color:' + color + ';' : ''}`;
+}
+function _excelCellInp(width) {
+    return `width:${width || 65}px;background:transparent;border:1px solid transparent;border-radius:0;padding:0.15rem 0.3rem;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.1s;background:transparent;`;
+}
+
+/* ===== OPEN MODAL ===== */
 function openExcelTableModal() {
-    if (typeof wells === 'undefined' || !Array.isArray(wells) || wells.length === 0) {
-        showToast('Brak studni do wyświetlenia', 'error');
-        return;
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) {
+        window.wells = [];
     }
 
     _excelMaxTransitions = _excelGetMaxTransitions();
-
-    const dnCounts = {};
-    wells.forEach(w => {
-        const key = w.dn === 'styczna' ? 'styczne' : String(w.dn);
-        dnCounts[key] = (dnCounts[key] || 0) + 1;
-    });
-
-    const firstTab = DN_TABS.find(t => dnCounts[t]) || '1000';
-    _excelActiveTab = firstTab;
 
     let existing = document.getElementById('excel-table-overlay');
     if (existing) existing.remove();
 
     const overlay = document.createElement('div');
     overlay.id = 'excel-table-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
 
-    overlay.addEventListener('click', e => {
-        if (e.target === overlay) closeExcelTableModal();
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeExcelTableModal(); });
+    overlay.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeExcelTableModal();
+        if (e.key === 'Tab') _excelHandleTab(e);
     });
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'width:95vw;height:95vh;background:var(--bg-secondary,#0f172a);border:1px solid var(--border-glass,rgba(255,255,255,0.08));border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.5);';
+    modal.style.cssText = 'width:96vw;height:96vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
 
     modal.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1.2rem;border-bottom:1px solid var(--border-glass,rgba(255,255,255,0.08));flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <i data-lucide="table" style="width:20px;height:20px;color:var(--success,#10b981);"></i>
-                <span style="font-size:0.85rem;font-weight:800;color:var(--text-primary);">Tabela konfiguracyjna studni</span>
-                <span style="font-size:0.65rem;color:var(--text-muted);margin-left:0.5rem;">${wells.length} studni</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+                <i data-lucide="table" style="width:16px;height:16px;color:#10b981;"></i>
+                <span style="font-size:0.75rem;font-weight:700;color:#e2e8f0;letter-spacing:0.3px;">Tabela konfiguracyjna</span>
+                <span id="excel-well-count" style="font-size:0.6rem;color:#64748b;padding:0.1rem 0.5rem;background:rgba(255,255,255,0.04);border-radius:3px;"></span>
             </div>
-            <div style="display:flex;gap:0.5rem;align-items:center;">
-                <button onclick="excelSaveAll()" style="background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.4rem 1rem;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Zapisz</button>
-                <button onclick="closeExcelTableModal()" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:0.4rem 0.8rem;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">Anuluj</button>
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+                <button onclick="excelAddWellToTab()" id="excel-add-btn" title="Dodaj studnię do bieżącej zakładki" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.25);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> Dodaj</button>
+                <button onclick="excelSaveAll()" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Zapisz</button>
+                <button onclick="closeExcelTableModal()" style="background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
             </div>
         </div>
-        <div id="excel-tabs" style="display:flex;gap:0.3rem;padding:0.5rem 1.2rem;border-bottom:1px solid var(--border-glass,rgba(255,255,255,0.06));flex-shrink:0;flex-wrap:wrap;"></div>
-        <div id="excel-table-container" style="flex:1;overflow:auto;padding:0;"></div>
+        <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;"></div>
+        <div id="excel-table-container" style="flex:1;overflow:auto;background:#0c0e14;"></div>
     `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    _excelRenderTabs(dnCounts);
+    _excelActiveTab = DN_TABS[0];
+    _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
 
     if (typeof lucide !== 'undefined') lucide.createIcons({ root: overlay });
 }
@@ -230,169 +239,227 @@ function closeExcelTableModal() {
     if (overlay) overlay.remove();
 }
 
-function _excelRenderTabs(dnCounts) {
+/* ===== TABS (always all visible) ===== */
+function _excelRenderTabs() {
     const container = document.getElementById('excel-tabs');
     if (!container) return;
 
-    let html = '';
-    DN_TABS.forEach(tab => {
-        const count = dnCounts[tab] || 0;
-        if (count === 0) return;
-        const c = DN_COLORS[tab] || DN_COLORS['1000'];
-        const isActive = tab === _excelActiveTab;
-        html += `<button onclick="excelSwitchTab('${tab}')" style="
-            padding:0.35rem 0.8rem;border-radius:6px;font-size:0.68rem;font-weight:700;cursor:pointer;
-            border:1px solid ${isActive ? c.border : 'rgba(255,255,255,0.08)'};
-            background:${isActive ? c.bg : 'rgba(255,255,255,0.03)'};
-            color:${isActive ? c.text : 'var(--text-muted)'};
-            transition:all 0.15s;">
-            DN${tab === 'styczne' ? ' Styczne' : tab} <span style="opacity:0.6;">(${count})</span>
-        </button>`;
-    });
-    container.innerHTML = html;
-}
-
-function excelSwitchTab(tab) {
-    _excelActiveTab = tab;
     const dnCounts = {};
     wells.forEach(w => {
         const key = w.dn === 'styczna' ? 'styczne' : String(w.dn);
         dnCounts[key] = (dnCounts[key] || 0) + 1;
     });
-    _excelRenderTabs(dnCounts);
+
+    let html = '';
+    DN_TABS.forEach(tab => {
+        const count = dnCounts[tab] || 0;
+        const c = DN_COLORS[tab] || DN_COLORS['1000'];
+        const isActive = tab === _excelActiveTab;
+        const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
+        html += `<button onclick="excelSwitchTab('${tab}')" style="
+            padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
+            border-bottom:2px solid ${isActive ? c.border : 'transparent'};
+            background:${isActive ? c.activeBg : 'transparent'};
+            color:${isActive ? c.text : '#64748b'};
+            transition:all 0.12s;letter-spacing:0.2px;">
+            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>
+        </button>`;
+    });
+    container.innerHTML = html;
+}
+
+function _excelUpdateWellCount() {
+    const el = document.getElementById('excel-well-count');
+    if (el) el.textContent = wells.length + ' studni';
+}
+
+function excelSwitchTab(tab) {
+    _excelActiveTab = tab;
+    _excelRenderTabs();
     _excelRenderTable(tab);
 }
 
+/* ===== ADD WELL TO CURRENT TAB ===== */
+function excelAddWellToTab() {
+    const dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab);
+
+    let well;
+    if (typeof createNewWell === 'function') {
+        well = createNewWell(null, dn);
+    } else {
+        well = {
+            id: 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+            name: (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')',
+            dn: dn,
+            config: [],
+            przejscia: [],
+            rzednaWlazu: null,
+            rzednaDna: null,
+            kineta: 'brak',
+            psiaBuda: false,
+            redukcjaDN1000: false,
+            redukcjaMinH: 2500
+        };
+    }
+
+    wells.push(well);
+    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    showToast('Dodano: ' + well.name, 'success');
+}
+
+/* ===== TABLE RENDER (Excel-style) ===== */
 function _excelRenderTable(dn) {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
 
     const tabWells = wells.filter(w => _excelWellMatchesTab(w, dn));
-    if (tabWells.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted);font-size:0.8rem;">Brak studni dla tego DN</div>';
-        return;
-    }
-
     const maxTr = _excelMaxTransitions;
     const compCols = _excelBuildComponentColumns(dn);
     const hasReduction = tabWells.some(w => w.redukcjaDN1000);
 
-    let html = '<table style="width:100%;border-collapse:collapse;font-size:0.68rem;white-space:nowrap;">';
+    const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
 
-    html += '<thead><tr style="position:sticky;top:0;z-index:10;background:var(--bg-secondary,#0f172a);">';
+    let html = '<table style="width:100%;border-collapse:collapse;table-layout:auto;">';
 
-    html += '<th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:2px solid var(--border-glass,rgba(255,255,255,0.1));min-width:140px;color:var(--text-muted);font-weight:800;">Nr. Studni</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:right;border-bottom:2px solid var(--border-glass,rgba(255,255,255,0.1));min-width:80px;color:var(--text-muted);font-weight:800;">Rz. Włazu [m]</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:right;border-bottom:2px solid var(--border-glass,rgba(255,255,255,0.1));min-width:80px;color:var(--text-muted);font-weight:800;">Rz. Dna [m]</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:right;border-bottom:2px solid var(--border-glass,rgba(255,255,255,0.1));min-width:70px;color:var(--accent,#818cf8);font-weight:800;">Wys. [mm]</th>';
+    /* THEAD — sticky */
+    html += `<thead><tr style="position:sticky;top:0;z-index:20;">`;
+
+    const thBase = `padding:0.35rem 0.5rem;border-bottom:2px solid rgba(255,255,255,0.1);border-right:1px solid rgba(255,255,255,0.04);font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;`;
+
+    html += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:130px;text-align:left;border-right:2px solid rgba(255,255,255,0.08);">Nr Studni</th>`;
+    html += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Włazu</th>`;
+    html += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Dna</th>`;
+    html += `<th style="${thBase}background:#161923;color:${dnColor};min-width:65px;text-align:center;">Wys.</th>`;
 
     for (let i = 0; i < maxTr; i++) {
-        const col = 'var(--accent-hover,rgba(99,102,241,0.3))';
-        html += `<th style="padding:0.4rem 0.6rem;text-align:right;border-bottom:2px solid ${col};min-width:80px;color:var(--accent,#818cf8);font-weight:800;">Rz. wlot ${i} [m]</th>`;
-        html += `<th style="padding:0.4rem 0.6rem;text-align:right;border-bottom:2px solid ${col};min-width:60px;color:var(--accent,#818cf8);font-weight:800;">Kąt ${i} [°]</th>`;
-        html += `<th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:2px solid ${col};min-width:130px;color:var(--accent,#818cf8);font-weight:800;">Połącze ${i}</th>`;
+        html += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:78px;text-align:right;">Rz. wlot ${i}</th>`;
+        html += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
+        html += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:125px;text-align:left;">Połącze ${i}</th>`;
     }
 
-    html += '<th style="padding:0.4rem 0.6rem;border-bottom:2px solid var(--border-glass,rgba(255,255,255,0.1));min-width:140px;color:#6ee7b7;font-weight:800;">Właz</th>';
+    html += `<th style="${thBase}background:#0f1a15;color:#6ee7b7;min-width:130px;text-align:left;">Właz</th>`;
 
     compCols.forEach(col => {
-        const hdr = col.componentType === 'avr' ? '#fbbf24' : (col.componentType === 'krag' || col.componentType === 'krag_ot') ? '#34d399' : '#93c5fd';
-        html += `<th style="padding:0.4rem 0.6rem;text-align:center;border-bottom:2px solid ${hdr}33;min-width:65px;color:${hdr};font-weight:800;">${col.label}</th>`;
+        const hc = col.componentType === 'avr' ? '#fbbf24' : (col.componentType === 'krag' || col.componentType === 'krag_ot') ? '#34d399' : '#93c5fd';
+        html += `<th style="${thBase}background:#13151f;color:${hc};min-width:62px;text-align:center;">${col.label}</th>`;
     });
 
     if (hasReduction) {
-        html += '<th style="padding:0.4rem 0.6rem;text-align:center;border-bottom:2px solid #f8717133;min-width:70px;color:#fca5a5;font-weight:800;">Red.</th>';
-        html += '<th style="padding:0.4rem 0.6rem;text-align:center;border-bottom:2px solid #f8717133;min-width:75px;color:#fca5a5;font-weight:800;">Min H red.</th>';
+        html += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:45px;text-align:center;">Red</th>`;
+        html += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:65px;text-align:center;">Min H</th>`;
     }
 
-    html += '<th style="padding:0.4rem 0.6rem;text-align:right;border-bottom:2px solid #f59e0b33;min-width:75px;color:#fbbf24;font-weight:800;">H denn.</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:center;border-bottom:2px solid #f59e0b33;min-width:60px;color:#fbbf24;font-weight:800;">Uszcz.</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:left;border-bottom:2px solid #c084fc33;min-width:100px;color:#c4b5fd;font-weight:800;">Kineta</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:center;border-bottom:2px solid rgba(255,255,255,0.1);min-width:60px;color:var(--text-muted);font-weight:800;">Psia buda</th>';
-    html += '<th style="padding:0.4rem 0.6rem;text-align:center;border-bottom:2px solid rgba(255,255,255,0.1);min-width:70px;color:var(--text-muted);font-weight:800;">Param.</th>';
+    html += `<th style="${thBase}background:#1a170f;color:#fbbf24;min-width:60px;text-align:center;">H denn</th>`;
+    html += `<th style="${thBase}background:#1a170f;color:#fbbf24;min-width:50px;text-align:center;">Uszcz</th>`;
+    html += `<th style="${thBase}background:#150f1a;color:#c4b5fd;min-width:95px;text-align:left;">Kineta</th>`;
+    html += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:55px;text-align:center;">P.Buda</th>`;
+    html += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:50px;text-align:center;">Param</th>`;
 
     html += '</tr></thead><tbody>';
 
+    if (tabWells.length === 0) {
+        html += `<tr><td colspan="50" style="padding:2.5rem;text-align:center;color:#475569;border:${_EXCEL_BORDER};">
+            <div style="font-size:0.75rem;margin-bottom:0.6rem;">Brak studni dla ${dn === 'styczne' ? 'stycznych' : 'DN' + dn}</div>
+            <button onclick="excelAddWellToTab()" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);padding:0.4rem 1.2rem;border-radius:3px;font-size:0.7rem;font-weight:600;cursor:pointer;">+ Dodaj studnię</button>
+        </td></tr>`;
+    }
+
     tabWells.forEach((well, idx) => {
         const wIdx = wells.indexOf(well);
-        const rowBg = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)';
+        const isEven = idx % 2 === 0;
+        const rowBg = isEven ? '#0e1017' : '#11131b';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" style="background:${rowBg};">`;
+        html += `<tr data-widx="${wIdx}" style="background:${rowBg};transition:background 0.08s;" onmouseenter="this.style.background='#1a1d2e'" onmouseleave="this.style.background='${rowBg}'">`;
 
-        html += `<td style="padding:0.3rem 0.6rem;border-bottom:1px solid rgba(255,255,255,0.04);font-weight:700;color:var(--text-primary);">${well.name}</td>`;
+        const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
 
-        html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);"><input type="number" step="0.01" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" style="width:75px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);text-align:right;font-size:0.68rem;"></td>`;
+        /* Nr. Studni — sticky left */
+        html += `<td style="${tdBase}font-weight:600;color:#cbd5e1;position:sticky;left:0;z-index:5;background:inherit;border-right:2px solid rgba(255,255,255,0.08);" title="${escapeHtml(well.name)}"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:125px;">${escapeHtml(well.name)}</span></td>`;
 
-        html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);"><input type="number" step="0.01" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" style="width:75px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);text-align:right;font-size:0.68rem;"></td>`;
+        /* Rz. Włazu */
+        html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
+        /* Rz. Dna */
+        html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+
+        /* Wys. — auto */
         const height = _excelCalcWellHeight(well);
-        html += `<td style="padding:0.3rem 0.6rem;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;color:var(--accent,#818cf8);font-weight:700;background:rgba(99,102,241,0.05);" data-cell="height-${wIdx}">${height || '—'}</td>`;
+        html += `<td style="${tdBase}text-align:center;color:${dnColor};font-weight:600;background:rgba(255,255,255,0.015);" data-cell="height-${wIdx}">${height || '—'}</td>`;
 
+        /* Przejścia */
         for (let i = 0; i < maxTr; i++) {
             const prz = przejscia[i] || {};
             const przProducts = (typeof studnieProducts !== 'undefined')
                 ? studnieProducts.filter(p => p.componentType === 'przejscie' && p.active !== 0 && parseInt(p.dn) === parseInt(well.dn))
                 : [];
 
-            let selectHtml = `<select onchange="excelOnPrzejscieChange(${wIdx},${i},'productId',this.value)" style="width:125px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);font-size:0.65rem;">`;
-            selectHtml += `<option value="">— brak —</option>`;
+            let selHtml = `<select onchange="excelOnPrzejscieChange(${wIdx},${i},'productId',this.value)" style="${_excelCellInp(120)}text-align:left;cursor:pointer;">`;
+            selHtml += `<option value="">—</option>`;
             przProducts.forEach(p => {
-                const sel = prz.productId === p.id ? ' selected' : '';
-                selectHtml += `<option value="${p.id}"${sel}>${p.name}</option>`;
+                const nm = p.name.length > 18 ? p.name.substring(0, 16) + '…' : p.name;
+                selHtml += `<option value="${p.id}"${prz.productId === p.id ? ' selected' : ''}>${nm}</option>`;
             });
-            selectHtml += `</select>`;
+            selHtml += `</select>`;
 
-            html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);"><input type="number" step="0.01" value="${prz.rzednaWlaczenia || ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" style="width:75px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);text-align:right;font-size:0.68rem;"></td>`;
-            html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" style="width:55px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);text-align:right;font-size:0.68rem;"></td>`;
-            html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);">${selectHtml}</td>`;
+            html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${prz.rzednaWlaczenia || ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+            html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
+            html += `<td style="${tdBase}text-align:left;">${selHtml}</td>`;
         }
 
+        /* Właz */
         const wlazVal = _excelGetWlazFromConfig(well);
         const wlazProducts = (typeof studnieProducts !== 'undefined')
             ? studnieProducts.filter(p => p.componentType === 'wlaz' && parseInt(p.dn) === parseInt(well.dn))
             : [];
-        let wlazSelect = `<select onchange="excelOnWlazChange(${wIdx},this.value)" style="width:135px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);font-size:0.65rem;">`;
-        wlazSelect += `<option value="">— brak —</option>`;
+        let wlazSel = `<select onchange="excelOnWlazChange(${wIdx},this.value)" style="${_excelCellInp(125)}text-align:left;cursor:pointer;">`;
+        wlazSel += `<option value="">—</option>`;
         wlazProducts.forEach(p => {
-            const sel = wlazVal === p.id ? ' selected' : '';
-            wlazSelect += `<option value="${p.id}"${sel}>${p.name}</option>`;
+            const nm = p.name.length > 20 ? p.name.substring(0, 18) + '…' : p.name;
+            wlazSel += `<option value="${p.id}"${wlazVal === p.id ? ' selected' : ''}>${nm}</option>`;
         });
-        wlazSelect += `</select>`;
-        html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);">${wlazSelect}</td>`;
+        wlazSel += `</select>`;
+        html += `<td style="${tdBase}text-align:left;">${wlazSel}</td>`;
 
+        /* Komponenty — ilości */
         compCols.forEach(col => {
             if (col.type === 'select') return;
             const count = _excelCountProductInConfig(well, col.componentType, col.height, col.productId);
             const pidArg = col.productId ? `'${col.productId}'` : 'null';
             const hArg = col.height != null ? col.height : 'null';
-            html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);"><input type="number" min="0" step="1" value="${count || ''}" onchange="excelOnCompChange(${wIdx},'${col.componentType}',${hArg},this.value,${pidArg})" style="width:55px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);text-align:center;font-size:0.68rem;"></td>`;
+            html += `<td style="${tdBase}text-align:center;"><input type="number" min="0" step="1" value="${count || ''}" onchange="excelOnCompChange(${wIdx},'${col.componentType}',${hArg},this.value,${pidArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
         });
 
+        /* Redukcja */
         if (hasReduction) {
-            const redChecked = well.redukcjaDN1000 ? ' checked' : '';
-            html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center;"><input type="checkbox"${redChecked} onchange="excelOnReductionChange(${wIdx},this.checked)" style="accent-color:#f87171;"></td>`;
-            html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);"><input type="number" min="0" step="100" value="${well.redukcjaMinH || 2500}" onchange="excelOnReductionMinHChange(${wIdx},this.value)" style="width:65px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);text-align:center;font-size:0.68rem;"></td>`;
+            html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.redukcjaDN1000 ? ' checked' : ''} onchange="excelOnReductionChange(${wIdx},this.checked)" style="accent-color:#f87171;cursor:pointer;" /></td>`;
+            html += `<td style="${tdBase}text-align:center;"><input type="number" min="0" step="100" value="${well.redukcjaMinH || 2500}" onchange="excelOnReductionMinHChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(60)}text-align:center;" /></td>`;
         }
 
+        /* H dennica — auto */
         const dennH = _excelCalcDennicaHeight(well);
-        html += `<td style="padding:0.3rem 0.6rem;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;color:#fbbf24;font-weight:600;background:rgba(245,158,11,0.05);" data-cell="denn-${wIdx}">${dennH || '—'}</td>`;
+        html += `<td style="${tdBase}text-align:center;color:#fbbf24;font-weight:600;background:rgba(245,158,11,0.03);" data-cell="denn-${wIdx}">${dennH || '—'}</td>`;
 
+        /* Uszczelki — auto */
         const uszczCount = _excelCalcUszczelkaCount(well);
-        html += `<td style="padding:0.3rem 0.6rem;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center;color:#fbbf24;font-weight:600;background:rgba(245,158,11,0.05);" data-cell="uszcz-${wIdx}">${uszczCount}</td>`;
+        html += `<td style="${tdBase}text-align:center;color:#fbbf24;font-weight:600;background:rgba(245,158,11,0.03);" data-cell="uszcz-${wIdx}">${uszczCount}</td>`;
 
-        let kinetaSelect = `<select onchange="excelOnKinetaChange(${wIdx},this.value)" style="width:95px;background:var(--bg-input,rgba(0,0,0,0.3));border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.2rem 0.3rem;color:var(--text-primary);font-size:0.65rem;">`;
+        /* Kineta */
+        let kinSel = `<select onchange="excelOnKinetaChange(${wIdx},this.value)" style="${_excelCellInp(90)}text-align:left;cursor:pointer;">`;
         KINETA_OPTIONS.forEach(([val, label]) => {
-            const sel = well.kineta === val ? ' selected' : '';
-            kinetaSelect += `<option value="${val}"${sel}>${label}</option>`;
+            kinSel += `<option value="${val}"${well.kineta === val ? ' selected' : ''}>${label}</option>`;
         });
-        kinetaSelect += `</select>`;
-        html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);">${kinetaSelect}</td>`;
+        kinSel += `</select>`;
+        html += `<td style="${tdBase}text-align:left;">${kinSel}</td>`;
 
-        const pbChecked = well.psiaBuda ? ' checked' : '';
-        html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center;"><input type="checkbox"${pbChecked} onchange="excelOnPsiaBudaChange(${wIdx},this.checked)" style="accent-color:#f59e0b;"></td>`;
+        /* Psia buda */
+        html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.psiaBuda ? ' checked' : ''} onchange="excelOnPsiaBudaChange(${wIdx},this.checked)" style="accent-color:#f59e0b;cursor:pointer;" /></td>`;
 
-        html += `<td style="padding:0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center;"><button onclick="excelOpenWellParams(${wIdx})" style="background:rgba(168,85,247,0.2);color:#c4b5fd;border:1px solid rgba(168,85,247,0.3);padding:0.2rem 0.5rem;border-radius:4px;font-size:0.6rem;cursor:pointer;font-weight:600;">Param.</button></td>`;
+        /* Param. */
+        html += `<td style="${tdBase}text-align:center;"><button onclick="excelOpenWellParams(${wIdx})" style="background:transparent;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.15rem 0.4rem;border-radius:2px;font-size:0.58rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(129,140,248,0.1)'" onmouseleave="this.style.background='transparent'">⋯</button></td>`;
 
         html += '</tr>';
     });
@@ -401,6 +468,37 @@ function _excelRenderTable(dn) {
     container.innerHTML = html;
 }
 
+/* ===== CELL FOCUS (Excel highlight) ===== */
+function excelCellFocus(el) {
+    el.style.borderColor = 'rgba(99,102,241,0.5)';
+    el.style.background = 'rgba(99,102,241,0.06)';
+    el.parentElement.style.background = 'rgba(99,102,241,0.04)';
+}
+function excelCellBlur(el) {
+    el.style.borderColor = 'transparent';
+    el.style.background = 'transparent';
+    const tr = el.closest('tr');
+    if (tr) el.parentElement.style.background = '';
+}
+
+/* ===== TAB KEY NAVIGATION ===== */
+function _excelHandleTab(e) {
+    const target = e.target;
+    if (!target || target.tagName !== 'INPUT' && target.tagName !== 'SELECT') return;
+
+    const container = document.getElementById('excel-table-container');
+    if (!container || !container.contains(target)) return;
+
+    const inputs = Array.from(container.querySelectorAll('input[type="number"], select'));
+    const idx = inputs.indexOf(target);
+    if (idx === -1) return;
+
+    e.preventDefault();
+    const next = e.shiftKey ? inputs[idx - 1] : inputs[idx + 1];
+    if (next) { next.focus(); next.select(); }
+}
+
+/* ===== HANDLERS ===== */
 function excelOnRzednaChange(wIdx) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (!row) return;
@@ -409,11 +507,6 @@ function excelOnRzednaChange(wIdx) {
     const rzDna = parseFloat(inputs[1]?.value) || null;
     wells[wIdx].rzednaWlazu = rzWlazu;
     wells[wIdx].rzednaDna = rzDna;
-
-    const height = _excelCalcWellHeight(wells[wIdx]);
-    const heightCell = row.querySelector(`[data-cell="height-${wIdx}"]`);
-    if (heightCell) heightCell.textContent = height || '—';
-
     _excelRefreshAutoCells(wIdx, row);
 }
 
@@ -422,11 +515,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push({ id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000), productId: '', rzednaWlaczenia: null, angle: 0 });
     }
-    if (field === 'angle') {
-        wells[wIdx].przejscia[trIdx][field] = parseFloat(value) || 0;
-    } else {
-        wells[wIdx].przejscia[trIdx][field] = value || null;
-    }
+    wells[wIdx].przejscia[trIdx][field] = field === 'angle' ? (parseFloat(value) || 0) : (value || null);
 }
 
 function excelOnWlazChange(wIdx, productId) {
@@ -435,9 +524,7 @@ function excelOnWlazChange(wIdx, productId) {
         const p = studnieProducts.find(pr => pr.id === item.productId);
         return !(p && p.componentType === 'wlaz');
     });
-    if (productId) {
-        well.config.push({ productId, quantity: 1, autoAdded: false });
-    }
+    if (productId) well.config.push({ productId, quantity: 1, autoAdded: false });
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId) {
@@ -460,12 +547,8 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
         } else {
             candidates = (typeof getAvailableProducts === 'function' ? getAvailableProducts(well) : studnieProducts)
                 .filter(p => p.componentType === componentType && parseInt(p.dn) === parseInt(well.dn));
-            if (height !== undefined) {
-                candidates = candidates.filter(p => parseInt(p.height) === parseInt(height));
-            }
-            if (typeof filterByWellParams === 'function') {
-                candidates = candidates.filter(p => filterByWellParams(p, well));
-            }
+            if (height !== undefined) candidates = candidates.filter(p => parseInt(p.height) === parseInt(height));
+            if (typeof filterByWellParams === 'function') candidates = candidates.filter(p => filterByWellParams(p, well));
         }
         for (let i = 0; i < newQty && i < candidates.length; i++) {
             well.config.push({ productId: candidates[i].id, quantity: 1, autoAdded: false });
@@ -477,9 +560,8 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
 }
 
 function excelOnKinetaChange(wIdx, value) {
-    const well = wells[wIdx];
-    well.kineta = value;
-    if (typeof syncKineta === 'function') syncKineta(well);
+    wells[wIdx].kineta = value;
+    if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
 }
 
 function excelOnPsiaBudaChange(wIdx, checked) {
@@ -500,6 +582,8 @@ function _excelRefreshAutoCells(wIdx, row) {
     const well = wells[wIdx];
     if (!well) return;
 
+    const dnColor = (DN_COLORS[well.dn === 'styczna' ? 'styczne' : String(well.dn)] || DN_COLORS['1000']).border;
+
     const height = _excelCalcWellHeight(well);
     const hCell = row.querySelector(`[data-cell="height-${wIdx}"]`);
     if (hCell) hCell.textContent = height || '—';
@@ -513,25 +597,21 @@ function _excelRefreshAutoCells(wIdx, row) {
     if (uCell) uCell.textContent = uszcz;
 }
 
+/* ===== SAVE ===== */
 function excelSaveAll() {
     if (typeof refreshAll === 'function') refreshAll();
-
     showToast('Zapisano zmiany w tabeli', 'success');
     closeExcelTableModal();
 }
 
+/* ===== PARAM. BUTTON ===== */
 function excelOpenWellParams(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
-
-    if (typeof currentWellIndex !== 'undefined') {
-        window.currentWellIndex = wIdx;
-    }
-
+    if (typeof currentWellIndex !== 'undefined') window.currentWellIndex = wIdx;
     if (typeof renderWellsList === 'function') renderWellsList();
     if (typeof renderWellParams === 'function') renderWellParams();
     if (typeof renderTiles === 'function') renderTiles();
-
     showToast(`Przełączono na: ${well.name}`, 'info');
     closeExcelTableModal();
 }
