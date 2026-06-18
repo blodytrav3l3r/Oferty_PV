@@ -536,13 +536,13 @@ function _excelRenderTable(dn) {
     const tdEmpty = `${tdBase}color:#334155;`;
 
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni…" id="excel-empty-name" onchange="excelOnEmptyRowChange()" onkeydown="if(event.key==='Enter'){excelOnEmptyRowChange()}" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni…" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onchange="excelOnEmptyRowChange()" onkeydown="if(event.key==='Enter'){excelOnEmptyRowChange()}" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Rz. Dna */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onchange="excelOnEmptyRowChange()" onkeydown="if(event.key==='Enter'){excelOnEmptyRowChange()}" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Wys. — placeholder */
     html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
@@ -589,7 +589,10 @@ function _excelRenderTable(dn) {
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
-function excelOnEmptyRowChange() {
+let _excelCreatingFromEmpty = false;
+
+function excelCreateFromEmpty() {
+    if (_excelCreatingFromEmpty) return;
     const nameEl = document.getElementById('excel-empty-name');
     const rzwEl = document.getElementById('excel-empty-rzw');
     const rzdEl = document.getElementById('excel-empty-rzd');
@@ -599,8 +602,9 @@ function excelOnEmptyRowChange() {
     const rzw = rzwEl ? parseFloat(rzwEl.value) : null;
     const rzd = rzdEl ? parseFloat(rzdEl.value) : null;
 
-    /* Twórz studnię dopiero gdy jest nazwa LUB co najmniej jedna rzędna */
     if (!name && rzw === null && rzd === null) return;
+
+    _excelCreatingFromEmpty = true;
 
     const dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab);
     const autoName = name || ((dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')');
@@ -611,16 +615,10 @@ function excelOnEmptyRowChange() {
     } else {
         well = {
             id: 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-            name: autoName,
-            dn: dn,
-            config: [],
-            przejscia: [],
-            rzednaWlazu: rzw,
-            rzednaDna: rzd,
-            kineta: 'brak',
-            psiaBuda: false,
-            redukcjaDN1000: false,
-            redukcjaMinH: 2500
+            name: autoName, dn: dn, config: [], przejscia: [],
+            rzednaWlazu: rzw, rzednaDna: rzd,
+            kineta: 'brak', psiaBuda: false,
+            redukcjaDN1000: false, redukcjaMinH: 2500
         };
     }
 
@@ -633,11 +631,11 @@ function excelOnEmptyRowChange() {
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
     showToast('Dodano: ' + autoName, 'success');
+    _excelCreatingFromEmpty = false;
 
-    /* Focus na pustym wierszu ponownie */
     setTimeout(() => {
-        const newName = document.getElementById('excel-empty-name');
-        if (newName) newName.focus();
+        const el = document.getElementById('excel-empty-name');
+        if (el) el.focus();
     }, 50);
 }
 
