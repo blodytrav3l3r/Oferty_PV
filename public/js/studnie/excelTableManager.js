@@ -259,6 +259,7 @@ function openExcelTableModal() {
     overlay.addEventListener('keydown', e => {
         if (e.key === 'Escape') closeExcelTableModal();
         if (e.key === 'Tab') _excelHandleTab(e);
+        if (e.key.startsWith('Arrow')) _excelHandleArrow(e);
     });
 
     const modal = document.createElement('div');
@@ -654,6 +655,52 @@ function _excelHandleTab(e) {
     e.preventDefault();
     const next = e.shiftKey ? inputs[idx - 1] : inputs[idx + 1];
     if (next) { next.focus(); next.select(); }
+}
+
+/* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
+function _excelHandleArrow(e) {
+    const target = e.target;
+    if (!target || target.tagName !== 'INPUT' && target.tagName !== 'SELECT') return;
+
+    const container = document.getElementById('excel-table-container');
+    if (!container || !container.contains(target)) return;
+
+    const tr = target.closest('tr');
+    if (!tr) return;
+
+    const rows = Array.from(container.querySelectorAll('tbody tr'));
+    const currentRowIdx = rows.indexOf(tr);
+    if (currentRowIdx === -1) return;
+
+    const rowEls = Array.from(tr.querySelectorAll('input:not([disabled]), select:not([disabled])'));
+    const colIdx = rowEls.indexOf(target);
+    if (colIdx === -1) return;
+
+    let next = null;
+
+    if (e.key === 'ArrowRight') {
+        next = rowEls[colIdx + 1] || null;
+    } else if (e.key === 'ArrowLeft') {
+        next = rowEls[colIdx - 1] || null;
+    } else if (e.key === 'ArrowDown') {
+        const nextRow = rows[currentRowIdx + 1];
+        if (nextRow) {
+            const nextEls = Array.from(nextRow.querySelectorAll('input:not([disabled]), select:not([disabled])'));
+            next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
+        }
+    } else if (e.key === 'ArrowUp') {
+        const prevRow = rows[currentRowIdx - 1];
+        if (prevRow) {
+            const prevEls = Array.from(prevRow.querySelectorAll('input:not([disabled]), select:not([disabled])'));
+            next = prevEls[Math.min(colIdx, prevEls.length - 1)] || null;
+        }
+    }
+
+    if (next) {
+        e.preventDefault();
+        next.focus();
+        if (next.tagName === 'INPUT') next.select();
+    }
 }
 
 /* ===== HANDLERS ===== */
