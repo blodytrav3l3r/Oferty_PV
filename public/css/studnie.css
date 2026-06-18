@@ -1753,6 +1753,16 @@ select.form-input option {
     appearance: textfield;
 }
 
+#excel-table-container input[type="number"]::-webkit-inner-spin-button,
+#excel-table-container input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#excel-table-container input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .fs-inputs-pane,
