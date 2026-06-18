@@ -2875,14 +2875,14 @@ function updateOfferDiscountsPopupPrices() {
 
         const el = document.getElementById(`offer-dn-price-${dn}`);
         if (el) {
-            el.innerHTML = `${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN`;
+            el.innerHTML = `${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN`;
         }
         totalOverallNetto += sumNettoDN;
     });
 
     const sumEl = document.getElementById('offer-total-popup-price');
     if (sumEl) {
-        sumEl.innerHTML = `${typeof fmtInt === 'function' ? fmtInt(totalOverallNetto) : totalOverallNetto} PLN`;
+        sumEl.innerHTML = `${typeof fmt === 'function' ? fmt(totalOverallNetto) : totalOverallNetto} PLN`;
     }
 }
 
@@ -2960,7 +2960,7 @@ function renderOfferDiscountsPopupContent() {
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb),0.4);"></span>
                     <span style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${displayDn}</span>
                 </div>
-                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmtInt === 'function' ? fmtInt(sumNettoDN) : sumNettoDN} PLN</div>
+                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, 'var(--accent-hover)', 'rgba(var(--accent-rgb),0.3)')}
@@ -3075,7 +3075,7 @@ function renderOfferDiscountsPopupContent() {
         html += `
         <div style="margin-top: 0.5rem; background: rgba(0,0,0,0.25); border: 1px dashed rgba(255,255,255,0.1); padding: 0.5rem 0.9rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Łączna Suma Netto</span>
-            <span id="offer-total-popup-price" style="font-size: 1.05rem; font-weight: 900; color: var(--success);">${typeof fmtInt === 'function' ? fmtInt(totalOverallNetto) : totalOverallNetto} PLN</span>
+            <span id="offer-total-popup-price" style="font-size: 1.05rem; font-weight: 900; color: var(--success);">${typeof fmt === 'function' ? fmt(totalOverallNetto) : totalOverallNetto} PLN</span>
         </div>`;
     } else {
         html += `<div style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.75rem;">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>`;
@@ -3174,7 +3174,7 @@ window.updateModalTransportDetails = function () {
         if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
             wells.forEach(w => { productsNetto += calcWellStats(w).price; });
         }
-        totalValEl.textContent = (typeof fmtInt === 'function' ? fmtInt : (v => v))(productsNetto + totalTransportCost) + ' PLN';
+        totalValEl.textContent = (typeof fmt === 'function' ? fmt : (v => v))(productsNetto + totalTransportCost) + ' PLN';
     }
 };
 
