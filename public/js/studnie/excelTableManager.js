@@ -253,7 +253,16 @@ function openExcelTableModal() {
 
     const overlay = document.createElement('div');
     overlay.id = 'excel-table-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+
+    // Pozycjonuj overlay obok lewego panelu (jeśli widoczny)
+    const diagramPanel = document.querySelector('.well-diagram-panel');
+    const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
+    if (isDiagramVisible) {
+        const rect = diagramPanel.getBoundingClientRect();
+        overlay.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.right}px;width:calc(100vw - ${rect.right}px);height:${rect.height}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+    } else {
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+    }
 
     overlay.addEventListener('click', e => { if (e.target === overlay) closeExcelTableModal(); });
     overlay.addEventListener('keydown', e => {
@@ -263,7 +272,11 @@ function openExcelTableModal() {
     });
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'width:96vw;height:96vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+    if (isDiagramVisible) {
+        modal.style.cssText = 'width:calc(100% - 1rem);height:calc(100% - 1rem);background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+    } else {
+        modal.style.cssText = 'width:96vw;height:96vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+    }
 
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
@@ -279,44 +292,7 @@ function openExcelTableModal() {
             </div>
         </div>
         <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;"></div>
-        <div style="flex:1;display:flex;overflow:hidden;background:#0c0e14;">
-            <!-- Panel podglądu (lewa kolumna) — identyczny układ jak zakładka Konfiguracja -->
-            <div style="width:340px;background:#10131a;border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;flex-shrink:0;">
-                <div style="padding:0.5rem 0.8rem;background:#131722;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:0.4rem;">
-                    <i data-lucide="search" style="width:14px;height:14px;"></i> Podgląd studni
-                </div>
-                <!-- Kafelki podsumowania (Wymagane / Zbudowano / Zostało) -->
-                <div style="padding:0.5rem 0.6rem 0;flex-shrink:0;">
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.25rem;">
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:0.3rem 0.4rem;text-align:center;">
-                            <div style="font-size:0.6rem;color:#71717a;white-space:nowrap;">Wymagane</div>
-                            <div id="excel-ws-req" style="font-size:0.72rem;font-weight:700;color:#e2e8f0;">—</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:0.3rem 0.4rem;text-align:center;">
-                            <div style="font-size:0.6rem;color:#71717a;white-space:nowrap;">Zbudowano</div>
-                            <div id="excel-ws-height" style="font-size:0.72rem;font-weight:700;color:#10b981;">0 mm</div>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:0.3rem 0.4rem;text-align:center;">
-                            <div style="font-size:0.6rem;color:#71717a;white-space:nowrap;">Zostało</div>
-                            <div id="excel-ws-diff" style="font-size:0.72rem;font-weight:700;color:#71717a;">—</div>
-                        </div>
-                    </div>
-                    <!-- Cena -->
-                    <div style="margin-top:0.3rem;background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.2);padding:0.3rem 0.5rem;border-radius:6px;display:flex;justify-content:center;align-items:center;gap:0.4rem;">
-                        <span style="color:#4ade80;font-size:0.7rem;font-weight:600;">Cena:</span>
-                        <span id="excel-ws-price" style="color:#4ade80;font-size:0.72rem;font-weight:700;">0</span>
-                    </div>
-                    <!-- Nazwa aktywnej studni -->
-                    <div id="excel-ws-name" style="margin-top:0.3rem;font-size:0.68rem;color:#94a3b8;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
-                </div>
-                <!-- Diagram SVG -->
-                <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0.5rem 1rem 1rem;overflow:auto;">
-                    <svg id="excel-well-diagram" style="width:100%;height:100%;max-height:70vh;"></svg>
-                </div>
-            </div>
-            <!-- Panel tabeli (prawa kolumna) -->
-            <div id="excel-table-container" style="flex:1;overflow:auto;"></div>
-        </div>
+        <div id="excel-table-container" style="flex:1;overflow:auto;background:#0c0e14;"></div>
     `;
 
     overlay.appendChild(modal);
@@ -327,105 +303,11 @@ function openExcelTableModal() {
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
 
-    // Rysuj podgląd aktualnie wybranej studni (lub pierwszej z listy)
-    const tabWells = wells.filter(w => _excelWellMatchesTab(w, _excelActiveTab));
-    if (tabWells.length > 0) {
-        const activeWell = (typeof currentWellIndex !== 'undefined' && tabWells[currentWellIndex]) ? tabWells[currentWellIndex] : tabWells[0];
-        _excelRenderPreview(activeWell);
-    } else {
-        _excelRenderPreview(null);
-    }
-
     if (typeof lucide !== 'undefined') lucide.createIcons({ root: overlay });
 }
 
-/* ===== PODGLĄD STUDNI — kafelki info + diagram SVG ===== */
-let _excelPreviewWellIdx = -1;
-
-function _excelRenderPreview(well) {
-    const svg = document.getElementById('excel-well-diagram');
-    if (svg && typeof renderWellDiagram === 'function') {
-        renderWellDiagram(svg, well);
-    }
-    _excelUpdatePreviewInfo(well);
-}
-
-/** Aktualizuje kafelki informacyjne podglądu (Wymagane/Zbudowano/Zostało/Cena/Nazwa) */
-function _excelUpdatePreviewInfo(well) {
-    const elReq = document.getElementById('excel-ws-req');
-    const elHeight = document.getElementById('excel-ws-height');
-    const elDiff = document.getElementById('excel-ws-diff');
-    const elPrice = document.getElementById('excel-ws-price');
-    const elName = document.getElementById('excel-ws-name');
-    if (!elReq) return;
-
-    if (!well) {
-        elReq.textContent = '—';
-        elHeight.textContent = '0 mm';
-        elDiff.textContent = '—';
-        elDiff.style.color = '#71717a';
-        elPrice.textContent = '0';
-        if (elName) elName.textContent = '—';
-        return;
-    }
-
-    // Oblicz statystyki z istniejącej funkcji
-    const stats = (typeof calcWellStats === 'function') ? calcWellStats(well) : { height: 0, price: 0 };
-
-    // Wymagane / Zbudowano / Zostało
-    const rzWlazu = parseFloat(well.rzednaWlazu);
-    const rzDna = parseFloat(well.rzednaDna);
-    const hasElevations = !isNaN(rzWlazu) && !isNaN(rzDna) && rzWlazu > rzDna;
-
-    if (hasElevations) {
-        const reqMm = Math.round((rzWlazu - rzDna) * 1000);
-        elReq.textContent = _excelFmtNum(reqMm) + ' mm';
-
-        const diff = reqMm - stats.height;
-        if (diff > 0) {
-            elDiff.textContent = '-' + _excelFmtNum(diff) + ' mm';
-            elDiff.style.color = '#f87171';
-        } else if (diff < 0) {
-            elDiff.textContent = '+' + _excelFmtNum(Math.abs(diff)) + ' mm';
-            elDiff.style.color = '#facc15';
-        } else {
-            elDiff.textContent = 'OK';
-            elDiff.style.color = '#4ade80';
-        }
-    } else {
-        elReq.textContent = '—';
-        elDiff.textContent = '—';
-        elDiff.style.color = '#71717a';
-    }
-
-    elHeight.textContent = _excelFmtNum(stats.height) + ' mm';
-
-    // Cena
-    if (stats.error) {
-        elPrice.textContent = 'BŁĄD';
-        elPrice.style.color = '#ef4444';
-    } else {
-        elPrice.textContent = _excelFmtNum(Math.round(stats.price)) + ' PLN';
-        elPrice.style.color = '';
-    }
-
-    // Nazwa
-    if (elName) elName.textContent = well.name || '—';
-}
-
-/** Pomocnicze formatowanie liczb z separatorem tysięcy */
-function _excelFmtNum(n) {
-    if (typeof fmtInt === 'function') return fmtInt(n);
-    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-}
-
-/** Wybór wiersza studni — aktualizuje podgląd */
+/* ===== WYBÓR WIERSZA ===== */
 function excelSelectRow(wIdx) {
-    _excelPreviewWellIdx = wIdx;
-    const well = (typeof wells !== 'undefined' && wells[wIdx]) ? wells[wIdx] : null;
-    _excelRenderPreview(well);
-
-    // Podświetlenie aktywnego wiersza
     const container = document.getElementById('excel-table-container');
     if (!container) return;
     container.querySelectorAll('tr[data-widx]').forEach(tr => {
@@ -897,7 +779,6 @@ function excelOnRzednaChange(wIdx) {
     wells[wIdx].rzednaWlazu = rzWlazu;
     wells[wIdx].rzednaDna = rzDna;
     _excelRefreshAutoCells(wIdx, row);
-    if (_excelPreviewWellIdx === wIdx) _excelRenderPreview(wells[wIdx]);
     if (typeof refreshAll === 'function') refreshAll(true);
 }
 
@@ -907,7 +788,6 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         wells[wIdx].przejscia.push({ id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000), productId: '', rzednaWlaczenia: null, angle: 0 });
     }
     wells[wIdx].przejscia[trIdx][field] = field === 'angle' ? (parseFloat(value) || 0) : (value || null);
-    if (_excelPreviewWellIdx === wIdx) _excelRenderPreview(wells[wIdx]);
     if (typeof refreshAll === 'function') refreshAll(true);
 }
 
@@ -939,7 +819,6 @@ function excelOnWlazChange(wIdx, productId) {
         return !(p && p.componentType === 'wlaz');
     });
     if (productId) well.config.push({ productId, quantity: 1, autoAdded: false });
-    if (_excelPreviewWellIdx === wIdx) _excelRenderPreview(wells[wIdx]);
     if (typeof refreshAll === 'function') refreshAll(true);
 }
 
@@ -974,14 +853,12 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
-    if (_excelPreviewWellIdx === wIdx) _excelRenderPreview(wells[wIdx]);
     if (typeof refreshAll === 'function') refreshAll(true);
 }
 
 function excelOnKinetaChange(wIdx, value) {
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
-    if (_excelPreviewWellIdx === wIdx) _excelRenderPreview(wells[wIdx]);
     if (typeof refreshAll === 'function') refreshAll(true);
 }
 
@@ -989,7 +866,6 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     wells[wIdx].psiaBuda = checked;
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
-    if (_excelPreviewWellIdx === wIdx) _excelRenderPreview(wells[wIdx]);
     if (typeof refreshAll === 'function') refreshAll(true);
 }
 
