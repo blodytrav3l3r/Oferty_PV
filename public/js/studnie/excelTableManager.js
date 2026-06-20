@@ -1098,7 +1098,7 @@ function excelOnRzednaChange(wIdx) {
 
 /* ===== USUWANIE KOLUMNY PRZEJŚCIA ===== */
 function excelRemoveTransitionColumn() {
-    if (_excelMaxTransitions <= 1) {
+    if (_excelMaxTransitions <= 1 && wells.length > 0) {
         showToast('Nie można usunąć — minimum 1 kolumna przejścia', 'error');
         return;
     }
@@ -1126,7 +1126,7 @@ function excelRemoveTransitionColumn() {
             }
         });
     }
-    _excelMaxTransitions--;
+    _excelMaxTransitions = Math.max(0, _excelMaxTransitions - 1);
     _excelRenderTable(_excelActiveTab);
     _excelDebouncedRefresh();
     showToast('Usunięto kolumnę przejścia', 'info');
