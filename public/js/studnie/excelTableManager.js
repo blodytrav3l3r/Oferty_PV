@@ -68,8 +68,8 @@ const DN_COLORS = {
 };
 
 const _EXCEL_BORDER = '1px solid rgba(255,255,255,0.07)';
-const _EXCEL_CELL_PADD = '0.3rem 0.45rem';
-const _EXCEL_FONT = 'font-size:0.67rem;font-family:Consolas,Menlo,monospace;';
+const _EXCEL_CELL_PADD = '0.35rem 0.5rem';
+const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
 function _excelWellMatchesTab(well, tab) {
     if (tab === 'styczne') return well.dn === 'styczna';
@@ -421,7 +421,7 @@ function _excelCellTxt(isRight, color) {
 }
 /** @param {number} [w] */
 function _excelCellInp(w) {
-    return `background:transparent;border:1px solid transparent;border-radius:0;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.1s;`;
+    return `background:transparent;border:1px solid transparent;border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
 /* ===== OPEN MODAL ===== */
@@ -468,6 +468,13 @@ function openExcelTableModal() {
     }
 
     modal.innerHTML = `
+        <style>
+            #excel-table-container input:focus { border-color:rgba(99,102,241,0.5) !important; }
+            #excel-table-container select:focus { border-color:rgba(99,102,241,0.5) !important; }
+            #excel-table-container ::-webkit-scrollbar { width:6px; height:6px; }
+            #excel-table-container ::-webkit-scrollbar-track { background:transparent; }
+            #excel-table-container ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+        </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
                 <i data-lucide="table" style="width:16px;height:16px;color:#10b981;"></i>
@@ -631,7 +638,7 @@ function _excelRenderTable(dn) {
     html += '<thead><tr style="position:sticky;top:0;z-index:20;">';
 
     const thBase =
-        'padding:0.35rem 0.5rem;border-bottom:2px solid rgba(255,255,255,0.1);border-right:1px solid rgba(255,255,255,0.04);font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;';
+        'padding:0.4rem 0.5rem;border-bottom:2px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.04);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
 
     html += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:130px;text-align:left;border-right:2px solid rgba(255,255,255,0.08);">Nr Studni</th>`;
     html += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Włazu</th>`;
@@ -704,7 +711,7 @@ function _excelRenderTable(dn) {
         const rowBorder = isDup ? '2px solid rgba(239,68,68,0.6)' : isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.08s;" onmouseenter="this.style.background='rgba(99,102,241,0.05)'" onmouseleave="this.style.background='${rowBg}'">`;
+        html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=isDup?'rgba(239,68,68,0.25)':isActive?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)'" onmouseleave="this.style.background='${rowBg}'">`;
 
         const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
 
