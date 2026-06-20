@@ -553,22 +553,18 @@ function _excelRenderTabs() {
     });
 
     let html = '';
-    const tabNameCounts = {};
-    wells.forEach((w) => { const n = (w.name || '').trim().toLowerCase(); if (n) tabNameCounts[n] = (tabNameCounts[n] || 0) + 1; });
-    const tabDupNames = new Set(Object.keys(tabNameCounts).filter((n) => tabNameCounts[n] > 1));
     DN_TABS.forEach((tab) => {
         const count = dnCounts[tab] || 0;
         const c = DN_COLORS[tab] || DN_COLORS['1000'];
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
-        const tabDupCount = tabDupNames.size > 0 ? wells.filter((w) => { const n = (w.name || '').trim().toLowerCase(); return tabDupNames.has(n) && ((w.dn === 'styczna' ? 'styczne' : String(w.dn)) === tab); }).length : 0;
         html += `<button onclick="excelSwitchTab('${tab}')" style="
             padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
             border-bottom:2px solid ${isActive ? c.border : 'transparent'};
             background:${isActive ? c.activeBg : 'transparent'};
             color:${isActive ? c.text : '#64748b'};
             transition:all 0.12s;letter-spacing:0.2px;">
-            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>${tabDupCount > 0 ? `<span style="margin-left:0.2rem;font-size:0.5rem;color:#ef4444;font-weight:700;">!${tabDupCount}</span>` : ''}
+            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>
         </button>`;
     });
     container.innerHTML = html;
