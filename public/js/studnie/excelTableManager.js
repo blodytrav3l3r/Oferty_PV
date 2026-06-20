@@ -1199,9 +1199,32 @@ function excelOnWlazChange(wIdx, productId) {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'wlaz');
     });
-    if (productId) well.config.push({ productId, quantity: 1, autoAdded: false });
+    if (productId) _excelInsertConfigItem(well, 'wlaz', productId, 1);
     _excelUpdateLeftPreview(wIdx);
     _excelDebouncedRefresh();
+}
+
+function _excelInsertConfigItem(well, componentType, productId, qty) {
+    const topTypes = ['wlaz', 'avr', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
+    const bottomTypes = ['dennica', 'kineta', 'styczna'];
+    if (topTypes.includes(componentType)) {
+        well.config.unshift({ productId, quantity: qty, autoAdded: false });
+    } else if (bottomTypes.includes(componentType)) {
+        well.config.push({ productId, quantity: qty, autoAdded: false });
+    } else {
+        /* Środek: znajdź pozycję za ostatnim top-closure, przed pierwszym dennica/styczna */
+        let insertAt = well.config.length;
+        for (let i = 0; i < well.config.length; i++) {
+            const p = typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                : null;
+            if (p && bottomTypes.includes(p.componentType)) {
+                insertAt = i;
+                break;
+            }
+        }
+        well.config.splice(insertAt, 0, { productId, quantity: qty, autoAdded: false });
+    }
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId) {
@@ -1242,7 +1265,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
         }
         /* Dodaj jeden wpis z pełną ilością (zamiast wielu wpisów po 1) */
         if (candidates.length > 0) {
-            well.config.push({ productId: candidates[0].id, quantity: newQty, autoAdded: false });
+            _excelInsertConfigItem(well, componentType, candidates[0].id, newQty);
         }
     }
 
