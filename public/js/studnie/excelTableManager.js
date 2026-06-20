@@ -631,11 +631,12 @@ function _excelRenderTable(dn) {
     const hasReduction = dn === '1000';
 
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
+    const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
 
     let html = '<table style="width:100%;border-collapse:collapse;table-layout:auto;">';
 
     /* THEAD — sticky */
-    html += '<thead><tr style="position:sticky;top:0;z-index:20;">';
+    html += '<thead><tr style="position:sticky;top:0;z-index:20;border-top:2px solid ${dnColor};">';
 
     const thBase =
         'padding:0.4rem 0.5rem;border-bottom:2px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.04);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
@@ -723,11 +724,11 @@ function _excelRenderTable(dn) {
         const nameKey = (well.name || '').trim().toLowerCase();
         const isDup = dupNames.has(nameKey);
         const tabKey = dn === 'styczne' ? 'styczne' : String(dn);
-        const rowBg = isDup ? 'rgba(239,68,68,0.15)' : isActive ? 'rgba(99,102,241,0.08)' : isEven ? '#0e1017' : '#11131b';
-        const rowBorder = isDup ? '2px solid rgba(239,68,68,0.6)' : isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
+        const rowBg = isDup ? dnBg : isActive ? 'rgba(99,102,241,0.08)' : isEven ? '#0e1017' : '#11131b';
+        const rowBorder = isDup ? '2px solid ' + dnColor : isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=${isDup}?'rgba(239,68,68,0.25)':${isActive}?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)'" onmouseleave="this.style.background='${rowBg}'">`;
+        html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=${isDup}?'${dnBg}':${isActive}?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)'" onmouseleave="this.style.background='${rowBg}'">`;
 
         const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
 
