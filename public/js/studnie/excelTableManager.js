@@ -553,12 +553,16 @@ function _excelRenderTabs() {
     });
 
     let html = '';
+    /* Wykryj duplikaty dla badge w zakładkach */
+    const tabNameCounts = {};
+    wells.forEach((w) => { const n = (w.name || '').trim().toLowerCase(); if (n) tabNameCounts[n] = (tabNameCounts[n] || 0) + 1; });
+    const tabDupNames = new Set(Object.keys(tabNameCounts).filter((n) => tabNameCounts[n] > 1));
     DN_TABS.forEach((tab) => {
         const count = dnCounts[tab] || 0;
         const c = DN_COLORS[tab] || DN_COLORS['1000'];
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
-        const tabDupCount = dupNames.size > 0 ? wells.filter((w) => { const n = (w.name || '').trim().toLowerCase(); return dupNames.has(n) && ((w.dn === 'styczna' ? 'styczne' : String(w.dn)) === tab); }).length : 0;
+        const tabDupCount = tabDupNames.size > 0 ? wells.filter((w) => { const n = (w.name || '').trim().toLowerCase(); return tabDupNames.has(n) && ((w.dn === 'styczna' ? 'styczne' : String(w.dn)) === tab); }).length : 0;
         html += `<button onclick="excelSwitchTab('${tab}')" style="
             padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
             border-bottom:2px solid ${isActive ? c.border : 'transparent'};
