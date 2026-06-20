@@ -896,16 +896,8 @@ function _excelRenderTable(dn) {
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
-function excelCreateFromEmpty(ev) {
+function excelCreateFromEmpty() {
     if (_excelCreatingLock) return;
-    /* Ignoruj blur gdy focus przechodzi w obrębie pustego wiersza */
-    if (
-        ev &&
-        ev.relatedTarget &&
-        ev.relatedTarget.closest &&
-        ev.relatedTarget.closest('#excel-empty-row')
-    )
-        return;
     _excelCreatingLock = true;
 
     const nameEl = document.getElementById('excel-empty-name');
