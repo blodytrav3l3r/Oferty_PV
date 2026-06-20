@@ -973,6 +973,8 @@ function excelCreateFromEmpty(ev) {
     } finally {
         setTimeout(() => {
             _excelCreatingLock = false;
+            const el = document.getElementById('excel-empty-name');
+            if (el) el.focus();
         }, 100);
     }
 }
