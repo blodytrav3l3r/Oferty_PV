@@ -965,8 +965,10 @@ function excelCreateFromEmpty() {
     } finally {
         setTimeout(() => {
             _excelCreatingLock = false;
-            const el = document.getElementById('excel-empty-name');
-            if (el) el.focus();
+            const newIdx = wells.length - 1;
+            const row = document.querySelector(`tr[data-widx="${newIdx}"]`);
+            const rzwEl = row && row.querySelector('input[data-field="rzednaWlazu"]');
+            if (rzwEl) { rzwEl.focus(); rzwEl.select(); }
         }, 100);
     }
 }
