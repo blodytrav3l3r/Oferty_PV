@@ -558,13 +558,14 @@ function _excelRenderTabs() {
         const c = DN_COLORS[tab] || DN_COLORS['1000'];
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
+        const tabDupCount = dupNames.size > 0 ? wells.filter((w) => { const n = (w.name || '').trim().toLowerCase(); return dupNames.has(n) && ((w.dn === 'styczna' ? 'styczne' : String(w.dn)) === tab); }).length : 0;
         html += `<button onclick="excelSwitchTab('${tab}')" style="
             padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
             border-bottom:2px solid ${isActive ? c.border : 'transparent'};
             background:${isActive ? c.activeBg : 'transparent'};
             color:${isActive ? c.text : '#64748b'};
             transition:all 0.12s;letter-spacing:0.2px;">
-            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>
+            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>${tabDupCount > 0 ? `<span style="margin-left:0.2rem;font-size:0.5rem;color:#ef4444;font-weight:700;">!${tabDupCount}</span>` : ''}
         </button>`;
     });
     container.innerHTML = html;
@@ -697,16 +698,32 @@ function _excelRenderTable(dn) {
 
     html += '</tr></thead><tbody>';
 
-    /* Wykryj duplikaty nazw */
+    /* Wykryj duplikaty nazw — we wszystkich średnicach */
     const nameCounts = {};
-    tabWells.forEach((w) => { const n = (w.name || '').trim().toLowerCase(); if (n) nameCounts[n] = (nameCounts[n] || 0) + 1; });
+    const nameDnMap = {}; // nazwa -> [{dn, label}]
+    wells.forEach((w) => {
+        const n = (w.name || '').trim().toLowerCase();
+        if (n) {
+            nameCounts[n] = (nameCounts[n] || 0) + 1;
+            const dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
+            if (!nameDnMap[n]) nameDnMap[n] = [];
+            const dnC = DN_COLORS[dnKey] || DN_COLORS['1000'];
+            const dnLabel = dnKey === 'styczne' ? 'Styczne' : 'DN' + dnKey;
+            if (!nameDnMap[n].find((x) => x.dn === dnKey)) {
+                nameDnMap[n].push({ dn: dnKey, label: dnLabel, color: dnC.border });
+            }
+        }
+    });
     const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
+
 
     tabWells.forEach((well, idx) => {
         const wIdx = wells.indexOf(well);
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const isDup = dupNames.has((well.name || '').trim().toLowerCase());
+        const nameKey = (well.name || '').trim().toLowerCase();
+        const isDup = dupNames.has(nameKey);
+        const tabKey = dn === 'styczne' ? 'styczne' : String(dn);
         const rowBg = isDup ? 'rgba(239,68,68,0.15)' : isActive ? 'rgba(99,102,241,0.08)' : isEven ? '#0e1017' : '#11131b';
         const rowBorder = isDup ? '2px solid rgba(239,68,68,0.6)' : isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
         const przejscia = well.przejscia || [];
@@ -715,8 +732,8 @@ function _excelRenderTable(dn) {
 
         const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
 
-        /* Nr. Studni — edytowalny input */
-        html += `<td style="${tdBase}font-weight:600;color:#cbd5e1;position:sticky;left:0;z-index:5;background:inherit;border-right:2px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelOnNameChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(125)}text-align:left;font-weight:600;color:#cbd5e1;" /></td>`;
+        /* Nr. Studni — edytowalny input + badge duplikatu */
+        html += `<td style="${tdBase}font-weight:600;color:#cbd5e1;position:sticky;left:0;z-index:5;background:inherit;border-right:2px solid rgba(255,255,255,0.08);"><div style="display:flex;align-items:center;gap:0.3rem;"><input type="text" value="${escapeHtml(well.name)}" onchange="excelOnNameChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(90)}text-align:left;font-weight:600;color:#cbd5e1;flex-shrink:1;min-width:0;" />${isDup && nameDnMap[nameKey] ? nameDnMap[nameKey].filter((d) => d.dn !== tabKey).map((d) => `<span style="display:inline-flex;align-items:center;gap:0.15rem;font-size:0.5rem;font-weight:700;padding:0.1rem 0.3rem;border-radius:3px;color:${d.color};border:1px solid ${d.color};background:rgba(0,0,0,0.3);flex-shrink:0;">${d.label}</span>`).join('') : ''}</div></td>`;
 
         /* Rz. Włazu */
         html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
