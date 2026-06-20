@@ -1208,7 +1208,15 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
     const topTypes = ['wlaz', 'avr', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
     const bottomTypes = ['dennica', 'kineta', 'styczna'];
     if (topTypes.includes(componentType)) {
-        well.config.unshift({ productId, quantity: qty, autoAdded: false });
+        /* Wstaw za włazem (jeśli istnieje), żeby nie rozbić kolejności góra-dół */
+        const wlazIdx = well.config.findIndex((item) => {
+            const p = typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find((pr) => pr.id === item.productId)
+                : null;
+            return p && p.componentType === 'wlaz';
+        });
+        const insertAt = wlazIdx >= 0 ? wlazIdx + 1 : 0;
+        well.config.splice(insertAt, 0, { productId, quantity: qty, autoAdded: false });
     } else if (bottomTypes.includes(componentType)) {
         well.config.push({ productId, quantity: qty, autoAdded: false });
     } else {
