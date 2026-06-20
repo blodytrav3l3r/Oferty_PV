@@ -841,13 +841,13 @@ function _excelRenderTable(dn) {
 
     /* Nazwa — sticky left */
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni… (Enter/→ dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni… (Enter dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Rz. Dna */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Wys. — placeholder */
     html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
@@ -1061,10 +1061,6 @@ function _excelHandleArrow(e) {
         e.preventDefault();
         next.focus();
         if (next.tagName === 'INPUT') next.select();
-    } else if (tr.querySelector('#excel-empty-name')) {
-        // ArrowRight z ostatniego pola w pustym wierszu → utwórz studnię
-        e.preventDefault();
-        excelCreateFromEmpty();
     }
 }
 
