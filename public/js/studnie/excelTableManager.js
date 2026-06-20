@@ -1478,35 +1478,35 @@ function excelOpenWellParams(wIdx) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'width:640px;max-height:90vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+    modal.style.cssText = 'width:680px;max-height:90vh;background:var(--bg-primary);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
 
-    let bodyHtml = '';
+    let bodyHtml = `<div style="display:flex;flex-direction:column;gap:0.55rem;">`;
     if (typeof WELL_PARAM_DEFS !== 'undefined') {
         WELL_PARAM_DEFS.forEach((def) => {
             if (def.key === 'precoFullHeight' && well.kineta !== 'preco' && well.kineta !== 'precotop') return;
             const currentVal = well[def.key] || '';
-            bodyHtml += '<div style="display:flex;align-items:center;gap:0.3rem;padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03);">';
-            bodyHtml += `<span style="min-width:130px;font-size:0.7rem;color:#64748b;font-weight:600;flex-shrink:0;">${def.label}</span>`;
-            const cols = Math.max(2, Math.min(def.options.length, 6));
-            bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:0.25rem;flex:1;">`;
+            bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;">`;
+            bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">${def.label}</span>`;
+            bodyHtml += `<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(100px, 1fr));gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="updateWellParam('${def.key}','${val}');excelRefreshParamsPopup(${wIdx})" style="height:28px;border-radius:5px;cursor:pointer;font-size:0.65rem;font-weight:${active?'700':'500'};border:1px solid ${active?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.06)'};background:${active?'rgba(99,102,241,0.2)':'transparent'};color:${active?'#a5b4fc':'#64748b'};transition:all 0.12s;${active?'box-shadow:0 0 6px rgba(99,102,241,0.15);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.06)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='transparent'}">${lbl}</button>`;
+                bodyHtml += `<button onclick="updateWellParam('${def.key}','${val}');excelRefreshParamsPopup(${wIdx})" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active?'800':'600'};border:1px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'};background:${active?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.04)'};color:${active?'#a5b4fc':'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active?'box-shadow:0 0 10px rgba(99,102,241,0.2);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
             });
-            bodyHtml += '</div></div>';
+            bodyHtml += `</div></div>`;
         });
     }
+    bodyHtml += `</div>`;
 
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
-            <span style="font-size:0.8rem;font-weight:700;color:#e2e8f0;">Parametry: ${escapeHtml(well.name)}</span>
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:1.1rem;">✕</button>
+            <span style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">Parametry: ${escapeHtml(well.name)}</span>
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
         </div>
-        <div style="flex:1;overflow-y:auto;padding:0.6rem 0.8rem;display:flex;flex-direction:column;gap:0.15rem;">
+        <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:#10131a;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:0.35rem 1rem;border-radius:4px;font-size:0.7rem;cursor:pointer;">Zamknij</button>
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:rgba(255,255,255,0.06);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.1);padding:0.4rem 1.2rem;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:600;">Zamknij</button>
         </div>
     `;
 
