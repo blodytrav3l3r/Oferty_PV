@@ -1205,7 +1205,7 @@ function excelOnWlazChange(wIdx, productId) {
 }
 
 function _excelInsertConfigItem(well, componentType, productId, qty) {
-    const topTypes = ['wlaz', 'avr', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
+    const topTypes = ['wlaz', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
     const bottomTypes = ['dennica', 'kineta', 'styczna'];
     const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
     if (topTypes.includes(componentType)) {
@@ -1258,18 +1258,55 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
     } else if (bottomTypes.includes(componentType)) {
         well.config.push({ productId, quantity: qty, autoAdded: false });
     } else {
-        /* Środek: znajdź pozycję za ostatnim top-closure, przed pierwszym dennica/styczna */
-        let insertAt = well.config.length;
-        for (let i = 0; i < well.config.length; i++) {
+        const topTypesForMiddle = ['wlaz', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
+        /* Szukaj płyty redukcyjnej — wpływa na pozycję kręgów */
+        const plateIdx = well.config.findIndex((item) => {
             const p = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                ? studnieProducts.find((pr) => pr.id === item.productId)
                 : null;
-            if (p && bottomTypes.includes(p.componentType)) {
-                insertAt = i;
-                break;
+            return p && p.componentType === 'plyta_redukcyjna';
+        });
+        if (plateIdx >= 0) {
+            const prod = typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find((pr) => pr.id === productId)
+                : null;
+            const isRedDn = prod && String(prod.dn) === '1000';
+            if (isRedDn) {
+                /* Krąg DN1000 — wstaw NAD płytą redukcyjną, za topClosure */
+                let insertIdx = 0;
+                for (let i = 0; i < plateIdx; i++) {
+                    const p = typeof studnieProducts !== 'undefined'
+                        ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                        : null;
+                    if (!p || !topTypesForMiddle.includes(p.componentType)) {
+                        insertIdx = i;
+                        break;
+                    }
+                    insertIdx = i + 1;
+                }
+                well.config.splice(insertIdx, 0, { productId, quantity: qty, autoAdded: false });
+            } else {
+                /* Krąg głównego DN — wstaw ZA płytą redukcyjną */
+                well.config.splice(plateIdx + 1, 0, { productId, quantity: qty, autoAdded: false });
             }
+        } else {
+            /* Brak płyty redukcyjnej — wstaw za topClosure, przed bottom */
+            let insertAt = well.config.length;
+            for (let i = 0; i < well.config.length; i++) {
+                const p = typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                    : null;
+                if (p && bottomTypes.includes(p.componentType)) {
+                    insertAt = i;
+                    break;
+                }
+                if (!p || !topTypesForMiddle.includes(p.componentType)) {
+                    insertAt = i;
+                    break;
+                }
+            }
+            well.config.splice(insertAt, 0, { productId, quantity: qty, autoAdded: false });
         }
-        well.config.splice(insertAt, 0, { productId, quantity: qty, autoAdded: false });
     }
 }
 
