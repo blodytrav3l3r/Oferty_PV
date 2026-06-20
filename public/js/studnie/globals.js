@@ -3,25 +3,25 @@
 /** @type {any[]} */
 const studnieProducts = [];
 let currentUser = null;
-const currentCennikTab = 'dn1000';
+let currentCennikTab = 'dn1000';
 
 // System wielu studni
 const wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
-const currentWellIndex = 0;
-const wellCounter = 1;
+let currentWellIndex = 0;
+let wellCounter = 1;
 var wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0, preco: 0 }, ... }
 var precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
 
 // Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
-const offerDefaultZakonczenie = null; // ID produktu lub null (=konus)
-const offerDefaultRedukcja = false; // true = redukcja do DN1000
-const offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
-const offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
+let offerDefaultZakonczenie = null; // ID produktu lub null (=konus)
+let offerDefaultRedukcja = false; // true = redukcja do DN1000
+let offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
+let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
 
 // System wielu ofert
 const offersStudnie = [];
 const ordersStudnie = [];
-const editingOfferIdStudnie = null;
+let editingOfferIdStudnie = null;
 var isSavingOffer = false;
 /** @type {any} */
 var orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
@@ -31,8 +31,8 @@ const expandedWellIndices = new Set();
 // Używać AppState.clientsDb zamiast lokalnej zmiennej
 
 // Stan kreatora
-const currentWizardStep = 1;
-const wizardConfirmedParams = new Set();
+let currentWizardStep = 1;
+let wizardConfirmedParams = new Set();
 let studnieViewTransitionTimer = null;
 const WIZARD_REQUIRED_PARAMS = [
     'nadbudowa',

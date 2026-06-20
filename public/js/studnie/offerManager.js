@@ -2799,7 +2799,7 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
 
 const dragOverCount = 0; // dla wizualizacji drag & drop
 
-const isBackendOnline = false;
+let isBackendOnline = false;
 
 // Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
 window.addEventListener('pv-sync-status-changed', () => {
