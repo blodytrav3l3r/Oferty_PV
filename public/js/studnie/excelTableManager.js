@@ -1050,6 +1050,10 @@ function _excelHandleArrow(e) {
         e.preventDefault();
         next.focus();
         if (next.tagName === 'INPUT') next.select();
+    } else if (tr.querySelector('#excel-empty-name')) {
+        // ArrowRight z ostatniego pola w pustym wierszu → utwórz studnię
+        e.preventDefault();
+        excelCreateFromEmpty();
     }
 }
 
