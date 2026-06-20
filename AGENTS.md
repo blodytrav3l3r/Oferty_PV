@@ -93,7 +93,8 @@ Profesjonalne środowisko wieloagentowe — patrz `docs/AGENTS/README.md`.
 | Reviewer | Code review (CRITICAL+INFORMATIONAL pass) | `docs/AGENTS/reviewer.md` |
 | Architekt | Spójność + security audit + Prisma patterns | `docs/AGENTS/architekt.md` |
 
-Każdy agent wywoływany przez `delegate_task(goal="...", skills="oferty-pv-<rola>")`.
+Każdy agent wywoływany przez `delegate_task(goal="...", skills="oferty-pv-<rola>, <dodatkowe-skille>")`.
+Hermes skille do załadowania dla każdego agenta — patrz `docs/AGENTS/<rola>.md` → sekcja "Hermes skille do załadowania".
 
 Wybrane wytyczne z `.opencode/skills/` (OpenCode) zostały zintegrowane do agentów:
 - `git-workflow` → koder (branch naming, conventional commits, PR template, merge strategy)

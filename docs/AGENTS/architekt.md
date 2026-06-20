@@ -187,3 +187,10 @@ Co to oznacza dla projektu (+ i -)
 - Nie zmieniaj struktury bez zgody
 - Nie usuwaj starego kodu bez sprawdzenia referencji
 - Nie pomijaj security checklist przy deployu
+
+## Hermes skille do załadowania
+
+Przy delegacji przez `delegate_task(goal="...", skills="oferty-pv-architekt, simplify-code, codebase-inspection")`:
+
+- **`simplify-code`** — parallel 3-agent cleanup po dużych zmianach. Każdy agent czyści inny obszar (backend/frontend/testy) bez kolizji
+- **`codebase-inspection`** — pygount do analizy LOC, języków, proporcji. Użyć przed refactoringiem cross-modułowym by ocenić scope zmian

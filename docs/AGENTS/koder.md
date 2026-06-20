@@ -242,3 +242,11 @@ Otwórz `chrome://inspect` w Chromium.
 - Nie refactoruj kodu, który nie ma związku z taskiem
 - Nie commituj bez typecheck
 - Nie używaj `console.log` w kodzie produkcyjnym — tylko `logger`
+
+## Hermes skille do załadowania
+
+Przy delegacji przez `delegate_task(goal="...", skills="oferty-pv-koder, spike, node-inspect-debugger, systematic-debugging")`:
+
+- **`spike`** — przed implementacją, gdy pomysł wymaga walidacji: eksperymentalny kod do sprawdzenia czy działa, potem wyrzucany
+- **`node-inspect-debugger`** — gdy backend Express nie odpowiada: debug przez `--inspect` + Chrome DevTools Protocol
+- **`systematic-debugging`** — 4-fazowe debugowanie: zrozum błąd → hipoteza → test → fix. Nie zgaduj, nie klep na ślepo

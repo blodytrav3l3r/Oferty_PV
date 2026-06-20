@@ -26,12 +26,12 @@ Profesjonalne środowisko wieloagentowe do rozwoju aplikacji. Każdy agent ma de
 
 ## Role
 
-| Agent | Wywołanie | Narzędzia | Odpowiedzialność |
-|-------|-----------|-----------|------------------|
-| **Planista** | `delegate_task(goal="zaplanuj...")` + skill planista | terminal, file, search | Rozbija zadania, tworzy plan w `todo()`, proponuje architekturę |
-| **Koder** | `delegate_task(goal="zaimplementuj...")` + skill koder | terminal, file, search | Pisze kod, testy, commituje. Branch naming, conventional commits, PR template, merge strategy, wzorce testów (supertest, mocki Prisma, timeout) |
-| **Reviewer** | `delegate_task(goal="przejrzyj...")` + skill reviewer | terminal, file | Code review (CRITICAL + INFORMATIONAL pass), typecheck, lint, bezpieczeństwo (XSS, SQL injection, auth, ownership) |
-| **Architekt** | `delegate_task(goal="sprawdź spójność...")` + skill architekt | terminal, file, search, graphify | Graphify update, spójność architektury, ADR, refactoring. Security audit checklist, performance patterns, Prisma/SQLite patterns |
+| Agent | Wywołanie | Hermes skills do załadowania | Narzędzia (toolsets) | Odpowiedzialność |
+|-------|-----------|------------------------------|----------------------|------------------|
+| **Planista** | `delegate_task(goal="zaplanuj...")` | `oferty-pv-planista` | terminal, file, search | Rozbija zadania, tworzy plan w `todo()`, proponuje architekturę |
+| **Koder** | `delegate_task(goal="zaimplementuj...")` | `oferty-pv-koder, spike, node-inspect-debugger, systematic-debugging` | terminal, file, search | Pisze kod, testy, commituje. Przed implementacją używa spike do walidacji pomysłów. Debugowanie przez node-inspect-debugger gdy backend nie działa. |
+| **Reviewer** | `delegate_task(goal="przejrzyj...")` | `oferty-pv-reviewer, requesting-code-review` | terminal, file | Code review (CRITICAL + INFORMATIONAL pass), typecheck, lint, security scan (requesting-code-review), bezpieczeństwo (XSS, SQL injection, auth, ownership) |
+| **Architekt** | `delegate_task(goal="sprawdź spójność...")` | `oferty-pv-architekt, simplify-code, codebase-inspection` | terminal, file, search, graphify | Graphify update, spójność architektury, ADR, refactoring. simplify-code do cleanup po zmianach. codebase-inspection do audytu wielkości kodu. Security audit checklist, performance patterns, Prisma/SQLite patterns |
 
 ## Przepływ pracy
 

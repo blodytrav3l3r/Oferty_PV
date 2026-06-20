@@ -128,3 +128,9 @@
 - Nie poprawiaj błędów — tylko zgłoś
 - Nie analizuj plików niezmienionych
 - Nie zgłaszaj fałszywych pozytywów (patrz Suppressions)
+
+## Hermes skille do załadowania
+
+Przy delegacji przez `delegate_task(goal="...", skills="oferty-pv-reviewer, requesting-code-review")`:
+
+- **`requesting-code-review`** — uruchamia security scan + quality gates + auto-fix przed właściwym CR. Szuka: SQL injection, XSS, credential leaks, unsafe innerHTML, eval, path traversal
