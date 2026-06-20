@@ -1477,8 +1477,15 @@ function excelOpenWellParams(wIdx) {
     overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
+    /* Oblicz szerokość okna dynamicznie: wszystkie kafelki ten sam rozmiar, brak zawijania */
+    const maxOptions = Math.max(...WELL_PARAM_DEFS.map(d => d.options.length));
+    const TILE_W = 90;
+    const gapPx = 5.6;
+    const gridW = maxOptions * TILE_W + (maxOptions - 1) * gapPx;
+    const popupW = Math.min(Math.round(gridW + 185 + 42), 1200);
+
     const modal = document.createElement('div');
-    modal.style.cssText = 'width:800px;max-height:90vh;background:var(--bg-primary);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+    modal.style.cssText = `width:${popupW}px;max-height:90vh;background:var(--bg-primary);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);`;
 
     let bodyHtml = `<div style="display:flex;flex-direction:column;gap:0.55rem;">`;
     if (typeof WELL_PARAM_DEFS !== 'undefined') {
@@ -1488,7 +1495,7 @@ function excelOpenWellParams(wIdx) {
             bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;">`;
             bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">${def.label}</span>`;
             const cols = def.options.length;
-            bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:0.35rem;flex:1;">`;
+            bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
                 bodyHtml += `<button onclick="updateWellParam('${def.key}','${val}');excelRefreshParamsPopup(${wIdx})" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active?'800':'600'};border:1px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'};background:${active?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.04)'};color:${active?'#a5b4fc':'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active?'box-shadow:0 0 10px rgba(99,102,241,0.2);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
