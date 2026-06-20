@@ -4,10 +4,6 @@
     grid-template-columns: 350px 1fr 350px;
     gap: 0;
     margin: -0.8rem -1.5rem -2rem -1.5rem;
-    align-items: stretch;
-    height: calc(100vh - 58px);
-    /* 100vh minus nag��wek */
-    overflow: hidden;
     background: var(--bg-primary);
 }
 
@@ -53,14 +49,13 @@
     border-right: 1px solid var(--border-glass);
     border-radius: 0;
     padding: 0.8rem 1.2rem;
-    height: 100%;
+    height: calc(100vh - 58px);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     position: sticky;
     top: 0;
-    align-self: start;
     z-index: 10;
+    overflow: hidden;
 }
 
 .well-diagram-panel h3 {
@@ -125,16 +120,15 @@
 
 /* ── Prawo: Panel boczny studni ── */
 .wells-sidebar {
-    height: 100%;
+    height: calc(100vh - 58px);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-glass);
     position: sticky;
     top: 0;
-    align-self: start;
     z-index: 10;
+    overflow: hidden;
 }
 
 .wells-sidebar-panel {
@@ -149,7 +143,7 @@
 }
 
 .well-center-column {
-    height: 100%;
+    height: calc(100vh - 58px);
     overflow-y: auto;
     padding: 0 1rem 4.5rem;
 }
