@@ -1141,7 +1141,7 @@ function excelAddTransitionColumn() {
         wells.forEach((w) => {
             if (!w.przejscia) w.przejscia = [];
             while (w.przejscia.length < _excelMaxTransitions) {
-                w.przejscia.push({ rzednaWlaczenia: null, kat: 0, productId: null, tempCategory: '' });
+                w.przejscia.push(_excelCreatePrzejscie());
             }
         });
     }
