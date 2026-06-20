@@ -104,9 +104,7 @@ async function logUpdateWithDebounce(
     const cutoff = new Date(new Date(now).getTime() - DEBOUNCE_SECONDS * 1000).toISOString();
 
     // Użyj raw query dla find (obsługa błędnych dat w bazie)
-    const recentRows = await prisma.$queryRaw<
-        Array<{ id: string }>
-    >`
+    const recentRows = await prisma.$queryRaw<Array<{ id: string }>>`
         SELECT id FROM audit_logs WHERE entityType = ${entityType} AND entityId = ${entityId}
         AND userId = ${userId} AND action = 'update' AND createdAt > ${cutoff}
         ORDER BY createdAt DESC LIMIT 1
@@ -162,5 +160,11 @@ export async function cleanupAuditLogs(): Promise<void> {
 
 // Uruchom czyszczenie przy ładowaniu modułu (tylko nie w testach)
 if (process.env.NODE_ENV !== 'test') {
-    cleanupAuditLogs();
+    cleanupAuditLogs().catch((err) =>
+        logger.error(
+            'AuditLog',
+            'Błąd czyszczenia logów przy starcie',
+            err instanceof Error ? err.message : String(err)
+        )
+    );
 }

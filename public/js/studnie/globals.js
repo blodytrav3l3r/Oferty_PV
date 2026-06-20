@@ -1,38 +1,38 @@
 // @ts-check
 /* ===== ZMIENNE GLOBALNE ===== */
 /** @type {any[]} */
-let studnieProducts = [];
-let currentUser = null;
-let currentCennikTab = 'dn1000';
+const studnieProducts = [];
+const currentUser = null;
+const currentCennikTab = 'dn1000';
 
 // System wielu studni
-let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
-let currentWellIndex = 0;
-let wellCounter = 1;
+const wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
+const currentWellIndex = 0;
+const wellCounter = 1;
 var wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0, preco: 0 }, ... }
 var precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
 
 // Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
-let offerDefaultZakonczenie = null; // ID produktu lub null (=konus)
-let offerDefaultRedukcja = false; // true = redukcja do DN1000
-let offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
-let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
+const offerDefaultZakonczenie = null; // ID produktu lub null (=konus)
+const offerDefaultRedukcja = false; // true = redukcja do DN1000
+const offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
+const offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
 
 // System wielu ofert
-let offersStudnie = [];
-let ordersStudnie = [];
-let editingOfferIdStudnie = null;
+const offersStudnie = [];
+const ordersStudnie = [];
+const editingOfferIdStudnie = null;
 var isSavingOffer = false;
 /** @type {any} */
 var orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
 
-let expandedWellIndices = new Set();
+const expandedWellIndices = new Set();
 // clientsDb jest zarządzane przez AppState (shared/appState.js)
 // Używać AppState.clientsDb zamiast lokalnej zmiennej
 
 // Stan kreatora
-let currentWizardStep = 1;
-let wizardConfirmedParams = new Set();
+const currentWizardStep = 1;
+const wizardConfirmedParams = new Set();
 let studnieViewTransitionTimer = null;
 const WIZARD_REQUIRED_PARAMS = [
     'nadbudowa',
@@ -71,7 +71,10 @@ function toggleCard(contentId, iconId) {
     if (!content) return;
     const isOpen = content.style.display !== 'none';
     content.style.display = isOpen ? 'none' : 'block';
-    if (icon) icon.innerHTML = isOpen ? '<span class="text-xs"><i data-lucide="chevron-down"></i></span>' : '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
+    if (icon)
+        icon.innerHTML = isOpen
+            ? '<span class="text-xs"><i data-lucide="chevron-down"></i></span>'
+            : '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
 }
 
 /* ===== NAWIGACJA ===== */
@@ -92,6 +95,11 @@ function showSectionStudnie(id) {
     document.getElementById('section-' + id)?.classList.add('active');
     document.querySelector(`.nav-btn[data-section="${id}"]`)?.classList.add('active');
 
+    // Cleanup well drag listeners when leaving builder section
+    if (id !== 'builder' && typeof window.cleanupWellDragListeners === 'function') {
+        window.cleanupWellDragListeners();
+    }
+
     if (id === 'pricelist') renderStudniePriceList();
     if (id === 'offer') {
         syncOfferClientSummary();
@@ -104,9 +112,11 @@ function showSectionStudnie(id) {
         if (ctxBanner && ctxBadge && ctxText) {
             ctxBanner.style.display = 'block';
             if (orderEditMode) {
-                ctxBadge.innerHTML = '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
+                ctxBadge.innerHTML =
+                    '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
                 ctxBadge.classList.add('badge-ok');
-                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+                ctxText.textContent =
+                    'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
             } else if (editingOfferIdStudnie) {
                 ctxBadge.innerHTML = '<i data-lucide="edit" class="icon-xs"></i> Oferta (krok 3)';
                 ctxBadge.classList.add('badge-info');
@@ -120,7 +130,6 @@ function showSectionStudnie(id) {
         }
     }
 }
-
 
 function syncOfferClientSummary() {
     const v = (id) => document.getElementById(id)?.value || '—';

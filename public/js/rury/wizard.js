@@ -5,7 +5,12 @@
 function goToPhase(step) {
     if (step < 1 || step > 5) return;
 
-    if (step === 1 && !window.orderEditMode && typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
+    if (
+        step === 1 &&
+        !window.orderEditMode &&
+        typeof pendingOrderCreationData !== 'undefined' &&
+        pendingOrderCreationData
+    ) {
         pendingOrderCreationData = null;
     }
 
@@ -34,7 +39,7 @@ function goToPhase(step) {
     const stepInfo = document.getElementById('wizard-nav-step-info');
     const bottomNav = document.getElementById('wizard-bottom-nav');
 
-    if (prevBtn) prevBtn.style.display = (step === 1 || step === 5) ? 'none' : 'flex';
+    if (prevBtn) prevBtn.style.display = step === 1 || step === 5 ? 'none' : 'flex';
     if (stepInfo) stepInfo.textContent = 'Krok ' + step + ' z 5';
 
     // Pasek nawigacji widoczny zawsze (w kroku 5 bez przycisków — sama etykieta "Zamówienie")
@@ -47,15 +52,19 @@ function goToPhase(step) {
         nextBtn.disabled = false;
         if (step === 3) {
             nextBtn.innerHTML = '<i data-lucide="check"></i> Zakończ';
-            nextBtn.onclick = async function () {
-                if (window.orderEditMode) {
-                    showToast('Edycja oferty zablokowana w trybie edycji zamówienia', 'warning');
-                    return;
-                }
-                if (!validatePhase(3)) return;
-                await saveOffer();
-                showToast('Oferta zapisana', 'success');
-            };
+            if (nextBtn)
+                nextBtn.onclick = async function () {
+                    if (window.orderEditMode) {
+                        showToast(
+                            'Edycja oferty zablokowana w trybie edycji zamówienia',
+                            'warning'
+                        );
+                        return;
+                    }
+                    if (!validatePhase(3)) return;
+                    await saveOffer();
+                    showToast('Oferta zapisana', 'success');
+                };
         } else if (step === 4) {
             nextBtn.innerHTML = '<i data-lucide="arrow-right"></i> Dalej';
             nextBtn.onclick = function () {
@@ -76,7 +85,7 @@ function goToPhase(step) {
     // Pokaż/ukryj fixed pasek podsumowania (zawsze nad paskiem nawigacji)
     const summaryBar = document.getElementById('rury-summary-bar');
     if (summaryBar) {
-        summaryBar.style.display = (step === 3 || step === 5) ? 'block' : 'none';
+        summaryBar.style.display = step === 3 || step === 5 ? 'block' : 'none';
         summaryBar.style.bottom = '60px';
     }
 
@@ -98,7 +107,7 @@ function goToPhase(step) {
     }
 
     if (step === 2 && window.orderEditMode) {
-        const order = (typeof getCurrentRuryOrder === 'function') ? getCurrentRuryOrder() : null;
+        const order = typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
         if (order && typeof renderStep2OrderBanner === 'function') {
             renderStep2OrderBanner(order);
         }
@@ -172,7 +181,12 @@ function validatePhase(step) {
             return true;
         }
         case 2: {
-            const active = (typeof getActiveItemsArray === 'function') ? getActiveItemsArray() : (window.orderEditMode ? orderCurrentItems : currentOfferItems);
+            const active =
+                typeof getActiveItemsArray === 'function'
+                    ? getActiveItemsArray()
+                    : window.orderEditMode
+                      ? orderCurrentItems
+                      : currentOfferItems;
             if (!active || active.length === 0) {
                 showToast('Dodaj co najmniej jeden produkt przed przejściem dalej', 'error');
                 return false;

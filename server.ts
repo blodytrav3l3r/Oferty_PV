@@ -61,14 +61,18 @@ app.get('/health', (_req, res) => {
 });
 
 /* ===== DOKUMENTACJA API (Swagger) ===== */
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customSiteTitle: 'WITROS Oferty PV — API Docs',
-    customfavIcon: '/favicon.ico',
-    swaggerOptions: {
-        persistAuthorization: true,
-        tryItOutEnabled: true
-    }
-}));
+app.use(
+    '/api/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+        customSiteTitle: 'WITROS Oferty PV — API Docs',
+        customfavIcon: '/favicon.ico',
+        swaggerOptions: {
+            persistAuthorization: true,
+            tryItOutEnabled: true
+        }
+    })
+);
 
 /* ===== API — surowy JSON docs ===== */
 app.get('/api/docs.json', (_req, res) => {
@@ -189,11 +193,13 @@ app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    const errorMessage = err instanceof Error ? err.stack || err.message : 'Unknown error';
-    logger.error('Server', 'Nieobsłużony błąd', errorMessage);
-    res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-});
+app.use(
+    (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+        const errorMessage = err instanceof Error ? err.stack || err.message : 'Unknown error';
+        logger.error('Server', 'Nieobsłużony błąd', errorMessage);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+);
 
 /* ===== SENTRY — error handler (po wszystkich route'ach) ===== */
 if (process.env.SENTRY_DSN) {
@@ -207,13 +213,21 @@ if (process.env.SENTRY_DSN) {
         await initRuryProductsTable();
         logger.info('Server', 'productsRury — OK');
     } catch (err) {
-        logger.warn('Server', 'initRuryProductsTable failed:', err instanceof Error ? err.message : err);
+        logger.warn(
+            'Server',
+            'initRuryProductsTable failed:',
+            err instanceof Error ? err.message : err
+        );
     }
     try {
         await initStudnieProductsTable();
         logger.info('Server', 'productsStudnie — OK');
     } catch (err) {
-        logger.warn('Server', 'initStudnieProductsTable failed:', err instanceof Error ? err.message : err);
+        logger.warn(
+            'Server',
+            'initStudnieProductsTable failed:',
+            err instanceof Error ? err.message : err
+        );
     }
 
     // 2. Admin + start serwera
@@ -222,7 +236,13 @@ if (process.env.SENTRY_DSN) {
         logger.info('Server', `WITROS Oferty — serwer działa na: http://localhost:${PORT}`);
         logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
         logger.info('Server', 'Baza: SQLite (lokalna)');
-        cleanupAuditLogs();
+        cleanupAuditLogs().catch((err) =>
+            logger.error(
+                'AuditLog',
+                'Błąd czyszczenia logów przy starcie serwera',
+                err instanceof Error ? err.message : String(err)
+            )
+        );
     });
 })();
 

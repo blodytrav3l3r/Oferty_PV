@@ -13,7 +13,7 @@ jest.mock('../src/middleware/auth', () => ({
 
 // Mock DB audit log
 jest.mock('../src/db', () => ({
-    logAudit: jest.fn(),
+    logAudit: jest.fn()
 }));
 
 jest.mock('../src/prismaClient', () => ({
@@ -30,6 +30,7 @@ jest.mock('../src/prismaClient', () => ({
             findMany: jest.fn()
         },
         // Raw SQL methods used in studnieOrders.ts
+        $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn(),
         $executeRawUnsafe: jest.fn()
     }
@@ -73,14 +74,26 @@ describe('Partial Orders Backend Logic', () => {
 
     it('should correctly filter orders by user role', async () => {
         const mockOrders = [
-            { id: 'o1', userId: 'test-user', offerStudnieId: 'off1', data: '{}', createdAt: new Date().toISOString() },
-            { id: 'o2', userId: 'other-user', offerStudnieId: 'off1', data: '{}', createdAt: new Date().toISOString() }
+            {
+                id: 'o1',
+                userId: 'test-user',
+                offerStudnieId: 'off1',
+                data: '{}',
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 'o2',
+                userId: 'other-user',
+                offerStudnieId: 'off1',
+                data: '{}',
+                createdAt: new Date().toISOString()
+            }
         ];
         // Mock raw SQL for GET
-        (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(mockOrders);
+        (prisma.$queryRaw as jest.Mock).mockResolvedValue(mockOrders);
 
         const res = await request(app).get('/api/orders-studnie');
-        
+
         expect(res.statusCode).toBe(200);
         expect(res.body.data).toHaveLength(2);
         expect(res.body.data[0].id).toBe('o1');

@@ -3,7 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
-import { pricelistDataSchema } from '../validators/offerSchemas';
+import { pricelistDataSchema, productPatchSchema } from '../validators/offerSchemas';
 import {
     ensureProductsSeeded,
     readPricelist,
@@ -29,31 +29,37 @@ export async function initRuryProductsTable() {
         if (cnt > 0) return;
         const data = await readPricelist(config.keyCurrent);
         if (!Array.isArray(data) || data.length === 0) return;
-        await prisma.$transaction(async (tx) => {
-            const cats = [...new Set(data.map((p) => String(p.category)).filter(Boolean))];
-            for (let i = 0; i < cats.length; i++) {
-                await tx.categoriesRury.upsert({
-                    where: { name: cats[i] },
-                    update: {},
-                    create: { name: cats[i], order: i }
-                });
-            }
-            await tx.productsRury.deleteMany();
-            for (const item of data) {
-                await tx.productsRury.create({
-                    data: {
-                        id: String(item.id),
-                        name: String(item.name ?? ''),
-                        category: String(item.category ?? ''),
-                        price: Number(item.price ?? 0),
-                        transport: item.transport != null ? Number(item.transport) : null,
-                        weight: item.weight != null ? Number(item.weight) : null,
-                        area: item.area != null ? Number(item.area) : null
-                    }
-                });
-            }
-        }, { timeout: 120000 });
-        logger.info('ProductsV2', `Zainicjalizowano productsRury (${data.length} produktów) z seed`);
+        await prisma.$transaction(
+            async (tx) => {
+                const cats = [...new Set(data.map((p) => String(p.category)).filter(Boolean))];
+                for (let i = 0; i < cats.length; i++) {
+                    await tx.categoriesRury.upsert({
+                        where: { name: cats[i] },
+                        update: {},
+                        create: { name: cats[i], order: i }
+                    });
+                }
+                await tx.productsRury.deleteMany();
+                for (const item of data) {
+                    await tx.productsRury.create({
+                        data: {
+                            id: String(item.id),
+                            name: String(item.name ?? ''),
+                            category: String(item.category ?? ''),
+                            price: Number(item.price ?? 0),
+                            transport: item.transport != null ? Number(item.transport) : null,
+                            weight: item.weight != null ? Number(item.weight) : null,
+                            area: item.area != null ? Number(item.area) : null
+                        }
+                    });
+                }
+            },
+            { timeout: 120000 }
+        );
+        logger.info(
+            'ProductsV2',
+            `Zainicjalizowano productsRury (${data.length} produktów) z seed`
+        );
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.warn('ProductsV2', 'Seed tabeli productsRury pominięty:', message);
@@ -123,28 +129,34 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
 // ──────────────────────────────────────────
 // PATCH /:id — edytuj jeden produkt
 // ──────────────────────────────────────────
-router.patch('/:id', requireAuth, writeLimiter, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const data: Record<string, unknown> = {};
-        for (const key of ALLOWED_FIELDS) {
-            if (req.body[key] !== undefined) {
-                data[key] = req.body[key];
+router.patch(
+    '/:id',
+    requireAuth,
+    writeLimiter,
+    validateData(productPatchSchema),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const data: Record<string, unknown> = {};
+            for (const key of ALLOWED_FIELDS) {
+                if (req.body[key] !== undefined) {
+                    data[key] = req.body[key];
+                }
             }
-        }
-        if (Object.keys(data).length === 0) {
-            res.status(400).json({ error: 'Brak pól do aktualizacji' });
-            return;
-        }
+            if (Object.keys(data).length === 0) {
+                res.status(400).json({ error: 'Brak pól do aktualizacji' });
+                return;
+            }
 
-        const updated = await prisma.productsRury.update({ where: { id }, data });
-        res.json({ ok: true, data: updated });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('ProductsV2', 'PATCH error', message);
-        res.status(500).json({ error: message });
+            const updated = await prisma.productsRury.update({ where: { id }, data });
+            res.json({ ok: true, data: updated });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            logger.error('ProductsV2', 'PATCH error', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // ──────────────────────────────────────────
 // DELETE /:id — usuń jeden produkt

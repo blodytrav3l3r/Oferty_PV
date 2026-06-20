@@ -4,38 +4,45 @@ import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
+import { WRITE_LIMITER } from '../middleware/rateLimiters';
 import { telemetryOverrideSchema } from '../validators/offerSchemas';
 
 const router = express.Router();
 
 // POST /api/telemetry/override
-router.post('/override', requireAuth, validateData(telemetryOverrideSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const { originalConfig, finalConfig, overrideReason } = req.body;
-        const userId = authReq.user?.id;
+router.post(
+    '/override',
+    requireAuth,
+    WRITE_LIMITER,
+    validateData(telemetryOverrideSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const { originalConfig, finalConfig, overrideReason } = req.body;
+            const userId = authReq.user?.id;
 
-        const id = crypto.randomUUID();
+            const id = crypto.randomUUID();
 
-        await prisma.ai_telemetry_logs.create({
-            data: {
-                id,
-                userId: userId || '',
-                original_auto_config: JSON.stringify(originalConfig),
-                final_user_config: JSON.stringify(finalConfig),
-                override_reason: overrideReason
-            }
-        });
+            await prisma.ai_telemetry_logs.create({
+                data: {
+                    id,
+                    userId: userId || '',
+                    original_auto_config: JSON.stringify(originalConfig),
+                    final_user_config: JSON.stringify(finalConfig),
+                    override_reason: overrideReason
+                }
+            });
 
-        return res.json({ success: true, id });
-    } catch (e: unknown) {
-        logger.error('Telemetry', 'Błąd zapisu', e);
-        return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
+            return res.json({ success: true, id });
+        } catch (e: unknown) {
+            logger.error('Telemetry', 'Błąd zapisu', e);
+            return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
+        }
     }
-});
+);
 
 // GET /api/telemetry/logs (Tylko administrator)
-router.get('/logs', requireAuth, (req, res) => {
+router.get('/logs', requireAuth, WRITE_LIMITER, (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user?.role !== 'admin') {
         return res.status(403).json({ error: 'Brak uprawnień' });

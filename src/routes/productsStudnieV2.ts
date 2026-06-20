@@ -3,7 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
-import { pricelistDataSchema } from '../validators/offerSchemas';
+import { pricelistDataSchema, productStudniePatchSchema } from '../validators/offerSchemas';
 import {
     ensureProductsSeeded,
     readPricelist,
@@ -38,7 +38,11 @@ export async function initStudnieProductsTable() {
             logger.info('ProductsStudnieV2', `Usunięto ${wCount.count} produktów W+ z bazy`);
         }
     } catch (e) {
-        logger.warn('ProductsStudnieV2', 'Błąd czyszczenia W+:', e instanceof Error ? e.message : e);
+        logger.warn(
+            'ProductsStudnieV2',
+            'Błąd czyszczenia W+:',
+            e instanceof Error ? e.message : e
+        );
     }
 
     try {
@@ -48,24 +52,34 @@ export async function initStudnieProductsTable() {
         if (!Array.isArray(data) || data.length === 0) return;
 
         // Kategorie — osobna, mała transakcja
-        await prisma.$transaction(async (tx) => {
-            const uniqueKeys = new Map<string, { name: string; componentType: string | null }>();
-            for (const item of data) {
-                const name = String(item.category ?? '');
-                if (!name) continue;
-                const compType = item.componentType != null ? String(item.componentType) : null;
-                uniqueKeys.set(name, { name, componentType: compType });
-            }
-            let orderIdx = 0;
-            for (const entry of uniqueKeys.values()) {
-                await tx.categoriesStudnie.upsert({
-                    where: { name: entry.name },
-                    update: { componentType: entry.componentType },
-                    create: { name: entry.name, componentType: entry.componentType, order: orderIdx }
-                });
-                orderIdx++;
-            }
-        }, { timeout: 30000 });
+        await prisma.$transaction(
+            async (tx) => {
+                const uniqueKeys = new Map<
+                    string,
+                    { name: string; componentType: string | null }
+                >();
+                for (const item of data) {
+                    const name = String(item.category ?? '');
+                    if (!name) continue;
+                    const compType = item.componentType != null ? String(item.componentType) : null;
+                    uniqueKeys.set(name, { name, componentType: compType });
+                }
+                let orderIdx = 0;
+                for (const entry of uniqueKeys.values()) {
+                    await tx.categoriesStudnie.upsert({
+                        where: { name: entry.name },
+                        update: { componentType: entry.componentType },
+                        create: {
+                            name: entry.name,
+                            componentType: entry.componentType,
+                            order: orderIdx
+                        }
+                    });
+                    orderIdx++;
+                }
+            },
+            { timeout: 30000 }
+        );
 
         // Czyszczenie poza transakcją
         await prisma.productsStudnie.deleteMany();
@@ -74,52 +88,78 @@ export async function initStudnieProductsTable() {
         const CHUNK = 25;
         for (let i = 0; i < data.length; i += CHUNK) {
             const chunk = data.slice(i, i + CHUNK);
-            await prisma.$transaction(async (tx) => {
-                for (const item of chunk) {
-                    await tx.productsStudnie.create({
-                        data: {
-                            id: String(item.id),
-                            name: String(item.name ?? ''),
-                            category: String(item.category ?? ''),
-                            componentType: String(item.componentType ?? ''),
-                            dn: item.dn != null ? String(item.dn) : null,
-                            height: item.height != null ? Number(item.height) : null,
-                            weight: item.weight != null ? Number(item.weight) : null,
-                            price: Number(item.price ?? 0),
-                            area: item.area != null ? Number(item.area) : null,
-                            areaExt: item.areaExt != null ? Number(item.areaExt) : null,
-                            transport: item.transport != null ? Number(item.transport) : null,
-                            magazynWL: item.magazynWL != null ? Boolean(item.magazynWL) : false,
-                            magazynKLB: item.magazynKLB != null ? Boolean(item.magazynKLB) : false,
-                            formaStandardowa: item.formaStandardowa != null ? Boolean(item.formaStandardowa) : false,
-                            formaStandardowaKLB: item.formaStandardowaKLB != null ? Boolean(item.formaStandardowaKLB) : false,
-                            active: item.active != null ? Boolean(item.active) : false,
-                            zapasDol: item.zapasDol != null ? Number(item.zapasDol) : null,
-                            zapasGora: item.zapasGora != null ? Number(item.zapasGora) : null,
-                            zapasDolMin: item.zapasDolMin != null ? Number(item.zapasDolMin) : null,
-                            zapasGoraMin: item.zapasGoraMin != null ? Number(item.zapasGoraMin) : null,
-                            spocznikH: item.spocznikH != null ? String(item.spocznikH) : null,
-                            hMin1: item.hMin1 != null ? Number(item.hMin1) : null,
-                            hMax1: item.hMax1 != null ? Number(item.hMax1) : null,
-                            cena1: item.cena1 != null ? Number(item.cena1) : null,
-                            hMin2: item.hMin2 != null ? Number(item.hMin2) : null,
-                            hMax2: item.hMax2 != null ? Number(item.hMax2) : null,
-                            cena2: item.cena2 != null ? Number(item.cena2) : null,
-                            hMin3: item.hMin3 != null ? Number(item.hMin3) : null,
-                            hMax3: item.hMax3 != null ? Number(item.hMax3) : null,
-                            cena3: item.cena3 != null ? Number(item.cena3) : null,
-                            doplataPEHD: item.doplataPEHD != null ? Number(item.doplataPEHD) : null,
-                            doplataZelbet: item.doplataZelbet != null ? Number(item.doplataZelbet) : null,
-                            doplataDrabNierdzewna: item.doplataDrabNierdzewna != null ? Number(item.doplataDrabNierdzewna) : null,
-                            malowanieWewnetrzne: item.malowanieWewnetrzne != null ? Number(item.malowanieWewnetrzne) : null,
-                            malowanieZewnetrzne: item.malowanieZewnetrzne != null ? Number(item.malowanieZewnetrzne) : null
-                        }
-                    });
-                }
-            }, { timeout: 30000 });
+            await prisma.$transaction(
+                async (tx) => {
+                    for (const item of chunk) {
+                        await tx.productsStudnie.create({
+                            data: {
+                                id: String(item.id),
+                                name: String(item.name ?? ''),
+                                category: String(item.category ?? ''),
+                                componentType: String(item.componentType ?? ''),
+                                dn: item.dn != null ? String(item.dn) : null,
+                                height: item.height != null ? Number(item.height) : null,
+                                weight: item.weight != null ? Number(item.weight) : null,
+                                price: Number(item.price ?? 0),
+                                area: item.area != null ? Number(item.area) : null,
+                                areaExt: item.areaExt != null ? Number(item.areaExt) : null,
+                                transport: item.transport != null ? Number(item.transport) : null,
+                                magazynWL: item.magazynWL != null ? Boolean(item.magazynWL) : false,
+                                magazynKLB:
+                                    item.magazynKLB != null ? Boolean(item.magazynKLB) : false,
+                                formaStandardowa:
+                                    item.formaStandardowa != null
+                                        ? Boolean(item.formaStandardowa)
+                                        : false,
+                                formaStandardowaKLB:
+                                    item.formaStandardowaKLB != null
+                                        ? Boolean(item.formaStandardowaKLB)
+                                        : false,
+                                active: item.active != null ? Boolean(item.active) : false,
+                                zapasDol: item.zapasDol != null ? Number(item.zapasDol) : null,
+                                zapasGora: item.zapasGora != null ? Number(item.zapasGora) : null,
+                                zapasDolMin:
+                                    item.zapasDolMin != null ? Number(item.zapasDolMin) : null,
+                                zapasGoraMin:
+                                    item.zapasGoraMin != null ? Number(item.zapasGoraMin) : null,
+                                spocznikH: item.spocznikH != null ? String(item.spocznikH) : null,
+                                hMin1: item.hMin1 != null ? Number(item.hMin1) : null,
+                                hMax1: item.hMax1 != null ? Number(item.hMax1) : null,
+                                cena1: item.cena1 != null ? Number(item.cena1) : null,
+                                hMin2: item.hMin2 != null ? Number(item.hMin2) : null,
+                                hMax2: item.hMax2 != null ? Number(item.hMax2) : null,
+                                cena2: item.cena2 != null ? Number(item.cena2) : null,
+                                hMin3: item.hMin3 != null ? Number(item.hMin3) : null,
+                                hMax3: item.hMax3 != null ? Number(item.hMax3) : null,
+                                cena3: item.cena3 != null ? Number(item.cena3) : null,
+                                doplataPEHD:
+                                    item.doplataPEHD != null ? Number(item.doplataPEHD) : null,
+                                doplataZelbet:
+                                    item.doplataZelbet != null ? Number(item.doplataZelbet) : null,
+                                doplataDrabNierdzewna:
+                                    item.doplataDrabNierdzewna != null
+                                        ? Number(item.doplataDrabNierdzewna)
+                                        : null,
+                                malowanieWewnetrzne:
+                                    item.malowanieWewnetrzne != null
+                                        ? Number(item.malowanieWewnetrzne)
+                                        : null,
+                                malowanieZewnetrzne:
+                                    item.malowanieZewnetrzne != null
+                                        ? Number(item.malowanieZewnetrzne)
+                                        : null
+                            }
+                        });
+                    }
+                },
+                { timeout: 30000 }
+            );
         }
 
-        logger.info('ProductsStudnieV2', `Zainicjalizowano productsStudnie (${data.length} produktów) z seed`);
+        logger.info(
+            'ProductsStudnieV2',
+            `Zainicjalizowano productsStudnie (${data.length} produktów) z seed`
+        );
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.warn('ProductsStudnieV2', 'Seed tabeli productsStudnie pominięty:', message);
@@ -127,13 +167,40 @@ export async function initStudnieProductsTable() {
 }
 
 const ALLOWED_FIELDS = [
-    'name', 'category', 'componentType', 'dn', 'height', 'weight', 'price',
-    'area', 'areaExt', 'transport',
-    'magazynWL', 'magazynKLB', 'formaStandardowa', 'formaStandardowaKLB',
-    'active', 'zapasDol', 'zapasGora', 'zapasDolMin', 'zapasGoraMin', 'spocznikH',
-    'hMin1', 'hMax1', 'cena1', 'hMin2', 'hMax2', 'cena2', 'hMin3', 'hMax3', 'cena3',
-    'doplataPEHD', 'doplataZelbet', 'doplataDrabNierdzewna',
-    'malowanieWewnetrzne', 'malowanieZewnetrzne'
+    'name',
+    'category',
+    'componentType',
+    'dn',
+    'height',
+    'weight',
+    'price',
+    'area',
+    'areaExt',
+    'transport',
+    'magazynWL',
+    'magazynKLB',
+    'formaStandardowa',
+    'formaStandardowaKLB',
+    'active',
+    'zapasDol',
+    'zapasGora',
+    'zapasDolMin',
+    'zapasGoraMin',
+    'spocznikH',
+    'hMin1',
+    'hMax1',
+    'cena1',
+    'hMin2',
+    'hMax2',
+    'cena2',
+    'hMin3',
+    'hMax3',
+    'cena3',
+    'doplataPEHD',
+    'doplataZelbet',
+    'doplataDrabNierdzewna',
+    'malowanieWewnetrzne',
+    'malowanieZewnetrzne'
 ] as const;
 
 type StudnieProductRaw = ProductsStudnie;
@@ -178,9 +245,7 @@ interface StudnieProductLegacy {
 
 function toLegacy(p: StudnieProductRaw): StudnieProductLegacy {
     const dnVal: number | string | null =
-        p.dn != null
-            ? (isNaN(Number(p.dn)) ? p.dn : Number(p.dn))
-            : null;
+        p.dn != null ? (isNaN(Number(p.dn)) ? p.dn : Number(p.dn)) : null;
     return {
         id: p.id,
         name: p.name,
@@ -216,7 +281,7 @@ function toLegacy(p: StudnieProductRaw): StudnieProductLegacy {
         doplataZelbet: p.doplataZelbet,
         doplataDrabNierdzewna: p.doplataDrabNierdzewna,
         malowanieWewnetrzne: p.malowanieWewnetrzne,
-        malowanieZewnetrzne: p.malowanieZewnetrzne,
+        malowanieZewnetrzne: p.malowanieZewnetrzne
     };
 }
 
@@ -256,7 +321,11 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
                 await tx.categoriesStudnie.upsert({
                     where: { name: entry.name },
                     update: { componentType: entry.componentType },
-                    create: { name: entry.name, componentType: entry.componentType, order: orderIdx }
+                    create: {
+                        name: entry.name,
+                        componentType: entry.componentType,
+                        order: orderIdx
+                    }
                 });
                 orderIdx++;
             }
@@ -279,8 +348,12 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
                         transport: item.transport != null ? Number(item.transport) : null,
                         magazynWL: item.magazynWL != null ? Boolean(item.magazynWL) : false,
                         magazynKLB: item.magazynKLB != null ? Boolean(item.magazynKLB) : false,
-                        formaStandardowa: item.formaStandardowa != null ? Boolean(item.formaStandardowa) : false,
-                        formaStandardowaKLB: item.formaStandardowaKLB != null ? Boolean(item.formaStandardowaKLB) : false,
+                        formaStandardowa:
+                            item.formaStandardowa != null ? Boolean(item.formaStandardowa) : false,
+                        formaStandardowaKLB:
+                            item.formaStandardowaKLB != null
+                                ? Boolean(item.formaStandardowaKLB)
+                                : false,
                         active: item.active != null ? Boolean(item.active) : false,
                         zapasDol: item.zapasDol != null ? Number(item.zapasDol) : null,
                         zapasGora: item.zapasGora != null ? Number(item.zapasGora) : null,
@@ -297,10 +370,20 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
                         hMax3: item.hMax3 != null ? Number(item.hMax3) : null,
                         cena3: item.cena3 != null ? Number(item.cena3) : null,
                         doplataPEHD: item.doplataPEHD != null ? Number(item.doplataPEHD) : null,
-                        doplataZelbet: item.doplataZelbet != null ? Number(item.doplataZelbet) : null,
-                        doplataDrabNierdzewna: item.doplataDrabNierdzewna != null ? Number(item.doplataDrabNierdzewna) : null,
-                        malowanieWewnetrzne: item.malowanieWewnetrzne != null ? Number(item.malowanieWewnetrzne) : null,
-                        malowanieZewnetrzne: item.malowanieZewnetrzne != null ? Number(item.malowanieZewnetrzne) : null
+                        doplataZelbet:
+                            item.doplataZelbet != null ? Number(item.doplataZelbet) : null,
+                        doplataDrabNierdzewna:
+                            item.doplataDrabNierdzewna != null
+                                ? Number(item.doplataDrabNierdzewna)
+                                : null,
+                        malowanieWewnetrzne:
+                            item.malowanieWewnetrzne != null
+                                ? Number(item.malowanieWewnetrzne)
+                                : null,
+                        malowanieZewnetrzne:
+                            item.malowanieZewnetrzne != null
+                                ? Number(item.malowanieZewnetrzne)
+                                : null
                     }
                 });
             }
@@ -317,28 +400,34 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
 // ──────────────────────────────────────────
 // PATCH /:id — edytuj jeden produkt
 // ──────────────────────────────────────────
-router.patch('/:id', requireAuth, writeLimiter, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const data: Record<string, unknown> = {};
-        for (const key of ALLOWED_FIELDS) {
-            if (req.body[key] !== undefined) {
-                data[key] = req.body[key];
+router.patch(
+    '/:id',
+    requireAuth,
+    writeLimiter,
+    validateData(productStudniePatchSchema),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const data: Record<string, unknown> = {};
+            for (const key of ALLOWED_FIELDS) {
+                if (req.body[key] !== undefined) {
+                    data[key] = req.body[key];
+                }
             }
-        }
-        if (Object.keys(data).length === 0) {
-            res.status(400).json({ error: 'Brak pól do aktualizacji' });
-            return;
-        }
+            if (Object.keys(data).length === 0) {
+                res.status(400).json({ error: 'Brak pól do aktualizacji' });
+                return;
+            }
 
-        const updated = await prisma.productsStudnie.update({ where: { id }, data });
-        res.json({ ok: true, data: toLegacy(updated) });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('ProductsStudnieV2', 'PATCH error', message);
-        res.status(500).json({ error: message });
+            const updated = await prisma.productsStudnie.update({ where: { id }, data });
+            res.json({ ok: true, data: toLegacy(updated) });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            logger.error('ProductsStudnieV2', 'PATCH error', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // ──────────────────────────────────────────
 // DELETE /:id — usuń jeden produkt

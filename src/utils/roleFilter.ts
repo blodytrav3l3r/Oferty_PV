@@ -1,6 +1,6 @@
-// Usunięto import Prisma
 import { User } from '../helpers';
 import { isValidId } from '../helpers';
+import { Prisma } from '../../generated/prisma';
 
 /**
  * Zwraca część klauzuli 'where' dla Prisma Client
@@ -46,4 +46,19 @@ export function buildRoleWhereSql(user: Pick<User, 'role' | 'id' | 'subUsers'>):
     }
     const safeId = isValidId(user.id) ? user.id.replace(/'/g, "''") : '__invalid__';
     return `WHERE "userId" = '${safeId}'`;
+}
+
+/**
+ * Bezpieczna (parametryzowana) wersja buildRoleWhereSql — zwraca Prisma.Sql
+ * do użycia z prisma.$queryRaw (tagged template) zamiast $queryRawUnsafe.
+ * Wartości są przekazywane jako parametry, co eliminuje ryzyko SQL Injection.
+ */
+export function buildRoleWhereCondition(user: Pick<User, 'role' | 'id' | 'subUsers'>): Prisma.Sql {
+    if (user.role === 'admin') return Prisma.empty;
+    if (user.role === 'pro') {
+        const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);
+        if (allowedIds.length === 0) return Prisma.sql`WHERE 1=0`;
+        return Prisma.sql`WHERE "userId" IN (${Prisma.join(allowedIds)})`;
+    }
+    return Prisma.sql`WHERE "userId" = ${user.id}`;
 }

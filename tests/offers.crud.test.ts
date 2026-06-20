@@ -15,7 +15,7 @@ jest.mock('../src/middleware/auth', () => ({
 
 // Mock DB audit log and logger
 jest.mock('../src/db', () => ({
-    logAudit: jest.fn(),
+    logAudit: jest.fn()
 }));
 
 jest.mock('../src/utils/logger', () => ({
@@ -47,6 +47,7 @@ jest.mock('../src/prismaClient', () => ({
             deleteMany: jest.fn(),
             create: jest.fn()
         },
+        $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn(),
         $executeRaw: jest.fn()
     }
@@ -118,7 +119,7 @@ describe('Offers CRUD Routes', () => {
 
     describe('GET /api/offers/studnie', () => {
         it('powinien pobrać oferty studni', async () => {
-            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue([mockOfferStudnie]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([mockOfferStudnie]);
 
             const res = await request(app).get('/api/offers/studnie');
             expect(res.statusCode).toBe(200);
@@ -167,12 +168,14 @@ describe('Offers CRUD Routes', () => {
                 .post('/api/offers')
                 .set('x-user-id', 'user-id')
                 .send({
-                    data: [{
-                        id: 'o-1',
-                        clientId: 'client-1',
-                        status: 'active',
-                        items: [ { productId: 'p-1', quantity: 2, price: 50, unitPrice: 50 } ]
-                    }]
+                    data: [
+                        {
+                            id: 'o-1',
+                            clientId: 'client-1',
+                            status: 'active',
+                            items: [{ productId: 'p-1', quantity: 2, price: 50, unitPrice: 50 }]
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(200);

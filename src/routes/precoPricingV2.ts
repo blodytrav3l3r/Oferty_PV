@@ -4,6 +4,8 @@ import path from 'path';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
+import { validateData } from '../validators/authSchema';
+import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
 import { readPricelist, writePricelist } from '../services/pricelistService';
 import prisma from '../prismaClient';
 
@@ -69,63 +71,75 @@ router.get('/', requireAuth, async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT / — pełny zapis struktury PRECO
 // ──────────────────────────────────────────
-router.put('/', requireAuth, writeLimiter, async (req, res) => {
-    try {
-        const raw = req.body.data;
-        let input: PrecoEntry;
+router.put(
+    '/',
+    requireAuth,
+    writeLimiter,
+    validateData(precoPricingUpdateSchema),
+    async (req, res) => {
+        try {
+            const raw = req.body.data;
+            let input: PrecoEntry;
 
-        if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object') {
-            input = raw[0] as PrecoEntry;
-        } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-            input = raw as PrecoEntry;
-        } else {
-            res.status(400).json({ error: 'Nieprawidłowy format danych' });
-            return;
+            if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object') {
+                input = raw[0] as PrecoEntry;
+            } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+                input = raw as PrecoEntry;
+            } else {
+                res.status(400).json({ error: 'Nieprawidłowy format danych' });
+                return;
+            }
+
+            await writePricelist(SETTINGS_KEY, [input]);
+            res.json({ ok: true });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            logger.error('PrecoPricingV2', 'PUT error', message);
+            res.status(500).json({ error: message });
         }
-
-        await writePricelist(SETTINGS_KEY, [input]);
-        res.json({ ok: true });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('PrecoPricingV2', 'PUT error', message);
-        res.status(500).json({ error: message });
     }
-});
+);
 
 // ──────────────────────────────────────────
 // PATCH / — częściowa aktualizacja
 // Body: { data: { "1000": { skrzynkaWlazowa: 500 }, "spadekKineta": [...] } }
 // ──────────────────────────────────────────
-router.patch('/', requireAuth, writeLimiter, async (req, res) => {
-    try {
-        const patch = req.body.data;
-        if (!patch || typeof patch !== 'object') {
-            res.status(400).json({ error: 'Nieprawidłowy format danych' });
-            return;
-        }
-
-        const current = await readPricelist(SETTINGS_KEY);
-        const entry: PrecoEntry = current.length > 0 ? { ...(current[0] as PrecoEntry) } : {};
-
-        for (const [key, value] of Object.entries(patch)) {
-            const dnStudni = Number(key);
-            if (!isNaN(dnStudni) && typeof value === 'object' && value !== null) {
-                // Deep-merge DN entry
-                const existing = entry[key] as Record<string, unknown> || {};
-                entry[key] = { ...existing, ...(value as Record<string, unknown>) };
-            } else if (RANGE_TYPES.includes(key as typeof RANGE_TYPES[number])) {
-                entry[key] = value;
+router.patch(
+    '/',
+    requireAuth,
+    writeLimiter,
+    validateData(precoPricingPatchSchema),
+    async (req, res) => {
+        try {
+            const patch = req.body.data;
+            if (!patch || typeof patch !== 'object') {
+                res.status(400).json({ error: 'Nieprawidłowy format danych' });
+                return;
             }
-        }
 
-        await writePricelist(SETTINGS_KEY, [entry]);
-        res.json({ ok: true });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('PrecoPricingV2', 'PATCH error', message);
-        res.status(500).json({ error: message });
+            const current = await readPricelist(SETTINGS_KEY);
+            const entry: PrecoEntry = current.length > 0 ? { ...(current[0] as PrecoEntry) } : {};
+
+            for (const [key, value] of Object.entries(patch)) {
+                const dnStudni = Number(key);
+                if (!isNaN(dnStudni) && typeof value === 'object' && value !== null) {
+                    // Deep-merge DN entry
+                    const existing = (entry[key] as Record<string, unknown>) || {};
+                    entry[key] = { ...existing, ...(value as Record<string, unknown>) };
+                } else if (RANGE_TYPES.includes(key as (typeof RANGE_TYPES)[number])) {
+                    entry[key] = value;
+                }
+            }
+
+            await writePricelist(SETTINGS_KEY, [entry]);
+            res.json({ ok: true });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            logger.error('PrecoPricingV2', 'PATCH error', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // ──────────────────────────────────────────
 // GET /default — fabryczne wartości PRECO
@@ -139,7 +153,10 @@ router.get('/default', requireAuth, async (_req, res) => {
         }
         const liveData = await readPricelist(SETTINGS_KEY);
         if (Array.isArray(liveData) && liveData.length > 0) {
-            await writePricelist(SETTINGS_KEY_DEFAULT, liveData as unknown as Record<string, unknown>[]);
+            await writePricelist(
+                SETTINGS_KEY_DEFAULT,
+                liveData as unknown as Record<string, unknown>[]
+            );
             res.json({ data: liveData });
         } else {
             res.json({ data: [] });

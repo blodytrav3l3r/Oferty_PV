@@ -55,7 +55,8 @@ function openZakonczeniePopup() {
     const renderTile = (p) => {
         const isActive = currentZak === p.id;
         const isKonus = p.componentType === 'konus';
-        const wkladkaPEHDZwienczenieActive = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+        const wkladkaPEHDZwienczenieActive =
+            well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
         const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
         const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
         const icon = typeIcons[p.componentType] || 'circle';
@@ -98,10 +99,14 @@ function openZakonczeniePopup() {
 
     let tilesHtml = '';
     if (candidates.length === 0) {
-        tilesHtml = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' + dnLabel + '</div>';
+        tilesHtml =
+            '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' +
+            dnLabel +
+            '</div>';
     } else {
         const isAutoActive = !currentZak;
-        const sectionStyle = 'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
+        const sectionStyle =
+            'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
 
         tilesHtml += `<div onclick="selectZakonczenie(null)" style="
             grid-column:1/ -1;
@@ -118,23 +123,33 @@ function openZakonczeniePopup() {
             <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem; margin-left:1.4rem;">Automatyczny dobór zakończenia dla średnicy DN${effectiveDn}</div>
         </div>`;
 
-        const konuses = candidates.filter(p => p.componentType === 'konus');
-        const dinPlates = candidates.filter(p => p.componentType === 'plyta_din');
-        const odcParts = candidates.filter(p => ['plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].includes(p.componentType));
+        const konuses = candidates.filter((p) => p.componentType === 'konus');
+        const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
+        const odcParts = candidates.filter((p) =>
+            ['plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(
+                p.componentType
+            )
+        );
 
         if (konuses.length) {
             tilesHtml += `<div style="${sectionStyle}">Konus</div>`;
-            konuses.forEach(p => { tilesHtml += renderTile(p); });
+            konuses.forEach((p) => {
+                tilesHtml += renderTile(p);
+            });
             if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
         }
         if (dinPlates.length) {
             tilesHtml += `<div style="${sectionStyle}">Płyta DIN</div>`;
-            dinPlates.forEach(p => { tilesHtml += renderTile(p); });
+            dinPlates.forEach((p) => {
+                tilesHtml += renderTile(p);
+            });
             if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
         }
         if (odcParts.length) {
             tilesHtml += `<div style="${sectionStyle}">Płyta / Pierścień Odciążający</div>`;
-            odcParts.forEach(p => { tilesHtml += renderTile(p); });
+            odcParts.forEach((p) => {
+                tilesHtml += renderTile(p);
+            });
         }
     }
 
@@ -175,8 +190,7 @@ function updateZakonczenieButton() {
                 : p.name
             : well.zakonczenie;
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' +
-            shortName;
+            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
         btn.style.borderColor = 'rgba(99,102,241,0.4)';
         btn.style.color = '#a78bfa';
     } else {
@@ -206,16 +220,14 @@ function updateRedukcjaButton() {
     const targetDn = well.redukcjaTargetDN || 1000;
 
     if (well.redukcjaDN1000) {
-        btn.innerHTML =
-            `<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja DN${targetDn} <span class="text-xs"><i data-lucide="check"></i></span>`;
+        btn.innerHTML = `<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja DN${targetDn} <span class="text-xs"><i data-lucide="check"></i></span>`;
         btn.style.borderColor = 'rgba(109,40,217,0.5)';
         btn.style.color = '#a78bfa';
         btn.style.background = 'rgba(109,40,217,0.15)';
         if (minWrap) minWrap.style.display = 'flex';
         if (minInput) minInput.value = ((well.redukcjaMinH || 2500) / 1000).toFixed(1);
     } else {
-        btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja';
+        btn.innerHTML = '<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';
@@ -247,8 +259,7 @@ function updateRedukcjaZakButton() {
             ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)
             : 'Zak. DN' + targetDn;
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' +
-            shortName;
+            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
         btn.style.borderColor = 'rgba(99,102,241,0.5)';
         btn.style.color = '#a78bfa';
     } else {
@@ -307,7 +318,10 @@ function openRedukcjaZakonczeniePopup() {
     ];
     const targetDn = well.redukcjaTargetDN || 1000;
     const candidates = availProducts
-        .filter((p) => topClosureTypes.includes(p.componentType) && parseInt(p.dn) === parseInt(targetDn))
+        .filter(
+            (p) =>
+                topClosureTypes.includes(p.componentType) && parseInt(p.dn) === parseInt(targetDn)
+        )
         .filter((p) => filterByWellParams(p, well));
 
     const typeIcons = {
@@ -333,7 +347,8 @@ function openRedukcjaZakonczeniePopup() {
     };
 
     const currentZak = well.redukcjaZakonczenie;
-    const wkladkaPEHDZwienczenieActive = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+    const wkladkaPEHDZwienczenieActive =
+        well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
 
     const renderTile = (p, overrideLabel = null) => {
         if (!p) return '';
@@ -396,25 +411,34 @@ function openRedukcjaZakonczeniePopup() {
         <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem; margin-left:1.4rem;">Automatyczny dobór zakończenia dla średnicy DN${targetDn}</div>
     </div>`;
 
-    const sectionStyle = 'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
+    const sectionStyle =
+        'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
 
-    const konuses = candidates.filter(p => p.componentType === 'konus');
-    const dinPlates = candidates.filter(p => p.componentType === 'plyta_din');
-    const odcParts = candidates.filter(p => ['plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].includes(p.componentType));
+    const konuses = candidates.filter((p) => p.componentType === 'konus');
+    const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
+    const odcParts = candidates.filter((p) =>
+        ['plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType)
+    );
 
     if (konuses.length) {
         tilesHtml += `<div style="${sectionStyle}">Konus</div>`;
-        konuses.forEach(p => { tilesHtml += renderTile(p); });
+        konuses.forEach((p) => {
+            tilesHtml += renderTile(p);
+        });
         if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
     }
     if (dinPlates.length) {
         tilesHtml += `<div style="${sectionStyle}">Płyta DIN</div>`;
-        dinPlates.forEach(p => { tilesHtml += renderTile(p); });
+        dinPlates.forEach((p) => {
+            tilesHtml += renderTile(p);
+        });
         if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
     }
     if (odcParts.length) {
         tilesHtml += `<div style="${sectionStyle}">Płyta / Pierścień Odciążający</div>`;
-        odcParts.forEach(p => { tilesHtml += renderTile(p); });
+        odcParts.forEach((p) => {
+            tilesHtml += renderTile(p);
+        });
     }
 
     showModal({
@@ -441,12 +465,12 @@ function openRedukcjaZakonczeniePopup() {
 }
 
 function showStycznaPopup(mode = 'select') {
-    const standardProducts = studnieProducts
-        .filter((p) => p.componentType === 'styczna' && !p.id.includes('KOREK'))
-        .sort((a, b) => (a.dn || 0) - (b.dn || 0));
-    const korekProducts = studnieProducts
-        .filter((p) => p.componentType === 'styczna' && p.id.includes('KOREK'))
-        .sort((a, b) => (a.dn || 0) - (b.dn || 0));
+    const standardProducts = [
+        ...studnieProducts.filter((p) => p.componentType === 'styczna' && !p.id.includes('KOREK'))
+    ].sort((a, b) => (a.dn || 0) - (b.dn || 0));
+    const korekProducts = [
+        ...studnieProducts.filter((p) => p.componentType === 'styczna' && p.id.includes('KOREK'))
+    ].sort((a, b) => (a.dn || 0) - (b.dn || 0));
 
     const renderProductRow = (p) => `
         <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${p.id}', '${mode}')" style="
@@ -512,8 +536,8 @@ function handleStycznaProductChoice(productId, mode) {
         // Domyślne zakończenie wg średnicy podstawy stycznej
         const effDn = 1000; // nowa studnia zawsze startuje z DN1000
         if (stycznaDn >= 1400) {
-            const plate = studnieProducts.find(p =>
-                p.componentType === 'plyta_zamykajaca' && parseInt(p.dn) === effDn
+            const plate = studnieProducts.find(
+                (p) => p.componentType === 'plyta_zamykajaca' && parseInt(p.dn) === effDn
             );
             if (plate) {
                 well.zakonczenie = plate.id;
@@ -546,8 +570,8 @@ function handleStycznaProductChoice(productId, mode) {
         // Domyślne zakończenie wg nowej średnicy podstawy
         const effDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
         if (stycznaDn >= 1400) {
-            const plate = studnieProducts.find(p =>
-                p.componentType === 'plyta_zamykajaca' && parseInt(p.dn) === effDn
+            const plate = studnieProducts.find(
+                (p) => p.componentType === 'plyta_zamykajaca' && parseInt(p.dn) === effDn
             );
             if (plate) {
                 well.zakonczenie = plate.id;
@@ -576,14 +600,14 @@ function handleStycznaProductChoice(productId, mode) {
 
 /* ===== OBSŁUGA POPUPÓW WYBORU ELEMENTÓW ===== */
 
-window.showKonusPehdResolverModal = function(wellIndex, callback) {
+window.showKonusPehdResolverModal = function (wellIndex, callback) {
     const well = wells[wellIndex];
     if (!well) return;
 
     const oldOverlay = document.getElementById('pehd-konus-resolver');
     if (oldOverlay) oldOverlay.remove();
 
-    let html = `
+    const html = `
     <div style="background:var(--bg-secondary, #1e293b); padding:2.2rem; border-radius:16px; max-width:600px; width:100%; border:1px solid rgba(248,113,113,0.25); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
         <h3 id="pehd-konus-title" style="margin-top:0; color:#f87171; display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size:1.25rem; font-weight:700;">
             <i data-lucide="alert-circle" style="width:24px;height:24px;" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
@@ -619,31 +643,36 @@ window.showKonusPehdResolverModal = function(wellIndex, callback) {
     window.konusResolverCallback = callback;
 };
 
-window.resolveKonusPehd = async function(wellIndex, type) {
+window.resolveKonusPehd = async function (wellIndex, type) {
     const well = wells[wellIndex];
     if (!well) return;
-    
+
     let dn = well.dn === 'styczna' ? 1000 : well.dn;
     if (well.redukcjaDN1000) dn = well.redukcjaTargetDN || 1000;
-    
+
     const mag = well.magazyn === 'Włocławek' ? 'WL' : 'KLB';
-    const avail = studnieProducts.filter(p => p.dn === dn && p.componentType === type && ((mag === 'WL' && p.magazynWL === 1) || (mag !== 'WL' && p.magazynKLB === 1)));
-    
+    const avail = studnieProducts.filter(
+        (p) =>
+            p.dn === dn &&
+            p.componentType === type &&
+            ((mag === 'WL' && p.magazynWL === 1) || (mag !== 'WL' && p.magazynKLB === 1))
+    );
+
     if (avail.length > 0) {
         if (well.redukcjaDN1000) {
             well.redukcjaZakonczenie = avail[0].id;
         } else {
             well.zakonczenie = avail[0].id;
         }
-        
+
         document.getElementById('pehd-konus-resolver').remove();
-        
+
         // Jeśli jesteśmy w trakcie edycji studni (Krok 3) i wywołano to przez updateWellParam:
         if (currentWizardStep === 3) {
             await autoSelectComponents(true);
             refreshAll();
         }
-        
+
         if (window.konusResolverCallback) window.konusResolverCallback();
     } else {
         showToast('Brak elementu dla wybranego typu w cenniku (DN' + dn + ').', 'error');
@@ -657,53 +686,73 @@ window.openGlobalRecalcModal = function () {
         return;
     }
     const uniqueDns = [...new Set(wells.map((w) => w.dn))].sort((a, b) => a - b);
-    let groupsHtml = uniqueDns.map((dn) => {
-        const exampleMag = wells[0]?.magazyn || 'Kluczbork';
-        const availForDn = studnieProducts.filter(
-            (p) => p.dn === dn &&
-                ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
-                    (exampleMag !== 'Włocławek' && p.magazynKLB === 1))
-        );
-        const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
-        const candidates = availForDn.filter((p) => topClosureTypes.includes(p.componentType));
-        const canReduce = [1200, 1500, 2000, 2500].includes(dn);
+    const groupsHtml = uniqueDns
+        .map((dn) => {
+            const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+            const availForDn = studnieProducts.filter(
+                (p) =>
+                    p.dn === dn &&
+                    ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
+                        (exampleMag !== 'Włocławek' && p.magazynKLB === 1))
+            );
+            const topClosureTypes = [
+                'konus',
+                'plyta_din',
+                'plyta_najazdowa',
+                'plyta_zamykajaca',
+                'pierscien_odciazajacy'
+            ];
+            const candidates = availForDn.filter((p) => topClosureTypes.includes(p.componentType));
+            const canReduce = [1200, 1500, 2000, 2500].includes(dn);
 
-        let topTiles = candidates.map((p) => `
+            let topTiles = candidates
+                .map(
+                    (p) => `
             <div class="fs-dn-tile" id="recalc-top-${dn}-${p.id}"
                  style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                  onclick="window.recalcSelectTop(${dn}, '${p.id}')">
                 <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
-            </div>`).join('');
+            </div>`
+                )
+                .join('');
 
-        topTiles = `
+            topTiles =
+                `
             <div class="fs-dn-tile active" id="recalc-top-${dn}-auto"
                  style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                  onclick="window.recalcSelectTop(${dn}, 'auto')">
                 <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;"><i data-lucide="refresh-cw"></i> Auto (Domyślny)</div>
             </div>` + topTiles;
 
-        let reductionHtml = '';
-        if (canReduce) {
-            const dn1000Cand = studnieProducts.filter(
-                (p) => p.dn === 1000 && topClosureTypes.includes(p.componentType) &&
-                    ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
-                        (exampleMag !== 'Włocławek' && p.magazynKLB === 1))
-            );
-            let redTiles = dn1000Cand.map((p) => `
+            let reductionHtml = '';
+            if (canReduce) {
+                const dn1000Cand = studnieProducts.filter(
+                    (p) =>
+                        p.dn === 1000 &&
+                        topClosureTypes.includes(p.componentType) &&
+                        ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
+                            (exampleMag !== 'Włocławek' && p.magazynKLB === 1))
+                );
+                let redTiles = dn1000Cand
+                    .map(
+                        (p) => `
                 <div class="fs-dn-tile fs-red-tile-${dn}" id="recalc-redtop-${dn}-${p.id}"
                      style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                      onclick="window.recalcSelectRedTop(${dn}, '${p.id}')">
                     <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
-                </div>`).join('');
+                </div>`
+                    )
+                    .join('');
 
-            redTiles = `
+                redTiles =
+                    `
                 <div class="fs-dn-tile active fs-red-tile-${dn}" id="recalc-redtop-${dn}-auto"
                      style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
                      onclick="window.recalcSelectRedTop(${dn}, 'auto')">
                     <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;"><i data-lucide="refresh-cw"></i> Auto (Konus)</div>
                 </div>` + redTiles;
 
-            reductionHtml = `
+                reductionHtml = `
             <div style="margin-top:0.6rem;">
                 <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; cursor:pointer;">
                     <input type="checkbox" id="recalc-use-red-${dn}" onchange="window.recalcToggleRed(${dn})" />
@@ -720,9 +769,9 @@ window.openGlobalRecalcModal = function () {
                     </div>
                 </div>
             </div>`;
-        }
+            }
 
-        return `
+            return `
         <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:8px; padding:0.8rem; margin-bottom:0.8rem;" class="recalc-group" data-dn="${dn}">
             <h4 style="margin-top:0; margin-bottom:0.6rem; color:var(--accent); font-size:0.9rem;">Studnie DN ${dn} <span style="font-size:0.65rem; color:var(--text-muted); font-weight:normal;">(${wells.filter((w) => w.dn === dn).length} szt.)</span></h4>
             <div style="font-size:0.65rem; margin-bottom:0.3rem; color:var(--text-muted);">Zakończenie główne:</div>
@@ -733,7 +782,8 @@ window.openGlobalRecalcModal = function () {
             <input type="hidden" id="recalc-choice-top-${dn}" value="auto" />
             <input type="hidden" id="recalc-choice-redtop-${dn}" value="auto" />
         </div>`;
-    }).join('');
+        })
+        .join('');
 
     showModal({
         id: 'global-recalc-modal',
@@ -809,7 +859,9 @@ window.applyGlobalRecalc = async function () {
 
             if (useRed) {
                 redTopId = document.getElementById(`recalc-choice-redtop-${dn}`)?.value || 'auto';
-                const redMinHMeters = parseFloat(document.getElementById(`recalc-red-minh-${dn}`)?.value);
+                const redMinHMeters = parseFloat(
+                    document.getElementById(`recalc-red-minh-${dn}`)?.value
+                );
                 redMinH = isNaN(redMinHMeters) ? 2500 : Math.round(redMinHMeters * 1000);
             }
 
@@ -879,7 +931,9 @@ function openRedukcjaChoicePopup() {
             <div style="font-size:0.7rem; opacity:0.7; margin-top:0.2rem;">Standardowa redukcja na kręgi DN1000.</div>
         </button>
         
-        ${can1200 ? `
+        ${
+            can1200
+                ? `
         <button onclick="selectRedukcjaChoice(1200)" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
             border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
@@ -889,7 +943,9 @@ function openRedukcjaChoicePopup() {
             <div style="font-weight:800; font-size:0.9rem;">Redukcja na DN1200</div>
             <div style="font-size:0.7rem; opacity:0.7; margin-top:0.2rem;">Większa redukcja na kręgi DN1200.</div>
         </button>
-        ` : ''}
+        `
+                : ''
+        }
 
         <button onclick="selectRedukcjaChoice(null)" style="
             padding:0.6rem; border-radius:8px; cursor:pointer; text-align:center; transition:all 0.2s;
@@ -920,21 +976,26 @@ async function selectRedukcjaChoice(targetDn) {
     } else {
         well.redukcjaDN1000 = true;
         well.redukcjaTargetDN = targetDn;
-        
+
         // Specjalna obsługa dla studni stycznych
         if (well.dn === 'styczna') {
-            well.stycznaNadbudowa1200 = (targetDn === 1200);
+            well.stycznaNadbudowa1200 = targetDn === 1200;
         }
     }
 
     closeModal();
     updateRedukcjaButton();
     updateRedukcjaZakButton();
-    
+
     if (!well.autoLocked) {
         let swapped = false;
         // Próbujemy podmienić elementy tylko jeśli zmieniamy średnicę aktywnej redukcji
-        if (wasActive && targetDn !== null && oldTarget !== newTarget && (well.config || []).length > 0) {
+        if (
+            wasActive &&
+            targetDn !== null &&
+            oldTarget !== newTarget &&
+            (well.config || []).length > 0
+        ) {
             swapped = trySwapReductionComponents(well, oldTarget, newTarget);
         }
 
@@ -946,7 +1007,10 @@ async function selectRedukcjaChoice(targetDn) {
         }
     }
     refreshAll();
-    showToast(targetDn ? `Redukcja na DN${targetDn} — WŁĄCZONA` : 'Redukcja — WYŁĄCZONA', targetDn ? 'success' : 'info');
+    showToast(
+        targetDn ? `Redukcja na DN${targetDn} — WŁĄCZONA` : 'Redukcja — WYŁĄCZONA',
+        targetDn ? 'success' : 'info'
+    );
 }
 
 /**
@@ -955,17 +1019,17 @@ async function selectRedukcjaChoice(targetDn) {
  */
 function trySwapReductionComponents(well, oldTarget, newTarget) {
     if (!well.config || well.config.length === 0) return false;
-    
+
     const newConfig = [];
-    const availProducts = getAvailableProducts(well).filter(p => filterByWellParams(p, well));
-    
+    const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
+
     for (const item of well.config) {
-        const prod = studnieProducts.find(p => p.id === item.productId);
+        const prod = studnieProducts.find((p) => p.id === item.productId);
         if (!prod) {
             newConfig.push(item);
             continue;
         }
-        
+
         // 1. Podmiana płyty redukcyjnej
         if (prod.componentType === 'plyta_redukcyjna') {
             const newPlate = getReductionPlate(availProducts, well.dn, true, newTarget);
@@ -973,31 +1037,30 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
             newConfig.push({ productId: newPlate.id, quantity: item.quantity });
             continue;
         }
-        
+
         // 2. Podmiana elementów o starej średnicy docelowej
         if (parseInt(prod.dn) === oldTarget) {
             // Szukamy odpowiednika w nowej średnicy o tym samym typie i wysokości
-            const match = availProducts.find(p => 
-                parseInt(p.dn) === newTarget && 
-                p.componentType === prod.componentType && 
-                p.height === prod.height
+            const match = availProducts.find(
+                (p) =>
+                    parseInt(p.dn) === newTarget &&
+                    p.componentType === prod.componentType &&
+                    p.height === prod.height
             );
-            
+
             if (!match) return false; // Brakuje elementu o tej samej wysokości - wymuś re-dobór
             newConfig.push({ productId: match.id, quantity: item.quantity });
             continue;
         }
-        
+
         // 3. Reszta (dennica, kręgi główne) zostaje bez zmian
         newConfig.push(item);
     }
-    
+
     well.config = newConfig;
     well.configSource = 'MANUAL_SWAP'; // Oznaczamy że to była podmiana, ale zachowujemy strukturę
     return true;
 }
-
-
 
 /* ===== TRANSITION MANAGER (MENEDŻER PRZEJŚĆ) ===== */
 let tmSelectedTransitions = new Set();
@@ -1011,8 +1074,8 @@ window.openTransitionManagerModal = function () {
         return;
     }
 
-    const transitionProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const categories = [...new Set(transitionProducts.map(p => p.category))].sort();
+    const transitionProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const categories = [...new Set(transitionProducts.map((p) => p.category))].sort();
 
     if (categories.length === 0) {
         showToast('Brak przejść w cenniku', 'error');
@@ -1023,16 +1086,16 @@ window.openTransitionManagerModal = function () {
     tmSelectedTransitions.clear();
     tmCurrentFilters = { sourceMaterial: [], dn: [], search: '' };
 
-    let allMaterials = new Set();
-    let allDNs = new Set();
-    
-    tmWellData.forEach(w => {
-        w.transitions.forEach(tr => {
+    const allMaterials = new Set();
+    const allDNs = new Set();
+
+    tmWellData.forEach((w) => {
+        w.transitions.forEach((tr) => {
             if (tr.material !== 'Nieznany') allMaterials.add(tr.material);
             allDNs.add(tr.dnRaw);
         });
     });
-    
+
     const overlay = showModal({
         id: 'transition-manager-modal',
         titleId: 'tm-title',
@@ -1053,12 +1116,15 @@ window.openTransitionManagerModal = function () {
                <div data-val="" onclick="tmSelectFilterMaterial('')"
                     style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
                     onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">Dowolna</div>
-               ${[...allMaterials].sort().map(m => {
-                 const safe = m.replace(/'/g,"\\'");
-                 return `<div data-val="${safe}" onclick="tmSelectFilterMaterial('${safe}')"
+               ${[...allMaterials]
+                   .sort()
+                   .map((m) => {
+                       const safe = m.replace(/'/g, "\\'");
+                       return `<div data-val="${safe}" onclick="tmSelectFilterMaterial('${safe}')"
                       style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
                       onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${m}</div>`;
-               }).join('')}
+                   })
+                   .join('')}
             </div>
          </div>
          <div style="min-width:90px;">
@@ -1067,12 +1133,15 @@ window.openTransitionManagerModal = function () {
                <div data-val="" onclick="tmSelectFilterDn('')"
                     style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
                     onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">Dowolne</div>
-               ${[...allDNs].sort((a,b) => parseFloat(a) - parseFloat(b)).map(dn => {
-                 const safe = String(dn).replace(/'/g,"\\'");
-                 return `<div data-val="${safe}" onclick="tmSelectFilterDn('${safe}')"
+               ${[...allDNs]
+                   .sort((a, b) => parseFloat(a) - parseFloat(b))
+                   .map((dn) => {
+                       const safe = String(dn).replace(/'/g, "\\'");
+                       return `<div data-val="${safe}" onclick="tmSelectFilterDn('${safe}')"
                       style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
                       onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${dn}</div>`;
-               }).join('')}
+                   })
+                   .join('')}
             </div>
          </div>
          <div style="min-width:160px; flex:1;">
@@ -1116,12 +1185,14 @@ window.openTransitionManagerModal = function () {
                   <div data-val="" onclick="tmSelectTargetCat('')"
                        style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
                        onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">— Wybierz —</div>
-                  ${categories.map(cat => {
-                    const safe = cat.replace(/'/g,"\\'");
-                    return `<div data-val="${safe}" onclick="tmSelectTargetCat('${safe}')"
+                  ${categories
+                      .map((cat) => {
+                          const safe = cat.replace(/'/g, "\\'");
+                          return `<div data-val="${safe}" onclick="tmSelectTargetCat('${safe}')"
                          style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
                          onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${cat}</div>`;
-                  }).join('')}
+                      })
+                      .join('')}
                </div>
             </div>
             <div style="flex-shrink:0;">
@@ -1135,7 +1206,7 @@ window.openTransitionManagerModal = function () {
     </div>`
     });
     if (window.lucide) window.lucide.createIcons({ root: overlay });
-    
+
     tmRenderTable();
 };
 
@@ -1145,19 +1216,22 @@ window.closeTransitionManagerModal = function () {
     if (el) el.remove();
 };
 
-window.tmRefreshWellData = function() {
+window.tmRefreshWellData = function () {
     tmWellData = [];
     for (let i = 0; i < wells.length; i++) {
         const well = wells[i];
-        
+
         let trList = [];
         if (well.przejscia && well.przejscia.length > 0) {
             trList = well.przejscia.map((tr, trIdx) => {
-                const p = studnieProducts.find(prod => prod.id === tr.productId);
+                const p = studnieProducts.find((prod) => prod.id === tr.productId);
                 return {
                     trIndex: trIdx,
                     angle: tr.angle || 0,
-                    rzedna: tr.rzednaWlaczenia !== undefined && tr.rzednaWlaczenia !== null ? tr.rzednaWlaczenia : well.rzednaDna,
+                    rzedna:
+                        tr.rzednaWlaczenia !== undefined && tr.rzednaWlaczenia !== null
+                            ? tr.rzednaWlaczenia
+                            : well.rzednaDna,
                     productId: tr.productId,
                     material: p ? p.category : 'Nieznany',
                     dnRaw: p ? p.dn : '?',
@@ -1173,7 +1247,8 @@ window.tmRefreshWellData = function() {
             if (typeof calculateOfferTotals === 'function') {
                 const totals = calculateOfferTotals();
                 if (totals && totals.globalWeight > 0 && totals.totalTransportCost > 0) {
-                    transportCost = totals.totalTransportCost * (stats.weight / totals.globalWeight);
+                    transportCost =
+                        totals.totalTransportCost * (stats.weight / totals.globalWeight);
                 }
             }
             wellPrice = stats.price + transportCost;
@@ -1182,7 +1257,7 @@ window.tmRefreshWellData = function() {
         tmWellData.push({
             wellIndex: i,
             uid: `well_${i}`,
-            wellName: well.nazwaWlasna || well.name || `Studnia ${i+1}`,
+            wellName: well.nazwaWlasna || well.name || `Studnia ${i + 1}`,
             wellDn: well.dn,
             rzednaDna: well.rzednaDna || '0.000',
             price: wellPrice,
@@ -1191,10 +1266,10 @@ window.tmRefreshWellData = function() {
     }
 };
 
-let tmSortState = { column: null, asc: true };
+const tmSortState = { column: null, asc: true };
 let tmTargetCat = '';
 
-window.tmSortBy = function(column) {
+window.tmSortBy = function (column) {
     if (tmSortState.column === column) {
         tmSortState.asc = !tmSortState.asc;
     } else {
@@ -1204,15 +1279,17 @@ window.tmSortBy = function(column) {
     tmRenderTable();
 };
 
-window.tmApplyFilters = function() {
-    tmCurrentFilters.search = (document.getElementById('tm-filter-search')?.value || '').toLowerCase();
+window.tmApplyFilters = function () {
+    tmCurrentFilters.search = (
+        document.getElementById('tm-filter-search')?.value || ''
+    ).toLowerCase();
     tmRenderTable();
 };
 
 function tmHighlightTiles(containerId, selectedVal) {
     const c = document.getElementById(containerId);
     if (!c) return;
-    c.querySelectorAll('[data-val]').forEach(d => {
+    c.querySelectorAll('[data-val]').forEach((d) => {
         const isSel = d.dataset.val === selectedVal;
         d.style.background = isSel ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)';
         d.style.borderColor = isSel ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)';
@@ -1223,15 +1300,18 @@ function tmHighlightTiles(containerId, selectedVal) {
 function tmHighlightTilesMulti(containerId, selectedVals) {
     const c = document.getElementById(containerId);
     if (!c) return;
-    c.querySelectorAll('[data-val]').forEach(d => {
-        const isSel = selectedVals.length === 0 ? d.dataset.val === '' : d.dataset.val !== '' && selectedVals.includes(d.dataset.val);
+    c.querySelectorAll('[data-val]').forEach((d) => {
+        const isSel =
+            selectedVals.length === 0
+                ? d.dataset.val === ''
+                : d.dataset.val !== '' && selectedVals.includes(d.dataset.val);
         d.style.background = isSel ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)';
         d.style.borderColor = isSel ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)';
         d.style.color = isSel ? '#a7f3d0' : 'var(--text-primary)';
     });
 }
 
-window.tmSelectFilterMaterial = function(val) {
+window.tmSelectFilterMaterial = function (val) {
     if (val === '') {
         tmCurrentFilters.sourceMaterial = [];
     } else {
@@ -1243,7 +1323,7 @@ window.tmSelectFilterMaterial = function(val) {
     tmApplyFilters();
 };
 
-window.tmSelectFilterDn = function(val) {
+window.tmSelectFilterDn = function (val) {
     if (val === '') {
         tmCurrentFilters.dn = [];
     } else {
@@ -1255,18 +1335,18 @@ window.tmSelectFilterDn = function(val) {
     tmApplyFilters();
 };
 
-window.tmSelectTargetCat = function(val) {
+window.tmSelectTargetCat = function (val) {
     tmTargetCat = val;
     tmHighlightTiles('tm-target-cat-tiles', val);
     tmUpdatePreview();
 };
 
-window.tmRenderTable = function() {
+window.tmRenderTable = function () {
     const container = document.getElementById('tm-table-body');
     if (!container) return;
 
     // Sortuj studnie jesli potrzeba
-    let sortedWells = [...tmWellData];
+    const sortedWells = [...tmWellData];
     if (tmSortState.column === 'wellName') {
         sortedWells.sort((a, b) => {
             const va = a.wellName.toLowerCase();
@@ -1280,15 +1360,23 @@ window.tmRenderTable = function() {
     let allChecked = true;
     let anyChecked = false;
 
-    sortedWells.forEach(w => {
-        let matchingTrs = [];
-        w.transitions.forEach(tr => {
-            let matchMat = true, matchDn = true, matchSearch = true;
-            if (tmCurrentFilters.sourceMaterial.length > 0 && !tmCurrentFilters.sourceMaterial.includes(tr.material)) matchMat = false;
-            if (tmCurrentFilters.dn.length > 0 && !tmCurrentFilters.dn.includes(String(tr.dnRaw))) matchDn = false;
+    sortedWells.forEach((w) => {
+        const matchingTrs = [];
+        w.transitions.forEach((tr) => {
+            let matchMat = true,
+                matchDn = true,
+                matchSearch = true;
+            if (
+                tmCurrentFilters.sourceMaterial.length > 0 &&
+                !tmCurrentFilters.sourceMaterial.includes(tr.material)
+            )
+                matchMat = false;
+            if (tmCurrentFilters.dn.length > 0 && !tmCurrentFilters.dn.includes(String(tr.dnRaw)))
+                matchDn = false;
             if (tmCurrentFilters.search) {
                 const s = tmCurrentFilters.search;
-                matchSearch = w.wellName.toLowerCase().includes(s) ||
+                matchSearch =
+                    w.wellName.toLowerCase().includes(s) ||
                     tr.material.toLowerCase().includes(s) ||
                     String(tr.dnRaw).includes(s);
             }
@@ -1297,24 +1385,27 @@ window.tmRenderTable = function() {
         if (matchingTrs.length === 0) return;
         visibleCount++;
 
-        const wellSelCount = matchingTrs.filter(tr => tmSelectedTransitions.has(`${w.wellIndex}:${tr.trIndex}`)).length;
+        const wellSelCount = matchingTrs.filter((tr) =>
+            tmSelectedTransitions.has(`${w.wellIndex}:${tr.trIndex}`)
+        ).length;
         const wellAllSel = wellSelCount === matchingTrs.length;
         const wellSomeSel = wellSelCount > 0;
         if (!wellAllSel) allChecked = false;
         if (wellSomeSel) anyChecked = true;
 
-        const tilesHtml = matchingTrs.map(tr => {
-            const key = `${w.wellIndex}:${tr.trIndex}`;
-            const isSel = tmSelectedTransitions.has(key);
-            const safeMaterial = tr.material.replace(/'/g, "\\'");
-            const locked = isWellLocked(w.wellIndex);
-            return `
+        const tilesHtml = matchingTrs
+            .map((tr) => {
+                const key = `${w.wellIndex}:${tr.trIndex}`;
+                const isSel = tmSelectedTransitions.has(key);
+                const safeMaterial = tr.material.replace(/'/g, "\\'");
+                const locked = isWellLocked(w.wellIndex);
+                return `
             <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
                   style="background:${isSel ? 'rgba(16,185,129,0.15)' : '#1a2536'};
                          border:1px solid ${isSel ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'};
                          border-radius:8px; padding:0.4rem 0.45rem; ${locked ? 'cursor:default;' : 'cursor:pointer;'}
                          transition:all 0.2s; display:flex; flex-direction:column; gap:0.1rem;"
-                  ${locked ? '' : `onmouseenter="this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'"`}
+                  ${locked ? '' : "onmouseenter=\"this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'\""}
                   ${locked ? '' : `onmouseleave="this.style.borderColor='${isSel ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'}';this.style.transform='none';this.style.boxShadow='none'"`}>
               <div style="display:flex; justify-content:space-between; align-items:center; gap:0.3rem;">
                 <div style="display:flex; align-items:center; gap:0.3rem; min-width:0; flex:1;">
@@ -1324,27 +1415,32 @@ window.tmRenderTable = function() {
                   <span style="font-size:0.76rem; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeMaterial}">${tr.material}</span>
                   <span style="font-size:0.82rem; font-weight:800; color:#4ade80; flex-shrink:0;">DN${tr.dnRaw}</span>
                 </div>
-                ${locked ? '' : `
+                ${
+                    locked
+                        ? ''
+                        : `
                 <button onclick="event.stopPropagation(); tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"
                         style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.2); border-radius:4px; cursor:pointer; padding:0.05rem 0.3rem; color:#34d399; font-size:0.6rem; line-height:1.3; flex-shrink:0; transition:all 0.15s;"
                         onmouseenter="this.style.background='rgba(16,185,129,0.25)'"
                         onmouseleave="this.style.background='rgba(16,185,129,0.12)'">
                   ✎
-                </button>`}
+                </button>`
+                }
               </div>
               <div style="display:flex; gap:0.3rem; align-items:center; font-size:0.65rem; color:var(--text-muted);">
-                <span>${tr.rzedna != null ? parseFloat(tr.rzedna).toFixed(2)+'m' : '—'}</span>
+                <span>${tr.rzedna != null ? parseFloat(tr.rzedna).toFixed(2) + 'm' : '—'}</span>
                 <span style="opacity:0.3;">·</span>
                 <span style="color:#fcd34d; font-weight:600;">${tr.angle}°</span>
                 <span style="opacity:0.3;">·</span>
                 <span style="background:${tr.flowType === FLOW_TYPES.WLOT ? 'rgba(52,211,153,0.18)' : 'rgba(251,191,36,0.18)'}; color:${tr.flowType === FLOW_TYPES.WLOT ? '#34d399' : '#fbbf24'}; padding:0.02rem 0.3rem; border-radius:3px; font-size:0.6rem; font-weight:700;">${tr.flowType === FLOW_TYPES.WLOT ? 'WLOT' : 'WYLOT'}</span>
               </div>
             </div>`;
-        }).join('');
+            })
+            .join('');
 
         const wellLocked = isWellLocked(w.wellIndex);
         html += `
-        <div style="background:#111827; border:1px solid ${wellLocked ? 'rgba(239,68,68,0.2)' : (wellSomeSel ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)')}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
+        <div style="background:#111827; border:1px solid ${wellLocked ? 'rgba(239,68,68,0.2)' : wellSomeSel ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)'}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
           <div style="display:flex; align-items:center; padding:0.55rem 0.75rem; background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.05);">
             <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)"
                    style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
@@ -1387,11 +1483,11 @@ window.tmRenderTable = function() {
     tmUpdatePreview();
 };
 
-window.tmToggleWell = function(wellIdx, isChecked) {
+window.tmToggleWell = function (wellIdx, isChecked) {
     if (isWellLocked(wellIdx)) return;
-    const wData = tmWellData.find(w => w.wellIndex === wellIdx);
+    const wData = tmWellData.find((w) => w.wellIndex === wellIdx);
     if (!wData) return;
-    wData.transitions.forEach(tr => {
+    wData.transitions.forEach((tr) => {
         const key = `${wellIdx}:${tr.trIndex}`;
         if (isChecked) tmSelectedTransitions.add(key);
         else tmSelectedTransitions.delete(key);
@@ -1399,34 +1495,37 @@ window.tmToggleWell = function(wellIdx, isChecked) {
     tmRenderTable();
 };
 
-window.tmToggleTransition = function(key, isChecked) {
+window.tmToggleTransition = function (key, isChecked) {
     if (isChecked) tmSelectedTransitions.add(key);
     else tmSelectedTransitions.delete(key);
     tmRenderTable();
 };
 
-window.tmToggleSelectAll = function() {
+window.tmToggleSelectAll = function () {
     const isChecked = document.getElementById('tm-select-all').checked;
     const visibleCbs = document.querySelectorAll('.tm-row-cb');
-    
-    visibleCbs.forEach(cb => {
+
+    visibleCbs.forEach((cb) => {
         const key = cb.value;
         const wellIdx = parseInt(key.split(':')[0], 10);
         if (isChecked && isWellLocked(wellIdx)) return;
         if (isChecked) tmSelectedTransitions.add(key);
         else tmSelectedTransitions.delete(key);
     });
-    
+
     tmRenderTable();
 };
 
 let tmEditSelectedCat = null;
 let tmEditSelectedDn = null;
 
-window.tmOpenEditTransitionPopup = function(wellIdx, trIdx, event) {
+window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     event.stopPropagation();
     if (isWellLocked(wellIdx)) {
-        showToast('<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zaakceptowane zlecenie produkcyjne.', 'error');
+        showToast(
+            '<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zaakceptowane zlecenie produkcyjne.',
+            'error'
+        );
         return;
     }
     const existing = document.getElementById('tm-edit-popup');
@@ -1437,11 +1536,13 @@ window.tmOpenEditTransitionPopup = function(wellIdx, trIdx, event) {
     const well = wells[wellIdx];
     if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
     const tr = well.przejscia[trIdx];
-    const currentP = studnieProducts.find(p => p.id === tr.productId);
+    const currentP = studnieProducts.find((p) => p.id === tr.productId);
 
-    const allProducts = studnieProducts.filter(p => p.componentType === 'przejscie');
-    const categories = [...new Set(allProducts.map(p => p.category))].sort();
-    const allDNs = [...new Set(allProducts.map(p => p.dn))].sort((a,b) => parseFloat(a) - parseFloat(b));
+    const allProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
+    const categories = [...new Set(allProducts.map((p) => p.category))].sort();
+    const allDNs = [...new Set(allProducts.map((p) => p.dn))].sort(
+        (a, b) => parseFloat(a) - parseFloat(b)
+    );
 
     const currentCat = currentP ? currentP.category : '';
     const currentDn = currentP ? currentP.dn : '';
@@ -1456,7 +1557,10 @@ window.tmOpenEditTransitionPopup = function(wellIdx, trIdx, event) {
     const popup = document.createElement('div');
     popup.id = 'tm-edit-popup';
     popup.style.cssText = `position:fixed;z-index:100000;background:#1e293b;border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:0.6rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);width:${popupW}px;top:${top}px;left:${left}px;animation:fadeIn 0.1s ease;`;
-    if (maxH > 120) { popup.style.maxHeight = maxH + 'px'; popup.style.overflowY = 'auto'; }
+    if (maxH > 120) {
+        popup.style.maxHeight = maxH + 'px';
+        popup.style.overflowY = 'auto';
+    }
 
     const currentLabel = currentP ? `${currentP.category} DN${currentP.dn}` : 'Nieznane';
 
@@ -1469,23 +1573,27 @@ window.tmOpenEditTransitionPopup = function(wellIdx, trIdx, event) {
         <div style="flex:1;min-width:0;">
           <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.25rem;">Typ</div>
           <div id="tm-edit-type-list" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-right:0.15rem;">
-            ${categories.map(cat => {
-              const isCur = cat === currentCat;
-              return `<div data-cat="${cat}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
+            ${categories
+                .map((cat) => {
+                    const isCur = cat === currentCat;
+                    return `<div data-cat="${cat}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
                    style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:${isCur ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#a7f3d0' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(16,185,129,0.15);' : ''}"
                    onmouseenter="this.style.borderColor='rgba(16,185,129,0.35)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'}'">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}${cat}</div>`;
-            }).join('')}
+                })
+                .join('')}
           </div>
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.25rem;">Średnica</div>
           <div id="tm-edit-dn-list" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-right:0.15rem;">
-            ${allDNs.map(dn => {
-              const isCur = dn === currentDn;
-              return `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
+            ${allDNs
+                .map((dn) => {
+                    const isCur = dn === currentDn;
+                    return `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
                    style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${isCur ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#6ee7b7' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(52,211,153,0.15);' : ''}"
                    onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'}'">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}DN${dn}</div>`;
-            }).join('')}
+                })
+                .join('')}
           </div>
         </div>
       </div>
@@ -1496,46 +1604,92 @@ window.tmOpenEditTransitionPopup = function(wellIdx, trIdx, event) {
 
     document.body.appendChild(popup);
 
-    const closeHandler = function(e) {
-        if (!popup.contains(e.target)) { popup.remove(); document.removeEventListener('click', closeHandler); }
+    const closeHandler = function (e) {
+        if (!popup.contains(e.target)) {
+            popup.remove();
+            document.removeEventListener('click', closeHandler);
+        }
     };
     setTimeout(() => document.addEventListener('click', closeHandler), 10);
 };
 
 function tmEditSelectType(el, wellIdx, trIdx) {
     const list = document.getElementById('tm-edit-type-list');
-    list.querySelectorAll('[data-cat]').forEach(div => { div.style.background = 'rgba(255,255,255,0.03)'; div.style.borderColor = 'rgba(255,255,255,0.06)'; div.style.color = 'var(--text-primary)'; div.style.boxShadow = 'none'; const dot = div.querySelector('span'); if (dot) dot.innerHTML = '◆'; dot.style.color = 'transparent'; });
-    el.style.background = 'rgba(16,185,129,0.2)'; el.style.borderColor = 'rgba(16,185,129,0.55)'; el.style.color = '#a7f3d0'; el.style.boxShadow = '0 0 8px rgba(16,185,129,0.15)'; const dot = el.querySelector('span'); if (dot) dot.style.color = '#34d399';
+    list.querySelectorAll('[data-cat]').forEach((div) => {
+        div.style.background = 'rgba(255,255,255,0.03)';
+        div.style.borderColor = 'rgba(255,255,255,0.06)';
+        div.style.color = 'var(--text-primary)';
+        div.style.boxShadow = 'none';
+        const dot = div.querySelector('span');
+        if (dot) dot.innerHTML = '◆';
+        dot.style.color = 'transparent';
+    });
+    el.style.background = 'rgba(16,185,129,0.2)';
+    el.style.borderColor = 'rgba(16,185,129,0.55)';
+    el.style.color = '#a7f3d0';
+    el.style.boxShadow = '0 0 8px rgba(16,185,129,0.15)';
+    const dot = el.querySelector('span');
+    if (dot) dot.style.color = '#34d399';
 
     tmEditSelectedCat = el.dataset.cat;
     tmEditSelectedDn = null;
 
-    const products = studnieProducts.filter(p => p.componentType === 'przejscie' && p.category === tmEditSelectedCat);
-    const dns = [...new Set(products.map(p => p.dn))].sort((a,b) => parseFloat(a) - parseFloat(b));
+    const products = studnieProducts.filter(
+        (p) => p.componentType === 'przejscie' && p.category === tmEditSelectedCat
+    );
+    const dns = [...new Set(products.map((p) => p.dn))].sort(
+        (a, b) => parseFloat(a) - parseFloat(b)
+    );
 
     const dnList = document.getElementById('tm-edit-dn-list');
-    dnList.innerHTML = dns.map(dn => `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'"><span style="color:transparent;font-size:0.75rem;">◆</span>DN${dn}</div>`).join('');
+    dnList.innerHTML = dns
+        .map(
+            (dn) =>
+                `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'"><span style="color:transparent;font-size:0.75rem;">◆</span>DN${dn}</div>`
+        )
+        .join('');
 
     const resultSpan = document.querySelector('#tm-edit-result span');
     if (resultSpan) resultSpan.textContent = 'Wybierz średnicę';
     const applyBtn = document.getElementById('tm-edit-apply-btn');
     if (applyBtn) applyBtn.style.display = 'none';
 
-    const currentP = studnieProducts.find(p => p.id === wells[wellIdx]?.przejscia?.[trIdx]?.productId);
+    const currentP = studnieProducts.find(
+        (p) => p.id === wells[wellIdx]?.przejscia?.[trIdx]?.productId
+    );
     if (currentP && currentP.category === tmEditSelectedCat) {
-        dnList.querySelectorAll('[data-dn]').forEach(div => { if (div.dataset.dn === currentP.dn) tmEditSelectDN(div, wellIdx, trIdx); });
+        dnList.querySelectorAll('[data-dn]').forEach((div) => {
+            if (div.dataset.dn === currentP.dn) tmEditSelectDN(div, wellIdx, trIdx);
+        });
     }
 }
 
 function tmEditSelectDN(el, wellIdx, trIdx) {
     const list = document.getElementById('tm-edit-dn-list');
-    list.querySelectorAll('[data-dn]').forEach(div => { div.style.background = 'rgba(255,255,255,0.03)'; div.style.borderColor = 'rgba(255,255,255,0.06)'; div.style.color = 'var(--text-primary)'; div.style.boxShadow = 'none'; const dot = div.querySelector('span'); if (dot) dot.style.color = 'transparent'; });
-    el.style.background = 'rgba(52,211,153,0.2)'; el.style.borderColor = 'rgba(52,211,153,0.55)'; el.style.color = '#6ee7b7'; el.style.boxShadow = '0 0 8px rgba(52,211,153,0.15)'; const dot = el.querySelector('span'); if (dot) dot.style.color = '#34d399';
+    list.querySelectorAll('[data-dn]').forEach((div) => {
+        div.style.background = 'rgba(255,255,255,0.03)';
+        div.style.borderColor = 'rgba(255,255,255,0.06)';
+        div.style.color = 'var(--text-primary)';
+        div.style.boxShadow = 'none';
+        const dot = div.querySelector('span');
+        if (dot) dot.style.color = 'transparent';
+    });
+    el.style.background = 'rgba(52,211,153,0.2)';
+    el.style.borderColor = 'rgba(52,211,153,0.55)';
+    el.style.color = '#6ee7b7';
+    el.style.boxShadow = '0 0 8px rgba(52,211,153,0.15)';
+    const dot = el.querySelector('span');
+    if (dot) dot.style.color = '#34d399';
 
     tmEditSelectedDn = el.dataset.dn;
 
     if (tmEditSelectedCat && tmEditSelectedDn) {
-        const product = studnieProducts.find(p => p.componentType === 'przejscie' && p.category === tmEditSelectedCat && String(p.dn) === tmEditSelectedDn);
+        const product = studnieProducts.find(
+            (p) =>
+                p.componentType === 'przejscie' &&
+                p.category === tmEditSelectedCat &&
+                String(p.dn) === tmEditSelectedDn
+        );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
             resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size:0.73rem;font-weight:600;">${product.category} DN${product.dn}</span><span style="color:#34d399;font-weight:700;margin-left:0.5rem;font-size:0.7rem;">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
@@ -1551,15 +1705,24 @@ async function tmEditApply(wellIdx, trIdx) {
         showToast('<i data-lucide="lock"></i> Studnia zablokowana.', 'error');
         return;
     }
-    const product = studnieProducts.find(p => p.componentType === 'przejscie' && p.category === tmEditSelectedCat && String(p.dn) === tmEditSelectedDn);
-    if (!product) { showToast('Nie znaleziono produktu', 'error'); return; }
+    const product = studnieProducts.find(
+        (p) =>
+            p.componentType === 'przejscie' &&
+            p.category === tmEditSelectedCat &&
+            String(p.dn) === tmEditSelectedDn
+    );
+    if (!product) {
+        showToast('Nie znaleziono produktu', 'error');
+        return;
+    }
 
     const tr = wells[wellIdx]?.przejscia?.[trIdx];
     if (!tr) return;
     tr.productId = product.id;
 
     document.getElementById('tm-edit-popup')?.remove();
-    tmEditSelectedCat = null; tmEditSelectedDn = null;
+    tmEditSelectedCat = null;
+    tmEditSelectedDn = null;
 
     try {
         currentWellIndex = wellIdx;
@@ -1573,12 +1736,12 @@ async function tmEditApply(wellIdx, trIdx) {
     showToast(`Zmieniono na ${product.category} DN${product.dn}`, 'success');
 }
 
-window.tmUpdateSelectedCount = function() {
+window.tmUpdateSelectedCount = function () {
     const countEl = document.getElementById('tm-selected-count');
     if (countEl) countEl.textContent = String(tmSelectedTransitions.size);
 };
 
-window.tmUpdatePreview = function() {
+window.tmUpdatePreview = function () {
     const panel = document.getElementById('tm-preview-panel');
     const content = document.getElementById('tm-preview-content');
     if (!panel || !content) return;
@@ -1589,27 +1752,28 @@ window.tmUpdatePreview = function() {
         return;
     }
 
-    let replaceList = [];
-    let skipList = [];
+    const replaceList = [];
+    const skipList = [];
 
-    tmSelectedTransitions.forEach(key => {
+    tmSelectedTransitions.forEach((key) => {
         const [wellIdxStr, trIdxStr] = key.split(':');
         const wellIdx = parseInt(wellIdxStr, 10);
         const trIdx = parseInt(trIdxStr, 10);
         const well = wells[wellIdx];
         if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
         const tr = well.przejscia[trIdx];
-        const p = studnieProducts.find(prod => prod.id === tr.productId);
+        const p = studnieProducts.find((prod) => prod.id === tr.productId);
         if (!p || p.category === targetCat) return;
 
-        const replacement = studnieProducts.find(pr =>
-            pr.componentType === 'przejscie' &&
-            pr.category === targetCat &&
-            pr.active !== 0 &&
-            pr.dn === p.dn
+        const replacement = studnieProducts.find(
+            (pr) =>
+                pr.componentType === 'przejscie' &&
+                pr.category === targetCat &&
+                pr.active !== 0 &&
+                pr.dn === p.dn
         );
 
-        const label = `${well.name || `Studnia ${wellIdx+1}`} — ${p.category} DN${p.dn}`;
+        const label = `${well.name || `Studnia ${wellIdx + 1}`} — ${p.category} DN${p.dn}`;
         if (replacement) {
             replaceList.push(label);
         } else {
@@ -1625,35 +1789,35 @@ window.tmUpdatePreview = function() {
     let html = '';
     if (replaceList.length > 0) {
         html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:#34d399; font-weight:800;">✅ Zostanie zamienione: ${replaceList.length}</span></div>`;
-        html += `<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">`;
-        replaceList.forEach(l => {
+        html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">';
+        replaceList.forEach((l) => {
             html += `<span style="background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.2); color:#34d399; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${l}</span>`;
         });
-        html += `</div>`;
+        html += '</div>';
     }
     if (skipList.length > 0) {
         html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:#f87171; font-weight:800;">⚠️ Brak odpowiednika w ${targetCat}: ${skipList.length}</span></div>`;
-        html += `<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">`;
-        skipList.forEach(l => {
+        html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">';
+        skipList.forEach((l) => {
             html += `<span style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${l}</span>`;
         });
-        html += `</div>`;
+        html += '</div>';
     }
 
     content.innerHTML = html;
     panel.style.display = 'block';
 };
 
-window.activatePreviewPanel = function() {
+window.activatePreviewPanel = function () {
     setTimeout(tmUpdatePreview, 100);
 };
 
-window.tmApplyChanges = async function() {
+window.tmApplyChanges = async function () {
     if (tmSelectedTransitions.size === 0) {
         showToast('Zaznacz co najmniej jedno przejście', 'warning');
         return;
     }
-    
+
     const targetCat = tmTargetCat;
 
     if (!targetCat) {
@@ -1662,11 +1826,11 @@ window.tmApplyChanges = async function() {
     }
 
     let replacedCount = 0;
-    let skippedDetails = [];
-    let skippedLocked = new Set();
-    let modifiedWellsIndices = new Set();
+    const skippedDetails = [];
+    const skippedLocked = new Set();
+    const modifiedWellsIndices = new Set();
 
-    tmSelectedTransitions.forEach(key => {
+    tmSelectedTransitions.forEach((key) => {
         const [wellIdxStr, trIdxStr] = key.split(':');
         const wellIdx = parseInt(wellIdxStr, 10);
         const trIdx = parseInt(trIdxStr, 10);
@@ -1680,15 +1844,16 @@ window.tmApplyChanges = async function() {
         if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
 
         const tr = well.przejscia[trIdx];
-        const p = studnieProducts.find(prod => prod.id === tr.productId);
+        const p = studnieProducts.find((prod) => prod.id === tr.productId);
         if (!p) return;
         if (p.category === targetCat) return;
 
-        const replacement = studnieProducts.find(pr => 
-            pr.componentType === 'przejscie' && 
-            pr.category === targetCat && 
-            pr.active !== 0 &&
-            pr.dn === p.dn
+        const replacement = studnieProducts.find(
+            (pr) =>
+                pr.componentType === 'przejscie' &&
+                pr.category === targetCat &&
+                pr.active !== 0 &&
+                pr.dn === p.dn
         );
 
         if (replacement) {
@@ -1697,7 +1862,7 @@ window.tmApplyChanges = async function() {
             modifiedWellsIndices.add(wellIdx);
         } else {
             skippedDetails.push({
-                wellName: well.nazwaWlasna || well.name || `Studnia ${wellIdx+1}`,
+                wellName: well.nazwaWlasna || well.name || `Studnia ${wellIdx + 1}`,
                 material: p.category,
                 dn: p.dn,
                 targetCat: targetCat
@@ -1706,7 +1871,10 @@ window.tmApplyChanges = async function() {
     });
 
     if (skippedLocked.size > 0) {
-        showToast(`Pominięto ${skippedLocked.size} zablokowaną studnię/studnie (zamówienie/zlecenie).`, 'warning');
+        showToast(
+            `Pominięto ${skippedLocked.size} zablokowaną studnię/studnie (zamówienie/zlecenie).`,
+            'warning'
+        );
     }
 
     if (replacedCount === 0) {
@@ -1730,22 +1898,24 @@ window.tmApplyChanges = async function() {
     }
 
     refreshAll();
-    
+
     if (skippedDetails.length > 0) {
         showSkippedPopup(skippedDetails, targetCat);
     }
-    
-    let msg = `Zakończono. Zamieniono ${replacedCount} przejść w ${modifiedWellsIndices.size} studniach.`;
+
+    const msg = `Zakończono. Zamieniono ${replacedCount} przejść w ${modifiedWellsIndices.size} studniach.`;
     showToast(msg, 'success');
-    
+
     tmSelectedTransitions.clear();
     tmRefreshWellData();
-    
+
     tmRenderTable();
 };
 
 function showSkippedPopup(skippedDetails, targetCat) {
-    const rowsHtml = skippedDetails.map((s, i) => `
+    const rowsHtml = skippedDetails
+        .map(
+            (s, i) => `
         <tr>
             <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${i + 1}</td>
             <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${s.wellName}</td>
@@ -1753,7 +1923,9 @@ function showSkippedPopup(skippedDetails, targetCat) {
             <td style="padding:0.35rem 0.6rem; text-align:center; white-space:nowrap;">${s.dn}</td>
             <td style="padding:0.35rem 0.6rem; white-space:nowrap; color:#f87171;">Brak produktu ${s.targetCat} o średnicy ${s.dn}</td>
         </tr>
-    `).join('');
+    `
+        )
+        .join('');
 
     showModal({
         id: 'skipped-popup-modal',
