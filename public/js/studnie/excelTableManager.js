@@ -1468,12 +1468,13 @@ function excelOpenWellParams(wIdx) {
         WELL_PARAM_DEFS.forEach((def) => {
             if (def.key === 'precoFullHeight' && well.kineta !== 'preco' && well.kineta !== 'precotop') return;
             const currentVal = well[def.key] || '';
-            bodyHtml += '<div style="display:flex;align-items:center;gap:0.3rem;padding:0.15rem 0;">';
-            bodyHtml += `<span style="min-width:140px;font-size:0.75rem;color:#94a3b8;font-weight:600;flex-shrink:0;">${def.label}</span>`;
-            bodyHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:0.3rem;flex:1;">';
+            bodyHtml += '<div style="display:flex;align-items:center;gap:0.3rem;padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03);">';
+            bodyHtml += `<span style="min-width:130px;font-size:0.7rem;color:#64748b;font-weight:600;flex-shrink:0;">${def.label}</span>`;
+            const cols = Math.max(2, Math.min(def.options.length, 6));
+            bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:0.25rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="updateWellParam('${def.key}','${val}');excelRefreshParamsPopup(${wIdx})" style="height:30px;border-radius:6px;cursor:pointer;font-size:0.7rem;font-weight:${active?'700':'500'};border:1px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'};background:${active?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.04)'};color:${active?'#a5b4fc':'#94a3b8'};transition:all 0.12s;${active?'box-shadow:0 0 8px rgba(99,102,241,0.2);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
+                bodyHtml += `<button onclick="updateWellParam('${def.key}','${val}');excelRefreshParamsPopup(${wIdx})" style="height:28px;border-radius:5px;cursor:pointer;font-size:0.65rem;font-weight:${active?'700':'500'};border:1px solid ${active?'rgba(99,102,241,0.5)':'rgba(255,255,255,0.06)'};background:${active?'rgba(99,102,241,0.2)':'transparent'};color:${active?'#a5b4fc':'#64748b'};transition:all 0.12s;${active?'box-shadow:0 0 6px rgba(99,102,241,0.15);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.06)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='transparent'}">${lbl}</button>`;
             });
             bodyHtml += '</div></div>';
         });
