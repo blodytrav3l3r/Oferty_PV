@@ -732,7 +732,7 @@ function _excelRenderTable(dn) {
         const rowBorder = isDup ? '2px solid rgba(239,68,68,0.6)' : isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=isDup?'rgba(239,68,68,0.25)':isActive?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)'" onmouseleave="this.style.background='${rowBg}'">`;
+        html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=${isDup}?'rgba(239,68,68,0.25)':isActive?'rgba(99,102,241,0.12)':'rgba(255,255,255,0.04)'" onmouseleave="this.style.background='${rowBg}'">`;
 
         const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
 
