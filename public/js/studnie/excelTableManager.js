@@ -1447,7 +1447,7 @@ function excelSaveAll() {
     closeExcelTableModal();
 }
 
-/* ===== PARAM. BUTTON — popup parametrów studni w Excelu ===== */
+/* ===== PARAM. BUTTON — popup parametrów studni w Excelu — kafelki ===== */
 function excelOpenWellParams(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
@@ -1461,69 +1461,47 @@ function excelOpenWellParams(wIdx) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'width:520px;max-height:90vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+    modal.style.cssText = 'width:640px;max-height:90vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
 
-    const save = () => {
-        _excelDebouncedRefresh();
-        _excelRenderTable(_excelActiveTab);
-        showToast('Parametry zaktualizowane', 'success');
-        overlay.remove();
-    };
-
-    const sel = (id, val, opts) => opts.map((o) => `<option value="${o}"${val === o ? ' selected' : ''}>${o}</option>`).join('');
-    const inp = (id, val) => `<input type="text" id="ep-${id}" value="${escapeHtml(String(val ?? ''))}" style="background:#161923;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;padding:0.3rem 0.5rem;font-size:0.7rem;width:100%;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor=\'rgba(99,102,241,0.5)\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.08)\'" />`;
-    const selEl = (id, val, opts) => `<select id="ep-${id}" style="background:#161923;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;padding:0.3rem 0.5rem;font-size:0.7rem;width:100%;outline:none;cursor:pointer;">${sel(id, val, opts)}</select>`;
-
-    const f = (label, html) => `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.2rem 0;"><span style="min-width:130px;font-size:0.7rem;color:#94a3b8;flex-shrink:0;">${label}</span>${html}</div>`;
-
-    const materialOpts = ['betonowa', 'zelbetowa'];
-    const takNie = ['brak', 'tak'];
+    let bodyHtml = '';
+    if (typeof WELL_PARAM_DEFS !== 'undefined') {
+        WELL_PARAM_DEFS.forEach((def) => {
+            if (def.key === 'precoFullHeight' && well.kineta !== 'preco' && well.kineta !== 'precotop') return;
+            const currentVal = well[def.key] || '';
+            bodyHtml += '<div style="display:flex;align-items:center;gap:0.3rem;padding:0.15rem 0;">';
+            bodyHtml += `<span style="min-width:140px;font-size:0.75rem;color:#94a3b8;font-weight:600;flex-shrink:0;">${def.label}</span>`;
+            bodyHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:0.3rem;flex:1;">';
+            def.options.forEach(([val, lbl]) => {
+                const active = val === currentVal;
+                bodyHtml += `<button onclick="updateWellParam('${def.key}','${val}');excelRefreshParamsPopup(${wIdx})" style="height:30px;border-radius:6px;cursor:pointer;font-size:0.7rem;font-weight:${active?'700':'500'};border:1px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'};background:${active?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.04)'};color:${active?'#a5b4fc':'#94a3b8'};transition:all 0.12s;${active?'box-shadow:0 0 8px rgba(99,102,241,0.2);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
+            });
+            bodyHtml += '</div></div>';
+        });
+    }
 
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <span style="font-size:0.8rem;font-weight:700;color:#e2e8f0;">Parametry: ${escapeHtml(well.name)}</span>
             <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:1.1rem;">✕</button>
         </div>
-        <div style="flex:1;overflow-y:auto;padding:0.8rem;display:flex;flex-direction:column;gap:0.3rem;">
-            ${f('Nadbudowa', selEl('nadbudowa', well.nadbudowa || 'betonowa', materialOpts))}
-            ${f('Dennica material', selEl('dennicaMaterial', well.dennicaMaterial || 'betonowa', materialOpts))}
-            ${f('Klasa betonu', inp('klasaBetonu', well.klasaBetonu))}
-            ${f('Stopnie/drabinka', selEl('stopnie', well.stopnie || 'brak', ['brak', 'nierdzewna', 'ocynkowana', 'drabinka']))}
-            ${f('Agresja chemiczna', selEl('agresjaChemiczna', well.agresjaChemiczna || 'brak', ['brak', 'X0', 'XA1', 'XA2', 'XA3']))}
-            ${f('Agresja mrozowa', selEl('agresjaMrozowa', well.agresjaMrozowa || 'brak', ['brak', 'XF1', 'XF2', 'XF3', 'XF4']))}
-            ${f('Klasa nośności (korpus)', inp('klasaNosnosci_korpus', well.klasaNosnosci_korpus))}
-            ${f('Klasa nośności (zwień.)', inp('klasaNosnosci_zwienczenie', well.klasaNosnosci_zwienczenie))}
-            ${f('Malowanie wewnątrz', selEl('malowanieW', well.malowanieW || 'brak', ['brak', 'bitum', 'epoksyd', 'ftalowy']))}
-            ${f('Malowanie zewnątrz', selEl('malowanieZ', well.malowanieZ || 'brak', ['brak', 'bitum', 'epoksyd', 'ftalowy']))}
-            ${f('Wkładka dennicy', selEl('wkladkaDennica', well.wkladkaDennica || 'brak', ['brak', 'PEHD', 'PP', 'PVC']))}
-            ${f('Wkładka nadbudowy', selEl('wkladkaNadbudowa', well.wkladkaNadbudowa || 'brak', ['brak', 'PEHD', 'PP', 'PVC']))}
-            ${f('Wkładka zwieńczenia', selEl('wkladkaZwienczenie', well.wkladkaZwienczenie || 'brak', ['brak', 'PEHD', 'PP', 'PVC']))}
-            ${f('Spocznik', selEl('spocznik', well.spocznik || 'brak', ['brak', 'lewy', 'prawy', 'obustronny']))}
-            ${f('Spocznik H (mm)', inp('spocznikH', well.spocznikH))}
-            ${f('Usytuowanie', selEl('usytuowanie', well.usytuowanie || '', ['', 'w terenie', 'w drodze', 'w chodniku']))}
-            ${f('Uszczelka', selEl('uszczelka', well.uszczelka || '', ['', 'guma', 'EPDM', 'silikon']))}
-            ${f('Magazyn', selEl('magazyn', well.magazyn || '', ['', 'WL', 'KLB']))}
+        <div style="flex:1;overflow-y:auto;padding:0.6rem 0.8rem;display:flex;flex-direction:column;gap:0.15rem;">
+            ${bodyHtml}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:#10131a;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:0.35rem 1rem;border-radius:4px;font-size:0.7rem;cursor:pointer;">Anuluj</button>
-            <button onclick="(function(){
-                const w = wells[${wIdx}]; if(!w)return;
-                ['nadbudowa','dennicaMaterial','klasaBetonu','stopnie','agresjaChemiczna','agresjaMrozowa','klasaNosnosci_korpus','klasaNosnosci_zwienczenie','malowanieW','malowanieZ','wkladkaDennica','wkladkaNadbudowa','wkladkaZwienczenie','spocznik','usytuowanie','uszczelka','magazyn','spocznikH'].forEach((f) => {
-                    const el = document.getElementById('ep-'+f);
-                    if(el) w[f] = el.value;
-                });
-                const hEl = document.getElementById('ep-spocznikH');
-                if(hEl) w.spocznikH = parseFloat(hEl.value) || null;
-                _excelDebouncedRefresh();
-                _excelRenderTable(_excelActiveTab);
-                document.getElementById('excel-params-popup').remove();
-                showToast('Parametry zaktualizowane', 'success');
-            })()" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.35rem 1.2rem;border-radius:4px;font-size:0.7rem;font-weight:700;cursor:pointer;">Zapisz</button>
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:0.35rem 1rem;border-radius:4px;font-size:0.7rem;cursor:pointer;">Zamknij</button>
         </div>
     `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+}
+
+/* Odświeżenie popupa parametrów po zmianie kafelka */
+function excelRefreshParamsPopup(wIdx) {
+    _excelDebouncedRefresh();
+    _excelRenderTable(_excelActiveTab);
+    const existing = document.getElementById('excel-params-popup');
+    if (existing) { existing.remove(); excelOpenWellParams(wIdx); }
 }
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
