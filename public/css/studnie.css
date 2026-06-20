@@ -131,6 +131,10 @@
     overflow: hidden;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-glass);
+    position: sticky;
+    top: 0;
+    align-self: start;
+    z-index: 10;
 }
 
 .wells-sidebar-panel {
@@ -277,13 +281,8 @@
 .well-list-actions {
     display: flex;
     gap: 0.1rem;
-    opacity: 0;
-    transition: opacity 0.2s;
 }
-
-.well-list-item:hover .well-list-actions {
-    opacity: 1;
-}
+/* hover highlight handled by .well-list-action:hover */
 
 .well-list-action {
     background: none;
