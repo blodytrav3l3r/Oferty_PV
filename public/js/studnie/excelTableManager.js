@@ -768,7 +768,8 @@ function _excelRenderTable(dn) {
             html += `<td style="${tdBase}text-align:left;">${dnSel}</td>`;
         }
 
-        /* Właz — użyj produktów z definicji kolumny (spójne z nagłówkiem) */
+        html += `<td style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td><td style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td>`;
+                /* Właz — użyj produktów z definicji kolumny (spójne z nagłówkiem) */
         const wlazCol = compCols.find((c) => c.componentType === 'wlaz');
         const wlazProducts = wlazCol
             ? wlazCol.products.filter(
@@ -859,7 +860,8 @@ function _excelRenderTable(dn) {
         html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(110)}opacity:0.3;"><option value="">—</option></select></td>`;
     }
 
-    /* Właz */
+    html += `<td style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td><td style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td>`;
+            /* Właz */
     html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(125)}opacity:0.3;"><option value="">—</option></select></td>`;
 
     /* Komponenty */
