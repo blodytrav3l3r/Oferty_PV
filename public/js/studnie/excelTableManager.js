@@ -1447,18 +1447,83 @@ function excelSaveAll() {
     closeExcelTableModal();
 }
 
-/* ===== PARAM. BUTTON ===== */
+/* ===== PARAM. BUTTON — popup parametrów studni w Excelu ===== */
 function excelOpenWellParams(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
-    /* Zapisz zmiany z tabeli przed przełączeniem */
-    if (typeof refreshAll === 'function') refreshAll();
-    if (typeof currentWellIndex !== 'undefined') currentWellIndex = wIdx;
-    if (typeof renderWellsList === 'function') renderWellsList();
-    if (typeof renderWellParams === 'function') renderWellParams();
-    if (typeof renderTiles === 'function') renderTiles();
-    showToast(`Przełączono na: ${well.name}`, 'info');
-    closeExcelTableModal();
+
+    const existing = document.getElementById('excel-params-popup');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'excel-params-popup';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'width:520px;max-height:90vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+
+    const save = () => {
+        _excelDebouncedRefresh();
+        _excelRenderTable(_excelActiveTab);
+        showToast('Parametry zaktualizowane', 'success');
+        overlay.remove();
+    };
+
+    const sel = (id, val, opts) => opts.map((o) => `<option value="${o}"${val === o ? ' selected' : ''}>${o}</option>`).join('');
+    const inp = (id, val) => `<input type="text" id="ep-${id}" value="${escapeHtml(String(val ?? ''))}" style="background:#161923;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;padding:0.3rem 0.5rem;font-size:0.7rem;width:100%;outline:none;transition:border-color 0.15s;" onfocus="this.style.borderColor=\'rgba(99,102,241,0.5)\'" onblur="this.style.borderColor=\'rgba(255,255,255,0.08)\'" />`;
+    const selEl = (id, val, opts) => `<select id="ep-${id}" style="background:#161923;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;padding:0.3rem 0.5rem;font-size:0.7rem;width:100%;outline:none;cursor:pointer;">${sel(id, val, opts)}</select>`;
+
+    const f = (label, html) => `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.2rem 0;"><span style="min-width:130px;font-size:0.7rem;color:#94a3b8;flex-shrink:0;">${label}</span>${html}</div>`;
+
+    const materialOpts = ['betonowa', 'zelbetowa'];
+    const takNie = ['brak', 'tak'];
+
+    modal.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+            <span style="font-size:0.8rem;font-weight:700;color:#e2e8f0;">Parametry: ${escapeHtml(well.name)}</span>
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:1.1rem;">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:0.8rem;display:flex;flex-direction:column;gap:0.3rem;">
+            ${f('Nadbudowa', selEl('nadbudowa', well.nadbudowa || 'betonowa', materialOpts))}
+            ${f('Dennica material', selEl('dennicaMaterial', well.dennicaMaterial || 'betonowa', materialOpts))}
+            ${f('Klasa betonu', inp('klasaBetonu', well.klasaBetonu))}
+            ${f('Stopnie/drabinka', selEl('stopnie', well.stopnie || 'brak', ['brak', 'nierdzewna', 'ocynkowana', 'drabinka']))}
+            ${f('Agresja chemiczna', selEl('agresjaChemiczna', well.agresjaChemiczna || 'brak', ['brak', 'X0', 'XA1', 'XA2', 'XA3']))}
+            ${f('Agresja mrozowa', selEl('agresjaMrozowa', well.agresjaMrozowa || 'brak', ['brak', 'XF1', 'XF2', 'XF3', 'XF4']))}
+            ${f('Klasa nośności (korpus)', inp('klasaNosnosci_korpus', well.klasaNosnosci_korpus))}
+            ${f('Klasa nośności (zwień.)', inp('klasaNosnosci_zwienczenie', well.klasaNosnosci_zwienczenie))}
+            ${f('Malowanie wewnątrz', selEl('malowanieW', well.malowanieW || 'brak', ['brak', 'bitum', 'epoksyd', 'ftalowy']))}
+            ${f('Malowanie zewnątrz', selEl('malowanieZ', well.malowanieZ || 'brak', ['brak', 'bitum', 'epoksyd', 'ftalowy']))}
+            ${f('Wkładka dennicy', selEl('wkladkaDennica', well.wkladkaDennica || 'brak', ['brak', 'PEHD', 'PP', 'PVC']))}
+            ${f('Wkładka nadbudowy', selEl('wkladkaNadbudowa', well.wkladkaNadbudowa || 'brak', ['brak', 'PEHD', 'PP', 'PVC']))}
+            ${f('Wkładka zwieńczenia', selEl('wkladkaZwienczenie', well.wkladkaZwienczenie || 'brak', ['brak', 'PEHD', 'PP', 'PVC']))}
+            ${f('Spocznik', selEl('spocznik', well.spocznik || 'brak', ['brak', 'lewy', 'prawy', 'obustronny']))}
+            ${f('Spocznik H (mm)', inp('spocznikH', well.spocznikH))}
+            ${f('Usytuowanie', selEl('usytuowanie', well.usytuowanie || '', ['', 'w terenie', 'w drodze', 'w chodniku']))}
+            ${f('Uszczelka', selEl('uszczelka', well.uszczelka || '', ['', 'guma', 'EPDM', 'silikon']))}
+            ${f('Magazyn', selEl('magazyn', well.magazyn || '', ['', 'WL', 'KLB']))}
+        </div>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:#10131a;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:0.35rem 1rem;border-radius:4px;font-size:0.7rem;cursor:pointer;">Anuluj</button>
+            <button onclick="(function(){
+                const w = wells[${wIdx}]; if(!w)return;
+                ['nadbudowa','dennicaMaterial','klasaBetonu','stopnie','agresjaChemiczna','agresjaMrozowa','klasaNosnosci_korpus','klasaNosnosci_zwienczenie','malowanieW','malowanieZ','wkladkaDennica','wkladkaNadbudowa','wkladkaZwienczenie','spocznik','usytuowanie','uszczelka','magazyn','spocznikH'].forEach((f) => {
+                    const el = document.getElementById('ep-'+f);
+                    if(el) w[f] = el.value;
+                });
+                const hEl = document.getElementById('ep-spocznikH');
+                if(hEl) w.spocznikH = parseFloat(hEl.value) || null;
+                _excelDebouncedRefresh();
+                _excelRenderTable(_excelActiveTab);
+                document.getElementById('excel-params-popup').remove();
+                showToast('Parametry zaktualizowane', 'success');
+            })()" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.35rem 1.2rem;border-radius:4px;font-size:0.7rem;font-weight:700;cursor:pointer;">Zapisz</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 }
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
