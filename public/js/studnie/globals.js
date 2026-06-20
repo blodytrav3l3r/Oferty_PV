@@ -2,7 +2,7 @@
 /* ===== ZMIENNE GLOBALNE ===== */
 /** @type {any[]} */
 const studnieProducts = [];
-const currentUser = null;
+let currentUser = null;
 const currentCennikTab = 'dn1000';
 
 // System wielu studni
