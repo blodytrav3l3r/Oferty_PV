@@ -1200,11 +1200,23 @@ function excelOnWlazChange(wIdx, productId) {
         return !(p && p.componentType === 'wlaz');
     });
     if (productId) _excelInsertConfigItem(well, 'wlaz', productId, 1);
+    _excelMarkManual(well);
     _excelUpdateLeftPreview(wIdx);
     _excelDebouncedRefresh();
 }
 
+function _excelMarkManual(well) {
+    if (!well) return;
+    well.autoLocked = true;
+    well.configSource = 'MANUAL';
+}
+
 function _excelInsertConfigItem(well, componentType, productId, qty) {
+    /* Konus + PEHD wkładka — blokada jak w głównym konfiguratorze */
+    if (componentType === 'konus' && well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+        showToast('Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.', 'error');
+        return;
+    }
     const topTypes = ['wlaz', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
     const bottomTypes = ['dennica', 'kineta', 'styczna'];
     const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
@@ -1351,6 +1363,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
             _excelInsertConfigItem(well, componentType, candidates[0].id, newQty);
         }
     }
+    _excelMarkManual(well);
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
