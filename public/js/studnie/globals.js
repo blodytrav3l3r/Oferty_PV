@@ -1,12 +1,12 @@
 // @ts-check
 /* ===== ZMIENNE GLOBALNE ===== */
 /** @type {any[]} */
-const studnieProducts = [];
+let studnieProducts = [];
 let currentUser = null;
 let currentCennikTab = 'dn1000';
 
 // System wielu studni
-const wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
+let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
 let wellCounter = 1;
 var wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0, preco: 0 }, ... }
@@ -19,8 +19,8 @@ let offerDefaultRedukcjaMinH = 2500; // minimalna wysokość sekcji dennej w mm
 let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia redukcji (DN1000)
 
 // System wielu ofert
-const offersStudnie = [];
-const ordersStudnie = [];
+let offersStudnie = [];
+let ordersStudnie = [];
 let editingOfferIdStudnie = null;
 var isSavingOffer = false;
 /** @type {any} */
