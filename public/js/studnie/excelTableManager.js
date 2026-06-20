@@ -645,6 +645,7 @@ function _excelRenderTable(dn) {
         html += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
     }
 
+    html += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#64748b'">+</button></th>`;
     html += `<th style="${thBase}background:#0f1a15;color:#6ee7b7;min-width:130px;text-align:left;">Właz</th>`;
 
     compCols.forEach((col) => {
@@ -1092,6 +1093,22 @@ function excelOnRzednaChange(wIdx) {
     _excelDebouncedRefresh();
 }
 
+/* ===== DODAWANIE KOLUMNY PRZEJŚCIA ===== */
+function excelAddTransitionColumn() {
+    _excelMaxTransitions = (_excelMaxTransitions || 1) + 1;
+    /* Dodaj puste przejście do każdej studni, która ma mniej niż nowe max */
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        wells.forEach((w) => {
+            if (!w.przejscia) w.przejscia = [];
+            while (w.przejscia.length < _excelMaxTransitions) {
+                w.przejscia.push({ rzednaWlaczenia: null, kat: 0, productId: null, tempCategory: '' });
+            }
+        });
+    }
+    _excelRenderTable(_excelActiveTab);
+    _excelDebouncedRefresh();
+    showToast('Dodano kolumnę przejścia', 'info');
+}
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     while (wells[wIdx].przejscia.length <= trIdx) {
