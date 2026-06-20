@@ -1108,7 +1108,7 @@ function excelRemoveTransitionColumn() {
         for (const w of wells) {
             if (w.przejscia && w.przejscia[lastIdx]) {
                 const p = w.przejscia[lastIdx];
-                if (p.rzednaWlaczenia != null || p.productId != null || (p.kat && p.kat !== 0)) {
+                if (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '' || p.productId !== null && p.productId !== '' || (p.kat && p.kat !== 0)) {
                     hasData = true;
                     break;
                 }
