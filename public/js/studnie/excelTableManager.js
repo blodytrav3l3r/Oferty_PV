@@ -645,6 +645,7 @@ function _excelRenderTable(dn) {
         html += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
     }
 
+    html += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:transparent;color:#ef4444;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='#ef4444'">−</button></th>`;
     html += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#64748b'">+</button></th>`;
     html += `<th style="${thBase}background:#0f1a15;color:#6ee7b7;min-width:130px;text-align:left;">Właz</th>`;
 
@@ -1094,6 +1095,43 @@ function excelOnRzednaChange(wIdx) {
 }
 
 /* ===== DODAWANIE KOLUMNY PRZEJŚCIA ===== */
+
+/* ===== USUWANIE KOLUMNY PRZEJŚCIA ===== */
+function excelRemoveTransitionColumn() {
+    if (_excelMaxTransitions <= 1) {
+        showToast('Nie można usunąć — minimum 1 kolumna przejścia', 'error');
+        return;
+    }
+    const lastIdx = _excelMaxTransitions - 1;
+    let hasData = false;
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        for (const w of wells) {
+            if (w.przejscia && w.przejscia[lastIdx]) {
+                const p = w.przejscia[lastIdx];
+                if (p.rzednaWlaczenia != null || p.productId != null || (p.kat && p.kat !== 0)) {
+                    hasData = true;
+                    break;
+                }
+            }
+        }
+    }
+    if (hasData) {
+        showToast('Nie można usunąć — ostatnia kolumna zawiera dane', 'error');
+        return;
+    }
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        wells.forEach((w) => {
+            if (w.przejscia && w.przejscia.length > 0) {
+                w.przejscia.pop();
+            }
+        });
+    }
+    _excelMaxTransitions--;
+    _excelRenderTable(_excelActiveTab);
+    _excelDebouncedRefresh();
+    showToast('Usunięto kolumnę przejścia', 'info');
+}
+
 function excelAddTransitionColumn() {
     _excelMaxTransitions = (_excelMaxTransitions || 1) + 1;
     /* Dodaj puste przejście do każdej studni, która ma mniej niż nowe max */
