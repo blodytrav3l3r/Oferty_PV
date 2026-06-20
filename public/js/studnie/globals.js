@@ -172,3 +172,5 @@ function normalizeId(id) {
     if (id.includes(':')) return id.split(':').pop();
     return id;
 }
+
+window.showSection = showSectionStudnie;

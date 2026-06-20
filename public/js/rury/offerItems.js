@@ -1036,3 +1036,4 @@ function showSectionRury(id) {
 }
 
 window.showSectionRury = showSectionRury;
+window.showSection = showSectionRury;
