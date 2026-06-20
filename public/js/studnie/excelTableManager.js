@@ -733,7 +733,7 @@ function _excelRenderTable(dn) {
         const tdBase = `padding:${_EXCEL_CELL_PADD};border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.04);${_EXCEL_FONT}`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu */
-        html += `<td style="${tdBase}font-weight:600;color:#cbd5e1;position:sticky;left:0;z-index:5;background:inherit;border-right:2px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelOnNameChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(125)}text-align:left;font-weight:600;color:#cbd5e1;" /></td>`;
+        html += `<td style="${tdBase}font-weight:600;color:#cbd5e1;position:sticky;left:0;z-index:5;background:inherit;border-right:2px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelOnNameChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(125)}background:inherit;text-align:left;font-weight:600;color:#cbd5e1;" /></td>`;
 
         /* Rz. Włazu */
         html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
