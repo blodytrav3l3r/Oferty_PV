@@ -1,4 +1,5 @@
-﻿/* ===== KALKULACJA TRANSPORTU (RURY) ===== */
+// @ts-check
+/* ===== KALKULACJA TRANSPORTU (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: kalkulacja kursów, kosztów, rozkładu wagowego */
 /* Zależności: products (globalna), getProductDiameter() z productHelpers.js */
 /* fmt(), fmtInt() z shared/formatters.js */
@@ -244,7 +245,7 @@ function calculateTransports(items) {
     const transportItems = mappedItems.filter(
         (i) => i.currentWeight && i.currentWeight > 0 && i.quantity > 0 && !i.autoAdded
     );
-    if (transportItems.length === 0) return { lines: [], totalTransports: 0, consolidated: [] };
+    if (transportItems.length === 0) return { lines: [], totalTransports: 0, saved: 0, consolidated: [] };
 
     const lines = [];
     const partials = []; // pozostałość z ostatniego transportu każdego produktu
@@ -463,8 +464,8 @@ window.openRuryTransportPopup = function () {
     ruryTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
     ruryTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
 
-    if (kmInput && modalKm) modalKm.value = kmInput.value || 0;
-    if (rateInput && modalRate) modalRate.value = rateInput.value || 0;
+    if (kmInput && modalKm) modalKm.value = kmInput.value || '0';
+    if (rateInput && modalRate) modalRate.value = rateInput.value || '0';
 
     const titleEl = document.getElementById('rury-transport-modal-title');
     if (titleEl) {
@@ -505,8 +506,8 @@ window.handleRuryTransportCancel = async function () {
             if (confirmed) {
                 const kmInput = document.getElementById('transport-km');
                 const rateInput = document.getElementById('transport-rate');
-                if (kmInput) kmInput.value = ruryTransportSnapshot.km;
-                if (rateInput) rateInput.value = ruryTransportSnapshot.rate;
+                if (kmInput) kmInput.value = String(ruryTransportSnapshot.km);
+                if (rateInput) rateInput.value = String(ruryTransportSnapshot.rate);
                 if (typeof updateOfferSummary === 'function') updateOfferSummary();
 
                 hide();
@@ -559,8 +560,8 @@ window.syncRuryTransportFromModal = function () {
     const modalKm = document.getElementById('rury-transport-modal-km');
     const modalRate = document.getElementById('rury-transport-modal-rate');
 
-    if (kmInput && modalKm) kmInput.value = modalKm.value || 0;
-    if (rateInput && modalRate) rateInput.value = modalRate.value || 0;
+    if (kmInput && modalKm) kmInput.value = modalKm.value || '0';
+    if (rateInput && modalRate) rateInput.value = modalRate.value || '0';
 
     if (typeof updateOfferSummary === 'function') updateOfferSummary();
     if (typeof window.updateRuryModalTransportDetails === 'function') window.updateRuryModalTransportDetails();

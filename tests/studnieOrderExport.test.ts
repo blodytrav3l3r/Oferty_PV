@@ -52,6 +52,22 @@ jest.mock('../src/utils/roleFilter', () => ({
     buildRoleWhereSql: jest.fn().mockReturnValue('')
 }));
 
+jest.mock('../src/services/pdfGenerator', () => ({
+    generateKartaBudowyPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-PDF-MOCK')),
+    generateStudniePDFFromContext: jest.fn().mockResolvedValue(Buffer.from('PDF-MOCK')),
+    generateStudnieOrderPDF: jest.fn().mockResolvedValue(Buffer.from('ORDER-PDF-MOCK')),
+    lookupOfferUsers: jest.fn().mockResolvedValue({
+        authorUser: null,
+        guardianUser: null
+    })
+}));
+
+jest.mock('../src/services/docx', () => ({
+    generateKartaBudowyDOCX: jest.fn().mockResolvedValue(Buffer.from('KARTA-DOCX-MOCK')),
+    generateStudnieDOCXFromContext: jest.fn().mockResolvedValue(Buffer.from('DOCX-MOCK')),
+    generateStudnieOrderDOCX: jest.fn().mockResolvedValue(Buffer.from('ORDER-DOCX-MOCK'))
+}));
+
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {

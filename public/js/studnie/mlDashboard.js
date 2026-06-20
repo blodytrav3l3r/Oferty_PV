@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Dashboard ML — Panel statystyk systemu uczenia (admin only).
  * Wyświetla: ilość korekt, preferencje, acceptance rate, top wzorce.
@@ -167,7 +168,8 @@ async function _importMLPreferences() {
     input.type = 'file';
     input.accept = '.json';
     input.onchange = async (e) => {
-        const file = e.target.files[0];
+        const input = /** @type {HTMLInputElement} */ (e.target);
+        const file = input.files?.[0];
         if (!file) return;
         try {
             const text = await file.text();

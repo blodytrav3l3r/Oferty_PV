@@ -1,3 +1,4 @@
+// @ts-check
 (function (global) {
 
 function _findPrecoGroup(grupy, dnRury) {

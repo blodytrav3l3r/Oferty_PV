@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== KREATOR OFERTY (RURY) — FAZY 1-5 ===== */
 /* currentWizardStep zarządzany przez AppState (shared/appState.js) */
 
@@ -117,7 +118,7 @@ function goToPhase(step) {
             step5Dot.removeAttribute('title');
         } else {
             step5Dot.classList.add('wizard-step-locked');
-            step5Dot.title = 'Otwórz zamówienie z karty Oferta';
+            /** @type {HTMLElement} */ (step5Dot).title = 'Otwórz zamówienie z karty Oferta';
         }
     }
 

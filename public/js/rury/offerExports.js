@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== EKSPORT / IMPORT OFERT (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: import/eksport PDF, XLSX, JSON, modal rabatów */
 /* Zależności: offers, currentOfferItems, products, CATEGORIES (globalne) */
@@ -15,14 +16,14 @@ function importOfferFromFile() {
     input.accept = '.json';
     input.multiple = true;
     input.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
+        const files = Array.from(/** @type {HTMLInputElement} */ (e.target).files);
         if (!files.length) return;
         let imported = 0;
         files.forEach((file) => {
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 try {
-                    const offer = JSON.parse(ev.target.result);
+                    const offer = JSON.parse(/** @type {string} */ (ev.target.result));
                     if (!offer.number || !offer.items || !Array.isArray(offer.items)) {
                         showToast(`Plik ${file.name} nie zawiera poprawnej oferty`, 'error');
                         return;
@@ -605,13 +606,13 @@ function importOfferFromXlsx() {
     input.type = 'file';
     input.accept = '.xlsx,.xls';
     input.addEventListener('change', (e) => {
-        const file = e.target.files[0];
+        const file = /** @type {HTMLInputElement} */ (e.target).files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = async (ev) => {
             try {
-                const data = new Uint8Array(ev.target.result);
+                const data = new Uint8Array(/** @type {ArrayBuffer} */ (ev.target.result));
                 const wb = XLSX.read(data, { type: 'array' });
 
                 // Najpierw spróbuj znaleźć arkusz metadanych (bezstratny import)

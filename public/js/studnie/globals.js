@@ -1,4 +1,6 @@
-﻿/* ===== ZMIENNE GLOBALNE ===== */
+// @ts-check
+/* ===== ZMIENNE GLOBALNE ===== */
+/** @type {any[]} */
 let studnieProducts = [];
 let currentUser = null;
 let currentCennikTab = 'dn1000';
@@ -20,8 +22,10 @@ let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia red
 let offersStudnie = [];
 let ordersStudnie = [];
 let editingOfferIdStudnie = null;
-let isSavingOffer = false;
-let orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
+var isSavingOffer = false;
+/** @type {any} */
+var orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
+
 let expandedWellIndices = new Set();
 // clientsDb jest zarządzane przez AppState (shared/appState.js)
 // Używać AppState.clientsDb zamiast lokalnej zmiennej

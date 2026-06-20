@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Shared Formatters — wspólne formatowanie liczb.
  * Eliminuje duplikat fmt/fmtInt z app.js i app_studnie.js.

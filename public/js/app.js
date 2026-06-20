@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== WITROS PRECISION OS — APP.JS (RDZEŃ) ===== */
 /* Zredukowany z 3108 linii do rdzenia: stan globalny, nawigacja, inicjalizacja DOM */
 /* Logika wydzielona do modułów w js/rury/: */
@@ -54,6 +55,13 @@ async function changeOfferUser() {
     }
 }
 
+/**
+ * Toggle (zwijanie/rozwijanie) karty.
+ * Działa z 2 sygnaturami:
+ * 1. (header: HTMLElement) — kliknięty nagłówek (karta DOM, shared/ui.js)
+ * 2. (contentId: string, iconId: string) — ID elementów
+ * @type {(...args: any[]) => void}
+ */
 window.toggleCard = function (contentId, iconId) {
     const content = document.getElementById(contentId);
     const icon = document.getElementById(iconId);

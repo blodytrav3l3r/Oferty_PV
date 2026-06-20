@@ -1,3 +1,4 @@
+// @ts-check
 /* ============================
    WITROS — Wydruk Karty Budowy Rury
    offerPrintManager.js

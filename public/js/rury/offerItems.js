@@ -1,4 +1,5 @@
-﻿/* ===== POZYCJE OFERTY (RURY) ===== */
+// @ts-check
+/* ===== POZYCJE OFERTY (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: formularz oferty, katalog, pozycje, uszczelki */
 /* Zależności: products, currentOfferItems, CATEGORIES (globalne) */
 /* getProductDiameter, getProductLength, getPipeInnerArea, isOneMetrePipe z productHelpers.js */

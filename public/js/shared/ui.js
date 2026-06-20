@@ -1,4 +1,5 @@
-﻿/**
+﻿// @ts-check
+/**
  * Shared UI Module — wspólne komponenty interfejsu.
  * Eliminuje duplikat showToast/closeModal/toggleCard/showSection z app.js i app_studnie.js.
  */
@@ -96,16 +97,35 @@ function closeModal(id) {
 
 /**
  * Toggle (zwijanie/rozwijanie) karty.
- * @param {HTMLElement} header - kliknięty nagłówek
+ * Obsługuje 2 sygnatury:
+ * 1. (header: HTMLElement) — kliknięty nagłówek (szukamy .card w DOM)
+ * 2. (contentId: string, iconId?: string) — ID elementów
+ * @param {HTMLElement|string} contentIdOrHeader
+ * @param {string} [iconId]
  */
-function toggleCard(header) {
-    const card = header.closest('.card');
-    if (!card) return;
-    const body = card.querySelector('.card-body');
-    if (!body) return;
-    body.style.display = body.style.display === 'none' ? 'block' : 'none';
-    const icon = header.querySelector('.toggle-icon');
-    if (icon) icon.textContent = body.style.display === 'none' ? '▸' : '▾';
+function toggleCard(contentIdOrHeader, iconId) {
+    if (contentIdOrHeader instanceof HTMLElement) {
+        // Sygnatura 1: header HTMLElement
+        const header = contentIdOrHeader;
+        const card = header.closest('.card');
+        if (!card) return;
+        const body = card.querySelector('.card-body');
+        if (!body) return;
+        body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        const icon = header.querySelector('.toggle-icon');
+        if (icon) icon.textContent = body.style.display === 'none' ? '▸' : '▾';
+    } else if (typeof contentIdOrHeader === 'string') {
+        // Sygnatura 2: contentId i iconId (string)
+        const content = document.getElementById(contentIdOrHeader);
+        const icon = iconId ? document.getElementById(iconId) : null;
+        if (content) {
+            content.classList.toggle('hidden');
+            if (icon) {
+                const isHidden = content.classList.contains('hidden');
+                icon.innerHTML = isHidden ? '<i data-lucide=\"chevron-down\"></i>' : '<i data-lucide=\"chevron-up\"></i>';
+            }
+        }
+    }
 }
 
 /**
@@ -249,10 +269,11 @@ async function fetchGlobalUsers() {
  *
  * @param {string} message - Treść pytania (obsługuje \n jako nową linię)
  * @param {object} [opts] - Opcje
- * @param {string} [opts.title='Potwierdzenie'] - Nagłówek modala
- * @param {string} [opts.okText='OK'] - Tekst przycisku OK
- * @param {string} [opts.cancelText='Anuluj'] - Tekst przycisku Anuluj
+ * @param {string} [opts.title='Potwierdzenie'] - Tytuł
+ * @param {string} [opts.okText='OK'] - Tekst OK
+ * @param {string} [opts.cancelText='Anuluj'] - Tekst Anuluj
  * @param {'info'|'warning'|'danger'} [opts.type='info'] - Typ (ikona + kolor)
+ * @param {boolean} [opts.allowHtml=false] - Czy zezwolić na HTML w tytule/treści
  * @returns {Promise<boolean>}
  */
 function appConfirm(message, opts = {}) {

@@ -1,4 +1,5 @@
-﻿/* ===== PODSUMOWANIE OFERTY W ZAKŁADCE "OFERTA" ===== */
+// @ts-check
+/* ===== PODSUMOWANIE OFERTY W ZAKŁADCE "OFERTA" ===== */
 
 function renderOfferSummaryTab() {
     // 1. Zaktualizuj dane klienta i inwestycji

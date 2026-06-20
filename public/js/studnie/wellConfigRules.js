@@ -1,3 +1,4 @@
+// @ts-check
 /* ============================
    Well Config Rules — Reguły walidacji i filtrowania studni
    ============================
@@ -555,15 +556,17 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
  * @param {boolean} opts.isOutOfBounds - czy odchyłka poza zakresem
  * @param {boolean} opts.isMinimal - czy minimalny zapas
  * @param {boolean} opts.isFallbackClosure - czy zamiennik zakończenia
- * @param {boolean} opts.needsTallerDennica - czy przejście przecina joint
+ * @param {boolean} [opts.needsTallerDennica] - czy przejście przecina joint
  * @param {boolean} opts.reductionForced - czy redukcja wymagana ale nie użyta
  * @param {boolean} [opts.hasReduction] - czy to ścieżka redukcyjna
  * @param {number} [opts.bottomSectionH] - wysokość sekcji dennej (redukcja)
  * @param {number} [opts.minBottomTotal] - minimalna wysokość sekcji dennej (redukcja)
  * @param {number} [opts.dn] - średnica studni (redukcja)
+ * @param {number} [opts.otCount] - liczba kręgów wierconych
+ * @param {boolean} [opts.isKonus] - czy zakończenie to konus
  * @returns {{ score: number, breakdown: Array<{factor:string,value:number}>, reason: string }}
  */
-function scoreLayout(opts = {}) {
+function scoreLayout(opts = /** @type {Object} */ ({})) {
     let score = 0;
     const breakdown = [];
 
@@ -617,7 +620,7 @@ function scoreLayout(opts = {}) {
 
     // reduction-specific: bottom section height
     if (opts.hasReduction && opts.bottomSectionH > 0) {
-        const dnFactor = (parseInt(opts.dn) || 1200) / 400;
+        const dnFactor = (parseInt(String(opts.dn)) || 1200) / 400;
         const v = opts.bottomSectionH * dnFactor;
         score += v;
         breakdown.push({ factor: 'bottomSection', value: v });

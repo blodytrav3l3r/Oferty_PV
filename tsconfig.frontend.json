@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
-    "module": "none",
-    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
@@ -11,13 +12,19 @@
     "strictNullChecks": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "ignoreDeprecations": "6.0"
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@shared/*": ["./public/js/shared/*"],
+      "@studnie/*": ["./public/js/studnie/*"],
+      "@rury/*": ["./public/js/rury/*"]
+    }
   },
   "include": [
     "public/js/**/*.js",
+    "public/js/**/*.ts",
     "public/data/*.js"
   ],
   "exclude": [

@@ -267,7 +267,8 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('showUniversalPrintModal ma sygnaturę (offerId, orderId, relatedOrders)', () => {
-            expect(src).toMatch(/window\.showUniversalPrintModal\s*=\s*function\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/);
+            // Uwzględnia JSDoc type cast: window.showUniversalPrintModal = /** @type {...} */ (function(...) {
+            expect(src).toMatch(/window\.showUniversalPrintModal\s*=\s*(?:\/\*\*[^*/]*\*\/\s*)?(?:function\s*)?\(?\s*function\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/);
         });
 
         it('studnie modal preferuje przekazany relatedOrders', () => {

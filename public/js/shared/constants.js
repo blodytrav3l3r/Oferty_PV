@@ -1,3 +1,4 @@
+// @ts-check
 (function () {
     var MAX = 24000;
     window.MAX_TRANSPORT_WEIGHT = MAX;

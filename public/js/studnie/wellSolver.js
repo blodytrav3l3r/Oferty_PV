@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * wellSolver.js — Rdzeń algorytmiczny doboru elementów studni
  *

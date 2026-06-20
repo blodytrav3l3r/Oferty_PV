@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * icons-slim.js — Lekka biblioteka ikon SVG (tylko 76 używanych ikon).
  * Zastępuje lucide.min.js (388KB) — ten plik waży ~15KB.

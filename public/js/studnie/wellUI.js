@@ -1,4 +1,5 @@
-﻿/* ===== WELL UI RENDERING ===== */
+// @ts-check
+/* ===== WELL UI RENDERING ===== */
 /* Extracted from wellManager.js - Phase 2 refactoring */
 
 /* ===== BLOKADA OFERTY - BANER ===== */

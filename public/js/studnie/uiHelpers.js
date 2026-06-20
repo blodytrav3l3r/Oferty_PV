@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== KREATOR ===== */
 function goToWizardStep(step) {
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
@@ -403,7 +404,7 @@ function skipWizardToStep3() {
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
 async function loadStudnieProducts() {
-    var result = await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000);
+    var result = /** @type {any} */ (await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000));
     if (!result || !Array.isArray(result.data)) {
         logger.error('uiHelpers', '[Studnie] Błąd loadStudnieProducts: brak danych po 3 próbach');
         showToast('Nie udało się załadować cennika studni z serwera', 'error');

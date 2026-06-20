@@ -1,4 +1,5 @@
-﻿/* ============================
+// @ts-check
+/* ============================
    WITROS — Kalkulator Studni
    app_studnie.js  (Orchestrator - Entry Point)
    ============================ */
@@ -89,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nrEl = document.getElementById('offer-number');
         if (nrEl && typeof generateOfferNumberStudnie === 'function') nrEl.value = generateOfferNumberStudnie();
 
-        createNewWell(1000);
+        createNewWell(null, 1000);
         renderWellsList();
         selectWell(0);
         goToWizardStep(1);

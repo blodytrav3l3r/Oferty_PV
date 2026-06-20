@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== KARTOTEKA INITIALIZATION ===== */
 let currentTypeFilter = 'all';
 
@@ -95,7 +96,7 @@ function applyCompactMode() {
 
 window.toggleCompactMode = function () {
     compactModeEnabled = !compactModeEnabled;
-    localStorage.setItem('kartoteka-compact-mode', compactModeEnabled);
+    localStorage.setItem('kartoteka-compact-mode', String(compactModeEnabled));
     applyCompactMode();
 };
 

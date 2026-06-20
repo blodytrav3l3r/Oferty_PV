@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * api.js — Ustandaryzowany klient API z timeoutem, obsługą błędów i toastami.
  *

@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== HELPERY PRODUKTU (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: kalkulacja wymiarów ze wzoru ID */
 

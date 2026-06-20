@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== CENNIK UI (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: renderowanie cennika, edycja inline, import/eksport Excel */
 /* Zależności: products, CATEGORIES (globalne), saveProducts z dataService.js */
@@ -183,7 +184,7 @@ async function resetPriceList() {
     try {
         const json = await api.get('/api/products/default');
         if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
-        const customDefault = json.data;
+        const customDefault = /** @type {any} */ (json).data;
         if (customDefault && customDefault.length > 0) {
             if (
                 !(await appConfirm(
@@ -343,7 +344,7 @@ function importRuryFromExcel(event) {
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
-            const data = new Uint8Array(e.target.result);
+            const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];

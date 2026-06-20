@@ -1,3 +1,4 @@
+// @ts-check
 /* ============================
    Rule Engine — Silnik reguł doboru elementów studni
    Port z Logika/rules.py
@@ -149,7 +150,7 @@ function estimateBottomSection(transitions, rzDna, mode) {
  * Port z: rules.py:75-107 → check_dennica_internal()
  *
  * @param {Array} products - lista wszystkich dostępnych produktów
- * @param {number} dn - średnica studni
+ * @param {string|number} dn - średnica studni
  * @param {string} warehouse - 'Kluczbork' lub 'Włocławek'
  * @param {Array} [transitions] - przejścia [{rzednaWlaczenia, productId}] (opcjonalne)
  * @param {number} [rzDna] - rzędna dna studni (opcjonalne, potrzebne z transitions)
@@ -162,7 +163,7 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
         if (dn === 'styczna') {
             return p.componentType === 'styczna' || p.category === 'Studnie styczne';
         }
-        return p.componentType === 'dennica' && parseInt(p.dn) === parseInt(dn) && parseFloat(p.height) > 0;
+        return p.componentType === 'dennica' && parseInt(String(p.dn)) === parseInt(String(dn)) && parseFloat(p.height) > 0;
     });
 
     if (dennicy.length === 0) return null;
@@ -258,10 +259,11 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
  * Phase 2: Zastąpi całkowicie getLowestDennica().
  * 
  * @param {Array} products - lista wszystkich dostępnych produktów
- * @param {number} dn - średnica studni
+ * @param {string|number} dn - średnica studni
  * @param {string} warehouse - 'Kluczbork' lub 'Włocławek'
  * @param {Array} [transitions] - przejścia [{rzednaWlaczenia, productId}]
  * @param {number} [rzDna] - rzędna dna studni
+ * @param {*} [preferredDn] - preferowana średnica (opcjonalne)
  * @returns {Object} { dennica: Object|null, reason: string }
  */
 function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, preferredDn) {
@@ -271,10 +273,10 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
         if (dn === 'styczna') {
             const isStyczna = p.componentType === 'styczna' || p.category === 'Studnie styczne';
             if (!isStyczna) return false;
-            if (preferredDn) return parseInt(p.dn) === parseInt(preferredDn);
+            if (preferredDn) return parseInt(String(p.dn)) === parseInt(String(preferredDn));
             return true;
         }
-        return p.componentType === 'dennica' && parseInt(p.dn) === parseInt(dn) && parseFloat(p.height) > 0;
+        return p.componentType === 'dennica' && parseInt(String(p.dn)) === parseInt(String(dn)) && parseFloat(p.height) > 0;
     });
 
     if (dennicy.length === 0) return { dennica: null, reason: 'no_dennice' };
@@ -354,18 +356,18 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
  * Port z: Logika/rules.py → RuleEngine.get_reduction_plate()
  *
  * @param {Array} products - lista produktów
- * @param {number} dn - średnica studni
+ * @param {string|number} dn - średnica studni
  * @param {boolean} useReduction - czy redukcja jest aktywna
  * @param {number} targetDn - średnica docelowa (domyślnie 1000)
  * @returns {Object|null} płyta redukcyjna lub null
  */
 function getReductionPlate(products, dn, useReduction, targetDn = 1000) {
-    if (!useReduction || parseInt(dn) <= 1000) return null;
+    if (!useReduction || parseInt(String(dn)) <= 1000) return null;
     const tDn = targetDn || 1000;
 
     const plates = products.filter((p) => {
         if (p.componentType !== 'plyta_redukcyjna') return false;
-        if (parseInt(p.dn) !== parseInt(dn)) return false;
+        if (parseInt(String(p.dn)) !== parseInt(String(dn))) return false;
 
         // Szukamy w nazwie wzorców pasujących do docelowej średnicy (np. →DN1000, /1000, DN1000)
         const nameUpper = (p.name || '').toUpperCase();
@@ -401,7 +403,7 @@ function getReductionPlate(products, dn, useReduction, targetDn = 1000) {
  */
 function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
     const ff = getFormaField(warehouse);
-    const dn = parseInt(topDn);
+    const dn = parseInt(String(topDn));
     // Przekazany fallbackToDin z reguły oznacza wkładkę PEHD. Użyjmy go jako flagi do całkowitej blokady Konusa, bo PEHD tego wymaga.
     const blockKonus = fallbackToDin;
 
@@ -444,7 +446,7 @@ function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
  * Port z: Logika/rules.py → RuleEngine.get_kregi_list()
  *
  * @param {Array} products - lista produktów
- * @param {number} dn - średnica
+ * @param {string|number} dn - średnica
  * @param {string} warehouse - 'Kluczbork' lub 'Włocławek'
  * @returns {Array} posortowana lista kręgów
  */
@@ -455,7 +457,7 @@ function getKregiList(products, dn, warehouse) {
     const kregi = products.filter(
         (p) =>
             (p.componentType === 'krag' || p.componentType === 'krag_ot') &&
-            parseInt(p.dn) === parseInt(effectiveDn) &&
+            parseInt(String(p.dn)) === parseInt(String(effectiveDn)) &&
             parseFloat(p.height) > 0
     );
 

@@ -1,4 +1,5 @@
-﻿/* ===== ZAMÓWIENIA STUDNI ===== */
+﻿// @ts-check
+/* ===== ZAMÓWIENIA STUDNI ===== */
 async function loadOrdersStudnie() {
     try {
         const res = await fetchWithTimeout('/api/orders-studnie', { headers: authHeaders() });
@@ -191,7 +192,7 @@ async function createOrderFromOffer() {
 /**
  * Zmienna przechowująca dane do utworzenia zamówienia w trakcie kroku Karta Budowy
  */
-let pendingOrderCreationData = null;
+var pendingOrderCreationData = null;
 
 /**
  * Inicjalizuje formularz Karty Budowy w Kroku 4.
@@ -243,7 +244,7 @@ function _resetKartaBudowyForm() {
 function _calcTransportCosts() {
     let tCost = 0, tWeight = 0, costPerTrip = 0;
 
-    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
+    if (orderEditMode && orderEditMode.order) {
         const o = orderEditMode.order;
         tWeight = o.totalWeight || 0;
         if (o.wells) {
@@ -824,9 +825,9 @@ function handlePrzejsciaZamowioneChange(selectElement) {
 /* ===== SEKCJA PRZEJŚĆ SZCZELNYCH — SZCZEGÓŁY Z OFERTY ===== */
 
 /** Tymczasowa tablica ręcznie dodanych wierszy niestandardowych przejść */
-let _customPrzejscieRows = [];
-let _offerPrzejscieRows = [];
-let _przejsciaInitialized = false;
+var _customPrzejscieRows = [];
+var _offerPrzejscieRows = [];
+var _przejsciaInitialized = false;
 
 /**
  * Buduje listę typów przejść z cennika (studnieProducts).
@@ -1056,7 +1057,7 @@ function updatePrzejscieDnOptions(prefix, category) {
             select.value = 'Inne';
             input.style.display = 'block';
         } else if (currVal && dnOptions.includes(parseFloat(currVal))) {
-            select.value = parseFloat(currVal);
+            select.value = String(parseFloat(currVal));
             input.style.display = 'none';
         } else {
             select.value = '';
@@ -1602,9 +1603,9 @@ function freezeWellPrices(wellsArr) {
                                 }
                             });
                             if (bestDrill) {
-                                drillingBasePrice = bestDrill.price || 0;
-                                drillProdName = bestDrill.name;
-                                drillProdDn = bestDrill.dn || '';
+                                drillingBasePrice = /** @type {any} */ (bestDrill).price || 0;
+                                drillProdName = /** @type {any} */ (bestDrill).name;
+                                drillProdDn = (/** @type {any} */ (bestDrill).dn) || '';
                             }
                         }
                     }
@@ -4414,7 +4415,7 @@ function updateBulkSeqNumbers() {
             numEl.value = '';
             numEl.placeholder = '—';
         } else {
-            numEl.value = counter;
+            numEl.value = String(counter);
             counter++;
         }
     });

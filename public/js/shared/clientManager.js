@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Shared Client Manager — wspólny moduł zarządzania bazą klientów.
  * Eliminuje duplikację kodu klientów z app.js (Rury) i offerManager.js (Studnie).

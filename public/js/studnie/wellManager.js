@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== ZARZĄDZANIE STUDNIAMI ===== */
 
 /** Odczytuje parametry globalne z kroku 2 kreatora z kafelków UI */
@@ -63,6 +64,10 @@ function getWizardGlobalParams() {
     return params;
 }
 
+/**
+ * @param {string|null} name
+ * @param {string|number} [dn=1000]
+ */
 function createNewWell(name, dn = 1000) {
     wellCounter++;
     const gp = getWizardGlobalParams();
@@ -171,7 +176,7 @@ function isWellLocked(wellIdx) {
 // renderOfferLockBanner() przeniesiona do wellUI.js
 
 
-function addNewWell(dn = 1000) {
+function addNewWell(dn = /** @type {string|number} */ (1000)) {
     if (enforceGlobalKonusPehdRule()) {
         showToast('Nie można dodać nowej studni, dopóki nie rozwiążesz konfliktu Konus+PEHD w poprzedniej.', 'error');
         return;
@@ -985,7 +990,7 @@ function updateGlobalPaintingCost(field, value) {
             const zewInput = document.getElementById('offer-mal-zew-cena');
             const refW = wells[0];
             if (refW && !refW.malowanieZewManual) {
-                zewInput.value = numVal;
+                zewInput.value = String(numVal);
             }
         }
     }
@@ -1534,7 +1539,7 @@ function calcWellStats(well) {
                             });
 
                             if (bestDrill) {
-                                drillingBasePrice = bestDrill.price || 0;
+                                drillingBasePrice = /** @type {any} */ (bestDrill).price || 0;
                             }
                         }
                     }

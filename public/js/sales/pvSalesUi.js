@@ -1,3 +1,4 @@
+// @ts-check
 // Wersja 2.0 - Zarzadzanie zamowieniami w Kartotece
 import { storageService } from '../shared/StorageService.js';
 
@@ -259,7 +260,7 @@ class PVSalesUI {
 
     /**
      * Sprawdza czy oferta ma zamówienie — najpierw z mapy API, potem z pól oferty.
-     * @returns {{ hasOrder: boolean, order: Object|null }}
+     * @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }}
      */
     getOrderForOffer(offer) {
         const offerId = this.normalizeId(offer.id);
@@ -1641,8 +1642,7 @@ class PVSalesUI {
             this.openOfferForEdit(rebuiltData, id, type);
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd podglądu historii:', error);
-            if (typeof window.showToast === 'function') window.showToast(error.message, 'error');
-            else if (typeof window.showToast === 'function')
+            if (typeof window.showToast === 'function')
                 window.showToast(error.message, 'error');
         }
     }

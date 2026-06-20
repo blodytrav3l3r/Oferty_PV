@@ -1,10 +1,11 @@
-﻿/* ===== CRUD OFERT (RURY) ===== */
+// @ts-check
+/* ===== CRUD OFERT (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: zapis, ładowanie, duplikacja, usuwanie, historia ofert */
 /* Zależności: offers, currentOfferItems, editingOfferId, editingOfferAssignedUserId/Name, currentUser (globalne) */
 
-let editingOfferCreatedByUserId = null;
-let editingOfferCreatedByUserName = '';
-let isSavingOffer = false;
+var editingOfferCreatedByUserId = null;
+var editingOfferCreatedByUserName = '';
+var isSavingOffer = false;
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */
@@ -301,7 +302,7 @@ function renderSavedOffers() {
     const subUsers = (currentUser && currentUser.subUsers) || [];
 
     const renderedList = offers
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .map((o) => {
             const isOwner = currentUser && o.userId === currentUser.id;
             const isSubUserOffer = isPro && subUsers.includes(o.userId);

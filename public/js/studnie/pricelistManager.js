@@ -1,4 +1,5 @@
-﻿/* ===== ZAKŁADKI CENNIKA ===== */
+// @ts-check
+/* ===== ZAKŁADKI CENNIKA ===== */
 const CENNIK_TAB_FILTERS = {
     dn1000: (p) => p.category === 'Studnie DN1000',
     dn1200: (p) => p.category === 'Studnie DN1200',
@@ -25,7 +26,7 @@ function updateStudnieSaveBtn() {
 
 function selectCennikTab(tab) {
     currentCennikTab = tab;
-    document.querySelectorAll('.cennik-tab').forEach((b) => {
+    document.querySelectorAll('.cennik-tab').forEach((/** @type {HTMLElement} */ b) => {
         b.classList.toggle('active', b.dataset.tab === tab);
     });
     if (tab === 'preco') {
@@ -544,13 +545,13 @@ async function deleteStudnieCategory(groupKey) {
 
 /* ===== PRZEŁĄCZANIE POLA MAGAZYNU ===== */
 function toggleMagazynField(el, field, id) {
-    const product = studnieProducts.find((p) => p.id === id);
+    const product = /** @type {any} */ (studnieProducts.find((p) => p.id === id));
     if (!product) return;
     product[field] = product[field] === 1 ? 0 : 1;
 
     // Natychmiastowa aktualizacja UI bez pełnego re-renderu
     const newVal = product[field];
-    el.textContent = newVal;
+    el.textContent = String(newVal);
     el.style.color = newVal === 1 ? '#34d399' : 'var(--danger-hover)';
 
     _studniePricelistDirty = true;
@@ -575,7 +576,7 @@ function editStudnieCell(el, field, id) {
     input.select();
 
     const save = () => {
-        let val = input.value.trim();
+        let val = /** @type {any} */ (input.value.trim());
         if (!isTextField) {
             val = val === '' ? null : Number(val);
         } else if (field === 'dn' && val !== '' && !val.includes('/')) {
@@ -847,7 +848,7 @@ async function addStudnieProduct() {
 /* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
     try {
-        const json = await api.get('/api/products-studnie/default');
+        const json = /** @type {any} */ (await api.get('/api/products-studnie/default'));
         if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = json.data;
         if (customDefault && customDefault.length > 0) {
@@ -1118,7 +1119,7 @@ function importStudnieFromExcel(event) {
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
-            const data = new Uint8Array(e.target.result);
+            const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
 
             let allJson = [];
@@ -1383,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ── Ustaw najpierw nawigację (przed asynchronicznym ładowaniem danych) ──
-    document.querySelectorAll('.nav-btn').forEach((btn) => {
+    document.querySelectorAll('.nav-btn').forEach((/** @type {HTMLElement} */ btn) => {
         btn.addEventListener('click', () => showSection(btn.dataset.section));
     });
 
@@ -1519,8 +1520,7 @@ function renderPrecoPriceList() {
     if (!container) return;
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
-        html = '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
-        container.innerHTML = html;
+        container.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
         return;
     }
 
@@ -1779,7 +1779,7 @@ function togglePrecoAccordion(headerEl, dn) {
 /** Odczytuje wartości z inputów UI i buduje obiekt precoPricing */
 function collectPrecoFromUI() {
     const data = structuredClone(precoPricing);
-    document.querySelectorAll('[data-preco-field]').forEach(input => {
+    document.querySelectorAll('[data-preco-field]').forEach((/** @type {HTMLElement} */ input) => {
         const dn = input.dataset.precoDn;
         const fieldPath = input.dataset.precoField;
         const val = parseFloat(input.value) || 0;

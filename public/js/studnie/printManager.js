@@ -1,3 +1,4 @@
+// @ts-check
 /* ============================
    WITROS — Druk Zleceń Produkcyjnych
    printManager.js

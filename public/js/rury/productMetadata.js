@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== METADANE PRODUKTÓW (RURY) ===== */
 /* Kategorie i mapa uszczelek — bez danych produktów (te pochodzą z API) */
 

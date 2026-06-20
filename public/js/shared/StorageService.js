@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * StorageService.js
  * Ujednolicona usługa do zarządzania wszystkimi typami ofert (Rury i Studnie).
@@ -90,6 +91,7 @@ class StorageService {
     async getOffers(types = ['offer', 'studnia_oferta']) {
         if (!this.initialized) throw new Error('StorageService not initialized.');
 
+        /** @type {Array<Record<string, unknown>>} */
         let results = [];
         try {
             const timestamp = Date.now();
@@ -111,7 +113,7 @@ class StorageService {
             }
 
             // Sortuj według createdAt malejąco
-            return results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            return results.sort((a, b) => new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime());
         } catch (error) {
             logger.error('StorageService', '[StorageService] Błąd podczas pobierania ofert:', error);
             throw error;

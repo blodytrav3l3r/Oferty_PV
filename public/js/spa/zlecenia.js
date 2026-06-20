@@ -1,4 +1,5 @@
-﻿/**
+// @ts-check
+/**
  * Logic for Kartoteka Zleceń Produkcyjnych
  */
 
@@ -268,7 +269,8 @@ const AppZlecenia = (() => {
 
         if (selectedIds.size > 0) {
             bar.style.display = 'flex';
-            bar.querySelector('.batch-count').textContent = selectedIds.size;
+            const batchCountEl = bar.querySelector('.batch-count');
+            if (batchCountEl) batchCountEl.textContent = String(selectedIds.size);
         } else {
             bar.style.display = 'none';
         }

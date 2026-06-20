@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * SPA Router — Router oparty na iframe dla WITROS.
  *

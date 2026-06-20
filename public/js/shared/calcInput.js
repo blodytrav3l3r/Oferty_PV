@@ -1,7 +1,7 @@
+// @ts-check
 /* ===== Kalkulator wyrażeń w polach input ===== */
-/* Obsługuje: =10-5 → 5, =100+50*2 → 200, 123.45 → 123.45 */
-/* Bezpieczny parser CSP — nie używa eval/new Function */
 
+/* Bezpieczny parser CSP — nie używa eval/new Function */
 (function () {
     const EXPR_RE = /^[\d\s+\-*/().]+$/;
 
@@ -103,7 +103,7 @@
         const parsed = window.parseCalcExpression(raw);
         if (parsed !== null) {
             /* Zamień wyrażenie na wynik w polu — pokaż użytkownikowi wartość */
-            inputEl.value = parsed;
+            inputEl.value = String(parsed);
         }
         return parsed;
     };

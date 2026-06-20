@@ -1,4 +1,5 @@
-﻿/* ===== Extracted to wellTransitions.js ===== */
+// @ts-check
+/* ===== Extracted to wellTransitions.js ===== */
 
 function getMaxPipeDn(wellDn) {
     if (!wellDn || wellDn === 'styczna') return 9999;
@@ -372,7 +373,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                             showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
                             numVal = rzWlazu;
                         }
-                        well.przejscia[index].rzednaWlaczenia = parseFloat(numVal).toFixed(3);
+                        well.przejscia[index].rzednaWlaczenia = numVal.toFixed(3);
                     }
                 } else if (field === 'spadekKineta') {
                     well.przejscia[index].spadekKineta = isNaN(numVal) ? null : Math.round(numVal);
@@ -391,9 +392,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     if (isNaN(numVal)) numVal = 0;
                     if (numVal < 0) numVal = 0;
                     const newRzedna = rzDnaQ + (elStart + numVal) / 1000;
-                    well.przejscia[index].rzednaWlaczenia = parseFloat(newRzedna).toFixed(3);
+                    well.przejscia[index].rzednaWlaczenia = newRzedna.toFixed(3);
                 } else if (field === 'doplata') {
-                    well.przejscia[index].doplata = isNaN(numVal) ? 0 : parseFloat(numVal);
+                    well.przejscia[index].doplata = isNaN(numVal) ? 0 : numVal;
                 }
 
                 if (field === 'rzednaWlaczenia' || field === 'heightMm') {
@@ -526,7 +527,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         }
                     });
                     if (bestDrillProd) {
-                        drillingBasePrice = bestDrillProd.price || 0;
+                        drillingBasePrice = /** @type {any} */ (bestDrillProd).price || 0;
                     }
                 }
             }

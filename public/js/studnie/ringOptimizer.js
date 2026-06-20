@@ -1,3 +1,4 @@
+// @ts-check
 /* ============================
    Ring Optimizer — Optymalizacja kręgów (DP solver)
    Port z Logika/cp_optimizer.py (CP-SAT → Dynamic Programming)

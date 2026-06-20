@@ -4,7 +4,8 @@ jest.mock('../src/prismaClient', () => ({
         settings: {
             findUnique: jest.fn(),
             update: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            upsert: jest.fn()
         }
     }
 }));
@@ -49,9 +50,10 @@ describe('readPricelist', () => {
         expect(result).toEqual([]);
     });
 
-    it('rzuca błąd dla nieprawidłowego JSON-a', async () => {
+    it('zwraca pustą tablicę dla nieprawidłowego JSON-a (brak błędu)', async () => {
         mockSettings.findUnique.mockResolvedValue({ key: 'x', value: 'not-json' });
-        await expect(readPricelist('x')).rejects.toThrow();
+        const result = await readPricelist('x');
+        expect(result).toEqual([]);
     });
 });
 

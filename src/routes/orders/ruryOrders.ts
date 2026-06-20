@@ -9,9 +9,9 @@ import { ruryOrdersBatchSchema, ruryOrderUpdateSchema, ruryOfferExportSchema } f
 import { logger } from '../../utils/logger';
 import { canReadDoc, canWriteDoc } from '../../utils/ownership';
 import { buildRoleWhereSql } from '../../utils/roleFilter';
-import { generateRuryPDFFromContext, generateRuryOrderPDF, lookupOfferUsers } from '../../services/pdfGenerator';
+import { generateRuryPDFFromContext, generateRuryOrderPDF, lookupOfferUsers, generateKartaBudowyRuryPDF } from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
-import { generateRuryDOCXFromContext, generateRuryOrderDOCX } from '../../services/docx';
+import { generateRuryDOCXFromContext, generateRuryOrderDOCX, generateKartaBudowyRuryDOCX } from '../../services/docx';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -184,7 +184,6 @@ router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
             return res.status(404).json({ error: 'Not found' });
         }
         const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
-        const { generateKartaBudowyRuryPDF } = await import('../../services/pdfGenerator');
         const pdfBuffer = await generateKartaBudowyRuryPDF(id);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${safeId}.pdf"`);
@@ -209,7 +208,6 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
             return res.status(404).json({ error: 'Not found' });
         }
         const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
-        const { generateKartaBudowyRuryDOCX } = await import('../../services/docx');
         const docxBuffer = await generateKartaBudowyRuryDOCX(id);
         res.setHeader(
             'Content-Type',

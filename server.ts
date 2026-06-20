@@ -4,6 +4,9 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import compression from 'compression';
+import * as Sentry from '@sentry/node';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './src/swagger';
 
 import { ensureAdminExists } from './src/middleware/auth';
 import { httpsRedirect, securityHeaders } from './src/middleware/security';
@@ -13,6 +16,17 @@ import { cleanupAuditLogs } from './src/services/auditService';
 
 dotenv.config();
 
+/* ===== SENTRY (monitoring błędów) ===== */
+if (process.env.SENTRY_DSN) {
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        environment: process.env.NODE_ENV || 'development',
+        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
+        integrations: [Sentry.expressIntegration()]
+    });
+    logger.info('Server', 'Sentry — aktywny');
+}
+
 const app = express();
 app.set('trust proxy', 1); // Trust Render's proxy to handle HTTPS correctly
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -20,6 +34,22 @@ const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 /* ===== SPRAWDZENIE STATUSU (przed middleware bezpieczeństwa, aby uniknąć przekierowania HTTPS) ===== */
+
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     tags: [System]
+ *     summary: Sprawdzenie statusu serwera
+ *     description: Endpoint używany przez Docker/Render do healthcheck. Zwraca status, uptime i wersję Node.
+ *     responses:
+ *       200:
+ *         description: Serwer działa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ */
 app.get('/health', (_req, res) => {
     res.json({
         status: 'ok',
@@ -28,6 +58,21 @@ app.get('/health', (_req, res) => {
         memory: process.memoryUsage(),
         version: process.version
     });
+});
+
+/* ===== DOKUMENTACJA API (Swagger) ===== */
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'WITROS Oferty PV — API Docs',
+    customfavIcon: '/favicon.ico',
+    swaggerOptions: {
+        persistAuthorization: true,
+        tryItOutEnabled: true
+    }
+}));
+
+/* ===== API — surowy JSON docs ===== */
+app.get('/api/docs.json', (_req, res) => {
+    res.json(swaggerSpec);
 });
 
 /* ===== BEZPIECZEŃSTWO ===== */
@@ -149,6 +194,11 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
     logger.error('Server', 'Nieobsłużony błąd', errorMessage);
     res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
 });
+
+/* ===== SENTRY — error handler (po wszystkich route'ach) ===== */
+if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+}
 
 /* ===== INICJALIZACJA ===== */
 (async function initServer() {

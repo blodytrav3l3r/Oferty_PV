@@ -1764,12 +1764,23 @@ select.form-input option {
 }
 
 #excel-table-container input[type="text"],
-#excel-table-container input[type="number"],
-#excel-table-container select {
+#excel-table-container input[type="number"] {
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 0.3rem 0.45rem;
     background: transparent;
+}
+
+#excel-table-container select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.3rem 0.45rem;
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+#excel-table-container select option {
+    background: #1e293b;
+    color: #e2e8f0;
 }
 
 #excel-table-container td {

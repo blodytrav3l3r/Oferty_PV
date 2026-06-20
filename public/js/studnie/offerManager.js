@@ -1,4 +1,5 @@
-﻿/* ===== PODSUMOWANIE OFERTY ===== */
+// @ts-check
+/* ===== PODSUMOWANIE OFERTY ===== */
 
 function toggleWellExpansion(index, event) {
     if (event) event.stopPropagation();
@@ -311,8 +312,8 @@ function calculateOfferTotals() {
     let totalTransports = 0, transportCostPerTrip = 0, totalTransportCost = 0;
     if (transportKm > 0 && transportRate > 0) {
         transportCostPerTrip = transportKm * transportRate;
-        if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
-            const _order = orderEditMode.order;
+        if (typeof orderEditMode !== 'undefined' && orderEditMode && /** @type {any} */ (orderEditMode).order) {
+            const _order = /** @type {any} */ (orderEditMode).order;
             const _offer = (typeof offersStudnie !== 'undefined' && offersStudnie) ? offersStudnie.find(o => o.id === _order.offerId) : null;
             const _offerWeight = _offer?.totalWeight || globalWeight;
             const _mode = _order.transportMode || currentTransportMode;
@@ -705,7 +706,7 @@ function calculateAssignedPrzejscia(well) {
 
             // Kalkulacja opłaty za wiercenie dla widoku oferty
             let drillingBasePrice = 0;
-            let bestDrillProd = null;
+            let bestDrillProd = /** @type {any} */ (null);
             const p = studnieProducts.find((x) => x.id === pr.productId);
             if (p) {
                 const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
@@ -833,6 +834,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, nadbudowaMu
             const precoMult = 1 - discPreco / 100;
             const precoCost = precoAlloc.allocatedCost * precoMult;
             const fracPerc = precoAlloc.fraction > 0 && precoAlloc.fraction < 1 ? Math.round(precoAlloc.fraction * 100) : 0;
+            let kinetaLabel;
             if (well.wkladkaOsadnikPreco === 'tak') {
                 let h = well.wkladkaOsadnikH || 1000;
                 if (!well.wkladkaOsadnikH) {
@@ -1305,8 +1307,8 @@ async function saveOffersDataStudnie(data) {
 /* ===== PODSUMOWANIE OFERTY (Studnie) ===== */
 let editingOfferAssignedUserId = null;
 let editingOfferAssignedUserName = '';
-let editingOfferCreatedByUserId = null;
-let editingOfferCreatedByUserName = '';
+var editingOfferCreatedByUserId = null;
+var editingOfferCreatedByUserName = '';
 
 async function changeOfferUser() {
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'pro')) {
@@ -1840,7 +1842,7 @@ function renderSavedOffersStudnie() {
     }
 
     container.innerHTML = offersStudnie
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .map((o) => {
             const oId = normalizeId(o.id);
             // Oblicz postęp zamówień częściowych
@@ -2217,12 +2219,12 @@ function importOfferFromFileStudnie() {
     input.type = 'file';
     input.accept = 'application/json';
     input.onchange = (e) => {
-        const file = e.target.files[0];
+        const file = /** @type {HTMLInputElement} */ (e.target).files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                const imported = JSON.parse(event.target.result);
+                const imported = JSON.parse(/** @type {string} */ (event.target.result));
                 if (imported && imported.wells) {
                     imported.id = 'offer_studnie_' + Date.now();
                     migrateWellData(imported.wells);
@@ -2349,13 +2351,13 @@ document.addEventListener('mouseup', (ev) => {
 
         // Złapane w obszar kosza
         const trash = document.getElementById('svg-trash');
-        if (trash && (trash === ev.target || trash.contains(ev.target))) {
+        if (trash && (trash === ev.target || trash.contains(/** @type {Node} */ (ev.target)))) {
             shouldRemove = true;
         }
 
         // Wyrzucone całkowicie poza okienko podglądu (diagram-panel)
         const diagramZone = document.getElementById('drop-zone-diagram');
-        if (diagramZone && !diagramZone.contains(ev.target)) {
+        if (diagramZone && !diagramZone.contains(/** @type {Node} */ (ev.target))) {
             shouldRemove = true;
         }
 
@@ -3185,8 +3187,8 @@ window.openTransportPopup = function () {
     const modalRate = document.getElementById('transport-modal-rate');
 
     // Wczytaj tryb transportu z oferty lub zamówienia
-    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
-        currentTransportMode = orderEditMode.order.transportMode || 'fractional';
+    if (typeof orderEditMode !== 'undefined' && orderEditMode && /** @type {any} */ (orderEditMode).order) {
+        currentTransportMode = /** @type {any} */ (orderEditMode).order.transportMode || 'fractional';
     } else if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
         const offer = typeof offersStudnie !== 'undefined' ? offersStudnie.find(o => o.id === editingOfferIdStudnie) : null;
         currentTransportMode = (offer && offer.transportMode) || 'full';
@@ -3198,8 +3200,8 @@ window.openTransportPopup = function () {
     initialTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
     initialTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
 
-    if (kmInput && modalKm) modalKm.value = kmInput.value || 0;
-    if (rateInput && modalRate) modalRate.value = rateInput.value || 0;
+    if (kmInput && modalKm) modalKm.value = kmInput.value || '0';
+    if (rateInput && modalRate) modalRate.value = rateInput.value || '0';
 
     if (typeof window.updateModalTransportDetails === 'function') window.updateModalTransportDetails();
 
@@ -3224,8 +3226,8 @@ window.handleOfferTransportCancel = async function () {
             if (confirmed) {
                 const kmInput = document.getElementById('transport-km');
                 const rateInput = document.getElementById('transport-rate');
-                if (kmInput) kmInput.value = initialTransportSnapshot.km;
-                if (rateInput) rateInput.value = initialTransportSnapshot.rate;
+                if (kmInput) kmInput.value = String(initialTransportSnapshot.km);
+                if (rateInput) rateInput.value = String(initialTransportSnapshot.rate);
 
                 const inOrderMode = typeof orderEditMode !== 'undefined' && orderEditMode;
                 if (inOrderMode) {
@@ -3260,8 +3262,8 @@ window.handleOfferTransportSave = async function () {
             const rateInput = document.getElementById('transport-rate');
             const modalKm = document.getElementById('transport-modal-km');
             const modalRate = document.getElementById('transport-modal-rate');
-            if (kmInput && modalKm) kmInput.value = modalKm.value || 0;
-            if (rateInput && modalRate) rateInput.value = modalRate.value || 0;
+            if (kmInput && modalKm) kmInput.value = modalKm.value || '0';
+            if (rateInput && modalRate) rateInput.value = modalRate.value || '0';
             hideModal();
 
             if (inOrderMode) {
@@ -3283,8 +3285,8 @@ window.syncTransportFromModal = function () {
     const modalKm = document.getElementById('transport-modal-km');
     const modalRate = document.getElementById('transport-modal-rate');
 
-    if (kmInput && modalKm) kmInput.value = modalKm.value || 0;
-    if (rateInput && modalRate) rateInput.value = modalRate.value || 0;
+    if (kmInput && modalKm) kmInput.value = modalKm.value || '0';
+    if (rateInput && modalRate) rateInput.value = modalRate.value || '0';
 
     // Kluczowe: renderOfferSummary przelicza totals i odświeża całe UI oferty (w tym suma w modal)
     if (typeof renderOfferSummary === 'function') renderOfferSummary();

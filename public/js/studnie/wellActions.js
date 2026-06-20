@@ -1,4 +1,5 @@
-﻿/* ===== Extracted to wellActions.js ===== */
+﻿// @ts-check
+/* ===== Extracted to wellActions.js ===== */
 
 let elevationDebounceTimer = null;
 
@@ -22,8 +23,8 @@ function updateElevations() {
     const wlazVal = wlazInput.value !== '' ? parseCalcExpression(wlazInput.value) : null;
     const dnaVal = dnaInput.value !== '' ? parseCalcExpression(dnaInput.value) : 0;
 
-    if (wlazVal !== null && wlazInput.value.trim().startsWith('=')) wlazInput.value = wlazVal;
-    if (dnaVal !== null && dnaInput.value.trim().startsWith('=')) dnaInput.value = dnaVal;
+    if (wlazVal !== null && wlazInput.value.trim().startsWith('=')) wlazInput.value = String(wlazVal);
+    if (dnaVal !== null && dnaInput.value.trim().startsWith('=')) dnaInput.value = String(dnaVal);
 
     well.rzednaWlazu = wlazVal;
     well.rzednaDna = dnaVal;
@@ -225,7 +226,7 @@ function updateDoplata() {
     const domEl = document.getElementById('input-doplata');
     if (!domEl) return;
     const dVal = domEl.value !== '' ? parseCalcExpression(domEl.value) : 0;
-    if (dVal !== null && domEl.value.trim().startsWith('=')) domEl.value = dVal;
+    if (dVal !== null && domEl.value.trim().startsWith('=')) domEl.value = String(dVal);
     well.doplata = dVal;
 
     // Zastosuj kolor natychmiastowo

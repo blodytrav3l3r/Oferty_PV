@@ -1,5 +1,6 @@
+// @ts-check
 /* ===== WITROS PRECISION OS — SINGLETON STANU APLIKACJI (RURY) ===== */
-/* Faza 4 refaktoryzacji: enkapsulacja zmiennych globalnych */
+
 /* Zamiast luźnych `let` na poziomie globalnym, cały stan współdzielony */
 /* jest zarządzany przez obiekt AppState z walidacją typów. */
 /* Moduły rury/ odwołują się do stanu przez window-level aliasy */

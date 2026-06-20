@@ -1,3 +1,4 @@
+// @ts-check
 /* ===== PODŚWIETLANIE SVG ===== */
 window.highlightSvg = function (type, index) {
     document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
@@ -952,7 +953,7 @@ function renderWellDiagram(targetSvg, targetWell) {
     }
 
     const bodyDN = well.dn;
-    const canvas = calculateCanvasParams(visible, bodyDN);
+    const canvas = /** @type {any} */ (calculateCanvasParams(visible, bodyDN));
     canvas.bodyDN = bodyDN;
 
     svg.setAttribute('viewBox', `0 0 ${canvas.svgW} ${canvas.svgH}`);

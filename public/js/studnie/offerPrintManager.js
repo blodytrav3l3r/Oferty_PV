@@ -1,3 +1,4 @@
+// @ts-check
 /* ============================
    WITROS — Wydruk Oferty Studni
    offerPrintManager.js
@@ -435,14 +436,14 @@ async function printOfferStudnie() {
  * Pokazuje uniwersalny modal dający wybór wydruku oferty oraz karty budowy
  */
 window.handlePrintClick = function() {
-    window.showUniversalPrintModal();
+    /** @type {(...args: any[]) => void} */ (window.showUniversalPrintModal)();
 };
 
 /**
  * Kompatybilność wsteczna - deleguje do uniwersalnego modala
  */
 window.showOfferExportChoice = function() {
-    window.showUniversalPrintModal();
+    /** @type {(...args: any[]) => void} */ (window.showUniversalPrintModal)();
 };
 
 /**
@@ -454,15 +455,15 @@ window.showOfferExportChoice = function() {
  *                                     (kartoteka PV ma `this.ordersMap`, edytor studni
  *                                     ma `ordersStudnie` / `getOrdersForOffer`).
  */
-window.showUniversalPrintModal = function(offerId, orderId, relatedOrders) {
+window.showUniversalPrintModal = /** @type {function(...[*]=): void} */ (function(offerId, orderId, relatedOrders) {
     let finalOfferId = offerId;
     let finalOrderId = orderId;
 
     if (!finalOfferId && !finalOrderId) {
         // Kliknięcie w aktywnym edytorze
-        if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) {
-            finalOrderId = orderEditMode.orderId;
-            finalOfferId = (orderEditMode.order && orderEditMode.order.offerId) || orderEditMode.offerId || (typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '');
+        if (typeof orderEditMode !== 'undefined' && orderEditMode && /** @type {any} */ (orderEditMode).orderId) {
+            finalOrderId = /** @type {any} */ (orderEditMode).orderId;
+            finalOfferId = (/** @type {any} */ (orderEditMode).order && /** @type {any} */ (orderEditMode).order.offerId) || /** @type {any} */ (orderEditMode).offerId || (typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '');
         } else if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
             finalOfferId = editingOfferIdStudnie;
             if (typeof getOrdersForOffer === 'function') {
@@ -528,7 +529,7 @@ window.showUniversalPrintModal = function(offerId, orderId, relatedOrders) {
     } else if (typeof showToast === 'function') {
         showToast('Helper printModal.js nie załadowany', 'error');
     }
-};
+});
 
 /**
  * Akcja pobierania oferty dla konkretnego ID

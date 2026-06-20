@@ -1,4 +1,5 @@
-﻿/* ===== Extracted to wellPopups.js ===== */
+// @ts-check
+/* ===== Extracted to wellPopups.js ===== */
 
 function openZakonczeniePopup() {
     const well = getCurrentWell();
@@ -1374,7 +1375,7 @@ window.tmRenderTable = function() {
     container.innerHTML = html;
 
     const visEl = document.getElementById('tm-visible-count');
-    if (visEl) visEl.textContent = visibleCount;
+    if (visEl) visEl.textContent = String(visibleCount);
     tmUpdateSelectedCount();
 
     const selectAllCb = document.getElementById('tm-select-all');
@@ -1574,7 +1575,7 @@ async function tmEditApply(wellIdx, trIdx) {
 
 window.tmUpdateSelectedCount = function() {
     const countEl = document.getElementById('tm-selected-count');
-    if (countEl) countEl.textContent = tmSelectedTransitions.size;
+    if (countEl) countEl.textContent = String(tmSelectedTransitions.size);
 };
 
 window.tmUpdatePreview = function() {

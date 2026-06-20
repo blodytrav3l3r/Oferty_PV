@@ -1,4 +1,5 @@
-﻿/**
+// @ts-check
+/**
  * transitionRenderer.js
  *
  * Zunifikowany renderer dla kafelków przejść.
@@ -79,14 +80,17 @@ function classifyFlowType(item, globalIndex) {
  * @param {number}  globalIndex  - Indeks przejścia w well.przejscia.
  * @param {Object}  product      - Wpis z studnieProducts dla item.productId.
  * @param {Object}  opts         - Opcje renderowania.
- * @param {number}  opts.heightMm      - Wysokość od dna elementu w mm.
- * @param {boolean} opts.showDeleteBtn - Czy pokazać przycisk usuwania (true w konfiguratorze).
- * @param {boolean} opts.showEditBtn   - Czy pokazać przycisk edycji (true w konfiguratorze).
- * @param {boolean} opts.showPrice     - Czy pokazać kolumnę ceny (true w konfiguratorze).
- * @param {string}  opts.spadekKinetaLabel - Etykieta dla "Spadek w kinecie".
- * @param {string}  opts.spadekMufaLabel   - Etykieta dla "Spadek w mufie".
- * @param {boolean} opts.enableDragDrop    - Czy dodać uchwyty do przeciągania (true w konfiguratorze).
- * @param {number}  opts.assignedCfgIndex  - Indeks konfiguracji do podświetlenia SVG (jeśli dostępny).
+ * @param {number}  [opts.heightMm]      - Wysokość od dna elementu w mm.
+ * @param {boolean} [opts.showDeleteBtn] - Czy pokazać przycisk usuwania (true w konfiguratorze).
+ * @param {boolean} [opts.showEditBtn]   - Czy pokazać przycisk edycji (true w konfiguratorze).
+ * @param {boolean} [opts.showPrice]     - Czy pokazać kolumnę ceny (true w konfiguratorze).
+ * @param {string}  [opts.spadekKinetaLabel] - Etykieta dla "Spadek w kinecie".
+ * @param {string}  [opts.spadekMufaLabel]   - Etykieta dla "Spadek w mufie".
+ * @param {boolean} [opts.enableDragDrop]    - Czy dodać uchwyty do przeciągania (true w konfiguratorze).
+ * @param {number}  [opts.assignedCfgIndex]  - Indeks konfiguracji do podświetlenia SVG (jeśli dostępny).
+ * @param {number}  [opts.drillingBasePrice=0] - Cena bazowa wiercenia.
+ * @param {Object}  [opts.drillingProd]        - Produkt wiercenia (opcjonalnie).
+ * @param {Object}  [opts.well]                - Obiekt studni (opcjonalnie).
  * @returns {string} Ciąg HTML.
  */
 function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {

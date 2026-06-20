@@ -1,9 +1,10 @@
-﻿/* ===== ZAMÓWIENIA RUR ===== */
+// @ts-check
+/* ===== ZAMÓWIENIA RUR ===== */
 let ordersRury = [];
-let pendingOrderCreationData = null;
-let _customPrzejscieRows = [];
-let _offerPrzejscieRows = [];
-let _przejsciaInitialized = false;
+var pendingOrderCreationData = null;
+var _customPrzejscieRows = [];
+var _offerPrzejscieRows = [];
+var _przejsciaInitialized = false;
 let orderCurrentItems = [];
 
 function getActiveItemsArray() {
@@ -507,7 +508,7 @@ function updateRuryOrderSummary(orderData) {
     });
 
     dst.querySelectorAll('.offer-cat-header td, .offer-diam-header td').forEach(td => {
-        td.setAttribute('colspan', colCount);
+        td.setAttribute('colspan', String(colCount));
     });
 
     copyTransportBreakdown();
@@ -665,7 +666,8 @@ window.saveOfferOrOrder = async function () {
 
 /* ===== TRYB EDYCJI ZAMÓWIENIA ===== */
 
-let orderEditMode = false;
+/** @type {any} */
+var orderEditMode = false;
 window.orderEditMode = false;
 
 function isOrderMode() {

@@ -6,6 +6,7 @@
  */
 import express from 'express';
 import studnieOrdersRouter from './studnieOrders';
+import ruryOrdersRouter from './ruryOrders';
 import productionRouter from './production';
 import numberingRouter from './numbering';
 
@@ -19,5 +20,8 @@ router.use('/production', productionRouter);
 
 // Zamówienia studni: / (CRUD na zamówieniach)
 router.use('/', studnieOrdersRouter);
+
+// Zamówienia rur: /rury/* (CRUD na zamówieniach rur)
+router.use('/rury', ruryOrdersRouter);
 
 export default router;
