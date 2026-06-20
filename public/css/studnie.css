@@ -5,6 +5,14 @@
     gap: 0;
     margin: -0.8rem -1.5rem -2rem -1.5rem;
     background: var(--bg-primary);
+    height: calc(100vh - 58px);
+}
+
+.well-center-column,
+.well-diagram-panel,
+.wells-sidebar,
+.wells-sidebar-panel {
+    box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
