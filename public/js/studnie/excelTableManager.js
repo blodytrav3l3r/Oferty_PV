@@ -1207,7 +1207,41 @@ function excelOnWlazChange(wIdx, productId) {
 function _excelInsertConfigItem(well, componentType, productId, qty) {
     const topTypes = ['wlaz', 'avr', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
     const bottomTypes = ['dennica', 'kineta', 'styczna'];
+    const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
     if (topTypes.includes(componentType)) {
+        /* Właz: tylko wstaw, nie ruszaj reszty zakończeń */
+        if (componentType === 'wlaz') {
+            const wlazIdx = well.config.findIndex((item) => {
+                const p = typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    : null;
+                return p && p.componentType === 'wlaz';
+            });
+            const insertAt = wlazIdx >= 0 ? wlazIdx + 1 : 0;
+            well.config.splice(insertAt, 0, { productId, quantity: qty, autoAdded: false });
+            return;
+        }
+        /* Jeśli dodajemy element odciążający: zachowaj partnera, usuń resztę */
+        if (reliefTypes.includes(componentType)) {
+            well.config = well.config.filter((item) => {
+                const p = typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    : null;
+                if (!p) return true;
+                if (reliefTypes.includes(p.componentType)) {
+                    return p.componentType !== componentType;
+                }
+                return !topTypes.includes(p.componentType);
+            });
+        } else {
+            /* Nie-odciążający (konus/plyta_din): usuń wszystkie zakończenia */
+            well.config = well.config.filter((item) => {
+                const p = typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    : null;
+                return !(p && topTypes.includes(p.componentType));
+            });
+        }
         /* Wstaw za włazem (jeśli istnieje), żeby nie rozbić kolejności góra-dół */
         const wlazIdx = well.config.findIndex((item) => {
             const p = typeof studnieProducts !== 'undefined'
@@ -1217,6 +1251,10 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         });
         const insertAt = wlazIdx >= 0 ? wlazIdx + 1 : 0;
         well.config.splice(insertAt, 0, { productId, quantity: qty, autoAdded: false });
+        /* Auto-uzupełnij komplet odciążający */
+        if (typeof window.ensureReliefRingPair === 'function') {
+            window.ensureReliefRingPair(well);
+        }
     } else if (bottomTypes.includes(componentType)) {
         well.config.push({ productId, quantity: qty, autoAdded: false });
     } else {
