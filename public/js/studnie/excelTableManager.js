@@ -560,9 +560,9 @@ function _excelRenderTabs() {
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
         html += `<button onclick="excelSwitchTab('${tab}')" style="
             padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
-            border-bottom:2px solid ${isActive ? c.border : 'transparent'};
-            background:${isActive ? c.activeBg : 'transparent'};
-            color:${isActive ? c.text : '#64748b'};
+            border-bottom:2px solid ${isActive ? c.border : c.border + '66'};
+            background:${isActive ? c.activeBg : c.bg};
+            color:${isActive ? c.text : c.border + '99'};
             transition:all 0.12s;letter-spacing:0.2px;">
             ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>
         </button>`;
