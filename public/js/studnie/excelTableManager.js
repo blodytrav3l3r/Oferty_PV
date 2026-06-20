@@ -690,12 +690,18 @@ function _excelRenderTable(dn) {
 
     html += '</tr></thead><tbody>';
 
+    /* Wykryj duplikaty nazw */
+    const nameCounts = {};
+    tabWells.forEach((w) => { const n = (w.name || '').trim().toLowerCase(); if (n) nameCounts[n] = (nameCounts[n] || 0) + 1; });
+    const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
+
     tabWells.forEach((well, idx) => {
         const wIdx = wells.indexOf(well);
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const rowBg = isActive ? 'rgba(99,102,241,0.08)' : isEven ? '#0e1017' : '#11131b';
-        const rowBorder = isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
+        const isDup = dupNames.has((well.name || '').trim().toLowerCase());
+        const rowBg = isDup ? 'rgba(239,68,68,0.15)' : isActive ? 'rgba(99,102,241,0.08)' : isEven ? '#0e1017' : '#11131b';
+        const rowBorder = isDup ? '2px solid rgba(239,68,68,0.6)' : isActive ? '2px solid rgba(99,102,241,0.6)' : 'none';
         const przejscia = well.przejscia || [];
 
         html += `<tr data-widx="${wIdx}" onclick="excelSelectRow(${wIdx})" style="background:${rowBg};outline:${rowBorder};transition:background 0.08s;" onmouseenter="this.style.background='rgba(99,102,241,0.05)'" onmouseleave="this.style.background='${rowBg}'">`;
@@ -1450,6 +1456,8 @@ function excelOpenWellParams(wIdx) {
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
 function excelOnNameChange(wIdx, value) {
+    /* Odśwież tabelę po zmianie nazwy — wykryje duplikaty */
+    _excelRenderTable(_excelActiveTab);
     const name = (value || '').trim();
     if (!name) return;
     wells[wIdx].name = name;
