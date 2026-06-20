@@ -5,6 +5,15 @@ let _excelMaxTransitions = 1;
 let _excelActiveTab = '1000';
 const _excelFocusedCell = null;
 let _excelCreatingLock = false;
+let _excelRefreshTimer = null;
+
+function _excelDebouncedRefresh() {
+    if (_excelRefreshTimer) clearTimeout(_excelRefreshTimer);
+    _excelRefreshTimer = setTimeout(() => {
+        _excelRefreshTimer = null;
+        if (typeof refreshAll === 'function') refreshAll(true);
+    }, 300);
+}
 
 const KINETA_OPTIONS = [
     ['brak', 'Brak'],
@@ -600,7 +609,7 @@ function excelAddWellToTab() {
     _excelUpdateWellCount();
     const newWIdx = wells.length - 1;
     setTimeout(() => excelSelectRow(newWIdx), 50);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
     showToast('Dodano: ' + well.name, 'success');
 }
 
@@ -829,13 +838,13 @@ function _excelRenderTable(dn) {
 
     /* Nazwa — sticky left */
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni…" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};border-right:2px solid rgba(255,255,255,0.08);"><input type="text" placeholder="Nazwa studni… (Enter/→ dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Rz. Dna */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Wys. — placeholder */
     html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
@@ -955,7 +964,7 @@ function excelCreateFromEmpty(ev) {
         _excelRenderTabs();
         _excelRenderTable(_excelActiveTab);
         _excelUpdateWellCount();
-        if (typeof refreshAll === 'function') refreshAll(true);
+        _excelDebouncedRefresh();
         showToast('Dodano: ' + autoName, 'success');
     } finally {
         setTimeout(() => {
@@ -1080,7 +1089,7 @@ function excelOnRzednaChange(wIdx) {
     wells[wIdx].rzednaDna = rzDna;
     _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
@@ -1100,7 +1109,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         p.displayIndex = i;
     });
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
@@ -1124,7 +1133,7 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     // Renderuj ponownie tabelę, by zaktualizować listę średnic (DN)
     _excelRenderTable(_excelActiveTab);
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnWlazChange(wIdx, productId) {
@@ -1135,7 +1144,7 @@ function excelOnWlazChange(wIdx, productId) {
     });
     if (productId) well.config.push({ productId, quantity: 1, autoAdded: false });
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId) {
@@ -1183,14 +1192,14 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnKinetaChange(wIdx, value) {
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnPsiaBudaChange(wIdx, checked) {
@@ -1218,19 +1227,19 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnReductionChange(wIdx, checked) {
     wells[wIdx].redukcjaDN1000 = checked;
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function excelOnReductionMinHChange(wIdx, value) {
     wells[wIdx].redukcjaMinH = parseInt(value) || 2500;
     _excelUpdateLeftPreview(wIdx);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 function _excelRefreshAutoCells(wIdx, row) {
@@ -1286,7 +1295,7 @@ function excelOnNameChange(wIdx, value) {
     }
     _excelRenderTabs();
     _excelUpdateWellCount();
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
 }
 
 /* ===== DUPLIKOWANIE STUDNI Z TABELI ===== */
@@ -1302,7 +1311,7 @@ function excelDuplicateWell(wIdx) {
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
     setTimeout(() => excelSelectRow(wIdx + 1), 50);
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
     showToast('Skopiowano: ' + copy.name, 'success');
 }
 
@@ -1324,6 +1333,6 @@ async function excelDeleteWell(wIdx) {
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
-    if (typeof refreshAll === 'function') refreshAll(true);
+    _excelDebouncedRefresh();
     showToast('Studnia usunięta', 'info');
 }
