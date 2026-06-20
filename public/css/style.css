@@ -435,6 +435,9 @@ body::before {
 .main:has(.wizard-nav-fixed) {
     padding-bottom: calc(60px + 2rem);
 }
+.main:has(#section-builder.active):has(.wizard-nav-fixed) {
+    padding-bottom: 0;
+}
 .main:has(.offer-summary-footer-fixed) {
     padding-bottom: calc(120px + 2rem);
 }
