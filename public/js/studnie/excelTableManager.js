@@ -550,7 +550,7 @@ function _excelGetWlazFromConfig(well) {
 function _excelAutoSetWlaz(well) {
     if (!well) return;
     const avail = (typeof getAvailableProducts === 'function' ? getAvailableProducts(well) : [])
-        .filter((p) => p.componentType === 'wlaz' && parseInt(p.dn) === parseInt(well.dn))
+        .filter((p) => p.componentType === 'wlaz' && (p.dn == null || parseInt(p.dn) === parseInt(well.dn)))
         .filter((p) => typeof filterByWellParams !== 'function' || filterByWellParams(p, well));
     if (avail.length === 0) return;
     const chosen = avail.find((p) => parseInt(p.height) === 150) || avail[0];
