@@ -599,6 +599,7 @@ function addWellComponent(productId) {
     renderWellsList();
     renderTiles(); // Aktualizacja podświetlenia
     updateHeightIndicator(); // Odśwież błędy
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
@@ -664,6 +665,7 @@ function removeWellComponent(index) {
     renderWellsList();
     renderTiles(); // Update highlight
     updateHeightIndicator(); // Odśwież błędy
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 }
 
 function updateWellQuantity(index, value) {
@@ -2063,6 +2065,23 @@ function sortWellConfigByOrder() {
         // Pozwala to na ręczne układanie elementów tej samej kategorii (np. kręgów tej samej średnicy) przez użytkownika.
         return 0;
     });
+    _moveWlazToTop(well);
+}
+
+function _moveWlazToTop(well) {
+    if (!well || !well.config || well.config.length < 2) return;
+    var wlazIdx = -1;
+    for (var i = 0; i < well.config.length; i++) {
+        var p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+        if (p && p.componentType === 'wlaz') {
+            wlazIdx = i;
+            break;
+        }
+    }
+    if (wlazIdx > 0) {
+        var item = well.config.splice(wlazIdx, 1)[0];
+        well.config.unshift(item);
+    }
 }
 
 // Eksport do window dla innych modułów
