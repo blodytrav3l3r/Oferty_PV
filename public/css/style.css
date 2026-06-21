@@ -820,24 +820,24 @@ body::before {
     background: var(--success-bg);
 }
 
-.btn-order-save {
-    background: var(--success-bg-hover) !important;
-    color: var(--success-hover) !important;
-    border: 1px solid var(--success-bg) !important;
+button.btn-order-save {
+    background: var(--success-bg-hover);
+    color: var(--success-hover);
+    border: 1px solid var(--success-bg);
     border-radius: var(--radius-sm);
-    box-shadow: none !important;
-    font-weight: 600 !important;
-    text-shadow: none !important;
-    padding: 0 1rem !important;
-    white-space: nowrap !important;
-    width: auto !important;
+    box-shadow: none;
+    font-weight: 600;
+    text-shadow: none;
+    padding: 0 1rem;
+    white-space: nowrap;
+    width: auto;
 }
 
-.btn-order-save:hover {
-    transform: translateY(-1px) !important;
-    background: var(--success-bg-hover) !important;
-    color: var(--success-hover) !important;
-    border-color: var(--success-bg) !important;
+button.btn-order-save:hover {
+    transform: translateY(-1px);
+    background: var(--success-bg-hover);
+    color: var(--success-hover);
+    border-color: var(--success-bg);
 }
 
 .btn-sm {
