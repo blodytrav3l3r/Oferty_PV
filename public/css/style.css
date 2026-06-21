@@ -441,6 +441,11 @@ body::before {
     overflow: hidden;
 }
 
+.nav-btn {
+    padding: inherit;
+    font-size: inherit;
+}
+
 .nav-tile:hover {
     background: var(--bg-hover);
     border-color: var(--bg-hover);
