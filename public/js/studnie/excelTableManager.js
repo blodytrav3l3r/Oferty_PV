@@ -1121,7 +1121,7 @@ function _excelRenderTable(dn) {
                 ? `<div style="font-size:0.4rem;color:#64748b;opacity:0.6;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58px;">${escapeHtml(cellCode)}</div>`
                 : '';
             html += `<td style="${tdBase}text-align:center;min-width:62px;">`
-                + `<input type="number" min="0" step="1" value="${count || ''}" onchange="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
+                + `<input type="number" min="0" step="1" value="${count || ''}" oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
                 + codeHtml
                 + `</td>`;
         });
