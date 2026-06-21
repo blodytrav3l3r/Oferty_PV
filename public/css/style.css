@@ -122,8 +122,7 @@
     --radius-md: 16px;
     --radius-lg: 24px;
 
-    /* Pink accent (zlecenia module) */
-    --pink: #ec4899;
+    /* Pink accent (zlecenia module) — merged with Colors section above */
     --pink-hover: #f472b6;
 
     /* Deprecated aliases (kept for backward compat) */
@@ -210,6 +209,10 @@
 .text-warn-hover {
     color: var(--warn-hover);
 }
+.hidden {
+    display: none !important;
+}
+
 .text-blue {
     color: var(--blue);
 }
@@ -743,9 +746,6 @@ body::before {
 }
 
 /* Utility semantic colors for JS dynamic styling */
-.text-warn {
-    color: var(--warn);
-}
 /* Przyciski */
 .btn {
     display: inline-flex;

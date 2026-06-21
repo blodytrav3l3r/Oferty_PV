@@ -29,10 +29,7 @@ body.index-page {
     position: relative;
 }
 
-:root {
-    --radius-md: 16px;
-    --radius-lg: 24px;
-}
+/* :root — radius defined in style.css */
 
 /* ── Niestandardowy pasek przewijania ── */
 body.index-page ::-webkit-scrollbar {

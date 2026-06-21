@@ -15,7 +15,7 @@
 .rury-card {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
-    border-radius: var(--radius-md, 16px);
+    border-radius: var(--radius-md);
     padding: 1.2rem 1.5rem;
     box-shadow: var(--shadow-lg);
     transition: var(--transition);
