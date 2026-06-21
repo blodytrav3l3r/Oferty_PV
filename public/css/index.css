@@ -352,9 +352,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     flex-shrink: 0;
 }
 
-.launch-card .launch-icon {
-    will-change: transform;
-}
 .launch-card:hover .launch-icon {
     transform: scale(1.1);
     transform-origin: center center;

@@ -2999,9 +2999,6 @@ svg.lucide {
         opacity 0.2s;
 }
 
-.wizard-step-dot {
-    will-change: transform;
-}
 .wizard-step-dot:hover {
     opacity: 0.8;
     transform: scale(1.05);
