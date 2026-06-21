@@ -1929,12 +1929,32 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
     _excelUpdateLeftPreview(wIdx);
     _excelDebouncedRefresh();
 
-    /* Komplet odciążający: pł.odc ↔ pierśc.odc — automatyczna para przy dodawaniu */
+    /* Komplet odciążający: pł.odc ↔ pierśc.odc — dodaj brakującą parę z tą samą wysokością */
     if (newQty > 0 && (componentType === 'plyta_najazdowa' || componentType === 'plyta_zamykajaca' || componentType === 'pierscien_odciazajacy')) {
-        if (typeof window.ensureReliefRingPair === 'function') {
-            const oldLen = well.config.length;
-            window.ensureReliefRingPair(well);
-            if (well.config.length !== oldLen) {
+        var isRing = componentType === 'pierscien_odciazajacy';
+        var partnerTypes = isRing ? ['plyta_najazdowa', 'plyta_zamykajaca'] : ['pierscien_odciazajacy'];
+        var _avail = typeof getAvailableProducts === 'function' ? getAvailableProducts(well) : (studnieProducts || []);
+        /* Sprawdź czy partner już istnieje (z tą samą wysokością) */
+        var hasPartner = false;
+        for (var ci = 0; ci < (well.config || []).length; ci++) {
+            var cp = _avail.find(function (pr) { return pr.id === well.config[ci].productId; });
+            if (cp && partnerTypes.indexOf(cp.componentType) !== -1) {
+                if (height === undefined || parseInt(cp.height) === parseInt(height)) {
+                    hasPartner = true;
+                    break;
+                }
+            }
+        }
+        if (!hasPartner) {
+            var partnerCandidates = _avail.filter(function (p) {
+                return partnerTypes.indexOf(p.componentType) !== -1 && parseInt(p.dn) === parseInt(well.dn);
+            });
+            if (height !== undefined) {
+                partnerCandidates = partnerCandidates.filter(function (p) { return parseInt(p.height) === parseInt(height); });
+            }
+            if (partnerCandidates.length > 0) {
+                var partner = partnerCandidates[0];
+                _excelInsertConfigItem(well, partner.componentType, partner.id, 1);
                 _excelSortConfig(well);
                 _excelRenderTable(_excelActiveTab);
             }
