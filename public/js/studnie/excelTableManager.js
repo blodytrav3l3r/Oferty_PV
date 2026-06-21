@@ -1868,6 +1868,14 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
 
+    /* Auto-konwersja krag ↔ krag_ot: jeśli studnia ma przejścia → OT, jeśli nie → zwykły */
+    const hasPrzejscia = well.przejscia && well.przejscia.length > 0;
+    const needsKragConv = (componentType === 'krag' || componentType === 'krag_ot')
+        && hasPrzejscia !== (componentType === 'krag_ot');
+    const targetKragType = needsKragConv
+        ? (componentType === 'krag' ? 'krag_ot' : 'krag')
+        : componentType;
+
     /* Zachowaj istniejące warianty — nie niszcz wyboru beton/żelbet/bez stopni */
     const existingItems = [];
     if (!productId) {
@@ -1880,9 +1888,15 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
         }
     }
 
+    /* Gdy konwersja krag↔krag_ot: usuń OBA typy na tej wysokości, by nie było duplikatu */
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return true;
+        if (needsKragConv && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
+            if (productId) return item.productId !== productId;
+            if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
+            return false;
+        }
         if (productId) return item.productId !== productId;
         if (p.componentType !== componentType) return true;
         if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
@@ -1891,7 +1905,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
 
     if (newQty > 0) {
         let candidates;
-        if (productId) {
+        if (productId && !needsKragConv) {
             candidates = (
                 typeof getAvailableProducts === 'function'
                     ? getAvailableProducts(well)
@@ -1905,7 +1919,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
                     ? getAvailableProducts(well)
                     : studnieProducts
             ).filter(
-                (p) => p.componentType === componentType && parseInt(p.dn) === parseInt(well.dn)
+                (p) => p.componentType === targetKragType && parseInt(p.dn) === parseInt(well.dn)
             );
             if (height !== undefined)
                 candidates = candidates.filter((p) => parseInt(p.height) === parseInt(height));
@@ -1917,9 +1931,9 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
             const firstPid = existingItems[0].productId;
             const stillAvail = candidates.some((c) => c.id === firstPid);
             const pid = stillAvail ? firstPid : (candidates.length > 0 ? candidates[0].id : null);
-            if (pid) _excelInsertConfigItem(well, componentType, pid, newQty);
+            if (pid) _excelInsertConfigItem(well, targetKragType, pid, newQty);
         } else if (candidates.length > 0) {
-            _excelInsertConfigItem(well, componentType, candidates[0].id, newQty);
+            _excelInsertConfigItem(well, targetKragType, candidates[0].id, newQty);
         }
     }
     _excelMarkManual(well);
