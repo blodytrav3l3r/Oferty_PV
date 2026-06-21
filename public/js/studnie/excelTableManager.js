@@ -1868,14 +1868,6 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
 
-    /* Auto-konwersja krag ↔ krag_ot: jeśli studnia ma przejścia → OT, jeśli nie → zwykły */
-    const hasPrzejscia = well.przejscia && well.przejscia.length > 0;
-    const needsKragConv = (componentType === 'krag' || componentType === 'krag_ot')
-        && hasPrzejscia !== (componentType === 'krag_ot');
-    const targetKragType = needsKragConv
-        ? (componentType === 'krag' ? 'krag_ot' : 'krag')
-        : componentType;
-
     /* Zachowaj istniejące warianty — nie niszcz wyboru beton/żelbet/bez stopni */
     const existingItems = [];
     if (!productId) {
@@ -1888,15 +1880,9 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
         }
     }
 
-    /* Gdy konwersja krag↔krag_ot: usuń OBA typy na tej wysokości, by nie było duplikatu */
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return true;
-        if (needsKragConv && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
-            if (productId) return item.productId !== productId;
-            if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
-            return false;
-        }
         if (productId) return item.productId !== productId;
         if (p.componentType !== componentType) return true;
         if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
@@ -1905,7 +1891,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
 
     if (newQty > 0) {
         let candidates;
-        if (productId && !needsKragConv) {
+        if (productId) {
             candidates = (
                 typeof getAvailableProducts === 'function'
                     ? getAvailableProducts(well)
@@ -1919,7 +1905,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
                     ? getAvailableProducts(well)
                     : studnieProducts
             ).filter(
-                (p) => p.componentType === targetKragType && parseInt(p.dn) === parseInt(well.dn)
+                (p) => p.componentType === componentType && parseInt(p.dn) === parseInt(well.dn)
             );
             if (height !== undefined)
                 candidates = candidates.filter((p) => parseInt(p.height) === parseInt(height));
@@ -1931,12 +1917,65 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
             const firstPid = existingItems[0].productId;
             const stillAvail = candidates.some((c) => c.id === firstPid);
             const pid = stillAvail ? firstPid : (candidates.length > 0 ? candidates[0].id : null);
-            if (pid) _excelInsertConfigItem(well, targetKragType, pid, newQty);
+            if (pid) _excelInsertConfigItem(well, componentType, pid, newQty);
         } else if (candidates.length > 0) {
-            _excelInsertConfigItem(well, targetKragType, candidates[0].id, newQty);
+            _excelInsertConfigItem(well, componentType, candidates[0].id, newQty);
         }
     }
     _excelMarkManual(well);
+
+    /* Auto-konwersja krag ↔ krag_ot: jeśli studnia ma przejścia → OT, jeśli nie → zwykły */
+    if (newQty > 0 && (componentType === 'krag' || componentType === 'krag_ot')) {
+        const hasPrzejscia = well.przejscia && well.przejscia.length > 0;
+        const shouldBeOT = hasPrzejscia;
+        const wasAddedAsOT = componentType === 'krag_ot';
+
+        if (shouldBeOT !== wasAddedAsOT) {
+            const targetType = shouldBeOT ? 'krag_ot' : 'krag';
+            /* Usuń dopiero-co dodany element złego typu */
+            well.config = (well.config || []).filter((item) => {
+                const p = studnieProducts.find((pr) => pr.id === item.productId);
+                if (!p) return true;
+                if (p.componentType !== componentType) return true;
+                if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
+                return false;
+            });
+            /* Znajdź istniejący element dobrego typu na tej wysokości */
+            let existingCorrect = null;
+            for (const item of well.config || []) {
+                const p = studnieProducts.find((pr) => pr.id === item.productId);
+                if (p && p.componentType === targetType && parseInt(p.dn) === parseInt(well.dn)
+                    && (height === undefined || parseInt(p.height) === parseInt(height))) {
+                    existingCorrect = item;
+                    break;
+                }
+            }
+            if (existingCorrect) {
+                /* Dodaj ilość do istniejącego */
+                existingCorrect.quantity = (existingCorrect.quantity || 0) + newQty;
+            } else {
+                /* Dodaj nowy element dobrego typu */
+                const avail = typeof getAvailableProducts === 'function'
+                    ? getAvailableProducts(well) : studnieProducts;
+                let cand = avail.filter((p) =>
+                    p.componentType === targetType && parseInt(p.dn) === parseInt(well.dn)
+                    && (height === undefined || parseInt(p.height) === parseInt(height))
+                );
+                if (typeof filterByWellParams === 'function')
+                    cand = cand.filter((p) => filterByWellParams(p, well));
+                if (cand.length > 0) {
+                    /* Zachowaj wariant beton/żelbet jeśli możliwe */
+                    let pid = cand[0].id;
+                    if (productId) {
+                        const prefix = productId.split('-').slice(0, 2).join('-');
+                        const match = cand.find((c) => c.id.startsWith(prefix));
+                        if (match) pid = match.id;
+                    }
+                    _excelInsertConfigItem(well, targetType, pid, newQty);
+                }
+            }
+        }
+    }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
