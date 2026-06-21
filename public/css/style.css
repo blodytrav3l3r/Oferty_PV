@@ -125,9 +125,9 @@
     /* Pink accent (zlecenia module) — merged with Colors section above */
     --pink-hover: #f472b6;
 
-    /* Deprecated aliases (kept for backward compat) */
-    --text-danger: var(--danger);
+    /* Glow colors */
     --accent-glow: #2e2b6e;
+    --text-danger: var(--danger);
 
     /* Transition */
     --transition:
