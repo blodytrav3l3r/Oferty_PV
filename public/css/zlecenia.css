@@ -185,22 +185,7 @@
     font-size: 0.8rem;
 }
 
-/* Status badges */
-.status-badge {
-    padding: 0.35rem 0.8rem;
-    border-radius: 10px;
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    position: relative;
-    overflow: hidden;
-}
+/* Status badges — base .status-badge is defined in style.css */
 .status-badge svg {
     width: 14px;
     height: 14px;

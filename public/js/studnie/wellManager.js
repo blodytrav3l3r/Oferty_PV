@@ -668,6 +668,8 @@ async function updateWellParam(paramKey, value) {
     }
 
     refreshAll();
+    /* Odśwież tabelę excela jeśli modal otwarty — tylko przy zmianie z zewnątrz */
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 }
 
 function resetWellParamsToDefaults() {

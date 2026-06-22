@@ -126,6 +126,7 @@
     --pink-hover: #f472b6;
 
     /* Glow colors */
+    /* DEPRECATED — see #2e2b6e literal; kept as fallback for JS refs */
     --accent-glow: #2e2b6e;
     --text-danger: var(--danger);
 
@@ -445,8 +446,8 @@ body::before {
 }
 
 .nav-btn {
-    padding: inherit;
-    font-size: inherit;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.75rem;
 }
 
 .nav-tile:hover {
@@ -782,12 +783,12 @@ body::before {
 .btn-primary {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: #fff;
-    box-shadow: 0 4px 15px var(--accent-glow);
+    box-shadow: 0 4px 15px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px var(--accent-glow);
+    box-shadow: 0 6px 20px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .btn-secondary {
@@ -909,7 +910,7 @@ button.btn-order-save:hover {
 .form-select:focus,
 .form-textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    box-shadow: 0 0 0 3px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .form-input:focus-visible,
@@ -3036,7 +3037,7 @@ svg.lucide {
     font-weight: 700;
     font-size: 0.65rem;
     background: var(--border-glass);
-    border: 2px solid var(--bg-tertiary);
+    border: 2px solid var(--border);
     color: var(--text-muted);
     transition:
         background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
@@ -3077,7 +3078,7 @@ svg.lucide {
 .wizard-step-line {
     width: 50px;
     height: 2px;
-    background: var(--bg-tertiary);
+    background: var(--border);
     transition: background 0.4s;
     margin: 0 0.35rem;
 }
@@ -3420,6 +3421,15 @@ html {
 }
 
 /* ===== Utility classes (JS inline style replacement) ===== */
+
+/* Flex/Grid helper utilities (shared by rury & studnie) */
+.flex-wrap-start { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+.flex-1-180 { flex: 1; min-width: 180px; }
+.flex-1-240 { flex: 1; min-width: 240px; }
+.flex-1-180-hidden { flex: 1; min-width: 180px; display: none; }
+.flex-2-240 { flex: 2; min-width: 240px; }
+.p-6-12 { padding: 0.6rem 1.2rem; }
+.form-input-wide { width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; }
 
 /* Status badges */
 .badge-ok {

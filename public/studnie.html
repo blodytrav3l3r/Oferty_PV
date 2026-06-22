@@ -783,16 +783,6 @@
                                                         display: flex;
                                                         flex-wrap: wrap;"
                                                     data-param="wkladka"
-                                                    onclick="setTimeout(() => { 
-                                                        const active = this.querySelector('.param-tile.active');
-                                                        const subOptions = document.getElementById('wkladka-sub-options');
-                                                        if (active && active.getAttribute('data-val') !== 'brak') {
-                                                            subOptions.style.display = 'block';
-                                                        } else {
-                                                            subOptions.style.display = 'none';
-                                                        }
-                                                        if (typeof validateWizardStep2 === 'function') validateWizardStep2();
-                                                    }, 50)"
                                                 >
                                                     <button class="param-tile" data-val="brak">
                                                         Brak

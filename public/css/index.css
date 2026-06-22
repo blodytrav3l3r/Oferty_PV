@@ -137,7 +137,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .login-box:hover {
     border-color: var(--accent-border-dim);
-    box-shadow: var(--shadow-lg), 0 0 20px var(--accent-glow);
+    box-shadow: var(--shadow-lg), 0 0 20px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .login-box h3 {
@@ -204,7 +204,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px var(--accent-glow);
+    box-shadow: 0 8px 25px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .login-btn:hover::after {
@@ -252,7 +252,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-size: 1rem;
     font-weight: 800;
     color: white;
-    box-shadow: 0 0 15px var(--accent-glow);
+    box-shadow: 0 0 15px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .user-info-text {
@@ -444,7 +444,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .index-card:hover {
     transform: translateY(-8px) scale(1.02);
     border-color: var(--accent-border-dim);
-    box-shadow: var(--shadow-lg), 0 0 30px var(--accent-glow);
+    box-shadow: var(--shadow-lg), 0 0 30px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .index-card:hover::before {
@@ -452,7 +452,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .card-rury:hover {
-    box-shadow: var(--shadow-lg), 0 0 30px var(--accent-glow);
+    box-shadow: var(--shadow-lg), 0 0 30px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .card-studnie:hover {
@@ -599,7 +599,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .admin-stat-card:hover {
     border-color: var(--accent-border-dim);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-sm), 0 0 12px var(--accent-glow);
+    box-shadow: var(--shadow-sm), 0 0 12px #2e2b6e; /* TODO: replace --accent-glow removed */
 }
 
 .admin-stat-icon {
