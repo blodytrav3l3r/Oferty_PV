@@ -1813,6 +1813,23 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         }
     }
     _excelSortConfig(well);
+    /* Rozwiń ilość kręgów na osobne pozycje: każdy krąg = osobny tile w konfiguratorze */
+    if ((componentType === 'krag' || componentType === 'krag_ot') && qty > 1) {
+        var _exp = [];
+        for (var _i = 0; _i < well.config.length; _i++) {
+            var _pr = typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find(function (x) { return x.id === well.config[_i].productId; })
+                : null;
+            if (_pr && (_pr.componentType === 'krag' || _pr.componentType === 'krag_ot') && well.config[_i].quantity > 1) {
+                for (var _j = 0; _j < well.config[_i].quantity; _j++) {
+                    _exp.push({ productId: well.config[_i].productId, quantity: 1, autoAdded: false });
+                }
+            } else {
+                _exp.push(well.config[_i]);
+            }
+        }
+        well.config = _exp;
+    }
 }
 
 /* Posortuj konfig wg typów: właz→AVR→zakończenia→kręgi→dennica */
@@ -1940,21 +1957,21 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
                 if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
                 return false;
             });
-            /* Znajdź istniejący element dobrego typu na tej wysokości */
-            let existingCorrect = null;
-            for (const item of well.config || []) {
-                const p = studnieProducts.find((pr) => pr.id === item.productId);
-                if (p && p.componentType === targetType && parseInt(p.dn) === parseInt(well.dn)
-                    && (height === undefined || parseInt(p.height) === parseInt(height))) {
-                    existingCorrect = item;
-                    break;
+            /* Znajdź i usuń WSZYSTKIE istniejące elementy dobrego typu na tej wysokości */
+            let totalExistingQty = 0;
+            const _tmpConfig = [];
+            for (const _item of well.config || []) {
+                const _p = studnieProducts.find((_pr) => _pr.id === _item.productId);
+                if (_p && _p.componentType === targetType && parseInt(_p.dn) === parseInt(well.dn)
+                    && (height === undefined || parseInt(_p.height) === parseInt(height))) {
+                    totalExistingQty += _item.quantity || 1;
+                } else {
+                    _tmpConfig.push(_item);
                 }
             }
-            if (existingCorrect) {
-                /* Dodaj ilość do istniejącego */
-                existingCorrect.quantity = (existingCorrect.quantity || 0) + newQty;
-            } else {
-                /* Dodaj nowy element dobrego typu */
+            well.config = _tmpConfig;
+            const totalQty = totalExistingQty + newQty;
+            if (totalQty > 0) {
                 const avail = typeof getAvailableProducts === 'function'
                     ? getAvailableProducts(well) : studnieProducts;
                 let cand = avail.filter((p) =>
@@ -1964,14 +1981,13 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
                 if (typeof filterByWellParams === 'function')
                     cand = cand.filter((p) => filterByWellParams(p, well));
                 if (cand.length > 0) {
-                    /* Zachowaj wariant beton/żelbet jeśli możliwe */
                     let pid = cand[0].id;
                     if (productId) {
                         const prefix = productId.split('-').slice(0, 2).join('-');
                         const match = cand.find((c) => c.id.startsWith(prefix));
                         if (match) pid = match.id;
                     }
-                    _excelInsertConfigItem(well, targetType, pid, newQty);
+                    _excelInsertConfigItem(well, targetType, pid, totalQty);
                 }
             }
         }
