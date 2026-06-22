@@ -1088,7 +1088,9 @@ function _excelRenderTable(dn) {
     // Komponenty — trzy wiersze (rz1=DN, rz2=skrót, rz3=szczegół)
     compCols.forEach((col) => {
         if (col.type === 'auto' || col.type === 'select') return;
-        const ct = col.componentType;
+        /** @type {any} */
+        const c = col;
+        const ct = c.componentType;
         const hc =
             ct === 'avr'
                 ? '#fbbf24'
@@ -1110,27 +1112,27 @@ function _excelRenderTable(dn) {
                             : ct === 'styczna'
                               ? '#f472b6'
                               : '#93c5fd';
-        const colLabel = col.shortLabel || col.label;
-        const colDetail = _excelWrapDetail(col.detailLabel) || '·';
-        var isPerProduct = col.productId ? true : false;
+        const colLabel = c.shortLabel || c.label;
+        const colDetail = _excelWrapDetail(c.detailLabel) || '·';
+        var isPerProduct = c.productId ? true : false;
         var colCodeId;
         if (isPerProduct) {
             /* Kolumna per-produkt — zawsze pokazuje swój stały kod */
-            colCodeId = col.productId;
+            colCodeId = c.productId;
         } else {
             /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni */
             var dynProdCode = null;
             if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) {
-                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, col.height);
+                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height);
             }
-            var fallbackCode = col.products && col.products[0] && col.products[0].id || null;
+            var fallbackCode = c.products && c.products[0] && c.products[0].id || null;
             colCodeId = dynProdCode || fallbackCode;
         }
         const codeDisp = colCodeId || null;
         const perProdAttr = isPerProduct ? ' data-per-product="1"' : '';
-        const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(col.products && col.products[0] && col.products[0].id || '')}"`;
+        const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
         const colCode = codeDisp
-            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${col.height != null ? col.height : ''}"${perProdAttr}${fallbackAttr} style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${col.height != null ? col.height : ''}"${perProdAttr} style="display:block;"></span>`
+            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colLabel}</th>`;
@@ -1512,16 +1514,16 @@ function _excelInitColumnResize() {
         let startWidth = 0;
         let lastDiff = 0;
 
-        handle.addEventListener('mousedown', (e) => {
+        handle.addEventListener('mousedown', (/** @type {MouseEvent} */ e) => {
             startX = e.clientX;
-            startWidth = th.offsetWidth;
+            startWidth = /** @type {HTMLElement} */ (th).offsetWidth;
             lastDiff = 0;
             e.preventDefault();
 
             const colIndex = Array.from(headers).indexOf(th);
             const rows = table.querySelectorAll('tr');
 
-            const onMove = (e2) => {
+            const onMove = (/** @type {MouseEvent} */ e2) => {
                 const diff = e2.clientX - startX;
                 lastDiff = diff;
                 const newWidth = Math.max(30, startWidth + diff);
@@ -1578,7 +1580,7 @@ function _excelInitColumnSelect() {
 
     const headers = table.querySelectorAll('thead tr:first-child th');
     headers.forEach((th, colIdx) => {
-        th.addEventListener('mousedown', (e) => {
+        th.addEventListener('mousedown', (/** @type {MouseEvent} */ e) => {
             if (e.target.closest('.excel-col-resize-handle')) return;
             if (e.target.closest('button')) return;
             if (!e.ctrlKey && !e.shiftKey) {
@@ -1592,7 +1594,7 @@ function _excelInitColumnSelect() {
     });
 
     // Klik w wiersz/tbody odznacza kolumny
-    table.addEventListener('mousedown', (e) => {
+    table.addEventListener('mousedown', (/** @type {MouseEvent} */ e) => {
         if (e.target.closest('thead')) return;
         if (e.ctrlKey || e.shiftKey) return;
         if (_excelSelectedCols.length > 0) _excelDeselectAllCols();
