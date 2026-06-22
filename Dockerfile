@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalujemy wszystkie zależności
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 COPY . .
 
