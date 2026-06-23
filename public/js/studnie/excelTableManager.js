@@ -1609,10 +1609,9 @@ function _excelRenderTable(dn) {
         html += `<td style="${tdEmpty}text-align:center;"><input type="number" min="0" step="1" placeholder="—" disabled style="${_excelCellInp(50)}opacity:0.3;" /></td>`;
     });
 
-    /* Redukcja */
+    /* Redukcja — pusty wiersz, disabled select */
     if (hasReduction) {
-        html += `<td style="${tdEmpty}text-align:center;"><input type="checkbox" disabled style="opacity:0.3;" /></td>`;
-        html += `<td style="${tdEmpty}text-align:center;"><input type="number" min="0" step="100" placeholder="2500" disabled style="${_excelCellInp(60)}opacity:0.3;" /></td>`;
+        html += `<td style="${tdEmpty}text-align:center;"><select disabled style="${_excelCellInp(105)}opacity:0.3;cursor:default;"><option value="">—</option></select></td>`;
     }
 
     /* Auto-kolumny — placeholder */
