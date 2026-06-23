@@ -493,7 +493,7 @@ function _excelBuildComponentColumns(dn, well) {
     cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
     /* 12. Redukcja — elementy nadbudowy (tylko gdy pierwsza studnia w zakładce ma redukcję) */
-    var hasRedTab = ['1000', '1200', '1500', '2000', '2500'].includes(String(dn));
+    var hasRedTab = ['1200', '1500', '2000', '2500'].includes(String(dn));
     if (hasRedTab && well && well.redukcjaDN1000) {
         var targetDns = [parseInt(well.redukcjaTargetDN) || 1000];
         targetDns.forEach(function(tDn) {
@@ -1151,7 +1151,7 @@ function _excelRenderTable(dn) {
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     const maxTr = _excelMaxTransitions;
     const compCols = _excelBuildComponentColumns(dn, tabWells[0]);
-    const hasReduction = ['1000', '1200', '1500', '2000', '2500'].includes(dn);
+    const hasReduction = ['1200', '1500', '2000', '2500'].includes(dn);
 
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
