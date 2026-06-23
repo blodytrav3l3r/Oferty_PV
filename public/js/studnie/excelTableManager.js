@@ -492,12 +492,18 @@ function _excelBuildComponentColumns(dn, well) {
     /* 11. Uszczelki — ilość (auto: kręgi + 1) */
     cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
-    /* 12. Redukcja — elementy nadbudowy (tylko gdy pierwsza studnia w zakładce ma redukcję) */
+    /* 12. Redukcja — elementy nadbudowy (zawsze gdy zakładka obsługuje redukcję) */
     var hasRedTab = ['1200', '1500', '2000', '2500'].includes(String(dn));
-    if (hasRedTab && well && well.redukcjaDN1000) {
-        var targetDns = [parseInt(well.redukcjaTargetDN) || 1000];
+    if (hasRedTab) {
+        var targetDns = [1000];
+        /* DN1200 dostępne tylko dla DN>=1500 */
+        if ([1500, 2000, 2500].includes(parseInt(String(dn)))) {
+            targetDns.push(1200);
+        }
+        /* Użyj well do filtrowania produktów jeśli podano */
+        var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
         targetDns.forEach(function(tDn) {
-            var redGroups = _excelGetComponentsForDn(String(tDn), well);
+            var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
             /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
             var redDnSpecific = {};
             Object.keys(redGroups).forEach(function(gk) {
