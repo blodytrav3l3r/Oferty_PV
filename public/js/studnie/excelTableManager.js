@@ -498,8 +498,13 @@ function _excelBuildComponentColumns(dn, well) {
         var targetDns = [parseInt(well.redukcjaTargetDN) || 1000];
         targetDns.forEach(function(tDn) {
             var redGroups = _excelGetComponentsForDn(String(tDn), well);
+            /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
+            var redDnSpecific = {};
+            Object.keys(redGroups).forEach(function(gk) {
+                redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
+            });
             /* Red. AVR */
-            (redGroups['avr'] || []).forEach(function(p) {
+            (redDnSpecific['avr'] || []).forEach(function(p) {
                 var nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
                 var lbl = _excelShortLabel(p.name || '', 'avr');
                 cols.push({
@@ -516,7 +521,7 @@ function _excelBuildComponentColumns(dn, well) {
                 });
             });
             /* Red. Konus */
-            var rKonus = [...(redGroups['konus'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+            var rKonus = [...(redDnSpecific['konus'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
             var seenRKH = {};
             rKonus.forEach(function(p) {
                 var h = parseInt(p.height) || 0;
@@ -540,7 +545,7 @@ function _excelBuildComponentColumns(dn, well) {
             });
             /* Red. Płyty nakrywające */
             ['plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].forEach(function(ct) {
-                var prods = [...(redGroups[ct] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var prods = [...(redDnSpecific[ct] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
                 if (ct === 'plyta_din') {
                     prods = prods.filter(function(p) { return parseInt(p.height) === 200; });
                 }
@@ -567,7 +572,7 @@ function _excelBuildComponentColumns(dn, well) {
                 });
             });
             /* Red. Kręgi */
-            var rKreg = [...(redGroups['krag'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+            var rKreg = [...(redDnSpecific['krag'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
             var seenRKH2 = {};
             rKreg.forEach(function(p) {
                 var h = parseInt(p.height) || 0;
@@ -590,7 +595,7 @@ function _excelBuildComponentColumns(dn, well) {
                 }
             });
             /* Red. Kręgi OT */
-            var rKragOt = [...(redGroups['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+            var rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
             var seenROtH = {};
             rKragOt.forEach(function(p) {
                 var h = parseInt(p.height) || 0;
