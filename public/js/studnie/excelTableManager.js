@@ -492,6 +492,140 @@ function _excelBuildComponentColumns(dn, well) {
     /* 11. Uszczelki — ilość (auto: kręgi + 1) */
     cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
+    /* 12. Redukcja — elementy nadbudowy dla DN1000 i DN1200 (jeśli tab obsługuje redukcję) */
+    var tabDn = dn;
+    var hasRedTab = ['1000', '1200', '1500', '2000', '2500'].includes(String(dn));
+    if (hasRedTab) {
+        /* Użyj well jeśli ma redukcję, inaczej domyślne targetDny */
+        var hasRed = well && well.redukcjaDN1000;
+        var targetDns = [];
+        if (hasRed) {
+            targetDns.push(parseInt(well.redukcjaTargetDN) || 1000);
+        } else {
+            targetDns.push(1000);
+            if ([1500, 2000, 2500].includes(parseInt(String(tabDn))) || tabDn === 'styczne') {
+                targetDns.push(1200);
+            }
+        }
+        targetDns.forEach(function(tDn) {
+            var redGroups = _excelGetComponentsForDn(String(tDn), well);
+            /* Red. AVR */
+            (redGroups['avr'] || []).forEach(function(p) {
+                var nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
+                var lbl = _excelShortLabel(p.name || '', 'avr');
+                cols.push({
+                    key: 'red_avr_' + tDn + '_' + p.id,
+                    label: 'R.AVR ' + nameShort,
+                    shortLabel: 'R.' + lbl.short,
+                    detailLabel: lbl.detail,
+                    type: 'number',
+                    componentType: 'avr',
+                    productId: p.id,
+                    height: p.height,
+                    fromReduction: true,
+                    redDn: tDn
+                });
+            });
+            /* Red. Konus */
+            var rKonus = [...(redGroups['konus'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+            var seenRKH = {};
+            rKonus.forEach(function(p) {
+                var h = parseInt(p.height) || 0;
+                if (h > 0 && !seenRKH[h]) {
+                    seenRKH[h] = true;
+                    var matching = rKonus.filter(function(k) { return parseInt(k.height) === h; });
+                    var lbl = _excelShortLabel(p.name || '', 'konus');
+                    cols.push({
+                        key: 'red_konus_' + tDn + '_' + h,
+                        label: 'R.' + lbl.short + ' H=' + h,
+                        shortLabel: 'R.' + lbl.short,
+                        detailLabel: String(h),
+                        type: 'number',
+                        componentType: 'konus',
+                        height: h,
+                        products: matching,
+                        fromReduction: true,
+                        redDn: tDn
+                    });
+                }
+            });
+            /* Red. Płyty nakrywające */
+            ['plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].forEach(function(ct) {
+                var prods = [...(redGroups[ct] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                if (ct === 'plyta_din') {
+                    prods = prods.filter(function(p) { return parseInt(p.height) === 200; });
+                }
+                var seenH = {};
+                prods.forEach(function(p) {
+                    var h = parseInt(p.height) || 0;
+                    if (h > 0 && !seenH[h]) {
+                        seenH[h] = true;
+                        var matching = prods.filter(function(k) { return parseInt(k.height) === h; });
+                        var lbl = _excelShortLabel(p.name || '', ct);
+                        cols.push({
+                            key: 'red_' + ct + '_' + tDn + '_' + h,
+                            label: 'R.' + (ct === 'plyta_din' ? 'Pł.DIN' : ct === 'plyta_najazdowa' ? 'Pł.najazd' : ct === 'plyta_zamykajaca' ? 'Pł.zamyk' : 'Pierśc.odc') + ' H=' + h,
+                            shortLabel: 'R.' + lbl.short,
+                            detailLabel: lbl.detail,
+                            type: 'number',
+                            componentType: ct,
+                            height: h,
+                            products: matching,
+                            fromReduction: true,
+                            redDn: tDn
+                        });
+                    }
+                });
+            });
+            /* Red. Kręgi */
+            var rKreg = [...(redGroups['krag'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+            var seenRKH2 = {};
+            rKreg.forEach(function(p) {
+                var h = parseInt(p.height) || 0;
+                if (h > 0 && !seenRKH2[h]) {
+                    seenRKH2[h] = true;
+                    var matching = rKreg.filter(function(k) { return parseInt(k.height) === h; });
+                    var lbl = _excelShortLabel(p.name || '', 'krag');
+                    cols.push({
+                        key: 'red_krag_' + tDn + '_' + h,
+                        label: 'R.Krąg H=' + h,
+                        shortLabel: 'R.' + lbl.short,
+                        detailLabel: lbl.detail,
+                        type: 'number',
+                        componentType: 'krag',
+                        height: h,
+                        products: matching,
+                        fromReduction: true,
+                        redDn: tDn
+                    });
+                }
+            });
+            /* Red. Kręgi OT */
+            var rKragOt = [...(redGroups['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+            var seenROtH = {};
+            rKragOt.forEach(function(p) {
+                var h = parseInt(p.height) || 0;
+                if (h > 0 && !seenROtH[h]) {
+                    seenROtH[h] = true;
+                    var matching = rKragOt.filter(function(k) { return parseInt(k.height) === h; });
+                    var lbl = _excelShortLabel(p.name || '', 'krag_ot');
+                    cols.push({
+                        key: 'red_krag_ot_' + tDn + '_' + h,
+                        label: 'R.Kr.OT H=' + h,
+                        shortLabel: 'R.' + lbl.short,
+                        detailLabel: lbl.detail,
+                        type: 'number',
+                        componentType: 'krag_ot',
+                        height: h,
+                        products: matching,
+                        fromReduction: true,
+                        redDn: tDn
+                    });
+                }
+            });
+        });
+    }
+
     return cols;
 }
 
@@ -1358,8 +1492,11 @@ function _excelRenderTable(dn) {
             const codeHtml = cellCode
                 ? `<div style="font-size:0.4rem;color:#64748b;opacity:0.6;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58px;">${escapeHtml(cellCode)}</div>`
                 : '';
+            /* Redukcja nadbudowa — wyłącz input gdy studnia nie ma pasującej redukcji */
+            var redDisabled = c.fromReduction && (!well.redukcjaDN1000 || parseInt(c.redDn) !== parseInt(well.redukcjaTargetDN));
+            var disabledAttr = redDisabled ? ' disabled' : '';
             html += `<td style="${tdBase}text-align:center;min-width:62px;">`
-                + `<input type="number" min="0" step="1" value="${count || ''}" oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
+                + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
                 + codeHtml
                 + `</td>`;
         });
