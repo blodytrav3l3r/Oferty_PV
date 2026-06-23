@@ -594,6 +594,38 @@ function _excelBuildComponentColumns(dn, well) {
                     });
                 }
             });
+            /* Red. Osadniki (per produkt) */
+            (redDnSpecific['osadnik'] || []).forEach(function(p) {
+                var lbl = _excelShortLabel(p.name || '', 'osadnik');
+                cols.push({
+                    key: 'red_osadnik_' + tDn + '_' + p.id,
+                    label: 'R.' + p.name,
+                    shortLabel: 'R.' + lbl.short,
+                    detailLabel: lbl.detail,
+                    type: 'number',
+                    componentType: 'osadnik',
+                    productId: p.id,
+                    height: p.height,
+                    fromReduction: true,
+                    redDn: tDn
+                });
+            });
+            /* Red. Płyty redukcyjne (dla tDn) */
+            (redDnSpecific['plyta_redukcyjna'] || []).forEach(function(p) {
+                var lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
+                cols.push({
+                    key: 'red_plyta_redukcyjna_' + tDn + '_' + p.id,
+                    label: 'R.' + p.name,
+                    shortLabel: 'R.' + lbl.short,
+                    detailLabel: lbl.detail,
+                    type: 'number',
+                    componentType: 'plyta_redukcyjna',
+                    productId: p.id,
+                    height: p.height,
+                    fromReduction: true,
+                    redDn: tDn
+                });
+            });
             /* Red. Kręgi OT */
             var rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
             var seenROtH = {};
