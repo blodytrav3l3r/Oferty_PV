@@ -1143,19 +1143,10 @@ function _excelRenderTable(dn) {
     });
 
     if (hasReduction) {
-        /* Redukcja — nagłówki: checkbox + średnica docelowa + Min H + Płyta red. + elementy redukcji */
-        h1 += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:45px;text-align:center;">Red</th>`;
-        h2 += `<th style="${th2Base}background:#1a1215;color:#fca5a5;min-width:45px;text-align:center;">·</th>`;
-        h3 += `<th style="${th3Base}background:#1a1215;color:#fca5a5;min-width:45px;text-align:center;">·</th>`;
-        h1 += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:70px;text-align:center;">Docel.</th>`;
-        h2 += `<th style="${th2Base}background:#1a1215;color:#fca5a5;min-width:70px;text-align:center;">·</th>`;
-        h3 += `<th style="${th3Base}background:#1a1215;color:#fca5a5;min-width:70px;text-align:center;">·</th>`;
-        h1 += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:65px;text-align:center;">Min H</th>`;
-        h2 += `<th style="${th2Base}background:#1a1215;color:#fca5a5;min-width:65px;text-align:center;">·</th>`;
-        h3 += `<th style="${th3Base}background:#1a1215;color:#fca5a5;min-width:65px;text-align:center;">·</th>`;
-        h1 += `<th style="${thBase}background:#1a1215;color:#f472b6;min-width:62px;text-align:center;">Pł.red.</th>`;
-        h2 += `<th style="${th2Base}background:#1a1215;color:#f472b6;min-width:62px;text-align:center;">·</th>`;
-        h3 += `<th style="${th3Base}background:#1a1215;color:#f472b6;min-width:62px;text-align:center;">·</th>`;
+        /* Redukcja — pojedynczy select: Brak / DN1000 / DN1200 */
+        h1 += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:110px;text-align:center;">Redukcja</th>`;
+        h2 += `<th style="${th2Base}background:#1a1215;color:#fca5a5;min-width:110px;text-align:center;">·</th>`;
+        h3 += `<th style="${th3Base}background:#1a1215;color:#fca5a5;min-width:110px;text-align:center;">·</th>`;
     }
 
     h1 += `<th style="${thBase}background:#1a170f;color:#fbbf24;min-width:60px;text-align:center;">H denn</th>`;
@@ -1373,35 +1364,18 @@ function _excelRenderTable(dn) {
                 + `</td>`;
         });
 
-        /* Redukcja */
+        /* Redukcja — pojedynczy select: Brak / DN1000 / DN1200 */
         if (hasReduction) {
-            /* Checkbox włącz/wyłącz */
-            html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.redukcjaDN1000 ? ' checked' : ''} onchange="excelOnReductionChange(${wIdx},this.checked)" style="accent-color:#f87171;cursor:pointer;" /></td>`;
-            /* Średnica docelowa redukcji */
-            var redTdn = well.redukcjaTargetDN || 1000;
-            var redSel = `<select onchange="excelOnReductionTargetDNChange(${wIdx},this.value)" style="${_excelCellInp(65)}text-align:center;cursor:pointer;">`;
-            ['1000','1200','1500','2000','2500'].forEach(function(dn) {
-                redSel += `<option value="${dn}"${String(redTdn)===dn?' selected':''}>DN${dn}</option>`;
-            });
-            redSel += '</select>';
-            html += `<td style="${tdBase}text-align:center;">${redSel}</td>`;
-            /* Min H */
-            html += `<td style="${tdBase}text-align:center;"><input type="number" min="0" step="100" value="${well.redukcjaMinH || 2500}" onchange="excelOnReductionMinHChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(60)}text-align:center;" /></td>`;
-            /* Płyta redukcyjna — ilość + wybór */
-            var redPlates = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).filter(function(p) {
-                return p.componentType === 'plyta_redukcyjna' && parseInt(p.dn) === parseInt(well.dn);
-            });
-            var redPlateQty = _excelCountProductInConfig(well, 'plyta_redukcyjna', undefined, undefined);
-            var redPlateSel = `<select onchange="excelOnReductionPlateChange(${wIdx},this.value)" style="${_excelCellInp(58)}text-align:left;cursor:pointer;">`;
-            redPlateSel += '<option value="">—</option>';
-            redPlates.forEach(function(p) {
-                redPlateSel += `<option value="${p.id}"${(well.config||[]).some(function(c){return c.productId===p.id})?' selected':''}>${p.name}</option>`;
-            });
-            redPlateSel += '</select>';
-            html += `<td style="${tdBase}text-align:center;">`;
-            html += `<input type="number" min="0" step="1" value="${redPlateQty||''}" oninput="excelOnReductionPlateQtyChange(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(36)}text-align:center;width:38px;" />`;
-            html += `<div style="margin-top:2px;">${redPlateSel}</div>`;
-            html += `</td>`;
+            var redActive = well.redukcjaDN1000;
+            var redTarget = well.redukcjaTargetDN || 1000;
+            /* DN1200 dostępne tylko dla DN>=1500 lub stycznych */
+            var can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
+            var redOpts = '<option value="">Brak</option>';
+            redOpts += '<option value="1000"' + (redActive && redTarget === 1000 ? ' selected' : '') + '>DN1000</option>';
+            if (can1200) {
+                redOpts += '<option value="1200"' + (redActive && redTarget === 1200 ? ' selected' : '') + '>DN1200</option>';
+            }
+            html += `<td style="${tdBase}text-align:center;"><select onchange="excelOnReductionSelectChange(${wIdx},this.value)" style="${_excelCellInp(105)}text-align:center;cursor:pointer;">${redOpts}</select></td>`;
         }
 
         /* H dennica — auto */
@@ -2420,41 +2394,17 @@ function excelOnReductionMinHChange(wIdx, value) {
     _excelDebouncedRefresh();
 }
 
-function excelOnReductionTargetDNChange(wIdx, value) {
-    wells[wIdx].redukcjaTargetDN = parseInt(value) || 1000;
-    _excelClearResCache(wells[wIdx]);
-    _excelUpdateLeftPreview(wIdx);
-    _excelDebouncedRefresh();
-}
-
-function excelOnReductionPlateChange(wIdx, productId) {
+/* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
+function excelOnReductionSelectChange(wIdx, value) {
     var well = wells[wIdx];
-    if (!productId) return;
-    /* Usuń starą płytę redukcyjną z configu */
-    well.config = (well.config || []).filter(function(item) {
-        var p = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === item.productId; });
-        return !(p && p.componentType === 'plyta_redukcyjna');
-    });
-    /* Dodaj nową */
-    _excelInsertConfigItem(well, 'plyta_redukcyjna', productId, 1);
-    _excelSortConfig(well);
-    _excelUpdateLeftPreview(wIdx);
-    _excelDebouncedRefresh();
-}
-
-function excelOnReductionPlateQtyChange(wIdx, value) {
-    var well = wells[wIdx];
-    var qty = parseInt(value) || 0;
-    var plateItem = (well.config || []).find(function(item) {
-        var p = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === item.productId; });
-        return p && p.componentType === 'plyta_redukcyjna';
-    });
-    if (plateItem) {
-        plateItem.quantity = qty;
-        if (qty <= 0) {
-            /* Usuń płytę jeśli ilość = 0 */
-            well.config = (well.config || []).filter(function(item) { return item !== plateItem; });
-        }
+    if (!well) return;
+    if (!value) {
+        /* Brak = wyłącz redukcję */
+        well.redukcjaDN1000 = false;
+        well.redukcjaTargetDN = null;
+    } else {
+        well.redukcjaDN1000 = true;
+        well.redukcjaTargetDN = parseInt(value) || 1000;
     }
     _excelClearResCache(well);
     _excelUpdateLeftPreview(wIdx);
