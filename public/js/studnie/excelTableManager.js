@@ -492,14 +492,20 @@ function _excelBuildComponentColumns(dn, well) {
     /* 11. Uszczelki — ilość (auto: kręgi + 1) */
     cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
-    /* 12. Redukcja — elementy nadbudowy (zawsze gdy zakładka obsługuje redukcję) */
+    /* 12. Redukcja — elementy nadbudowy (tylko gdy któraś studnia w zakładce ma redukcję) */
     var hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTab) {
-        var targetDns = [1000];
-        /* DN1200 dostępne dla DN>=1500 lub stycznej */
-        if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
-            targetDns.push(1200);
+        /* Znajdź target DN z pierwszej studni która ma redukcję */
+        var firstRedWell = null;
+        var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) { return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna'); }) : [];
+        for (var ri = 0; ri < tabWellsList.length; ri++) {
+            if (tabWellsList[ri].redukcjaDN1000) { firstRedWell = tabWellsList[ri]; break; }
         }
+        var targetDns = [];
+        if (firstRedWell) {
+            targetDns.push(parseInt(firstRedWell.redukcjaTargetDN) || 1000);
+        }
+        if (targetDns.length > 0) {
         /* Użyj well do filtrowania produktów jeśli podano */
         var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
         targetDns.forEach(function(tDn) {
@@ -655,8 +661,9 @@ function _excelBuildComponentColumns(dn, well) {
                     });
                 }
             });
-        });
-    }
+        }); /* koniec targetDns.forEach */
+        } /* koniec targetDns */
+    } /* koniec hasRedTab */
 
     return cols;
 }
