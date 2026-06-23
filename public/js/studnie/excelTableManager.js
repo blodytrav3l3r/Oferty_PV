@@ -493,11 +493,11 @@ function _excelBuildComponentColumns(dn, well) {
     cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
     /* 12. Redukcja — elementy nadbudowy (zawsze gdy zakładka obsługuje redukcję) */
-    var hasRedTab = ['1200', '1500', '2000', '2500'].includes(String(dn));
+    var hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTab) {
         var targetDns = [1000];
-        /* DN1200 dostępne tylko dla DN>=1500 */
-        if ([1500, 2000, 2500].includes(parseInt(String(dn)))) {
+        /* DN1200 dostępne dla DN>=1500 lub stycznej */
+        if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
             targetDns.push(1200);
         }
         /* Użyj well do filtrowania produktów jeśli podano */
@@ -1189,7 +1189,7 @@ function _excelRenderTable(dn) {
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     const maxTr = _excelMaxTransitions;
     const compCols = _excelBuildComponentColumns(dn, tabWells[0]);
-    const hasReduction = ['1200', '1500', '2000', '2500'].includes(dn);
+    const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].includes(dn);
 
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
