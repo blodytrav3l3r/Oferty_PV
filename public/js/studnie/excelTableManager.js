@@ -492,21 +492,10 @@ function _excelBuildComponentColumns(dn, well) {
     /* 11. Uszczelki — ilość (auto: kręgi + 1) */
     cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
 
-    /* 12. Redukcja — elementy nadbudowy dla DN1000 i DN1200 (jeśli tab obsługuje redukcję) */
-    var tabDn = dn;
+    /* 12. Redukcja — elementy nadbudowy (tylko gdy pierwsza studnia w zakładce ma redukcję) */
     var hasRedTab = ['1000', '1200', '1500', '2000', '2500'].includes(String(dn));
-    if (hasRedTab) {
-        /* Użyj well jeśli ma redukcję, inaczej domyślne targetDny */
-        var hasRed = well && well.redukcjaDN1000;
-        var targetDns = [];
-        if (hasRed) {
-            targetDns.push(parseInt(well.redukcjaTargetDN) || 1000);
-        } else {
-            targetDns.push(1000);
-            if ([1500, 2000, 2500].includes(parseInt(String(tabDn))) || tabDn === 'styczne') {
-                targetDns.push(1200);
-            }
-        }
+    if (hasRedTab && well && well.redukcjaDN1000) {
+        var targetDns = [parseInt(well.redukcjaTargetDN) || 1000];
         targetDns.forEach(function(tDn) {
             var redGroups = _excelGetComponentsForDn(String(tDn), well);
             /* Red. AVR */
@@ -2519,18 +2508,6 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     _excelDebouncedRefresh();
 }
 
-function excelOnReductionChange(wIdx, checked) {
-    wells[wIdx].redukcjaDN1000 = checked;
-    _excelUpdateLeftPreview(wIdx);
-    _excelDebouncedRefresh();
-}
-
-function excelOnReductionMinHChange(wIdx, value) {
-    wells[wIdx].redukcjaMinH = parseInt(value) || 2500;
-    _excelUpdateLeftPreview(wIdx);
-    _excelDebouncedRefresh();
-}
-
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
 function excelOnReductionSelectChange(wIdx, value) {
     var well = wells[wIdx];
@@ -2545,6 +2522,8 @@ function excelOnReductionSelectChange(wIdx, value) {
     }
     _excelClearResCache(well);
     _excelUpdateLeftPreview(wIdx);
+    /* Pełen re-render tabeli — kolumny nadbudowy redukcji mogą się zmienić */
+    _excelRenderTable(_excelActiveTab);
     _excelDebouncedRefresh();
 }
 
