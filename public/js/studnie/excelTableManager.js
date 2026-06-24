@@ -1605,38 +1605,10 @@ function _excelRenderTable(dn) {
             const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? (c.targetDn || well.redukcjaTargetDN || 1000) : null);
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
-            const redArg = c.fromReduction ? `,${c.targetDn || well.redukcjaTargetDN || 1000}` : '';
-            // Pobierz kod produktu z konfiguracji studni
-            let cellCode = '';
-            if (count > 0 && !c.productId) {
-                // Kolumna grupowana — znajdź pierwszy produkt w config
-                for (const item of well.config || []) {
-                    const p = _excelGetResolution(well, item);
-                    if (p && p.componentType === c.componentType &&
-                        parseInt(p.height) === parseInt(c.height) && item.quantity > 0) {
-                        /* Dla kolumn redukcji: produkt musi pasować do targetDn */
-                        if (c.fromReduction) {
-                            var _td = c.targetDn || well.redukcjaTargetDN || 1000;
-                            if (p.dn !== null && parseInt(p.dn) !== parseInt(_td)) continue;
-                        } else if (!c.fromReduction && !c.productId) {
-                            /* Main column: preferuj produkt dla DN studni */
-                            if (p.dn !== null && parseInt(p.dn) !== parseInt(well.dn)) continue;
-                        }
-                        cellCode = p.id;
-                        break;
-                    }
-                }
-            } else if (count > 0 && c.productId) {
-                cellCode = c.productId;
-            }
-            const codeHtml = cellCode
-                ? `<div style="font-size:0.4rem;color:#64748b;opacity:0.6;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58px;">${escapeHtml(cellCode)}</div>`
-                : '';
-            /* Redukcja nadbudowa — wszystkie inputy zawsze aktywne, kazda studnia widzi swoje ilosci */
+            const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
             var disabledAttr = '';
             html += `<td style="${tdBase}text-align:center;min-width:62px;">`
                 + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
-                + codeHtml
                 + `</td>`;
         });
 
