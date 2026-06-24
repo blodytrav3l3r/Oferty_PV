@@ -510,11 +510,11 @@ function _excelBuildComponentColumns(dn, well) {
         var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
         targetDns.forEach(function(tDn) {
             var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
-                        /* Pobierz też płyty redukcyjne dla średnicy studni — w głównym systemie są dla dn, nie dla tDn */
-                        var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
-                        var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
-                        var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
-                        /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
+            /* Pobierz też płyty redukcyjne dla średnicy studni — w głównym systemie są dla dn, nie dla tDn */
+            var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
+            var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
+            var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
+            /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
             var redDnSpecific = {};
             Object.keys(redGroups).forEach(function(gk) {
                 redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
@@ -655,8 +655,8 @@ function _excelBuildComponentColumns(dn, well) {
                     nameUC.includes(' DN' + tDnStr) ||
                     nameUC.includes('X' + tDnStr) ||
                     nameUC.includes(' NA ' + tDnStr) ||
-                    nameUC.includes('\u2192DN' + tDnStr) ||
-                    nameUC.includes('\u2192' + tDnStr) ||
+                    nameUC.includes('→DN' + tDnStr) ||
+                    nameUC.includes('→' + tDnStr) ||
                     nameUC.includes('->DN' + tDnStr) ||
                     nameUC.includes('->' + tDnStr) ||
                     nameUC.includes('DO ' + tDnStr);
