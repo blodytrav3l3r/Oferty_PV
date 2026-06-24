@@ -955,11 +955,12 @@ function _excelUpdateHeaderProdCodes() {
         if (isPerProduct) return; /* kolumny per-produkt mają stały kod z definicji */
         var ct = span.getAttribute('data-ct');
         var height = span.getAttribute('data-height');
-        var pid = well ? _excelGetWellProdCode(well, ct, height, span.getAttribute('data-reddn')) : null;
+        var redTarget = well && well.redukcjaTargetDN ? well.redukcjaTargetDN : null;
+        var pid = well ? _excelGetWellProdCode(well, ct, height, redTarget) : null;
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
         if (prices && prices[idx]) {
-            prices[idx].textContent = pid ? (_excelGetWellProdPrice(well, ct, height, span.getAttribute('data-reddn')) || '') : '';
+            prices[idx].textContent = pid ? (_excelGetWellProdPrice(well, ct, height, redTarget) || '') : '';
         }
     });
 }
