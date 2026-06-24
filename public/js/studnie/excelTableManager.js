@@ -515,7 +515,7 @@ function _excelBuildComponentColumns(dn, well) {
         }
         if (targetDns.length > 0) {
         /* Użyj well do filtrowania produktów jeśli podano */
-        var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
+        var refWell = well || (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
         targetDns.forEach(function(tDn) {
             var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
             /* Pobierz też płyty redukcyjne dla średnicy studni — w głównym systemie są dla dn, nie dla tDn */
@@ -1171,16 +1171,13 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
-    /* Jeśli zaznaczona studnia ma redukcję z innym target DN — przeładuj kolumny nadbudowy */
+    /* Jeśli zaznaczona studnia ma redukcję — sprawdź czy target różni się od wyświetlanego */
     var selWell = wells[wIdx];
     if (selWell && selWell.redukcjaDN1000) {
-        var cols = _excelBuildComponentColumns(_excelActiveTab, null);
-        var firstRedDn = null;
-        for (var ci = 0; ci < cols.length; ci++) {
-            var colAny = /** @type {any} */ (cols[ci]);
-            if (colAny.fromReduction) { firstRedDn = colAny.redDn; break; }
-        }
-        if (firstRedDn && parseInt(firstRedDn) !== parseInt(selWell.redukcjaTargetDN)) {
+        var currentRedDn = null;
+        var existingSpan = container.querySelector('thead .h3-prodcode[data-reddn]');
+        if (existingSpan) currentRedDn = existingSpan.getAttribute('data-reddn');
+        if (currentRedDn && parseInt(currentRedDn) !== parseInt(selWell.redukcjaTargetDN)) {
             _excelRenderTable(_excelActiveTab);
             return;
         }
