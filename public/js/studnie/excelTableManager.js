@@ -955,7 +955,7 @@ function _excelUpdateHeaderProdCodes() {
         if (isPerProduct) return; /* kolumny per-produkt mają stały kod z definicji */
         var ct = span.getAttribute('data-ct');
         var height = span.getAttribute('data-height');
-        var redTarget = well && well.redukcjaTargetDN ? well.redukcjaTargetDN : null;
+        var redTarget = (span.getAttribute('data-reddn') || '') ? (well && well.redukcjaTargetDN || null) : null;
         var pid = well ? _excelGetWellProdCode(well, ct, height, redTarget) : null;
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
