@@ -44,10 +44,10 @@ function _excelGetWellConfigHash(well) {
     return wellParams + '|' + parts;
 }
 
-/* Helper: sprawdź czy studnia ma obsługę redukcji (DN1000-2500) */
+/* Helper: sprawdź czy studnia ma obsługę redukcji (DN1200-2500) */
 function getHasReduction(well, dn) {
-    if (!well) return !!dn && ['1000', '1200', '1500', '2000', '2500'].includes(String(dn));
-    return ['1000', '1200', '1500', '2000', '2500'].includes(String(well.dn));
+    if (!well) return !!dn && ['1200', '1500', '2000', '2500'].includes(String(dn));
+    return ['1200', '1500', '2000', '2500'].includes(String(well.dn));
 }
 
 /* Sprawdza czy zmieniła się struktura kolumn (wymaga pełnego re-renderu, nie tylko updatu kodów) */
