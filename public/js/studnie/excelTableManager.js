@@ -1585,6 +1585,7 @@ function _excelRenderTable(dn) {
             const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? c.redDn : null);
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
+            const redArg = c.fromReduction && c.redDn ? `,${c.redDn}` : '';
             // Pobierz kod produktu z konfiguracji studni
             let cellCode = '';
             if (count > 0 && !c.productId) {
@@ -1611,7 +1612,7 @@ function _excelRenderTable(dn) {
             var redDisabled = c.fromReduction && (!well.redukcjaDN1000 || parseInt(c.redDn) !== parseInt(well.redukcjaTargetDN));
             var disabledAttr = redDisabled ? ' disabled' : '';
             html += `<td style="${tdBase}text-align:center;min-width:62px;">`
-                + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
+                + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
                 + codeHtml
                 + `</td>`;
         });
@@ -2446,10 +2447,13 @@ function _excelMoveWlazToTop(well) {
     }
 }
 
-function excelOnCompChange(wIdx, componentType, height, value, productId) {
+function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
     _excelClearResCache(well);
+
+    /* Dla kolumn redukcji: użyj targetDn zamiast well.dn do filtrowania produktów */
+    const filterDn = redDn ? parseInt(redDn) : parseInt(well.dn);
 
     /* Zachowaj istniejące warianty — nie niszcz wyboru beton/żelbet/bez stopni */
     const existingItems = [];
@@ -2488,7 +2492,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId) {
                     ? getAvailableProducts(well)
                     : studnieProducts
             ).filter(
-                (p) => p.componentType === componentType && parseInt(p.dn) === parseInt(well.dn)
+                (p) => p.componentType === componentType && parseInt(p.dn) === filterDn
             );
             if (height !== undefined)
                 candidates = candidates.filter((p) => parseInt(p.height) === parseInt(height));
