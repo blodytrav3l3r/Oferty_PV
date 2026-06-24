@@ -2031,7 +2031,7 @@ function sortWellConfigByOrder() {
         'plyta_zamykajaca': 2,
         'konus': 2,
         'pierscien_odciazajacy': 3,
-        'plyta_redukcyjna': 4,
+        'plyta_redukcyjna': 2.5,
         'krag': 5,
         'krag_ot': 5,
         'dennica': 6,
