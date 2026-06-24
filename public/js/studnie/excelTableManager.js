@@ -495,21 +495,16 @@ function _excelBuildComponentColumns(dn, well) {
     /* 12. Redukcja — elementy nadbudowy (tylko gdy któraś studnia w zakładce ma redukcję) */
     var hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTab) {
-        /* Sprawdź czy KTÓRAŚ studnia w zakładce ma redukcję */
-        var anyRed = false;
+        /* Znajdź pierwszą studnię z redukcją i jej target DN */
+        var firstRedWell = null;
         var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) { return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna'); }) : [];
         for (var ri = 0; ri < tabWellsList.length; ri++) {
-            if (tabWellsList[ri].redukcjaDN1000) { anyRed = true; break; }
+            if (tabWellsList[ri].redukcjaDN1000) { firstRedWell = tabWellsList[ri]; break; }
         }
         var targetDns = [];
-        if (anyRed) {
-            /* Pokaz nadbudowe dla WSZYSTKICH mozliwych targetow */
-            targetDns.push(1000);
-            /* DN1200 dostępny tylko dla DN>=1500 lub stycznej */
-            var can1200 = [1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne';
-            if (can1200) {
-                targetDns.push(1200);
-            }
+        if (firstRedWell) {
+            /* Tylko JEDEN target DN — z pierwszej studni z redukcją */
+            targetDns.push(parseInt(firstRedWell.redukcjaTargetDN) || 1000);
         }
         if (targetDns.length > 0) {
         /* Użyj well do filtrowania produktów jeśli podano */
