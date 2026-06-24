@@ -870,6 +870,9 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(targetDn)) continue;
+        } else {
+            /* Main column: preferuj produkt dla DN studni */
+            if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(well.dn)) continue;
         }
         return resolved.id;
     }
@@ -887,11 +890,15 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
         if (targetDn !== undefined && targetDn !== null) {
             var dnMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(targetDn); });
             if (dnMatch.length > 0) return dnMatch[0].id;
-            /* Jeśli brak, spróbuj uniwersalny */
             var univ = fallback.filter(function(p) { return p.dn === null; });
             if (univ.length > 0) return univ[0].id;
             return null;
         }
+        /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
+        var mainMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(well.dn); });
+        if (mainMatch.length > 0) return mainMatch[0].id;
+        var mainUniv = fallback.filter(function(p) { return p.dn === null; });
+        if (mainUniv.length > 0) return mainUniv[0].id;
         return fallback.length > 0 ? fallback[0].id : null;
     }
     return null;
@@ -1575,9 +1582,12 @@ function _excelRenderTable(dn) {
                         parseInt(p.height) === parseInt(c.height) && item.quantity > 0) {
                         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
                         if (c.fromReduction) {
-                                                    var _td = well.redukcjaTargetDN || 1000;
-                                                    if (p.dn !== null && parseInt(p.dn) !== parseInt(_td)) continue;
-                                                }
+                            var _td = well.redukcjaTargetDN || 1000;
+                            if (p.dn !== null && parseInt(p.dn) !== parseInt(_td)) continue;
+                        } else if (!c.fromReduction && !c.productId) {
+                            /* Main column: preferuj produkt dla DN studni */
+                            if (p.dn !== null && parseInt(p.dn) !== parseInt(well.dn)) continue;
+                        }
                         cellCode = p.id;
                         break;
                     }
