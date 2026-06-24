@@ -510,26 +510,23 @@ function _excelBuildComponentColumns(dn, well) {
                 targetDns.push(1200);
             }
         }
-        if (targetDns.length > 0) {
-        /* Użyj well do filtrowania produktów jeśli podano */
-        var refWell = well || (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
-        targetDns.forEach(function(tDn) {
-            var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
-            /* Pobierz też płyty redukcyjne dla średnicy studni — w głównym systemie są dla dn, nie dla tDn */
-            var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
-            var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
-            var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
-            /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
-            var redDnSpecific = {};
-            Object.keys(redGroups).forEach(function(gk) {
-                redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
-            });
+        if (anyRed) {
+        var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
+        /* Buduj JEDEN zestaw kolumn */
+        var redGroups = _excelGetComponentsForDn('1000', refWell);
+        var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
+        var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
+        var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
+        var redDnSpecific = {};
+        Object.keys(redGroups).forEach(function(gk) {
+            redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
+        });
             /* Red. AVR */
             (redDnSpecific['avr'] || []).forEach(function(p) {
                 var nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
                 var lbl = _excelShortLabel(p.name || '', 'avr');
                 cols.push({
-                    key: 'red_avr_' + tDn + '_' + p.id,
+                    key: 'red_avr_' + p.id,
                     label: 'R.AVR ' + nameShort,
                     shortLabel: 'R.' + lbl.short,
                     detailLabel: lbl.detail,
@@ -537,8 +534,7 @@ function _excelBuildComponentColumns(dn, well) {
                     componentType: 'avr',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: true,
-                    redDn: tDn
+                    fromReduction: true
                 });
             });
             /* Red. Konus */
@@ -551,7 +547,7 @@ function _excelBuildComponentColumns(dn, well) {
                     var matching = rKonus.filter(function(k) { return parseInt(k.height) === h; });
                     var lbl = _excelShortLabel(p.name || '', 'konus');
                     cols.push({
-                        key: 'red_konus_' + tDn + '_' + h,
+                        key: 'red_konus_' + h,
                         label: 'R.' + lbl.short + ' H=' + h,
                         shortLabel: 'R.' + lbl.short,
                         detailLabel: String(h),
@@ -559,8 +555,7 @@ function _excelBuildComponentColumns(dn, well) {
                         componentType: 'konus',
                         height: h,
                         products: matching,
-                        fromReduction: true,
-                        redDn: tDn
+                        fromReduction: true
                     });
                 }
             });
@@ -578,7 +573,7 @@ function _excelBuildComponentColumns(dn, well) {
                         var matching = prods.filter(function(k) { return parseInt(k.height) === h; });
                         var lbl = _excelShortLabel(p.name || '', ct);
                         cols.push({
-                            key: 'red_' + ct + '_' + tDn + '_' + h,
+                            key: 'red_' + ct + '_' + h + '_' + h,
                             label: 'R.' + (ct === 'plyta_din' ? 'Pł.DIN' : ct === 'plyta_najazdowa' ? 'Pł.najazd' : ct === 'plyta_zamykajaca' ? 'Pł.zamyk' : 'Pierśc.odc') + ' H=' + h,
                             shortLabel: 'R.' + lbl.short,
                             detailLabel: lbl.detail,
@@ -586,8 +581,7 @@ function _excelBuildComponentColumns(dn, well) {
                             componentType: ct,
                             height: h,
                             products: matching,
-                            fromReduction: true,
-                            redDn: tDn
+                            fromReduction: true
                         });
                     }
                 });
@@ -602,7 +596,7 @@ function _excelBuildComponentColumns(dn, well) {
                     var matching = rKreg.filter(function(k) { return parseInt(k.height) === h; });
                     var lbl = _excelShortLabel(p.name || '', 'krag');
                     cols.push({
-                        key: 'red_krag_' + tDn + '_' + h,
+                        key: 'red_krag_' + h,
                         label: 'R.Krąg H=' + h,
                         shortLabel: 'R.' + lbl.short,
                         detailLabel: lbl.detail,
@@ -610,8 +604,7 @@ function _excelBuildComponentColumns(dn, well) {
                         componentType: 'krag',
                         height: h,
                         products: matching,
-                        fromReduction: true,
-                        redDn: tDn
+                        fromReduction: true
                     });
                 }
             });
@@ -619,7 +612,7 @@ function _excelBuildComponentColumns(dn, well) {
             (redDnSpecific['osadnik'] || []).forEach(function(p) {
                 var lbl = _excelShortLabel(p.name || '', 'osadnik');
                 cols.push({
-                    key: 'red_osadnik_' + tDn + '_' + p.id,
+                    key: 'red_osadnik_' + p.id,
                     label: 'R.' + p.name,
                     shortLabel: 'R.' + lbl.short,
                     detailLabel: lbl.detail,
@@ -627,8 +620,7 @@ function _excelBuildComponentColumns(dn, well) {
                     componentType: 'osadnik',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: true,
-                    redDn: tDn
+                    fromReduction: true
                 });
             });
             /* Red. Uszczelki (przez filterSealsByWellType) */
@@ -639,7 +631,7 @@ function _excelBuildComponentColumns(dn, well) {
             uszczProducts.forEach(function(p) {
                 var lbl = _excelShortLabel(p.name || '', 'uszczelka');
                 cols.push({
-                    key: 'red_uszczelka_' + tDn + '_' + p.id,
+                    key: 'red_uszczelka_' + p.id,
                     label: 'R.' + p.name,
                     shortLabel: 'R.' + lbl.short,
                     detailLabel: lbl.detail,
@@ -647,28 +639,15 @@ function _excelBuildComponentColumns(dn, well) {
                     componentType: 'uszczelka',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: true,
-                    redDn: tDn
+                    fromReduction: true
                 });
             });
             /* Red. Płyty redukcyjne — w głównym systemie: dn === (średnica studni) + matchesTargetDn */
             /* Filtruj z allRedPlyta (produkty dla średnicy studni) tylko pasujące do tDn */
             allRedPlyta.forEach(function(p) {
-                var nameUC = (p.name || '').toUpperCase();
-                var tDnStr = String(tDn);
-                var matches = nameUC.includes('/' + tDnStr) ||
-                    nameUC.includes(' DN' + tDnStr) ||
-                    nameUC.includes('X' + tDnStr) ||
-                    nameUC.includes(' NA ' + tDnStr) ||
-                    nameUC.includes('→DN' + tDnStr) ||
-                    nameUC.includes('→' + tDnStr) ||
-                    nameUC.includes('->DN' + tDnStr) ||
-                    nameUC.includes('->' + tDnStr) ||
-                    nameUC.includes('DO ' + tDnStr);
-                if (!matches) return;
                 var lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
                 cols.push({
-                    key: 'red_plyta_redukcyjna_' + tDn + '_' + p.id,
+                    key: 'red_plyta_red_' + p.id,
                     label: 'R.' + p.name,
                     shortLabel: 'R.' + lbl.short,
                     detailLabel: lbl.detail,
@@ -676,8 +655,7 @@ function _excelBuildComponentColumns(dn, well) {
                     componentType: 'plyta_redukcyjna',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: true,
-                    redDn: tDn
+                    fromReduction: true
                 });
             });
             /* Red. Kręgi OT */
@@ -690,7 +668,7 @@ function _excelBuildComponentColumns(dn, well) {
                     var matching = rKragOt.filter(function(k) { return parseInt(k.height) === h; });
                     var lbl = _excelShortLabel(p.name || '', 'krag_ot');
                     cols.push({
-                        key: 'red_krag_ot_' + tDn + '_' + h,
+                        key: 'red_krag_ot_' + h,
                         label: 'R.Kr.OT H=' + h,
                         shortLabel: 'R.' + lbl.short,
                         detailLabel: lbl.detail,
@@ -698,13 +676,11 @@ function _excelBuildComponentColumns(dn, well) {
                         componentType: 'krag_ot',
                         height: h,
                         products: matching,
-                        fromReduction: true,
-                        redDn: tDn
+                        fromReduction: true
                     });
                 }
             });
-        }); /* koniec targetDns.forEach */
-        } /* koniec targetDns */
+        } /* koniec anyRed */
     } /* koniec hasRedTab */
 
     return cols;
@@ -1366,7 +1342,7 @@ function _excelRenderTable(dn) {
             /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni */
             var dynProdCode = null;
             if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) {
-                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height, c.fromReduction ? c.redDn : null);
+                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height, c.fromReduction ? (wells[currentWellIndex].redukcjaTargetDN || 1000) : null);
             }
             var fallbackCode = c.products && c.products[0] && c.products[0].id || null;
             colCodeId = dynProdCode || fallbackCode;
@@ -1374,13 +1350,13 @@ function _excelRenderTable(dn) {
         const codeDisp = colCodeId || null;
         const perProdAttr = isPerProduct ? ' data-per-product="1"' : '';
         const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
-        const redDnAttr = c.fromReduction && c.redDn ? ` data-reddn="${c.redDn}"` : '';
+
         const colCode = codeDisp
-            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr}${redDnAttr} style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
+            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} data-reddn="${c.fromReduction ? (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN || '') : ''}" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
-        const colDnLabel = c.fromReduction && c.redDn ? 'DN' + c.redDn : dnTh3(ct);
+        const colDnLabel = c.fromReduction ? 'DN' + (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN || 1000) : dnTh3(ct);
         h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colLabel}</th>`;
         h2 += `<th style="${th2Base}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colDetail}</th>`;
         h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#13151f;color:${hc};min-width:62px;text-align:center;">${colDnLabel}${colCode}</th>`;
@@ -1581,10 +1557,10 @@ function _excelRenderTable(dn) {
         compCols.forEach((col) => {
             if (col.type === 'select' || col.type === 'auto') return;
             const c = /** @type {any} */ (col);
-            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? c.redDn : null);
+            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? (well.redukcjaTargetDN || 1000) : null);
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
-            const redArg = c.fromReduction && c.redDn ? `,${c.redDn}` : '';
+            const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
             // Pobierz kod produktu z konfiguracji studni
             let cellCode = '';
             if (count > 0 && !c.productId) {
@@ -1596,9 +1572,10 @@ function _excelRenderTable(dn) {
                     if (p && p.componentType === c.componentType &&
                         parseInt(p.height) === parseInt(c.height) && item.quantity > 0) {
                         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
-                        if (c.fromReduction && c.redDn) {
-                            if (p.dn !== null && parseInt(p.dn) !== parseInt(c.redDn)) continue;
-                        }
+                        if (c.fromReduction) {
+                                                    var _td = well.redukcjaTargetDN || 1000;
+                                                    if (p.dn !== null && parseInt(p.dn) !== parseInt(_td)) continue;
+                                                }
                         cellCode = p.id;
                         break;
                     }
