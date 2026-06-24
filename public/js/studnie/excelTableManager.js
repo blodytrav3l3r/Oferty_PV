@@ -510,7 +510,11 @@ function _excelBuildComponentColumns(dn, well) {
         var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
         targetDns.forEach(function(tDn) {
             var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
-            /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
+                        /* Pobierz też płyty redukcyjne dla średnicy studni — w głównym systemie są dla dn, nie dla tDn */
+                        var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
+                        var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
+                        var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
+                        /* Usuń produkty uniwersalne (dn===null) — są już w głównych kolumnach */
             var redDnSpecific = {};
             Object.keys(redGroups).forEach(function(gk) {
                 redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
@@ -622,8 +626,41 @@ function _excelBuildComponentColumns(dn, well) {
                     redDn: tDn
                 });
             });
-            /* Red. Płyty redukcyjne (dla tDn) */
-            (redDnSpecific['plyta_redukcyjna'] || []).forEach(function(p) {
+            /* Red. Uszczelki (przez filterSealsByWellType) */
+            var uszczProducts = redDnSpecific['uszczelka'] || [];
+            if (typeof filterSealsByWellType === 'function') {
+                uszczProducts = filterSealsByWellType(uszczProducts, refWell);
+            }
+            uszczProducts.forEach(function(p) {
+                var lbl = _excelShortLabel(p.name || '', 'uszczelka');
+                cols.push({
+                    key: 'red_uszczelka_' + tDn + '_' + p.id,
+                    label: 'R.' + p.name,
+                    shortLabel: 'R.' + lbl.short,
+                    detailLabel: lbl.detail,
+                    type: 'number',
+                    componentType: 'uszczelka',
+                    productId: p.id,
+                    height: p.height,
+                    fromReduction: true,
+                    redDn: tDn
+                });
+            });
+            /* Red. Płyty redukcyjne — w głównym systemie: dn === (średnica studni) + matchesTargetDn */
+            /* Filtruj z allRedPlyta (produkty dla średnicy studni) tylko pasujące do tDn */
+            allRedPlyta.forEach(function(p) {
+                var nameUC = (p.name || '').toUpperCase();
+                var tDnStr = String(tDn);
+                var matches = nameUC.includes('/' + tDnStr) ||
+                    nameUC.includes(' DN' + tDnStr) ||
+                    nameUC.includes('X' + tDnStr) ||
+                    nameUC.includes(' NA ' + tDnStr) ||
+                    nameUC.includes('\u2192DN' + tDnStr) ||
+                    nameUC.includes('\u2192' + tDnStr) ||
+                    nameUC.includes('->DN' + tDnStr) ||
+                    nameUC.includes('->' + tDnStr) ||
+                    nameUC.includes('DO ' + tDnStr);
+                if (!matches) return;
                 var lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
                 cols.push({
                     key: 'red_plyta_redukcyjna_' + tDn + '_' + p.id,
