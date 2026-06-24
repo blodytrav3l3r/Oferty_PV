@@ -756,8 +756,8 @@ function _excelShortLabel(name, componentType) {
             return { short: short, detail: detail };
         }
         case 'plyta_zamykajaca': {
-            return { short: 'Pł.odc', detail: '200' };
-        }
+                    return { short: 'Pł.zamyk', detail: '200' };
+                }
         case 'pierscien_odciazajacy': {
             return { short: 'Pierśc.odc', detail: '' };
         }
@@ -769,6 +769,11 @@ function _excelShortLabel(name, componentType) {
         case 'osadnik': {
             var short = 'Osadnik';
             var detail = name.length > 14 ? name.substring(0, 12) + '…' : name;
+            return { short: short, detail: detail };
+        }
+        case 'uszczelka': {
+            var short = 'Uszcz.';
+            var detail = name.replace(/^Uszczelka\s*/i, '').trim() || name;
             return { short: short, detail: detail };
         }
         case 'styczna': {
