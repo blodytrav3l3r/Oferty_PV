@@ -2595,19 +2595,25 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 }
 
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
-function excelOnReductionSelectChange(wIdx, value) {
+async function excelOnReductionSelectChange(wIdx, value) {
     var well = wells[wIdx];
     if (!well) return;
     if (!value) {
         /* Brak = wyłącz redukcję */
         well.redukcjaDN1000 = false;
-        well.redukcjaTargetDN = null;
+        well.redukcjaTargetDN = 1000;
     } else {
         well.redukcjaDN1000 = true;
         well.redukcjaTargetDN = parseInt(value) || 1000;
     }
     _excelClearResCache(well);
     _excelUpdateLeftPreview(wIdx);
+    /* Wywołaj autoSelectComponents aby przeliczyć config z uwzględnieniem redukcji */
+    if (!well.autoLocked && typeof autoSelectComponents === 'function') {
+        well.configSource = 'AUTO';
+        well.config = [];
+        await autoSelectComponents(true);
+    }
     /* Pełen re-render tabeli — kolumny nadbudowy redukcji mogą się zmienić */
     _excelRenderTable(_excelActiveTab);
     _excelDebouncedRefresh();
