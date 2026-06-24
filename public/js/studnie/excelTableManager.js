@@ -922,7 +922,7 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
 }
 
 /* ===== Cena elementu w h3 — per sztuka, zgodnie z getItemAssessedPrice ===== */
-function _excelGetWellProdPrice(well, ct, height) {
+function _excelGetWellProdPrice(well, ct, height, targetDn) {
     if (!well || !well.config || !ct) return '';
     var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
 
@@ -935,6 +935,10 @@ function _excelGetWellProdPrice(well, ct, height) {
         if (resolved.componentType !== ct) continue;
         if (height !== undefined && height !== null && height !== ''
             && parseInt(resolved.height) !== parseInt(height)) continue;
+        /* Dla kolumn redukcji: produkt musi pasować do targetDn */
+        if (targetDn !== undefined && targetDn !== null) {
+            if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(targetDn)) continue;
+        }
         /* Mamy dopasowany config item — pobierz cenę */
         var price = typeof getItemAssessedPrice === 'function'
             ? getItemAssessedPrice(well, resolved, true, item)
@@ -976,11 +980,11 @@ function _excelUpdateHeaderProdCodes() {
         if (isPerProduct) return; /* kolumny per-produkt mają stały kod z definicji */
         var ct = span.getAttribute('data-ct');
         var height = span.getAttribute('data-height');
-        var pid = well ? _excelGetWellProdCode(well, ct, height) : null;
+        var pid = well ? _excelGetWellProdCode(well, ct, height, span.getAttribute('data-reddn')) : null;
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
         if (prices && prices[idx]) {
-            prices[idx].textContent = pid ? (_excelGetWellProdPrice(well, ct, height) || '') : '';
+            prices[idx].textContent = pid ? (_excelGetWellProdPrice(well, ct, height, span.getAttribute('data-reddn')) || '') : '';
         }
     });
 }
@@ -1371,8 +1375,9 @@ function _excelRenderTable(dn) {
         const codeDisp = colCodeId || null;
         const perProdAttr = isPerProduct ? ' data-per-product="1"' : '';
         const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
+        const redDnAttr = c.fromReduction && c.redDn ? ` data-reddn="${c.redDn}"` : '';
         const colCode = codeDisp
-            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
+            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr}${redDnAttr} style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
