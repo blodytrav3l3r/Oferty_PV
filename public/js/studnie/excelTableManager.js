@@ -819,13 +819,14 @@ function _excelCountProductInConfig(well, componentType, height, productId, targ
                 ? studnieProducts.find((pr) => pr.id === item.productId)
                 : null;
         if (!p) return;
-        /* Dla kolumn redukcji: produkt musi pasować do targetDn lub być uniwersalny */
+        if (productId) {
+            /* Per-product: dokładne dopasowanie (np. plyta_redukcyjna z dn studni) */
+            if (item.productId !== productId) return;
+        } else {
+        /* Dla kolumn redukcji (grupowane): produkt musi pasować do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
             if (p.dn !== null && parseInt(p.dn) !== parseInt(targetDn)) return;
         }
-        if (productId) {
-            if (item.productId !== productId) return;
-        } else {
             if (p.componentType !== componentType) return;
             if (height !== undefined && parseInt(p.height) !== parseInt(height)) return;
         }
