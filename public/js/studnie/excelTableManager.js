@@ -495,15 +495,22 @@ function _excelBuildComponentColumns(dn, well) {
     /* 12. Redukcja — elementy nadbudowy (tylko gdy któraś studnia w zakładce ma redukcję) */
     var hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTab) {
-        /* Znajdź pierwszą studnię z redukcją i jej target DN */
+        /* Znajdź target DN — najpierw z aktualnie zaznaczonej studni, potem z pierwszej z redukcją */
         var firstRedWell = null;
-        var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) { return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna'); }) : [];
-        for (var ri = 0; ri < tabWellsList.length; ri++) {
-            if (tabWellsList[ri].redukcjaDN1000) { firstRedWell = tabWellsList[ri]; break; }
+        var selectedWell = (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]
+            && _excelWellMatchesTab(wells[currentWellIndex], String(dn))) ? wells[currentWellIndex] : null;
+        if (selectedWell && selectedWell.redukcjaDN1000) {
+            firstRedWell = selectedWell;
+        } else {
+            var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) {
+                return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna');
+            }) : [];
+            for (var ri = 0; ri < tabWellsList.length; ri++) {
+                if (tabWellsList[ri].redukcjaDN1000) { firstRedWell = tabWellsList[ri]; break; }
+            }
         }
         var targetDns = [];
         if (firstRedWell) {
-            /* Tylko JEDEN target DN — z pierwszej studni z redukcją */
             targetDns.push(parseInt(firstRedWell.redukcjaTargetDN) || 1000);
         }
         if (targetDns.length > 0) {
@@ -1164,6 +1171,20 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
+    /* Jeśli zaznaczona studnia ma redukcję z innym target DN — przeładuj kolumny nadbudowy */
+    var selWell = wells[wIdx];
+    if (selWell && selWell.redukcjaDN1000) {
+        var cols = _excelBuildComponentColumns(_excelActiveTab, null);
+        var firstRedDn = null;
+        for (var ci = 0; ci < cols.length; ci++) {
+            var colAny = /** @type {any} */ (cols[ci]);
+            if (colAny.fromReduction) { firstRedDn = colAny.redDn; break; }
+        }
+        if (firstRedDn && parseInt(firstRedDn) !== parseInt(selWell.redukcjaTargetDN)) {
+            _excelRenderTable(_excelActiveTab);
+            return;
+        }
+    }
     _excelUpdateHeaderProdCodes();
 }
 
