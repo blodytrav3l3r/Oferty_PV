@@ -955,7 +955,7 @@ function _excelUpdateHeaderProdCodes() {
         if (isPerProduct) return; /* kolumny per-produkt mają stały kod z definicji */
         var ct = span.getAttribute('data-ct');
         var height = span.getAttribute('data-height');
-        var redTarget = (span.getAttribute('data-reddn') || '') ? (well && well.redukcjaTargetDN || null) : null;
+        var redTarget = (span.getAttribute('data-reddn') || '') ? (well && (well.redukcjaTargetDN || parseInt(span.getAttribute('data-reddn')) || 1000)) : null;
         var pid = well ? _excelGetWellProdCode(well, ct, height, redTarget) : null;
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
@@ -1353,7 +1353,7 @@ function _excelRenderTable(dn) {
         const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
 
         const colCode = codeDisp
-            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} data-reddn="${c.fromReduction ? (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN || '') : ''}" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
+            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} data-reddn="${c.fromReduction ? '1000' : ''}" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
