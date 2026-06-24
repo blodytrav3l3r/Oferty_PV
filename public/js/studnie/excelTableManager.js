@@ -511,139 +511,180 @@ function _excelBuildComponentColumns(dn, well) {
             }
         }
         if (anyRed) {
-        var refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
-        /* Buduj JEDEN zestaw kolumn */
-        var redGroups = _excelGetComponentsForDn('1000', refWell);
-        var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
-        var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
-        var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
-        var redDnSpecific = {};
-        Object.keys(redGroups).forEach(function(gk) {
-            redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
-        });
-            /* Red. AVR */
-            (redDnSpecific['avr'] || []).forEach(function(p) {
-                var nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
-                var lbl = _excelShortLabel(p.name || '', 'avr');
-                cols.push({
-                    key: 'red_avr_' + p.id,
-                    label: 'R.AVR ' + nameShort,
-                    shortLabel: 'R.' + lbl.short,
-                    detailLabel: lbl.detail,
-                    type: 'number',
-                    componentType: 'avr',
-                    productId: p.id,
-                    height: p.height,
-                    fromReduction: true
+            /* refWell: preferuj studnię Z redukcją — filterByWellParams może blokować płyty redukcyjne na studni bez redukcji */
+            var refWell = null;
+            for (var rwi = 0; rwi < tabWellsList.length; rwi++) {
+                if (tabWellsList[rwi].redukcjaDN1000) { refWell = tabWellsList[rwi]; break; }
+            }
+            if (!refWell) refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
+            var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
+            var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
+            var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
+
+            targetDns.forEach(function(tDn) {
+                /* Buduj Zestawy kolumn DLA KAŻDEGO tDn */
+                var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
+                var redDnSpecific = {};
+                Object.keys(redGroups).forEach(function(gk) {
+                    redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
                 });
-            });
-            /* Red. Konus */
-            var rKonus = [...(redDnSpecific['konus'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
-            var seenRKH = {};
-            rKonus.forEach(function(p) {
-                var h = parseInt(p.height) || 0;
-                if (h > 0 && !seenRKH[h]) {
-                    seenRKH[h] = true;
-                    var matching = rKonus.filter(function(k) { return parseInt(k.height) === h; });
-                    var lbl = _excelShortLabel(p.name || '', 'konus');
+
+                var dnPfx = targetDns.length > 1 ? tDn + '_' : '';
+                var dnLbl = targetDns.length > 1 ? '(' + tDn + ') ' : '';
+
+                /* Red. AVR */
+                (redDnSpecific['avr'] || []).forEach(function(p) {
+                    var nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
+                    var lbl = _excelShortLabel(p.name || '', 'avr');
                     cols.push({
-                        key: 'red_konus_' + h,
-                        label: 'R.' + lbl.short + ' H=' + h,
-                        shortLabel: 'R.' + lbl.short,
-                        detailLabel: String(h),
-                        type: 'number',
-                        componentType: 'konus',
-                        height: h,
-                        products: matching,
-                        fromReduction: true
-                    });
-                }
-            });
-            /* Red. Płyty nakrywające */
-            ['plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].forEach(function(ct) {
-                var prods = [...(redDnSpecific[ct] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
-                if (ct === 'plyta_din') {
-                    prods = prods.filter(function(p) { return parseInt(p.height) === 200; });
-                }
-                var seenH = {};
-                prods.forEach(function(p) {
-                    var h = parseInt(p.height) || 0;
-                    if (h > 0 && !seenH[h]) {
-                        seenH[h] = true;
-                        var matching = prods.filter(function(k) { return parseInt(k.height) === h; });
-                        var lbl = _excelShortLabel(p.name || '', ct);
-                        cols.push({
-                            key: 'red_' + ct + '_' + h + '_' + h,
-                            label: 'R.' + (ct === 'plyta_din' ? 'Pł.DIN' : ct === 'plyta_najazdowa' ? 'Pł.najazd' : ct === 'plyta_zamykajaca' ? 'Pł.zamyk' : 'Pierśc.odc') + ' H=' + h,
-                            shortLabel: 'R.' + lbl.short,
-                            detailLabel: lbl.detail,
-                            type: 'number',
-                            componentType: ct,
-                            height: h,
-                            products: matching,
-                            fromReduction: true
-                        });
-                    }
-                });
-            });
-            /* Red. Kręgi */
-            var rKreg = [...(redDnSpecific['krag'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
-            var seenRKH2 = {};
-            rKreg.forEach(function(p) {
-                var h = parseInt(p.height) || 0;
-                if (h > 0 && !seenRKH2[h]) {
-                    seenRKH2[h] = true;
-                    var matching = rKreg.filter(function(k) { return parseInt(k.height) === h; });
-                    var lbl = _excelShortLabel(p.name || '', 'krag');
-                    cols.push({
-                        key: 'red_krag_' + h,
-                        label: 'R.Krąg H=' + h,
+                        key: 'red_avr_' + dnPfx + p.id,
+                        label: 'R.AVR ' + dnLbl + nameShort,
                         shortLabel: 'R.' + lbl.short,
                         detailLabel: lbl.detail,
                         type: 'number',
-                        componentType: 'krag',
-                        height: h,
-                        products: matching,
-                        fromReduction: true
+                        componentType: 'avr',
+                        productId: p.id,
+                        height: p.height,
+                        fromReduction: true,
+                        targetDn: tDn
                     });
+                });
+                /* Red. Konus */
+                var rKonus = [...(redDnSpecific['konus'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var seenRKH = {};
+                rKonus.forEach(function(p) {
+                    var h = parseInt(p.height) || 0;
+                    if (h > 0 && !seenRKH[h]) {
+                        seenRKH[h] = true;
+                        var matching = rKonus.filter(function(k) { return parseInt(k.height) === h; });
+                        var lbl = _excelShortLabel(p.name || '', 'konus');
+                        cols.push({
+                            key: 'red_konus_' + dnPfx + h,
+                            label: 'R.' + lbl.short + ' ' + dnLbl + 'H=' + h,
+                            shortLabel: 'R.' + lbl.short,
+                            detailLabel: String(h),
+                            type: 'number',
+                            componentType: 'konus',
+                            height: h,
+                            products: matching,
+                            fromReduction: true,
+                            targetDn: tDn
+                        });
+                    }
+                });
+                /* Red. Płyty nakrywające */
+                ['plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].forEach(function(ct) {
+                    var prods = [...(redDnSpecific[ct] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                    if (ct === 'plyta_din') {
+                        prods = prods.filter(function(p) { return parseInt(p.height) === 200; });
+                    }
+                    var seenH = {};
+                    prods.forEach(function(p) {
+                        var h = parseInt(p.height) || 0;
+                        if (h > 0 && !seenH[h]) {
+                            seenH[h] = true;
+                            var matching = prods.filter(function(k) { return parseInt(k.height) === h; });
+                            var lbl = _excelShortLabel(p.name || '', ct);
+                            cols.push({
+                                key: 'red_' + ct + '_' + dnPfx + h + '_' + h,
+                                label: 'R.' + (ct === 'plyta_din' ? 'Pł.DIN' : ct === 'plyta_najazdowa' ? 'Pł.najazd' : ct === 'plyta_zamykajaca' ? 'Pł.zamyk' : 'Pierśc.odc') + ' ' + dnLbl + 'H=' + h,
+                                shortLabel: 'R.' + lbl.short,
+                                detailLabel: lbl.detail,
+                                type: 'number',
+                                componentType: ct,
+                                height: h,
+                                products: matching,
+                                fromReduction: true,
+                                targetDn: tDn
+                            });
+                        }
+                    });
+                });
+                /* Red. Kręgi */
+                var rKreg = [...(redDnSpecific['krag'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var seenRKH2 = {};
+                rKreg.forEach(function(p) {
+                    var h = parseInt(p.height) || 0;
+                    if (h > 0 && !seenRKH2[h]) {
+                        seenRKH2[h] = true;
+                        var matching = rKreg.filter(function(k) { return parseInt(k.height) === h; });
+                        var lbl = _excelShortLabel(p.name || '', 'krag');
+                        cols.push({
+                            key: 'red_krag_' + dnPfx + h,
+                            label: 'R.Krąg ' + dnLbl + 'H=' + h,
+                            shortLabel: 'R.' + lbl.short,
+                            detailLabel: lbl.detail,
+                            type: 'number',
+                            componentType: 'krag',
+                            height: h,
+                            products: matching,
+                            fromReduction: true,
+                            targetDn: tDn
+                        });
+                    }
+                });
+                /* Red. Osadniki (per produkt) */
+                (redDnSpecific['osadnik'] || []).forEach(function(p) {
+                    var lbl = _excelShortLabel(p.name || '', 'osadnik');
+                    cols.push({
+                        key: 'red_osadnik_' + dnPfx + p.id,
+                        label: 'R.' + dnLbl + p.name,
+                        shortLabel: 'R.' + lbl.short,
+                        detailLabel: lbl.detail,
+                        type: 'number',
+                        componentType: 'osadnik',
+                        productId: p.id,
+                        height: p.height,
+                        fromReduction: true,
+                        targetDn: tDn
+                    });
+                });
+                /* Red. Uszczelki (przez filterSealsByWellType) */
+                var uszczProducts = redDnSpecific['uszczelka'] || [];
+                if (typeof filterSealsByWellType === 'function') {
+                    uszczProducts = filterSealsByWellType(uszczProducts, refWell);
                 }
-            });
-            /* Red. Osadniki (per produkt) */
-            (redDnSpecific['osadnik'] || []).forEach(function(p) {
-                var lbl = _excelShortLabel(p.name || '', 'osadnik');
-                cols.push({
-                    key: 'red_osadnik_' + p.id,
-                    label: 'R.' + p.name,
-                    shortLabel: 'R.' + lbl.short,
-                    detailLabel: lbl.detail,
-                    type: 'number',
-                    componentType: 'osadnik',
-                    productId: p.id,
-                    height: p.height,
-                    fromReduction: true
+                uszczProducts.forEach(function(p) {
+                    var lbl = _excelShortLabel(p.name || '', 'uszczelka');
+                    cols.push({
+                        key: 'red_uszczelka_' + dnPfx + p.id,
+                        label: 'R.' + dnLbl + p.name,
+                        shortLabel: 'R.' + lbl.short,
+                        detailLabel: lbl.detail,
+                        type: 'number',
+                        componentType: 'uszczelka',
+                        productId: p.id,
+                        height: p.height,
+                        fromReduction: true,
+                        targetDn: tDn
+                    });
                 });
-            });
-            /* Red. Uszczelki (przez filterSealsByWellType) */
-            var uszczProducts = redDnSpecific['uszczelka'] || [];
-            if (typeof filterSealsByWellType === 'function') {
-                uszczProducts = filterSealsByWellType(uszczProducts, refWell);
-            }
-            uszczProducts.forEach(function(p) {
-                var lbl = _excelShortLabel(p.name || '', 'uszczelka');
-                cols.push({
-                    key: 'red_uszczelka_' + p.id,
-                    label: 'R.' + p.name,
-                    shortLabel: 'R.' + lbl.short,
-                    detailLabel: lbl.detail,
-                    type: 'number',
-                    componentType: 'uszczelka',
-                    productId: p.id,
-                    height: p.height,
-                    fromReduction: true
+                /* Red. Kręgi OT */
+                var rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var seenROtH = {};
+                rKragOt.forEach(function(p) {
+                    var h = parseInt(p.height) || 0;
+                    if (h > 0 && !seenROtH[h]) {
+                        seenROtH[h] = true;
+                        var matching = rKragOt.filter(function(k) { return parseInt(k.height) === h; });
+                        var lbl = _excelShortLabel(p.name || '', 'krag_ot');
+                        cols.push({
+                            key: 'red_krag_ot_' + dnPfx + h,
+                            label: 'R.Kr.OT ' + dnLbl + 'H=' + h,
+                            shortLabel: 'R.' + lbl.short,
+                            detailLabel: lbl.detail,
+                            type: 'number',
+                            componentType: 'krag_ot',
+                            height: h,
+                            products: matching,
+                            fromReduction: true,
+                            targetDn: tDn
+                        });
+                    }
                 });
-            });
-            /* Red. Płyty redukcyjne — w głównym systemie: dn === (średnica studni) + matchesTargetDn */
-            /* Filtruj z allRedPlyta (produkty dla średnicy studni) tylko pasujące do tDn */
+            }); // koniec tDn loop
+
+            /* Płyty redukcyjne — dodawane RAZ (niezależnie od targetDns, bo mają dn studni głównej) */
             allRedPlyta.forEach(function(p) {
                 var lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
                 cols.push({
@@ -655,30 +696,9 @@ function _excelBuildComponentColumns(dn, well) {
                     componentType: 'plyta_redukcyjna',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: true
+                    fromReduction: true,
+                    targetDn: null
                 });
-            });
-            /* Red. Kręgi OT */
-            var rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
-            var seenROtH = {};
-            rKragOt.forEach(function(p) {
-                var h = parseInt(p.height) || 0;
-                if (h > 0 && !seenROtH[h]) {
-                    seenROtH[h] = true;
-                    var matching = rKragOt.filter(function(k) { return parseInt(k.height) === h; });
-                    var lbl = _excelShortLabel(p.name || '', 'krag_ot');
-                    cols.push({
-                        key: 'red_krag_ot_' + h,
-                        label: 'R.Kr.OT H=' + h,
-                        shortLabel: 'R.' + lbl.short,
-                        detailLabel: lbl.detail,
-                        type: 'number',
-                        componentType: 'krag_ot',
-                        height: h,
-                        products: matching,
-                        fromReduction: true
-                    });
-                }
             });
         } /* koniec anyRed */
     } /* koniec hasRedTab */
@@ -800,10 +820,7 @@ function _excelCalcDennicaHeight(well) {
 function _excelCalcUszczelkaCount(well) {
     let count = 0;
     (well.config || []).forEach((item) => {
-        const p =
-            typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === item.productId)
-                : null;
+        const p = _excelGetResolution(well, item);
         if (p && p.componentType === 'uszczelka') {
             count += item.quantity;
         }
@@ -814,14 +831,11 @@ function _excelCalcUszczelkaCount(well) {
 function _excelCountProductInConfig(well, componentType, height, productId, targetDn) {
     let count = 0;
     (well.config || []).forEach((item) => {
-        const p =
-            typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === item.productId)
-                : null;
+        const p = _excelGetResolution(well, item);
         if (!p) return;
         if (productId) {
             /* Per-product: dokładne dopasowanie (np. plyta_redukcyjna z dn studni) */
-            if (item.productId !== productId) return;
+            if (p.id !== productId) return;
         } else {
         /* Dla kolumn redukcji (grupowane): produkt musi pasować do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
@@ -921,6 +935,9 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(targetDn)) continue;
+        } else {
+            /* Main column: preferuj produkt dla DN studni */
+            if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(well.dn)) continue;
         }
         /* Mamy dopasowany config item — pobierz cenę */
         var price = typeof getItemAssessedPrice === 'function'
@@ -933,15 +950,34 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
     /* 2. FALLBACK: pierwszy dostępny produkt */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
         var avail = getAvailableProducts(well).filter(function(p) { return filterByWellParams(p, well); });
-        var fallbackP = avail.find(function(p) {
+        var fallback = avail.filter(function(p) {
             return p.componentType === ct
                 && (height === undefined || height === null || height === ''
                     || parseInt(p.height) === parseInt(height));
         });
-        if (fallbackP) {
+        /* Dla kolumn redukcji: preferuj produkt pasujący do targetDn */
+        var matchedFallback = null;
+        if (targetDn !== undefined && targetDn !== null) {
+            var dnMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(targetDn); });
+            if (dnMatch.length > 0) matchedFallback = dnMatch[0];
+            else {
+                var univ = fallback.filter(function(p) { return p.dn === null; });
+                if (univ.length > 0) matchedFallback = univ[0];
+            }
+        } else {
+            /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
+            var mainMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(well.dn); });
+            if (mainMatch.length > 0) matchedFallback = mainMatch[0];
+            else {
+                var mainUniv = fallback.filter(function(p) { return p.dn === null; });
+                if (mainUniv.length > 0) matchedFallback = mainUniv[0];
+                else if (fallback.length > 0) matchedFallback = fallback[0];
+            }
+        }
+        if (matchedFallback) {
             var price = typeof getItemAssessedPrice === 'function'
-                ? getItemAssessedPrice(well, fallbackP, true, null)
-                : (fallbackP.price || 0);
+                ? getItemAssessedPrice(well, matchedFallback, true, null)
+                : (matchedFallback.price || 0);
             var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
             return fmt(price) + ' PLN';
         }
@@ -1002,7 +1038,7 @@ function _excelAutoSetWlaz(well) {
 /* ===== CELL STYLES (Excel-like) ===== */
 /** @param {number} [w] */
 function _excelCellInp(w) {
-    return `background:transparent;border:1px solid transparent;border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
+    return `background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
 /* ===== OPEN MODAL ===== */
@@ -1301,10 +1337,10 @@ function _excelRenderTable(dn) {
     }
 
     // Przyciski +/-
-    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:transparent;color:#ef4444;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='#ef4444'">−</button></th>`;
+    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:#13151f;color:#ef4444;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='#ef4444'">−</button></th>`;
     h2 += `<th style="${th2Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th style="${th3Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
-    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#64748b'">+</button></th>`;
+    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:#13151f;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#64748b'">+</button></th>`;
     h2 += `<th style="${th2Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th style="${th3Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
 
@@ -1351,7 +1387,7 @@ function _excelRenderTable(dn) {
             /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni */
             var dynProdCode = null;
             if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) {
-                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height, c.fromReduction ? (wells[currentWellIndex].redukcjaTargetDN || 1000) : null);
+                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height, c.fromReduction ? (c.targetDn || wells[currentWellIndex].redukcjaTargetDN || 1000) : null);
             }
             var fallbackCode = c.products && c.products[0] && c.products[0].id || null;
             colCodeId = dynProdCode || fallbackCode;
@@ -1361,11 +1397,11 @@ function _excelRenderTable(dn) {
         const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
 
         const colCode = codeDisp
-            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} data-reddn="${c.fromReduction ? '1000' : ''}" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
+            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} data-reddn="${c.fromReduction ? (c.targetDn || '1000') : ''}" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
-        const colDnLabel = c.fromReduction ? 'DN' + (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN || 1000) : dnTh3(ct);
+        const colDnLabel = c.fromReduction ? 'DN' + (c.targetDn || (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) || 1000) : dnTh3(ct);
         h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colLabel}</th>`;
         h2 += `<th style="${th2Base}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colDetail}</th>`;
         h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#13151f;color:${hc};min-width:62px;text-align:center;">${colDnLabel}${colCode}</th>`;
@@ -1566,23 +1602,21 @@ function _excelRenderTable(dn) {
         compCols.forEach((col) => {
             if (col.type === 'select' || col.type === 'auto') return;
             const c = /** @type {any} */ (col);
-            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? (well.redukcjaTargetDN || 1000) : null);
+            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? (c.targetDn || well.redukcjaTargetDN || 1000) : null);
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
-            const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
+            const redArg = c.fromReduction ? `,${c.targetDn || well.redukcjaTargetDN || 1000}` : '';
             // Pobierz kod produktu z konfiguracji studni
             let cellCode = '';
             if (count > 0 && !c.productId) {
                 // Kolumna grupowana — znajdź pierwszy produkt w config
                 for (const item of well.config || []) {
-                    const p = typeof studnieProducts !== 'undefined'
-                        ? studnieProducts.find(pr => pr.id === item.productId)
-                        : null;
+                    const p = _excelGetResolution(well, item);
                     if (p && p.componentType === c.componentType &&
                         parseInt(p.height) === parseInt(c.height) && item.quantity > 0) {
                         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
                         if (c.fromReduction) {
-                            var _td = well.redukcjaTargetDN || 1000;
+                            var _td = c.targetDn || well.redukcjaTargetDN || 1000;
                             if (p.dn !== null && parseInt(p.dn) !== parseInt(_td)) continue;
                         } else if (!c.fromReduction && !c.productId) {
                             /* Main column: preferuj produkt dla DN studni */
@@ -1592,6 +1626,8 @@ function _excelRenderTable(dn) {
                         break;
                     }
                 }
+            } else if (count > 0 && c.productId) {
+                cellCode = c.productId;
             }
             const codeHtml = cellCode
                 ? `<div style="font-size:0.4rem;color:#64748b;opacity:0.6;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58px;">${escapeHtml(cellCode)}</div>`
@@ -1640,9 +1676,9 @@ function _excelRenderTable(dn) {
         /* Akcje: Param, Duplikuj, Usuń */
         html += `<td style="${tdBase}text-align:center;white-space:nowrap;">`;
         html += '<div style="display:flex;gap:2px;justify-content:center;">';
-        html += `<button onclick="excelOpenWellParams(${wIdx})" title="Parametry" style="background:transparent;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(129,140,248,0.1)'" onmouseleave="this.style.background='transparent'">⋯</button>`;
-        html += `<button onclick="excelDuplicateWell(${wIdx})" title="Duplikuj" style="background:transparent;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(96,165,250,0.1)'" onmouseleave="this.style.background='transparent'">⧉</button>`;
-        html += `<button onclick="excelDeleteWell(${wIdx})" title="Usuń" style="background:transparent;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='transparent'">✕</button>`;
+        html += `<button onclick="excelOpenWellParams(${wIdx})" title="Parametry" style="background:#13151f;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(129,140,248,0.1)'" onmouseleave="this.style.background='transparent'">⋯</button>`;
+        html += `<button onclick="excelDuplicateWell(${wIdx})" title="Duplikuj" style="background:#13151f;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(96,165,250,0.1)'" onmouseleave="this.style.background='transparent'">⧉</button>`;
+        html += `<button onclick="excelDeleteWell(${wIdx})" title="Usuń" style="background:#13151f;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='transparent'">✕</button>`;
         html += '</div></td>';
 
         html += '</tr>';
@@ -2005,7 +2041,7 @@ function excelCellFocus(el) {
 }
 function excelCellBlur(el) {
     el.style.outline = 'none';
-    el.style.background = 'transparent';
+    el.style.background = '#13151f';
     _excelUserEditing = false; /* wznawia polling */
 }
 
@@ -2807,7 +2843,7 @@ function excelOpenWellParams(wIdx) {
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <span style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">Parametry: ${escapeHtml(well.name)}</span>
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:transparent;color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:#13151f;color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
