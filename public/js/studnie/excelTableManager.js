@@ -495,23 +495,20 @@ function _excelBuildComponentColumns(dn, well) {
     /* 12. Redukcja — elementy nadbudowy (tylko gdy któraś studnia w zakładce ma redukcję) */
     var hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTab) {
-        /* Znajdź target DN — najpierw z aktualnie zaznaczonej studni, potem z pierwszej z redukcją */
-        var firstRedWell = null;
-        var selectedWell = (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]
-            && _excelWellMatchesTab(wells[currentWellIndex], String(dn))) ? wells[currentWellIndex] : null;
-        if (selectedWell && selectedWell.redukcjaDN1000) {
-            firstRedWell = selectedWell;
-        } else {
-            var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) {
-                return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna');
-            }) : [];
-            for (var ri = 0; ri < tabWellsList.length; ri++) {
-                if (tabWellsList[ri].redukcjaDN1000) { firstRedWell = tabWellsList[ri]; break; }
-            }
+        /* Sprawdź czy KTÓRAŚ studnia w zakładce ma redukcję */
+        var anyRed = false;
+        var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) {
+            return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna');
+        }) : [];
+        for (var ri = 0; ri < tabWellsList.length; ri++) {
+            if (tabWellsList[ri].redukcjaDN1000) { anyRed = true; break; }
         }
         var targetDns = [];
-        if (firstRedWell) {
-            targetDns.push(parseInt(firstRedWell.redukcjaTargetDN) || 1000);
+        if (anyRed) {
+            targetDns.push(1000);
+            if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
+                targetDns.push(1200);
+            }
         }
         if (targetDns.length > 0) {
         /* Użyj well do filtrowania produktów jeśli podano */
@@ -1171,17 +1168,6 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
-    /* Jeśli zaznaczona studnia ma redukcję — sprawdź czy target różni się od wyświetlanego */
-    var selWell = wells[wIdx];
-    if (selWell && selWell.redukcjaDN1000) {
-        var currentRedDn = null;
-        var existingSpan = container.querySelector('thead .h3-prodcode[data-reddn]');
-        if (existingSpan) currentRedDn = existingSpan.getAttribute('data-reddn');
-        if (currentRedDn && parseInt(currentRedDn) !== parseInt(selWell.redukcjaTargetDN)) {
-            _excelRenderTable(_excelActiveTab);
-            return;
-        }
-    }
     _excelUpdateHeaderProdCodes();
 }
 
@@ -1621,9 +1607,8 @@ function _excelRenderTable(dn) {
             const codeHtml = cellCode
                 ? `<div style="font-size:0.4rem;color:#64748b;opacity:0.6;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58px;">${escapeHtml(cellCode)}</div>`
                 : '';
-            /* Redukcja nadbudowa — wyłącz input gdy studnia nie ma pasującej redukcji */
-            var redDisabled = c.fromReduction && (!well.redukcjaDN1000 || parseInt(c.redDn) !== parseInt(well.redukcjaTargetDN));
-            var disabledAttr = redDisabled ? ' disabled' : '';
+            /* Redukcja nadbudowa — wszystkie inputy zawsze aktywne, kazda studnia widzi swoje ilosci */
+            var disabledAttr = '';
             html += `<td style="${tdBase}text-align:center;min-width:62px;">`
                 + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
                 + codeHtml
