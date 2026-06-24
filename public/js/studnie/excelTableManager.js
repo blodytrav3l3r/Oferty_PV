@@ -836,7 +836,7 @@ function _excelCalcUszczelkaCount(well) {
     return count;
 }
 
-function _excelCountProductInConfig(well, componentType, height, productId) {
+function _excelCountProductInConfig(well, componentType, height, productId, targetDn) {
     let count = 0;
     (well.config || []).forEach((item) => {
         const p =
@@ -844,6 +844,10 @@ function _excelCountProductInConfig(well, componentType, height, productId) {
                 ? studnieProducts.find((pr) => pr.id === item.productId)
                 : null;
         if (!p) return;
+        /* Dla kolumn redukcji: produkt musi pasować do targetDn lub być uniwersalny */
+        if (targetDn !== undefined && targetDn !== null) {
+            if (p.dn !== null && parseInt(p.dn) !== parseInt(targetDn)) return;
+        }
         if (productId) {
             if (item.productId !== productId) return;
         } else {
@@ -874,7 +878,7 @@ function _excelClearResCache(well) {
 }
 
 /* ===== Dynamiczny kod produktu w h3 — pobrany z configu zaznaczonej studni ===== */
-function _excelGetWellProdCode(well, ct, height) {
+function _excelGetWellProdCode(well, ct, height, targetDn) {
     if (!well || !well.config || !ct) return null;
     var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
 
@@ -887,6 +891,10 @@ function _excelGetWellProdCode(well, ct, height) {
         if (resolved.componentType !== ct) continue;
         if (height !== undefined && height !== null && height !== ''
             && parseInt(resolved.height) !== parseInt(height)) continue;
+        /* Dla kolumn redukcji: produkt musi pasować do targetDn */
+        if (targetDn !== undefined && targetDn !== null) {
+            if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(targetDn)) continue;
+        }
         return resolved.id;
     }
 
@@ -898,6 +906,15 @@ function _excelGetWellProdCode(well, ct, height) {
         var fallback = avail.filter(function(p) { return p.componentType === ct; });
         if (height !== undefined && height !== null && height !== '') {
             fallback = fallback.filter(function(p) { return parseInt(p.height) === parseInt(height); });
+        }
+        /* Dla kolumn redukcji: preferuj produkt pasujący do targetDn */
+        if (targetDn !== undefined && targetDn !== null) {
+            var dnMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(targetDn); });
+            if (dnMatch.length > 0) return dnMatch[0].id;
+            /* Jeśli brak, spróbuj uniwersalny */
+            var univ = fallback.filter(function(p) { return p.dn === null; });
+            if (univ.length > 0) return univ[0].id;
+            return null;
         }
         return fallback.length > 0 ? fallback[0].id : null;
     }
@@ -1346,7 +1363,7 @@ function _excelRenderTable(dn) {
             /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni */
             var dynProdCode = null;
             if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) {
-                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height);
+                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height, c.fromReduction ? c.redDn : null);
             }
             var fallbackCode = c.products && c.products[0] && c.products[0].id || null;
             colCodeId = dynProdCode || fallbackCode;
@@ -1560,7 +1577,7 @@ function _excelRenderTable(dn) {
         compCols.forEach((col) => {
             if (col.type === 'select' || col.type === 'auto') return;
             const c = /** @type {any} */ (col);
-            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId);
+            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? c.redDn : null);
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
             // Pobierz kod produktu z konfiguracji studni
@@ -1573,6 +1590,10 @@ function _excelRenderTable(dn) {
                         : null;
                     if (p && p.componentType === c.componentType &&
                         parseInt(p.height) === parseInt(c.height) && item.quantity > 0) {
+                        /* Dla kolumn redukcji: produkt musi pasować do targetDn */
+                        if (c.fromReduction && c.redDn) {
+                            if (p.dn !== null && parseInt(p.dn) !== parseInt(c.redDn)) continue;
+                        }
                         cellCode = p.id;
                         break;
                     }
