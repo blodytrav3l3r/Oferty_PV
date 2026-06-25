@@ -1540,9 +1540,8 @@ function _excelRenderTable(dn) {
         const colCode = codeDisp
             ? (function() {
                 var priceHtml = '';
-                if (isPerProduct && codeDisp && typeof getItemAssessedPrice === 'function') {
+                if (isPerProduct && codeDisp) {
                     try {
-                        /* Użyj pierwszej studni z zakładki dla ceny, nie aktualnej */
                         var priceWell = null;
                         if (typeof _excelActiveTab !== 'undefined' && _excelActiveTab) {
                             for (var _i = 0; _i < wells.length; _i++) {
@@ -1556,12 +1555,10 @@ function _excelRenderTable(dn) {
                             priceWell = wells[currentWellIndex];
                         }
                         if (priceWell) {
-                            var prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === codeDisp; });
-                            if (prod) {
-                                var pr = getItemAssessedPrice(priceWell, prod, true, null);
-                                var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
-                                if (pr && pr > 0) priceHtml = fmt(pr) + ' PLN';
-                            }
+                            var p = typeof _excelGetWellProdPrice === 'function'
+                                ? _excelGetWellProdPrice(priceWell, ct, c.height, c.fromReduction ? (c.targetDn || priceWell.redukcjaTargetDN || 1000) : null)
+                                : '';
+                            if (p) priceHtml = p;
                         }
                     } catch(e) {}
                 }
