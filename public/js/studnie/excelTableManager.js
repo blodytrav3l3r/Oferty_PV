@@ -2372,6 +2372,13 @@ function excelAddTransitionColumn() {
     _excelDebouncedRefresh();
     showToast('Dodano kolumnę przejścia', 'info');
 }
+function _excelCleanEmptyPrzejscia(well) {
+    if (!well || !well.przejscia) return;
+    well.przejscia = well.przejscia.filter(function(p) {
+        return p.productId || (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '') || p.tempCategory;
+    });
+}
+
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     while (wells[wIdx].przejscia.length <= trIdx) {
@@ -2388,6 +2395,8 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     wells[wIdx].przejscia.forEach((p, i) => {
         p.displayIndex = i;
     });
+    /* Usuń puste przejścia */
+    _excelCleanEmptyPrzejscia(wells[wIdx]);
     _excelUpdateLeftPreview(wIdx);
     _excelDebouncedRefresh();
 }
@@ -2413,6 +2422,8 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     // Renderuj ponownie tabelę, by zaktualizować listę średnic (DN)
     _excelRenderTable(_excelActiveTab);
     _excelUpdateLeftPreview(wIdx);
+    /* Usuń puste przejścia */
+    _excelCleanEmptyPrzejscia(wells[wIdx]);
     _excelDebouncedRefresh();
 }
 
