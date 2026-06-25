@@ -366,11 +366,12 @@ function _excelBuildComponentColumns(dn, well) {
                             seenH[h] = true;
                             var matching = prods.filter(function(k) { return parseInt(k.height) === h; });
                             var lbl = _excelShortLabel(p.name || '', ct);
+                            var det = ct === 'pierscien_odciazajacy' ? '' : String(h);
                             cols.push({
                                 key: 'red_' + ct + '_' + dnPfx + h + '_' + h,
                                 label: 'R.' + (ct === 'plyta_din' ? 'Pł.DIN' : ct === 'plyta_najazdowa' ? 'Pł.najazd' : ct === 'plyta_zamykajaca' ? 'Pł.zamyk' : 'Pierśc.odc') + ' ' + dnLbl + 'H=' + h,
                                 shortLabel: 'R.' + lbl.short,
-                                detailLabel: lbl.detail,
+                                detailLabel: det,
                                 type: 'number',
                                 componentType: ct,
                                 height: h,
@@ -475,12 +476,12 @@ function _excelBuildComponentColumns(dn, well) {
                     key: 'red_plyta_red_' + p.id,
                     label: 'R.' + p.name,
                     shortLabel: 'R.' + lbl.short,
-                    detailLabel: lbl.detail,
+                    detailLabel: p.height ? String(p.height) : lbl.detail,
                     type: 'number',
                     componentType: 'plyta_redukcyjna',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: true,
+                    fromReduction: false, /* płyty redukcyjne mają dn studni głównej, nie targetu */
                     targetDn: null
                 });
             });
@@ -569,21 +570,23 @@ function _excelBuildComponentColumns(dn, well) {
         });
     });
 
-    /* 5. Płyty redukcyjne */
-    const plytaRedProducts = groups['plyta_redukcyjna'] || [];
-    plytaRedProducts.forEach((p) => {
-        const lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
-        cols.push({
-            key: 'plyta_redukcyjna_' + p.id,
-            label: p.name,
-            shortLabel: lbl.short,
-            detailLabel: lbl.detail,
-            type: 'number',
-            componentType: 'plyta_redukcyjna',
-            productId: p.id,
-            height: p.height
+    /* 5. Płyty redukcyjne — tylko gdy brak sekcji redukcji (bo wtedy są w sekcji R.*) */
+    if (!hasRedTab || !anyRed) {
+        const plytaRedProducts = groups['plyta_redukcyjna'] || [];
+        plytaRedProducts.forEach((p) => {
+            const lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
+            cols.push({
+                key: 'plyta_redukcyjna_' + p.id,
+                label: p.name,
+                shortLabel: lbl.short,
+                detailLabel: p.height ? String(p.height) : lbl.detail,
+                type: 'number',
+                componentType: 'plyta_redukcyjna',
+                productId: p.id,
+                height: p.height
+            });
         });
-    });
+    }
 
     /* 6. Kręgi — per wysokość */
     const kregProducts = [...(groups['krag'] || [])].sort(
@@ -816,23 +819,37 @@ function _excelShortLabel(name, componentType) {
         case 'plyta_din': {
             var short = 'Pł.DIN';
             var detail = name.replace(/^Płyta DIN\s*/i, '').trim();
+            var hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            if (hMatch) detail = hMatch[1];
             return { short: short, detail: detail };
         }
         case 'plyta_najazdowa': {
             var short = 'Pł.najazd';
             var detail = name.replace(/^Płyta najazdowa\s*/i, '').trim();
+            var hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            if (hMatch) detail = hMatch[1];
             if (!detail) detail = name;
             return { short: short, detail: detail };
         }
         case 'plyta_zamykajaca': {
-                    return { short: 'Pł.zamyk', detail: '200' };
-                }
+            var short = 'Pł.zamyk';
+            var detail = name.replace(/^Płyta zamykająca\s*/i, '').trim();
+            var hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            if (hMatch) detail = hMatch[1];
+            return { short: short, detail: detail };
+        }
         case 'pierscien_odciazajacy': {
-            return { short: 'Pierśc.odc', detail: '' };
+            var short = 'Pierśc.odc';
+            var detail = name.replace(/^Pierście[ńn] odciążający\s*/i, '').trim();
+            var hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            if (hMatch) detail = hMatch[1];
+            return { short: short, detail: detail };
         }
         case 'plyta_redukcyjna': {
             var short = 'Pł.red.';
             var detail = name.replace(/^Płyta redukcyjna\s*/i, '').trim();
+            var hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            if (hMatch) detail = hMatch[1];
             return { short: short, detail: detail };
         }
         case 'osadnik': {
@@ -1080,10 +1097,17 @@ function _excelUpdateHeaderProdCodes() {
     var well = tabWell || (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 ? wells[currentWellIndex] : null);
     codes.forEach(function(span, idx) {
         var isPerProduct = span.getAttribute('data-per-product') === '1';
-        if (isPerProduct) return; /* kolumny per-produkt mają stały kod z definicji */
         var ct = span.getAttribute('data-ct');
         var height = span.getAttribute('data-height');
         var redTarget = (span.getAttribute('data-reddn') || '') ? (well && (well.redukcjaTargetDN || parseInt(span.getAttribute('data-reddn')) || 1000)) : null;
+        if (isPerProduct) {
+            /* Kolumny per-produkt: kod stały, ale cenę trzeba odświeżyć */
+            if (prices && prices[idx]) {
+                var ppid = span.textContent && span.textContent.trim();
+                prices[idx].textContent = ppid ? (_excelGetWellProdPrice(well, ct, height, redTarget) || '') : '';
+            }
+            return;
+        }
         var pid = well ? _excelGetWellProdCode(well, ct, height, redTarget) : null;
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
@@ -1331,6 +1355,7 @@ function excelSwitchTab(tab) {
     _excelActiveTab = tab;
     _excelRenderTabs();
     _excelRenderTable(tab);
+    _excelUpdateHeaderProdCodes();
 }
 
 /* ===== ADD WELL TO CURRENT TAB ===== */
@@ -1513,7 +1538,35 @@ function _excelRenderTable(dn) {
         const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
 
         const colCode = codeDisp
-            ? `<br><span class="h3-prodcode" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr}${fallbackAttr} data-reddn="${c.fromReduction ? (c.targetDn || '1000') : ''}" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">${escapeHtml(codeDisp)}</span><br><span class="h3-prodprice" data-ct="${ct}" data-height="${c.height != null ? c.height : ''}"${perProdAttr} style="display:block;"></span>`
+            ? (function() {
+                var priceHtml = '';
+                if (isPerProduct && codeDisp && typeof getItemAssessedPrice === 'function') {
+                    try {
+                        /* Użyj pierwszej studni z zakładki dla ceny, nie aktualnej */
+                        var priceWell = null;
+                        if (typeof _excelActiveTab !== 'undefined' && _excelActiveTab) {
+                            for (var _i = 0; _i < wells.length; _i++) {
+                                if (_excelWellMatchesTab(wells[_i], _excelActiveTab)) {
+                                    priceWell = wells[_i];
+                                    break;
+                                }
+                            }
+                        }
+                        if (!priceWell && typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
+                            priceWell = wells[currentWellIndex];
+                        }
+                        if (priceWell) {
+                            var prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === codeDisp; });
+                            if (prod) {
+                                var pr = getItemAssessedPrice(priceWell, prod, true, null);
+                                var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
+                                if (pr && pr > 0) priceHtml = fmt(pr) + ' PLN';
+                            }
+                        }
+                    } catch(e) {}
+                }
+                return '<br><span class="h3-prodcode" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + fallbackAttr + ' data-reddn="' + (c.fromReduction ? (c.targetDn || '1000') : '') + '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">' + escapeHtml(codeDisp) + '</span><br><span class="h3-prodprice" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + ' style="display:block;">' + priceHtml + '</span>';
+            })()
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
