@@ -1104,7 +1104,13 @@ function _excelUpdateHeaderProdCodes() {
             /* Kolumny per-produkt: kod stały, ale cenę trzeba odświeżyć */
             if (prices && prices[idx]) {
                 var ppid = span.textContent && span.textContent.trim();
-                prices[idx].textContent = ppid ? (_excelGetWellProdPrice(well, ct, height, redTarget) || '') : '';
+                if (ppid) {
+                    var _prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === ppid; });
+                    if (_prod && _prod.price) {
+                        var _fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
+                        prices[idx].textContent = _fmt(_prod.price) + ' PLN';
+                    }
+                }
             }
             return;
         }
@@ -1542,25 +1548,13 @@ function _excelRenderTable(dn) {
                 var priceHtml = '';
                 if (isPerProduct && codeDisp) {
                     try {
-                        var priceWell = null;
-                        if (typeof _excelActiveTab !== 'undefined' && _excelActiveTab) {
-                            for (var _i = 0; _i < wells.length; _i++) {
-                                if (_excelWellMatchesTab(wells[_i], _excelActiveTab)) {
-                                    priceWell = wells[_i];
-                                    break;
-                                }
-                            }
+                        /* Znajdź produkt w studnieProducts i pobierz cenę bez filtrowania */
+                        var prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === codeDisp; });
+                        if (prod && prod.price) {
+                            var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
+                            priceHtml = fmt(prod.price) + ' PLN';
                         }
-                        if (!priceWell && typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
-                            priceWell = wells[currentWellIndex];
-                        }
-                        if (priceWell) {
-                            var p = typeof _excelGetWellProdPrice === 'function'
-                                ? _excelGetWellProdPrice(priceWell, ct, c.height, c.fromReduction ? (c.targetDn || priceWell.redukcjaTargetDN || 1000) : null)
-                                : '';
-                            if (p) priceHtml = p;
-                        }
-                    } catch(e) {}
+                    } catch(e) { console.error('priceHtml error:', e); }
                 }
                 return '<br><span class="h3-prodcode" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + fallbackAttr + ' data-reddn="' + (c.fromReduction ? (c.targetDn || '1000') : '') + '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">' + escapeHtml(codeDisp) + '</span><br><span class="h3-prodprice" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + ' style="display:block;">' + priceHtml + '</span>';
             })()
