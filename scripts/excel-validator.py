@@ -53,7 +53,7 @@ def check_overlay_clean(path):
 
 # ===== ETAP 1 =====
 check('getHasReduction z 2500', JS, r'2500.*includes\(String')
-check('hasReduction render z 2500', JS, r"hasReduction = \['1000',\s*'1200',\s*'1500',\s*'2000',\s*'2500'\]")
+check('hasReduction render z 2500 i styczne', JS, r"hasReduction = \['1200',\s*'1500',\s*'2000',\s*'2500',\s*'styczne'\]")
 check('stycznaNadbudowa1200 w _excelGetComponentsForDn', JS, r'stycznaNadbudowa1200 \? 1200 : 1000')
 check('redukcjaTargetDN w hash config', JS, r'redukcjaTargetDN')
 check('spocznikH w hash config', JS, r"spocznikH \|\| ''")
