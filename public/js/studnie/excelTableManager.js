@@ -752,8 +752,24 @@ function _excelBuildComponentColumns(dn, well) {
             });
         }
     }
-    /* Main Uszczelki — auto */
-    cols.push({ key: 'uszczelka', label: 'Uszczelki', type: 'auto', componentType: 'uszczelka' });
+    /* Main Uszczelki — per-product (jak R.Uszczelki, dla głównego DN) */
+    var mainUszczProducts = groups['uszczelka'] || [];
+    if (typeof filterSealsByWellType === 'function') {
+        mainUszczProducts = filterSealsByWellType(mainUszczProducts, well);
+    }
+    mainUszczProducts.forEach(function(p) {
+        var lbl = _excelShortLabel(p.name || '', 'uszczelka');
+        cols.push({
+            key: 'uszczelka_' + p.id,
+            label: p.name,
+            shortLabel: lbl.short,
+            detailLabel: lbl.detail,
+            type: 'number',
+            componentType: 'uszczelka',
+            productId: p.id,
+            height: p.height
+        });
+    });
 
     return cols;
 }
