@@ -1169,7 +1169,17 @@ function openExcelTableModal() {
         }
     }
 
-    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+    /* Inicjalizuj _excelMaxTransitions dla WSZYSTKICH zakładek */
+    var _allTabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+    _allTabs.forEach(function(t) {
+        var _tw = (typeof wells !== 'undefined' && Array.isArray(wells))
+            ? wells.filter(function(w) { return _excelWellMatchesTab(w, t); })
+            : [];
+        var _tm = _tw.reduce(function(m, w) {
+            return (w.przejscia && w.przejscia.length > m) ? w.przejscia.length : m;
+        }, 0);
+        _excelMaxTransitions[t] = Math.max(1, _tm);
+    });
 
     const existing = document.getElementById('excel-table-overlay');
     if (existing) existing.remove();
@@ -2401,9 +2411,9 @@ function excelAddTransitionColumn() {
 }
 function _excelCleanEmptyPrzejscia(well) {
     if (!well || !well.przejscia) return;
-    /* Usuń przejścia bez productId — tylko wybór produktu czyni przejście validdym */
+    /* Zachowaj tylko przejścia z productId LUB w trakcie wyboru (tempCategory, rzednaWlaczenia) */
     well.przejscia = well.przejscia.filter(function(p) {
-        return p.productId && p.productId !== '';
+        return (p.productId && p.productId !== '') || (p.tempCategory && p.tempCategory !== '') || (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '');
     });
 }
 
