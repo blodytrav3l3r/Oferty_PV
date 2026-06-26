@@ -2357,6 +2357,19 @@ function _excelHandleArrow(e) {
                 nextRow.querySelectorAll('input, select')
             );
             next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
+            /* Pomijaj disabled w nowym wierszu — szukaj nastepnego enabled */
+            if (next && next.disabled) {
+                var _n;
+                for (var _ni = Math.min(colIdx, nextEls.length - 1) + 1; _ni < nextEls.length; _ni++) {
+                    if (!nextEls[_ni].disabled) { _n = nextEls[_ni]; break; }
+                }
+                if (!_n) {
+                    for (var _ni = Math.min(colIdx, nextEls.length - 1) - 1; _ni >= 0; _ni--) {
+                        if (!nextEls[_ni].disabled) { _n = nextEls[_ni]; break; }
+                    }
+                }
+                next = _n || null;
+            }
         }
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
@@ -2370,13 +2383,37 @@ function _excelHandleArrow(e) {
                 prevRow.querySelectorAll('input, select')
             );
             next = prevEls[Math.min(colIdx, prevEls.length - 1)] || null;
+            /* Pomijaj disabled w nowym wierszu — szukaj nastepnego enabled */
+            if (next && next.disabled) {
+                var _p;
+                for (var _pi = Math.min(colIdx, prevEls.length - 1) + 1; _pi < prevEls.length; _pi++) {
+                    if (!prevEls[_pi].disabled) { _p = prevEls[_pi]; break; }
+                }
+                if (!_p) {
+                    for (var _pi = Math.min(colIdx, prevEls.length - 1) - 1; _pi >= 0; _pi--) {
+                        if (!prevEls[_pi].disabled) { _p = prevEls[_pi]; break; }
+                    }
+                }
+                next = _p || null;
+            }
         }
     }
 
-    // Pomijaj disabled elementy przy focusowaniu
-    function _focusNext(el) {
+    // Pomijaj disabled elementy przy focusowaniu — skanuj dalej w tym samym kierunku
+    function _focusNext(el, dir) {
         if (!el) return;
-        if (el.disabled) return; // disabled input/select — nie da się focusować
+        if (el.disabled) {
+            /* Spróbuj następny w tym samym kierunku */
+            var curIdx = rowEls.indexOf(el);
+            if (dir === 'right' || dir === 'down') {
+                var nxt = rowEls[curIdx + 1];
+                if (nxt) _focusNext(nxt, dir);
+            } else if (dir === 'left' || dir === 'up') {
+                var prv = rowEls[curIdx - 1];
+                if (prv) _focusNext(prv, dir);
+            }
+            return;
+        }
         el.focus();
     }
 
@@ -2384,7 +2421,7 @@ function _excelHandleArrow(e) {
     if (target.tagName === 'INPUT') {
         e.preventDefault();
         if (next) {
-            _focusNext(next);
+            _focusNext(next, e.key.replace('Arrow', '').toLowerCase());
             // select() tylko dla INPUT, nigdy dla SELECT (brak metody)
             if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
         }
@@ -2392,7 +2429,7 @@ function _excelHandleArrow(e) {
         // select z open dropdown — nie blokuj (zachowaj natywne nawigowanie opcji)
         // ale jeśli navigate OUT to innej komórki, zróbmy to
         e.preventDefault();
-        _focusNext(next);
+        _focusNext(next, e.key.replace('Arrow', '').toLowerCase());
         if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
     }
 }
