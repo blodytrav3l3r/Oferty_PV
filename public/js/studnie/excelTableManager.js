@@ -1161,6 +1161,13 @@ function openExcelTableModal() {
         window.wells = [];
     }
 
+    /* Wyczyść puste przejścia przy otwarciu (PRZED obliczeniem maxTr) */
+    if (typeof wells !== 'undefined') {
+        for (var _rwo = 0; _rwo < wells.length; _rwo++) {
+            _excelCleanEmptyPrzejscia(wells[_rwo]);
+        }
+    }
+
     _excelMaxTransitions = _excelGetMaxTransitions();
 
     const existing = document.getElementById('excel-table-overlay');
@@ -1431,6 +1438,13 @@ async function _excelAutoSelectForWell(wIdx) {
 function _excelRenderTable(dn) {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
+
+    /* Wyczyść puste przejścia we wszystkich studniach */
+    if (typeof wells !== 'undefined') {
+        for (var _rwi = 0; _rwi < wells.length; _rwi++) {
+            _excelCleanEmptyPrzejscia(wells[_rwi]);
+        }
+    }
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     const maxTr = _excelMaxTransitions;
@@ -2380,13 +2394,17 @@ function excelAddTransitionColumn() {
 }
 function _excelCleanEmptyPrzejscia(well) {
     if (!well || !well.przejscia) return;
+    /* Usuń przejścia bez productId — tylko wybór produktu czyni przejście validdym */
     well.przejscia = well.przejscia.filter(function(p) {
-        return p.productId || (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '') || p.tempCategory;
+        return p.productId && p.productId !== '';
     });
 }
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
+    /* Nie twórz pustego przejścia, jeśli wartość jest pusta i nie ma jeszcze przejścia */
+    var hasExisting = trIdx < wells[wIdx].przejscia.length;
+    if (!hasExisting && (!value || value === '')) return;
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
     }
@@ -2401,8 +2419,6 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     wells[wIdx].przejscia.forEach((p, i) => {
         p.displayIndex = i;
     });
-    /* Usuń puste przejścia */
-    _excelCleanEmptyPrzejscia(wells[wIdx]);
     _excelUpdateLeftPreview(wIdx);
     _excelDebouncedRefresh();
 }
@@ -2428,8 +2444,6 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     // Renderuj ponownie tabelę, by zaktualizować listę średnic (DN)
     _excelRenderTable(_excelActiveTab);
     _excelUpdateLeftPreview(wIdx);
-    /* Usuń puste przejścia */
-    _excelCleanEmptyPrzejscia(wells[wIdx]);
     _excelDebouncedRefresh();
 }
 
