@@ -2329,7 +2329,11 @@ function _excelHandleTab(e) {
 
 /* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
 function _excelHandleArrow(e) {
-    e.preventDefault(); /* Zawsze blokuj scroll — niezależnie od dalszej logiki */
+    // Zawsze blokuj scroll — niezależnie od dalszej logiki
+    e.preventDefault();
+    /* Zapamiętaj pozycję scrolla przed zmianą focusa */
+    var _scrollContainer = document.getElementById('excel-table-container');
+    var _savedScroll = _scrollContainer ? { left: _scrollContainer.scrollLeft, top: _scrollContainer.scrollTop } : null;
     const target = e.target;
     if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT')) return;
 
@@ -2442,6 +2446,11 @@ function _excelHandleArrow(e) {
         e.preventDefault();
         _focusNext(next, e.key.replace('Arrow', '').toLowerCase());
         if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
+    }
+    /* Po zmianie focusa przywróć scroll — zabezpieczenie przed re-layoutem */
+    if (_savedScroll && _scrollContainer) {
+        _scrollContainer.scrollLeft = _savedScroll.left;
+        _scrollContainer.scrollTop = _savedScroll.top;
     }
 }
 
