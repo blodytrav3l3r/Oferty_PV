@@ -2414,10 +2414,10 @@ function _excelHandleArrow(e) {
         }
     }
 
-    // Pomijaj disabled i <select> przy focusowaniu — skanuj dalej w tym samym kierunku
+    // Pomijaj disabled elementy przy focusowaniu — skanuj dalej w tym samym kierunku
     function _focusNext(el, dir) {
         if (!el) return;
-        if (el.disabled || el.tagName === 'SELECT') {
+        if (el.disabled) {
             /* Spróbuj następny w tym samym kierunku */
             var curIdx = rowEls.indexOf(el);
             if (dir === 'right' || dir === 'down') {
@@ -2428,6 +2428,11 @@ function _excelHandleArrow(e) {
                 if (prv) _focusNext(prv, dir);
             }
             return;
+        }
+        /* Gdy target to <select>, zablokuj dropdown przez wlaczenie disabled na moment */
+        if (target && target.tagName === 'SELECT' && target !== el) {
+            target.disabled = true; /* zamyka dropdown natychmiast */
+            target.disabled = false; /* re-enable dla nastepnej interakcji */
         }
         el.focus();
     }
