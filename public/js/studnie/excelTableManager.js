@@ -95,7 +95,7 @@ function _excelStartPolling() {
             _excelUpdateHeaderProdCodes();
         }
         lastConfigHash = configHash;
-    }, 300);
+    }, 1500);
 }
 
 function _excelStopPolling() {
@@ -1404,7 +1404,8 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
-    _excelUpdateHeaderProdCodes();
+    /* Odśwież kody h3 asynchronicznie — unikaj DOM mutations podczas event cycle */
+    setTimeout(function() { _excelUpdateHeaderProdCodes(); }, 0);
 }
 
 /* ===== CLOSE ===== */
