@@ -1334,12 +1334,16 @@ function openExcelTableModal() {
     const container = document.getElementById('excel-table-container');
     if (container && !/** @type {any} */ (container)._excelListenersAttached) {
         /** @type {any} */ (container)._excelListenersAttached = true;
-        container.addEventListener('keydown', (e) => {
-            if (e.key.startsWith('Arrow')) {
-                e.stopPropagation();
-                _excelHandleArrow(e);
-            }
-        });
+        /* Użyj capture phase na dokumencie — przechwytuje strzałki ZANIM input/select je przetworzy */
+        var _arrowHandler = function(e) {
+            if (!container.contains(e.target)) return;
+            if (!e.key.startsWith('Arrow')) return;
+            e.stopPropagation();
+            e.preventDefault();
+            _excelHandleArrow(e);
+        };
+        document.addEventListener('keydown', _arrowHandler, true);
+        /** @type {any} */ (container)._arrowHandler = _arrowHandler;
         /* Delegowany klik — zamiast inline onclick na każdym TR */
         container.addEventListener('click', function(e) {
             var row = e.target.closest('tr[data-widx]');
@@ -1414,6 +1418,11 @@ function closeExcelTableModal() {
         /* Usuń handler resize */
         if (/** @type {any} */ (overlay)._resizeHandler) {
             window.removeEventListener('resize', /** @type {any} */ (overlay)._resizeHandler);
+        }
+        /* Usuń handler strzałek (capture phase) */
+        var _container = document.getElementById('excel-table-container');
+        if (_container && /** @type {any} */ (_container)._arrowHandler) {
+            document.removeEventListener('keydown', /** @type {any} */ (_container)._arrowHandler, true);
         }
         overlay.remove();
     }
