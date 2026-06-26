@@ -1159,85 +1159,6 @@ function _excelCellInp(w) {
     return `background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
-/* ===== CUSTOM SELECT (zamiast natywnego <select>) ===== */
-/* Chrome nie pozwala w pelni zablokowac ArrowUp/Down na <select> */
-var _excelCustomPopup = null;
-
-function _excelCustomSelectHtml(opts, curVal, onChange, width) {
-    var label = '';
-    for (var i = 0; i < opts.length; i++) {
-        if (opts[i][0] === curVal) { label = opts[i][1]; break; }
-    }
-    var escOnCh = onChange.replace(/'/g, "\\'");
-    return '<div class="excel-csel" tabindex="0" role="listbox"'
-        + ' style="display:inline-flex;position:relative;width:auto;min-width:40px;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;cursor:pointer;outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;' + (width ? 'width:' + width + 'px;' : '') + '"'
-        + ' data-csel-opts=\'' + JSON.stringify(opts).replace(/'/g, "\\'") + '\''
-        + ' data-csel-val="' + (curVal || '') + '"'
-        + ' data-csel-onchange="' + escOnCh + '"'
-        + ' onclick="_excelCustomSelectOpen(this)"'
-        + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)">'
-        + (label || '—') + '</div>';
-}
-
-function _excelCustomSelectOpen(el) {
-    var oldPopup = document.getElementById('excel-csel-popup');
-    if (oldPopup) oldPopup.remove();
-    if (_excelCustomPopup === el) { _excelCustomPopup = null; return; }
-    _excelCustomPopup = el;
-    var rect = el.getBoundingClientRect();
-    var rawOpts = el.getAttribute('data-csel-opts') || '[]';
-    var opts;
-    try { opts = JSON.parse(rawOpts); } catch(e) { opts = []; }
-    var curVal = el.getAttribute('data-csel-val') || '';
-    var onChange = el.getAttribute('data-csel-onchange') || '';
-    var popup = document.createElement('div');
-    popup.id = 'excel-csel-popup';
-    popup.style.cssText = 'position:fixed;top:' + (rect.bottom + 1) + 'px;left:' + Math.max(rect.left, 0) + 'px;min-width:' + Math.max(rect.width, 80) + 'px;background:#161923;border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:2px;z-index:10002;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);';
-    for (var i = 0; i < opts.length; i++) {
-        var act = opts[i][0] === curVal;
-        var d = document.createElement('div');
-        d.style.cssText = 'padding:0.25rem 0.5rem;font-size:0.65rem;cursor:pointer;border-radius:3px;background:' + (act ? 'rgba(99,102,241,0.2)' : 'transparent') + ';color:' + (act ? '#a5b4fc' : '#e2e8f0') + ';';
-        d.textContent = opts[i][1];
-        d.onmouseenter = function() { /** @type {HTMLElement} */ (this).style.background = 'rgba(255,255,255,0.08)'; };
-        d.onmouseleave = function() { /** @type {HTMLElement} */ (this).style.background = /** @type {HTMLElement} */ (this).dataset.active === '1' ? 'rgba(99,102,241,0.2)' : 'transparent'; };
-        d.dataset.val = opts[i][0];
-        d.dataset.active = act ? '1' : '0';
-        d.onclick = function() { _excelCustomSelectClose(/** @type {HTMLElement} */ (this).dataset.val, onChange); };
-        popup.appendChild(d);
-    }
-    document.body.appendChild(popup);
-    /* Zamknij po kliknieciu poza */
-    setTimeout(function() {
-        var _cl = function(e2) {
-            if (!popup || !popup.parentNode) return;
-            if (!popup.contains(e2.target) && e2.target !== el) {
-                popup.remove(); _excelCustomPopup = null;
-                document.removeEventListener('mousedown', _cl, true);
-            }
-        };
-        document.addEventListener('mousedown', _cl, true);
-    }, 10);
-}
-
-function _excelCustomSelectClose(val, onChange) {
-    var popup = document.getElementById('excel-csel-popup');
-    if (popup) popup.remove();
-    _excelCustomPopup = null;
-    /* Znajdz element nadrzedny i zaktualizuj wartosc */
-    var el = document.querySelector('[data-csel-val]');
-    if (el) {
-        el.setAttribute('data-csel-val', val);
-        /* Znajdz etykiete */
-        var opts = JSON.parse(el.getAttribute('data-csel-opts') || '[]');
-        for (var i = 0; i < opts.length; i++) {
-            if (opts[i][0] === val) { el.textContent = opts[i][1]; break; }
-        }
-    }
-    /* Wykonaj callback (eval) */
-    try { (new Function('return ' + onChange))(); } catch(e) { console.warn('csel onChange error', e); }
-}
-
-
 /* ===== OVERLAY SELECT ===== */
 function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
     var label = '';
@@ -1962,15 +1883,14 @@ function _excelRenderTable(dn) {
               )
             : [];
         const wlazVal = _excelGetWlazFromConfig(well);
-        let wlazSel = `<select onchange="excelOnWlazChange(${wIdx},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(62)}text-align:left;cursor:pointer;">`;
-        wlazSel += '<option value="">—</option>';
-        wlazProducts.forEach((p) => {
-            const hCm = Math.round(parseInt(p.height) || 0) / 10;
-            const label = hCm > 0 ? hCm + ' cm' : (p.name.length > 20 ? p.name.substring(0, 18) + '…' : p.name);
-            wlazSel += `<option value="${p.id}"${wlazVal === p.id ? ' selected' : ''}>${label}</option>`;
+        var wlazOpts2 = [['', '—']];
+        wlazProducts.forEach(function(p) {
+            var hCm2 = Math.round(parseInt(p.height) || 0) / 10;
+            var lbl2 = hCm2 > 0 ? hCm2 + ' cm' : (p.name.length > 20 ? p.name.substring(0, 18) + '…' : p.name);
+            wlazOpts2.push([p.id, lbl2]);
         });
-        wlazSel += '</select>';
-        html += `<td style="${tdBase}text-align:left;">${wlazSel}</td>`;
+        html += '<td style="text-align:left;">' + _excelOverlaySelectHtml(wlazOpts2, wlazVal,
+            "excelOnWlazChange(" + wIdx + ",this.value)", 62) + '</td>';
 
         /* Komponenty — ilości z kodem produktu */
         compCols.forEach((col) => {
@@ -2005,16 +1925,23 @@ function _excelRenderTable(dn) {
             if (can1200) {
                 redOpts += '<option value="1200"' + (redActive && redTarget === 1200 ? ' selected' : '') + '>DN1200</option>';
             }
-            html += `<td style="${tdBase}text-align:center;"><select onchange="excelOnReductionSelectChange(${wIdx},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(105)}text-align:center;cursor:pointer;">${redOpts}</select></td>`;
+            var redOpts2 = [['', 'Brak']];
+            if (redActive) {
+                if (redTarget === 1000) redOpts2.push(['1000', 'DN1000']);
+                if (redTarget === 1200) redOpts2.push(['1200', 'DN1200']);
+            } else {
+                redOpts2.push(['1000', 'DN1000']);
+                if (can1200) redOpts2.push(['1200', 'DN1200']);
+            }
+            html += '<td style="text-align:center;">' + _excelOverlaySelectHtml(redOpts2, redActive ? String(redTarget) : '',
+                "excelOnReductionSelectChange(" + wIdx + ",this.value)", 105) + '</td>';
         }
 
         /* Kineta */
-        let kinSel = `<select onchange="excelOnKinetaChange(${wIdx},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(90)}text-align:left;cursor:pointer;">`;
-        KINETA_OPTIONS.forEach(([val, label]) => {
-            kinSel += `<option value="${val}"${well.kineta === val ? ' selected' : ''}>${label}</option>`;
-        });
-        kinSel += '</select>';
-        html += `<td style="${tdBase}text-align:left;">${kinSel}</td>`;
+        var kinOpts2 = [['', '—']];
+        KINETA_OPTIONS.forEach(function(ko) { kinOpts2.push([ko[0], ko[1]]); });
+        html += '<td style="text-align:left;">' + _excelOverlaySelectHtml(kinOpts2, well.kineta || '',
+            "excelOnKinetaChange(" + wIdx + ",this.value)", 90) + '</td>';
 
         /* Psia buda */
         html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.psiaBuda ? ' checked' : ''} onchange="excelOnPsiaBudaChange(${wIdx},this.checked)" style="accent-color:#f59e0b;cursor:pointer;" /></td>`;
@@ -2404,7 +2331,7 @@ function excelCellBlur(el) {
 /* ===== TAB KEY NAVIGATION ===== */
 function _excelHandleTab(e) {
     const target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
+    if (!target || (target.tagName !== 'INPUT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
 
     const container = document.getElementById('excel-table-container');
     if (!container || !container.contains(target)) return;
@@ -2431,7 +2358,7 @@ function _excelHandleArrow(e) {
     var _scrollContainer = document.getElementById('excel-table-container');
     var _savedScroll = _scrollContainer ? { left: _scrollContainer.scrollLeft, top: _scrollContainer.scrollTop } : null;
     const target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
+    if (!target || (target.tagName !== 'INPUT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
 
     const container = document.getElementById('excel-table-container');
     if (!container || !container.contains(target)) return;
@@ -2524,11 +2451,6 @@ function _excelHandleArrow(e) {
                 if (prv) _focusNext(prv, dir);
             }
             return;
-        }
-        /* Gdy target to <select>, zablokuj dropdown przez wlaczenie disabled na moment */
-        if (target && target.tagName === 'SELECT' && target !== el) {
-            target.disabled = true; /* zamyka dropdown natychmiast */
-            target.disabled = false; /* re-enable dla nastepnej interakcji */
         }
         el.focus();
     }
