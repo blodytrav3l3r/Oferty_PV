@@ -1237,6 +1237,27 @@ function _excelCustomSelectClose(val, onChange) {
     try { (new Function('return ' + onChange))(); } catch(e) { console.warn('csel onChange error', e); }
 }
 
+
+/* ===== OVERLAY SELECT ===== */
+function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
+    var label = '';
+    for (var i = 0; i < opts.length; i++) {
+        if (opts[i][0] === curVal) { label = opts[i][1]; break; }
+    }
+    var optHtml = '';
+    for (var i = 0; i < opts.length; i++) {
+        optHtml += '<option value="' + (opts[i][0] || '').replace(/"/g, '&quot;') + '"' + (opts[i][0] === curVal ? ' selected' : '') + '>' + opts[i][1] + '</option>';
+    }
+    var escOnCh = onChange.replace(/"/g, '&quot;');
+    return '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' + (width ? 'width:' + width + 'px;' : '') + '"'
+        + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)">'
+        + '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"'
+        + ' onchange="' + escOnCh + ';this.previousElementSibling.textContent=this.options[this.selectedIndex].text">'
+        + optHtml + '</select>'
+        + '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' + (label || '&mdash;') + '</div>'
+        + '</div>';
+}
+
 /* ===== OVERLAY POSITIONING ===== */
 function _excelPositionOverlay(overlay) {
     if (!overlay) return;
@@ -1906,12 +1927,10 @@ function _excelRenderTable(dn) {
             // Określ aktywny rodzaj
             const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
 
-            let typeSel = `<select onchange="excelOnPrzejscieTypeChange(${wIdx},${i},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(120)}text-align:left;cursor:pointer;">`;
-            typeSel += '<option value="">—</option>';
-            categories.forEach((cat) => {
-                typeSel += `<option value="${cat}"${activeCategory === cat ? ' selected' : ''}>${cat}</option>`;
-            });
-            typeSel += '</select>';
+            var catOpts2 = [['', '&mdash;']];
+            categories.forEach(function(c) { catOpts2.push([c, c]); });
+            var typeHtml = _excelOverlaySelectHtml(catOpts2, activeCategory,
+                'excelOnPrzejscieTypeChange(' + wIdx + ',' + i + ',this.value)', 120);
 
             // Wybierz średnice dostępne tylko dla wybranego rodzaju
             const availDns = activeCategory
@@ -1920,19 +1939,18 @@ function _excelRenderTable(dn) {
                   )
                 : [];
 
-            let dnSel = `<select onchange="excelOnPrzejscieChange(${wIdx},${i},'productId',this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(110)}text-align:left;cursor:pointer;"${!activeCategory ? ' disabled' : ''}>`;
-            dnSel += '<option value="">—</option>';
-            availDns.forEach((p) => {
-                const dnLabel =
-                    typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
-                dnSel += `<option value="${p.id}"${prz.productId === p.id ? ' selected' : ''}>${dnLabel}</option>`;
+            var dnOpts2 = [['', '&mdash;']];
+            availDns.forEach(function(p) {
+                var dnLabel2 = typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
+                dnOpts2.push([p.id, dnLabel2]);
             });
-            dnSel += '</select>';
+            var dnHtml = _excelOverlaySelectHtml(dnOpts2, prz.productId,
+                "excelOnPrzejscieChange(" + wIdx + "," + i + ",'productId',this.value)", 110);
 
             html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${hasExplicitRzWl ? prz.rzednaWlaczenia : ''}" placeholder="${rzWlPlaceholder}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
             html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
-            html += `<td style="${tdBase}text-align:left;">${typeSel}</td>`;
-            html += `<td style="${tdBase}text-align:left;">${dnSel}</td>`;
+            html += `<td style="${tdBase}text-align:left;">${typeHtml}</td>`;
+            html += `<td style="${tdBase}text-align:left;">${dnHtml}</td>`;
         }
 
         html += `<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td>`;
@@ -2365,7 +2383,7 @@ function excelCreateFromEmpty() {
 function excelCellFocus(el) {
     el.style.outline = '1px solid rgba(99,102,241,0.5)';
     el.style.background = 'rgba(99,102,241,0.06)';
-    el.select();
+    if (el.tagName === 'INPUT') el.select();
     _excelUserEditing = true; /* blokuje polling */
 
     // Ustaw aktywną studnię = wiersz w którym jest kursor
@@ -2386,7 +2404,7 @@ function excelCellBlur(el) {
 /* ===== TAB KEY NAVIGATION ===== */
 function _excelHandleTab(e) {
     const target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT')) return;
+    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
 
     const container = document.getElementById('excel-table-container');
     if (!container || !container.contains(target)) return;
@@ -2413,7 +2431,7 @@ function _excelHandleArrow(e) {
     var _scrollContainer = document.getElementById('excel-table-container');
     var _savedScroll = _scrollContainer ? { left: _scrollContainer.scrollLeft, top: _scrollContainer.scrollTop } : null;
     const target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT')) return;
+    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
 
     const container = document.getElementById('excel-table-container');
     if (!container || !container.contains(target)) return;
