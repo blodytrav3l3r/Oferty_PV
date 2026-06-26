@@ -1339,6 +1339,7 @@ function openExcelTableModal() {
             if (!container.contains(e.target)) return;
             if (!e.key.startsWith('Arrow')) return;
             e.stopPropagation();
+            e.stopImmediatePropagation();
             e.preventDefault();
             _excelHandleArrow(e);
         };
