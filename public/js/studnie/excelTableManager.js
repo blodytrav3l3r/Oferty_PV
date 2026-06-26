@@ -2429,6 +2429,8 @@ function _excelHandleArrow(e) {
             }
             return;
         }
+        /* Blur aktualnego selecta przed focusem nastepnego — zamyka dropdown */
+        if (target && target.tagName === 'SELECT') target.blur();
         el.focus();
     }
 
