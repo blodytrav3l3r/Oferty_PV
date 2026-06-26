@@ -1177,10 +1177,12 @@ function openExcelTableModal() {
         const topBar = document.querySelector('header') || document.querySelector('.header');
         const bottomBar = document.getElementById('offer-summary-footer-fixed');
         const topOffset = topBar ? topBar.getBoundingClientRect().bottom : diaRect.top;
-        const bottomOffset = bottomBar ? bottomBar.getBoundingClientRect().top : (diaRect.top + diaRect.height);
-        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);height:${bottomOffset - topOffset}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+        const bottomOffset = (bottomBar && bottomBar.offsetHeight > 0) ? bottomBar.getBoundingClientRect().top : (diaRect.top + diaRect.height);
+        const overlayHeight = Math.max(bottomOffset - topOffset, 100);
+        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);height:${overlayHeight}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
 
     } else {
+        overlay.style.cssText =
             'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
     }
 
