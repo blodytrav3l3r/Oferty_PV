@@ -1098,7 +1098,7 @@ function _excelUpdateHeaderProdCodes() {
             }
         }
     }
-    var well = tabWell || (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 ? wells[currentWellIndex] : null);
+    var well = (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 ? wells[currentWellIndex] : null) || tabWell;
     codes.forEach(function(span, idx) {
         var isPerProduct = span.getAttribute('data-per-product') === '1';
         var ct = span.getAttribute('data-ct');
