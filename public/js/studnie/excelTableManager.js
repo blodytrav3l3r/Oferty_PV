@@ -1404,8 +1404,7 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
-    /* Odśwież kody h3 asynchronicznie — unikaj DOM mutations podczas event cycle */
-    setTimeout(function() { _excelUpdateHeaderProdCodes(); }, 0);
+    _excelUpdateHeaderProdCodes();
 }
 
 /* ===== CLOSE ===== */
