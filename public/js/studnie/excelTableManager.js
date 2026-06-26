@@ -1159,6 +1159,84 @@ function _excelCellInp(w) {
     return `background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
+/* ===== CUSTOM SELECT (zamiast natywnego <select>) ===== */
+/* Chrome nie pozwala w pelni zablokowac ArrowUp/Down na <select> */
+var _excelCustomPopup = null;
+
+function _excelCustomSelectHtml(opts, curVal, onChange, width) {
+    var label = '';
+    for (var i = 0; i < opts.length; i++) {
+        if (opts[i][0] === curVal) { label = opts[i][1]; break; }
+    }
+    var escOnCh = onChange.replace(/'/g, "\\'");
+    return '<div class="excel-csel" tabindex="0" role="listbox"'
+        + ' style="display:inline-flex;position:relative;width:auto;min-width:40px;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;cursor:pointer;outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;' + (width ? 'width:' + width + 'px;' : '') + '"'
+        + ' data-csel-opts=\'' + JSON.stringify(opts).replace(/'/g, "\\'") + '\''
+        + ' data-csel-val="' + (curVal || '') + '"'
+        + ' data-csel-onchange="' + escOnCh + '"'
+        + ' onclick="_excelCustomSelectOpen(this)"'
+        + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)">'
+        + (label || '—') + '</div>';
+}
+
+function _excelCustomSelectOpen(el) {
+    var oldPopup = document.getElementById('excel-csel-popup');
+    if (oldPopup) oldPopup.remove();
+    if (_excelCustomPopup === el) { _excelCustomPopup = null; return; }
+    _excelCustomPopup = el;
+    var rect = el.getBoundingClientRect();
+    var rawOpts = el.getAttribute('data-csel-opts') || '[]';
+    var opts;
+    try { opts = JSON.parse(rawOpts); } catch(e) { opts = []; }
+    var curVal = el.getAttribute('data-csel-val') || '';
+    var onChange = el.getAttribute('data-csel-onchange') || '';
+    var popup = document.createElement('div');
+    popup.id = 'excel-csel-popup';
+    popup.style.cssText = 'position:fixed;top:' + (rect.bottom + 1) + 'px;left:' + Math.max(rect.left, 0) + 'px;min-width:' + Math.max(rect.width, 80) + 'px;background:#161923;border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:2px;z-index:10002;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);';
+    for (var i = 0; i < opts.length; i++) {
+        var act = opts[i][0] === curVal;
+        var d = document.createElement('div');
+        d.style.cssText = 'padding:0.25rem 0.5rem;font-size:0.65rem;cursor:pointer;border-radius:3px;background:' + (act ? 'rgba(99,102,241,0.2)' : 'transparent') + ';color:' + (act ? '#a5b4fc' : '#e2e8f0') + ';';
+        d.textContent = opts[i][1];
+        d.onmouseenter = function() { /** @type {HTMLElement} */ (this).style.background = 'rgba(255,255,255,0.08)'; };
+        d.onmouseleave = function() { /** @type {HTMLElement} */ (this).style.background = /** @type {HTMLElement} */ (this).dataset.active === '1' ? 'rgba(99,102,241,0.2)' : 'transparent'; };
+        d.dataset.val = opts[i][0];
+        d.dataset.active = act ? '1' : '0';
+        d.onclick = function() { _excelCustomSelectClose(/** @type {HTMLElement} */ (this).dataset.val, onChange); };
+        popup.appendChild(d);
+    }
+    document.body.appendChild(popup);
+    /* Zamknij po kliknieciu poza */
+    setTimeout(function() {
+        var _cl = function(e2) {
+            if (!popup || !popup.parentNode) return;
+            if (!popup.contains(e2.target) && e2.target !== el) {
+                popup.remove(); _excelCustomPopup = null;
+                document.removeEventListener('mousedown', _cl, true);
+            }
+        };
+        document.addEventListener('mousedown', _cl, true);
+    }, 10);
+}
+
+function _excelCustomSelectClose(val, onChange) {
+    var popup = document.getElementById('excel-csel-popup');
+    if (popup) popup.remove();
+    _excelCustomPopup = null;
+    /* Znajdz element nadrzedny i zaktualizuj wartosc */
+    var el = document.querySelector('[data-csel-val]');
+    if (el) {
+        el.setAttribute('data-csel-val', val);
+        /* Znajdz etykiete */
+        var opts = JSON.parse(el.getAttribute('data-csel-opts') || '[]');
+        for (var i = 0; i < opts.length; i++) {
+            if (opts[i][0] === val) { el.textContent = opts[i][1]; break; }
+        }
+    }
+    /* Wykonaj callback (eval) */
+    try { (new Function('return ' + onChange))(); } catch(e) { console.warn('csel onChange error', e); }
+}
+
 /* ===== OVERLAY POSITIONING ===== */
 function _excelPositionOverlay(overlay) {
     if (!overlay) return;
