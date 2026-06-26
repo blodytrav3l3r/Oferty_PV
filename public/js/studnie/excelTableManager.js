@@ -1271,7 +1271,8 @@ function openExcelTableModal() {
 
     // Delegowany klik na wiersze — bardziej niezawodny niż inline onclick
     const container = document.getElementById('excel-table-container');
-    if (container) {
+    if (container && !/** @type {any} */ (container)._excelListenersAttached) {
+        /** @type {any} */ (container)._excelListenersAttached = true;
         container.addEventListener('keydown', (e) => {
             if (e.key.startsWith('Arrow')) {
                 e.stopPropagation();
@@ -1933,6 +1934,10 @@ function _excelRenderTable(dn) {
     _excelInitColumnResize();
     _excelInitColumnSelect();
     _excelUpdateHeaderProdCodes();
+    /* Odśwież ikony Lucide po zmianie DOM */
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        try { lucide.createIcons(); } catch(e) {}
+    }
 }
 
 /* ===== RESIZE COLUMNS (Excel-like drag handles) ===== */
