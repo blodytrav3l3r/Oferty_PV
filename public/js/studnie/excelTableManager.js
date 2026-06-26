@@ -1828,7 +1828,7 @@ function _excelRenderTable(dn) {
             // Określ aktywny rodzaj
             const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
 
-            let typeSel = `<select onchange="excelOnPrzejscieTypeChange(${wIdx},${i},this.value)" style="${_excelCellInp(120)}text-align:left;cursor:pointer;">`;
+            let typeSel = `<select onchange="excelOnPrzejscieTypeChange(${wIdx},${i},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(120)}text-align:left;cursor:pointer;">`;
             typeSel += '<option value="">—</option>';
             categories.forEach((cat) => {
                 typeSel += `<option value="${cat}"${activeCategory === cat ? ' selected' : ''}>${cat}</option>`;
@@ -1842,7 +1842,7 @@ function _excelRenderTable(dn) {
                   )
                 : [];
 
-            let dnSel = `<select onchange="excelOnPrzejscieChange(${wIdx},${i},'productId',this.value)" style="${_excelCellInp(110)}text-align:left;cursor:pointer;"${!activeCategory ? ' disabled' : ''}>`;
+            let dnSel = `<select onchange="excelOnPrzejscieChange(${wIdx},${i},'productId',this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(110)}text-align:left;cursor:pointer;"${!activeCategory ? ' disabled' : ''}>`;
             dnSel += '<option value="">—</option>';
             availDns.forEach((p) => {
                 const dnLabel =
@@ -1866,7 +1866,7 @@ function _excelRenderTable(dn) {
               )
             : [];
         const wlazVal = _excelGetWlazFromConfig(well);
-        let wlazSel = `<select onchange="excelOnWlazChange(${wIdx},this.value)" style="${_excelCellInp(62)}text-align:left;cursor:pointer;">`;
+        let wlazSel = `<select onchange="excelOnWlazChange(${wIdx},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(62)}text-align:left;cursor:pointer;">`;
         wlazSel += '<option value="">—</option>';
         wlazProducts.forEach((p) => {
             const hCm = Math.round(parseInt(p.height) || 0) / 10;
@@ -1909,11 +1909,11 @@ function _excelRenderTable(dn) {
             if (can1200) {
                 redOpts += '<option value="1200"' + (redActive && redTarget === 1200 ? ' selected' : '') + '>DN1200</option>';
             }
-            html += `<td style="${tdBase}text-align:center;"><select onchange="excelOnReductionSelectChange(${wIdx},this.value)" style="${_excelCellInp(105)}text-align:center;cursor:pointer;">${redOpts}</select></td>`;
+            html += `<td style="${tdBase}text-align:center;"><select onchange="excelOnReductionSelectChange(${wIdx},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(105)}text-align:center;cursor:pointer;">${redOpts}</select></td>`;
         }
 
         /* Kineta */
-        let kinSel = `<select onchange="excelOnKinetaChange(${wIdx},this.value)" style="${_excelCellInp(90)}text-align:left;cursor:pointer;">`;
+        let kinSel = `<select onchange="excelOnKinetaChange(${wIdx},this.value)" onkeydown="if(event.key.startsWith('Arrow')){event.stopPropagation();event.preventDefault();window._excelHandleArrow(event);}" style="${_excelCellInp(90)}text-align:left;cursor:pointer;">`;
         KINETA_OPTIONS.forEach(([val, label]) => {
             kinSel += `<option value="${val}"${well.kineta === val ? ' selected' : ''}>${label}</option>`;
         });
