@@ -2319,6 +2319,7 @@ function _excelHandleTab(e) {
 
 /* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
 function _excelHandleArrow(e) {
+    e.preventDefault(); /* Zawsze blokuj scroll — niezależnie od dalszej logiki */
     const target = e.target;
     if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'SELECT')) return;
 
