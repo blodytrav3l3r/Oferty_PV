@@ -1660,15 +1660,15 @@ function _excelRenderTable(dn) {
                         }
                     } catch(e) { console.error('priceHtml error:', e); }
                 }
-                return '<br><span class="h3-prodcode" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + fallbackAttr + ' data-reddn="' + (c.fromReduction ? (c.targetDn || '1000') : '') + '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:95px;">' + escapeHtml(codeDisp) + '</span><br><span class="h3-prodprice" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + ' style="display:block;">' + priceHtml + '</span>';
+                return '<br><span class="h3-prodcode" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + fallbackAttr + ' data-reddn="' + (c.fromReduction ? (c.targetDn || '1000') : '') + '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;">' + escapeHtml(codeDisp) + '</span><br><span class="h3-prodprice" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + ' style="display:block;">' + priceHtml + '</span>';
             })()
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
         const colDnLabel = c.fromReduction ? 'DN' + (c.targetDn || (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) || 1000) : dnTh3(ct);
-        h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colLabel}</th>`;
-        h2 += `<th style="${th2Base}background:#13151f;color:${hc};min-width:62px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#13151f;color:${hc};min-width:62px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
+        h2 += `<th style="${th2Base}background:#13151f;color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
+        h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#13151f;color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
     h1 += `<th style="${thBase}background:#1a170f;color:#fbbf24;min-width:60px;text-align:center;">H denn</th>`;
@@ -1875,7 +1875,7 @@ function _excelRenderTable(dn) {
             const hArg = c.height != null ? c.height : 'null';
             const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
             var disabledAttr = '';
-            html += `<td style="${tdBase}text-align:center;min-width:62px;">`
+            html += `<td style="${tdBase}text-align:center;min-width:95px;">`
                 + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
                 + `</td>`;
         });
