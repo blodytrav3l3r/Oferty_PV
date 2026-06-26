@@ -1169,14 +1169,18 @@ function openExcelTableModal() {
     const overlay = document.createElement('div');
     overlay.id = 'excel-table-overlay';
 
-    // Pozycjonuj overlay obok lewego panelu (jeśli widoczny)
+    // Pozycjonuj overlay między górnym banerem a dolnym paskiem, przylegający do lewego panelu
     const diagramPanel = document.querySelector('.well-diagram-panel');
     const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
     if (isDiagramVisible) {
-        const rect = diagramPanel.getBoundingClientRect();
-        overlay.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.right}px;width:calc(100vw - ${rect.right}px);height:${rect.height}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+        const diaRect = diagramPanel.getBoundingClientRect();
+        const topBar = document.querySelector('header') || document.querySelector('.header');
+        const bottomBar = document.getElementById('offer-summary-footer-fixed');
+        const topOffset = topBar ? topBar.getBoundingClientRect().bottom : diaRect.top;
+        const bottomOffset = bottomBar ? bottomBar.getBoundingClientRect().top : (diaRect.top + diaRect.height);
+        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);height:${bottomOffset - topOffset}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+
     } else {
-        overlay.style.cssText =
             'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
     }
 
