@@ -1329,7 +1329,7 @@ function openExcelTableModal() {
                     <button onclick="_excelToggleAddMenu()" id="excel-add-btn" title="Dodaj studnię do bieżącej zakładki" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.25);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> + Dodaj</button>
                     <div id="excel-add-dropdown" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#161923;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.4rem;z-index:100;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
                         <label style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.4rem;font-size:0.65rem;color:#94a3b8;cursor:pointer;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:0.3rem;">
-                            <input type="checkbox" id="excel-auto-select-check" ${_excelAutoSelectEnabled ? 'checked' : ''} onchange="window._excelAutoSelectEnabled=this.checked" style="accent-color:#6366f1;cursor:pointer;" />
+                            <input type="checkbox" id="excel-auto-select-check" ${_excelAutoSelectEnabled ? 'checked' : ''} onchange="_excelAutoSelectEnabled=this.checked;window._excelAutoSelectEnabled=this.checked" style="accent-color:#6366f1;cursor:pointer;" />
                             Auto-dobór
                         </label>
                         <button onclick="excelAddWellToTab();_excelToggleAddMenu()" style="display:block;width:100%;text-align:left;background:rgba(59,130,246,0.1);color:#93c5fd;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;margin-bottom:2px;transition:background 0.1s;" onmouseenter="this.style.background='rgba(59,130,246,0.2)'" onmouseleave="this.style.background='rgba(59,130,246,0.1)'">Szybko (puste)</button>
@@ -1553,6 +1553,29 @@ function _excelRenderTable(dn) {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
 
+    // Zapisz aktualny fokus przed re-renderem
+    let savedFocus = null;
+    const activeEl = document.activeElement;
+    if (activeEl && container.contains(activeEl)) {
+        const tr = activeEl.closest('tr');
+        if (tr) {
+            const wIdx = tr.getAttribute('data-widx');
+            if (wIdx !== null) {
+                // Spróbuj zidentyfikować po atrybucie data-field (dla INPUT)
+                const field = activeEl.getAttribute('data-field');
+                // Jeśli to select wrapper (DIV), to ma data-field na wewnętrznym select lub divie?
+                // Sprawdźmy po prostu indeks elementu w wierszu dla uniwersalności
+                const navEls = _excelGetNavElements(tr);
+                const colIdx = navEls.indexOf(activeEl);
+                savedFocus = {
+                    wIdx: parseInt(wIdx),
+                    field: field,
+                    colIdx: colIdx
+                };
+            }
+        }
+    }
+
     /* Wyczyść puste przejścia we wszystkich studniach */
     if (typeof wells !== 'undefined') {
         for (var _rwi = 0; _rwi < wells.length; _rwi++) {
@@ -1569,6 +1592,8 @@ function _excelRenderTable(dn) {
     const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
 
     let html = '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
+
+
 
     /* THEAD — sticky, trzy wiersze */
     html += '<thead>';
@@ -2043,6 +2068,22 @@ function _excelRenderTable(dn) {
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
         try { lucide.createIcons(); } catch(e) {}
     }
+
+    // Przywróć fokus po re-renderze
+    if (savedFocus) {
+        const targetRow = container.querySelector(`tr[data-widx="${savedFocus.wIdx}"]`);
+        if (targetRow) {
+            const navEls = _excelGetNavElements(targetRow);
+            const restoreEl = navEls[savedFocus.colIdx];
+            if (restoreEl && !restoreEl.disabled) {
+                restoreEl.focus();
+                // Jeśli to input, zaznacz zawartość
+                if (restoreEl.tagName === 'INPUT' && restoreEl.select) {
+                    restoreEl.select();
+                }
+            }
+        }
+    }
 }
 
 /* ===== RESIZE COLUMNS (Excel-like drag handles) ===== */
@@ -2357,8 +2398,27 @@ function _excelHandleArrow(e) {
     /* Zapamiętaj pozycję scrolla przed zmianą focusa */
     var _scrollContainer = document.getElementById('excel-table-container');
     var _savedScroll = _scrollContainer ? { left: _scrollContainer.scrollLeft, top: _scrollContainer.scrollTop } : null;
-    const target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
+
+    let target = e.target;
+    if (!target) return;
+
+    // Normalizuj target — selecty to overlay pattern (DIV.excel-sel-wrap > hidden SELECT)
+    // Sprowadź do fokusowego elementu: INPUT lub DIV.excel-sel-wrap
+    if (target.tagName === 'SELECT') {
+        // Ukryty select — fokus powinien być na wrapperze
+        var wrap = target.closest('.excel-sel-wrap');
+        if (wrap) target = wrap;
+    } else if (target.tagName !== 'INPUT' && target.classList && target.classList.contains('excel-sel-wrap')) {
+        // Już na wrapperze — OK
+    } else if (target.tagName !== 'INPUT') {
+        // Inny element — sprawdź czy jest wewnątrz wrappera
+        var parentWrap = target.closest && target.closest('.excel-sel-wrap');
+        if (parentWrap) {
+            target = parentWrap;
+        } else {
+            return;
+        }
+    }
 
     const container = document.getElementById('excel-table-container');
     if (!container || !container.contains(target)) return;
@@ -2372,8 +2432,8 @@ function _excelHandleArrow(e) {
     const currentRowIdx = dataRows.indexOf(tr);
     if (currentRowIdx === -1) return;
 
-    // Indeks kolumny wśród WSZYSTKICH input/select w wierszu (w tym disabled — dla spójności indeksów)
-    const rowEls = Array.from(tr.querySelectorAll('input, select'));
+    // Zbierz fokusowalne elementy: INPUT + DIV.excel-sel-wrap (nie ukryte selecty!)
+    const rowEls = _excelGetNavElements(tr);
     const colIdx = rowEls.indexOf(target);
     if (colIdx === -1) return;
 
@@ -2391,23 +2451,9 @@ function _excelHandleArrow(e) {
             if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
                 excelSelectRow(downWIdx);
             }
-            const nextEls = Array.from(
-                nextRow.querySelectorAll('input, select')
-            );
+            const nextEls = _excelGetNavElements(nextRow);
             next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
-            /* Pomijaj disabled w nowym wierszu — szukaj nastepnego enabled */
-            if (next && next.disabled) {
-                var _n;
-                for (var _ni = Math.min(colIdx, nextEls.length - 1) + 1; _ni < nextEls.length; _ni++) {
-                    if (!nextEls[_ni].disabled) { _n = nextEls[_ni]; break; }
-                }
-                if (!_n) {
-                    for (var _ni = Math.min(colIdx, nextEls.length - 1) - 1; _ni >= 0; _ni--) {
-                        if (!nextEls[_ni].disabled) { _n = nextEls[_ni]; break; }
-                    }
-                }
-                next = _n || null;
-            }
+            next = _excelSkipDisabled(next, nextEls, colIdx, 1);
         }
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
@@ -2417,64 +2463,91 @@ function _excelHandleArrow(e) {
             if (!isNaN(upWIdx) && typeof currentWellIndex !== 'undefined' && upWIdx !== currentWellIndex) {
                 excelSelectRow(upWIdx);
             }
-            const prevEls = Array.from(
-                prevRow.querySelectorAll('input, select')
-            );
+            const prevEls = _excelGetNavElements(prevRow);
             next = prevEls[Math.min(colIdx, prevEls.length - 1)] || null;
-            /* Pomijaj disabled w nowym wierszu — szukaj nastepnego enabled */
-            if (next && next.disabled) {
-                var _p;
-                for (var _pi = Math.min(colIdx, prevEls.length - 1) + 1; _pi < prevEls.length; _pi++) {
-                    if (!prevEls[_pi].disabled) { _p = prevEls[_pi]; break; }
-                }
-                if (!_p) {
-                    for (var _pi = Math.min(colIdx, prevEls.length - 1) - 1; _pi >= 0; _pi--) {
-                        if (!prevEls[_pi].disabled) { _p = prevEls[_pi]; break; }
-                    }
-                }
-                next = _p || null;
-            }
+            next = _excelSkipDisabled(next, prevEls, colIdx, -1);
         }
     }
 
-    // Pomijaj disabled elementy przy focusowaniu — skanuj dalej w tym samym kierunku
-    function _focusNext(el, dir) {
-        if (!el) return;
-        if (el.disabled) {
-            /* Spróbuj następny w tym samym kierunku */
-            var curIdx = rowEls.indexOf(el);
-            if (dir === 'right' || dir === 'down') {
-                var nxt = rowEls[curIdx + 1];
-                if (nxt) _focusNext(nxt, dir);
-            } else if (dir === 'left' || dir === 'up') {
-                var prv = rowEls[curIdx - 1];
-                if (prv) _focusNext(prv, dir);
-            }
-            return;
-        }
-        el.focus();
-    }
-
-    // Zawsze handle nav dla INPUT, nawet jeśli next jest null (blokuj scroll)
-    if (target.tagName === 'INPUT') {
-        e.preventDefault();
-        if (next) {
-            _focusNext(next, e.key.replace('Arrow', '').toLowerCase());
-            // select() tylko dla INPUT, nigdy dla SELECT (brak metody)
-            if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
-        }
-    } else if (target.tagName === 'SELECT' && next) {
-        // select z open dropdown — nie blokuj (zachowaj natywne nawigowanie opcji)
-        // ale jeśli navigate OUT to innej komórki, zróbmy to
-        e.preventDefault();
-        _focusNext(next, e.key.replace('Arrow', '').toLowerCase());
+    // Nawigacja — focusuj następny element
+    e.preventDefault();
+    if (next) {
+        _excelFocusNavEl(next, rowEls, e.key.replace('Arrow', '').toLowerCase());
+        // select() tylko dla INPUT
         if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
     }
+
     /* Po zmianie focusa przywróć scroll — zabezpieczenie przed re-layoutem */
     if (_savedScroll && _scrollContainer) {
         _scrollContainer.scrollLeft = _savedScroll.left;
         _scrollContainer.scrollTop = _savedScroll.top;
     }
+}
+
+/** Zbierz fokusowalne elementy nawigacji w wierszu: INPUT + DIV.excel-sel-wrap */
+function _excelGetNavElements(row) {
+    var els = [];
+    var cells = row.querySelectorAll('td');
+    for (var i = 0; i < cells.length; i++) {
+        // Priorytet: wrapper selecta (DIV.excel-sel-wrap)
+        var wrap = cells[i].querySelector('.excel-sel-wrap');
+        if (wrap) {
+            els.push(wrap);
+            continue;
+        }
+        // INPUT
+        var inp = cells[i].querySelector('input');
+        if (inp) {
+            els.push(inp);
+            continue;
+        }
+        // Fallback: natywny select bez wrappera
+        var sel = cells[i].querySelector('select');
+        if (sel) {
+            els.push(sel);
+        }
+    }
+    return els;
+}
+
+/** Pomiń disabled elementy — szukaj enabled w kierunku +1/-1 */
+function _excelSkipDisabled(el, els, startIdx, dir) {
+    if (!el || !_excelIsDisabledNav(el)) return el;
+    var from = Math.min(startIdx, els.length - 1);
+    // Szukaj dalej w kierunku dir
+    for (var i = from + dir; i >= 0 && i < els.length; i += dir) {
+        if (!_excelIsDisabledNav(els[i])) return els[i];
+    }
+    // Szukaj w przeciwnym kierunku
+    for (i = from - dir; i >= 0 && i < els.length; i -= dir) {
+        if (!_excelIsDisabledNav(els[i])) return els[i];
+    }
+    return null;
+}
+
+/** Sprawdź czy element nawigacyjny jest disabled */
+function _excelIsDisabledNav(el) {
+    if (!el) return true;
+    if (el.disabled) return true;
+    // Wrapper z disabled selectem
+    if (el.classList && el.classList.contains('excel-sel-wrap')) {
+        var sel = el.querySelector('select');
+        return sel && sel.disabled;
+    }
+    return false;
+}
+
+/** Focusuj element nawigacji, pomijając disabled */
+function _excelFocusNavEl(el, rowEls, dir) {
+    if (!el) return;
+    if (_excelIsDisabledNav(el)) {
+        var curIdx = rowEls.indexOf(el);
+        var step = (dir === 'right' || dir === 'down') ? 1 : -1;
+        var nxt = rowEls[curIdx + step];
+        if (nxt) _excelFocusNavEl(nxt, rowEls, dir);
+        return;
+    }
+    el.focus();
 }
 
 /* ===== HANDLERS ===== */
