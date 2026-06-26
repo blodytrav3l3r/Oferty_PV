@@ -1,7 +1,7 @@
 // @ts-check
 /* ===== EXCEL TABLE MANAGER — Tabela konfiguracyjna studni (Excel-style) ===== */
 
-let _excelMaxTransitions = 1;
+let _excelMaxTransitions = {}; /* per-tab: { '1000': 1, '1200': 1, ... } */
 let _excelActiveTab = '1000';
 let _excelCreatingLock = false;
 let _excelRefreshTimer = null;
@@ -172,13 +172,14 @@ function _excelWellMatchesTab(well, tab) {
 }
 
 function _excelGetMaxTransitions() {
-    let max = 1;
-    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
-        wells.forEach((w) => {
-            if (w.przejscia && w.przejscia.length > max) max = w.przejscia.length;
-        });
-    }
-    return Math.max(max, _excelMaxTransitions);
+    var tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    var tabWells = typeof wells !== 'undefined' && Array.isArray(wells)
+        ? wells.filter(function(w) { return _excelWellMatchesTab(w, tab); })
+        : [];
+    var max = tabWells.reduce(function(m, w) {
+        return (w.przejscia && w.przejscia.length > m) ? w.przejscia.length : m;
+    }, 0);
+    return Math.max(max, _excelMaxTransitions[tab] || 1);
 }
 
 function _excelCreatePrzejscie() {
@@ -1168,7 +1169,7 @@ function openExcelTableModal() {
         }
     }
 
-    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
 
     const existing = document.getElementById('excel-table-overlay');
     if (existing) existing.remove();
@@ -1406,7 +1407,7 @@ function excelAddWellToTab() {
 
     wells.push(well);
     _excelAutoSetWlaz(well);
-    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
@@ -1447,7 +1448,7 @@ function _excelRenderTable(dn) {
     }
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
-    const maxTr = _excelMaxTransitions;
+    const maxTr = _excelMaxTransitions[dn] || 1;
     const compCols = _excelBuildComponentColumns(dn, tabWells[0]);
     const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].includes(dn);
 
@@ -2164,7 +2165,7 @@ function excelCreateFromEmpty() {
 
         wells.push(well);
         _excelAutoSetWlaz(well);
-        _excelMaxTransitions = _excelGetMaxTransitions();
+        _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
         _excelRenderTabs();
         _excelRenderTable(_excelActiveTab);
         _excelUpdateWellCount();
@@ -2343,14 +2344,17 @@ function excelOnRzednaChange(wIdx) {
 
 /* ===== DODAWANIE / USUWANIE KOLUMNY PRZEJŚCIA ===== */
 function excelRemoveTransitionColumn() {
-    if (_excelMaxTransitions <= 1 && wells.length > 0) {
+    var tab = _excelActiveTab || '1000';
+    var curMax = _excelMaxTransitions[tab] || 1;
+    if (curMax <= 1 && wells.length > 0) {
         showToast('Nie można usunąć — minimum 1 kolumna przejścia', 'error');
         return;
     }
-    const lastIdx = _excelMaxTransitions - 1;
+    const lastIdx = curMax - 1;
     let hasData = false;
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         for (const w of wells) {
+            if (!_excelWellMatchesTab(w, tab)) continue;
             if (w.przejscia && w.przejscia[lastIdx]) {
                 const p = w.przejscia[lastIdx];
                 if (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '' || p.productId !== null && p.productId !== '' || (p.kat && p.kat !== 0)) {
@@ -2366,29 +2370,32 @@ function excelRemoveTransitionColumn() {
     }
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         wells.forEach((w) => {
+            if (!_excelWellMatchesTab(w, tab)) return;
             if (w.przejscia && w.przejscia.length > 0) {
                 w.przejscia.pop();
             }
         });
     }
-    _excelMaxTransitions = Math.max(0, _excelMaxTransitions - 1);
+    _excelMaxTransitions[tab] = Math.max(1, curMax - 1);
     _excelRenderTable(_excelActiveTab);
     _excelDebouncedRefresh();
     showToast('Usunięto kolumnę przejścia', 'info');
 }
-
 function excelAddTransitionColumn() {
-    _excelMaxTransitions = (_excelMaxTransitions || 1) + 1;
-    /* Dodaj puste przejście do każdej studni, która ma mniej niż nowe max */
+    var tab = _excelActiveTab || '1000';
+    _excelMaxTransitions[tab] = (_excelMaxTransitions[tab] || 1) + 1;
+    var newMax = _excelMaxTransitions[tab];
+    /* Dodaj puste przejście TYLKO do studni z bieżącej zakładki */
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         wells.forEach((w) => {
+            if (!_excelWellMatchesTab(w, tab)) return;
             if (!w.przejscia) w.przejscia = [];
-            while (w.przejscia.length < _excelMaxTransitions) {
+            while (w.przejscia.length < newMax) {
                 w.przejscia.push(_excelCreatePrzejscie());
             }
         });
     }
-    _excelRenderTable(_excelActiveTab);
+    _excelRenderTable(tab);
     _excelDebouncedRefresh();
     showToast('Dodano kolumnę przejścia', 'info');
 }
@@ -3066,7 +3073,7 @@ function excelDuplicateWell(wIdx) {
     copy.id = 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
     copy.name = src.name + ' (kopia)';
     wells.splice(wIdx + 1, 0, copy);
-    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
@@ -3089,7 +3096,7 @@ async function excelDeleteWell(wIdx) {
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= wells.length) {
         currentWellIndex = Math.max(0, wells.length - 1);
     }
-    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
@@ -3166,7 +3173,7 @@ function _excelCreateFromDialog() {
     well.name = name; well.rzednaWlazu = rzw; well.rzednaDna = rzd;
     wells.push(well);
     _excelAutoSetWlaz(well);
-    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
     var overlay = document.getElementById('excel-add-dialog-overlay');
     if (overlay) overlay.remove();
@@ -3273,7 +3280,7 @@ function _excelImportPasteList() {
     });
     var overlay = document.getElementById('excel-paste-dialog-overlay');
     if (overlay) overlay.remove();
-    _excelMaxTransitions = _excelGetMaxTransitions();
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
     if (added > 0) {
         showToast('Dodano ' + added + ' studni', 'success');
