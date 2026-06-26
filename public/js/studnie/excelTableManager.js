@@ -6,6 +6,8 @@ let _excelActiveTab = '1000';
 let _excelCreatingLock = false;
 let _excelRefreshTimer = null;
 let _excelSelectedCols = [];
+let _excelDirty = false;
+let _excelFullscreen = false;
 let _excelPollInterval = null;
 let _excelLastClickedCol = -1;
 let _excelColWidths = {};
@@ -104,6 +106,7 @@ function _excelStopPolling() {
 }
 
 function _excelDebouncedRefresh() {
+    _excelMarkDirty();
     if (_excelRefreshTimer) clearTimeout(_excelRefreshTimer);
     _excelRefreshTimer = setTimeout(() => {
         _excelRefreshTimer = null;
@@ -1156,6 +1159,61 @@ function _excelCellInp(w) {
     return `background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
+/* ===== OVERLAY POSITIONING ===== */
+function _excelPositionOverlay(overlay) {
+    if (!overlay) return;
+    if (_excelFullscreen) {
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+        return;
+    }
+    const diagramPanel = document.querySelector('.well-diagram-panel');
+    const isVisible = diagramPanel && diagramPanel.offsetParent !== null;
+    if (isVisible) {
+        const diaRect = diagramPanel.getBoundingClientRect();
+        const topBar = document.querySelector('header') || document.querySelector('.header');
+        const bottomBar = document.getElementById('offer-summary-footer-fixed');
+        const topOffset = topBar ? topBar.getBoundingClientRect().bottom : diaRect.top;
+        const bottomOffset = (bottomBar && bottomBar.offsetHeight > 0) ? bottomBar.getBoundingClientRect().top : (diaRect.top + diaRect.height);
+        const h = Math.max(bottomOffset - topOffset, 100);
+        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${h}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+    } else {
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+    }
+}
+
+function excelToggleFullscreen() {
+    _excelFullscreen = !_excelFullscreen;
+    const overlay = document.getElementById('excel-table-overlay');
+    _excelPositionOverlay(overlay);
+    var btn = document.getElementById('excel-fs-btn');
+    if (btn) btn.textContent = _excelFullscreen ? 'Okno' : 'Pełny';
+}
+
+/* ===== DIRTY FLAG ===== */
+function _excelMarkDirty() {
+    _excelDirty = true;
+}
+function _excelMarkClean() {
+    _excelDirty = false;
+}
+
+/* ===== SEARCH / FILTER ===== */
+function excelFilterWells(value) {
+    const q = (value || '').trim().toLowerCase();
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const rows = container.querySelectorAll('tbody tr[data-widx]');
+    rows.forEach(function(row) {
+        if (!q) {
+            row.style.display = '';
+            return;
+        }
+        var nameCell = row.querySelector('td:nth-child(2) input, td:nth-child(2)');
+        var name = nameCell ? (nameCell.value || nameCell.textContent || '').toLowerCase() : '';
+        row.style.display = name.indexOf(q) >= 0 ? '' : 'none';
+    });
+}
+
 /* ===== OPEN MODAL ===== */
 function openExcelTableModal() {
     if (typeof wells === 'undefined' || !Array.isArray(wells)) {
@@ -1181,6 +1239,9 @@ function openExcelTableModal() {
         _excelMaxTransitions[t] = Math.max(1, _tm);
     });
 
+    /* Zainicjuj stan — brak zmian */
+    _excelDirty = false;
+
     const existing = document.getElementById('excel-table-overlay');
     if (existing) existing.remove();
 
@@ -1191,21 +1252,7 @@ function openExcelTableModal() {
     overlay.setAttribute('aria-label', 'Tabela konfiguracyjna studni');
 
     // Pozycjonuj overlay między górnym banerem a dolnym paskiem, przylegający do lewego panelu
-    const diagramPanel = document.querySelector('.well-diagram-panel');
-    const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
-    if (isDiagramVisible) {
-        const diaRect = diagramPanel.getBoundingClientRect();
-        const topBar = document.querySelector('header') || document.querySelector('.header');
-        const bottomBar = document.getElementById('offer-summary-footer-fixed');
-        const topOffset = topBar ? topBar.getBoundingClientRect().bottom : diaRect.top;
-        const bottomOffset = (bottomBar && bottomBar.offsetHeight > 0) ? bottomBar.getBoundingClientRect().top : (diaRect.top + diaRect.height);
-        const overlayHeight = Math.max(bottomOffset - topOffset, 100);
-        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${overlayHeight}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
-
-    } else {
-        overlay.style.cssText =
-            'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
-    }
+    _excelPositionOverlay(overlay);
 
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeExcelTableModal();
@@ -1214,6 +1261,14 @@ function openExcelTableModal() {
         if (e.key === 'Escape') closeExcelTableModal();
     });
 
+    /* Nasłuchuj resize — odśwież pozycjonowanie */
+    var _resizeHandler = function() { _excelPositionOverlay(overlay); };
+    window.addEventListener('resize', _resizeHandler);
+    /* Zapisz handler do usunięcia przy close */
+    /** @type {any} */ (overlay)._resizeHandler = _resizeHandler;
+
+    const diagramPanel = document.querySelector('.well-diagram-panel');
+    const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
     const modal = document.createElement('div');
     if (isDiagramVisible) {
         modal.style.cssText =
@@ -1262,7 +1317,9 @@ function openExcelTableModal() {
                         <button onclick="excelShowPasteDialog();_excelToggleAddMenu()" style="display:block;width:100%;text-align:left;background:rgba(255,255,255,0.04);color:#e2e8f0;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;transition:background 0.1s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.04)'">Wklej listę</button>
                     </div>
                 </div>
-                <button onclick="excelSaveAll()" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
+                <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" style="background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:0.25rem 0.4rem;font-size:0.6rem;color:#e2e8f0;outline:none;width:100px;" />
+                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
+                <button onclick="excelSaveAll()" id="excel-save-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
                 <button onclick="closeExcelTableModal()" title="Zamknij bez zapisywania" style="background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
             </div>
         </div>
@@ -1346,10 +1403,21 @@ function excelSelectRow(wIdx) {
     _excelUpdateHeaderProdCodes();
 }
 
+/* ===== CLOSE ===== */
 function closeExcelTableModal() {
+    if (_excelDirty && typeof appConfirm === 'function') {
+        if (!appConfirm('Są niezapisane zmiany. Czy na pewno zamknąć?')) return;
+    }
     _excelStopPolling();
     const overlay = document.getElementById('excel-table-overlay');
-    if (overlay) overlay.remove();
+    if (overlay) {
+        /* Usuń handler resize */
+        if (/** @type {any} */ (overlay)._resizeHandler) {
+            window.removeEventListener('resize', /** @type {any} */ (overlay)._resizeHandler);
+        }
+        overlay.remove();
+    }
+    _excelDirty = false;
 }
 
 /* ===== TABS (always all visible) ===== */
@@ -2968,8 +3036,16 @@ function _excelRefreshDupColors() {
 
 /* ===== SAVE ===== */
 function excelSaveAll() {
+    var btn = document.getElementById('excel-save-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Zapisywanie...';
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+    }
     if (typeof refreshAll === 'function') refreshAll();
     showToast('Zapisano zmiany w tabeli', 'success');
+    _excelDirty = false;
     closeExcelTableModal();
 }
 
