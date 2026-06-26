@@ -2414,10 +2414,10 @@ function _excelHandleArrow(e) {
         }
     }
 
-    // Pomijaj disabled elementy przy focusowaniu — skanuj dalej w tym samym kierunku
+    // Pomijaj disabled i <select> przy focusowaniu — skanuj dalej w tym samym kierunku
     function _focusNext(el, dir) {
         if (!el) return;
-        if (el.disabled) {
+        if (el.disabled || el.tagName === 'SELECT') {
             /* Spróbuj następny w tym samym kierunku */
             var curIdx = rowEls.indexOf(el);
             if (dir === 'right' || dir === 'down') {
@@ -2429,8 +2429,6 @@ function _excelHandleArrow(e) {
             }
             return;
         }
-        /* Blur aktualnego selecta przed focusem nastepnego — zamyka dropdown */
-        if (target && target.tagName === 'SELECT') target.blur();
         el.focus();
     }
 
