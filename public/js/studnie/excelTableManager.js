@@ -1171,7 +1171,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
     }
     var escOnCh = onChange.replace(/"/g, '&quot;');
     return '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' + (width ? 'width:' + width + 'px;' : '') + '"'
-        + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)">'
+        + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();var s=this.querySelector(\'select\');if(typeof s.showPicker===\'function\'){s.showPicker()}else{s.focus();s.click()}}">'
         + '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"'
         + ' onchange="' + escOnCh + ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text">'
         + optHtml + '</select>'
