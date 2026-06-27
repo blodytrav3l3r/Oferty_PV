@@ -2514,39 +2514,24 @@ function _excelHandlePaste(e) {
     if (!cb) return;
     var text = cb.getData('text');
     if (!text || !text.trim()) return;
-    /* Zawsze przejmij event (capture phase na kontenerze) */
+    /* Zawsze przejmij event gdy jesteśmy w kontenerze (capture phase) */
     e.preventDefault();
     e.stopPropagation();
 
-    /* Podziel na linie — obsłuż \r\n i \n */
-    var lines = text.trim().split('\n').map(function(l) { return l.replace(/\r$/, ''); }).filter(function(l) { return l.trim() !== ''; });
-    if (lines.length === 0) return;
-
-    /* Wykryj tryb danych:
-       - isTsv: dane mają tabulatory (wielokolumnowe, np. z Excela)
-       - isMultiLine: dane mają więcej niż 1 linię (lista nazw lub TSV) */
-    var hasTabs = lines.some(function(l) { return l.indexOf('\t') !== -1; });
-
-    /* Sprawdź gdzie jest fokus */
-    var _activeEl = document.activeElement;
+    /* Paste w pusty wiersz → utwórz nowe studnie */
     var _emptyInput = document.getElementById('excel-empty-name');
-    var focusOnEmpty = _activeEl && (_activeEl === _emptyInput ||
-        _activeEl.id === 'excel-empty-rzw' || _activeEl.id === 'excel-empty-rzd');
-
-    /* Tryb: NOWE STUDNIE
-       Warunki: fokus na pustym wierszu LUB (lista nazw bez TSV i brak zaznaczenia komórek/kolumn) */
-    var noSelection = _excelSelectedCells.length === 0 && _excelSelectedCols.length === 0;
-    var isNameList = !hasTabs && lines.length > 1;
-    if (focusOnEmpty || (noSelection && isNameList)) {
+    if (_emptyInput && _emptyInput === document.activeElement) {
         _excelPasteCreateWells(text);
         return;
     }
 
     var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
     if (rows.length === 0) return;
-
+    var lines = text.trim().split('\n');
+    for (var _pi = 0; _pi < lines.length; _pi++) {
+        lines[_pi] = lines[_pi].replace(/\r$/, '');
+    }
     if (_excelSelectedCells.length > 0) {
-        /* ── Tryb: ZAZNACZONE KOMÓRKI ── */
         var cellList = _excelSelectedCells.sort(function(a,b){return a.wIdx-b.wIdx||a.colIdx-b.colIdx;});
         var cellRows = {};
         cellList.forEach(function(c) {
@@ -2556,23 +2541,27 @@ function _excelHandlePaste(e) {
         var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
         var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
         var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
-        rows = _excelEnsureRowCount(_baseWIdx + lines.length, rows);
+        /* Doklej brakujące wiersze gdy dane wylewają się poza tabelę */
+        var neededRows = _baseWIdx + lines.length;
+        rows = _excelEnsureRowCount(neededRows, rows);
         lines.forEach(function(line, li) {
             var wIdx = li < widxArr.length ? widxArr[li] : (_baseWIdx + li);
             var parts = line.split('\t');
             var _srccols = li < widxArr.length && cellRows[wIdx] ? cellRows[wIdx].sort(function(a,b){return a-b;}) : _baseCols;
             var _firstCol = _srccols.length > 0 ? _srccols[0] : 0;
             parts.forEach(function(val, ci) {
+                var colIdx = _firstCol + ci;
                 var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
                 if (!row) return;
-                var tdInner = row.children[_firstCol + ci];
+                var tdInner = row.children[colIdx];
                 var target = tdInner ? tdInner.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, val.trim());
+                if (!target) return;
+                _excelSetCellValue(target, val.trim());
             });
         });
     } else if (_excelSelectedCols.length > 0) {
-        /* ── Tryb: ZAZNACZONE KOLUMNY ── */
         var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        /* Doklej brakujące wiersze */
         rows = _excelEnsureRowCount(lines.length, rows);
         lines.forEach(function(line, i) {
             var parts = line.split('\t');
@@ -2580,27 +2569,32 @@ function _excelHandlePaste(e) {
                 if (ci >= parts.length) return;
                 var tdInner = rows[i] ? rows[i].children[colIdx] : null;
                 var target = tdInner ? tdInner.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, parts[ci].trim());
+                if (!target) return;
+                _excelSetCellValue(target, parts[ci].trim());
             });
         });
     } else {
-        /* ── Tryb: FALLBACK — wklej od aktywnego elementu ── */
+        /* Wykryj startowy wiersz z aktywnego elementu w tabeli */
         var startWIdx = 0;
-        if (_activeEl) {
-            var _tr = _activeEl.closest('tr[data-widx]');
+        var _ae = document.activeElement;
+        if (_ae) {
+            var _tr = _ae.closest('tr[data-widx]');
             if (_tr) startWIdx = parseInt(_tr.getAttribute('data-widx') || '0') || 0;
         }
-        var startRow = document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0];
-        var colIdx = _excelGetPasteColIdx(startRow);
+        var colIdx = _excelGetPasteColIdx(
+            document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
+        );
+        /* Doklej brakujące wiersze od startWIdx */
         rows = _excelEnsureRowCount(startWIdx + lines.length, rows);
         lines.forEach(function(line, i) {
             var parts = line.split('\t');
-            var targetRow = document.querySelector('tr[data-widx="' + (startWIdx + i) + '"]') || rows[startWIdx + i];
-            if (!targetRow) return;
             parts.forEach(function(v, ci) {
-                var tdEl = targetRow.children[colIdx + ci];
-                var target = tdEl ? tdEl.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, v.trim());
+                var _ci = colIdx + ci;
+                var targetRow = document.querySelector('tr[data-widx="' + (startWIdx + i) + '"]');
+                var td3 = targetRow ? targetRow.children[_ci] : (rows[startWIdx + i] ? rows[startWIdx + i].children[_ci] : null);
+                var target = td3 ? td3.querySelector('input, select') : null;
+                if (!target) return;
+                _excelSetCellValue(target, v.trim());
             });
         });
     }
@@ -4019,22 +4013,20 @@ function _excelPasteCreateWells(text) {
     var parsed = _excelParsePasteData(text);
     /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
     if (parsed.length === 0) {
-        var lines = text.trim().split('\n').map(function(l) { return l.replace(/\r$/, '').trim(); }).filter(function(l) { return l; });
+        var lines = text.trim().split(String.fromCharCode(92,110)).map(function(l) { return l.replace(String.fromCharCode(92,114,36), '').trim(); }).filter(function(l) { return l; });
         if (lines.length > 0) {
             var dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
             var added = 0;
-            for (var fi = 0; fi < lines.length; fi++) {
-                var name = lines[fi];
-                if (!name) continue;
-                if (wells.some(function(w) { return w.name === name; })) continue;
+            lines.forEach(function(name) {
+                if (wells.some(function(w) { return w.name === name; })) return;
                 var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                 if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
                 var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
                 wells.push(well);
                 _excelAutoSetWlaz(well);
                 added++;
-            }
+            });
             if (added > 0) {
                 _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
                 _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
