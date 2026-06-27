@@ -1389,7 +1389,7 @@ function openExcelTableModal() {
             firstRow.style.outline = 'none';
             firstRow.style.boxShadow = 'none';
             var lp = firstRow.querySelector('td:first-child');
-            if (lp) lp.style.borderLeft = 'none';
+            if (lp) lp.style.boxShadow = 'none';
         }
         currentWellIndex = -1;
     }
@@ -1431,7 +1431,7 @@ function excelSelectRow(wIdx) {
             prevRow.style.boxShadow = 'none';
             /* Usuń zieloną ramkę */
             var prevFirstTd = prevRow.querySelector('td:first-child');
-            if (prevFirstTd) prevFirstTd.style.borderLeft = 'none';
+            if (prevFirstTd) prevFirstTd.style.boxShadow = 'none';
         }
     }
 
@@ -1443,9 +1443,9 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
         }
-        /* Zielona ramka — tylko na Lp */
+        /* Zielona ramka — box-shadow inset na Lp */
         var firstTd = newRow.querySelector('td:first-child');
-        if (firstTd) firstTd.style.borderLeft = '3px solid #22c55e';
+        if (firstTd) firstTd.style.boxShadow = 'inset 3px 0 0 #22c55e';
     }
 
     _excelUpdateLeftPreview(wIdx);
@@ -1858,7 +1858,7 @@ function _excelRenderTable(dn) {
         const tdBase = `${_EXCEL_FONT}`;
 
         /* Lp. */
-        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;${isActive ? 'border-left:3px solid #22c55e;' : ''}">${idx + 1}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;${isActive ? 'box-shadow:inset 3px 0 0 #22c55e;' : ''}">${idx + 1}</td>`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu, sticky */
         html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
