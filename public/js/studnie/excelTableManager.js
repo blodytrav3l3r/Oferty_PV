@@ -1387,7 +1387,7 @@ function openExcelTableModal() {
                 excelSelectRow(wIdx);
             }
         });
-        /* Delegowany klik — excel-like cell/row selection */
+        /* Delegowany klik — excel-like cell selection */
         container.addEventListener('click', function(e) {
             if (e.target.closest('button')) return;
             var td = e.target.closest('td');
@@ -1396,21 +1396,29 @@ function openExcelTableModal() {
             var wIdx = parseInt(row.getAttribute('data-widx'), 10);
             if (isNaN(wIdx)) return;
             var colIdx = Array.from(row.children).indexOf(td);
-            /* Ctrl+Shift+click na komórce = cell selection */
-            if (e.ctrlKey || e.shiftKey) {
+            /* Shift+click = zakres */
+            if (e.shiftKey) {
                 e.stopPropagation();
-                _excelSelectCell(wIdx, colIdx, e.ctrlKey, e.shiftKey);
+                _excelSelectCell(wIdx, colIdx, false, true);
                 return;
             }
-            /* Zwykły klik = wybierz wiersz */
+            /* Ctrl+click = toggle */
+            if (e.ctrlKey) {
+                e.stopPropagation();
+                _excelSelectCell(wIdx, colIdx, true, false);
+                return;
+            }
+            /* Zwykły klik = zaznacz komórkę + wiersz */
+            _excelSelectCell(wIdx, colIdx, false, false);
             if (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex) {
                 excelSelectRow(wIdx);
             }
-            _excelDeselectAllCells();
         });
         /* Bind copy/paste */
         container.addEventListener('copy', _excelHandleCopy);
         container.addEventListener('paste', _excelHandlePaste);
+        /* Bind keydown dla skrótów */
+        container.addEventListener('keydown', _excelHandleKeydown);
     }
 
     _excelActiveTab = DN_TABS[0];
@@ -3233,6 +3241,7 @@ function _excelMoveWlazToTop(well) {
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
+    _excelSaveUndoSnapshot();
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
     _excelClearResCache(well);
@@ -3424,6 +3433,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
 async function excelOnReductionSelectChange(wIdx, value) {
+    _excelSaveUndoSnapshot();
     var well = wells[wIdx];
     if (!well) return;
     if (!value) {
@@ -3658,6 +3668,7 @@ function excelRefreshParamsPopup(wIdx) {
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
 function excelOnNameChange(wIdx, value) {
+    _excelSaveUndoSnapshot();
     const name = (value || '').trim();
     if (!name) return;
     wells[wIdx].name = name;
@@ -3935,6 +3946,178 @@ function _excelHandlePaste(e) {
         }
     });
     showToast('Wklejono wartości', 'info');
+}
+
+/* ===== UNDO / REDO (simple snapshot stack) ===== */
+let _excelUndoStack = [];
+let _excelRedoStack = [];
+const _EXCEL_UNDO_LIMIT = 20;
+
+function _excelSaveUndoSnapshot() {
+    if (typeof wells === 'undefined') return;
+    _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
+    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelRedoStack = [];
+}
+
+function _excelUndo() {
+    if (_excelUndoStack.length === 0) return;
+    _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
+    var snap = _excelUndoStack.pop();
+    wells.splice(0, wells.length, ...snap);
+    _excelRenderTable(_excelActiveTab);
+    showToast('Cofnięto', 'info');
+}
+
+function _excelRedo() {
+    if (_excelRedoStack.length === 0) return;
+    _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
+    var snap = _excelRedoStack.pop();
+    wells.splice(0, wells.length, ...snap);
+    _excelRenderTable(_excelActiveTab);
+    showToast('Przywrócono', 'info');
+}
+
+/* ===== KEYBOARD SHORTCUTS (Excel-like) ===== */
+function _excelHandleKeydown(e) {
+    /* Tylko gdy kontener Excela jest otwarty */
+    var overlay = document.getElementById('excel-table-overlay');
+    if (!overlay) return;
+
+    var isCtrl = e.ctrlKey || e.metaKey;
+
+    /* Ctrl+Z = undo */
+    if (isCtrl && !e.shiftKey && e.key === 'z') { e.preventDefault(); _excelUndo(); return; }
+    /* Ctrl+Y / Ctrl+Shift+Z = redo */
+    if ((isCtrl && !e.shiftKey && e.key === 'y') || (isCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) { e.preventDefault(); _excelRedo(); return; }
+
+    /* Delete = wyczyść zaznaczone komórki */
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; /* edycja w komórce */
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            var row = rows[cell.wIdx];
+            if (!row) return;
+            var inputs = row.querySelectorAll('input, select');
+            var target = inputs[cell.colIdx];
+            if (!target) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = '';
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = '';
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Wyczyszczono ' + _excelSelectedCells.length + ' komórek', 'info');
+        return;
+    }
+
+    /* Ctrl+A = zaznacz wszystko */
+    if (isCtrl && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        var allRows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelDeselectAllCells();
+        allRows.forEach(function(row, rIdx) {
+            var tds = row.querySelectorAll('td');
+            tds.forEach(function(td, cIdx) {
+                if (cIdx < 2) return; /* pomiń Lp + Nr Studni */
+                _excelSelectedCells.push({ wIdx: rIdx, colIdx: cIdx });
+                td.classList.add('cell-selected');
+            });
+        });
+        _excelLastClickedCell = null;
+        showToast('Zaznaczono wszystkie komórki', 'info');
+        return;
+    }
+
+    /* Ctrl+X = wytnij */
+    if (isCtrl && (e.key === 'x' || e.key === 'X')) {
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        /* Uzyj oryginalnego eventu — clipboardData istnieje w keydown */
+        _excelHandleCopy(/** @type {any} */ (e));
+        /* Potem wyczyść */
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            var row = rows[cell.wIdx];
+            if (!row) return;
+            var inputs = row.querySelectorAll('input, select');
+            var target = inputs[cell.colIdx];
+            if (!target) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = '';
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = '';
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Wycinanie: ' + _excelSelectedCells.length + ' komórek', 'info');
+        return;
+    }
+
+    /* Ctrl+D = kopiuj w dół */
+    if (isCtrl && (e.key === 'd' || e.key === 'D')) {
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            if (cell.wIdx === 0) return;
+            var srcRow = rows[cell.wIdx - 1];
+            var dstRow = rows[cell.wIdx];
+            if (!srcRow || !dstRow) return;
+            var inputs = dstRow.querySelectorAll('input, select');
+            var srcInputs = srcRow.querySelectorAll('input, select');
+            var target = inputs[cell.colIdx];
+            var src = srcInputs[cell.colIdx];
+            if (!target || !src) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (src).value;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Skopiowano w dół', 'info');
+        return;
+    }
+
+    /* Ctrl+R = kopiuj w prawo */
+    if (isCtrl && (e.key === 'r' || e.key === 'R')) {
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            if (cell.colIdx <= 1) return;
+            var row = rows[cell.wIdx];
+            if (!row) return;
+            var inputs = row.querySelectorAll('input, select');
+            var target = inputs[cell.colIdx];
+            var src = inputs[cell.colIdx - 1];
+            if (!target || !src) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (src).value;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Skopiowano w prawo', 'info');
+        return;
+    }
 }
 
 /* ===== GLOBALNA ODSWIEŻALKA ===== */
