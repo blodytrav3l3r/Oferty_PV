@@ -1384,10 +1384,8 @@ function openExcelTableModal() {
             var baseRef = firstRow.getAttribute('data-base-bg');
             if (baseRef) {
                 firstRow.style.background = baseRef;
-                firstRow.setAttribute('data-orig-bg', baseRef);
-            }
-            firstRow.style.outline = 'none';
-            firstRow.style.boxShadow = 'none';
+                    firstRow.setAttribute('data-orig-bg', baseRef);
+                }
         }
         currentWellIndex = -1;
     }
@@ -1425,12 +1423,10 @@ function excelSelectRow(wIdx) {
                 prevRow.style.background = base;
                 prevRow.setAttribute('data-orig-bg', base);
             }
-            prevRow.style.outline = 'none';
-            prevRow.style.boxShadow = 'none';
         }
     }
 
-    // Zaznacz nowy aktywny wiersz
+    // Zaznacz nowy aktywny wiersz - tylko tło, zero ramek
     const newRow = container.querySelector(`tr[data-widx="${wIdx}"]`);
     if (newRow) {
         const activeBg = newRow.getAttribute('data-active-bg');
