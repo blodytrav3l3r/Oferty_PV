@@ -2471,8 +2471,8 @@ function _excelHandleCopy(e) {
                 if (cellMap[r] && cellMap[r][c]) {
                     var row = rows[r];
                     if (row) {
-                        var inputs = row.querySelectorAll('input, select');
-                        var target = inputs[c];
+                        var td = row.children[c];
+                        var target = td ? td.querySelector('input, select') : null;
                         if (target) { var _sel = /** @type {HTMLSelectElement} */ (target); val = _sel.tagName === 'SELECT' ? (_sel.options[_sel.selectedIndex] ? _sel.options[_sel.selectedIndex].text : '') : (/** @type {HTMLInputElement} */(target)).value || ''; }
                     }
                 }
@@ -2485,8 +2485,8 @@ function _excelHandleCopy(e) {
         rows.forEach(function(row) {
             var line = [];
             cols.forEach(function(colIdx) {
-                var inputs = row.querySelectorAll('input, select');
-                var target = inputs[colIdx];
+                var td = row.children[colIdx];
+                var target = td ? td.querySelector('input, select') : null;
                 line.push(target ? (function(t){var _s=/** @type {HTMLSelectElement} */(t);return _s.tagName==='SELECT'?(_s.options[_s.selectedIndex]?_s.options[_s.selectedIndex].text:''):(/** @type {HTMLInputElement} */(t)).value||'';})(target) : '');
             });
             text += line.join('\t') + '\n';
@@ -2536,8 +2536,8 @@ function _excelHandlePaste(e) {
                 var colIdx = cols[ci];
                 var row = rows[wIdx];
                 if (!row) return;
-                var inputs = row.querySelectorAll('input, select');
-                var target = inputs[colIdx];
+                var tdInner = row.children[colIdx];
+                var target = tdInner ? tdInner.querySelector('input, select') : null;
                 if (!target) return;
                 val = val.trim();
                 if (target.tagName === 'SELECT') {
@@ -2556,10 +2556,10 @@ function _excelHandlePaste(e) {
         lines.forEach(function(line, i) {
             if (i >= rows.length) return;
             var parts = line.split('\t');
-            var inputs = rows[i].querySelectorAll('input, select');
             cols.forEach(function(colIdx, ci) {
                 if (ci >= parts.length) return;
-                var target = inputs[colIdx];
+                var tdInner = rows[i] ? rows[i].children[colIdx] : null;
+                var target = tdInner ? tdInner.querySelector('input, select') : null;
                 if (!target) return;
                 var val = parts[ci].trim();
                 if (target.tagName === 'SELECT') {
@@ -2577,8 +2577,8 @@ function _excelHandlePaste(e) {
         var colIdx = _excelGetPasteColIdx(rows[0]);
         lines.forEach(function(line, i) {
             if (i >= rows.length) return;
-            var inputs = rows[i].querySelectorAll('input, select');
-            var target = inputs[colIdx];
+            var td3 = rows[i] ? rows[i].children[colIdx] : null;
+            var target = td3 ? td3.querySelector('input, select') : null;
             if (!target) return;
             var val = line.trim();
             if (target.tagName === 'SELECT') {
@@ -3924,37 +3924,6 @@ function _excelImportPasteList() {
     _excelDebouncedRefresh();
 }
 
-/* ===== PASTE KOLUMN ===== */
-function _excelHandlePaste(e) {
-    if (_excelSelectedCols.length === 0) return;
-    var colIdx = _excelSelectedCols[0];
-    if (colIdx === undefined || colIdx === null || colIdx < 2) return; /* Lp.(0) + Nr Studni(1) = skip */
-    var cb = e.clipboardData || window.clipboardData;
-    if (!cb) return;
-    var text = cb.getData('text');
-    if (!text || !text.trim()) return;
-    e.preventDefault();
-    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-    if (rows.length === 0) return;
-    var values = text.trim().split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-    rows.forEach(function(row, i) {
-        if (i >= values.length) return;
-        var inputs = row.querySelectorAll('input, select');
-        var target = inputs[colIdx];
-        if (!target) return;
-        if (target.tagName === 'SELECT') {
-            var selEl = /** @type {HTMLSelectElement} */ (target);
-            var opt = Array.from(selEl.options).find(function(o) { return o.value === values[i] || o.text === values[i]; });
-            if (opt) { selEl.value = opt.value; selEl.dispatchEvent(new Event('change', { bubbles: true })); }
-        } else if (target.tagName === 'INPUT') {
-            target.value = values[i];
-            target.dispatchEvent(new Event('input', { bubbles: true }));
-            target.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    });
-    showToast('Wklejono wartości', 'info');
-}
-
 /* ===== UNDO / REDO (simple snapshot stack) ===== */
 let _excelUndoStack = [];
 let _excelRedoStack = [];
@@ -4081,10 +4050,10 @@ function _excelHandleKeydown(e) {
             var srcRow = rows[cell.wIdx - 1];
             var dstRow = rows[cell.wIdx];
             if (!srcRow || !dstRow) return;
-            var inputs = dstRow.querySelectorAll('input, select');
-            var srcInputs = srcRow.querySelectorAll('input, select');
-            var target = inputs[cell.colIdx];
-            var src = srcInputs[cell.colIdx];
+            var tdDst = dstRow.children[cell.colIdx];
+            var tdSrc = srcRow.children[cell.colIdx];
+            var target = tdDst ? tdDst.querySelector('input, select') : null;
+            var src = tdSrc ? tdSrc.querySelector('input, select') : null;
             if (!target || !src) return;
             if (target.tagName === 'SELECT') {
                 /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
@@ -4109,9 +4078,10 @@ function _excelHandleKeydown(e) {
             if (cell.colIdx <= 1) return;
             var row = rows[cell.wIdx];
             if (!row) return;
-            var inputs = row.querySelectorAll('input, select');
-            var target = inputs[cell.colIdx];
-            var src = inputs[cell.colIdx - 1];
+            var tdR = row.children[cell.colIdx];
+            var tdRSrc = row.children[cell.colIdx - 1];
+            var target = tdR ? tdR.querySelector('input, select') : null;
+            var src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
             if (!target || !src) return;
             if (target.tagName === 'SELECT') {
                 /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
