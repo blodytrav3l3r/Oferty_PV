@@ -2421,7 +2421,6 @@ function excelCreateFromEmpty() {
 /* ===== CELL FOCUS (Excel highlight) ===== */
 function excelCellFocus(el) {
     if (el.tagName === 'INPUT') {
-        el.style.background = 'rgba(99,102,241,0.06)';
         el.select();
     }
     _excelUserEditing = true; /* blokuje polling */
@@ -2438,10 +2437,8 @@ function excelCellFocus(el) {
     }
 }
 function excelCellBlur(el) {
-    /* Przywróć oryginalne tło komórki zamiast hardcodować #13151f */
-    var tr = el.closest('tr[data-widx]');
-    var origBg = tr ? tr.getAttribute('data-orig-bg') : '#13151f';
-    el.style.background = origBg || '#13151f';
+    /* Wyczyść inline background — INPUT wraca do CSS z _excelCellInp (#13151f) */
+    el.style.background = '';
     _excelUserEditing = false; /* wznawia polling */
 }
 
