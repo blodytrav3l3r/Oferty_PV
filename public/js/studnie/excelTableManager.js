@@ -2131,6 +2131,9 @@ function _excelRenderTable(dn) {
             }
         }
     }
+    /* Ponownie zastosuj filtr wyszukiwarki po re-renderze */
+    var searchInput = document.getElementById('excel-search-input');
+    if (searchInput && searchInput.value) excelFilterWells(searchInput.value);
 }
 
 /** Wymuś poprawne sticky left — dopasowuje do rzeczywistej szerokości kolumn */
