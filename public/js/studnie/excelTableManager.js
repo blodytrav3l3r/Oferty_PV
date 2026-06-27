@@ -2548,6 +2548,7 @@ function _excelFocusNavEl(el, rowEls, dir) {
         return;
     }
     el.focus();
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 /* ===== HANDLERS ===== */
