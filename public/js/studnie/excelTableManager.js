@@ -4086,15 +4086,18 @@ function _excelPasteCreateWells(text) {
             var dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
             var added = 0;
-            lines.forEach(function(name) {
-                if (wells.some(function(w) { return w.name === name; })) return;
+            for (var fi = 0; fi < lines.length; fi++) {
+                var name = lines[fi];
+                if (!name) continue;
+                if (wells.some(function(w) { return w.name === name; })) continue;
                 var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                 if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
                 var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+                well.name = name;
                 wells.push(well);
                 _excelAutoSetWlaz(well);
                 added++;
-            });
+            }
             if (added > 0) {
                 _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
                 _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
