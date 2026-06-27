@@ -2541,18 +2541,24 @@ function _excelHandlePaste(e) {
         var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
         var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
         var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
-        /* Jeżeli danych jest więcej niż dostępnych wierszy — dopnij na końcu (nie od klikniętego wiersza) */
-        var lastIdx = widxArr.length > 0 ? widxArr[widxArr.length-1] : _baseWIdx;
-        var neededRows = Math.max(lastIdx, rows.length - 1) + lines.length;
-        rows = _excelEnsureRowCount(neededRows, rows);
+        /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby */
+        var availableRows = rows.length - _baseWIdx;
+        if (lines.length > availableRows) {
+            lines = lines.slice(0, availableRows);
+            if (lines.length === 0) { showToast('Brak miejsca na wklejenie', 'warning'); return; }
+            showToast('Wklejono ' + lines.length + ' (obcięte — brak miejsca)', 'warning');
+        }
         var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
         /* Użyj batch/sync paste — obsłuż duże zestawy */
         var _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
         _pasteFn(lines, _baseWIdx, _firstCol, null);
     } else if (_excelSelectedCols.length > 0) {
         var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
-        /* Doklej brakujące wiersze */
-        rows = _excelEnsureRowCount(lines.length, rows);
+        /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
+        if (lines.length > rows.length) {
+            lines = lines.slice(0, rows.length);
+            showToast('Wklejono ' + lines.length + ' (obcięte — brak miejsca)', 'warning');
+        }
         lines.forEach(function(line, i) {
             var parts = line.split('	');
             cols.forEach(function(colIdx, ci) {
@@ -2579,15 +2585,17 @@ function _excelHandlePaste(e) {
         var colIdx = _excelGetPasteColIdx(
             document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
         );
-        /* Doklej brakujące wiersze od startWIdx (tylko gdy jest wystarczająco miejsca) */
+        /* Wkleja tylko w istniejące — obcina nadmiar (bez auto-add nowych pustych wierszy) */
         var availableRows = rows.length - startWIdx;
         if (lines.length > availableRows) {
-            rows = _excelEnsureRowCount(startWIdx + lines.length, rows);
+            lines = lines.slice(0, availableRows);
+            if (lines.length === 0) { showToast('Brak miejsca na wklejenie', 'warning'); return; }
+            showToast('Wklejono ' + lines.length + ' (obcięte — brak miejsca)', 'warning');
         }
         /* Użyj batch/sync paste — obsłuż duże zestawy */
         (lines.length > 100 ? _excelPasteBatch : _excelPasteSync)(lines, startWIdx, colIdx, null);
     }
-    showToast('Wklejono wartości', 'info');
+    showToast('Wklejono', 'info');
 }
 
 /* ===== BATCH PASTE (async chunked) ===== */
