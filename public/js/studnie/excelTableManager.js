@@ -4027,20 +4027,24 @@ function _excelImportPasteList() {
         added++;
     });
     var overlay = document.getElementById('excel-paste-dialog-overlay');
-    if (overlay) overlay.remove();
+    if (added === 0) { showToast('Nie dodano żadnej studni (duplikaty?)', 'info'); return; }
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-    _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
-    if (added > 0) {
-        showToast('Dodano ' + added + ' studni', 'success');
-        if (_excelAutoSelectEnabled) {
-            for (var k = 0; k < added; k++) {
-                (function(idx) {
-                    setTimeout(function() {
-                        var w = wells[wells.length - added + idx];
-                        if (w && w.rzednaWlazu != null && w.rzednaDna != null) _excelAutoSelectForWell(wells.length - added + idx);
-                    }, 200 + idx * 300);
-                })(k);
-            }
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    if (_excelAutoSelectEnabled) {
+        for (var k = 0; k < added; k++) {
+            (function(idx) {
+                setTimeout(function() {
+                    var nwi = wells.length - added + idx;
+                    var w = wells[nwi];
+                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                        _excelAutoSelectForWell(nwi).catch(function(e) {
+                            if (console.warn) console.warn('AutoSelect pominiety dla nowej studni:', e.message || e);
+                        });
+                    }
+                }, 200 + idx * 300);
+            })(k);
         }
     }
     _excelDebouncedRefresh();
@@ -4135,8 +4139,13 @@ function _excelPasteCreateWells(text) {
         for (var k = 0; k < added; k++) {
             (function(idx) {
                 setTimeout(function() {
-                    var w = wells[wells.length - added + idx];
-                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) _excelAutoSelectForWell(wells.length - added + idx);
+                    var nwi = wells.length - added + idx;
+                    var w = wells[nwi];
+                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                        _excelAutoSelectForWell(nwi).catch(function(e) {
+                            if (console.warn) console.warn('AutoSelect pominiety dla nowej studni:', e.message || e);
+                        });
+                    }
                 }, 200 + idx * 300);
             })(k);
         }
