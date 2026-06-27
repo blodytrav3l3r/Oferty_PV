@@ -1617,15 +1617,15 @@ function _excelRenderTable(dn) {
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;border-right:1px solid rgba(255,255,255,0.1);">Nr Studni</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;">·</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Włazu</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Dna</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:${dnColor};min-width:65px;text-align:center;">Wys.</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:${dnColor};min-width:65px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:${dnColor};min-width:65px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:30;min-width:78px;text-align:right;">Rz. Włazu</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:30;min-width:78px;text-align:right;">Rz. Dna</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:30;min-width:65px;text-align:center;">Wys.</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:30;min-width:65px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:30;min-width:65px;text-align:center;">·</th>`;
 
     for (let i = 0; i < maxTr; i++) {
         h1 += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
@@ -1839,14 +1839,14 @@ function _excelRenderTable(dn) {
         html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
 
         /* Rz. Włazu */
-        html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:#13151f;text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Rz. Dna */
-        html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:#13151f;text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Wys. — auto */
         const height = _excelCalcWellHeight(well);
-        html += `<td style="${tdBase}text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '—'}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:318px;z-index:5;background:#13151f;text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '\u2014'}</td>`;
 
         /* Przejścia */
         for (let i = 0; i < maxTr; i++) {
@@ -1996,13 +1996,13 @@ function _excelRenderTable(dn) {
     html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Nazwa studni… (Enter/zmiana dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:162px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Rz. Dna */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:240px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Wys. — placeholder */
-    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:318px;z-index:5;background:${emptyRowBg};text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
 
     /* Przejścia — puste */
     for (let i = 0; i < maxTr; i++) {
