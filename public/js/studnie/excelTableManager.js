@@ -1324,7 +1324,7 @@ function openExcelTableModal() {
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
             #excel-table-container thead th { position:relative; }
-            #excel-table-container thead { position:sticky;top:0;z-index:10;background:#161923; }
+            #excel-table-container thead { background:#161923; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
