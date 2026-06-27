@@ -2545,8 +2545,8 @@ function _excelHandlePaste(e) {
         var availableRows = rows.length - _baseWIdx;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
-            if (lines.length === 0) { showToast('Brak miejsca na wklejenie', 'warning'); return; }
-            showToast('Wklejono ' + lines.length + ' (obcięte — brak miejsca)', 'warning');
+            if (lines.length === 0) { showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning'); return; }
+            showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
         /* Użyj batch/sync paste — obsłuż duże zestawy */
@@ -2557,7 +2557,7 @@ function _excelHandlePaste(e) {
         /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
         if (lines.length > rows.length) {
             lines = lines.slice(0, rows.length);
-            showToast('Wklejono ' + lines.length + ' (obcięte — brak miejsca)', 'warning');
+            showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         lines.forEach(function(line, i) {
             var parts = line.split('	');
@@ -2596,8 +2596,8 @@ function _excelHandlePaste(e) {
         var availableRows = rows.length - startWIdx;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
-            if (lines.length === 0) { showToast('Brak miejsca na wklejenie', 'warning'); return; }
-            showToast('Wklejono ' + lines.length + ' (obcięte — brak miejsca)', 'warning');
+            if (lines.length === 0) { showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning'); return; }
+            showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         /* Użyj batch/sync paste — obsłuż duże zestawy */
         (lines.length > 100 ? _excelPasteBatch : _excelPasteSync)(lines, startWIdx, colIdx, null);
