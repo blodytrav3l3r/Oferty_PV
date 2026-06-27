@@ -1228,8 +1228,10 @@ function excelFilterWells(value) {
             row.style.display = '';
             return;
         }
-        var nameCell = row.querySelector('td:nth-child(2) input, td:nth-child(2)');
-        var name = nameCell ? (nameCell.value || nameCell.textContent || '').toLowerCase() : '';
+        /* Najpierw szukaj inputa — dopiero potem fallback do TD */
+        var nameInp = row.querySelector('td:nth-child(2) input');
+        var name = nameInp ? nameInp.value : (row.querySelector('td:nth-child(2)') || {}).textContent || '';
+        name = (name || '').toLowerCase();
         row.style.display = name.indexOf(q) >= 0 ? '' : 'none';
     });
 }
