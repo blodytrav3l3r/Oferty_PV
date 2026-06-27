@@ -1273,6 +1273,10 @@ function openExcelTableModal() {
         if (_oldContainer && /** @type {any} */ (_oldContainer)._arrowHandler) {
             document.removeEventListener('keydown', /** @type {any} */ (_oldContainer)._arrowHandler, true);
         }
+        /* Wyczyść stary capture paste handler */
+        if (_oldContainer) {
+            _oldContainer.removeEventListener('paste', _excelHandlePaste, true);
+        }
         existing.remove();
     }
 
@@ -1414,9 +1418,10 @@ function openExcelTableModal() {
                 excelSelectRow(wIdx);
             }
         });
-        /* Bind copy/paste */
+        /* Bind copy na document, paste z capture na kontenerze */
         document.addEventListener('copy', _excelHandleCopy);
-        document.addEventListener('paste', _excelHandlePaste);
+        /* useCapture=true: wychwytuje event ZANIM dotrze do inputów w tabeli */
+        container.addEventListener('paste', _excelHandlePaste, true);
         /* Bind keydown dla skrótów */
         container.addEventListener('keydown', _excelHandleKeydown);
     }
@@ -1518,6 +1523,7 @@ function closeExcelTableModal() {
         /* Usuń globalne handlery copy/paste */
         document.removeEventListener('copy', _excelHandleCopy);
         document.removeEventListener('paste', _excelHandlePaste);
+        if (_container) _container.removeEventListener('paste', _excelHandlePaste, true);
         overlay.remove();
     }
     _excelDirty = false;
@@ -2508,7 +2514,9 @@ function _excelHandlePaste(e) {
     if (!cb) return;
     var text = cb.getData('text');
     if (!text || !text.trim()) return;
+    /* Zawsze przejmij event gdy jesteśmy w kontenerze (capture phase) */
     e.preventDefault();
+    e.stopPropagation();
 
     /* Paste w pusty wiersz → utwórz nowe studnie */
     var _emptyInput = document.getElementById('excel-empty-name');
@@ -2566,14 +2574,24 @@ function _excelHandlePaste(e) {
             });
         });
     } else {
-        var colIdx = _excelGetPasteColIdx(rows[0]);
-        /* Doklej brakujące wiersze */
-        rows = _excelEnsureRowCount(lines.length, rows);
+        /* Wykryj startowy wiersz z aktywnego elementu w tabeli */
+        var startWIdx = 0;
+        var _ae = document.activeElement;
+        if (_ae) {
+            var _tr = _ae.closest('tr[data-widx]');
+            if (_tr) startWIdx = parseInt(_tr.getAttribute('data-widx') || '0') || 0;
+        }
+        var colIdx = _excelGetPasteColIdx(
+            document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
+        );
+        /* Doklej brakujące wiersze od startWIdx */
+        rows = _excelEnsureRowCount(startWIdx + lines.length, rows);
         lines.forEach(function(line, i) {
             var parts = line.split('\t');
             parts.forEach(function(v, ci) {
                 var _ci = colIdx + ci;
-                var td3 = rows[i] ? rows[i].children[_ci] : null;
+                var targetRow = document.querySelector('tr[data-widx="' + (startWIdx + i) + '"]');
+                var td3 = targetRow ? targetRow.children[_ci] : (rows[startWIdx + i] ? rows[startWIdx + i].children[_ci] : null);
                 var target = td3 ? td3.querySelector('input, select') : null;
                 if (!target) return;
                 _excelSetCellValue(target, v.trim());
