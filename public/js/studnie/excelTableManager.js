@@ -1313,6 +1313,7 @@ function openExcelTableModal() {
             #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.35); }
             #excel-table-overlay ::-webkit-scrollbar-corner { background:transparent; }
             #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(99,102,241,0.25) !important; }
+            #excel-table-container td.excel-col-selected { background:rgba(99,102,241,0.08) !important; }
             #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
             #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
             #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
