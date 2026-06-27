@@ -1422,6 +1422,7 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
         }
+        newRow.style.outline = '2px solid #22c55e';
     }
 
     _excelUpdateLeftPreview(wIdx);
@@ -1825,7 +1826,7 @@ function _excelRenderTable(dn) {
             styczne: '#602848'
         }[dupColorKey] || '#2a4a80';
         const hoverBg = isDup && isActive ? hoverActiveDupSolid : isDup ? hoverDupSolid : isActive ? '#263460' : '#141722';
-        const rowBorder = 'none';
+        const rowBorder = isActive ? '2px solid #22c55e' : 'none';
         const przejscia = well.przejscia || [];
 
         html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
