@@ -2531,12 +2531,13 @@ function _excelHandlePaste(e) {
             cellRows[c.wIdx].push(c.colIdx);
         });
         var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
-        /* Jesli wiecej linii niz zaznaczonych komorek, rozszerz na kolejne wiersze */
         var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
         var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
+        /* Doklej brakujące wiersze gdy dane wylewają się poza tabelę */
+        var neededRows = _baseWIdx + lines.length;
+        rows = _excelEnsureRowCount(neededRows, rows);
         lines.forEach(function(line, li) {
             var wIdx = li < widxArr.length ? widxArr[li] : (_baseWIdx + li);
-            if (wIdx >= rows.length) return;
             var parts = line.split('\t');
             var _srccols = li < widxArr.length && cellRows[wIdx] ? cellRows[wIdx].sort(function(a,b){return a-b;}) : _baseCols;
             var _firstCol = _srccols.length > 0 ? _srccols[0] : 0;
@@ -2547,64 +2548,87 @@ function _excelHandlePaste(e) {
                 var tdInner = row.children[colIdx];
                 var target = tdInner ? tdInner.querySelector('input, select') : null;
                 if (!target) return;
-                val = val.trim();
-                if (target.tagName === 'SELECT') {
-                    var _sel = /** @type {HTMLSelectElement} */ (target);
-                    var opt = Array.from(_sel.options).find(function(o) { return o.value === val || o.text === val; });
-                    if (opt) { _sel.value = opt.value; _sel.dispatchEvent(new Event('change', { bubbles: true })); }
-                } else if (target.tagName === 'INPUT') {
-                    /** @type {HTMLInputElement} */ (target).value = val;
-                    target.dispatchEvent(new Event('input', { bubbles: true }));
-                    target.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+                _excelSetCellValue(target, val.trim());
             });
         });
     } else if (_excelSelectedCols.length > 0) {
         var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        /* Doklej brakujące wiersze */
+        rows = _excelEnsureRowCount(lines.length, rows);
         lines.forEach(function(line, i) {
-            if (i >= rows.length) return;
             var parts = line.split('\t');
             cols.forEach(function(colIdx, ci) {
                 if (ci >= parts.length) return;
                 var tdInner = rows[i] ? rows[i].children[colIdx] : null;
                 var target = tdInner ? tdInner.querySelector('input, select') : null;
                 if (!target) return;
-                var val = parts[ci].trim();
-                if (target.tagName === 'SELECT') {
-                    var _sel2 = /** @type {HTMLSelectElement} */ (target);
-                    var opt2 = Array.from(_sel2.options).find(function(o) { return o.value === val || o.text === val; });
-                    if (opt2) { _sel2.value = opt2.value; _sel2.dispatchEvent(new Event('change', { bubbles: true })); }
-                } else if (target.tagName === 'INPUT') {
-                    /** @type {HTMLInputElement} */ (target).value = val;
-                    target.dispatchEvent(new Event('input', { bubbles: true }));
-                    target.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+                _excelSetCellValue(target, parts[ci].trim());
             });
         });
     } else {
         var colIdx = _excelGetPasteColIdx(rows[0]);
+        /* Doklej brakujące wiersze */
+        rows = _excelEnsureRowCount(lines.length, rows);
         lines.forEach(function(line, i) {
-            if (i >= rows.length) return;
             var parts = line.split('\t');
             parts.forEach(function(v, ci) {
                 var _ci = colIdx + ci;
                 var td3 = rows[i] ? rows[i].children[_ci] : null;
                 var target = td3 ? td3.querySelector('input, select') : null;
                 if (!target) return;
-                var val = v.trim();
-                if (target.tagName === 'SELECT') {
-                    var _sel3 = /** @type {HTMLSelectElement} */ (target);
-                    var opt3 = Array.from(_sel3.options).find(function(o) { return o.value === val || o.text === val; });
-                    if (opt3) { _sel3.value = opt3.value; _sel3.dispatchEvent(new Event('change', { bubbles: true })); }
-                } else if (target.tagName === 'INPUT') {
-                    /** @type {HTMLInputElement} */ (target).value = val;
-                    target.dispatchEvent(new Event('input', { bubbles: true }));
-                    target.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+                _excelSetCellValue(target, v.trim());
             });
         });
     }
     showToast('Wklejono wartości', 'info');
+}
+
+/**
+ * Ustawia wartość komórki (input lub select) i dispatchuje eventy.
+ * @param {Element} target
+ * @param {string} val
+ */
+function _excelSetCellValue(target, val) {
+    if (target.tagName === 'SELECT') {
+        var _sel = /** @type {HTMLSelectElement} */ (target);
+        var opt = Array.from(_sel.options).find(function(o) { return o.value === val || o.text === val; });
+        if (opt) { _sel.value = opt.value; _sel.dispatchEvent(new Event('change', { bubbles: true })); }
+    } else if (target.tagName === 'INPUT') {
+        /** @type {HTMLInputElement} */ (target).value = val;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+/**
+ * Zapewnia że tabela ma co najmniej `neededTotal` wierszy w aktywnym tabie.
+ * Tworzy brakujące studnie, re-renderuje tabelę i zwraca zaktualizowany NodeList rows.
+ * @param {number} neededTotal
+ * @param {NodeListOf<Element>} currentRows
+ * @returns {NodeListOf<Element>}
+ */
+function _excelEnsureRowCount(neededTotal, currentRows) {
+    var deficit = neededTotal - currentRows.length;
+    if (deficit <= 0) return currentRows;
+    var dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab, 10);
+    _excelSaveUndoSnapshot();
+    for (var i = 0; i < deficit; i++) {
+        var well = typeof createNewWell === 'function'
+            ? createNewWell(null, /** @type {any} */ (dn))
+            : {
+                id: 'well_' + Date.now() + '_' + i,
+                name: (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')',
+                dn: dn, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null,
+                kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500
+            };
+        wells.push(well);
+        _excelAutoSetWlaz(well);
+    }
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    return document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
