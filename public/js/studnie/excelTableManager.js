@@ -2542,7 +2542,7 @@ function _excelHandlePaste(e) {
             var _firstCol = _srccols.length > 0 ? _srccols[0] : 0;
             parts.forEach(function(val, ci) {
                 var colIdx = _firstCol + ci;
-                var row = rows[wIdx];
+                var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
                 if (!row) return;
                 var tdInner = row.children[colIdx];
                 var target = tdInner ? tdInner.querySelector('input, select') : null;
@@ -4053,7 +4053,7 @@ function _excelHandleKeydown(e) {
         _excelSaveUndoSnapshot();
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function(cell) {
-            var row = rows[cell.wIdx];
+            var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             var inputs = row.querySelectorAll('input, select');
             var target = inputs[cell.colIdx];
@@ -4099,7 +4099,7 @@ function _excelHandleKeydown(e) {
         _excelSaveUndoSnapshot();
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function(cell) {
-            var row = rows[cell.wIdx];
+            var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             var inputs = row.querySelectorAll('input, select');
             var target = inputs[cell.colIdx];
@@ -4125,8 +4125,8 @@ function _excelHandleKeydown(e) {
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function(cell) {
             if (cell.wIdx === 0) return;
-            var srcRow = rows[cell.wIdx - 1];
-            var dstRow = rows[cell.wIdx];
+            var srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
+            var dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!srcRow || !dstRow) return;
             var tdDst = dstRow.children[cell.colIdx];
             var tdSrc = srcRow.children[cell.colIdx];
@@ -4154,7 +4154,7 @@ function _excelHandleKeydown(e) {
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function(cell) {
             if (cell.colIdx <= 1) return;
-            var row = rows[cell.wIdx];
+            var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             var tdR = row.children[cell.colIdx];
             var tdRSrc = row.children[cell.colIdx - 1];
