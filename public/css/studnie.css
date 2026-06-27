@@ -1866,7 +1866,7 @@ select.form-input option {
 /* ── Excel table header aesthetic improvements ── */
 #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
 #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
-#excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02) !important; }
+#excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02); }
 #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
 #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
 #excel-table-container thead th { position:relative; }
