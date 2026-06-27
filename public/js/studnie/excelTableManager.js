@@ -95,7 +95,7 @@ function _excelStartPolling() {
             _excelUpdateHeaderProdCodes();
         }
         lastConfigHash = configHash;
-    }, 1500);
+    }, 5000);
 }
 
 function _excelStopPolling() {
@@ -110,9 +110,9 @@ function _excelDebouncedRefresh() {
     if (_excelRefreshTimer) clearTimeout(_excelRefreshTimer);
     _excelRefreshTimer = setTimeout(() => {
         _excelRefreshTimer = null;
-        if (typeof refreshAll === 'function') refreshAll(true);
-        _excelUpdateHeaderProdCodes(); /* odśwież kody po zmianie configu przez refreshAll */
-    }, 300);
+        /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
+        _excelUpdateHeaderProdCodes();
+    }, 800);
 }
 
 const KINETA_OPTIONS = [
@@ -2065,9 +2065,9 @@ function _excelRenderTable(dn) {
     _excelInitColumnSelect();
     _excelUpdateHeaderProdCodes();
     _excelApplyStickyColumns();
-    /* Odśwież ikony Lucide po zmianie DOM */
+    /* Odśwież ikony Lucide w kontenerze (nie skanuj całego dokumentu) */
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
-        try { lucide.createIcons(); } catch(e) {}
+        try { lucide.createIcons({ root: container }); } catch(e) {}
     }
 
     // Przywróć fokus po re-renderze
