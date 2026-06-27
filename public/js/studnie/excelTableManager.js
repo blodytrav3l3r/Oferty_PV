@@ -2538,10 +2538,10 @@ function _excelHandlePaste(e) {
             var wIdx = li < widxArr.length ? widxArr[li] : (_baseWIdx + li);
             if (wIdx >= rows.length) return;
             var parts = line.split('\t');
-            var cols = li < widxArr.length && cellRows[wIdx] ? cellRows[wIdx].sort(function(a,b){return a-b;}) : _baseCols;
+            var _srccols = li < widxArr.length && cellRows[wIdx] ? cellRows[wIdx].sort(function(a,b){return a-b;}) : _baseCols;
+            var _firstCol = _srccols.length > 0 ? _srccols[0] : 0;
             parts.forEach(function(val, ci) {
-                if (ci >= cols.length) return;
-                var colIdx = cols[ci];
+                var colIdx = _firstCol + ci;
                 var row = rows[wIdx];
                 if (!row) return;
                 var tdInner = row.children[colIdx];
@@ -2585,19 +2585,23 @@ function _excelHandlePaste(e) {
         var colIdx = _excelGetPasteColIdx(rows[0]);
         lines.forEach(function(line, i) {
             if (i >= rows.length) return;
-            var td3 = rows[i] ? rows[i].children[colIdx] : null;
-            var target = td3 ? td3.querySelector('input, select') : null;
-            if (!target) return;
-            var val = line.trim();
-            if (target.tagName === 'SELECT') {
-                var _sel3 = /** @type {HTMLSelectElement} */ (target);
-                var opt3 = Array.from(_sel3.options).find(function(o) { return o.value === val || o.text === val; });
-                if (opt3) { _sel3.value = opt3.value; _sel3.dispatchEvent(new Event('change', { bubbles: true })); }
-            } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = val;
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            var parts = line.split('\t');
+            parts.forEach(function(v, ci) {
+                var _ci = colIdx + ci;
+                var td3 = rows[i] ? rows[i].children[_ci] : null;
+                var target = td3 ? td3.querySelector('input, select') : null;
+                if (!target) return;
+                var val = v.trim();
+                if (target.tagName === 'SELECT') {
+                    var _sel3 = /** @type {HTMLSelectElement} */ (target);
+                    var opt3 = Array.from(_sel3.options).find(function(o) { return o.value === val || o.text === val; });
+                    if (opt3) { _sel3.value = opt3.value; _sel3.dispatchEvent(new Event('change', { bubbles: true })); }
+                } else if (target.tagName === 'INPUT') {
+                    /** @type {HTMLInputElement} */ (target).value = val;
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    target.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
         });
     }
     showToast('Wklejono wartości', 'info');
