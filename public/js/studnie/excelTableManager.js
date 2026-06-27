@@ -1841,11 +1841,9 @@ function _excelRenderTable(dn) {
             styczne: '#602848'
         }[dupColorKey] || '#2a4a80';
         const hoverBg = isDup && isActive ? hoverActiveDupSolid : isDup ? hoverDupSolid : isActive ? '#263460' : '#141722';
-        const rowBorder = isActive ? '2px solid #22c55e' : 'none';
-        const rowShadow = isActive ? 'inset 0 0 0 1px #22c55e' : 'none';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};outline:${rowBorder};box-shadow:${rowShadow};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
+        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
 
         const tdBase = `${_EXCEL_FONT}`;
 
