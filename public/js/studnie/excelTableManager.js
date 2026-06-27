@@ -1305,9 +1305,7 @@ function openExcelTableModal() {
             #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.25); border-radius:4px; }
             #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.35); }
             #excel-table-overlay ::-webkit-scrollbar-corner { background:transparent; }
-            #excel-table-container input:focus { border-color:rgba(99,102,241,0.5) !important; }
-            #excel-table-container select:focus { border-color:rgba(99,102,241,0.5) !important; }
-            #excel-table-container td.excel-col-selected { background:rgba(99,102,241,0.12) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.25); }
+            #excel-table-container table { min-width:100%; border-collapse:collapse; }
             #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
             #excel-table-container table { min-width:100%; border-collapse:collapse; }
             #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
@@ -2404,7 +2402,6 @@ function excelCreateFromEmpty() {
 
 /* ===== CELL FOCUS (Excel highlight) ===== */
 function excelCellFocus(el) {
-    el.style.outline = '1px solid rgba(99,102,241,0.5)';
     el.style.background = 'rgba(99,102,241,0.06)';
     if (el.tagName === 'INPUT') el.select();
     _excelUserEditing = true; /* blokuje polling */
