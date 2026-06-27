@@ -2553,7 +2553,7 @@ function _excelHandlePaste(e) {
         /* Doklej brakujące wiersze */
         rows = _excelEnsureRowCount(lines.length, rows);
         lines.forEach(function(line, i) {
-            var parts = line.split('\t');
+            var parts = line.split('	');
             cols.forEach(function(colIdx, ci) {
                 if (ci >= parts.length) return;
                 var tdInner = rows[i] ? rows[i].children[colIdx] : null;
@@ -2631,7 +2631,7 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
                 return;
             }
             var line = lines[idx];
-            var parts = line.split('\t');
+            var parts = line.split('	');
             var wIdx = startWIdx + idx;
             parts.forEach(function(v, ci) {
                 var colIdx = startColIdx + ci;
@@ -2656,7 +2656,7 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
 /** Synchroniczne wklejenie (do 99 wierszy) */
 function _excelPasteSync(lines, startWIdx, startColIdx) {
     for (var si = 0; si < lines.length; si++) {
-        var parts = lines[si].split('\t');
+        var parts = lines[si].split('	');
         var wIdx = startWIdx + si;
         parts.forEach(function(v, ci) {
             var colIdx = startColIdx + ci;
