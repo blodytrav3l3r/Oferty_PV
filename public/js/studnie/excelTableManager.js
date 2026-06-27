@@ -2667,8 +2667,10 @@ function excelOnRzednaChange(wIdx) {
     _excelClearResCache(wells[wIdx]);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
-    const rzWlazu = rzWlazuInput ? parseFloat(rzWlazuInput.value) || null : null;
-    const rzDna = rzDnaInput ? parseFloat(rzDnaInput.value) || null : null;
+    const rzWlazu = rzWlazuInput ? parseFloat(rzWlazuInput.value) : null;
+    const rzDnaRaw = rzDnaInput ? parseFloat(rzDnaInput.value) : null;
+    /* Użyj null tylko gdy nie da się sparsować (gdy NaN lub pusty) */
+    const rzDna = rzDnaRaw !== null && !isNaN(rzDnaRaw) ? rzDnaRaw : null;
 
     /* Walidacja: rzędna włazu musi być większa od rzędnej dna */
     if (rzWlazu !== null && rzDna !== null && rzWlazu <= rzDna) {
@@ -3540,8 +3542,10 @@ function excelShowAddDialog() {
 function _excelCreateFromDialog() {
     var name = (document.getElementById('dlg-name')?.value || '').trim();
     var dn = document.getElementById('dlg-dn')?.value || '1000';
-    var rzw = parseFloat(document.getElementById('dlg-rzw')?.value) || null;
-    var rzd = parseFloat(document.getElementById('dlg-rzd')?.value) || null;
+    var rzwParsed = parseFloat(document.getElementById('dlg-rzw')?.value);
+    var rzdParsed = parseFloat(document.getElementById('dlg-rzd')?.value);
+    var rzw = isNaN(rzwParsed) ? null : rzwParsed;
+    var rzd = isNaN(rzdParsed) ? null : rzdParsed;
     if (!name) { showToast('Podaj nazwę studni', 'error'); return; }
     if (wells.some(function(w) { return w.name === name; })) { showToast('Nazwa "' + name + '" już istnieje', 'error'); return; }
     if (rzw === null) { showToast('Podaj rządną włazu', 'error'); return; }
