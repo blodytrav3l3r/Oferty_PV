@@ -2541,8 +2541,9 @@ function _excelHandlePaste(e) {
         var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
         var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
         var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
-        /* Doklej brakujące wiersze gdy dane wylewają się poza tabelę */
-        var neededRows = _baseWIdx + lines.length;
+        /* Jeżeli danych jest więcej niż dostępnych wierszy — dopnij na końcu (nie od klikniętego wiersza) */
+        var lastIdx = widxArr.length > 0 ? widxArr[widxArr.length-1] : _baseWIdx;
+        var neededRows = Math.max(lastIdx, rows.length - 1) + lines.length;
         rows = _excelEnsureRowCount(neededRows, rows);
         var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
         /* Użyj batch/sync paste — obsłuż duże zestawy */
