@@ -1413,9 +1413,9 @@ function excelSelectRow(wIdx) {
             }
             prevRow.style.outline = 'none';
             prevRow.style.boxShadow = 'none';
-            /* Usuń zieloną ramkę z pierwszego td */
-            var prevFirstTd = prevRow.querySelector('td:first-child');
-            if (prevFirstTd) prevFirstTd.style.borderLeft = 'none';
+            /* Usuń zieloną ramkę ze sticky kolumn */
+            var prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
+            prevStickyTds.forEach(function(td) { td.style.borderLeft = 'none'; });
         }
     }
 
@@ -1427,9 +1427,9 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
         }
-        /* Zielona ramka — dodaj border-left na pierwszym td */
-        var firstTd = newRow.querySelector('td:first-child');
-        if (firstTd) firstTd.style.borderLeft = '3px solid #22c55e';
+        /* Zielona ramka — dodaj border-left na 5 sticky kolumnach */
+        var stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
+        stickyTds.forEach(function(td) { td.style.borderLeft = '3px solid #22c55e'; });
     }
 
     _excelUpdateLeftPreview(wIdx);
@@ -1845,17 +1845,17 @@ function _excelRenderTable(dn) {
         html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;${isActive ? 'border-left:3px solid #22c55e;' : ''}">${idx + 1}</td>`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu, sticky */
-        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);${isActive ? 'border-left:3px solid #22c55e;' : ''}"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
 
         /* Rz. Włazu */
-        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:#13151f;text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:#13151f;text-align:right;${isActive ? 'border-left:3px solid #22c55e;' : ''}"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Rz. Dna */
-        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:#13151f;text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:#13151f;text-align:right;${isActive ? 'border-left:3px solid #22c55e;' : ''}"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Wys. — auto */
         const height = _excelCalcWellHeight(well);
-        html += `<td style="${tdBase}position:sticky;left:318px;z-index:5;background:#13151f;text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '\u2014'}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:318px;z-index:5;background:#13151f;text-align:center;color:${dnColor};font-weight:600;${isActive ? 'border-left:3px solid #22c55e;' : ''}" data-cell="height-${wIdx}">${height || '\u2014'}</td>`;
 
         /* Przejścia */
         for (let i = 0; i < maxTr; i++) {
