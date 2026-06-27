@@ -3965,7 +3965,33 @@ function _excelRedo() {
 /* ===== PASTE DO PUSTEGO WIERSZA → nowe studnie ===== */
 function _excelPasteCreateWells(text) {
     var parsed = _excelParsePasteData(text);
-    if (parsed.length === 0) { showToast('Nie rozpoznano danych', 'error'); return; }
+    /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
+    if (parsed.length === 0) {
+        var lines = text.trim().split(String.fromCharCode(92,110)).map(function(l) { return l.replace(String.fromCharCode(92,114,36), '').trim(); }).filter(function(l) { return l; });
+        if (lines.length > 0) {
+            var dn = _excelActiveTab || '1000';
+            _excelSaveUndoSnapshot();
+            var added = 0;
+            lines.forEach(function(name) {
+                if (wells.some(function(w) { return w.name === name; })) return;
+                var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
+                if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
+                var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+                wells.push(well);
+                _excelAutoSetWlaz(well);
+                added++;
+            });
+            if (added > 0) {
+                _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+                _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+                _excelDebouncedRefresh();
+                showToast('Dodano ' + added + ' studni', 'success');
+                return;
+            }
+        }
+        showToast('Nie rozpoznano danych', 'error');
+        return;
+    }
     var dn = _excelActiveTab || '1000';
     _excelSaveUndoSnapshot();
     var added = 0;
