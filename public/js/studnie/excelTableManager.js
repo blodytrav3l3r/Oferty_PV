@@ -1411,6 +1411,11 @@ function excelSelectRow(wIdx) {
                 prevRow.style.background = base;
                 prevRow.setAttribute('data-orig-bg', base);
             }
+            prevRow.style.outline = 'none';
+            prevRow.style.boxShadow = 'none';
+            /* Usuń zieloną ramkę z pierwszego td */
+            var prevFirstTd = prevRow.querySelector('td:first-child');
+            if (prevFirstTd) prevFirstTd.style.borderLeft = 'none';
         }
     }
 
@@ -1422,7 +1427,9 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
         }
-        newRow.style.outline = '2px solid #22c55e';
+        /* Zielona ramka — dodaj border-left na pierwszym td */
+        var firstTd = newRow.querySelector('td:first-child');
+        if (firstTd) firstTd.style.borderLeft = '3px solid #22c55e';
     }
 
     _excelUpdateLeftPreview(wIdx);
@@ -1827,14 +1834,15 @@ function _excelRenderTable(dn) {
         }[dupColorKey] || '#2a4a80';
         const hoverBg = isDup && isActive ? hoverActiveDupSolid : isDup ? hoverDupSolid : isActive ? '#263460' : '#141722';
         const rowBorder = isActive ? '2px solid #22c55e' : 'none';
+        const rowShadow = isActive ? 'inset 0 0 0 1px #22c55e' : 'none';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
+        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};outline:${rowBorder};box-shadow:${rowShadow};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
 
         const tdBase = `${_EXCEL_FONT}`;
 
         /* Lp. */
-        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">${idx + 1}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;${isActive ? 'border-left:3px solid #22c55e;' : ''}">${idx + 1}</td>`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu, sticky */
         html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
