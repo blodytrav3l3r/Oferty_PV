@@ -1591,7 +1591,7 @@ function _excelRenderTable(dn) {
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
 
-    let html = '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;">';
+    let html = '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
 
 
 
@@ -2064,6 +2064,7 @@ function _excelRenderTable(dn) {
     _excelInitColumnResize();
     _excelInitColumnSelect();
     _excelUpdateHeaderProdCodes();
+    _excelApplyStickyColumns();
     /* Odśwież ikony Lucide po zmianie DOM */
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
         try { lucide.createIcons(); } catch(e) {}
@@ -2081,6 +2082,44 @@ function _excelRenderTable(dn) {
                 if (restoreEl.tagName === 'INPUT' && restoreEl.select) {
                     restoreEl.select();
                 }
+            }
+        }
+    }
+}
+
+/** Wymuś poprawne sticky left — dopasowuje do rzeczywistej szerokości kolumn */
+function _excelApplyStickyColumns() {
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const table = container.querySelector('table');
+    if (!table) return;
+    /* Zmierz rzeczywiste szerokości pierwszych 5 kolumn */
+    const firstRow = table.querySelector('thead tr');
+    if (!firstRow) return;
+    const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+5)');
+    if (stickyThs.length < 5) return;
+    var leftPos = 0;
+    var offsets = [0];
+    for (var i = 0; i < 4; i++) {
+        leftPos += /** @type {HTMLElement} */ (stickyThs[i]).offsetWidth;
+        offsets.push(leftPos);
+    }
+    /* Zastosuj do wszystkich th i td w pierwszych 5 kolumnach */
+    var sel = 'th:nth-child(-n+5), td:nth-child(-n+5)';
+    var cells = table.querySelectorAll(sel);
+    for (var i = 0; i < cells.length; i++) {
+        var colIdx = 0;
+        var el = cells[i];
+        var prev = el.previousElementSibling;
+        while (prev) { colIdx++; prev = prev.previousElementSibling; }
+        if (colIdx < 5 && offsets[colIdx] != null) {
+            el.style.left = offsets[colIdx] + 'px';
+            el.style.position = 'sticky';
+            // Z-index: 30 dla thead, 5 dla tbody
+            if (el.closest('thead')) {
+                el.style.zIndex = '30';
+            } else {
+                el.style.zIndex = '5';
             }
         }
     }
