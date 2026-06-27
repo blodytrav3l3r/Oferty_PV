@@ -2578,9 +2578,16 @@ function _excelHandlePaste(e) {
             if (_tr) startWIdx = parseInt(_tr.getAttribute('data-widx') || '0') || 0;
         }
         if (startWIdx < 0) {
-            /* Brak fokusu w tabeli — potraktuj jak "dodaj nowe studnie" */
-            _excelPasteCreateWells(text);
-            return;
+            /* brak fokusu w konkretnym wierszu — szukaj input/select wewnatrz kontenera jako fallback */
+            var focusedInput = document.querySelector('#excel-table-container input:focus, #excel-table-container select:focus, #excel-table-container .excel-sel-wrap:focus-within');
+            if (focusedInput) {
+                var _ftr = focusedInput.closest('tr[data-widx]');
+                if (_ftr) startWIdx = parseInt(_ftr.getAttribute('data-widx') || '0') || 0;
+            }
+        }
+        if (startWIdx < 0) {
+            /* nadal brak — paste do wszystkich istniejących wierszy od 0 */
+            startWIdx = 0;
         }
         var colIdx = _excelGetPasteColIdx(
             document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
