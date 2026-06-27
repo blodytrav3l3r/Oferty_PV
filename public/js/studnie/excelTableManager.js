@@ -1377,6 +1377,22 @@ function openExcelTableModal() {
     _excelActiveTab = DN_TABS[0];
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
+    /* Nie zaznaczaj żadnego wiersza przy otwarciu — usuń aktywny styl z pierwszej studni */
+    if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
+        var firstRow = document.querySelector('#excel-table-container tr[data-widx="' + currentWellIndex + '"]');
+        if (firstRow) {
+            var baseRef = firstRow.getAttribute('data-base-bg');
+            if (baseRef) {
+                firstRow.style.background = baseRef;
+                firstRow.setAttribute('data-orig-bg', baseRef);
+            }
+            firstRow.style.outline = 'none';
+            firstRow.style.boxShadow = 'none';
+            var lp = firstRow.querySelector('td:first-child');
+            if (lp) lp.style.borderLeft = 'none';
+        }
+        currentWellIndex = -1;
+    }
     _excelStopPolling();
     _excelStartPolling();
     _excelUpdateWellCount();
