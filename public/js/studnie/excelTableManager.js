@@ -1464,8 +1464,8 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
-    /* NIE wywołuj _excelUpdateHeaderProdCodes — kody nie zmieniają się
-       przy zmianie aktywnego wiersza (niepotrzebny koszt) */
+    /* Aktualizuj h3 — kody produktów ZALEŻĄ od zaznaczonej studni */
+    _excelUpdateHeaderProdCodes();
 }
 
 /* ===== CLOSE ===== */
