@@ -1591,7 +1591,7 @@ function _excelRenderTable(dn) {
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
 
-    let html = '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
+    let html = '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;">';
 
 
 
