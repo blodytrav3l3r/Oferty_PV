@@ -2420,8 +2420,10 @@ function excelCreateFromEmpty() {
 
 /* ===== CELL FOCUS (Excel highlight) ===== */
 function excelCellFocus(el) {
-    el.style.background = 'rgba(99,102,241,0.06)';
-    if (el.tagName === 'INPUT') el.select();
+    if (el.tagName === 'INPUT') {
+        el.style.background = 'rgba(99,102,241,0.06)';
+        el.select();
+    }
     _excelUserEditing = true; /* blokuje polling */
 
     // Ustaw aktywną studnię = wiersz w którym jest kursor (tylko dla INPUT, nie dla select/overlay)
