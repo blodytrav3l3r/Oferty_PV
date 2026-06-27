@@ -2751,8 +2751,9 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         }
     }
     // Renderuj ponownie tabelę, by zaktualizować listę średnic (DN)
+    currentWellIndex = -1;
     _excelRenderTable(_excelActiveTab);
-    _excelUpdateLeftPreview(wIdx);
+    currentWellIndex = -1;
     _excelDebouncedRefresh();
 }
 
