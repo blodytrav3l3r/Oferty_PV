@@ -2421,6 +2421,19 @@ function _excelDeselectAllCells() {
 }
 
 /* ===== COPY / PASTE (Excel-like) ===== */
+/** Znajdź indeks kolumny do paste — preferuj aktywną (focus) komórkę */
+function _excelGetPasteColIdx(row) {
+    if (!row) return 2;
+    var active = document.activeElement;
+    if (active && row.contains(active)) {
+        var td = active.closest('td');
+        if (td) {
+            var ci = Array.from(row.children).indexOf(td);
+            if (ci >= 2) return ci;
+        }
+    }
+    return 2; /* fallback: pierwsza kolumna po Lp+NrStudni */
+}
 function _excelHandleCopy(e) {
     if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
     e.preventDefault();
@@ -2495,11 +2508,14 @@ function _excelHandlePaste(e) {
             cellRows[c.wIdx].push(c.colIdx);
         });
         var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
+        /* Jesli wiecej linii niz zaznaczonych komorek, rozszerz na kolejne wiersze */
+        var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
+        var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
         lines.forEach(function(line, li) {
-            if (li >= widxArr.length) return;
-            var wIdx = widxArr[li];
+            var wIdx = li < widxArr.length ? widxArr[li] : (_baseWIdx + li);
+            if (wIdx >= rows.length) return;
             var parts = line.split('\t');
-            var cols = cellRows[wIdx].sort(function(a,b){return a-b;});
+            var cols = li < widxArr.length && cellRows[wIdx] ? cellRows[wIdx].sort(function(a,b){return a-b;}) : _baseCols;
             parts.forEach(function(val, ci) {
                 if (ci >= cols.length) return;
                 var colIdx = cols[ci];
@@ -2543,11 +2559,7 @@ function _excelHandlePaste(e) {
             });
         });
     } else {
-        var colIdx = 0;
-        for (var ci = 0; ci < rows[0].querySelectorAll('input, select').length; ci++) {
-            if (ci < 2) continue;
-            colIdx = ci; break;
-        }
+        var colIdx = _excelGetPasteColIdx(rows[0]);
         lines.forEach(function(line, i) {
             if (i >= rows.length) return;
             var inputs = rows[i].querySelectorAll('input, select');
