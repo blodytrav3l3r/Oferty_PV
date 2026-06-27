@@ -1316,7 +1316,7 @@ function openExcelTableModal() {
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
             #excel-table-container thead th { position:relative; }
-            #excel-table-container thead { position:sticky;top:0;z-index:10; }
+            #excel-table-container thead { position:sticky;top:0;z-index:10;background:#161923; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -1628,7 +1628,7 @@ function _excelRenderTable(dn) {
     const thBase =
         'padding:0.4rem 0.5rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
     const th2Base =
-        'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;opacity:0.7;line-height:1.3;';
+        'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
     const th3Base =
         'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;';
 
@@ -2632,9 +2632,9 @@ function excelOnRzednaChange(wIdx) {
     if (_excelAutoSelectEnabled && rzWlazu !== null && rzDna !== null && rzWlazu > rzDna
         && typeof autoSelectComponents === 'function') {
         _excelAutoSelectForWell(wIdx);
-    } else {
-        _excelDebouncedRefresh();
     }
+    /* Nie wywołuj _excelDebouncedRefresh — wysokość nie zmienia kodów h3,
+       a _excelRefreshAutoCells juz zaktualizowalo height/uszcz cells */
 }
 
 /* ===== DODAWANIE / USUWANIE KOLUMNY PRZEJŚCIA ===== */
