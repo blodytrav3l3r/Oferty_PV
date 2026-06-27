@@ -6,6 +6,8 @@ let _excelActiveTab = '1000';
 let _excelCreatingLock = false;
 let _excelRefreshTimer = null;
 let _excelSelectedCols = [];
+let _excelSelectedCells = []; // [{wIdx, colIdx}] — selekcja pojedynczych komórek
+let _excelLastClickedCell = null; // {wIdx, colIdx} dla Shift+click zakresu
 let _excelDirty = false;
 let _excelFullscreen = false;
 let _excelPollInterval = null;
@@ -1317,6 +1319,8 @@ function openExcelTableModal() {
             #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(99,102,241,0.25) !important; }
             #excel-table-container td.excel-col-selected { outline:2px solid rgba(99,102,241,0.3); outline-offset:-2px; }
             #excel-table-container td.excel-col-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
+            #excel-table-container td.cell-selected { outline:2px solid rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.06); }
+            #excel-table-container td.cell-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
             #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
             #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
@@ -1383,16 +1387,30 @@ function openExcelTableModal() {
                 excelSelectRow(wIdx);
             }
         });
-        /* Delegowany klik — safari fallback: click na checkbox/sel-wrap nie zawsze daje focusin */
+        /* Delegowany klik — excel-like cell/row selection */
         container.addEventListener('click', function(e) {
             if (e.target.closest('button')) return;
+            var td = e.target.closest('td');
             var row = e.target.closest('tr[data-widx]');
-            if (!row) return;
+            if (!row || !td) return;
             var wIdx = parseInt(row.getAttribute('data-widx'), 10);
-            if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+            if (isNaN(wIdx)) return;
+            var colIdx = Array.from(row.children).indexOf(td);
+            /* Ctrl+Shift+click na komórce = cell selection */
+            if (e.ctrlKey || e.shiftKey) {
+                e.stopPropagation();
+                _excelSelectCell(wIdx, colIdx, e.ctrlKey, e.shiftKey);
+                return;
+            }
+            /* Zwykły klik = wybierz wiersz */
+            if (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex) {
                 excelSelectRow(wIdx);
             }
+            _excelDeselectAllCells();
         });
+        /* Bind copy/paste */
+        container.addEventListener('copy', _excelHandleCopy);
+        container.addEventListener('paste', _excelHandlePaste);
     }
 
     _excelActiveTab = DN_TABS[0];
@@ -2353,6 +2371,201 @@ function _excelToggleColClass(colIdx, add) {
             else cell.classList.remove('excel-col-selected');
         }
     });
+}
+
+/* ===== CELL SELECTION (Excel-like) ===== */
+function _excelToggleCellClass(wIdx, colIdx, add) {
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const td = container.querySelector('tr[data-widx="' + wIdx + '"] td:nth-child(' + (colIdx + 1) + ')');
+    if (!td) return;
+    if (add) td.classList.add('cell-selected');
+    else td.classList.remove('cell-selected');
+}
+
+function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
+    if (shift && _excelLastClickedCell) {
+        _excelDeselectAllCells();
+        var minR = Math.min(_excelLastClickedCell.wIdx, wIdx);
+        var maxR = Math.max(_excelLastClickedCell.wIdx, wIdx);
+        var minC = Math.min(_excelLastClickedCell.colIdx, colIdx);
+        var maxC = Math.max(_excelLastClickedCell.colIdx, colIdx);
+        for (var r = minR; r <= maxR; r++) {
+            for (var c = minC; c <= maxC; c++) {
+                _excelSelectedCells.push({ wIdx: r, colIdx: c });
+                _excelToggleCellClass(r, c, true);
+            }
+        }
+    } else if (ctrl) {
+        var idx = _excelSelectedCells.findIndex(function(cell) { return cell.wIdx === wIdx && cell.colIdx === colIdx; });
+        if (idx >= 0) {
+            _excelSelectedCells.splice(idx, 1);
+            _excelToggleCellClass(wIdx, colIdx, false);
+        } else {
+            _excelSelectedCells.push({ wIdx: wIdx, colIdx: colIdx });
+            _excelToggleCellClass(wIdx, colIdx, true);
+        }
+    } else {
+        _excelDeselectAllCells();
+        _excelSelectedCells.push({ wIdx: wIdx, colIdx: colIdx });
+        _excelToggleCellClass(wIdx, colIdx, true);
+    }
+    _excelLastClickedCell = { wIdx: wIdx, colIdx: colIdx };
+}
+
+function _excelDeselectAllCells() {
+    if (_excelSelectedCells.length === 0) return;
+    const copy = [..._excelSelectedCells];
+    _excelSelectedCells = [];
+    copy.forEach(function(cell) { _excelToggleCellClass(cell.wIdx, cell.colIdx, false); });
+}
+
+/* ===== COPY / PASTE (Excel-like) ===== */
+function _excelHandleCopy(e) {
+    if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
+    e.preventDefault();
+    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    if (rows.length === 0) return;
+    var text = '';
+    if (_excelSelectedCells.length > 0) {
+        var cellMap = {};
+        var minR = Infinity, maxR = -Infinity, minC = Infinity, maxC = -Infinity;
+        _excelSelectedCells.forEach(function(cell) {
+            if (!cellMap[cell.wIdx]) cellMap[cell.wIdx] = {};
+            cellMap[cell.wIdx][cell.colIdx] = true;
+            if (cell.wIdx < minR) minR = cell.wIdx;
+            if (cell.wIdx > maxR) maxR = cell.wIdx;
+            if (cell.colIdx < minC) minC = cell.colIdx;
+            if (cell.colIdx > maxC) maxC = cell.colIdx;
+        });
+        for (var r = minR; r <= maxR; r++) {
+            var line = [];
+            for (var c = minC; c <= maxC; c++) {
+                var val = '';
+                if (cellMap[r] && cellMap[r][c]) {
+                    var row = rows[r];
+                    if (row) {
+                        var inputs = row.querySelectorAll('input, select');
+                        var target = inputs[c];
+                        if (target) { var _sel = /** @type {HTMLSelectElement} */ (target); val = _sel.tagName === 'SELECT' ? (_sel.options[_sel.selectedIndex] ? _sel.options[_sel.selectedIndex].text : '') : (/** @type {HTMLInputElement} */(target)).value || ''; }
+                    }
+                }
+                line.push(val);
+            }
+            text += line.join('\t') + '\n';
+        }
+    } else if (_excelSelectedCols.length > 0) {
+        var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        rows.forEach(function(row) {
+            var line = [];
+            cols.forEach(function(colIdx) {
+                var inputs = row.querySelectorAll('input, select');
+                var target = inputs[colIdx];
+                line.push(target ? (function(t){var _s=/** @type {HTMLSelectElement} */(t);return _s.tagName==='SELECT'?(_s.options[_s.selectedIndex]?_s.options[_s.selectedIndex].text:''):(/** @type {HTMLInputElement} */(t)).value||'';})(target) : '');
+            });
+            text += line.join('\t') + '\n';
+        });
+    }
+    if (text) {
+        if (e.clipboardData) {
+            e.clipboardData.setData('text/plain', text);
+        } else if (window.clipboardData) {
+            window.clipboardData.setData('text', text);
+        }
+    }
+}
+
+function _excelHandlePaste(e) {
+    var cb = e.clipboardData || window.clipboardData;
+    if (!cb) return;
+    var text = cb.getData('text');
+    if (!text || !text.trim()) return;
+    e.preventDefault();
+    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    if (rows.length === 0) return;
+    var lines = text.trim().split('\n');
+    for (var _pi = 0; _pi < lines.length; _pi++) {
+        lines[_pi] = lines[_pi].replace(/\r$/, '');
+    }
+    if (_excelSelectedCells.length > 0) {
+        var cellList = _excelSelectedCells.sort(function(a,b){return a.wIdx-b.wIdx||a.colIdx-b.colIdx;});
+        var cellRows = {};
+        cellList.forEach(function(c) {
+            if (!cellRows[c.wIdx]) cellRows[c.wIdx] = [];
+            cellRows[c.wIdx].push(c.colIdx);
+        });
+        var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
+        lines.forEach(function(line, li) {
+            if (li >= widxArr.length) return;
+            var wIdx = widxArr[li];
+            var parts = line.split('\t');
+            var cols = cellRows[wIdx].sort(function(a,b){return a-b;});
+            parts.forEach(function(val, ci) {
+                if (ci >= cols.length) return;
+                var colIdx = cols[ci];
+                var row = rows[wIdx];
+                if (!row) return;
+                var inputs = row.querySelectorAll('input, select');
+                var target = inputs[colIdx];
+                if (!target) return;
+                val = val.trim();
+                if (target.tagName === 'SELECT') {
+                    var _sel = /** @type {HTMLSelectElement} */ (target);
+                    var opt = Array.from(_sel.options).find(function(o) { return o.value === val || o.text === val; });
+                    if (opt) { _sel.value = opt.value; _sel.dispatchEvent(new Event('change', { bubbles: true })); }
+                } else if (target.tagName === 'INPUT') {
+                    /** @type {HTMLInputElement} */ (target).value = val;
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    target.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        });
+    } else if (_excelSelectedCols.length > 0) {
+        var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        lines.forEach(function(line, i) {
+            if (i >= rows.length) return;
+            var parts = line.split('\t');
+            var inputs = rows[i].querySelectorAll('input, select');
+            cols.forEach(function(colIdx, ci) {
+                if (ci >= parts.length) return;
+                var target = inputs[colIdx];
+                if (!target) return;
+                var val = parts[ci].trim();
+                if (target.tagName === 'SELECT') {
+                    var _sel2 = /** @type {HTMLSelectElement} */ (target);
+                    var opt2 = Array.from(_sel2.options).find(function(o) { return o.value === val || o.text === val; });
+                    if (opt2) { _sel2.value = opt2.value; _sel2.dispatchEvent(new Event('change', { bubbles: true })); }
+                } else if (target.tagName === 'INPUT') {
+                    /** @type {HTMLInputElement} */ (target).value = val;
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    target.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        });
+    } else {
+        var colIdx = 0;
+        for (var ci = 0; ci < rows[0].querySelectorAll('input, select').length; ci++) {
+            if (ci < 2) continue;
+            colIdx = ci; break;
+        }
+        lines.forEach(function(line, i) {
+            if (i >= rows.length) return;
+            var inputs = rows[i].querySelectorAll('input, select');
+            var target = inputs[colIdx];
+            if (!target) return;
+            var val = line.trim();
+            if (target.tagName === 'SELECT') {
+                var _sel3 = /** @type {HTMLSelectElement} */ (target);
+                var opt3 = Array.from(_sel3.options).find(function(o) { return o.value === val || o.text === val; });
+                if (opt3) { _sel3.value = opt3.value; _sel3.dispatchEvent(new Event('change', { bubbles: true })); }
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = val;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+    showToast('Wklejono wartości', 'info');
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
