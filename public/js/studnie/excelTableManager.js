@@ -1263,7 +1263,14 @@ function openExcelTableModal() {
     _excelDirty = false;
 
     const existing = document.getElementById('excel-table-overlay');
-    if (existing) existing.remove();
+    if (existing) {
+        /* Wyczyść stary capture handler przed usunięciem overlay */
+        var _oldContainer = document.getElementById('excel-table-container');
+        if (_oldContainer && /** @type {any} */ (_oldContainer)._arrowHandler) {
+            document.removeEventListener('keydown', /** @type {any} */ (_oldContainer)._arrowHandler, true);
+        }
+        existing.remove();
+    }
 
     const overlay = document.createElement('div');
     overlay.id = 'excel-table-overlay';
@@ -1305,6 +1312,7 @@ function openExcelTableModal() {
             #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.25); border-radius:4px; }
             #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.35); }
             #excel-table-overlay ::-webkit-scrollbar-corner { background:transparent; }
+            #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
             #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
             #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
             #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
@@ -1350,9 +1358,10 @@ function openExcelTableModal() {
     const container = document.getElementById('excel-table-container');
     if (container && !/** @type {any} */ (container)._excelListenersAttached) {
         /** @type {any} */ (container)._excelListenersAttached = true;
-        /* Użyj capture phase na dokumencie — przechwytuje strzałki ZANIM input/select je przetworzy */
+        /* Capture phase — przechwytuje strzałki ZANIM input/select je przetworzy */
         var _arrowHandler = function(e) {
-            if (!container.contains(e.target)) return;
+            var tgt = e.target;
+            if (!tgt || !container.contains(tgt)) return;
             if (!e.key.startsWith('Arrow')) return;
             e.stopPropagation();
             e.stopImmediatePropagation();
@@ -1383,7 +1392,7 @@ function openExcelTableModal() {
                 firstRow.setAttribute('data-orig-bg', baseRef);
                 /* Przywróć tło sticky kolumn */
                 var stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
-                stTds.forEach(function(td) { td.style.background = '#13151f'; });
+                stTds.forEach(function(td) { td.style.background = baseRef; });
             }
         }
         currentWellIndex = -1;
@@ -1422,9 +1431,10 @@ function excelSelectRow(wIdx) {
                 prevRow.style.background = base;
                 prevRow.setAttribute('data-orig-bg', base);
             }
-            /* Przywróć tło sticky kolumn do #13151f */
+            /* Przywróć tło sticky kolumn do base-bg */
             var prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
-            prevStickyTds.forEach(function(td) { td.style.background = '#13151f'; });
+            var baseBg = prevRow.getAttribute('data-base-bg') || '#0a0d16';
+            prevStickyTds.forEach(function(td) { td.style.background = baseBg; });
         }
     }
 
@@ -1442,7 +1452,8 @@ function excelSelectRow(wIdx) {
     }
 
     _excelUpdateLeftPreview(wIdx);
-    _excelUpdateHeaderProdCodes();
+    /* NIE wywołuj _excelUpdateHeaderProdCodes — kody nie zmieniają się
+       przy zmianie aktywnego wiersza (niepotrzebny koszt) */
 }
 
 /* ===== CLOSE ===== */
@@ -1849,20 +1860,20 @@ function _excelRenderTable(dn) {
         const tdBase = `${_EXCEL_FONT}`;
 
         /* Lp. */
-        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;${isActive ? '' : ''}">${idx + 1}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:${rowBg};text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">${idx + 1}</td>`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu, sticky */
-        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:${rowBg};border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
 
         /* Rz. Włazu */
-        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:#13151f;text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Rz. Dna */
-        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:#13151f;text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Wys. — auto */
         const height = _excelCalcWellHeight(well);
-        html += `<td style="${tdBase}position:sticky;left:318px;z-index:5;background:#13151f;text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '\u2014'}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:318px;z-index:5;background:${rowBg};text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '\u2014'}</td>`;
 
         /* Przejścia */
         for (let i = 0; i < maxTr; i++) {
@@ -2425,55 +2436,23 @@ function excelCellFocus(el) {
     }
 }
 function excelCellBlur(el) {
-    el.style.background = '#13151f';
+    /* Przywróć oryginalne tło komórki zamiast hardcodować #13151f */
+    var tr = el.closest('tr[data-widx]');
+    var origBg = tr ? tr.getAttribute('data-orig-bg') : '#13151f';
+    el.style.background = origBg || '#13151f';
     _excelUserEditing = false; /* wznawia polling */
 }
 
 /* ===== TAB KEY NAVIGATION ===== */
 function _excelHandleTab(e) {
     let target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
-
-    const container = document.getElementById('excel-table-container');
-    if (!container || !container.contains(target)) return;
-
-    const inputs = Array.from(
-        container.querySelectorAll('input:not([disabled]), select:not([disabled])')
-    );
-    const idx = inputs.indexOf(target);
-    if (idx === -1) return;
-
-    e.preventDefault();
-    const next = e.shiftKey ? inputs[idx - 1] : inputs[idx + 1];
-    if (next) {
-        next.focus();
-        if (next.tagName === 'INPUT') next.select();
-    }
-}
-
-/* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
-function _excelHandleArrow(e) {
-    // Zawsze blokuj scroll — niezależnie od dalszej logiki
-    e.preventDefault();
-    let target = e.target;
     if (!target) return;
-
-    // Normalizuj target — selecty to overlay pattern (DIV.excel-sel-wrap > hidden SELECT)
-    // Sprowadź do fokusowego elementu: INPUT lub DIV.excel-sel-wrap
+    // Normalizuj target — SELECT → wrapper, wrapper OK, INPUT OK
     if (target.tagName === 'SELECT') {
-        // Ukryty select — fokus powinien być na wrapperze
-        var wrap = target.closest('.excel-sel-wrap');
-        if (wrap) target = wrap;
-    } else if (target.tagName !== 'INPUT' && target.classList && target.classList.contains('excel-sel-wrap')) {
-        // Już na wrapperze — OK
-    } else if (target.tagName !== 'INPUT') {
-        // Inny element — sprawdź czy jest wewnątrz wrappera
-        var parentWrap = target.closest && target.closest('.excel-sel-wrap');
-        if (parentWrap) {
-            target = parentWrap;
-        } else {
-            return;
-        }
+        var w = target.closest('.excel-sel-wrap');
+        if (w) target = w;
+    } else if (target.tagName !== 'INPUT' && !(target.classList && target.classList.contains('excel-sel-wrap'))) {
+        return;
     }
 
     const container = document.getElementById('excel-table-container');
@@ -2481,17 +2460,61 @@ function _excelHandleArrow(e) {
 
     const tr = target.closest('tr');
     if (!tr) return;
+    const navEls = _excelGetNavElements(tr);
+    var idx = navEls.indexOf(target);
+    if (idx === -1) return;
 
-    // Znajdź wszystkie wiersze data (pomiń empty-row)
+    // Szukaj następnego/poprzedniego nawigacyjnego elementu w wierszu lub następnych wierszach
+    e.preventDefault();
+    var allRows = Array.from(container.querySelectorAll('tbody tr[data-widx]'));
+    var rowIdx = allRows.indexOf(tr);
+    var next = null;
+    if (!e.shiftKey) {
+        next = navEls[idx + 1];
+        if (!next && allRows[rowIdx + 1]) {
+            var nextRowEls = _excelGetNavElements(allRows[rowIdx + 1]);
+            next = nextRowEls[0];
+        }
+    } else {
+        next = navEls[idx - 1];
+        if (!next && allRows[rowIdx - 1]) {
+            var prevRowEls = _excelGetNavElements(allRows[rowIdx - 1]);
+            next = prevRowEls[prevRowEls.length - 1];
+        }
+    }
+    if (next) {
+        _excelFocusNavEl(next, navEls, e.shiftKey ? 'left' : 'right');
+    }
+}
+
+/* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
+function _excelHandleArrow(e) {
+    let target = e.target;
+    if (!target) return;
+
+    // Normalizuj target do elementu nawigacyjnego: INPUT lub DIV.excel-sel-wrap
+    target = _excelNormalizeNavTarget(target);
+    if (!target) return;
+
+    const container = document.getElementById('excel-table-container');
+    if (!container || !container.contains(target)) return;
+
+    const tr = target.closest('tr');
+    if (!tr) return;
+
+    // Znajdź wiersze data (pomiń empty-row)
     const allRows = Array.from(container.querySelectorAll('tbody tr'));
     const dataRows = allRows.filter(r => r.hasAttribute('data-widx'));
     const currentRowIdx = dataRows.indexOf(tr);
     if (currentRowIdx === -1) return;
 
-    // Zbierz fokusowalne elementy: INPUT + DIV.excel-sel-wrap (nie ukryte selecty!)
+    // Zbierz fokusowalne elementy: INPUT + DIV.excel-sel-wrap
     const rowEls = _excelGetNavElements(tr);
     const colIdx = rowEls.indexOf(target);
-    if (colIdx === -1) return;
+    if (colIdx === -1) {
+        if (typeof window.logger !== 'undefined') window.logger.warn('excel-nav', 'colIdx=-1 target=' + target.tagName + ' class=' + (target.className || ''));
+        return;
+    }
 
     let next = null;
 
@@ -2502,7 +2525,6 @@ function _excelHandleArrow(e) {
     } else if (e.key === 'ArrowDown') {
         const nextRow = dataRows[currentRowIdx + 1];
         if (nextRow) {
-            /* Aktualizuj lewy panel — select nowej studni */
             var downWIdx = parseInt(nextRow.getAttribute('data-widx'));
             if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
                 excelSelectRow(downWIdx);
@@ -2514,7 +2536,6 @@ function _excelHandleArrow(e) {
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
         if (prevRow) {
-            /* Aktualizuj lewy panel — select nowej studni */
             var upWIdx = parseInt(prevRow.getAttribute('data-widx'));
             if (!isNaN(upWIdx) && typeof currentWellIndex !== 'undefined' && upWIdx !== currentWellIndex) {
                 excelSelectRow(upWIdx);
@@ -2525,13 +2546,29 @@ function _excelHandleArrow(e) {
         }
     }
 
-    // Nawigacja — focusuj następny element
-    e.preventDefault();
     if (next) {
         _excelFocusNavEl(next, rowEls, e.key.replace('Arrow', '').toLowerCase());
-        // select() tylko dla INPUT
-        if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
     }
+}
+
+/** Normalizuj dowolny target do elementu nawigacyjnego (INPUT lub DIV.excel-sel-wrap) */
+function _excelNormalizeNavTarget(el) {
+    if (!el) return null;
+    // INPUT — OK
+    if (el.tagName === 'INPUT') return el;
+    // SELECT — szukaj wrappera, fallback na sam SELECT
+    if (el.tagName === 'SELECT') {
+        var wrap = el.closest('.excel-sel-wrap');
+        return wrap || el;
+    }
+    // DIV.excel-sel-wrap — OK
+    if (el.classList && el.classList.contains('excel-sel-wrap')) return el;
+    // Inny element wewnątrz wrappera
+    if (el.closest) {
+        var parentWrap = el.closest('.excel-sel-wrap');
+        if (parentWrap) return parentWrap;
+    }
+    return null;
 }
 
 /** Zbierz fokusowalne elementy nawigacji w wierszu: INPUT + DIV.excel-sel-wrap */
@@ -2587,18 +2624,29 @@ function _excelIsDisabledNav(el) {
     return false;
 }
 
-/** Focusuj element nawigacji, pomijając disabled */
+/** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow) */
 function _excelFocusNavEl(el, rowEls, dir) {
     if (!el) return;
-    if (_excelIsDisabledNav(el)) {
-        var curIdx = rowEls.indexOf(el);
-        var step = (dir === 'right' || dir === 'down') ? 1 : -1;
-        var nxt = rowEls[curIdx + step];
-        if (nxt) _excelFocusNavEl(nxt, rowEls, dir);
-        return;
+    var step = (dir === 'right' || dir === 'down') ? 1 : -1;
+    var limit = rowEls.length + 1; /* max iteracji = rozmiar wiersza + 1 */
+    var cur = el;
+    while (cur && limit-- > 0) {
+        if (!_excelIsDisabledNav(cur)) {
+            cur.focus();
+            cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            if (cur.tagName === 'INPUT' && !cur.disabled && cur.select) cur.select();
+            var tr = cur.closest('tr[data-widx]');
+            if (tr) {
+                var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+                if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+                    excelSelectRow(wIdx);
+                }
+            }
+            return;
+        }
+        var curIdx = rowEls.indexOf(cur);
+        cur = rowEls[curIdx + step] || null;
     }
-    el.focus();
-    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 /* ===== HANDLERS ===== */
@@ -2742,7 +2790,6 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     // Renderuj ponownie tabelę, by zaktualizować listę średnic (DN)
     currentWellIndex = -1;
     _excelRenderTable(_excelActiveTab);
-    currentWellIndex = -1;
     _excelDebouncedRefresh();
 }
 

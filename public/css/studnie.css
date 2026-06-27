@@ -1,4 +1,4 @@
-﻿/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
+/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
 .well-app-layout {
     display: grid;
     grid-template-columns: 350px 1fr 350px;
@@ -1569,6 +1569,7 @@ select.form-input option {
 #excel-table-container input[type="text"],
 #excel-table-container input[type="number"] {
     width: 100% !important;
+    height: 100% !important;
     box-sizing: border-box !important;
     padding: 0.3rem 0.45rem;
     background: transparent;
@@ -1586,8 +1587,28 @@ select.form-input option {
     color: #e2e8f0;
 }
 
+#excel-table-container .excel-sel-wrap {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#excel-table-container .excel-sel-wrap > div {
+    padding: 0.3rem 0.45rem !important;
+    font-size: 0.7rem !important;
+    font-family: Inter, Segoe UI, sans-serif !important;
+    letter-spacing: 0.1px !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
 #excel-table-container td {
     padding: 0;
+    height: 1px; /* Trik CSS: pozwala dzieciom z height: 100% wypełnić pełną wysokość wiersza */
 }
 
 #excel-table-container input[type="checkbox"] {
@@ -1595,8 +1616,61 @@ select.form-input option {
     margin: 0.3rem auto;
 }
 
-#excel-table-container tbody tr:focus-within {
-    outline: 2px solid rgba(99,102,241,0.7);
+#excel-table-container tbody tr:focus-within td {
+    position: relative;
+}
+
+/* Górna linia podświetlenia wiersza na wierzchu */
+#excel-table-container tbody tr:focus-within td::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-top: 2px solid rgba(99, 102, 241, 0.95);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Dolna linia podświetlenia wiersza na wierzchu */
+#excel-table-container tbody tr:focus-within td::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.95);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Lewa krawędź na pierwszej komórce */
+#excel-table-container tbody tr:focus-within td:first-child::before {
+    height: 100%;
+    border-left: 2px solid rgba(99, 102, 241, 0.95);
+}
+
+/* Prawa krawędź na ostatniej komórce */
+#excel-table-container tbody tr:focus-within td:last-child::after {
+    height: 100%;
+    border-right: 2px solid rgba(99, 102, 241, 0.95);
+}
+
+/* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
+#excel-table-container tbody tr:focus-within td {
+    color: #e2e8f0 !important;
+}
+
+/* Kolumna Lp. — lepszy kontrast w aktywnym wierszu */
+#excel-table-container tbody tr:focus-within td:first-child {
+    color: #a5b4fc !important; /* Przyjemny pastelowy fioletowy dla aktywnego indeksu */
+}
+
+/* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
+#excel-table-container tbody tr:focus-within td[data-cell^="height-"] {
+    color: #f8fafc !important;
 }
 
 #excel-table-container td[data-cell] {
