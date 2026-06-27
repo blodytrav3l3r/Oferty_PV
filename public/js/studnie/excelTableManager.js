@@ -1173,7 +1173,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
     return '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' + (width ? 'width:' + width + 'px;' : '') + '"'
         + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)">'
         + '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"'
-        + ' onchange="' + escOnCh + ';this.previousElementSibling.textContent=this.options[this.selectedIndex].text">'
+        + ' onchange="' + escOnCh + ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text">'
         + optHtml + '</select>'
         + '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' + (label || '&mdash;') + '</div>'
         + '</div>';
@@ -1368,7 +1368,7 @@ function openExcelTableModal() {
         /* Delegowany klik — zamiast inline onclick na każdym TR */
         container.addEventListener('click', function(e) {
             var row = e.target.closest('tr[data-widx]');
-            if (row && !e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select')) {
+            if (row && !e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select') && !e.target.closest('.excel-sel-wrap')) {
                 excelSelectRow(parseInt(row.getAttribute('data-widx')));
             }
         });
