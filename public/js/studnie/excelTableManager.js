@@ -2102,6 +2102,11 @@ function _excelRenderTable(dn) {
             const navEls = _excelGetNavElements(targetRow);
             const restoreEl = navEls[savedFocus.colIdx];
             if (restoreEl && !restoreEl.disabled) {
+                /* Ustaw currentWellIndex ZANIM focus, by excelCellFocus nie
+                   wywolal excelSelectRow (focus triggeruje onfocus -> excelCellFocus) */
+                if (typeof savedFocus.wIdx !== 'undefined' && !isNaN(savedFocus.wIdx)) {
+                    currentWellIndex = savedFocus.wIdx;
+                }
                 restoreEl.focus();
                 // Jeśli to input, zaznacz zawartość
                 if (restoreEl.tagName === 'INPUT' && restoreEl.select) {
