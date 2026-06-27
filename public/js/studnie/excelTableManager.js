@@ -4085,7 +4085,7 @@ function _excelPasteCreateWells(text) {
     var parsed = _excelParsePasteData(text);
     /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
     if (parsed.length === 0) {
-        var lines = text.trim().split(String.fromCharCode(92,110)).map(function(l) { return l.replace(String.fromCharCode(92,114,36), '').trim(); }).filter(function(l) { return l; });
+        var lines = text.trim().split(String.fromCharCode(10)).map(function(l) { return l.replace(String.fromCharCode(13), '').trim(); }).filter(function(l) { return l; });
         if (lines.length > 0) {
             var dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
