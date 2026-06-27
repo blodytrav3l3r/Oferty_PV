@@ -2544,21 +2544,10 @@ function _excelHandlePaste(e) {
         /* Doklej brakujące wiersze gdy dane wylewają się poza tabelę */
         var neededRows = _baseWIdx + lines.length;
         rows = _excelEnsureRowCount(neededRows, rows);
-        lines.forEach(function(line, li) {
-            var wIdx = li < widxArr.length ? widxArr[li] : (_baseWIdx + li);
-            var parts = line.split('\t');
-            var _srccols = li < widxArr.length && cellRows[wIdx] ? cellRows[wIdx].sort(function(a,b){return a-b;}) : _baseCols;
-            var _firstCol = _srccols.length > 0 ? _srccols[0] : 0;
-            parts.forEach(function(val, ci) {
-                var colIdx = _firstCol + ci;
-                var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
-                if (!row) return;
-                var tdInner = row.children[colIdx];
-                var target = tdInner ? tdInner.querySelector('input, select') : null;
-                if (!target) return;
-                _excelSetCellValue(target, val.trim());
-            });
-        });
+        var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
+        /* Użyj batch/sync paste — obsłuż duże zestawy */
+        var _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
+        _pasteFn(lines, _baseWIdx, _firstCol, null);
     } else if (_excelSelectedCols.length > 0) {
         var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
         /* Doklej brakujące wiersze */
@@ -2586,19 +2575,98 @@ function _excelHandlePaste(e) {
         );
         /* Doklej brakujące wiersze od startWIdx */
         rows = _excelEnsureRowCount(startWIdx + lines.length, rows);
-        lines.forEach(function(line, i) {
-            var parts = line.split('\t');
-            parts.forEach(function(v, ci) {
-                var _ci = colIdx + ci;
-                var targetRow = document.querySelector('tr[data-widx="' + (startWIdx + i) + '"]');
-                var td3 = targetRow ? targetRow.children[_ci] : (rows[startWIdx + i] ? rows[startWIdx + i].children[_ci] : null);
-                var target = td3 ? td3.querySelector('input, select') : null;
-                if (!target) return;
-                _excelSetCellValue(target, v.trim());
-            });
-        });
+        /* Użyj batch/sync paste — obsłuż duże zestawy */
+        (lines.length > 100 ? _excelPasteBatch : _excelPasteSync)(lines, startWIdx, colIdx, null);
     }
     showToast('Wklejono wartości', 'info');
+}
+
+/* ===== BATCH PASTE (async chunked) ===== */
+var _excelPasteCancelFlag = false;
+
+function _excelShowPasteProgress(now, total) {
+    var pct = Math.min(100, Math.round(now / total * 100));
+    var el = document.getElementById('excel-paste-progress');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'excel-paste-progress';
+        el.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:99999;background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.75rem 1rem;min-width:260px;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+        el.innerHTML = '<div style="font-size:0.65rem;color:#94a3b8;margin-bottom:0.35rem;">Wklejanie... <span id="excel-paste-pct">0%</span></div>'
+            + '<div style="height:4px;background:#0c0e14;border-radius:2px;overflow:hidden;">'
+            + '<div id="excel-paste-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);transition:width 0.15s;"></div></div>';
+        document.body.appendChild(el);
+    }
+    var bar = document.getElementById('excel-paste-bar');
+    var pctEl = document.getElementById('excel-paste-pct');
+    if (bar) bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function _excelHidePasteProgress() {
+    var el = document.getElementById('excel-paste-progress');
+    if (el) el.remove();
+}
+
+/**
+ * Wkleja dane wsadowo w chunkach przez requestAnimationFrame.
+ * Nie blokuje UI.
+ */
+function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
+    var CHUNK = 50;
+    var idx = 0;
+    var total = lines.length;
+    if (total < 100) {
+        _excelPasteSync(lines, startWIdx, startColIdx);
+        if (doneCallback) doneCallback();
+        return;
+    }
+    _excelShowPasteProgress(0, total);
+    function tick() {
+        var end = Math.min(idx + CHUNK, total);
+        for (; idx < end; idx++) {
+            if (_excelPasteCancelFlag) {
+                _excelHidePasteProgress();
+                _excelPasteCancelFlag = false;
+                showToast('Wklejanie przerwane', 'warning');
+                return;
+            }
+            var line = lines[idx];
+            var parts = line.split('\t');
+            var wIdx = startWIdx + idx;
+            parts.forEach(function(v, ci) {
+                var colIdx = startColIdx + ci;
+                var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+                if (!row) return;
+                var tdEl = row.children[colIdx];
+                var target = tdEl ? tdEl.querySelector('input, select') : null;
+                if (target) _excelSetCellValue(target, v.trim());
+            });
+        }
+        _excelShowPasteProgress(idx, total);
+        if (idx < total) {
+            requestAnimationFrame(tick);
+        } else {
+            _excelHidePasteProgress();
+            if (doneCallback) doneCallback();
+        }
+    }
+    requestAnimationFrame(tick);
+}
+
+/** Synchroniczne wklejenie (do 99 wierszy) */
+function _excelPasteSync(lines, startWIdx, startColIdx) {
+    for (var si = 0; si < lines.length; si++) {
+        var parts = lines[si].split('\t');
+        var wIdx = startWIdx + si;
+        parts.forEach(function(v, ci) {
+            var colIdx = startColIdx + ci;
+            var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+            if (!row) return;
+            var tdEl = row.children[colIdx];
+            var target = tdEl ? tdEl.querySelector('input, select') : null;
+            if (target) _excelSetCellValue(target, v.trim());
+        });
+    }
 }
 
 /**
