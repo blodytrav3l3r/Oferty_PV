@@ -2509,6 +2509,14 @@ function _excelHandlePaste(e) {
     var text = cb.getData('text');
     if (!text || !text.trim()) return;
     e.preventDefault();
+
+    /* Paste w pusty wiersz → utwórz nowe studnie */
+    var _emptyInput = document.getElementById('excel-empty-name');
+    if (_emptyInput && _emptyInput === document.activeElement) {
+        _excelPasteCreateWells(text);
+        return;
+    }
+
     var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
     if (rows.length === 0) return;
     var lines = text.trim().split('\n');
@@ -3952,6 +3960,46 @@ function _excelRedo() {
     wells.splice(0, wells.length, ...snap);
     _excelRenderTable(_excelActiveTab);
     showToast('Przywrócono', 'info');
+}
+
+/* ===== PASTE DO PUSTEGO WIERSZA → nowe studnie ===== */
+function _excelPasteCreateWells(text) {
+    var parsed = _excelParsePasteData(text);
+    if (parsed.length === 0) { showToast('Nie rozpoznano danych', 'error'); return; }
+    var dn = _excelActiveTab || '1000';
+    _excelSaveUndoSnapshot();
+    var added = 0;
+    parsed.forEach(function(row) {
+        var name = String(row.name || '').trim();
+        if (!name) return;
+        if (wells.some(function(w) { return w.name === name; })) return;
+        var dnVal = row.dn || String(dn);
+        dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
+        if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
+        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',','.')) : null;
+        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',','.')) : 0;
+        var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: rzw, rzednaDna: rzd, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+        if (rzw !== null) well.rzednaWlazu = rzw;
+        if (rzd !== null) well.rzednaDna = rzd;
+        wells.push(well);
+        _excelAutoSetWlaz(well);
+        added++;
+    });
+    if (added === 0) { showToast('Nie dodano żadnej studni (duplikaty?)', 'info'); return; }
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+    _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+    if (_excelAutoSelectEnabled) {
+        for (var k = 0; k < added; k++) {
+            (function(idx) {
+                setTimeout(function() {
+                    var w = wells[wells.length - added + idx];
+                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) _excelAutoSelectForWell(wells.length - added + idx);
+                }, 200 + idx * 300);
+            })(k);
+        }
+    }
+    _excelDebouncedRefresh();
+    showToast('Dodano ' + added + ' studni', 'success');
 }
 
 /* ===== KEYBOARD SHORTCUTS (Excel-like) ===== */
