@@ -4107,24 +4107,13 @@ function _excelPasteCreateWells(text) {
             var dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
             var added = 0;
-            var skipped = 0;
             for (var fi = 0; fi < lines.length; fi++) {
                 var name = lines[fi];
                 if (!name) continue;
-                if (wells.some(function(w) { return w.name === name; })) { skipped++; continue; }
-                /* Unikalna nazwa — dodaj suffix gdy spotyka duplikat po raz drugi */
-                var uniqName = name;
-                if (skipped > 0 || added > 0) {
-                    var n = 2;
-                    while (wells.some(function(w) { return w.name === uniqName; })) {
-                        uniqName = name + ' (' + n + ')';
-                        n++;
-                    }
-                }
                 var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                 if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-                var well = typeof createNewWell === 'function' ? createNewWell(uniqName, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: uniqName, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
-                well.name = uniqName;
+                var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+                well.name = name; /* pozwól na duplikaty */
                 wells.push(well);
                 _excelAutoSetWlaz(well);
                 added++;
@@ -4133,12 +4122,10 @@ function _excelPasteCreateWells(text) {
                 _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
                 _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
                 _excelDebouncedRefresh();
-                var msg = 'Dodano ' + added + ' studni';
-                if (skipped > 0) msg += ' (' + skipped + ' pominięto jako duplikaty)';
-                showToast(msg, 'success');
+                showToast('Dodano ' + added + ' studni', 'success');
                 return;
             }
-            showToast('Wszystkie studnie już istnieją (' + lines.length + ')', 'info');
+            showToast('Brak danych do wklejenia', 'info');
             return;
         }
         showToast('Nie rozpoznano danych', 'error');
@@ -4150,7 +4137,7 @@ function _excelPasteCreateWells(text) {
     parsed.forEach(function(row) {
         var name = String(row.name || '').trim();
         if (!name) return;
-        if (wells.some(function(w) { return w.name === name; })) return;
+        /* pozwól na duplikaty — nie sprawdzamy 'wells.some' */
         var dnVal = row.dn || String(dn);
         dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
@@ -4163,7 +4150,7 @@ function _excelPasteCreateWells(text) {
         _excelAutoSetWlaz(well);
         added++;
     });
-    if (added === 0) { showToast('Nie dodano żadnej studni (duplikaty?)', 'info'); return; }
+    if (added === 0) { showToast('Nie dodano żadnej studni', 'info'); return; }
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
     if (_excelAutoSelectEnabled) {
