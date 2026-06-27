@@ -2418,12 +2418,14 @@ function excelCellFocus(el) {
     if (el.tagName === 'INPUT') el.select();
     _excelUserEditing = true; /* blokuje polling */
 
-    // Ustaw aktywną studnię = wiersz w którym jest kursor
-    var tr = el.closest('tr[data-widx]');
-    if (tr) {
-        var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
-        if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
-            excelSelectRow(wIdx);
+    // Ustaw aktywną studnię = wiersz w którym jest kursor (tylko dla INPUT, nie dla select/overlay)
+    if (el.tagName === 'INPUT') {
+        var tr = el.closest('tr[data-widx]');
+        if (tr) {
+            var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+            if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+                excelSelectRow(wIdx);
+            }
         }
     }
 }
