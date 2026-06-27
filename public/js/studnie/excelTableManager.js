@@ -1415,8 +1415,8 @@ function openExcelTableModal() {
             }
         });
         /* Bind copy/paste */
-        container.addEventListener('copy', _excelHandleCopy);
-        container.addEventListener('paste', _excelHandlePaste);
+        document.addEventListener('copy', _excelHandleCopy);
+        document.addEventListener('paste', _excelHandlePaste);
         /* Bind keydown dla skrótów */
         container.addEventListener('keydown', _excelHandleKeydown);
     }
@@ -1515,6 +1515,9 @@ function closeExcelTableModal() {
         if (_container && /** @type {any} */ (_container)._arrowHandler) {
             document.removeEventListener('keydown', /** @type {any} */ (_container)._arrowHandler, true);
         }
+        /* Usuń globalne handlery copy/paste */
+        document.removeEventListener('copy', _excelHandleCopy);
+        document.removeEventListener('paste', _excelHandlePaste);
         overlay.remove();
     }
     _excelDirty = false;
@@ -2443,6 +2446,8 @@ function _excelGetPasteColIdx(row) {
     return 2; /* fallback: pierwsza kolumna po Lp+NrStudni */
 }
 function _excelHandleCopy(e) {
+    /* Tylko gdy Excel otwarty */
+    if (!document.getElementById('excel-table-overlay')) return;
     if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
     e.preventDefault();
     var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
@@ -2497,6 +2502,8 @@ function _excelHandleCopy(e) {
 }
 
 function _excelHandlePaste(e) {
+    /* Tylko gdy Excel otwarty */
+    if (!document.getElementById('excel-table-overlay')) return;
     var cb = e.clipboardData || window.clipboardData;
     if (!cb) return;
     var text = cb.getData('text');
