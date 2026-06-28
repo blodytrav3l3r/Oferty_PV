@@ -8,6 +8,8 @@ let _excelRefreshTimer = null;
 let _excelSelectedCols = [];
 let _excelSelectedCells = []; // [{wIdx, colIdx}] — selekcja pojedynczych komórek
 let _excelLastClickedCell = null; // {wIdx, colIdx} dla Shift+click zakresu
+let _excelDragState = null; // {anchor: {wIdx,colIdx}, mode: 'new'|'add'}
+let _excelDragThrottle = null;
 let _excelDirty = false;
 let _excelFullscreen = false;
 let _excelPollInterval = null;
@@ -1325,6 +1327,8 @@ function openExcelTableModal() {
             #excel-table-container td.excel-col-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-table-container td.cell-selected { outline:2px solid rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.06); }
             #excel-table-container td.cell-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
+            #excel-table-container td.drag-preview { outline:2px dashed rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.03); }
+            #excel-table-container td.drag-preview .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
             #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
             #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
@@ -1424,6 +1428,10 @@ function openExcelTableModal() {
         container.addEventListener('paste', _excelHandlePaste, true);
         /* Bind keydown dla skrótów */
         container.addEventListener('keydown', _excelHandleKeydown);
+        /* Drag-selection: mousedown + mousemove + mouseup */
+        container.addEventListener('mousedown', _excelOnMouseDown);
+        document.addEventListener('mousemove', _excelOnMouseMove);
+        document.addEventListener('mouseup', _excelOnMouseUp);
     }
 
     _excelActiveTab = DN_TABS[0];
@@ -1524,6 +1532,10 @@ function closeExcelTableModal() {
         document.removeEventListener('copy', _excelHandleCopy);
         document.removeEventListener('paste', _excelHandlePaste);
         if (_container) _container.removeEventListener('paste', _excelHandlePaste, true);
+        /* Drag-selection cleanup */
+        if (_container) _container.removeEventListener('mousedown', _excelOnMouseDown);
+        document.removeEventListener('mousemove', _excelOnMouseMove);
+        document.removeEventListener('mouseup', _excelOnMouseUp);
         overlay.remove();
     }
     _excelDirty = false;
@@ -2430,6 +2442,109 @@ function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
     _excelLastClickedCell = { wIdx: wIdx, colIdx: colIdx };
 }
 
+function _excelOnMouseDown(e) {
+    if (e.button !== 0) return; // tylko lewy przycisk
+    var td = e.target.closest('td');
+    if (!td) return;
+    var tr = td.closest('tr[data-widx]');
+    if (!tr || !tr.children) return;
+    var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+    var colIdx = Array.prototype.indexOf.call(tr.children, td);
+    if (isNaN(wIdx) || colIdx < 0) return;
+
+    _excelDragState = {
+        anchor: { wIdx: wIdx, colIdx: colIdx },
+        mode: (e.ctrlKey || e.metaKey) ? 'add' : 'new',
+        end: { wIdx: wIdx, colIdx: colIdx },
+        additiveFromShift: false
+    };
+
+    /* Zaznacz anchor natychmiast (action-only-on-mousedown dla czystego drag) */
+    if (!e.ctrlKey && !e.shiftKey) {
+        _excelDeselectAllCells();
+        _excelSelectCell(wIdx, colIdx, false, false);
+    } else if (e.shiftKey && _excelLastClickedCell) {
+        _excelDeselectAllCells();
+        for (var r = Math.min(_excelLastClickedCell.wIdx, wIdx); r <= Math.max(_excelLastClickedCell.wIdx, wIdx); r++) {
+            for (var c = Math.min(_excelLastClickedCell.colIdx, colIdx); c <= Math.max(_excelLastClickedCell.colIdx, colIdx); c++) {
+                _excelSelectCell(r, c, false, false);
+            }
+        }
+    }
+    /* Dla ctrl: nic nie rob (toggle bedzie przy mouseup) */
+}
+
+function _excelOnMouseMove(e) {
+    if (!_excelDragState || !_excelDragState.active) return;
+    /* nie aktualizuj jeszcze dragu, czekaj na dragstart */
+    var td = e.target.closest('td');
+    if (!td) return;
+    var tr = td.closest('tr[data-widx]');
+    if (!tr || !tr.children) return;
+    var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+    var colIdx = Array.prototype.indexOf.call(tr.children, td);
+    if (isNaN(wIdx) || colIdx < 0) return;
+    if (wIdx === _excelDragState.end.wIdx && colIdx === _excelDragState.end.colIdx) return;
+
+    _excelDragState.end = { wIdx: wIdx, colIdx: colIdx };
+    /* Live preview */
+    if (_excelDragThrottle) return;
+    _excelDragThrottle = true;
+    requestAnimationFrame(function() {
+        _excelDragThrottle = false;
+        if (!_excelDragState) return;
+        _excelClearDragPreview();
+        var s = _excelDragState.anchor;
+        var e2 = _excelDragState.end;
+        var rMin = Math.min(s.wIdx, e2.wIdx);
+        var rMax = Math.max(s.wIdx, e2.wIdx);
+        var cMin = Math.min(s.colIdx, e2.colIdx);
+        var cMax = Math.max(s.colIdx, e2.colIdx);
+        for (var r = rMin; r <= rMax; r++) {
+            for (var c = cMin; c <= cMax; c++) {
+                var row = document.querySelector('tr[data-widx="' + r + '"]');
+                if (!row || !row.children[c]) continue;
+                /* Nie nadpisuj juz-faktycznie-zaznaczonych komorek, tylko preview */
+                if (_excelDragState.mode === 'new') {
+                    row.children[c].classList.add('drag-preview');
+                }
+            }
+        }
+    });
+}
+
+function _excelOnMouseUp() {
+    if (!_excelDragState) return;
+    if (_excelDragThrottle) {
+        _excelDragThrottle = false;
+    }
+    var s = _excelDragState.anchor;
+    var en = _excelDragState.end;
+    var mode = _excelDragState.mode;
+    var minR = Math.min(s.wIdx, en.wIdx);
+    var maxR = Math.max(s.wIdx, en.wIdx);
+    var minC = Math.min(s.colIdx, en.colIdx);
+    var maxC = Math.max(s.colIdx, en.colIdx);
+
+    /* Real selection commmit */
+    if ((maxR - minR) > 0 || (maxC - minC) > 0) {
+        /* rzeczywiscie drag (nie klik) */
+        if (mode === 'new') {
+            _excelDeselectAllCells();
+            _excelSelectRange(s.wIdx, s.colIdx, en.wIdx, en.colIdx, false);
+        } else {
+            /* 'add' mode: dodaj zakres do istniejacej selekcji */
+            _excelSelectRange(s.wIdx, s.colIdx, en.wIdx, en.colIdx, true);
+        }
+    } else if (mode === 'new') {
+        /* Sam anchor replacement: pojedyncze klikniecie = zaznacz komorke */
+        _excelDeselectAllCells();
+        _excelSelectCell(s.wIdx, s.colIdx, false, false);
+    }
+    _excelClearDragPreview();
+    _excelDragState = null;
+}
+
 function _excelDeselectAllCells() {
     if (_excelSelectedCells.length === 0) return;
     const copy = [..._excelSelectedCells];
@@ -2437,8 +2552,51 @@ function _excelDeselectAllCells() {
     copy.forEach(function(cell) { _excelToggleCellClass(cell.wIdx, cell.colIdx, false); });
 }
 
+/* ===== DRAG SELECTION ===== */
+function _excelClearDragPreview() {
+    document.querySelectorAll('#excel-table-container td.drag-preview').forEach(function(td) {
+        td.classList.remove('drag-preview');
+    });
+}
+
+function _excelSelectedCount() {
+    return _excelSelectedCells.length;
+}
+
+/* ===== SELECT ALL ===== */
+function _excelSelectAllCells() {
+    _excelDeselectAllCells();
+    _excelDeselectAllCols();
+    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    for (var r = 0; r < rows.length; r++) {
+        var tds = rows[r].querySelectorAll('td');
+        for (var c = 0; c < tds.length; c++) {
+            var td = tds[c];
+            if (td.querySelector('input,select')) {
+                _excelSelectCell(r, c, false, false);
+            }
+        }
+    }
+}
+
+function _excelSelectRange(startW, startC, endW, endC, additive) {
+    if (!additive) _excelDeselectAllCells();
+    var rMin = Math.min(startW, endW);
+    var rMax = Math.max(startW, endW);
+    var cMin = Math.min(startC, endC);
+    var cMax = Math.max(startC, endC);
+    for (var r = rMin; r <= rMax; r++) {
+        for (var c = cMin; c <= cMax; c++) {
+            var row = document.querySelector('tr[data-widx="' + r + '"]');
+            if (!row || !row.children[c]) continue;
+            var existing = _excelSelectedCells.find(function(cl){ return cl.wIdx===r && cl.colIdx===c; });
+            if (!existing) _excelSelectCell(r, c, false, false);
+        }
+    }
+}
+
 /* ===== COPY / PASTE (Excel-like) ===== */
-/** Znajdź indeks kolumny do paste — preferuj aktywną (focus) komórkę */
+
 function _excelGetPasteColIdx(row) {
     if (!row) return 2;
     var active = document.activeElement;
