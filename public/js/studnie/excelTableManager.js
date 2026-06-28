@@ -3468,7 +3468,19 @@ function _excelFocusNavEl(el, rowEls, dir) {
     while (cur && limit-- > 0) {
         if (!_excelIsDisabledNav(cur)) {
             cur.focus();
+            /* scrollIntoView + uwzglednij wysokosc sticky headera (ok. 70px) */
             cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            /* Korekta scrolla: jesli element jest pod sticky headerem, przewin w dol */
+            var headerH = /** @type {HTMLElement} */ (document.querySelector('#excel-table-container thead')).offsetHeight || 60;
+            var elRect = cur.getBoundingClientRect();
+            if (elRect.top < headerH && elRect.top > 0) {
+                /* Element czesciowo lub calkowicie pod headerem — przewin w dol */
+                var container = document.getElementById('excel-table-container');
+                if (container) container.scrollTop -= (headerH - elRect.top + 5);
+            } else if (elRect.top < 0) {
+                /* Element poza gornym krawedzia — przewin w gore */
+                cur.scrollIntoView({ block: 'start', inline: 'nearest' });
+            }
             if (cur.tagName === 'INPUT' && !cur.disabled && cur.select) cur.select();
             var tr = cur.closest('tr[data-widx]');
             if (tr) {
