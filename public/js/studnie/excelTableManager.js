@@ -3052,6 +3052,41 @@ function _excelHandleTab(e) {
 
 /* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
 function _excelHandleArrow(e) {
+    /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie */
+    var emptyInput = document.getElementById('excel-empty-name');
+    var emptyRzw = document.getElementById('excel-empty-rzw');
+    var emptyRzd = document.getElementById('excel-empty-rzd');
+    if (emptyInput && (e.target === emptyInput || e.target === emptyRzw || e.target === emptyRzd)) {
+        e.preventDefault();
+        if (e.key === 'ArrowDown') {
+            return; /* nic poniżej */
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            var drUp = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+            var lastRowUp = drUp[drUp.length - 1];
+            if (lastRowUp) {
+                var lastElsUp = _excelGetNavElements(lastRowUp);
+                var lastIdxUp = lastElsUp.length - 1;
+                if (lastElsUp[lastIdxUp]) _excelFocusNavEl(lastElsUp[lastIdxUp], lastElsUp, 'up');
+            }
+            return;
+        }
+        if (e.key === 'ArrowRight' || e.key === 'Tab') {
+            e.preventDefault();
+            if (e.target === emptyInput && emptyRzw) emptyRzw.focus();
+            else if (e.target === emptyRzw && emptyRzd) emptyRzd.focus();
+            return;
+        }
+        if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
+            e.preventDefault();
+            if (e.target === emptyRzd && emptyRzw) emptyRzw.focus();
+            else if (e.target === emptyRzw && emptyInput) emptyInput.focus();
+            return;
+        }
+        return;
+    }
+
     let target = e.target;
     if (!target) return;
 
@@ -3086,16 +3121,23 @@ function _excelHandleArrow(e) {
     } else if (e.key === 'ArrowLeft') {
         next = rowEls[colIdx - 1] || null;
     } else if (e.key === 'ArrowDown') {
-        const nextRow = dataRows[currentRowIdx + 1];
-        if (nextRow) {
-            var downWIdx = parseInt(nextRow.getAttribute('data-widx'));
-            if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
-                excelSelectRow(downWIdx);
+        var nextRow = dataRows[currentRowIdx + 1];
+        if (!nextRow) {
+            /* ostatni rzad danych — przejdz do pustego wiersza */
+            var emptyInput = document.getElementById('excel-empty-name');
+            if (emptyInput) {
+                e.preventDefault();
+                _excelFocusNavEl(emptyInput, [], 'down');
             }
-            const nextEls = _excelGetNavElements(nextRow);
-            next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
-            next = _excelSkipDisabled(next, nextEls, colIdx, 1);
+            return;
         }
+        var downWIdx = parseInt(nextRow.getAttribute('data-widx'));
+        if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
+            excelSelectRow(downWIdx);
+        }
+        var nextEls = _excelGetNavElements(nextRow);
+        next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
+        next = _excelSkipDisabled(next, nextEls, colIdx, 1);
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
         if (prevRow) {
