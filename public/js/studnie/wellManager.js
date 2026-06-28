@@ -86,6 +86,7 @@ function createNewWell(name, dn = 1000) {
         rzednaDna: null,
         numer: '',
         autoLocked: false,
+        autoSelect: true,
         zakonczenie: offerDefaultZakonczenie,
         redukcjaDN1000: offerDefaultRedukcja,
         redukcjaMinH: offerDefaultRedukcjaMinH,

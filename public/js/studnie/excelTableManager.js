@@ -13,6 +13,7 @@ let _excelDragState = null; // {anchor: {wIdx,colIdx}, mode: 'new'|'add'}
 let _excelDragThrottle = null;
 let _excelFocusOverlayEl = null; // globalny overlay div nad aktualnie fokusowaną komórką
 let _excelFocusRaf = null; // throttling dla scroll/resize update
+let _excelRowSelectStates = {}; // {wIdx: bool} — checkbox column state w Excelu
 let _excelDirty = false;
 let _excelFullscreen = false;
 let _excelPollInterval = null;
@@ -1431,6 +1432,8 @@ function openExcelTableModal() {
         container.addEventListener('paste', _excelHandlePaste, true);
         /* Bind keydown dla skrótów */
         container.addEventListener('keydown', _excelHandleKeydown);
+        /* Checkbox column change listener */
+        container.addEventListener('change', _excelOnRowSelectChange);
         /* Drag-selection: mousedown + mousemove + mouseup */
         container.addEventListener('mousedown', _excelOnMouseDown);
         document.addEventListener('mousemove', _excelOnMouseMove);
@@ -1473,6 +1476,13 @@ function openExcelTableModal() {
     _excelStopPolling();
     _excelStartPolling();
     _excelUpdateWellCount();
+    /* Migracja autoSelect - wszystkie istniejace studnie dostaja default true */
+    if (typeof wells !== 'undefined') {
+        wells.forEach(function(w) {
+            if (w && typeof w.autoSelect === 'undefined') w.autoSelect = true;
+        });
+    }
+    _excelUpdateBulkButtons();
 
     if (typeof lucide !== 'undefined') lucide.createIcons({ root: overlay });
 }
@@ -1558,6 +1568,7 @@ function closeExcelTableModal() {
         if (_container) {
             _container.removeEventListener('focusin', _excelOnFocusIn);
             _container.removeEventListener('focusout', _excelOnFocusOut);
+            _container.removeEventListener('change', _excelOnRowSelectChange);
         }
         document.removeEventListener('scroll', _excelOnOverlayScroll, true);
         window.removeEventListener('resize', _excelOnOverlayScroll);
@@ -1652,6 +1663,7 @@ async function _excelAutoSelectForWell(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
     if (well.rzednaWlazu == null || well.rzednaDna == null) return;
+    if (well.autoSelect === false) return; /* Manual skip */
     if (typeof autoSelectComponents !== 'function') return;
     var savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     try {
@@ -1727,6 +1739,21 @@ function _excelRenderTable(dn) {
 
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
+
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">Lp.</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
+    /* Checkbox column header - select all */
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">` +
+          `<input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" />` +
+          `</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"></th>`;
+    /* AUTO/MAN mode header z przyciskami */
+    var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Auto (0)</button>`;
+    var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Manual (0)</button>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;gap:3px;justify-content:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">Tryb</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">Auto/M</th>`;
 
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">Lp.</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
@@ -1947,6 +1974,19 @@ function _excelRenderTable(dn) {
         html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
 
         const tdBase = `${_EXCEL_FONT}`;
+
+        /* Checkbox column - NIE sticky, normalnie w flow */
+        const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
+        const isAuto = well.autoSelect !== false;
+        const autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
+        const autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
+        html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:28px;">
+            <input type="checkbox" class="excel-row-select" data-widx="${wIdx}"${cbChecked} tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" />
+        </td>`;
+        /* AUTO/MAN mode badge column - NIE sticky */
+        html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;">
+            <span class="excel-mode-badge" title="${isAuto ? 'Auto (komponenty dobierane automatycznie)' : 'Manual (komponenty ustawione ręcznie)'}" style="display:inline-block;padding:2px 6px;border-radius:3px;font-size:0.55rem;cursor:help;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;">${isAuto ? 'AUTO' : 'MAN'}</span>
+        </td>`;
 
         /* Lp. */
         html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:${rowBg};text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">${idx + 1}</td>`;
@@ -2620,6 +2660,26 @@ function _excelSelWrapFocus(selWrap) {
     });
 }
 
+/* ===== ROW SELECT CHEKBOX CHANGE HANDLER ===== */
+function _excelOnRowSelectChange(e) {
+    var target = e.target;
+    if (!target) return;
+    /* Row checkbox - per studnia */
+    if (target.classList && target.classList.contains('excel-row-select')) {
+        var wIdx = parseInt(target.getAttribute('data-widx'), 10);
+        if (!isNaN(wIdx)) {
+            _excelRowSelectStates[wIdx] = target.checked;
+            _excelUpdateBulkButtons();
+            /* sync select-all checkbox */
+            var allBoxes = document.querySelectorAll('#excel-table-container tbody tr[data-widx] input.excel-row-select');
+            var allChecked = Array.from(allBoxes).every(function(cb) { return cb.checked; });
+            var hdrAll = document.getElementById('excel-select-all');
+            if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = allChecked;
+        }
+    }
+    /* Select-all checkbox jest obslugiwany inline onchange -> _excelToggleSelectAll */
+}
+
 function _excelOnFocusOut(e) {
     if (!_excelFocusOverlayEl) return;
     /* Delay — sprawdzamy czy focus nie przeskoczyl do innej komórki w kontenerze */
@@ -2679,6 +2739,57 @@ function _excelSelectAllCells() {
             }
         }
     }
+}
+
+/* ===== ROW CHECKBOX + AUTO/MANUAL BATCH ===== */
+function _excelBulkSetMode(enabled) {
+    if (typeof wells === 'undefined') return;
+    var sel = [];
+    for (var i = 0; i < wells.length; i++) {
+        if (_excelRowSelectStates[i]) sel.push(i);
+    }
+    var targets;
+    if (sel.length === 0) {
+        targets = [];
+        for (var i = 0; i < wells.length; i++) {
+            if (wells[i]) targets.push(i);
+        }
+        if (targets.length === 0) return;
+        showToast('Brak zaznaczonych — zastosowano do ' + targets.length + ' studni', 'info');
+    } else {
+        targets = sel;
+        showToast((enabled ? 'Auto' : 'Manual') + ' dla ' + targets.length + ' studni', 'success');
+    }
+    _excelSaveUndoSnapshot();
+    targets.forEach(function(i) {
+        if (wells[i]) wells[i].autoSelect = enabled;
+    });
+    _excelRenderTable(_excelActiveTab);
+}
+
+function _excelToggleSelectAll(checked) {
+    _excelRowSelectStates = {};
+    if (typeof wells !== 'undefined') {
+        for (var i = 0; i < wells.length; i++) {
+            _excelRowSelectStates[i] = checked;
+        }
+    }
+    var boxes = document.querySelectorAll('.excel-row-select');
+    boxes.forEach(function(cb) { cb.checked = checked; });
+    var hdrAll = document.getElementById('excel-select-all');
+    if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
+    _excelUpdateBulkButtons();
+}
+
+function _excelUpdateBulkButtons() {
+    var btnAuto = document.getElementById('excel-bulk-auto');
+    var btnManual = document.getElementById('excel-bulk-manual');
+    var count = 0;
+    for (var k in _excelRowSelectStates) {
+        if (_excelRowSelectStates.hasOwnProperty(k) && _excelRowSelectStates[k]) count++;
+    }
+    if (btnAuto) btnAuto.textContent = 'Auto (' + count + ')';
+    if (btnManual) btnManual.textContent = 'Manual (' + count + ')';
 }
 
 function _excelSelectRange(startW, startC, endW, endC, additive) {
