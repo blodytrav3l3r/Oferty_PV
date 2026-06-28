@@ -11,6 +11,8 @@ let _excelLastClickedCell = null; // {wIdx, colIdx} dla Shift+click zakresu
 let _excelLastDataCol = -1; // ostatnia fokusowana kolumna (indeks td.children) dla strzałek do/z empty-row
 let _excelDragState = null; // {anchor: {wIdx,colIdx}, mode: 'new'|'add'}
 let _excelDragThrottle = null;
+let _excelFocusOverlayEl = null; // globalny overlay div nad aktualnie fokusowaną komórką
+let _excelFocusRaf = null; // throttling dla scroll/resize update
 let _excelDirty = false;
 let _excelFullscreen = false;
 let _excelPollInterval = null;
@@ -1433,6 +1435,21 @@ function openExcelTableModal() {
         container.addEventListener('mousedown', _excelOnMouseDown);
         document.addEventListener('mousemove', _excelOnMouseMove);
         document.addEventListener('mouseup', _excelOnMouseUp);
+        /* Focus overlay - singleton div podążający za aktualnie fokusowaną komórką */
+        if (!document.getElementById('excel-focus-overlay')) {
+            var ov = document.createElement('div');
+            ov.id = 'excel-focus-overlay';
+            ov.style.cssText = 'position:fixed;pointer-events:none;z-index:99998;border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
+            document.body.appendChild(ov);
+            _excelFocusOverlayEl = ov;
+        } else {
+            _excelFocusOverlayEl = document.getElementById('excel-focus-overlay');
+            _excelFocusOverlayEl.style.display = 'none';
+        }
+        container.addEventListener('focusin', _excelOnFocusIn);
+        container.addEventListener('focusout', _excelOnFocusOut);
+        document.addEventListener('scroll', _excelOnOverlayScroll, true);
+        window.addEventListener('resize', _excelOnOverlayScroll);
     }
 
     _excelActiveTab = DN_TABS[0];
@@ -1537,6 +1554,14 @@ function closeExcelTableModal() {
         if (_container) _container.removeEventListener('mousedown', _excelOnMouseDown);
         document.removeEventListener('mousemove', _excelOnMouseMove);
         document.removeEventListener('mouseup', _excelOnMouseUp);
+        /* Focus overlay cleanup */
+        if (_container) {
+            _container.removeEventListener('focusin', _excelOnFocusIn);
+            _container.removeEventListener('focusout', _excelOnFocusOut);
+        }
+        document.removeEventListener('scroll', _excelOnOverlayScroll, true);
+        window.removeEventListener('resize', _excelOnOverlayScroll);
+        if (_excelFocusOverlayEl) _excelFocusOverlayEl.style.display = 'none';
         overlay.remove();
     }
     _excelDirty = false;
@@ -2546,6 +2571,68 @@ function _excelOnMouseUp() {
     }
     _excelClearDragPreview();
     _excelDragState = null;
+}
+
+/* ===== FOCUS OVERLAY ===== */
+function _excelPositionFocusOverlay(td) {
+    if (!_excelFocusOverlayEl) return;
+    if (!td || !document.body.contains(td)) {
+        _excelFocusOverlayEl.style.display = 'none';
+        return;
+    }
+    var r = td.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) {
+        _excelFocusOverlayEl.style.display = 'none';
+        return;
+    }
+    _excelFocusOverlayEl.style.display = 'block';
+    _excelFocusOverlayEl.style.top = (r.top - 2) + 'px';
+    _excelFocusOverlayEl.style.left = (r.left - 2) + 'px';
+    _excelFocusOverlayEl.style.width = (r.width + 4) + 'px';
+    _excelFocusOverlayEl.style.height = (r.height + 4) + 'px';
+}
+
+function _excelOnFocusIn(e) {
+    if (!_excelFocusOverlayEl) return;
+    var target = e.target;
+    if (!target) return;
+    /* Dla overlay select: target = .excel-sel-wrap (lub inner button/input/select);
+       szukamy td */
+    var td = target.closest('td');
+    if (!td) return;
+    /* Wymazujemy timer jezeli jest */
+    if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
+    _excelFocusRaf = requestAnimationFrame(function() {
+        _excelFocusRaf = null;
+        _excelPositionFocusOverlay(td);
+    });
+}
+
+function _excelOnFocusOut(e) {
+    if (!_excelFocusOverlayEl) return;
+    /* Delay — sprawdzamy czy focus nie przeskoczyl do innej komórki w kontenerze */
+    setTimeout(function() {
+        var ae = document.activeElement;
+        var stillInContainer = ae && document.getElementById('excel-table-container') && document.getElementById('excel-table-container').contains(ae);
+        if (!stillInContainer) {
+            if (_excelFocusOverlayEl) _excelFocusOverlayEl.style.display = 'none';
+        }
+    }, 30);
+}
+
+function _excelOnOverlayScroll() {
+    if (!_excelFocusOverlayEl) return;
+    if (_excelFocusOverlayEl.style.display === 'none') return;
+    /* throttling: jeden requestAnimationFrame na wiele scroll events */
+    if (_excelFocusRaf) return;
+    _excelFocusRaf = requestAnimationFrame(function() {
+        _excelFocusRaf = null;
+        var ae = document.activeElement;
+        if (!ae) return;
+        var td = ae.closest('td');
+        if (!td) return;
+        _excelPositionFocusOverlay(td);
+    });
 }
 
 function _excelDeselectAllCells() {
