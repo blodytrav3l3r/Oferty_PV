@@ -1753,9 +1753,8 @@ function _excelRenderTable(dn) {
     var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Manual (0)</button>`;
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;gap:3px;justify-content:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">Tryb</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">Auto/M</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:right;width:80px;">Auto/M</th>`;
 
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">Lp.</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;border-right:1px solid rgba(255,255,255,0.1);">Nr Studni</th>`;
