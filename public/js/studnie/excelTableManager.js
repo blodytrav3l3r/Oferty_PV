@@ -1744,11 +1744,11 @@ function _excelRenderTable(dn) {
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></th>`;
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"></th>`;
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
-    var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Auto (0)</button>`;
-    var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Manual (0)</button>`;
+    var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:3px 4px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;">Auto</button>`;
+    var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:3px 4px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;">Manual</button>`;
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;flex-direction:column;gap:3px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:right;width:80px;">Auto/M</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);"><b style="color:#fbbf24;">A/M</b></th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:right;width:80px;">.</th>`;
     /* === KOLUMNA 2: Lp. — sticky left:0 === */
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">Lp.</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
@@ -2787,8 +2787,8 @@ function _excelUpdateBulkButtons() {
     for (var k in _excelRowSelectStates) {
         if (_excelRowSelectStates.hasOwnProperty(k) && _excelRowSelectStates[k]) count++;
     }
-    if (btnAuto) btnAuto.textContent = 'Auto (' + count + ')';
-    if (btnManual) btnManual.textContent = 'Manual (' + count + ')';
+    if (btnAuto) btnAuto.textContent = 'Auto\n' + count;
+    if (btnManual) btnManual.textContent = 'Manual\n' + count;
 }
 
 function _excelSelectRange(startW, startC, endW, endC, additive) {
