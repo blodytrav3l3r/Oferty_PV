@@ -1746,7 +1746,7 @@ function _excelRenderTable(dn) {
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
     var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Auto (0)</button>`;
     var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.6rem;font-weight:600;width:44px;">Manual (0)</button>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;gap:3px;justify-content:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;flex-direction:column;gap:3px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:right;width:80px;">Auto/M</th>`;
     /* === KOLUMNA 2: Lp. — sticky left:0 === */
