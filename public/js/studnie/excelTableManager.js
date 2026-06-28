@@ -1735,7 +1735,7 @@ function _excelRenderTable(dn) {
     const th2Base =
         'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
     const th3Base =
-        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;';
+        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#161923;';
 
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
