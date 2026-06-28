@@ -1339,7 +1339,6 @@ function openExcelTableModal() {
             #excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02); }
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
-            #excel-table-container thead th { position:relative; }
             #excel-table-container thead { position:sticky;top:0;z-index:10;background:#161923; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
@@ -2255,26 +2254,26 @@ function _excelApplyStickyColumns() {
     if (!container) return;
     const table = container.querySelector('table');
     if (!table) return;
-    /* Zmierz rzeczywiste szerokości pierwszych 5 kolumn */
+    /* Zmierz rzeczywiste szerokości pierwszych 7 kolumn (checkbox, tryb, Lp, NrStudni, RzWlazu, RzDna, Wys) */
     const firstRow = table.querySelector('thead tr');
     if (!firstRow) return;
-    const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+5)');
-    if (stickyThs.length < 5) return;
+    const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+7)');
+    if (stickyThs.length < 2) return;
     var leftPos = 0;
     var offsets = [0];
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < stickyThs.length - 1; i++) {
         leftPos += /** @type {HTMLElement} */ (stickyThs[i]).offsetWidth;
         offsets.push(leftPos);
     }
-    /* Zastosuj do wszystkich th i td w pierwszych 5 kolumnach */
-    var sel = 'th:nth-child(-n+5), td:nth-child(-n+5)';
+    /* Zastosuj do wszystkich th i td w pierwszych 7 kolumnach */
+    var sel = 'th:nth-child(-n+7), td:nth-child(-n+7)';
     var cells = table.querySelectorAll(sel);
     for (var i = 0; i < cells.length; i++) {
         var colIdx = 0;
         var el = cells[i];
         var prev = el.previousElementSibling;
         while (prev) { colIdx++; prev = prev.previousElementSibling; }
-        if (colIdx < 5 && offsets[colIdx] != null) {
+        if (colIdx < 7 && offsets[colIdx] != null) {
             el.style.left = offsets[colIdx] + 'px';
             el.style.position = 'sticky';
             // Z-index: 30 dla thead, 5 dla tbody
@@ -2296,7 +2295,11 @@ function _excelInitColumnResize() {
 
     const headers = table.querySelectorAll('thead tr:first-child th');
     headers.forEach((th) => {
-        th.style.position = 'relative';
+        // Tylko ustaw position:relative dla kolumn ktore nie maja sticky w inline
+        // (sticky columns maja position:sticky;left:N ustawione przez _excelApplyStickyColumns)
+        if (th.style.position !== 'sticky') {
+            th.style.position = 'relative';
+        }
 
         const handle = document.createElement('div');
         handle.className = 'excel-col-resize-handle';
