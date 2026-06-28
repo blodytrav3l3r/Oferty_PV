@@ -2787,8 +2787,8 @@ function _excelUpdateBulkButtons() {
     for (var k in _excelRowSelectStates) {
         if (_excelRowSelectStates.hasOwnProperty(k) && _excelRowSelectStates[k]) count++;
     }
-    if (btnAuto) btnAuto.textContent = 'Auto\n' + count;
-    if (btnManual) btnManual.textContent = 'Manual\n' + count;
+    if (btnAuto) btnAuto.textContent = 'Auto';
+    if (btnManual) btnManual.textContent = 'Manual';
 }
 
 function _excelSelectRange(startW, startC, endW, endC, additive) {
