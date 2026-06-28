@@ -1339,7 +1339,7 @@ function openExcelTableModal() {
             #excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02); }
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
-            #excel-table-container thead { position:sticky;top:0;z-index:10;background:#161923; }
+            #excel-table-container thead { position:sticky;top:0;z-index:50;background:#161923;isolation:isolate; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -1891,9 +1891,9 @@ function _excelRenderTable(dn) {
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">·</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">·</th>`;
 
-    html += `<tr style="position:sticky;top:0;z-index:20;">${h3}</tr>`;
-    html += `<tr style="position:sticky;top:1.4rem;z-index:20;">${h1}</tr>`;
-    html += `<tr style="position:sticky;top:3.2rem;z-index:20;">${h2}</tr>`;
+    html += `<tr style="position:sticky;top:0;z-index:20;background:#161923;">${h3}</tr>`;
+    html += `<tr style="position:sticky;top:1.4rem;z-index:20;background:#161923;">${h1}</tr>`;
+    html += `<tr style="position:sticky;top:3.2rem;z-index:20;background:#161923;">${h2}</tr>`;
     html += '</thead><tbody>';
 
     /* Wykryj duplikaty nazw — we wszystkich średnicach */
