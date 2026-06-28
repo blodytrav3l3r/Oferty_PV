@@ -2456,6 +2456,8 @@ function _excelOnMouseDown(e) {
         anchor: { wIdx: wIdx, colIdx: colIdx },
         mode: (e.ctrlKey || e.metaKey) ? 'add' : 'new',
         end: { wIdx: wIdx, colIdx: colIdx },
+        active: true,
+        thresholdMet: false,
         additiveFromShift: false
     };
 
