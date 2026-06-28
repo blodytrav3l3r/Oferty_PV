@@ -2704,7 +2704,13 @@ function _excelSetCellValue(target, val) {
         var opt = Array.from(_sel.options).find(function(o) { return o.value === val || o.text === val; });
         if (opt) { _sel.value = opt.value; _sel.dispatchEvent(new Event('change', { bubbles: true })); }
     } else if (target.tagName === 'INPUT') {
-        /** @type {HTMLInputElement} */ (target).value = val;
+        /* Normalizuj separator dziesietny — MS Excel z PL wysyla przecinek, input type=number wymaga kropki */
+        var normalizedVal = val;
+        var inputType = /** @type {HTMLInputElement} */ (target).type;
+        if (inputType === 'number' && typeof normalizedVal === 'string' && normalizedVal.indexOf(',') >= 0 && normalizedVal.indexOf('.') < 0) {
+            normalizedVal = normalizedVal.replace(',', '.');
+        }
+        /** @type {HTMLInputElement} */ (target).value = normalizedVal;
         target.dispatchEvent(new Event('input', { bubbles: true }));
         target.dispatchEvent(new Event('change', { bubbles: true }));
     }
