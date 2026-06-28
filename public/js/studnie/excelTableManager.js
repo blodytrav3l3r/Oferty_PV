@@ -8,6 +8,7 @@ let _excelRefreshTimer = null;
 let _excelSelectedCols = [];
 let _excelSelectedCells = []; // [{wIdx, colIdx}] — selekcja pojedynczych komórek
 let _excelLastClickedCell = null; // {wIdx, colIdx} dla Shift+click zakresu
+let _excelLastDataCol = -1; // ostatnia fokusowana kolumna (indeks td.children) dla strzałek do/z empty-row
 let _excelDragState = null; // {anchor: {wIdx,colIdx}, mode: 'new'|'add'}
 let _excelDragThrottle = null;
 let _excelDirty = false;
@@ -3067,8 +3068,21 @@ function _excelHandleArrow(e) {
             var lastRowUp = drUp[drUp.length - 1];
             if (lastRowUp) {
                 var lastElsUp = _excelGetNavElements(lastRowUp);
-                var lastIdxUp = lastElsUp.length - 1;
-                if (lastElsUp[lastIdxUp]) _excelFocusNavEl(lastElsUp[lastIdxUp], lastElsUp, 'up');
+                /* Wybor kolumny z zapisanej wartosci _excelLastDataCol */
+                var targetEl = null;
+                var savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
+                if (savedCol >= 0 && savedCol < lastRowUp.children.length) {
+                    var tdAtCol = lastRowUp.children[savedCol];
+                    if (tdAtCol) {
+                        var inpAtCol = tdAtCol.querySelector('input, select, .excel-sel-wrap');
+                        if (inpAtCol) targetEl = inpAtCol;
+                    }
+                }
+                if (!targetEl && lastElsUp.length > 0) {
+                    /* Fallback: ostatni focusowalny element w ostatnim wierszu */
+                    targetEl = lastElsUp[lastElsUp.length - 1];
+                }
+                if (targetEl) _excelFocusNavEl(targetEl, lastElsUp, 'up');
             }
             return;
         }
@@ -3123,6 +3137,11 @@ function _excelHandleArrow(e) {
     } else if (e.key === 'ArrowDown') {
         var nextRow = dataRows[currentRowIdx + 1];
         if (!nextRow) {
+            /* zapamietaj indeks td.children (nie index z rowEls) */
+            var tddx = target.closest('td');
+            if (tddx && tddx.parentElement === tr) {
+                _excelLastDataCol = Array.prototype.indexOf.call(tr.children, tddx);
+            }
             /* ostatni rzad danych — przejdz do pustego wiersza */
             var emptyInput = document.getElementById('excel-empty-name');
             if (emptyInput) {
