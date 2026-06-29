@@ -869,7 +869,13 @@ function toggleAutoLock() {
         return;
     }
     well.autoLocked = !well.autoLocked;
+    /* Sync z Excelem - ustaw configSource na MANUAL gdy blokujemy */
+    well.configSource = well.autoLocked ? 'MANUAL' : 'AUTO';
+    well.autoSelect = !well.autoLocked;
     updateAutoLockUI();
+    /* Odswiez Excel jesli otwarty */
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 }
 
 // updateAutoLockUI() przeniesiona do wellUI.js
