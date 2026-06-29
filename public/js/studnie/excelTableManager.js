@@ -3182,6 +3182,18 @@ function _excelPasteSync(lines, startWIdx, startColIdx) {
     }
 }
 
+function _excelMarkAsManual(wIdx) {
+    if (typeof wells === 'undefined' || !wells[wIdx]) return;
+    var w = wells[wIdx];
+    if (w.autoSelect !== false || w.configSource !== 'MANUAL' || w.autoLocked !== true) {
+        w.autoSelect = false;
+        w.configSource = 'MANUAL';
+        w.autoLocked = true;
+        if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
+        if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
+    }
+}
+
 /**
  * Ustawia wartość komórki (input lub select) i dispatchuje eventy.
  * @param {Element} target
@@ -3625,6 +3637,7 @@ function _excelFocusNavEl(el, rowEls, dir) {
 function excelOnRzednaChange(wIdx) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (!row) return;
+    _excelMarkAsManual(wIdx);
     _excelClearResCache(wells[wIdx]);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
@@ -3721,6 +3734,7 @@ function _excelCleanEmptyPrzejscia(well) {
 }
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
+    _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     /* Nie twórz pustego przejścia, jeśli wartość jest pusta i nie ma jeszcze przejścia */
     var hasExisting = trIdx < wells[wIdx].przejscia.length;
@@ -3970,6 +3984,7 @@ function _excelMoveWlazToTop(well) {
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
     _excelSaveUndoSnapshot();
+    _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
     _excelClearResCache(well);
@@ -4397,6 +4412,7 @@ function excelRefreshParamsPopup(wIdx) {
 /* ===== EDYCJA NAZWY STUDNI ===== */
 function excelOnNameChange(wIdx, value) {
     _excelSaveUndoSnapshot();
+    _excelMarkAsManual(wIdx);
     const name = (value || '').trim();
     if (!name) return;
     wells[wIdx].name = name;

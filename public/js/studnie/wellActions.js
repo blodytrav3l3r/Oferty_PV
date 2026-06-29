@@ -442,6 +442,7 @@ function addWellComponent(productId) {
         well.autoLocked = true;
         updateAutoLockUI();
         showToast('Włączono tryb ręczny.', 'info');
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     }
     well.configSource = 'MANUAL';
 
@@ -686,6 +687,9 @@ function updateWellQuantity(index, value) {
     }
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
+    well.autoSelect = false;
+    well.autoLocked = true;
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     // Nie pozwalamy na zmianę ilości na > 1 dla elementów betonowych, ale zachowujemy funkcję do usuwania
     well.config[index].quantity = 1;
     renderWellConfig();
@@ -707,6 +711,9 @@ function clearWellConfig() {
     const well = getCurrentWell();
     if (!well) return;
     well.configSource = 'MANUAL';
+    well.autoSelect = false;
+    well.autoLocked = true;
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     well.config = [];
     refreshAll();
     showToast('Wyczyszczono konfigurację studni', 'info');
