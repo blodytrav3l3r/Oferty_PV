@@ -91,7 +91,7 @@ function _excelStartPolling() {
             /* Lekka aktualizacja — nie re-render caly, tylko tryb AUTO/MAN */
             _excelSyncAutoManualUI();
         }
-    }, 5000);
+    }, 200);
     /* Inicjalny snapshot */
     lastSnapshot = _excelBuildWellsSnapshot();
 }
