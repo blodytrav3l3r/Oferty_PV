@@ -117,7 +117,7 @@ function _excelSyncAutoManualUI() {
         var btnMode = document.getElementById('excel-mode-btn-' + i);
         var btnRun = document.getElementById('excel-run-auto-' + i);
         if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
-        var isAuto = w.autoSelect !== false;
+        var isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
         btnMode.textContent = isAuto ? 'AUTO' : 'MAN';
         btnMode.style.background = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
         btnMode.style.color = isAuto ? '#c7d2fe' : '#fbbf24';
@@ -2069,7 +2069,7 @@ function _excelRenderTable(dn) {
 
         /* Checkbox column - NIE sticky, normalnie w flow */
         const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
-        const isAuto = well.autoSelect !== false;
+        const isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
         const autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
         const autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
         html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:28px;">
