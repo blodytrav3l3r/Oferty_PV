@@ -3805,6 +3805,12 @@ function _excelMarkManual(well) {
     well.autoSelect = false;
     if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
     if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
+    /* Wymus pelny rerendem tabeli Excela — zeby btnMode.textContent == MANUAL */
+    if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+    /* Odswiez glowny panel */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
 function _excelInsertConfigItem(well, componentType, productId, qty) {
@@ -4055,7 +4061,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     }
     _excelMarkManual(well);
 
-    /* Auto-konwersja krag ↔ krag_ot: jeśli studnia ma przejścia → OT, jeśli nie → zwykły */
+    /* Auto-konwersja krag ↔ krag_ot: jesli studnia ma przejscia → OT, jesli nie → zwykly */
     if (newQty > 0 && (componentType === 'krag' || componentType === 'krag_ot')) {
         const hasPrzejscia = well.przejscia && well.przejscia.length > 0;
         const shouldBeOT = hasPrzejscia;
