@@ -152,6 +152,10 @@ function _excelDebouncedRefresh() {
         _excelRefreshTimer = null;
         /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
         _excelUpdateHeaderProdCodes();
+        /* Odśwież główny panel gdy Excel jest otwarty */
+        if (typeof window.updateSummary === 'function') window.updateSummary();
+        if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+        if (typeof window.renderWellsList === 'function') window.renderWellsList();
     }, 800);
 }
 
@@ -3798,6 +3802,9 @@ function _excelMarkManual(well) {
     if (!well) return;
     well.autoLocked = true;
     well.configSource = 'MANUAL';
+    well.autoSelect = false;
+    if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
+    if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
 }
 
 function _excelInsertConfigItem(well, componentType, productId, qty) {
@@ -4137,6 +4144,10 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             }
         }
     }
+    /* Odswiez glowny panel po zmianie konfiguracji */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
 function excelOnKinetaChange(wIdx, value) {
