@@ -1715,6 +1715,9 @@ function _excelToggleWellAutoMode(wIdx) {
     wells[wIdx].autoSelect = wells[wIdx].autoSelect === false;
     /* Synchornizuj configSource z glownym panelem */
     wells[wIdx].configSource = wells[wIdx].autoSelect !== false ? 'AUTO' : 'MANUAL';
+    /* Synchornizuj autoLocked - glowny panel sprawdza to dla przycisku Auto */
+    if (wells[wIdx].autoSelect === false) wells[wIdx].autoLocked = true;
+    else wells[wIdx].autoLocked = false;
     /* Lekki update - tylko jeden TD, bez calego _excelRenderTable (mniej migotania) */
     var btn = document.getElementById('excel-mode-btn-' + wIdx);
     var runBtn = document.getElementById('excel-run-auto-' + wIdx);
@@ -1737,6 +1740,7 @@ function _excelToggleWellAutoMode(wIdx) {
     /* Odswiez glowny panel (configSource zmieniony przez nas) */
     if (typeof window.updateSummary === 'function') window.updateSummary();
     if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
     showToast(nowAuto ? 'Auto wl.' : 'Manual wl.', 'info');
 }
 
@@ -2872,6 +2876,7 @@ function _excelBulkSetMode(enabled) {
         if (wells[i]) {
             wells[i].autoSelect = enabled;
             wells[i].configSource = enabled ? 'AUTO' : 'MANUAL'; /* sync z glownym panelem */
+            wells[i].autoLocked = !enabled; /* sync autoLocked */
         }
     });
     _excelRenderTable(_excelActiveTab);
