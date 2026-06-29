@@ -1703,32 +1703,44 @@ function _excelToggleWellAutoMode(wIdx) {
     showToast(nowAuto ? 'Auto wl.' : 'Manual wl.', 'info');
 }
 
-/* Per-row Run: uruchom solver dla konkretnej studni */
+/* Per-row Run: uruchom solver dla konkretnej studni.
+   Wzorzec jak przycisk Auto w konfiguratorze: najpierw wyczysc config,
+   potem wywolaj autoSelectComponents (prawdziwy dobór od nowa). */
 async function _excelRunAutoSelectForWell(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
     var well = wells[wIdx];
     if (!well) return;
     if (well.autoSelect === false) {
-        showToast('Przelacz w tryb Auto aby uruchomic', 'warning');
+        showToast('Przełącz w tryb Auto aby uruchomić', 'warning');
         return;
     }
     if (well.rzednaWlazu == null || well.rzednaDna == null) {
-        showToast('Uzupelnij Rz. wla盘u i Rz. dna przed autodor.', 'warning');
+        showToast('Uzupełnij Rz. włazu i Rz. dna przed autodor.', 'warning');
         return;
     }
     if (typeof autoSelectComponents !== 'function') {
-        showToast('Auto-dobór nie dost\u0119pny (autoSelectComponents brak)', 'error');
+        showToast('Auto-dobór nie dostępny (autoSelectComponents brak)', 'error');
         return;
     }
     var runBtn = document.getElementById('excel-run-auto-' + wIdx);
+    var savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     if (runBtn) runBtn.textContent = '...';
     try {
-        await _excelAutoSelectForWell(wIdx);
+        currentWellIndex = wIdx;
+        /* WZORZEC z wellActions.js:1390 - czyscimy config i przeładowujemy solver */
+        well.configSource = 'AUTO';
+        well.config = [];
+        await autoSelectComponents(true);
+        _excelClearResCache(well);
+        _excelRenderTable(_excelActiveTab);
+        _excelUpdateHeaderProdCodes();
         showToast('Auto-dobór dla studni #' + wIdx + ' OK', 'success');
     } catch (e) {
-        showToast('Blad auto-doboru: ' + (e?.message || e), 'error');
+        console.error('Auto-dobór fail:', e);
+        showToast('Błąd auto-doboru: ' + (e?.message || e), 'error');
     } finally {
-        if (runBtn) runBtn.textContent = '\u25b6';
+        currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
+        if (runBtn) runBtn.textContent = '▶';
     }
 }
 
