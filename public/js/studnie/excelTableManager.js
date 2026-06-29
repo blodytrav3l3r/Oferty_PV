@@ -117,6 +117,9 @@ function _excelSyncAutoManualUI() {
         var btnMode = document.getElementById('excel-mode-btn-' + i);
         var btnRun = document.getElementById('excel-run-auto-' + i);
         if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
+        /* Sync autoSelect z configSource (gdy glowny panel zmieni configSource) */
+        if (w.configSource === 'AUTO' && w.autoSelect === false) w.autoSelect = true;
+        if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
         var isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
         btnMode.textContent = isAuto ? 'AUTO' : 'MAN';
         btnMode.style.background = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
@@ -1710,6 +1713,8 @@ function _excelToggleWellAutoMode(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
     _excelSaveUndoSnapshot();
     wells[wIdx].autoSelect = wells[wIdx].autoSelect === false;
+    /* Synchornizuj configSource z glownym panelem */
+    wells[wIdx].configSource = wells[wIdx].autoSelect !== false ? 'AUTO' : 'MANUAL';
     /* Lekki update - tylko jeden TD, bez calego _excelRenderTable (mniej migotania) */
     var btn = document.getElementById('excel-mode-btn-' + wIdx);
     var runBtn = document.getElementById('excel-run-auto-' + wIdx);
@@ -1729,6 +1734,9 @@ function _excelToggleWellAutoMode(wIdx) {
         runBtn.style.pointerEvents = nowAuto ? 'auto' : 'none';
         runBtn.title = nowAuto ? 'Uruchom auto-dobor elementow dla tej studni' : 'Przelacz na Auto aby uruchomic';
     }
+    /* Odswiez glowny panel (configSource zmieniony przez nas) */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
     showToast(nowAuto ? 'Auto wl.' : 'Manual wl.', 'info');
 }
 
@@ -2861,9 +2869,15 @@ function _excelBulkSetMode(enabled) {
     }
     _excelSaveUndoSnapshot();
     targets.forEach(function(i) {
-        if (wells[i]) wells[i].autoSelect = enabled;
+        if (wells[i]) {
+            wells[i].autoSelect = enabled;
+            wells[i].configSource = enabled ? 'AUTO' : 'MANUAL'; /* sync z glownym panelem */
+        }
     });
     _excelRenderTable(_excelActiveTab);
+    /* Odswiez glowny panel */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
 function _excelToggleSelectAll(checked) {
