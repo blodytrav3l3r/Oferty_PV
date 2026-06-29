@@ -1552,7 +1552,8 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     let left = Math.min(rect.left, window.innerWidth - popupW - 16);
     if (left < 8) left = 8;
     const top = rect.bottom + 4;
-    const maxH = Math.min(400, window.innerHeight - top - 20);
+    /* rezerwuj 72px na dolny pasek nawigacji (wizard-nav-fixed: height 60px + margines) */
+    const maxH = Math.min(400, window.innerHeight - top - 72);
 
     const popup = document.createElement('div');
     popup.id = 'tm-edit-popup';

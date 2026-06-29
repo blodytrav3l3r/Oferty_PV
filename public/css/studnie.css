@@ -57,7 +57,7 @@
     border-right: 1px solid var(--border-glass);
     border-radius: 0;
     padding: 0.8rem 1.2rem;
-    height: calc(100vh - 57px);
+    height: calc(100vh - 60px);
     display: flex;
     flex-direction: column;
     position: sticky;
@@ -128,7 +128,7 @@
 
 /* ── Prawo: Panel boczny studni ── */
 .wells-sidebar {
-    height: calc(100vh - 57px);
+    height: calc(100vh - 60px);
     display: flex;
     flex-direction: column;
     background: var(--bg-secondary);
@@ -151,7 +151,7 @@
 }
 
 .well-center-column {
-    height: calc(100vh - 57px);
+    height: calc(100vh - 60px);
     overflow-y: auto;
     padding: 0 1rem 4.5rem;
 }
