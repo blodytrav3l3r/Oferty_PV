@@ -4151,6 +4151,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
 }
 
 function excelOnKinetaChange(wIdx, value) {
+    _excelMarkAsManual(wIdx);
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
     _excelUpdateLeftPreview(wIdx);
@@ -4158,6 +4159,7 @@ function excelOnKinetaChange(wIdx, value) {
 }
 
 function excelOnPsiaBudaChange(wIdx, checked) {
+    _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     if (checked) {
         /* Backup parametrów przed włączeniem */
