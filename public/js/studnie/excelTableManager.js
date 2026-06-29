@@ -4935,5 +4935,12 @@ window.refreshExcelFromConfig = function () {
 /* Sync UI z wells[i].configSource/autoSelect (bez pelnego re-render) — dla zmian z glownego panelu */
 window._excelSyncAutoManualUI = function () {
     if (!document.getElementById('excel-table-overlay')) return;
-    if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
+    var fn = /** @type {any} */ (window._excelSyncAutoManualUI);
+    if (fn._inProgress) return;
+    fn._inProgress = true;
+    try {
+        _excelSyncAutoManualUI();
+    } finally {
+        fn._inProgress = false;
+    }
 };
