@@ -121,7 +121,7 @@ function _excelSyncAutoManualUI() {
         if (w.configSource === 'AUTO' && w.autoSelect === false) w.autoSelect = true;
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
         var isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
-        btnMode.textContent = isAuto ? 'AUTO' : 'MAN';
+        btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
         btnMode.style.background = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
         btnMode.style.color = isAuto ? '#c7d2fe' : '#fbbf24';
         btnMode.title = isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)';
@@ -1720,7 +1720,7 @@ function _excelToggleWellAutoMode(wIdx) {
     var runBtn = document.getElementById('excel-run-auto-' + wIdx);
     if (!btn) return;
     var nowAuto = wells[wIdx].autoSelect !== false;
-    btn.textContent = nowAuto ? 'AUTO' : 'MAN';
+    btn.textContent = nowAuto ? 'AUTO' : 'MANUAL';
     btn.style.background = nowAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
     btn.style.color = nowAuto ? '#c7d2fe' : '#fbbf24';
     btn.title = nowAuto ? 'Auto (klik = przelacz na Manual)' : 'Manual (klik = przelacz na Auto)';
@@ -2087,7 +2087,7 @@ function _excelRenderTable(dn) {
         const modeTitle = isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)';
         const runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
         html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;">
-            <button type="button" id="excel-mode-btn-${wIdx}" data-widx="${wIdx}" onclick="_excelToggleWellAutoMode(${wIdx})" title="${modeTitle}" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;height:18px;">${isAuto ? 'AUTO' : 'MAN'}</button>
+            <button type="button" id="excel-mode-btn-${wIdx}" data-widx="${wIdx}" onclick="_excelToggleWellAutoMode(${wIdx})" title="${modeTitle}" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;height:18px;">${isAuto ? 'AUTO' : 'MANUAL'}</button>
             <button type="button" id="excel-run-auto-${wIdx}" data-widx="${wIdx}" onclick="_excelRunAutoSelectForWell(${wIdx})" title="${isAuto ? 'Uruchom auto-dobór elementów dla tej studni' : 'Przełącz na Auto aby uruchomić'}" ${runDisabled} style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:${isAuto ? 'pointer' : 'not-allowed'};background:${isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)'};color:${isAuto ? '#c7d2fe' : '#64748b'};border:1px solid ${isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)'};height:18px;line-height:1;">\u25b6</button>
         </td>`;
 
