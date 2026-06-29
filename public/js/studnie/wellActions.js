@@ -666,6 +666,8 @@ function removeWellComponent(index) {
     renderTiles(); // Update highlight
     updateHeightIndicator(); // Odśwież błędy
     if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
+    /* Patch v=3.71 - sync Excel UI (AUTO/MAN mode button + Run button) */
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
 }
 
 function updateWellQuantity(index, value) {
