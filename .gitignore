@@ -45,10 +45,6 @@ build/
 *.tsbuildinfo
 
 # Database
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
-*.db
 data/backup/
 data/migration_backup/
 
