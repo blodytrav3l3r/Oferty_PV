@@ -71,7 +71,7 @@
     --warn-hover-rgb: 251, 191, 36;
     --blue-rgb: 59, 130, 246;
 
-    /* Navigation */
+    /* Nawigacja */
     --nav-glow-custom: #1e1540;
 
     /* Background variants */
@@ -3423,13 +3423,37 @@ html {
 /* ===== Utility classes (JS inline style replacement) ===== */
 
 /* Flex/Grid helper utilities (shared by rury & studnie) */
-.flex-wrap-start { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
-.flex-1-180 { flex: 1; min-width: 180px; }
-.flex-1-240 { flex: 1; min-width: 240px; }
-.flex-1-180-hidden { flex: 1; min-width: 180px; display: none; }
-.flex-2-240 { flex: 2; min-width: 240px; }
-.p-6-12 { padding: 0.6rem 1.2rem; }
-.form-input-wide { width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; }
+.flex-wrap-start {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.flex-1-180 {
+    flex: 1;
+    min-width: 180px;
+}
+.flex-1-240 {
+    flex: 1;
+    min-width: 240px;
+}
+.flex-1-180-hidden {
+    flex: 1;
+    min-width: 180px;
+    display: none;
+}
+.flex-2-240 {
+    flex: 2;
+    min-width: 240px;
+}
+.p-6-12 {
+    padding: 0.6rem 1.2rem;
+}
+.form-input-wide {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+}
 
 /* Status badges */
 .badge-ok {
@@ -3621,7 +3645,7 @@ html {
     height: 20px;
 }
 
-/* Button & pill utility classes */
+/* Klasy pomocnicze przycisków */
 .pad-sm {
     padding: 0.5rem 0.75rem;
 }
@@ -3658,7 +3682,7 @@ html {
     line-height: 1;
 }
 
-/* Hover effect classes */
+/* Klasy efektów najechania */
 .hover-danger {
     transition:
         background-color 0.2s,

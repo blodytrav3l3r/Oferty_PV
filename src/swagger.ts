@@ -1,20 +1,19 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { getVersion } from './version';
 
 const options: swaggerJsdoc.Options = {
     definition: {
         openapi: '3.0.0',
         info: {
             title: 'WITROS Oferty PV — API',
-            version: '2.0.0',
+            version: getVersion().version,
             description:
                 'Generator ofert handlowych dla fotowoltaiki. Zarządzanie produktami (rury, studnie), ofertami, zamówieniami, klientami i wycenami Preco.',
             contact: {
                 name: 'WITROS'
             }
         },
-        servers: [
-            { url: '/', description: 'Lokalny serwer' }
-        ],
+        servers: [{ url: '/', description: 'Lokalny serwer' }],
         components: {
             securitySchemes: {
                 cookieAuth: {

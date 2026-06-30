@@ -9,7 +9,32 @@ export default {
         'scope-enum': [
             2,
             'always',
-            ['rury', 'studnie', 'offers', 'orders', 'prisma', 'auth', 'ui', 'api', 'seed', 'deploy']
+            [
+                'rury',
+                'studnie',
+                'offers',
+                'orders',
+                'prisma',
+                'auth',
+                'ui',
+                'api',
+                'seed',
+                'deploy',
+                'clients',
+                'audit',
+                'settings',
+                'preco',
+                'telemetry',
+                'deps',
+                'docs',
+                'ci',
+                'config',
+                'test',
+                'docker',
+                'security',
+                'chore',
+                'release'
+            ]
         ],
         'scope-case': [2, 'always', 'lower-case'],
         'subject-case': [2, 'always', 'lower-case'],
