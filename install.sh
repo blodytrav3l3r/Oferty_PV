@@ -68,8 +68,9 @@ echo "===================================================="
 echo "  GOTOWE"
 echo "===================================================="
 echo
-echo "Uruchomienie: npm start"
-echo "lub: node server.js"
+echo "Uruchomienie:"
+echo "  - produkcja:  npm start"
+echo "  - dev:        npm run dev"
 echo
 echo "Aplikacja: http://localhost:3000"
 echo "Konto: admin / admin123"

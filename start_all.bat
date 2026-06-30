@@ -80,27 +80,15 @@ if "!PYTHON_AVAILABLE!"=="1" (
 echo.
 
 if not exist "node_modules" (
-    if exist "vendor\node_modules.tar.gz" (
-        echo [INFO] Rozpakowywanie node_modules z archiwum offline...
-        tar -xzf vendor\node_modules.tar.gz
-        if errorlevel 1 (
-            echo [BLAD] Rozpakowanie node_modules nie powiodlo sie.
-            pause
-            exit /b 1
-        )
-        echo [OK] node_modules rozpakowane z vendor\node_modules.tar.gz
-        echo.
-    ) else (
-        echo [INFO] Brak folderu node_modules. Instalowanie zaleznosci Node.js...
-        call npm install
-        if errorlevel 1 (
-            echo [BLAD] npm install nie powiodlo sie.
-            pause
-            exit /b 1
-        )
-        echo [OK] Zaleznosci Node.js zainstalowane.
-        echo.
+    echo [INFO] Brak folderu node_modules. Instalowanie zaleznosci Node.js...
+    call npm install
+    if errorlevel 1 (
+        echo [BLAD] npm install nie powiodlo sie.
+        pause
+        exit /b 1
     )
+    echo [OK] Zaleznosci Node.js zainstalowane.
+    echo.
 )
 
 if "!PYTHON_AVAILABLE!"=="1" (
@@ -121,14 +109,9 @@ if "!PYTHON_AVAILABLE!"=="1" (
     echo [INFO] Sprawdzanie zaleznosci Python...
     call well_configurator_backend\venv\Scripts\python -c "import sqlalchemy" >nul 2>&1
     if errorlevel 1 (
-        echo [INFO] Instalowanie zaleznosci Python...
-        if exist "vendor\python_wheels" (
-            echo        (tryb offline — lokalne pliki .whl)
-            call well_configurator_backend\venv\Scripts\python -m pip install --no-index --find-links vendor\python_wheels\ -r well_configurator_backend\requirements.txt
-        ) else (
-            echo        (tryb online — pobieranie z internetu)
-            call well_configurator_backend\venv\Scripts\python -m pip install -r well_configurator_backend\requirements.txt
-        )
+        echo [INFO] Instalowanie zaleznosci Python (z internetu)...
+        call well_configurator_backend\venv\Scripts\python -m pip install -r well_configurator_backend
+equirements.txt
         if errorlevel 1 (
             echo [BLAD] Instalacja zaleznosci Python nie powiodla sie.
             echo        Moze to byc spowodowane niezgodnoscia z wersja Pythona.
@@ -158,7 +141,6 @@ if "!RUN_PYTHON!"=="1" (
 
 echo [2/2] Uruchamianie Serwera Node.js...
 start "Serwer Node.js" cmd /k "npm run dev"
-start "Graphify Watch" cmd /k "graphify watch ."
 
 echo.
 echo ========================================
@@ -172,7 +154,7 @@ if "!RUN_PYTHON!"=="1" (
 )
 echo Node.js Server:    http://127.0.0.1:3000
 echo.
-echo TWOJ LINK: http://127.0.0.1:3000/app.html#/studnie
+echo TWOJ LINK: http://127.0.0.1:3000/studnie.html
 echo.
 echo UWAGA: Sprawdz okna czy nie ma bledow ERROR!
 echo ========================================
