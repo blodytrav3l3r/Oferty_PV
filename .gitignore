@@ -72,6 +72,7 @@ everything-claude-code
 
 # Graphify auto-generated cache (knowledge graph - rebuild from source)
 graphify-out/
+public/graphify-out/
 
 # Kilo Agent Manager worktrees (each contains own node_modules/ + assets)
 .kilo/worktrees/
