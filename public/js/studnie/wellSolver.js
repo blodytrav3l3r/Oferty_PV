@@ -444,6 +444,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 
     // === KROK 2: Fallback do JS solvera ===
     logger.warn('wellSolver', '[AutoSelect] Backend niedostępny lub odrzucił. Fallback do JS solvera.');
+    const jsMsStart = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
     const jsResult = runJsAutoSelection(well, requiredMm, availProducts);
     if (jsResult.error) {
         showToast(jsResult.error, 'error');
@@ -486,6 +487,29 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     } catch (renderErr) {
         logger.error('wellSolver', '[AutoSelect] Błąd renderowania:', renderErr);
         logger.error('wellSolver', '[AutoSelect] Stack:', renderErr.stack);
+    }
+
+    // ─── Pasywny hook telemetry AI (NIE zmienia logiki solvera) ───
+    // Wysyła pełny snapshot wygenerowanej konfiguracji do /api/telemetry/ai/config.
+    // Solver JS pozostaje jedynym źródłem prawdy — telemetry jedynie obserwuje.
+    try {
+        if (typeof window.telemetryRecordConfig === 'function') {
+            const jsMsEnd = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+            window.telemetryRecordConfig({
+                well: well,
+                configItems: well.config || [],
+                solverSource: 'AUTO_JS',
+                computationMs: Math.round(jsMsEnd - jsMsStart),
+                iterationCount: 1,
+                checkedVariants: (availProducts || []).length,
+                rankingScore: typeof jsResult.diff === 'number' ? Math.max(0, 10 - jsResult.diff / 50) : undefined,
+                selectionReason: jsResult.fallback
+                    ? `fallback: ${jsResult.fallbackReason || 'extended tolerance'}`
+                    : 'js_solver_standard'
+            });
+        }
+    } catch (e) {
+        // Pasywny hook — nie wpływa na wynik solvera
     }
 
     const diffStr = jsResult.diff >= 0 ? `+${jsResult.diff}mm` : `${jsResult.diff}mm`;

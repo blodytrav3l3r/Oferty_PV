@@ -5173,6 +5173,16 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
 
         <div id="toast-container" class="toast-container"></div>
         <script src="/js/versionDisplay.js"></script>
+        <!-- Pasywny moduł telemetry AI (NIE zmienia solvera) -->
+        <script src="/js/studnie/telemetryBridge.js"></script>
+        <!-- Rejestracja wersji solvera/reguł (raz na sesję) -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof window.telemetryRegisterSolverVersion === 'function') {
+                    window.telemetryRegisterSolverVersion();
+                }
+            });
+        </script>
         <script src="js/shared/xlsx.full.min.js"></script>
 
         <!-- PV script dependencies -->

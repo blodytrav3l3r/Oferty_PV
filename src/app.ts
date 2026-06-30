@@ -186,6 +186,7 @@ import pvMarketplaceRoutes from './routes/pvMarketplace';
 import auditRoutes from './routes/audit';
 import settingsRoutes from './routes/settings';
 import telemetryRoutes from './routes/telemetry';
+import telemetryAiRoutes from './routes/telemetryAi';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -209,6 +210,8 @@ app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
 app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);
+// Nowy moduł telemetry AI - pasywny zapis konfiguracji, zdarzeń i wersji
+app.use('/api/telemetry', telemetryAiRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
