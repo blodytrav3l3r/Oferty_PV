@@ -6,6 +6,11 @@ node_modules/
 /vendor/python_wheels/
 !/vendor/README.md
 
+# Offline bundle (build locally with python build_offline_bundle.py)
+/dist-bundle/
+/WITROS-Oferty-PV-Offline.zip
+
+
 # Python
 well_configurator_backend/venv/
 well_configurator_backend/__pycache__/
