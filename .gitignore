@@ -90,10 +90,13 @@ check_db_temp.js
 .agents/
 .opencode/
 .graphifyignore
+.hermes/
+./~/
 
 # === Temp/working files ===
 scripts/tempRules.js
 data/app_database.sqlite.backup_*
+tmp/
 
 # === Local git hooks (powiązane z graphify które wykluczyliśmy) ===
 .githooks/
