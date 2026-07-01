@@ -148,6 +148,56 @@ model ai_telemetry_versions {
   @@index([componentType, isActive], map: "idx_versions_active")
 }
 
+// Baza wiedzy AI - zapisywane wzorce i rekomendacje nie modyfikują solvera
+model ai_knowledge_base {
+  id              String  @id
+  patternType     String  // 'dennica_swap' | 'ring_pattern' | 'reduction_choice'
+  patternKey      String
+  dn              String?
+  context         String?
+  description     String?
+  recommendation  String?
+  hitCount        Int     @default(0)
+  confidence      Float   @default(0.0)
+  successCount    Int     @default(0)
+  rejectionCount  Int     @default(0)
+  firstDetectedAt String?
+  lastHitAt       String?
+  lastUpdatedAt   String?
+  changeHistory   String?
+  status          String  @default("active")
+  schemaVersion   String?
+  generatedBy     String?
+
+  @@index([patternType], map: "idx_kb_pattern_type")
+  @@index([dn], map: "idx_kb_dn")
+  @@index([patternKey], map: "idx_kb_pattern_key")
+  @@index([status], map: "idx_kb_status")
+  @@index([confidence], map: "idx_kb_confidence")
+}
+
+// Rekomendacje AI - wygenerowane, ale niewpływające na solver
+model ai_recommendations {
+  id            String  @id
+  patternType   String
+  patternKey    String
+  dn            String?
+  wellId        String?
+  score         Float   @default(0.0)
+  confidence    Float   @default(0.0)
+  payload       String?
+  wasApplied    Boolean @default(false)
+  wasAccepted   Boolean @default(false)
+  wasRejected   Boolean @default(false)
+  generatedAt   String?
+  decidedAt     String?
+  decidedBy     String?
+
+  @@index([patternType], map: "idx_recs_type")
+  @@index([wellId], map: "idx_recs_well")
+  @@index([wasApplied], map: "idx_recs_applied")
+}
+
 // Przejscia szczelne (geometric features) - wydzielone od zwyklych komponentow
 model ai_transition_snapshots {
   id           String  @id

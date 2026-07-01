@@ -1,86 +1,107 @@
-#!/bin/bash
-# WITROS Oferty PV - instalator (bash / git-bash / Linux / macOS)
+#!/usr/bin/env bash
+# ============================================================
+#  install.sh - Linux/macOS/git-bash (Mirror of install.bat)
+#  Architektura: Node.js + Express + Prisma + AI Learning Engine
+# ============================================================
 
 set -e
 cd "$(dirname "$0")"
 
-echo "===================================================="
-echo "  WITROS Oferty PV - instalator"
-echo "===================================================="
+echo "=========================================================="
+echo "  WITROS Oferty PV - instalator (Node + AI + Telemetry)"
+echo "=========================================================="
 echo
 
 # 1. Node.js
-echo "[1/6] Sprawdzenie Node.js..."
+echo "[1/8] Sprawdzanie Node.js..."
 if ! command -v node >/dev/null 2>&1; then
     echo "BLAD: Node.js nie jest zainstalowany."
-    echo "Zainstaluj LTS 18+ ze strony https://nodejs.org/"
-    read -p "Enter..."
+    echo "Zainstaluj LTS 20+ z https://nodejs.org/"
     exit 1
 fi
-node --version
-echo "OK"
+NODE_VER=$(node --version)
+NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1 | tr -d 'v')
+if [ "$NODE_MAJOR" -lt 20 ]; then
+    echo "BLAD: Wymagane Node.js >= 20. Wykryto $NODE_VER"
+    exit 1
+fi
+echo "     [OK] Node.js $NODE_VER"
 echo
 
 # 2. npm
-echo "[2/6] Sprawdzenie npm..."
+echo "[2/8] Sprawdzanie npm..."
 if ! command -v npm >/dev/null 2>&1; then
     echo "BLAD: npm nie jest dostepny."
-    read -p "Enter..."
     exit 1
 fi
-npm --version
-echo "OK"
+echo "     [OK] npm $(npm --version)"
 echo
 
-# 3. zależności
-echo "[3/6] npm install..."
-if [ ! -f "package.json" ]; then
-    echo "BLAD: brak package.json w $(pwd)"
-    read -p "Enter..."
-    exit 1
-fi
-npm install --no-audit --no-fund
-echo "OK"
-echo
-
-# 4. Prisma generate
-echo "[4/6] prisma generate..."
-npx prisma generate
-echo "OK"
-echo
-
-# 5. Prisma db push
-echo "[5/6] prisma db push --accept-data-loss..."
-npx prisma db push --accept-data-loss
-echo "OK"
-echo
-
-# 6. Seed (opcja)
-echo "[6/6] Seed danych (opcja)..."
-if [ -f "prisma/seed.js" ] || [ -f "prisma/seed.ts" ] || [ -f "prisma/seed.mjs" ]; then
-    npx prisma db seed || echo "(seed pominiety - brak skryptu seed)"
+# 3. Git
+echo "[3/8] Sprawdzanie Git (dla husky)..."
+if ! command -v git >/dev/null 2>&1; then
+    echo "UWAGA: Git nie jest zainstalowany, hooki husky moga nie dzialac."
 else
-    echo "(brak pliku seed - pomijam)"
+    echo "     [OK] Git jest zainstalowany."
 fi
 echo
 
-echo "===================================================="
-echo "  GOTOWE"
-echo "===================================================="
+# 4. Struktura
+echo "[4/8] Sprawdzanie struktury katalogow..."
+for d in src public tests prisma; do
+    if [ ! -d "$d" ]; then
+        echo "BLAD: Brak katalogu $d/"
+        exit 1
+    fi
+done
+echo "     [OK] Struktura repo poprawna."
 echo
-echo "Uruchomienie:"
-echo "  - produkcja:  npm start"
-echo "  - dev:        npm run dev"
+
+# 5. npm install
+echo "[5/8] npm install..."
+if [ -f "package-lock.json" ]; then
+    npm ci --no-audit --no-fund
+else
+    npm install --no-audit --no-fund
+fi
+echo "     [OK] Zaleznosci zainstalowane."
 echo
+
+# 6. Prisma
+echo "[6/8] Prisma generate + migracja..."
+npx prisma generate || { echo "BLAD: prisma generate"; exit 1; }
+echo "     [OK] Prisma client wygenerowany."
+
+if [ -d "migrations" ] && [ -f "migrations/migration_lock.toml" ]; then
+    npx prisma migrate deploy || npx prisma db push --skip-generate --accept-data-loss
+else
+    npx prisma db push --skip-generate --accept-data-loss
+fi
+echo "     [OK] Schemat bazy aktualny."
+echo
+
+# 7. Seed (opcja)
+echo "[7/8] Seed (opcjonalny)..."
+if [ -f "prisma/seed.ts" ]; then
+    npx ts-node prisma/seed.ts || echo "     [UWAGA] Seed nie powiodl sie - pomijam."
+else
+    echo "     [INFO] Brak prisma/seed.ts — pomijam."
+fi
+echo
+
+# 8. Typecheck
+echo "[8/8] TypeScript typecheck..."
+npx tsc --noEmit || echo "     [UWAGA] Typecheck wykryl problemy."
+echo
+
+echo "=========================================================="
+echo "  GOTOWE - instalacja zakonczona"
+echo "=========================================================="
+echo
+echo "Nastepne kroki:"
+echo "  bash dev.sh    — development z hot reload"
+echo "  bash build.sh  — produkcyjny build"
+echo "  bash prod.sh   — server produkcyjny (Ctrl+C)"
+echo
+echo "Cron Service uruchamiany automatycznie przez server.ts"
 echo "Aplikacja: http://localhost:3000"
-echo "Konto: admin / admin123"
-echo
-
-read -p "Uruchomic serwer teraz? (T/N): " RUN
-if [[ "$RUN" =~ ^[TtYy]$ ]]; then
-    echo
-    echo "Uruchamiam server..."
-    echo "(Zatrzymanie: Ctrl+C)"
-    echo
-    npm start
-fi
