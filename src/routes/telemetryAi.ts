@@ -191,6 +191,111 @@ router.post(
 );
 
 /**
+ * POST /api/telemetry/ai/acceptance-full
+ * Rozszerzony acceptance z pełnym kontekstem (oferta + akceptacja).
+ */
+router.post(
+    '/ai/acceptance-full',
+    requireAuth,
+    WRITE_LIMITER,
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        const userId = authReq.user?.id;
+        try {
+            const body = req.body as {
+                telemetryId?: string;
+                accepted?: boolean;
+                offerId?: string;
+                wellId?: string;
+                configSnapshot?: Record<string, unknown>;
+                transitions?: Array<Record<string, unknown>>;
+                warehouse?: string;
+            };
+            if (typeof body.telemetryId !== 'string') {
+                return res.status(400).json({ error: 'Brak telemetryId' });
+            }
+            if (typeof body.accepted !== 'boolean') {
+                return res.status(400).json({ error: 'Brak accepted (boolean)' });
+            }
+            await telemetryService.recordAcceptance(body.telemetryId, body.accepted);
+
+            if (
+                body.accepted &&
+                body.configSnapshot &&
+                typeof body.configSnapshot === 'object'
+            ) {
+                const snap = body.configSnapshot;
+                await telemetryService.recordConfig(
+                    {
+                        solverSource: 'MANUAL',
+                        wasAccepted: true,
+                        wasRejected: false,
+                        wasModified: false,
+                        offerId: body.offerId,
+                        wellId: body.wellId,
+                        warehouse: body.warehouse,
+                        dn: (snap.dn as string) || undefined,
+                        dennicaHeight:
+                            typeof snap.dennicaHeight === 'number'
+                                ? snap.dennicaHeight
+                                : undefined,
+                        ringCount:
+                            typeof snap.ringCount === 'number' ? snap.ringCount : undefined,
+                        allComponentIds: Array.isArray(snap.allComponentIds)
+                            ? (snap.allComponentIds as string[])
+                            : undefined,
+                        appliedReductions: Array.isArray(snap.appliedReductions)
+                            ? (snap.appliedReductions as never[])
+                            : undefined,
+                        appliedKonus: Array.isArray(snap.appliedKonus)
+                            ? (snap.appliedKonus as never[])
+                            : undefined,
+                        appliedHatches: Array.isArray(snap.appliedHatches)
+                            ? (snap.appliedHatches as never[])
+                            : undefined,
+                        appliedSeals: Array.isArray(snap.appliedSeals)
+                            ? (snap.appliedSeals as never[])
+                            : undefined,
+                        transitions: Array.isArray(body.transitions)
+                            ? (body.transitions as never[])
+                            : undefined,
+                        selectionReason: 'user_accepted_post_solver',
+                        featureSnapshot:
+                            typeof snap.featureSnapshot === 'object' && snap.featureSnapshot
+                                ? (snap.featureSnapshot as Record<string, unknown>)
+                                : undefined,
+                        labelSnapshot:
+                            typeof snap.labelSnapshot === 'object' && snap.labelSnapshot
+                                ? (snap.labelSnapshot as Record<string, unknown>)
+                                : undefined,
+                        parentConfigId: body.telemetryId
+                    },
+                    userId
+                );
+            }
+
+            await telemetryService.recordEvent(
+                {
+                    eventType: body.accepted ? 'accept' : 'reject',
+                    wellId: body.wellId,
+                    telemetryId: body.telemetryId,
+                    changeReason: body.accepted
+                        ? 'offer_saved_user_accept'
+                        : 'offer_rejected'
+                },
+                userId
+            );
+
+            return res.json({ success: true });
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            logger.error('Telemetry', `Błąd acceptance-full: ${message}`);
+            return res.status(500).json({ error: 'Nie udało się zapisać acceptance' });
+        }
+    }
+);
+
+/**
  * GET /api/telemetry/ai/list
  * Lista ostatnich rekordów telemetry (admin only).
  */
