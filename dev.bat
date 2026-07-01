@@ -1,38 +1,50 @@
 @echo off
 REM ===========================================================
-REM  dev.bat — Development mode (hot reload)
-REM  Backend (ts-node-dev) + Frontend (Vite)
-REM  Architektura: AI Learning Engine + Telemetry + Skill Bridge
+REM  dev.bat — Development mode (final, 2026-07-01)
+REM  Strategia: minimalna zlozonosc, zero zaglebiania w Edge Case.
+REM  Wszystkie krytyczne zadania zlecone sa npm i cyzelnie
+REM  odporne na MSYS bash escape'y.
 REM ===========================================================
 
-setlocal enabledelayedexpansion
-chcp 65001 >nul 2>&1
+REM Wylacz delayed expansion zeby uniknac problemow z cyframi
+setlocal
 cd /d "%~dp0"
 
-echo ============================================================
+echo ===========================================================
 echo   WITROS Oferty PV - Development Mode (hot reload)
-echo ============================================================
+echo ===========================================================
 echo.
 
-REM Sprawdzenie Node.js
-where node >nul 2>&1
+REM Krok 1: Walidacja Node.js
+where node >nul 2>nul
 if errorlevel 1 (
     echo [BLAD] Brak Node.js. Uruchom install.bat.
     pause
     exit /b 1
 )
 
-REM Sprawdzenie node_modules
-if not exist "node_modules" (
-    echo [INFO] Brak node_modules. Uruchamiam install.bat...
-    call install.bat
-    if errorlevel 1 exit /b 1
+REM Krok 2: Walidacja package.json
+if not exist "package.json" (
+    echo [BLAD] Brak package.json w %CD%
+    pause
+    exit /b 1
 )
 
-REM Sprawdzenie Prisma
-if not exist "generated\prisma" (
-    echo [INFO] Brak Prisma client. Generuje...
-    call npx prisma generate >nul 2>&1
+REM Krok 3: Auto-instalacja node_modules jesli brak
+if not exist "node_modules" (
+    echo [INFO] Brak node_modules. Instaluje zaleznosci...
+    call npm install --no-audit --no-fund
+    if errorlevel 1 (
+        echo [BLAD] npm install nie powiodl sie.
+        pause
+        exit /b 1
+    )
+)
+
+REM Krok 4: Sprawdzenie Prisma Client
+if not exist "generated\prisma\index.d.ts" (
+    echo [INFO] Generuje Prisma Client...
+    call npx prisma generate
     if errorlevel 1 (
         echo [BLAD] prisma generate nie powiodl sie.
         pause
@@ -40,28 +52,37 @@ if not exist "generated\prisma" (
     )
 )
 
-REM Sprawdzenie migracji (heurystyka: jesli telemetry_logs missing, push)
+REM Krok 5: Sprawdzenie schematu DB
 echo [INFO] Sprawdzanie schematu bazy...
-node scripts/check-db.js >nul 2>&1 || call npx prisma db push --skip-generate --accept-data-loss >nul 2>&1
+call node scripts/check-db.js >nul 2>nul
+if errorlevel 1 (
+    echo [INFO] Brak tabel telemetry/AI - migracja...
+    call npx prisma db push --skip-generate --accept-data-loss >nul 2>nul
+)
 
-REM Uruchom check/skan portu
+REM Krok 6: PowerShell port-check (BEZ NETSTAT, ktory mogl wisniec)
 echo [INFO] Sprawdzanie portu 3000...
-netstat -ano 2^>nul | findstr ":3000 " > temp_port.txt
-for /f "tokens=5" %%a in (temp_port.txt) do (
-    if not "%%a"=="" (
-        echo [UWAGA] Port 3000 jest uzywany przez PID %%a
-        echo          Jesli to nie aplikacja WITROS, zatrzymaj ja.
+set "PORT_PID="
+for /f "tokens=*" %%n in ('powershell -NoProfile -Command "(Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue).OwningProcess" 2^>nul') do (
+    if "%%n" neq "" set "PORT_PID=%%n"
+)
+
+if defined PORT_PID (
+    echo [UWAGA] Port 3000 uzywany przez PID !PORT_PID!
+    set /p "KEEP=Nadal kontynuowac? (T = nie, N = kontynuuj) [T/N]: "
+    if /i "!KEEP!"=="N" (
+        echo [INFO] Kontynuuje pomimo zajetego portu...
+    ) else (
+        echo [INFO] Zatrzymuje PID !PORT_PID!...
+        powershell -Command "Stop-Process -Id !PORT_PID! -Force" 2>nul
+        timeout /t 2 /nobreak >nul 2>&1
     )
 )
-del temp_port.txt 2>nul
 
+REM Krok 7: Uruchomienie
+echo [INFO] Uruchamiam npm run dev (Ctrl+C stop)
 echo.
-echo [INFO] Uruchamiam backend + frontend (Ctrl+C zatrzymuje oba)
-echo [INFO] Backend:  http://localhost:3000
-echo [INFO] Frontend: http://localhost:3000 (proxy do Vite)
-echo.
-
-REM Uruchamiaj oba procesy (concurrently dev)
 call npm run dev
 
-pause
+REM Restore
+endlocal

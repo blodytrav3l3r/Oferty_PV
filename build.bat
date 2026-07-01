@@ -1,53 +1,64 @@
 @echo off
 REM ===========================================================
-REM  build.bat — Budowanie production bundle
+REM  build.bat — Budowanie production bundle (final)
 REM ===========================================================
 
-setlocal enabledelayedexpansion
-chcp 65001 >nul 2>&1
+setlocal
 cd /d "%~dp0"
 
-echo ============================================================
+echo ===========================================================
 echo   WITROS Oferty PV - Budowanie produkcyjne
-echo ============================================================
+echo ===========================================================
 echo.
 
-where node >nul 2>&1 || (
+REM Walidacja
+where node >nul 2>nul || (
     echo [BLAD] Brak Node.js.
     pause
     exit /b 1
 )
 
+REM npm ci jesli brak node_modules
 if not exist "node_modules" (
-    echo [INFO] Brak node_modules, instalacja...
-    call npm ci --no-audit --no-fund || exit /b 1
+    echo [INFO] npm ci...
+    call npm ci --no-audit --no-fund
+    if errorlevel 1 (
+        echo [BLAD] npm ci nie powiodl sie.
+        pause
+        exit /b 1
+    )
 )
+echo [OK] Dependencies OK
 
 REM Prisma client
 echo [INFO] Prisma generate...
-call npx prisma generate || exit /b 1
-echo [OK] Prisma client gotowy.
+call npx prisma generate
+if errorlevel 1 (
+    echo [BLAD] prisma generate
+    pause
+    exit /b 1
+)
+echo [OK] Prisma client
 
-REM TypeScript compile (backend → dist/)
-echo [INFO] TypeScript compile (backend)...
-call npx tsc || exit /b 1
-echo [OK] Backend skompilowany (dist^/).
+REM TypeScript compile
+echo [INFO] TypeScript compile...
+call npx tsc
+if errorlevel 1 (
+    echo [BLAD] TypeScript compile.
+    pause
+    exit /b 1
+)
+echo [OK] dist\
 
-REM Vite build (frontend → dist-fe/ lub podobne)
-REM W tym projekcie frontend jest serwowany z public/ bezposrednio,
-REM wiec tylko opcja dev:frontend buduje bundle produkcyjny.
-echo.
-echo [INFO] Gotowe do production.
-echo Backend: dist^/server.js
-echo Frontend: serwowany z public^/ przez backend (statycznie).
-echo.
-
-REM Opcjonalnie: Vite budowanie frontendu jako bundle (jesli potrzeba)
+REM Vite build (opcja)
 if exist "vite.config.js" (
-    echo [INFO] Budowanie frontendu z Vite (opcja)...
-    call npm run build:frontend || (
-        echo [UWAGA] Frontend build nie powiodl sie — pomijam.
-    )
+    echo [INFO] Vite build...
+    call npm run build:frontend >nul 2>nul
+    if not errorlevel 1 (echo [OK] Vite)
 )
 
+echo ===========================================================
+echo   Build zakonczony
+echo ===========================================================
 pause
+endlocal

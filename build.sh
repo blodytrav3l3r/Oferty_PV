@@ -1,24 +1,40 @@
 #!/usr/bin/env bash
 # ============================================================
-#  build.sh - Production build (bash mirror of build.bat)
+#  build.sh - Production build (bash, rewritten 2026-07-01)
 # ============================================================
 
 set -e
 cd "$(dirname "$0")"
 
-command -v node >/dev/null 2>&1 || { echo "BLAD: Brak Node.js."; exit 1; }
+ts() { date +%H:%M:%S; }
+log() { printf "\033[1;36m[%s]\033[0m [%s] %b\n" "$(ts)" "$1" "$2"; }
 
-[ -d node_modules ] || { echo "[INFO] Brak node_modules - npm ci..."; npm ci --no-audit --no-fund; }
+log INIT "========================================================"
+log INIT "  WITROS Oferty PV - Budowanie produkcyjne"
+log INIT "========================================================"
 
-echo "[INFO] Prisma generate..."
+command -v node >/dev/null || { log ERR "Brak Node.js"; exit 1; }
+log OK "Node.js $(node --version)"
+
+# npm ci jesli brak node_modules
+if [ ! -d node_modules ]; then
+    log STEP "npm ci..."
+    npm ci --no-audit --no-fund
+else
+    log SKIP "node_modules istnieje"
+fi
+
+log STEP "Prisma generate..."
 npx prisma generate
 
-echo "[INFO] TypeScript compile (backend)..."
+log STEP "TypeScript compile..."
 npx tsc
 
 if [ -f vite.config.js ]; then
-    echo "[INFO] Budowanie frontendu z Vite (opcja)..."
-    npm run build:frontend || echo "[UWAGA] Frontend build opcjonalny - pomijam"
+    log STEP "Vite build (opcjonalny)..."
+    npm run build:frontend || log WARN "Frontend build opcjonalny - pomijam"
+else
+    log SKIP "Brak vite.config.js"
 fi
 
-echo "[OK] Gotowe do produkcji."
+log OK "Gotowe do produkcji (uruchom prod.bat / prod.sh)"

@@ -121,3 +121,8 @@ assets/
 
 # === Archived scripts (lokalne kopie starych wersji) ===
 scripts/archive/
+
+# === Temp files z batch ===
+temp_*.txt
+*.tmp
+witros_dev_port_check.*
