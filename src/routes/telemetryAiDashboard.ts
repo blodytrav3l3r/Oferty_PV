@@ -24,7 +24,7 @@ const recommend = new RecommendationEngine();
  * Status silnika uczącego.
  */
 router.get(
-    '/learning/status',
+    '/ai/learning/status',
     requireAuth,
     READ_LIMITER,
     async (req, res) => {
@@ -45,7 +45,7 @@ router.get(
  * Wymusza pełny cykl uczenia (analiza historyczna).
  */
 router.post(
-    '/learning/run',
+    '/ai/learning/run',
     requireAuth,
     READ_LIMITER,
     async (req, res) => {
@@ -75,7 +75,7 @@ router.post(
  * Lista wzorców w bazie wiedzy per DN.
  */
 router.get(
-    '/knowledge/patterns',
+    '/ai/knowledge/patterns',
     requireAuth,
     READ_LIMITER,
     async (req, res) => {
@@ -101,7 +101,7 @@ router.get(
  * Statystyki bazy wiedzy do dashboardu.
  */
 router.get(
-    '/knowledge/stats',
+    '/ai/knowledge/stats',
     requireAuth,
     READ_LIMITER,
     async (req, res) => {
@@ -125,7 +125,7 @@ router.get(
  * Zwraca rekomendacje AI dla danego rekordu telemetry.
  */
 router.get(
-    '/recommendations/:telemetryId',
+    '/ai/recommendations/:telemetryId',
     requireAuth,
     READ_LIMITER,
     async (req, res) => {
@@ -151,7 +151,7 @@ router.get(
  * Decyzja akceptacji/odrzucenia rekomendacji.
  */
 router.post(
-    '/recommendations/decide',
+    '/ai/recommendations/decide',
     requireAuth,
     READ_LIMITER,
     async (req, res) => {

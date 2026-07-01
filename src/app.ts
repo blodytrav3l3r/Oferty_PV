@@ -187,6 +187,7 @@ import auditRoutes from './routes/audit';
 import settingsRoutes from './routes/settings';
 import telemetryRoutes from './routes/telemetry';
 import telemetryAiRoutes from './routes/telemetryAi';
+import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -212,6 +213,8 @@ app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 // Nowy moduł telemetry AI - pasywny zapis konfiguracji, zdarzeń i wersji
 app.use('/api/telemetry', telemetryAiRoutes);
+// Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
+app.use('/api/telemetry', telemetryAiDashboardRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
@@ -273,6 +276,20 @@ export async function initApp(): Promise<void> {
             err instanceof Error ? err.message : String(err)
         )
     );
+
+    // Cron Service - cykliczne zadania AI Learning Engine (pasywne, nie wplywa na solver JS)
+    if (process.env.NODE_ENV !== 'test') {
+        try {
+            const { cronService } = await import('./utils/cronService');
+            cronService.init();
+        } catch (err) {
+            logger.warn(
+                'Server',
+                'CronService nie zostal zainicjalizowany:',
+                err instanceof Error ? err.message : String(err)
+            );
+        }
+    }
 }
 
 export default app;
