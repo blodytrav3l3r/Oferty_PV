@@ -425,6 +425,9 @@ const SpaRouter = (() => {
             if (typeof updateAIDashboardVisibility === 'function') {
                 updateAIDashboardVisibility();
             }
+            if (typeof updateVersionInToolbar === 'function') {
+                updateVersionInToolbar();
+            }
         } catch (e) {
             window.location.href = 'index.html';
             return;
@@ -521,7 +524,23 @@ const SpaRouter = (() => {
     }
     window.updateAIDashboardVisibility = updateAIDashboardVisibility;
 
-    const api = { showSection, navigate, openOfferInModule, refreshModule, openAIDashboard, updateAIDashboardVisibility };
+    /** Pobiera wersję z /api/version i wyświetla w toolbarze obok Wyloguj */
+    async function updateVersionInToolbar() {
+        const el = document.getElementById('app-version-toolbar');
+        if (!el) return;
+        try {
+            const res = await fetch('/api/version');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            el.textContent = 'v' + (data.version || '?');
+        } catch (e) {
+            // graceful fallback — zostaw puste
+            el.textContent = '';
+        }
+    }
+    window.updateVersionInToolbar = updateVersionInToolbar;
+
+    const api = { showSection, navigate, openOfferInModule, refreshModule, openAIDashboard, updateAIDashboardVisibility, updateVersionInToolbar };
     window.SpaRouter = api;
     return api;
 })();
