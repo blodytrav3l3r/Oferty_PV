@@ -113,6 +113,37 @@
                             ></span>
                         </div>
                         <button
+                            id="nav-ai-dashboard"
+                            onclick="SpaRouter.openAIDashboard()"
+                            title="Dashboard AI — statystyki systemu uczenia"
+                            style="
+                                display: none;
+                                padding: 0.35rem 0.8rem;
+                                border: 1px solid rgba(6, 182, 212, 0.4);
+                                border-radius: 6px;
+                                background: rgba(6, 182, 212, 0.12);
+                                color: #67e8f9;
+                                font: 500 0.75rem 'Inter', sans-serif;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                                align-items: center;
+                                gap: 0.35rem;
+                            "
+                            onmouseenter="
+                                this.style.background = 'rgba(6, 182, 212, 0.25)';
+                                this.style.borderColor = 'rgba(6, 182, 212, 0.7)';
+                                this.style.color = '#a5f3fc';
+                            "
+                            onmouseleave="
+                                this.style.background = 'rgba(6, 182, 212, 0.12)';
+                                this.style.borderColor = 'rgba(6, 182, 212, 0.4)';
+                                this.style.color = '#67e8f9';
+                            "
+                        >
+                            <i data-lucide="brain" style="width: 14px; height: 14px"></i>
+                            <span>AI Dashboard</span>
+                        </button>
+                        <button
                             onclick="appLogout()"
                             style="
                                 padding: 0.35rem 0.8rem;
