@@ -76,6 +76,22 @@ function renderOfferSummary() {
         }
         if (window.lucide) window.lucide.createIcons({ root: saveBtn });
     }
+
+    // Widoczność przycisku AI Dashboard (tylko admin/pro)
+    updateAIDashboardVisibility();
+}
+/**
+ * Odświeża widoczność przycisku AI Dashboard na podstawie roli użytkownika.
+ * Wywoływana z renderOfferSummary oraz przy starcie strony.
+ */
+function updateAIDashboardVisibility() {
+    const aiDashboardBtn = document.querySelector('.summary-action-btn--ai');
+    if (!aiDashboardBtn) return;
+    const showAi = currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro');
+    aiDashboardBtn.classList.toggle('visible', showAi);
+    if (showAi && window.lucide) {
+        window.lucide.createIcons({ root: aiDashboardBtn.parentElement });
+    }
 }
 
 function generateOfferNotes(onlyIfEmpty = false) {
@@ -2799,7 +2815,7 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
 
 const dragOverCount = 0; // dla wizualizacji drag & drop
 
-let isBackendOnline = false;
+const isBackendOnline = false;
 
 // Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
 window.addEventListener('pv-sync-status-changed', () => {

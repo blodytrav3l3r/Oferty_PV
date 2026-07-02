@@ -126,3 +126,4 @@ scripts/archive/
 temp_*.txt
 *.tmp
 witros_dev_port_check.*
+cookies.txt
