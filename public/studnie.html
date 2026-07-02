@@ -5216,5 +5216,12 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
 
         <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
+        <script>
+            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
+            if (window.top === window.self) {
+                const module = location.pathname.split('/').pop().replace(/\.html?$/, '') || 'studnie';
+                window.location.replace('/app.html#/' + module);
+            }
+        </script>
     </body>
 </html>
