@@ -1900,16 +1900,9 @@ select.form-input option {
     border-color: rgba(99, 102, 241, 0.6);
     color: var(--accent-text);
 }
-.summary-action-btn--ai {
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #a5b4fc;
-    grid-column: 2;
-    grid-row: 2;
-    display: none; /* fallback — .visible nadpisuje */
-}
-.summary-action-btn--ai.visible {
-    display: flex;
+/* Przycisk AI Dashboard w górnym pasku nawigacji — widoczny tylko admin/pro przez JS */
+#nav-ai-dashboard {
+    display: none;
 }
 
 /* ── Karty w dolnym pasku podsumowania (wzór rury) ── */

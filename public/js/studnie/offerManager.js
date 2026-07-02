@@ -85,10 +85,10 @@ function renderOfferSummary() {
  * Wywoływana z renderOfferSummary oraz przy starcie strony.
  */
 function updateAIDashboardVisibility() {
-    const aiDashboardBtn = document.querySelector('.summary-action-btn--ai');
+    const aiDashboardBtn = document.getElementById('nav-ai-dashboard');
     if (!aiDashboardBtn) return;
     const showAi = currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro');
-    aiDashboardBtn.classList.toggle('visible', showAi);
+    aiDashboardBtn.style.display = showAi ? 'flex' : 'none';
     if (showAi && window.lucide) {
         window.lucide.createIcons({ root: aiDashboardBtn.parentElement });
     }
