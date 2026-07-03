@@ -4,12 +4,12 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default tseslint.config(
-    {
-        ignores: ['node_modules/', 'data/', '*.sqlite', 'public/data/']
-    },
+    { ignores: ['node_modules/', 'data/', '*.sqlite', 'public/data/'] },
     eslint.configs.recommended,
-    ...tseslint.configs.recommended,
-    eslintConfigPrettier,
+    ...tseslint.configs.recommended.map((c) => ({
+        files: ['**/*.ts'],
+        ...c
+    })),
     {
         files: ['src/**/*.{js,ts}', 'server.ts', 'scripts/**/*.{js,ts}', 'tests/**/*.{js,ts}'],
         languageOptions: {
@@ -30,6 +30,24 @@ export default tseslint.config(
                 }
             ],
             '@typescript-eslint/no-explicit-any': 'off',
+            'no-console': 'off',
+            semi: ['error', 'always'],
+            quotes: ['error', 'single', { avoidEscape: true }],
+            'no-empty': 'off',
+            'prefer-const': 'off'
+        }
+    },
+    {
+        files: ['scripts/**/*.mjs'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: {
+                ...globals.node
+            }
+        },
+        rules: {
+            'no-unused-vars': 'off',
             'no-console': 'off',
             semi: ['error', 'always'],
             quotes: ['error', 'single', { avoidEscape: true }],
@@ -72,5 +90,6 @@ export default tseslint.config(
             'prefer-const': 'warn',
             'no-console': 'off'
         }
-    }
+    },
+    eslintConfigPrettier
 );

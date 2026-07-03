@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * skill-cli.mjs (v2) — CLI do budowy/walidacji/planowania kontekstu z manifestem.
+ * skill-cli.mjs (v3) — CLI do budowy/walidacji/planowania kontekstu z manifestem.
  *
- * v2 zmiany:
+ * v3 zmiany:
  *   - NEW: build-cost      -- czyta SKILL.md i oblicza `cost` (nie ręczny)
  *   - NEW: plan            -- 6-stage Context Planner (intent→capabilities→skills→deps→budget)
  *   - NEW: capabilities    -- inverse index capabilities → skills (capability resolver)
@@ -24,7 +24,7 @@
  */
 
 import { readFileSync, existsSync, writeFileSync } from 'fs';
-import { resolve, join, dirname } from 'path';
+import { resolve, join } from 'path';
 import yaml from 'js-yaml';
 
 const ROOT = resolve(process.cwd());
@@ -35,19 +35,6 @@ const CLASSIFIER_PATH = resolve(ROOT, '.hermes', 'skills', '_classifier.md');
 
 function readYAML(text) {
     return yaml.load(text);
-}
-
-function parseFrontmatter(skillMdPath) {
-    if (!existsSync(skillMdPath)) return null;
-    const text = readFileSync(skillMdPath, 'utf-8');
-    // Szukamy bloku frontmatter na początku pliku ---
-    const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    if (!m) return null;
-    try {
-        return yaml.load(m[1]);
-    } catch {
-        return null;
-    }
 }
 
 function approxTokensFromBytes(bytes) {
@@ -64,7 +51,7 @@ function resolveInstallPath(src) {
             'C:\\Users\\blody\\AppData\\Local\\hermes\\profiles\\pv\\skills',
             ...parts.slice(1, 2),
             sub,
-            'SKILL.md',
+            'SKILL.md'
         ]
             .filter(Boolean)
             .join('\\');
@@ -100,14 +87,15 @@ function cmdBuildCost() {
         .map((s) => {
             const bytes = loadSkillBytes(s);
             const cost = bytes ? approxTokensFromBytes(bytes) : null;
-            const utility = typeof s.utility === 'number' ? s.utility : manifest.defaults?.utility ?? 50;
+            const utility =
+                typeof s.utility === 'number' ? s.utility : (manifest.defaults?.utility ?? 50);
             const ratio = cost && utility > 0 ? cost / utility : Infinity;
             return {
                 id: s.id,
                 cat: s.category ?? 'feature',
                 cost,
                 utility,
-                ratio,
+                ratio
             };
         });
 
@@ -123,9 +111,7 @@ function cmdBuildCost() {
         const cost = r.cost === null ? '?     ' : String(r.cost).padStart(6);
         const util = String(r.utility).padStart(4);
         const ratio = isFinite(r.ratio) ? r.ratio.toFixed(1).padStart(7) : '   inf';
-        console.log(
-            `  ${r.id.padEnd(40)} | ${cost} t  | ${util} | ${ratio}`
-        );
+        console.log(`  ${r.id.padEnd(40)} | ${cost} t  | ${util} | ${ratio}`);
     }
 
     console.log('');
@@ -176,7 +162,7 @@ function cmdCapabilities() {
             idx[cap].push({
                 id: s.id,
                 utility: s.utility ?? 50,
-                cat: s.category,
+                cat: s.category
             });
         }
     }
@@ -196,7 +182,9 @@ function cmdCapabilities() {
 
     console.log('');
     console.log(`  Total capabilities: ${caps.length}`);
-    console.log(`  Total skills: ${Object.values(idx).reduce((n, s) => n + s.length, 0)} assignments`);
+    console.log(
+        `  Total skills: ${Object.values(idx).reduce((n, s) => n + s.length, 0)} assignments`
+    );
     console.log('\n══════════════════════════════════════════════\n');
 }
 
@@ -258,7 +246,10 @@ function cmdPlan(usrIntent = null) {
         return { skill: s, score: idHit ? llmSoft * 1.2 : llmSoft };
     });
     scored.sort((a, b) => b.score - a.score);
-    let picked = scored.slice(0, manifest.policies?.max_skills_per_session ?? 6).filter((x) => x.score > 0).map((x) => x.skill);
+    let picked = scored
+        .slice(0, manifest.policies?.max_skills_per_session ?? 6)
+        .filter((x) => x.score > 0)
+        .map((x) => x.skill);
 
     // Pre-pin core always-loaded
     const core = scoringSkills.filter((s) => s.auto_load);
@@ -318,7 +309,9 @@ function cmdPlan(usrIntent = null) {
         const util = s.utility ?? 50;
         const ratio = c / Math.max(util, 1);
         const tag = s.auto_load ? '★' : s.invoke_only ? '⚐' : '·';
-        console.log(`    ${tag} ${(s.id ?? '?').padEnd(28)} cat=${(s.category ?? '?').padEnd(8)} cost=${String(c).padStart(6)} t  util=${util}  ratio=${ratio.toFixed(1)}`);
+        console.log(
+            `    ${tag} ${(s.id ?? '?').padEnd(28)} cat=${(s.category ?? '?').padEnd(8)} cost=${String(c).padStart(6)} t  util=${util}  ratio=${ratio.toFixed(1)}`
+        );
     }
     console.log(`\n  TOTAL: ${final.length} skills, ~${total} tokens`);
     console.log('\n══════════════════════════════════════════════\n');
@@ -433,7 +426,9 @@ function cmdStats() {
     console.log('  Top-8 najdroższych:\n');
     for (const s of sorted.slice(0, 8)) {
         const tag = s.category === 'core' ? '🟢' : s.category === 'heavy' ? '🟣' : '🟡';
-        console.log(`    ${tag} ${(s.id ?? '?').padEnd(28)} cost: ${String(s.cost ?? 0).padStart(6)} t  util: ${s.utility}`);
+        console.log(
+            `    ${tag} ${(s.id ?? '?').padEnd(28)} cost: ${String(s.cost ?? 0).padStart(6)} t  util: ${s.utility}`
+        );
     }
 
     console.log('\n══════════════════════════════════════════════\n');
@@ -516,14 +511,18 @@ function cmdProviderResolve(cap) {
     }
     console.log(`\n  Provider Resolver -> ${cap}\n`);
     const tiers = { lite: 0, standard: 1, pro: 2, experimental: 3 };
-    const sorted = (entry.implementations || []).sort((a, b) => (tiers[a.tier] || 1) - (tiers[b.tier] || 1));
+    const sorted = (entry.implementations || []).sort(
+        (a, b) => (tiers[a.tier] || 1) - (tiers[b.tier] || 1)
+    );
     for (const imp of sorted) {
-        const sk = (manifest.skills || []).find(s => s.id === imp.skill_id);
+        const sk = (manifest.skills || []).find((s) => s.id === imp.skill_id);
         const cost = sk ? approxTokensFromBytes(loadSkillBytes(sk) || 0) : '?';
         const util = (sk && sk.utility_state && sk.utility_state.total) || (sk && sk.utility) || 50;
         const conf = imp.confidence ?? sk?.confidence ?? '?';
         const lat = imp.latency_ms ?? sk?.latency_ms ?? '?';
-        console.log(`  ${imp.tier.padEnd(12)} ${imp.skill_id.padEnd(28)} util=${String(util).padStart(3)}  conf=${String(conf).padStart(4)}  lat=${String(lat).padStart(4)}ms  cost~${String(cost).padStart(6)}t`);
+        console.log(
+            `  ${imp.tier.padEnd(12)} ${imp.skill_id.padEnd(28)} util=${String(util).padStart(3)}  conf=${String(conf).padStart(4)}  lat=${String(lat).padStart(4)}ms  cost~${String(cost).padStart(6)}t`
+        );
     }
     console.log(`\n  default_tier: ${entry.default_tier || 'standard'}`);
     console.log('');
@@ -535,7 +534,9 @@ function cmdFeedbackRecord() {
     const fbPath = resolve(ROOT, '.hermes', 'skills', '_feedback.json');
     let fb = { schema: 1, history: [] };
     if (existsSync(fbPath)) {
-        try { fb = JSON.parse(readFileSync(fbPath, 'utf-8')); } catch {}
+        try {
+            fb = JSON.parse(readFileSync(fbPath, 'utf-8'));
+        } catch {}
     }
     const record = {
         task: process.env.FEEDBACK_TASK || '(nie podano)',
@@ -565,7 +566,9 @@ function cmdFeedbackShow() {
         return;
     }
     let fb;
-    try { fb = JSON.parse(readFileSync(fbPath, 'utf-8')); } catch {
+    try {
+        fb = JSON.parse(readFileSync(fbPath, 'utf-8'));
+    } catch {
         console.log('\n  _feedback.json uszkodzony\n');
         return;
     }
@@ -589,16 +592,20 @@ function cmdFeedbackShow() {
     console.log('  Skills:');
     const sorted = Object.entries(skillStats).sort((a, b) => b[1].count - a[1].count);
     for (const [sid, st] of sorted) {
-        const sr = st.count > 0 ? (st.success / st.count * 100).toFixed(0) : '?';
+        const sr = st.count > 0 ? ((st.success / st.count) * 100).toFixed(0) : '?';
         const avgT = st.count > 0 ? Math.round(st.totalTokens / st.count) : '?';
-        console.log(`    ${sid.padEnd(28)} loaded=${String(st.count).padStart(3)} success=${sr}%  avg_tokens=${String(avgT).padStart(6)}`);
+        console.log(
+            `    ${sid.padEnd(28)} loaded=${String(st.count).padStart(3)} success=${sr}%  avg_tokens=${String(avgT).padStart(6)}`
+        );
     }
     console.log('\n  Last 5 outcomes:');
     const last5 = hist.slice(-5).reverse();
     for (const r of last5) {
         const ts = (r.timestamp || '').slice(0, 19).replace('T', ' ');
         const outcome = r.outcome === 'success' ? '+' : r.outcome === 'partial' ? '~' : '-';
-        console.log(`    ${outcome} ${ts}  ${r.task.slice(0, 60).padEnd(60)} skills=${(r.skills_loaded || []).length}`);
+        console.log(
+            `    ${outcome} ${ts}  ${r.task.slice(0, 60).padEnd(60)} skills=${(r.skills_loaded || []).length}`
+        );
     }
     console.log('');
 }
@@ -610,18 +617,24 @@ function cmdUtilityRecalc() {
     const manifest = loadManifest();
     const doWrite = process.argv.includes('--write');
     let fb = { history: [] };
-    if (existsSync(fbPath)) { try { fb = JSON.parse(readFileSync(fbPath, 'utf-8')); } catch {} }
+    if (existsSync(fbPath)) {
+        try {
+            fb = JSON.parse(readFileSync(fbPath, 'utf-8'));
+        } catch {}
+    }
     const hist = fb.history || [];
     const now = new Date();
     const skillData = {};
     for (const r of hist) {
         for (const sid of r.skills_loaded || []) {
-            if (!skillData[sid]) skillData[sid] = { total: 0, successCount: 0, lastUsed: null, count: 0 };
+            if (!skillData[sid])
+                skillData[sid] = { total: 0, successCount: 0, lastUsed: null, count: 0 };
             skillData[sid].total++;
             if (r.outcome === 'success') skillData[sid].successCount++;
             skillData[sid].count++;
             const ts = r.timestamp ? new Date(r.timestamp) : null;
-            if (ts && (!skillData[sid].lastUsed || ts > skillData[sid].lastUsed)) skillData[sid].lastUsed = ts;
+            if (ts && (!skillData[sid].lastUsed || ts > skillData[sid].lastUsed))
+                skillData[sid].lastUsed = ts;
         }
     }
     console.log('\n══════════════════════════════════════════════');
@@ -632,7 +645,9 @@ function cmdUtilityRecalc() {
         if (!s) continue;
         const sd = skillData[s.id];
         let base = s.utility_state?.base ?? s.utility ?? 50;
-        let historyBonus = 0, successBonus = 0, recencyPenalty = 0;
+        let historyBonus = 0,
+            successBonus = 0,
+            recencyPenalty = 0;
         if (sd && sd.total > 0) {
             historyBonus = Math.round(sd.total * 0.5);
             successBonus = Math.round((sd.successCount / sd.total) * 10);
@@ -641,11 +656,16 @@ function cmdUtilityRecalc() {
                 recencyPenalty = Math.min(Math.round(daysSince / 15), 20);
             }
         }
-        const total = Math.max(1, Math.min(100, base + historyBonus + successBonus - recencyPenalty));
+        const total = Math.max(
+            1,
+            Math.min(100, base + historyBonus + successBonus - recencyPenalty)
+        );
         const oldTotal = s.utility_state?.total ?? s.utility ?? 50;
         if (Math.abs(oldTotal - total) > 1) {
             changedAny = true;
-            console.log(`  ${s.id.padEnd(28)} ${String(oldTotal).padStart(3)} -> ${String(total).padStart(3)} (base=${base} hist=+${historyBonus} succ=+${successBonus} rec=-${recencyPenalty})`);
+            console.log(
+                `  ${s.id.padEnd(28)} ${String(oldTotal).padStart(3)} -> ${String(total).padStart(3)} (base=${base} hist=+${historyBonus} succ=+${successBonus} rec=-${recencyPenalty})`
+            );
             if (doWrite) {
                 if (!s.utility_state) s.utility_state = {};
                 s.utility_state.base = base;
@@ -653,7 +673,8 @@ function cmdUtilityRecalc() {
                 s.utility_state.success_rate_bonus = successBonus;
                 s.utility_state.recency_penalty = recencyPenalty;
                 s.utility_state.total = total;
-                s.utility_state.last_updated = now.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+                s.utility_state.last_updated =
+                    now.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
             }
         }
     }
