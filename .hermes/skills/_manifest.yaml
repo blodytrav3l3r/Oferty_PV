@@ -1,322 +1,376 @@
-# HERMES SKILLS MANIFEST v1
-# SSoT dla klasyfikacji, routingu, kosztów i zależności skilli w projekcie Oferty_PV.
+# HERMES SKILLS MANIFEST v2
+# SSoT dla klasyfikacji, capability routing, kosztów i zależności skilli.
+#
+# v2 zmiany względem v1:
+#   - Manifest NIE TRZYMA `load_when` (to rola `classifier.md`)
+#   - `cost` jest COMPUTED przy `npm run skills:build-cost` (nie ręczny)
+#   - Nowe kategorie: domain, tool, workflow, experimental, deprecated
+#   - Każdy skill ma `version` (semver) + opcjonalnie `checksum`
+#   - Nowe pole: `capabilities` (zamiast `tags`) — capability router korzysta z niego
+#   - Nowe pole: `utility` (0-100) — wybór w budżecie
+#   - Typowane `requires` / `optional` / `conflicts` / `before` / `after`
+#   - `summary` zostaje; `source` zachowany (z `install_path` resolved przy build)
+#
 # Konsumenci:
-#   - Hermes (przez .hermes/skills/_router.md -- ten plik jest źródłem)
-#   - scripts/skill-cli.mjs (build-manifest, validate, stats)
-# Wersja schemy: 1
-# Format: YAML 1.2
-# Uwaga: ten manifest dotyczy SKILLI używanych w projekcie. Skile systemu Hermes
-# (computer-use, dogfood itp.) pomijamy -- to domena platformy, nie projektu.
+#   - Hermes (przez _router.md)
+#   - scripts/skill-cli.mjs (build-cost, plan, validate)
+#   - developer (review)
 
-schema_version: 1
+schema_version: 2
+schema_changelog:
+  - "v2: capabilities + utility + typed deps; cost computed; categories expanded; version+checksum"
 
-categories:
-  core:
-    intent: "Minimum required for the project to be operable. Auto-loaded."
-  feature:
-    intent: "Specialised playbooks. Loaded on demand when task type matches."
-    fallback: "Pozostaje niezaladowane jeśli brak match. Hermes użyje tylko core."
-  heavy:
-    intent: "Expensive / out-of-band. Loaded only on explicit /invoke lub /<skill>."
+# ════════════════════ POLICY ════════════════════
 
 defaults:
+  utility: 50            # fallback, gdy skill nie ma zdefiniowanego
   category: feature
-  cost_estimator: "approx_tokens = ceil(bytes / 0.75)"   # dla języka naturalnego
+  cost_estimator: "approx_tokens = ceil(bytes / 0.75)"   # conservative estimate
+  version: "0.1.0"
   auto_load: false
   invoke_only: false
 
-skills:
-  # ════════════════════ CORE ════════════════════
-  - id: conventions-lite
-    category: core
-    cost: 3900
-    auto_load: true
-    source: ".hermes/skills/conventions-lite/SKILL.md"
-    tags: [conventions, project, semver, style, spa]
-    summary: |
-      3 KB skrót najważniejszych reguł: SSoT wersji (VERSION), styl PL,
-      /caveman lite, bug → fix, SPA app.html-only entry. Pełne reguły w
-      sp-a-conventions (95 KB, load when invoked).
-
-  - id: router
-    category: core
-    cost: 600
-    auto_load: true
-    source: ".hermes/skills/_router.md"
-    tags: [routing, classification, manifest]
-    summary: |
-      Router -- jedyny zawsze-załadowany meta-skill. Wskazuje na _manifest.yaml
-      jako SSoT i opisuje reakcje na słowa-klucze.
-
-  # ════════════════════ FEATURE ════════════════════
-
-  - id: excel-debug
-    category: feature
-    cost: 3700
-    auto_load: false
-    source: "profile:pv:software-development/excel-debug"
-    depends_on: [conventions-lite]
-    references_count: 24
-    load_when:
-      component_in: [excel, table, paste, copy]
-      error_contains:
-        - "_excelHandlePaste"
-        - "_excelRenderTable"
-        - "_excelAutoSelectForWell"
-        - "TSV"
-        - "paste"
-    tags: [excel, paste, copy, table, sticky-cols, focus-overlay]
-    summary: "20+ playbook: copy/paste MS Excel, sticky cols, focus overlay, paste-into-empty-row."
-
-  - id: sp-a-conventions
-    category: feature
-    cost: 126700
-    auto_load: false
-    source: "profile:pv:software-development/oferty-pv-conventions"
-    depends_on: [conventions-lite]
-    references_count: 11
-    load_when:
-      task_in: [modify, refactor, fix]
-      component_in: [spa, app.html, router, iframe, header]
-    tags: [spa, arch, app-wrapper, single-entrypoint, header-overlay]
-    summary: "Pełne konwencje projektu (heavy). 127 KB. Ładowane RĘCZNIE tylko."
-
-  - id: oferty-pv-ai-telemetry
-    category: feature
-    cost: 18400
-    auto_load: false
-    source: "profile:pv:software-development/oferty-pv-ai-telemetry"
-    depends_on: [conventions-lite]
-    load_when:
-      component_in: [ai, telemetry, ml, dashboard]
-    tags: [ai, telemetry, ml, dashboard]
-    summary: "Telemetria AI: learning engine, knowledge base, ML API."
-
-  - id: python-debugpy
-    category: feature
-    cost: 18100
-    auto_load: false
-    source: "profile:pv:software-development/python-debugpy"
-    depends_on: [conventions-lite]
-    load_when:
-      runtime: python
-      path_matches: ["well_configurator_backend/**", "scripts/*.py"]
-    tags: [python, debugger, debugger, venv]
-    summary: "Debug python via debugpy. W projekcie: well_configurator_backend/ (martwy, opt)."
-
-  - id: multi-agent-coordination
-    category: feature
-    cost: 3600
-    auto_load: false
-    source: "profile:pv:software-development/multi-agent-coordination"
-    depends_on: [conventions-lite]
-    load_when:
-      task_class: complex
-      files_changed_min: 3
-    tags: [agents, planner, coder, reviewer, architect]
-    summary: "Delegowanie planista → koder → reviewer → architekt."
-
-  - id: plan-guardian
-    category: feature
-    cost: 8000
-    auto_load: false
-    source: "profile:pv:software-development/plan-guardian"
-    depends_on: [conventions-lite]
-    load_when:
-      task_class: plan-validation
-      has_file: ".hermes/plan-*.md"
-    tags: [plan, validation, compliance]
-    summary: "Walidacja zgodności kodu z planem napraw (.hermes/plan-*.md)."
-
-  - id: systematic-debugging
-    category: feature
-    cost: 27500
-    auto_load: false
-    source: "profile:pv:software-development/systematic-debugging"
-    depends_on: [conventions-lite]
-    load_when:
-      task_class: debug
-      has_regression: true
-    tags: [debug, root-cause, 4-phase]
-    summary: "4-fazowy debug: understand → root-cause → fix → verify."
-
-  - id: test-driven-development
-    category: feature
-    cost: 13700
-    auto_load: false
-    source: "profile:pv:software-development/test-driven-development"
-    depends_on: [conventions-lite]
-    load_when:
-      task_in: [test, add-feature, fix-with-test]
-    tags: [tdd, red-green-refactor]
-    summary: "TDD workflow: RED → GREEN → IMPROVE."
-
-  - id: simplify-code
-    category: feature
-    cost: 14600
-    auto_load: false
-    source: "profile:pv:software-development/simplify-code"
-    depends_on: [conventions-lite]
-    load_when:
-      task_in: [cleanup, refactor]
-      after_session: true
-    tags: [cleanup, refactor]
-    summary: "Parallel 3-agent cleanup po dłuższych sesjach."
-
-  - id: node-inspect-debugger
-    category: feature
-    cost: 15000
-    auto_load: false
-    source: "profile:pv:software-development/node-inspect-debugger"
-    depends_on: [conventions-lite]
-    load_when:
-      runtime: node
-      task_class: debug
-    tags: [node, debugger, chrome-devtools]
-    summary: "Debug Node.js via --inspect + Chrome DevTools Protocol."
-
-  - id: spike
-    category: feature
-    cost: 11900
-    auto_load: false
-    source: "profile:pv:software-development/spike"
-    depends_on: [conventions-lite]
-    load_when:
-      task_in: [experiment, validate-idea]
-    tags: [spike, throwaway, prototype]
-    summary: "Throwaway experiments to validate an idea before build."
-
-  - id: plan
-    category: feature
-    cost: 12400
-    auto_load: false
-    source: "profile:pv:software-development/plan"
-    depends_on: [conventions-lite]
-    load_when:
-      task_in: [plan, design]
-      complexity: medium-high
-    tags: [plan, mode, design]
-    summary: "Plan mode: napisz actionable markdown plan do .hermes/plan-*.md."
-
-  # ════════════════════ HEAVY ════════════════════
-
-  - id: graphify
-    category: heavy
-    cost: 50700
-    auto_load: false
-    invoke_only: true
-    source: ".hermes/skills/graphify/SKILL.md"
-    depends_on: [conventions-lite]
-    references_count: 8
-    triggers: ["/graphify", "knowledge graph", "graph query", "graph build"]
-    tags: [graph, code-intelligence, query, knowledge-graph]
-    summary: "Knowledge graph: AST extraction + community detection + query/path/explain. Cost > 50 KB."
-
-  - id: codebase-audit
-    category: heavy
-    cost: 6000
-    auto_load: false
-    invoke_only: true
-    source: "profile:pv:devops/codebase-audit"
-    triggers: ["audyt", "audit", "codebase review", "cleanup audit"]
-    tags: [audit, cleanup, refactor]
-    summary: "Audyt repo + dead code + cleanup."
-
-  - id: requesting-code-review
-    category: heavy
-    cost: 12000
-    auto_load: false
-    invoke_only: true
-    source: "profile:pv:software-development/requesting-code-review"
-    triggers: ["code review", "review PR", "review przed commitem"]
-    tags: [review, security]
-    summary: "Pre-commit code review: security scan + quality gates."
-
-# ════════════════════ TASK CLASSIFIER ════════════════════
-
-classifier:
-  version: 1
-  rules:
-    decision_tree: |
-      Hermes ma prompt. Przeiteruj od góry, pierwszy match wygrywa:
-
-      1. User napisał "/graphify" lub "knowledge graph" lub "graph build"
-         → load: graphify (heavy, invoke)
-      2. "audyt" / "audit" / "codebase review"
-         → load: codebase-audit (heavy, invoke)
-      3. "code review" / "review przed commitem" / "review PR"
-         → load: requesting-code-review (heavy, invoke)
-      4. Błędy dot. excel/paste/copy/TSV
-         → load: excel-debug
-      5. Zadanie w well_configurator_backend/ (Python)
-         → load: python-debugpy
-      6. AI/telemetry/ML/dashboard w nazwie pliku lub komponencie
-         → load: oferty-pv-ai-telemetry
-      7. SPA / app.html / router / iframe / header
-         → load: sp-a-conventions (jeśli poważna zmiana) LUB conventions-lite (jeśli prosta)
-      8. Root-cause debugging / regresja
-         → load: systematic-debugging
-      9. Złożone zadanie (> 3 pliki)
-         → load: multi-agent-coordination + plan
-      10. Plan mode (.hermes/plan-*.md istnieje)
-          → load: plan-guardian
-      11. Pisanie nowego testu / feature TDD
-          → load: test-driven-development
-      12. Refaktor / cleanup po sesji
-          → load: simplify-code
-      13. Throwaway / spike
-          → load: spike
-      default:
-        load: [conventions-lite, router]
-        rationale: "Brak specyficznego trigger keywords. Wystarczą core."
-
-  defaults:
-    load_skills: [conventions-lite, router]
-    max_skills_per_session: 4    # cap na zbyt wiele OCR/feature skilli
-    defensive_load: false        # nie ładuj prewencyjnie
-
-# ════════════════════ GLOBAL POLICY ════════════════════
-
-policy:
+policies:
   cache_loaded:
     enabled: true
     type: session
-    behavior: "Once loaded, reference by name; do not re-inject."
-  trigger_keywords:
-    enabled: true         # auto-load przez frontmatter description match
-    fallback: classifier_decision_tree
-  language:
-    in_prompts: polski
-    in_code: english
-    in_data_keys: english
-  scope:
-    project_root: "I:\\GitHub\\Oferty_PV"
-    read:
-      - "src/**"
-      - "public/**"
-      - "scripts/**"
-      - ".hermes/**"
-      - "tests/**"
-    read_no_modify:
-      - "data/**"
-      - "node_modules/**"
-      - "dist/**"
-      - ".git/**"
-    write:
-      - "src/**"
-      - "public/**"
-      - "scripts/**"
-      - ".hermes/**"
-      - "docs/**"        # z ostrożnością
+  max_skills_per_session: 6
+  cap_total_cost_tokens: 100000    # jeśli plan > 100k, optymalizuj (drop lowest utility/cost ratio)
+  conflict_resolution: error       # jeśli są conflicting skills, abort i pytaj developera
 
-# ════════════════════ STATS (regenerated by CLI) ════════════════════
+# ════════════════════ CATEGORIES ════════════════════
+
+categories:
+  core:
+    intent: "Niezbędne do działania projektu. Auto-load."
+    cost_policy: "minimum; powinna być 1-2 skille"
+  domain:
+    intent: "Wiedza dziedzinowa projektu (oferty, cenniki, konfiguracja studni)."
+    cost_policy: "duża dopuszczalna"
+  feature:
+    intent: "Specjalistyczny playbook (excel-debug, multi-agent, debug)."
+    cost_policy: "średnia; selektywnie"
+  tool:
+    intent: "Narzędzia systemowe (CLI, version-check, db)."
+    cost_policy: "mała; specific use"
+  workflow:
+    intent: "Wieloetapowy proces (release, deploy, audit)."
+    cost_policy: "średnia; orchestruje kilka innych"
+  heavy:
+    intent: ">50KB. Tylko invoke (/graphify, /audit)."
+    cost_policy: "warn jeśli auto-load"
+  experimental:
+    intent: "Nowy skill, nie sprawdzony w produkcji."
+    cost_policy: "flag in stats"
+  deprecated:
+    intent: "Wycofane. CLI powinno warn."
+    cost_policy: "N/A"
+
+# ════════════════════ SKILLS ════════════════════
+
+skills:
+
+  # ─── CORE ───
+  - id: conventions-lite
+    category: core
+    version: 1.2.0
+    updated: "2026-07-03"
+    capabilities:
+      - project-conventions
+      - style-conventions
+      - semver-rules
+      - spa-architecture-summary
+      - bug-fix-flow
+    utility: 95
+    auto_load: true
+    source: ".hermes/skills/conventions-lite/SKILL.md"
+    install_path: ".hermes/skills/conventions-lite/SKILL.md"
+
+  - id: router
+    category: core
+    version: 1.1.0
+    updated: "2026-07-03"
+    capabilities:
+      - skill-routing
+      - meta-skill
+      - manifest-sot
+    utility: 100
+    auto_load: true
+    source: ".hermes/skills/_router.md"
+    install_path: ".hermes/skills/_router.md"
+
+  # ─── DOMAIN ───
+  - id: sp-a-conventions
+    category: domain
+    version: 1.4.1
+    updated: "2026-06-15"
+    capabilities:
+      - spa-architecture
+      - spa-app-wrapper
+      - single-entrypoint
+      - spa-toolbar
+      - excel-sync
+      - solver-architecture
+      - verify-after-mutation
+      - windows-hookchain
+    utility: 90
+    requires: []
+    optional: []
+    source: "profile:pv:software-development/oferty-pv-conventions"
+    install_path: "<resolved at build>"
+    references_count: 11
+    notes: "95 KB. Loaded TYLKO dla poważnych zmian SPA."
+
+  # ─── FEATURE ───
+  - id: excel-debug
+    category: feature
+    version: 0.4.2
+    updated: "2026-07-01"
+    capabilities:
+      - excel-paste
+      - excel-copy
+      - excel-sticky-cols
+      - debug-table
+      - focus-overlay
+      - paste-into-empty-row
+    utility: 87
+    requires: [conventions-lite]
+    optional: [systematic-debugging]
+    source: "profile:pv:software-development/excel-debug"
+    install_path: "<resolved at build>"
+    references_count: 24
+
+  - id: systematic-debugging
+    category: feature
+    version: 1.0.1
+    updated: "2026-05-20"
+    capabilities:
+      - debug
+      - root-cause
+      - regression
+    utility: 80
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/systematic-debugging"
+    install_path: "<resolved at build>"
+
+  - id: multi-agent-coordination
+    category: feature
+    version: 0.9.0
+    updated: "2026-06-01"
+    capabilities:
+      - planning
+      - coding
+      - reviewing
+      - architecture
+      - delegation
+    utility: 75
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/multi-agent-coordination"
+    install_path: "<resolved at build>"
+
+  - id: oferty-pv-ai-telemetry
+    category: feature
+    version: 0.3.5
+    updated: "2026-04-15"
+    capabilities:
+      - ai-telemetry
+      - learning-engine
+      - knowledge-base
+      - ml-api
+    utility: 65
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/oferty-pv-ai-telemetry"
+    install_path: "<resolved at build>"
+    notes: "Backend ML aktualnie martwy (port 8000)."
+
+  - id: python-debugpy
+    category: feature
+    version: 1.2.0
+    updated: "2026-03-10"
+    capabilities:
+      - python-debugger
+      - debugpy
+      - venv
+    utility: 50
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/python-debugpy"
+    install_path: "<resolved at build>"
+
+  - id: plan-guardian
+    category: feature
+    version: 0.5.1
+    updated: "2026-06-22"
+    capabilities:
+      - plan-validation
+      - plan-compliance
+    utility: 70
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/plan-guardian"
+    install_path: "<resolved at build>"
+
+  - id: plan
+    category: feature
+    version: 1.0.0
+    updated: "2026-05-30"
+    capabilities:
+      - planning
+      - design
+      - mode-toggle
+    utility: 72
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/plan"
+    install_path: "<resolved at build>"
+
+  - id: test-driven-development
+    category: feature
+    version: 1.0.0
+    updated: "2026-03-12"
+    capabilities:
+      - tdd
+      - red-green-refactor
+      - testing
+    utility: 78
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/test-driven-development"
+    install_path: "<resolved at build>"
+
+  - id: simplify-code
+    category: feature
+    version: 1.0.1
+    updated: "2026-06-01"
+    capabilities:
+      - cleanup
+      - refactor
+      - parallel-agents
+    utility: 65
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/simplify-code"
+    install_path: "<resolved at build>"
+
+  - id: spike
+    category: feature
+    version: 1.0.0
+    updated: "2026-02-10"
+    capabilities:
+      - experiment
+      - prototype
+      - throwaway
+    utility: 60
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/spike"
+    install_path: "<resolved at build>"
+
+  - id: node-inspect-debugger
+    category: feature
+    version: 0.9.0
+    updated: "2026-04-05"
+    capabilities:
+      - node-debugger
+      - chrome-devtools
+      - --inspect
+    utility: 55
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/node-inspect-debugger"
+    install_path: "<resolved at build>"
+
+  # ─── TOOL ───
+  - id: skill-cli
+    category: tool
+    version: 0.3.0
+    updated: "2026-07-03"
+    capabilities:
+      - manifest-validate
+      - build-cost
+      - plan
+      - stats
+      - deps
+    utility: 90
+    requires: []
+    source: "scripts/skill-cli.mjs"
+    install_path: "scripts/skill-cli.mjs"
+    notes: "Sam się triggeruje (jest narzędziem CLI)."
+
+  # ─── WORKFLOW ───
+  - id: requesting-code-review
+    category: workflow
+    version: 0.7.0
+    updated: "2026-05-18"
+    capabilities:
+      - code-review
+      - security-scan
+      - quality-gates
+    utility: 75
+    requires: [conventions-lite]
+    source: "profile:pv:software-development/requesting-code-review"
+    install_path: "<resolved at build>"
+
+  # ─── HEAVY ───
+  - id: graphify
+    category: heavy
+    version: 0.9.5
+    updated: "2026-07-03"
+    capabilities:
+      - knowledge-graph
+      - code-intelligence
+      - graph-query
+      - ast-extraction
+    utility: 70             # poniżej 80; drogi skill
+    requires: [conventions-lite]
+    invoke_only: true
+    source: ".hermes/skills/graphify/SKILL.md"
+    install_path: ".hermes/skills/graphify/SKILL.md"
+    references_count: 8
+    notes: "CLI install: graphify install --platform hermes --project"
+
+  - id: codebase-audit
+    category: heavy
+    version: 1.0.0
+    updated: "2026-04-20"
+    capabilities:
+      - audit
+      - cleanup
+      - dead-code
+    utility: 60
+    requires: [conventions-lite]
+    invoke_only: true
+    source: "profile:pv:devops/codebase-audit"
+    install_path: "<resolved at build>"
+
+# ════════════════════ KEYWORDS (opcjonalnie) ════════════════════
+
+keywords:
+  excel:
+    skills: [excel-debug]
+  debug:
+    skills: [systematic-debugging]
+  python:
+    skills: [python-debugpy]
+  review:
+    skills: [requesting-code-review]
+  audyt:
+    skills: [codebase-audit]
+  graphify:
+    skills: [graphify]
+  plan:
+    skills: [plan, plan-guardian]
+
+# ════════════════════ STATS (computed) ════════════════════
+# Pole poniżej aktualizowane przez `npm run skills:build-cost` -- nie ręcznie.
 
 stats:
-  skills_total: 17
-  by_category:
-    core: 2
-    feature: 11
-    heavy: 3
-  total_cost_if_all_loaded: ~300K
-  cost_only_core: ~4.5K
-  savings_ratio_if_core_only: "98.5% mniej kontekstu vs all-loaded"
+  emit_at_build: true
+  fields:
+    skills_total: int
+    by_category: map[str, int]
+    cost_core: int
+    cost_feature: int
+    cost_domain: int
+    cost_tool: int
+    cost_workflow: int
+    cost_heavy: int
+    cost_experimental: int
+    cost_deprecated: int
+    cost_total_all_loaded: int
+    cost_with_cap_budget: int   # z cap_total_cost_tokens
+    skills_with_warnings: int
+    cycles_found: int
