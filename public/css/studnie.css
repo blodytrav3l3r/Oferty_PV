@@ -1,11 +1,47 @@
+/* Full-height layout — scoped to studnie.html (only loaded in studnie iframe) */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+}
+body > .header {
+    flex-shrink: 0;
+}
+
+/* ── Propagacja wysokości ── */
+body > .main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding-bottom: 0;
+}
+body > .main > .section.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Override global :has() padding-bottom rules (higher specificity via chain) */
+body > .main:has(.wizard-nav-fixed),
+body > .main:has(.offer-summary-footer-fixed) {
+    padding-bottom: 0;
+}
+
 /* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
 .well-app-layout {
     display: grid;
     grid-template-columns: 350px 1fr 350px;
+    grid-template-rows: 1fr;
     gap: 0;
-    margin: -0.8rem -1.5rem -2rem -1.5rem;
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    margin: -0.8rem -1.5rem 0 -1.5rem;
     background: var(--bg-primary);
-    height: calc(100vh - 120px);
 }
 
 .well-center-column,
