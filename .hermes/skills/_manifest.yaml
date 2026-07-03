@@ -1,70 +1,130 @@
-# HERMES SKILLS MANIFEST v2
-# SSoT dla klasyfikacji, capability routing, kosztów i zależności skilli.
+# HERMES SKILLS MANIFEST v3
+# SSoT dla klasyfikacji, capability routing, provider selection i dynamicznego utility.
 #
-# v2 zmiany względem v1:
-#   - Manifest NIE TRZYMA `load_when` (to rola `classifier.md`)
-#   - `cost` jest COMPUTED przy `npm run skills:build-cost` (nie ręczny)
-#   - Nowe kategorie: domain, tool, workflow, experimental, deprecated
-#   - Każdy skill ma `version` (semver) + opcjonalnie `checksum`
-#   - Nowe pole: `capabilities` (zamiast `tags`) — capability router korzysta z niego
-#   - Nowe pole: `utility` (0-100) — wybór w budżecie
-#   - Typowane `requires` / `optional` / `conflicts` / `before` / `after`
-#   - `summary` zostaje; `source` zachowany (z `install_path` resolved przy build)
+# v3 zmiany względem v2:
+#   - Capabilities NIE SĄ bezpośrednio skille - capabilities to SERVICE.
+#     Skills są implementacjami (Provider Pattern).
+#   - Nowe pole providers: capability -> implementations[] (ranking by tier)
+#   - Nowe pole tier: standard / pro / lite (alternative implementations)
+#   - Nowe pole replaces: deprecated skills supercedes
+#   - Nowe pole utility_state: dynamic utility (base + history + success + recency)
+#   - Nowe pole soft_requires: opcjonalna dep which może być pominięta przy małym budget
+#   - Nowe pole confidence/latency_ms: dla budget optimizer multicriteria
+#   - Nowe pole checksum, last_updated: dla cache invalidation
 #
-# Konsumenci:
-#   - Hermes (przez _router.md)
-#   - scripts/skill-cli.mjs (build-cost, plan, validate)
-#   - developer (review)
+# Stary manifest v2 zachowany w `_manifest.v2.yaml.bak`.
 
-schema_version: 2
+schema_version: 3
 schema_changelog:
-  - "v2: capabilities + utility + typed deps; cost computed; categories expanded; version+checksum"
+  - "v3: Provider Pattern; capability jako service; tier/replaces; dynamic utility; multicriteria budget"
 
-# ════════════════════ POLICY ════════════════════
+# ════════════════════ DEFAULT POLICY ════════════════════
 
 defaults:
-  utility: 50            # fallback, gdy skill nie ma zdefiniowanego
+  utility: 50
+  utility_state:
+    base: 50
+    history_bonus: 0
+    success_rate_bonus: 0
+    recency_penalty: 0
+    total: 50
+    last_updated: "2026-07-03T00:00:00Z"
   category: feature
-  cost_estimator: "approx_tokens = ceil(bytes / 0.75)"   # conservative estimate
+  cost_estimator: "approx_tokens = ceil(bytes / 0.75)"
   version: "0.1.0"
   auto_load: false
   invoke_only: false
+  confidence: 0.7         # 0-1, jak pewny jest skill
+  latency_ms: 200         # median estimate
 
 policies:
   cache_loaded:
     enabled: true
     type: session
   max_skills_per_session: 6
-  cap_total_cost_tokens: 100000    # jeśli plan > 100k, optymalizuj (drop lowest utility/cost ratio)
-  conflict_resolution: error       # jeśli są conflicting skills, abort i pytaj developera
+  cap_total_cost_tokens: 100000
+  conflict_resolution: error
+  budget_weights:           # multicriteria weighting
+    cost: 0.5
+    utility: 0.3
+    confidence: 0.15
+    latency: 0.05           # normalized -1/latency_ms
+  provider_strategy:
+    prefer_tier: standard  # gdy nic nie jest wybrane
+    allow_pro_when_over_budget: true   # do decyzji runtime
 
 # ════════════════════ CATEGORIES ════════════════════
 
 categories:
   core:
     intent: "Niezbędne do działania projektu. Auto-load."
-    cost_policy: "minimum; powinna być 1-2 skille"
   domain:
-    intent: "Wiedza dziedzinowa projektu (oferty, cenniki, konfiguracja studni)."
-    cost_policy: "duża dopuszczalna"
+    intent: "Wiedza dziedzinowa projektu."
   feature:
-    intent: "Specjalistyczny playbook (excel-debug, multi-agent, debug)."
-    cost_policy: "średnia; selektywnie"
+    intent: "Specjalistyczny playbook."
   tool:
-    intent: "Narzędzia systemowe (CLI, version-check, db)."
-    cost_policy: "mała; specific use"
+    intent: "Narzędzia systemowe."
   workflow:
-    intent: "Wieloetapowy proces (release, deploy, audit)."
-    cost_policy: "średnia; orchestruje kilka innych"
+    intent: "Wieloetapowy proces."
   heavy:
-    intent: ">50KB. Tylko invoke (/graphify, /audit)."
-    cost_policy: "warn jeśli auto-load"
+    intent: ">50KB. Tylko invoke."
   experimental:
-    intent: "Nowy skill, nie sprawdzony w produkcji."
-    cost_policy: "flag in stats"
+    intent: "Nowy, nie zwalidowany."
   deprecated:
-    intent: "Wycofane. CLI powinno warn."
-    cost_policy: "N/A"
+    intent: "Wycofane. CLI powinien warn."
+
+# ════════════════════ PROVIDERS ════════════════════
+#
+# Capabilities NIE SĄ skillami - to są SERVICES.
+# Skills mają `tier: standard/pro/lite` - alternative implementations.
+#
+# W provider_model jest deklaratywna mapa capability -> set implementacji.
+
+providers:
+  excel-debug:
+    implementations:
+      - skill_id: excel-debug
+        tier: standard
+        confidence: 0.85
+        latency_ms: 200
+      - skill_id: excel-debug-pro
+        tier: pro
+        confidence: 0.96
+        latency_ms: 100
+    default_tier: standard
+    upgrade_tier_on_budget: pro
+
+  planning:
+    implementations:
+      - skill_id: plan-lite
+        tier: lite
+        confidence: 0.65
+        latency_ms: 50
+      - skill_id: plan
+        tier: standard
+        confidence: 0.85
+        latency_ms: 200
+      - skill_id: plan-pro
+        tier: pro
+        confidence: 0.97
+        latency_ms: 250
+    default_tier: standard
+
+  debug:
+    implementations:
+      - skill_id: systematic-debugging
+        tier: standard
+        confidence: 0.82
+      - skill_id: debug-lite
+        tier: lite
+        confidence: 0.55
+    default_tier: standard
+
+  graphify:
+    implementations:
+      - skill_id: graphify
+        tier: standard
+    default_tier: standard
 
 # ════════════════════ SKILLS ════════════════════
 
@@ -75,6 +135,7 @@ skills:
     category: core
     version: 1.2.0
     updated: "2026-07-03"
+    tier: standard
     capabilities:
       - project-conventions
       - style-conventions
@@ -82,28 +143,46 @@ skills:
       - spa-architecture-summary
       - bug-fix-flow
     utility: 95
+    utility_state:
+      base: 95
+      history_bonus: 0
+      success_rate_bonus: 0
+      recency_penalty: 0
+      total: 95
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.95
+    latency_ms: 50
     auto_load: true
+    requires: []
+    soft_requires: []
     source: ".hermes/skills/conventions-lite/SKILL.md"
-    install_path: ".hermes/skills/conventions-lite/SKILL.md"
 
   - id: router
     category: core
     version: 1.1.0
     updated: "2026-07-03"
+    tier: standard
     capabilities:
       - skill-routing
       - meta-skill
       - manifest-sot
     utility: 100
+    utility_state:
+      base: 100
+      total: 100
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 1.0
+    latency_ms: 30
     auto_load: true
+    requires: []
     source: ".hermes/skills/_router.md"
-    install_path: ".hermes/skills/_router.md"
 
   # ─── DOMAIN ───
   - id: sp-a-conventions
     category: domain
     version: 1.4.1
     updated: "2026-06-15"
+    tier: standard
     capabilities:
       - spa-architecture
       - spa-app-wrapper
@@ -114,10 +193,15 @@ skills:
       - verify-after-mutation
       - windows-hookchain
     utility: 90
+    utility_state:
+      base: 90
+      total: 90
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.92
+    latency_ms: 300
     requires: []
-    optional: []
+    soft_requires: [conventions-lite]
     source: "profile:pv:software-development/oferty-pv-conventions"
-    install_path: "<resolved at build>"
     references_count: 11
     notes: "95 KB. Loaded TYLKO dla poważnych zmian SPA."
 
@@ -126,6 +210,7 @@ skills:
     category: feature
     version: 0.4.2
     updated: "2026-07-01"
+    tier: standard
     capabilities:
       - excel-paste
       - excel-copy
@@ -134,29 +219,66 @@ skills:
       - focus-overlay
       - paste-into-empty-row
     utility: 87
+    utility_state:
+      base: 87
+      total: 87
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.85
+    latency_ms: 200
     requires: [conventions-lite]
-    optional: [systematic-debugging]
+    soft_requires: [systematic-debugging]
     source: "profile:pv:software-development/excel-debug"
-    install_path: "<resolved at build>"
     references_count: 24
+
+  - id: excel-debug-pro
+    category: feature
+    version: 0.1.0
+    updated: "2026-07-03"
+    tier: pro
+    capabilities:
+      - excel-paste
+      - excel-copy
+      - excel-sticky-cols
+      - debug-table
+      - focus-overlay
+      - paste-into-empty-row
+      - excel-pro-tips            # advanced
+    utility: 95
+    utility_state:
+      base: 95
+      total: 95
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.96
+    latency_ms: 100
+    requires: [conventions-lite, excel-debug]
+    soft_requires: [systematic-debugging]
+    source: "skill://alias-to-excel-debug-with-pro-tips"   # placeholder
+    notes: "Pro tier; alternative implementation excel-debug. Skill aktualnie pointer do excel-debug."
 
   - id: systematic-debugging
     category: feature
     version: 1.0.1
     updated: "2026-05-20"
+    tier: standard
     capabilities:
       - debug
       - root-cause
       - regression
     utility: 80
+    utility_state:
+      base: 80
+      total: 80
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.82
+    latency_ms: 200
     requires: [conventions-lite]
     source: "profile:pv:software-development/systematic-debugging"
-    install_path: "<resolved at build>"
 
   - id: multi-agent-coordination
     category: feature
     version: 0.9.0
     updated: "2026-06-01"
+    tier: standard
     capabilities:
       - planning
       - coding
@@ -164,213 +286,317 @@ skills:
       - architecture
       - delegation
     utility: 75
+    utility_state:
+      base: 75
+      total: 75
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.78
+    latency_ms: 300
     requires: [conventions-lite]
     source: "profile:pv:software-development/multi-agent-coordination"
-    install_path: "<resolved at build>"
 
   - id: oferty-pv-ai-telemetry
     category: feature
     version: 0.3.5
     updated: "2026-04-15"
+    tier: standard
     capabilities:
       - ai-telemetry
       - learning-engine
       - knowledge-base
       - ml-api
     utility: 65
+    utility_state:
+      base: 65
+      total: 65
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.7
+    latency_ms: 250
     requires: [conventions-lite]
     source: "profile:pv:software-development/oferty-pv-ai-telemetry"
-    install_path: "<resolved at build>"
     notes: "Backend ML aktualnie martwy (port 8000)."
 
   - id: python-debugpy
     category: feature
     version: 1.2.0
     updated: "2026-03-10"
+    tier: standard
     capabilities:
       - python-debugger
       - debugpy
       - venv
     utility: 50
+    utility_state:
+      base: 50
+      total: 50
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.65
+    latency_ms: 300
     requires: [conventions-lite]
     source: "profile:pv:software-development/python-debugpy"
-    install_path: "<resolved at build>"
 
   - id: plan-guardian
     category: feature
     version: 0.5.1
     updated: "2026-06-22"
+    tier: standard
     capabilities:
       - plan-validation
       - plan-compliance
     utility: 70
+    utility_state:
+      base: 70
+      total: 70
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.75
+    latency_ms: 180
     requires: [conventions-lite]
     source: "profile:pv:software-development/plan-guardian"
-    install_path: "<resolved at build>"
 
   - id: plan
     category: feature
     version: 1.0.0
     updated: "2026-05-30"
+    tier: standard
     capabilities:
       - planning
       - design
       - mode-toggle
     utility: 72
+    utility_state:
+      base: 72
+      total: 72
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.85
+    latency_ms: 200
     requires: [conventions-lite]
     source: "profile:pv:software-development/plan"
-    install_path: "<resolved at build>"
+
+  - id: plan-lite
+    category: feature
+    version: 0.5.0
+    updated: "2026-07-03"
+    tier: lite
+    capabilities:
+      - planning
+      - design-mini
+    utility: 65
+    utility_state:
+      base: 65
+      total: 65
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.65
+    latency_ms: 50
+    requires: [conventions-lite]
+    source: ".hermes/skills/plan-lite/SKILL.md"
+    notes: "Lite tier (kb) - alternative for plan"
+
+  - id: plan-pro
+    category: experimental
+    version: 0.0.1
+    updated: "2026-07-03"
+    tier: pro
+    capabilities:
+      - planning
+      - design-deep
+      - deps-analysis
+    utility: 98
+    utility_state:
+      base: 98
+      total: 98
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.97
+    latency_ms: 350
+    requires: [conventions-lite, plan]
+    source: ".hermes/skills/plan-pro/SKILL.md"
+    notes: "Pro tier; future deep-planning; placeholder"
 
   - id: test-driven-development
     category: feature
     version: 1.0.0
     updated: "2026-03-12"
+    tier: standard
     capabilities:
       - tdd
       - red-green-refactor
       - testing
     utility: 78
+    utility_state:
+      base: 78
+      total: 78
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.85
+    latency_ms: 200
     requires: [conventions-lite]
     source: "profile:pv:software-development/test-driven-development"
-    install_path: "<resolved at build>"
 
   - id: simplify-code
     category: feature
-    version: 1.0.1
+    version: 1.0.0
     updated: "2026-06-01"
+    tier: standard
     capabilities:
       - cleanup
       - refactor
       - parallel-agents
     utility: 65
+    utility_state:
+      base: 65
+      total: 65
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.75
+    latency_ms: 250
     requires: [conventions-lite]
     source: "profile:pv:software-development/simplify-code"
-    install_path: "<resolved at build>"
 
   - id: spike
     category: feature
     version: 1.0.0
     updated: "2026-02-10"
+    tier: standard
     capabilities:
       - experiment
       - prototype
       - throwaway
     utility: 60
+    utility_state:
+      base: 60
+      total: 60
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.7
+    latency_ms: 100
     requires: [conventions-lite]
     source: "profile:pv:software-development/spike"
-    install_path: "<resolved at build>"
 
   - id: node-inspect-debugger
     category: feature
     version: 0.9.0
     updated: "2026-04-05"
+    tier: standard
     capabilities:
       - node-debugger
       - chrome-devtools
       - --inspect
     utility: 55
+    utility_state:
+      base: 55
+      total: 55
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.7
+    latency_ms: 300
     requires: [conventions-lite]
     source: "profile:pv:software-development/node-inspect-debugger"
-    install_path: "<resolved at build>"
 
   # ─── TOOL ───
   - id: skill-cli
     category: tool
-    version: 0.3.0
+    version: 0.4.0
     updated: "2026-07-03"
+    tier: standard
     capabilities:
       - manifest-validate
       - build-cost
       - plan
       - stats
       - deps
+      - feedback
     utility: 90
+    utility_state:
+      base: 90
+      total: 90
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.95
+    latency_ms: 50
     requires: []
     source: "scripts/skill-cli.mjs"
-    install_path: "scripts/skill-cli.mjs"
-    notes: "Sam się triggeruje (jest narzędziem CLI)."
 
   # ─── WORKFLOW ───
   - id: requesting-code-review
     category: workflow
     version: 0.7.0
     updated: "2026-05-18"
+    tier: standard
     capabilities:
       - code-review
       - security-scan
       - quality-gates
     utility: 75
+    utility_state:
+      base: 75
+      total: 75
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.85
+    latency_ms: 200
     requires: [conventions-lite]
     source: "profile:pv:software-development/requesting-code-review"
-    install_path: "<resolved at build>"
 
   # ─── HEAVY ───
   - id: graphify
     category: heavy
     version: 0.9.5
     updated: "2026-07-03"
+    tier: standard
     capabilities:
       - knowledge-graph
       - code-intelligence
       - graph-query
       - ast-extraction
-    utility: 70             # poniżej 80; drogi skill
+    utility: 70
+    utility_state:
+      base: 70
+      total: 70
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.8
+    latency_ms: 2000
     requires: [conventions-lite]
+    soft_requires: []
     invoke_only: true
     source: ".hermes/skills/graphify/SKILL.md"
-    install_path: ".hermes/skills/graphify/SKILL.md"
     references_count: 8
-    notes: "CLI install: graphify install --platform hermes --project"
 
   - id: codebase-audit
     category: heavy
     version: 1.0.0
     updated: "2026-04-20"
+    tier: standard
     capabilities:
       - audit
       - cleanup
       - dead-code
     utility: 60
+    utility_state:
+      base: 60
+      total: 60
+      last_updated: "2026-07-03T00:00:00Z"
+    confidence: 0.78
+    latency_ms: 1500
     requires: [conventions-lite]
     invoke_only: true
     source: "profile:pv:devops/codebase-audit"
-    install_path: "<resolved at build>"
 
-# ════════════════════ KEYWORDS (opcjonalnie) ════════════════════
+# ════════════════════ KEYWORDS ════════════════════
 
 keywords:
-  excel:
-    skills: [excel-debug]
-  debug:
-    skills: [systematic-debugging]
-  python:
-    skills: [python-debugpy]
-  review:
-    skills: [requesting-code-review]
-  audyt:
-    skills: [codebase-audit]
-  graphify:
-    skills: [graphify]
-  plan:
-    skills: [plan, plan-guardian]
+  excel: [excel-debug]
+  debug: [systematic-debugging]
+  python: [python-debugpy]
+  review: [requesting-code-review]
+  audyt: [codebase-audit]
+  graphify: [graphify]
+  plan: [plan, plan-guardian]
 
-# ════════════════════ STATS (computed) ════════════════════
-# Pole poniżej aktualizowane przez `npm run skills:build-cost` -- nie ręcznie.
+# ════════════════════ STATS ════════════════════
+# Pole emitowane przez `npm run skills:build-cost` -- nie ręcznie.
 
 stats:
   emit_at_build: true
   fields:
     skills_total: int
     by_category: map[str, int]
+    by_tier: map[str, int]
     cost_core: int
-    cost_feature: int
-    cost_domain: int
-    cost_tool: int
-    cost_workflow: int
-    cost_heavy: int
-    cost_experimental: int
-    cost_deprecated: int
     cost_total_all_loaded: int
-    cost_with_cap_budget: int   # z cap_total_cost_tokens
     skills_with_warnings: int
     cycles_found: int
+    avg_utility: float
+    avg_confidence: float

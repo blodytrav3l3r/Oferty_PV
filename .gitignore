@@ -126,3 +126,14 @@ temp_*.txt
 *.tmp
 witros_dev_port_check.*
 cookies.txt
+
+# Lokalne dane feedback loop
+.hermes/skills/_feedback.json
+
+# Konfiguracje agentów AI (autogenerowane)
+.claude/
+.codex/
+CLAUDE.md
+
+# Backup manifestów
+.hermes/skills/_manifest.v2.yaml.bak

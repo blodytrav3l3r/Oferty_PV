@@ -23,7 +23,7 @@
  *   npm run skills:capabilities
  */
 
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { resolve, join, dirname } from 'path';
 import yaml from 'js-yaml';
 
@@ -328,8 +328,8 @@ function cmdValidate() {
     const manifest = loadManifest();
     const errors = [];
 
-    if (manifest.schema_version !== 2) {
-        errors.push(`schema_version !== 2 (got: ${manifest.schema_version ?? 'unset'})`);
+    if (manifest.schema_version !== 2 && manifest.schema_version !== 3) {
+        errors.push(`schema_version musi być 2 lub 3 (got: ${manifest.schema_version ?? 'unset'})`);
     }
 
     const skills = manifest.skills ?? [];
@@ -398,7 +398,7 @@ function cmdValidate() {
     }
 
     console.log('\n══════════════════════════════════════════════');
-    console.log('  Manifest Validation (v2)');
+    console.log('  Manifest Validation (v2/v3)');
     console.log('══════════════════════════════════════════════\n');
 
     if (errors.length === 0) {
@@ -498,13 +498,183 @@ function cmdDeps(skillId, depth = 0, seen = new Set()) {
     console.log('');
 }
 
+// ── v3 Provider Resolver ──
+
+function cmdProviderResolve(cap) {
+    if (!cap) {
+        process.stderr.write('\n  ✗ Uzycie: provider-resolve <capability>\n\n');
+        process.exit(1);
+    }
+    const manifest = loadManifest();
+    const provs = manifest.providers || {};
+    const entry = provs[cap];
+    if (!entry) {
+        console.log(`\n  Brak providerow dla capability: '${cap}'`);
+        console.log('  Dostepne:', Object.keys(provs).join(', ') || '(brak)');
+        console.log('');
+        process.exit(0);
+    }
+    console.log(`\n  Provider Resolver -> ${cap}\n`);
+    const tiers = { lite: 0, standard: 1, pro: 2, experimental: 3 };
+    const sorted = (entry.implementations || []).sort((a, b) => (tiers[a.tier] || 1) - (tiers[b.tier] || 1));
+    for (const imp of sorted) {
+        const sk = (manifest.skills || []).find(s => s.id === imp.skill_id);
+        const cost = sk ? approxTokensFromBytes(loadSkillBytes(sk) || 0) : '?';
+        const util = (sk && sk.utility_state && sk.utility_state.total) || (sk && sk.utility) || 50;
+        const conf = imp.confidence ?? sk?.confidence ?? '?';
+        const lat = imp.latency_ms ?? sk?.latency_ms ?? '?';
+        console.log(`  ${imp.tier.padEnd(12)} ${imp.skill_id.padEnd(28)} util=${String(util).padStart(3)}  conf=${String(conf).padStart(4)}  lat=${String(lat).padStart(4)}ms  cost~${String(cost).padStart(6)}t`);
+    }
+    console.log(`\n  default_tier: ${entry.default_tier || 'standard'}`);
+    console.log('');
+}
+
+// ── v3 Feedback Record ──
+
+function cmdFeedbackRecord() {
+    const fbPath = resolve(ROOT, '.hermes', 'skills', '_feedback.json');
+    let fb = { schema: 1, history: [] };
+    if (existsSync(fbPath)) {
+        try { fb = JSON.parse(readFileSync(fbPath, 'utf-8')); } catch {}
+    }
+    const record = {
+        task: process.env.FEEDBACK_TASK || '(nie podano)',
+        outcome: 'unknown',
+        skills_loaded: [],
+        matched_intent: process.env.FEEDBACK_INTENT || '',
+        tokens_estimated: 0,
+        duration_ms: 0,
+        errors: [],
+        timestamp: new Date().toISOString()
+    };
+    fb.history.push(record);
+    writeFileSync(fbPath, JSON.stringify(fb, null, 2));
+    console.log(`\n  Feedback record zapisany (historia: ${fb.history.length})`);
+    console.log(`    task: ${record.task}`);
+    console.log(`    outcome: ${record.outcome}`);
+    console.log(`    skills: ${record.skills_loaded.join(', ') || '(brak)'}`);
+    console.log('');
+}
+
+// ── v3 Feedback Show ──
+
+function cmdFeedbackShow() {
+    const fbPath = resolve(ROOT, '.hermes', 'skills', '_feedback.json');
+    if (!existsSync(fbPath)) {
+        console.log('\n  Brak _feedback.json\n');
+        return;
+    }
+    let fb;
+    try { fb = JSON.parse(readFileSync(fbPath, 'utf-8')); } catch {
+        console.log('\n  _feedback.json uszkodzony\n');
+        return;
+    }
+    const hist = fb.history || [];
+    if (hist.length === 0) {
+        console.log('\n  Feedback historia: pusta (0 wpisow)\n');
+        return;
+    }
+    const skillStats = {};
+    for (const r of hist) {
+        for (const sid of r.skills_loaded || []) {
+            if (!skillStats[sid]) skillStats[sid] = { count: 0, success: 0, totalTokens: 0 };
+            skillStats[sid].count++;
+            if (r.outcome === 'success') skillStats[sid].success++;
+            skillStats[sid].totalTokens += r.tokens_estimated || 0;
+        }
+    }
+    console.log('\n══════════════════════════════════════════════');
+    console.log(`  Feedback Report (${hist.length} records)`);
+    console.log('══════════════════════════════════════════════\n');
+    console.log('  Skills:');
+    const sorted = Object.entries(skillStats).sort((a, b) => b[1].count - a[1].count);
+    for (const [sid, st] of sorted) {
+        const sr = st.count > 0 ? (st.success / st.count * 100).toFixed(0) : '?';
+        const avgT = st.count > 0 ? Math.round(st.totalTokens / st.count) : '?';
+        console.log(`    ${sid.padEnd(28)} loaded=${String(st.count).padStart(3)} success=${sr}%  avg_tokens=${String(avgT).padStart(6)}`);
+    }
+    console.log('\n  Last 5 outcomes:');
+    const last5 = hist.slice(-5).reverse();
+    for (const r of last5) {
+        const ts = (r.timestamp || '').slice(0, 19).replace('T', ' ');
+        const outcome = r.outcome === 'success' ? '+' : r.outcome === 'partial' ? '~' : '-';
+        console.log(`    ${outcome} ${ts}  ${r.task.slice(0, 60).padEnd(60)} skills=${(r.skills_loaded || []).length}`);
+    }
+    console.log('');
+}
+
+// ── v3 Utility Recalc ──
+
+function cmdUtilityRecalc() {
+    const fbPath = resolve(ROOT, '.hermes', 'skills', '_feedback.json');
+    const manifest = loadManifest();
+    const doWrite = process.argv.includes('--write');
+    let fb = { history: [] };
+    if (existsSync(fbPath)) { try { fb = JSON.parse(readFileSync(fbPath, 'utf-8')); } catch {} }
+    const hist = fb.history || [];
+    const now = new Date();
+    const skillData = {};
+    for (const r of hist) {
+        for (const sid of r.skills_loaded || []) {
+            if (!skillData[sid]) skillData[sid] = { total: 0, successCount: 0, lastUsed: null, count: 0 };
+            skillData[sid].total++;
+            if (r.outcome === 'success') skillData[sid].successCount++;
+            skillData[sid].count++;
+            const ts = r.timestamp ? new Date(r.timestamp) : null;
+            if (ts && (!skillData[sid].lastUsed || ts > skillData[sid].lastUsed)) skillData[sid].lastUsed = ts;
+        }
+    }
+    console.log('\n══════════════════════════════════════════════');
+    console.log('  Utility Recalc (dry-run)');
+    console.log('══════════════════════════════════════════════\n');
+    let changedAny = false;
+    for (const s of manifest.skills || []) {
+        if (!s) continue;
+        const sd = skillData[s.id];
+        let base = s.utility_state?.base ?? s.utility ?? 50;
+        let historyBonus = 0, successBonus = 0, recencyPenalty = 0;
+        if (sd && sd.total > 0) {
+            historyBonus = Math.round(sd.total * 0.5);
+            successBonus = Math.round((sd.successCount / sd.total) * 10);
+            if (sd.lastUsed) {
+                const daysSince = (now - sd.lastUsed) / (1000 * 60 * 60 * 24);
+                recencyPenalty = Math.min(Math.round(daysSince / 15), 20);
+            }
+        }
+        const total = Math.max(1, Math.min(100, base + historyBonus + successBonus - recencyPenalty));
+        const oldTotal = s.utility_state?.total ?? s.utility ?? 50;
+        if (Math.abs(oldTotal - total) > 1) {
+            changedAny = true;
+            console.log(`  ${s.id.padEnd(28)} ${String(oldTotal).padStart(3)} -> ${String(total).padStart(3)} (base=${base} hist=+${historyBonus} succ=+${successBonus} rec=-${recencyPenalty})`);
+            if (doWrite) {
+                if (!s.utility_state) s.utility_state = {};
+                s.utility_state.base = base;
+                s.utility_state.history_bonus = historyBonus;
+                s.utility_state.success_rate_bonus = successBonus;
+                s.utility_state.recency_penalty = recencyPenalty;
+                s.utility_state.total = total;
+                s.utility_state.last_updated = now.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+            }
+        }
+    }
+    if (!changedAny) console.log('  (brak zmian)');
+    if (doWrite && changedAny) {
+        writeFileSync(MANIFEST_PATH, yaml.dump(manifest, { indent: 2, lineWidth: -1 }));
+        console.log('\n  Manifest zaktualizowany (--write)');
+    } else {
+        console.log('\n  dry-run: zadne zmiany nie zostaly zapisane.');
+        console.log('  Uzyj --write by zatwierdzic.\n');
+    }
+    console.log('');
+}
+
 // ── Dispatcher ──
 
 const [, , cmd, ...args] = process.argv;
 
 if (!cmd || cmd === '--help' || cmd === '-h') {
     console.log(
-        '\n  Hermes Skills Manifest CLI v2\n' +
+        '\n  Hermes Skills Manifest CLI v3\n' +
             '\n  Komendy:\n' +
             '    build-cost                   oblicz koszty z SKILL.md (computed)\n' +
             '    plan "<intent>"              6-stage Context Planner (intent→plan)\n' +
@@ -513,6 +683,10 @@ if (!cmd || cmd === '--help' || cmd === '-h') {
             '    stats                        per-category + top\n' +
             '    cost <skill_id>              direct + transitive\n' +
             '    deps <skill_id>              drzewo requires\n' +
+            '    provider-resolve <capability>  resolve provider dla capability\n' +
+            '    feedback-record              zapisz task outcome do _feedback.json\n' +
+            '    feedback-show                raport metryk z feedback history\n' +
+            '    utility-recalc [--write]     przelicz utility z dry-run/write\n' +
             '\n  SSoT: .hermes/skills/_manifest.yaml\n' +
             '  Classifier: .hermes/skills/_classifier.md (load_when, route rules)\n'
     );
@@ -542,9 +716,21 @@ switch (cmd) {
     case 'deps':
         cmdDeps(args[0]);
         break;
+    case 'provider-resolve':
+        cmdProviderResolve(args[0]);
+        break;
+    case 'feedback-record':
+        cmdFeedbackRecord();
+        break;
+    case 'feedback-show':
+        cmdFeedbackShow();
+        break;
+    case 'utility-recalc':
+        cmdUtilityRecalc();
+        break;
     case 'build-manifest':
         cmdStats();
-        console.log('  Alias: build-manifest → stats (use build-cost for v2)');
+        console.log('  Alias: build-manifest → stats (use build-cost for v3)');
         break;
     default:
         process.stderr.write(`  ✗ Nieznana komenda: ${cmd}\n`);
