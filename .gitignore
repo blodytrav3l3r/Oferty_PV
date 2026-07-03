@@ -94,7 +94,6 @@ check_db_temp.js
 .agents/
 .opencode/
 .graphifyignore
-.hermes/
 ./~/
 
 # === Temp/working files ===
