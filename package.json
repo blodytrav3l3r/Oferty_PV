@@ -38,6 +38,11 @@
         "version:minor": "node scripts/bump-version.mjs minor",
         "version:major": "node scripts/bump-version.mjs major",
         "version:set": "node scripts/bump-version.mjs",
+        "skills:build": "node scripts/skill-cli.mjs build-manifest",
+        "skills:stats": "node scripts/skill-cli.mjs stats",
+        "skills:validate": "node scripts/skill-cli.mjs validate",
+        "skills:cost": "node scripts/skill-cli.mjs cost",
+        "skills:deps": "node scripts/skill-cli.mjs deps",
         "release:minor": "standard-version --release-as minor",
         "release:patch": "standard-version --release-as patch",
         "release:major": "standard-version --release-as major",
@@ -98,7 +103,8 @@
         "ts-node-dev": "^2.0.0",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.58.1",
-        "vite": "^8.0.14"
+        "vite": "^8.0.14",
+        "js-yaml": "^4.2.0"
     },
     "prisma": {
         "seed": "ts-node prisma/seed.ts"
