@@ -32,8 +32,8 @@ function parseVersionFromPkg(pkgJson) {
 
 function parseLastVersionFromChangelog(cl) {
     // Najnowsza wersja jest na GÓRZE pliku (Keep a Changelog).
-    // Bierzemy pierwszy nagłówek "## [X.Y.Z]".
-    const m = [...(cl ?? '').matchAll(/^##[ \t]*\[(\d+\.\d+\.\d+)\][^\n\r]*/gm)];
+    // Bierzemy pierwszy nagłówek "## [X.Y.Z]" lub "## X.Y.Z".
+    const m = [...(cl ?? '').matchAll(/^##[ \t]*\[?(\d+\.\d+\.\d+)\]?[^\n\r]*/gm)];
     return m.length > 0 ? m[0][1] : null;
 }
 
@@ -58,7 +58,11 @@ if (!versionChangelog) {
     warnings.push(`CHANGELOG.md — brak wpisu ## [X.Y.Z] (początkowy CHANGELOG OK)`);
 }
 
-const allVersions = { VERSION: versionFile, 'package.json': versionPkg, CHANGELOG: versionChangelog };
+const allVersions = {
+    VERSION: versionFile,
+    'package.json': versionPkg,
+    CHANGELOG: versionChangelog
+};
 
 if (versionFile && versionPkg && versionFile !== versionPkg) {
     errors.push(`VERSION (${versionFile}) ≠ package.json (${versionPkg})`);
