@@ -198,6 +198,12 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 11. `npm run version:check` — spójność wersji (robi to post-commit hook)
 12. Browser: `Ctrl+Shift+R` po dużej zmianie CSS
 
+### Commit
+
+13. Przed wykonaniem commita — **zapytaj użytkownika**: czy tylko commit, czy też `npm run release` (bump wersji + tag)
+14. Domyślnie: tylko commit. Release robimy na wyraźne życzenie.
+15. Po commicie NIE pytaj o release ponownie — czekaj na inicjatywę użytkownika.
+
 ---
 
 ## Przydatne komendy
