@@ -22,7 +22,7 @@ let editPrzejscieState = {
 };
 
 const inlinePrzejsciaState = { type: null, dnId: null };
-const visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
+let visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
 
 window.editPrzejscie = editPrzejscie;
 window.savePrzejscieEdit = savePrzejscieEdit;
