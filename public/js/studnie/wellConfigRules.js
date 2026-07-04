@@ -564,11 +564,16 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
  * @param {number} [opts.dn] - średnica studni (redukcja)
  * @param {number} [opts.otCount] - liczba kręgów wierconych
  * @param {boolean} [opts.isKonus] - czy zakończenie to konus
+ * @param {Object} [opts.preferenceWeights] - wyuczone preferencje (Phase 3)
+ * @param {string[]} [opts.productIds] - lista produktów w konfiguracji (Phase 3)
+ * @param {number[]} [opts.diameterProfile] - profil średnic (Phase 3)
  * @returns {{ score: number, breakdown: Array<{factor:string,value:number}>, reason: string }}
  */
 function scoreLayout(opts = /** @type {Object} */ ({})) {
     let score = 0;
     const breakdown = [];
+
+    const prefs = opts.preferenceWeights;
 
     // rings: 10 pkt za krąg
     if (opts.ringCount > 0) {
@@ -612,10 +617,72 @@ function scoreLayout(opts = /** @type {Object} */ ({})) {
     }
 
     // konus_bonus: preferuj konus nad zamiennikiem (np. DIN)
-    // Bez tego solver wybiera DIN+gorsza dennica bo kara denH (2000/mm) przewyższa karę fallbacku
+    // Domyślnie -500000; może być nadpisany przez preferenceWeights
     if (opts.isKonus) {
-        score -= 500000;
-        breakdown.push({ factor: 'konus_bonus', value: -500000 });
+        const cv = prefs && typeof prefs.konusBonus === 'number' ? prefs.konusBonus : -500000;
+        score += cv;
+        breakdown.push({ factor: 'konus_bonus', value: cv });
+    }
+
+    // ringHeightBonus: preferuj częściej akceptowane wysokości kręgów
+    if (prefs && prefs.ringHeightBonus && opts.ringCount > 0) {
+        let rhTotal = 0;
+        for (const [h, bonus] of Object.entries(prefs.ringHeightBonus)) {
+            if (typeof bonus !== 'number') continue;
+            rhTotal += bonus;
+        }
+        if (rhTotal !== 0) {
+            score += rhTotal;
+            breakdown.push({ factor: 'ringHeight_prefs', value: rhTotal });
+        }
+    }
+
+    // avoid/product penalties z bazy wiedzy
+    if (prefs && Array.isArray(prefs.avoidProductIds) && prefs.avoidProductIds.length > 0) {
+        let avoidTotal = 0;
+        const avoidSet = new Set(prefs.avoidProductIds);
+        if (opts.productIds && Array.isArray(opts.productIds)) {
+            for (const pid of opts.productIds) {
+                if (avoidSet.has(pid)) avoidTotal += 50000;
+            }
+        }
+        if (avoidTotal !== 0) {
+            score += avoidTotal;
+            breakdown.push({ factor: 'avoid_products', value: avoidTotal });
+        }
+    }
+
+    // preferProducts z bazy wiedzy
+    if (prefs && Array.isArray(prefs.preferProductIds) && prefs.preferProductIds.length > 0) {
+        let prefTotal = 0;
+        const prefSet = new Set(prefs.preferProductIds);
+        if (opts.productIds && Array.isArray(opts.productIds)) {
+            for (const pid of opts.productIds) {
+                if (prefSet.has(pid)) prefTotal -= 20000;
+            }
+        }
+        if (prefTotal !== 0) {
+            score += prefTotal;
+            breakdown.push({ factor: 'prefer_products', value: prefTotal });
+        }
+    }
+
+    // profileBonuses: dopasowanie do popularnych profili średnicowych
+    if (prefs && Array.isArray(prefs.profileBonuses) && prefs.profileBonuses.length > 0 && opts.diameterProfile) {
+        let profileBonus = 0;
+        const currProfile = opts.diameterProfile;
+        for (const pb of prefs.profileBonuses) {
+            if (Array.isArray(pb.pattern) && Array.isArray(currProfile) &&
+                pb.pattern.length === currProfile.length &&
+                pb.pattern.every((v, i) => v === currProfile[i])) {
+                profileBonus = pb.bonus;
+                break;
+            }
+        }
+        if (profileBonus !== 0) {
+            score += profileBonus;
+            breakdown.push({ factor: 'profile_match', value: profileBonus });
+        }
     }
 
     // reduction-specific: bottom section height

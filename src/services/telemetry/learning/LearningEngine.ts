@@ -199,16 +199,64 @@ export class LearningEngine {
                 })
             );
 
+            // 5b) Pattern Detection - ring patterns (z zaakceptowanych konfiguracji)
+            const ringPatterns = this.patterns.detectRingPattern(
+                records.map(function (r) {
+                    return {
+                        dn: r.dn || 'unknown',
+                        componentSeq: (r.final_user_config || r.original_auto_config) || undefined,
+                        wasAccepted: !!r.wasAccepted,
+                        acceptanceCount: 0
+                    };
+                })
+            );
+
+            // 5c) Pattern Detection - closure preference
+            const closurePatterns = this.patterns.detectClosurePreference(
+                records.map(function (r) {
+                    return {
+                        dn: r.dn || 'unknown',
+                        componentSeq: (r.final_user_config || r.original_auto_config) || undefined,
+                        wasAccepted: !!r.wasAccepted
+                    };
+                })
+            );
+
+            // 5d) Pattern Detection - product preference
+            const productPatterns = this.patterns.detectProductPreference(
+                records.map(function (r) {
+                    return {
+                        dn: r.dn || 'unknown',
+                        componentSeq: (r.final_user_config || r.original_auto_config) || undefined,
+                        wasAccepted: !!r.wasAccepted,
+                        wasRejected: !!r.wasRejected
+                    };
+                })
+            );
+
             const allPatterns: KnowledgePattern[] = [
                 ...subPatterns,
                 ...addPatterns,
                 ...remPatterns,
                 ...transitionLayouts,
-                ...reductionPatterns
+                ...reductionPatterns,
+                ...ringPatterns,
+                ...closurePatterns,
+                ...productPatterns
             ];
 
             // 6) Zapis do KnowledgeBase
             persisted = await this.patterns.persist(allPatterns);
+
+            // 7) Cleanup starych wzorców
+            try {
+                const cleanupCount = await this.kb.cleanupCycle();
+                if (cleanupCount > 0) {
+                    logger.info('LearningEngine', 'Oczyszczono ' + cleanupCount + ' nieaktualnych wzorców');
+                }
+            } catch (e) {
+                logger.warn('LearningEngine', 'Cleanup warning: ' + e);
+            }
 
             this.lastRunAt = new Date().toISOString();
             this.initialized = true;
