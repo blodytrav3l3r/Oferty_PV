@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Inicjalizacja UI (bez danych — będą gotowe za chwilę)
         if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
         if (typeof renderSavedOffersStudnie === 'function') renderSavedOffersStudnie();
-        checkBackendStatus();
 
         // Auto-uzupełnienie daty i numeru oferty w kroku 1
         const dateEl = document.getElementById('offer-date');

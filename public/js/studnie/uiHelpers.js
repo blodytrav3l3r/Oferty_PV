@@ -458,14 +458,6 @@ async function saveStudnieProducts(data) {
     return result !== null;
 }
 
-/* ===== SPRAWDZANIE STATUSU BACKENDU ===== */
-// Backend Python (OR-Tools/ML) jest opcjonalny — nie pingujemy go cyklicznie.
-// isBackendOnline domyślnie false; zmienna zadeklarowana w offerManager.js:2819.
-// Aby włączyć backend, uruchom well_configurator_backend/start.bat.
-function checkBackendStatus() {
-    // No-op: backend sprawdzany tylko na żądanie (mlDashboard.js, wellSolver.js)
-}
-
 /* ===== CENNIK PRECO — load / save / defaults ===== */
 
 /**

@@ -22,7 +22,7 @@ let editPrzejscieState = {
 };
 
 const inlinePrzejsciaState = { type: null, dnId: null };
-let visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
+const visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
 
 window.editPrzejscie = editPrzejscie;
 window.savePrzejscieEdit = savePrzejscieEdit;
@@ -987,9 +987,6 @@ function refreshPrzejsciaVisibilityTiles() {
     const counterEl = overlay.querySelector('.przejscia-vis-counter');
     if (counterEl)
         counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
-
-    // Sprawdzenie statusu serwera
-    checkBackendStatus();
 
     // Aktualizuj kazdy kafelek w miejscu
     const tiles = overlay.querySelectorAll('.przejscia-vis-tile');

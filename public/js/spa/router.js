@@ -127,7 +127,14 @@ const SpaRouter = (() => {
 
     function toggleBackendIndicator(module) {
         const el = document.getElementById('backend-status-indicator');
-        if (el) el.style.display = module === 'studnie' ? 'flex' : 'none';
+        if (!el) return;
+        if (module === 'studnie') {
+            el.style.display = 'flex';
+            if (typeof startBackendPolling === 'function') startBackendPolling();
+        } else {
+            el.style.display = 'none';
+            if (typeof stopBackendPolling === 'function') stopBackendPolling();
+        }
     }
 
     function getTransitionLayer() {
