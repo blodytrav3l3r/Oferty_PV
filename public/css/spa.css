@@ -91,3 +91,11 @@ body.spa-view-loading .spa-module-iframe[style*='display:block'] {
         animation: none;
     }
 }
+
+/* Moduł Studnie — header edge-to-edge */
+body.module-studnie .header {
+    padding: 0;
+}
+body.module-studnie .header-inner {
+    padding: 0.3rem 0;
+}

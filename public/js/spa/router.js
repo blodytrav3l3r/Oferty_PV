@@ -296,6 +296,9 @@ const SpaRouter = (() => {
         updateAppNav(module);
         toggleBackendIndicator(module);
 
+        // Klasa body dla scope CSS modułów
+        document.body.classList.toggle('module-studnie', module === 'studnie');
+
         // Renderuj nawigację sekcji tylko przy przełączaniu modułów
         if (currentModule !== module) {
             renderSectionNav(module);

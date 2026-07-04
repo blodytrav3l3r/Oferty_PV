@@ -22,13 +22,22 @@ body > .header {
 }
 
 /* .main odbiera resztę wysokości po headerze */
-body > .main {
+body.studnie-page > .main {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
     /* nadpisuje style.css padding:0.8rem 1.5rem 2rem */
-    padding: 0.8rem 0 0 0;
+    padding: 0.8rem 0 0 0 !important;
+}
+
+/* header full-width w widoku Studnie */
+body.studnie-page .header-inner {
+    max-width: 100%;
+    padding: 0.3rem 0;
 }
 
 /* .section.active — акtywna zakładka */
