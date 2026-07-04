@@ -29,7 +29,7 @@ const SpaRouter = (() => {
                 {
                     id: 'builder',
                     icon: '<i data-lucide="edit"></i>',
-                    label: 'Konfiguracja',
+                    label: 'Konfiguracja'
                 },
                 { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },
                 { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik' }
@@ -42,7 +42,7 @@ const SpaRouter = (() => {
                 {
                     id: 'builder',
                     icon: '<i data-lucide="cylinder"></i>',
-                    label: 'Konfiguracja',
+                    label: 'Konfiguracja'
                 },
                 { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },
                 { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik' }
@@ -428,9 +428,6 @@ const SpaRouter = (() => {
             if (typeof updateAIDashboardVisibility === 'function') {
                 updateAIDashboardVisibility();
             }
-            if (typeof updateVersionInToolbar === 'function') {
-                updateVersionInToolbar();
-            }
         } catch (e) {
             window.location.href = 'index.html';
             return;
@@ -504,7 +501,11 @@ const SpaRouter = (() => {
     function openAIDashboard() {
         const module = currentModule || 'studnie';
         const iframe = iframes[module];
-        if (iframe && iframe.contentWindow && typeof iframe.contentWindow.showMLDashboard === 'function') {
+        if (
+            iframe &&
+            iframe.contentWindow &&
+            typeof iframe.contentWindow.showMLDashboard === 'function'
+        ) {
             iframe.contentWindow.showMLDashboard();
             return;
         }
@@ -527,23 +528,14 @@ const SpaRouter = (() => {
     }
     window.updateAIDashboardVisibility = updateAIDashboardVisibility;
 
-    /** Pobiera wersję z /api/version i wyświetla w toolbarze obok Wyloguj */
-    async function updateVersionInToolbar() {
-        const el = document.getElementById('app-version-toolbar');
-        if (!el) return;
-        try {
-            const res = await fetch('/api/version');
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            el.textContent = 'v' + (data.version || '?');
-        } catch (e) {
-            // graceful fallback — zostaw puste
-            el.textContent = '';
-        }
-    }
-    window.updateVersionInToolbar = updateVersionInToolbar;
-
-    const api = { showSection, navigate, openOfferInModule, refreshModule, openAIDashboard, updateAIDashboardVisibility, updateVersionInToolbar };
+    const api = {
+        showSection,
+        navigate,
+        openOfferInModule,
+        refreshModule,
+        openAIDashboard,
+        updateAIDashboardVisibility
+    };
     window.SpaRouter = api;
     return api;
 })();

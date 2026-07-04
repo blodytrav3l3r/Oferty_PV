@@ -211,7 +211,7 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 | `npm run lint`                        | ESLint (tylko src/)                    |
 | `npm run format`                      | Prettier                               |
 | `npm run version:check`               | Sprawdź spójność VERSION/pkg/CHANGELOG |
-| `npm run version:patch\|minor\|major` | Bump wersji (niskopoziomowy)           |
+| `npm run version:patch\|minor\|major` | Bump wersji (niskopoziomowy, awaryjny) |
 | `npm run release:patch\|minor\|major` | Release + CHANGELOG + tag (zalecane)   |
 | `npm run release:dry`                 | Podgląd release bez zmian              |
 | `graphify query "<q>"`                | Zapytaj graf wiedzy                    |

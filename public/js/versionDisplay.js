@@ -1,7 +1,6 @@
 /**
  * versionDisplay.js — wyświetlanie wersji aplikacji w interfejsie użytkownika.
- * Pobiera wersję z endpointu /api/version i wstrzykuje do elementu #app-version.
- * Komentarze w języku polskim.
+ * Pobiera wersję z endpointu /api/version i wstrzykuje do elementu #app-version-toolbar.
  */
 
 (function () {
@@ -12,7 +11,7 @@
      */
     function initVersionDisplay() {
         // Referencja do elementu, w którym wyświetlimy wersję
-        var versionEl = document.getElementById('app-version');
+        var versionEl = document.getElementById('app-version-toolbar');
 
         // Jeśli element nie istnieje, nie ma co robić
         if (!versionEl) {

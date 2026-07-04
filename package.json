@@ -4,7 +4,7 @@
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
-        "dev": "concurrently -k -n backend,frontend -c cyan,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+        "dev": "concurrently -k -n backend,frontend -c cyan,green \"npm run dev:backend\" \"node scripts/wait-and-start.mjs\"",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
         "dev:frontend": "vite",
         "build": "tsc",
@@ -97,21 +97,22 @@
         "globals": "^17.4.0",
         "husky": "^9.1.7",
         "jest": "^30.3.0",
+        "js-yaml": "^4.2.0",
         "lint-staged": "^17.0.7",
         "prettier": "^3.8.2",
         "prisma": "^6.0.0",
         "rollup-plugin-visualizer": "^7.0.1",
+        "standard-version": "^9.5.0",
         "supertest": "^7.2.2",
         "swagger-jsdoc": "^6.3.0",
         "swagger-ui-express": "^5.0.1",
-        "standard-version": "^9.5.0",
         "ts-jest": "^29.4.9",
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.58.1",
         "vite": "^8.0.14",
-        "js-yaml": "^4.2.0"
+        "wait-on": "^9.0.10"
     },
     "prisma": {
         "seed": "ts-node prisma/seed.ts"

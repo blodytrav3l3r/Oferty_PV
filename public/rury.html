@@ -2051,7 +2051,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <!-- Toast container -->
         <div id="toast-container" class="toast-container"></div>
 
-        <script src="/js/versionDisplay.js"></script>
         <script src="js/shared/xlsx.full.min.js"></script>
         <script src="js/shared/formatters.js?v=3.0"></script>
         <script src="js/shared/auth.js?v=3.0"></script>
@@ -2083,7 +2082,11 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script>
             // Wymuszenie jedynego punktu wejścia: app.html#/<module>
             if (window.top === window.self) {
-                const module = location.pathname.split('/').pop().replace(/\.html?$/, '') || 'rury';
+                const module =
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'rury';
                 window.location.replace('/app.html#/' + module);
             }
         </script>

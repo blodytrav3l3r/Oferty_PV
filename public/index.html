@@ -9,8 +9,8 @@
             content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
         />
         <link href="css/inter.css" rel="stylesheet" />
-        <link rel="stylesheet" href="css/style.css?v=3.0" />
-        <link rel="stylesheet" href="css/index.css?v=3.0" />
+        <link rel="stylesheet" href="css/style.css?v=3.1" />
+        <link rel="stylesheet" href="css/index.css?v=3.1" />
     </head>
 
     <body class="index-page">
@@ -82,6 +82,16 @@
                                 margin-right: 0.5rem;
                             "
                         ></span>
+                        <span
+                            id="app-version-toolbar"
+                            style="
+                                color: var(--text-secondary);
+                                font-size: 0.7rem;
+                                padding: 0.35rem 0.5rem;
+                                opacity: 0.65;
+                                font-feature-settings: 'tnum';
+                            "
+                        ></span>
                         <button
                             onclick="doLogout()"
                             style="
@@ -112,10 +122,10 @@
             </div>
         </header>
 
-        <script src="js/shared/formatters.js?v=3.0"></script>
-        <script src="js/shared/auth.js?v=3.0"></script>
-        <script src="js/shared/logger.js?v=3.0"></script>
-        <script src="js/shared/constants.js?v=3.0"></script>
+        <script src="js/shared/formatters.js?v=3.1"></script>
+        <script src="js/shared/auth.js?v=3.1"></script>
+        <script src="js/shared/logger.js?v=3.1"></script>
+        <script src="js/shared/constants.js?v=3.1"></script>
         <div class="container">
             <div class="index-logo">WITROS</div>
             <div class="subtitle">Generator Ofert Handlowych</div>
@@ -123,14 +133,40 @@
             <!-- Login Form -->
             <div id="login-section" class="login-box">
                 <h3><i data-lucide="lock"></i> Logowanie</h3>
-                <label for="login-username" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Login</label>
+                <label
+                    for="login-username"
+                    style="
+                        position: absolute;
+                        width: 1px;
+                        height: 1px;
+                        padding: 0;
+                        margin: -1px;
+                        overflow: hidden;
+                        clip: rect(0, 0, 0, 0);
+                        border: 0;
+                    "
+                    >Login</label
+                >
                 <input
                     type="text"
                     id="login-username"
                     placeholder="Login"
                     autocomplete="username"
                 />
-                <label for="login-password" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Hasło</label>
+                <label
+                    for="login-password"
+                    style="
+                        position: absolute;
+                        width: 1px;
+                        height: 1px;
+                        padding: 0;
+                        margin: -1px;
+                        overflow: hidden;
+                        clip: rect(0, 0, 0, 0);
+                        border: 0;
+                    "
+                    >Hasło</label
+                >
                 <input
                     type="password"
                     id="login-password"
@@ -163,7 +199,11 @@
                         <button class="btn-hero" onclick="showChangePassword()">
                             <i data-lucide="key"></i> Hasło
                         </button>
-                        <button class="btn-hero" onclick="doLogout()" style="color: var(--danger-hover)">
+                        <button
+                            class="btn-hero"
+                            onclick="doLogout()"
+                            style="color: var(--danger-hover)"
+                        >
                             <i data-lucide="log-out"></i> Wyloguj
                         </button>
                     </div>
@@ -213,7 +253,13 @@
                         </div>
                     </div>
                     <div class="admin-card system-card">
-                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem">
+                        <div
+                            style="
+                                font-size: 0.85rem;
+                                color: var(--text-secondary);
+                                margin-bottom: 0.75rem;
+                            "
+                        >
                             Gotowe do użycia przy następnym zleceniu
                         </div>
                         <div
@@ -239,7 +285,13 @@
                     <div class="admin-card system-card">
                         <div style="display: flex; align-items: center; gap: 0.75rem">
                             <span style="font-size: 1.5rem"><i data-lucide="calendar"></i></span>
-                            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-primary)">
+                            <div
+                                style="
+                                    font-size: 0.85rem;
+                                    font-weight: 800;
+                                    color: var(--text-primary);
+                                "
+                            >
                                 Litera roku:
                                 <span
                                     id="year-letter-preview"
@@ -252,7 +304,11 @@
                         <div style="display: flex; align-items: center; gap: 0.6rem">
                             <span
                                 id="year-letter-year"
-                                style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700"
+                                style="
+                                    font-size: 0.75rem;
+                                    color: var(--text-muted);
+                                    font-weight: 700;
+                                "
                             ></span>
                             <input
                                 type="text"
@@ -281,7 +337,10 @@
                     </div>
 
                     <!-- User Management Widget -->
-                    <div class="admin-header-row" style="justify-content: center; margin: 1.5rem 0 0.8rem">
+                    <div
+                        class="admin-header-row"
+                        style="justify-content: center; margin: 1.5rem 0 0.8rem"
+                    >
                         <div class="admin-title-group" style="text-align: center">
                             <h3><i data-lucide="users"></i> Zarządzanie Użytkownikami</h3>
                         </div>
@@ -312,7 +371,10 @@
                         </div>
                     </div>
 
-                    <div class="admin-card" style="padding: 0; display: flex; flex-direction: column">
+                    <div
+                        class="admin-card"
+                        style="padding: 0; display: flex; flex-direction: column"
+                    >
                         <div class="admin-table-wrap" style="flex: 1">
                             <table class="admin-table">
                                 <thead>
@@ -345,16 +407,38 @@
                                 </div>
                                 <div class="admin-form-grid">
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-firstname">Imię</label>
-                                        <input type="text" id="new-user-firstname" placeholder="Imię" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-firstname"
+                                            >Imię</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="new-user-firstname"
+                                            placeholder="Imię"
+                                            class="glass-input"
+                                        />
                                     </div>
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-lastname">Nazwisko</label>
-                                        <input type="text" id="new-user-lastname" placeholder="Nazwisko" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-lastname"
+                                            >Nazwisko</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="new-user-lastname"
+                                            placeholder="Nazwisko"
+                                            class="glass-input"
+                                        />
                                     </div>
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-symbol">Symbol</label>
-                                        <input type="text" id="new-user-symbol" placeholder="Sym." title="Symbol w numeracji" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-symbol"
+                                            >Symbol</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="new-user-symbol"
+                                            placeholder="Sym."
+                                            title="Symbol w numeracji"
+                                            class="glass-input"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -366,16 +450,38 @@
                                 </div>
                                 <div class="admin-form-grid">
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-login">Login</label>
-                                        <input type="text" id="new-user-login" placeholder="Login" autocomplete="username" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-login"
+                                            >Login</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="new-user-login"
+                                            placeholder="Login"
+                                            autocomplete="username"
+                                            class="glass-input"
+                                        />
                                     </div>
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-password">Hasło</label>
-                                        <input type="password" id="new-user-password" placeholder="Hasło" autocomplete="new-password" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-password"
+                                            >Hasło</label
+                                        >
+                                        <input
+                                            type="password"
+                                            id="new-user-password"
+                                            placeholder="Hasło"
+                                            autocomplete="new-password"
+                                            class="glass-input"
+                                        />
                                     </div>
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-role">Rola</label>
-                                        <select id="new-user-role" onchange="toggleSubUsersList()" class="glass-input">
+                                        <label class="admin-form-label" for="new-user-role"
+                                            >Rola</label
+                                        >
+                                        <select
+                                            id="new-user-role"
+                                            onchange="toggleSubUsersList()"
+                                            class="glass-input"
+                                        >
                                             <option value="user">USER</option>
                                             <option value="pro">PRO</option>
                                             <option value="admin">ADMIN</option>
@@ -385,7 +491,9 @@
 
                                 <!-- SubUsers container (only visible if role === 'pro') -->
                                 <div id="sub-users-container" class="hidden sub-users-compact">
-                                    <span class="sub-users-title"><i data-lucide="link"></i> Przypisani:</span>
+                                    <span class="sub-users-title"
+                                        ><i data-lucide="link"></i> Przypisani:</span
+                                    >
                                     <div id="sub-users-list" class="sub-users-list-compact"></div>
                                 </div>
                             </div>
@@ -397,12 +505,26 @@
                                 </div>
                                 <div class="admin-form-grid">
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-email">Email</label>
-                                        <input type="email" id="new-user-email" placeholder="Email" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-email"
+                                            >Email</label
+                                        >
+                                        <input
+                                            type="email"
+                                            id="new-user-email"
+                                            placeholder="Email"
+                                            class="glass-input"
+                                        />
                                     </div>
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-phone">Telefon</label>
-                                        <input type="text" id="new-user-phone" placeholder="Telefon" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-phone"
+                                            >Telefon</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="new-user-phone"
+                                            placeholder="Telefon"
+                                            class="glass-input"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -414,12 +536,30 @@
                                 </div>
                                 <div class="admin-form-grid">
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-order-start">Nr Zamówień (start)</label>
-                                        <input type="number" id="new-user-order-start" value="1" title="Start Zamówień" class="glass-input" />
+                                        <label class="admin-form-label" for="new-user-order-start"
+                                            >Nr Zamówień (start)</label
+                                        >
+                                        <input
+                                            type="number"
+                                            id="new-user-order-start"
+                                            value="1"
+                                            title="Start Zamówień"
+                                            class="glass-input"
+                                        />
                                     </div>
                                     <div class="admin-form-group">
-                                        <label class="admin-form-label" for="new-user-prod-order-start">Nr Zleceń (start)</label>
-                                        <input type="number" id="new-user-prod-order-start" value="1" title="Start Zleceń" class="glass-input" />
+                                        <label
+                                            class="admin-form-label"
+                                            for="new-user-prod-order-start"
+                                            >Nr Zleceń (start)</label
+                                        >
+                                        <input
+                                            type="number"
+                                            id="new-user-prod-order-start"
+                                            value="1"
+                                            title="Start Zleceń"
+                                            class="glass-input"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -429,14 +569,31 @@
                                 <span id="form-mode-label" class="admin-edit-badge hidden">
                                     <i data-lucide="pencil"></i> TRYB EDYCJI
                                 </span>
-                                <button id="add-user-btn" class="btn-hero btn-accent" onclick="createUser()">
+                                <button
+                                    id="add-user-btn"
+                                    class="btn-hero btn-accent"
+                                    onclick="createUser()"
+                                >
                                     <i data-lucide="plus"></i> Dodaj
                                 </button>
-                                <button id="cancel-edit-btn" class="btn-hero hidden" onclick="cancelEditUser()" style="background: var(--danger-bg); color: var(--danger-hover); border: 1px solid var(--danger-border);">
+                                <button
+                                    id="cancel-edit-btn"
+                                    class="btn-hero hidden"
+                                    onclick="cancelEditUser()"
+                                    style="
+                                        background: var(--danger-bg);
+                                        color: var(--danger-hover);
+                                        border: 1px solid var(--danger-border);
+                                    "
+                                >
                                     Anuluj
                                 </button>
                             </div>
-                            <div id="admin-error" class="login-error" style="padding: 0 1.1rem 0.5rem; text-align: center;"></div>
+                            <div
+                                id="admin-error"
+                                class="login-error"
+                                style="padding: 0 1.1rem 0.5rem; text-align: center"
+                            ></div>
                         </div>
                     </div>
                 </div>
@@ -445,8 +602,9 @@
 
         <div class="footer">WITROS © 2026 • Generator Ofert</div>
 
-        <script src="js/shared/ui.js?v=3.0"></script>
-        <script src="js/shared/dashboard.js?v=3.0"></script>
-        <script src="js/shared/iconsSlim.js?v=3.0"></script>
+        <script src="js/shared/ui.js?v=3.1"></script>
+        <script src="js/shared/dashboard.js?v=3.1"></script>
+        <script src="js/shared/iconsSlim.js?v=3.1"></script>
+        <script src="js/versionDisplay.js?v=3.2"></script>
     </body>
 </html>
