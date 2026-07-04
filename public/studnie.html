@@ -7,7 +7,7 @@
         <title>WITROS — Kalkulator Studni</title>
         <script src="js/studnie/headInit.js?v=3.0"></script>
         <link rel="stylesheet" href="css/style.css?v=3.0" />
-        <link rel="stylesheet" href="css/studnie.css?v=3.6" />
+        <link rel="stylesheet" href="css/studnie.css?v=4.2" />
         <link rel="stylesheet" href="css/printModal.css?v=3.0" />
         <script src="js/shared/calcInput.js?v=3.0"></script>
     </head>
@@ -3984,6 +3984,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 id="sidebar-list-content"
                                 style="
                                     flex: 1;
+                                    min-height: 0;
                                     display: flex;
                                     flex-direction: column;
                                     overflow: hidden;
@@ -5219,7 +5220,11 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script>
             // Wymuszenie jedynego punktu wejścia: app.html#/<module>
             if (window.top === window.self) {
-                const module = location.pathname.split('/').pop().replace(/\.html?$/, '') || 'studnie';
+                const module =
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'studnie';
                 window.location.replace('/app.html#/' + module);
             }
         </script>
