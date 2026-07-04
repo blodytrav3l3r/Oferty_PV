@@ -35,7 +35,7 @@ async function showMLDashboard() {
 
     const stats = await fetchMLStats();
     if (!stats || stats.status !== 'ok') {
-        showToast('Nie udało się pobrać statystyk ML', 'error');
+        logger.warn('mlDashboard', 'Backend OR-Tools offline — statystyki ML niedostępne');
         return;
     }
 
@@ -49,18 +49,21 @@ async function showMLDashboard() {
     overlay.setAttribute('aria-modal', 'true');
     overlay.style.zIndex = '99999';
 
-    const prefRows = topPrefs.length > 0
-        ? topPrefs.map(p => {
-            const typeLabel = _prefTypeLabel(p.pattern_type);
-            const conf = (p.confidence * 100).toFixed(0);
-            return `<tr>
+    const prefRows =
+        topPrefs.length > 0
+            ? topPrefs
+                  .map((p) => {
+                      const typeLabel = _prefTypeLabel(p.pattern_type);
+                      const conf = (p.confidence * 100).toFixed(0);
+                      return `<tr>
                 <td style="padding:0.3rem 0.6rem;"><span class="badge" style="background:${typeLabel.color};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.7rem;">${typeLabel.text}</span></td>
                 <td style="padding:0.3rem 0.6rem;font-size:0.75rem;font-family:monospace;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${p.pattern_key}</td>
                 <td style="padding:0.3rem 0.6rem;text-align:center;">${conf}%</td>
                 <td style="padding:0.3rem 0.6rem;text-align:center;">${p.hit_count}</td>
             </tr>`;
-        }).join('')
-        : '<tr><td colspan="4" style="padding:1rem;text-align:center;color:var(--text-muted);">Brak preferencji — system jeszcze się uczy</td></tr>';
+                  })
+                  .join('')
+            : '<tr><td colspan="4" style="padding:1rem;text-align:center;color:var(--text-muted);">Brak preferencji — system jeszcze się uczy</td></tr>';
 
     overlay.innerHTML = `
     <div class="modal" style="max-width:700px; padding:1.5rem;">
@@ -120,7 +123,6 @@ async function showMLDashboard() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-
 function _statCard(label, value, color) {
     return `<div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.8rem; text-align:center;">
         <div style="font-size:1.5rem; font-weight:800; color:${color};">${value}</div>
@@ -128,17 +130,15 @@ function _statCard(label, value, color) {
     </div>`;
 }
 
-
 function _prefTypeLabel(type) {
     const map = {
-        'SUBSTITUTION': { text: 'ZAMIANA', color: '#ef4444' },
-        'ADDITION': { text: 'DODANIE', color: '#10b981' },
-        'REMOVAL': { text: 'USUNIĘCIE', color: '#f59e0b' },
-        'USAGE_BOOST': { text: 'POPULARNE', color: '#6366f1' },
+        SUBSTITUTION: { text: 'ZAMIANA', color: '#ef4444' },
+        ADDITION: { text: 'DODANIE', color: '#10b981' },
+        REMOVAL: { text: 'USUNIĘCIE', color: '#f59e0b' },
+        USAGE_BOOST: { text: 'POPULARNE', color: '#6366f1' }
     };
     return map[type] || { text: type, color: '#64748b' };
 }
-
 
 async function _exportMLPreferences() {
     try {
@@ -161,7 +161,6 @@ async function _exportMLPreferences() {
         showToast('Błąd eksportu', 'error');
     }
 }
-
 
 async function _importMLPreferences() {
     const input = document.createElement('input');
@@ -187,7 +186,10 @@ async function _importMLPreferences() {
             });
             const result = await res.json();
             if (result.status === 'ok') {
-                showToast(`Zaimportowano ${result.merged} preferencji (pominięto ${result.skipped})`, 'success');
+                showToast(
+                    `Zaimportowano ${result.merged} preferencji (pominięto ${result.skipped})`,
+                    'success'
+                );
                 // Odśwież dashboard
                 document.querySelector('.modal-overlay')?.remove();
                 showMLDashboard();

@@ -37,7 +37,7 @@
         "version:patch": "node scripts/bump-version.mjs patch",
         "version:minor": "node scripts/bump-version.mjs minor",
         "version:major": "node scripts/bump-version.mjs major",
-        "version:set": "node scripts/bump-version.mjs",
+        "version:bump": "node scripts/bump-version.mjs",
         "skills:build": "node scripts/skill-cli.mjs build-cost",
         "skills:stats": "node scripts/skill-cli.mjs stats",
         "skills:validate": "node scripts/skill-cli.mjs validate",
@@ -53,6 +53,7 @@
         "release:patch": "standard-version --release-as patch",
         "release:major": "standard-version --release-as major",
         "release:dry": "standard-version --dry-run",
+        "release:first": "standard-version --first-release",
         "prepare": "husky"
     },
     "engines": {
