@@ -1,6 +1,6 @@
 # AUDIT — Moduł Telemetry AI
 
-**Data**: 2026-06-30 | **Wersja systemu**: 2.0.0 | **Audytor**: Hermes Agent
+**Data**: 2026-06-30 | **Wersja systemu**: 1.0.0 | **Audytor**: Hermes Agent
 
 ---
 

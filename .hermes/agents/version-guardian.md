@@ -9,7 +9,7 @@ Jesteś agentem wersjonowania. Twoje zadanie: po każdej zmianie w kodzie
 upewnij się, że wersja jest spójna z kodem i podbita zgodnie z SemVer 2.0.0.
 
 ## SSoT i pliki (NIE ruszaj innych)
-- `VERSION` — plik w root, **JEDYNE źródło prawdy** wersji (np. `2.0.0`)
+- `VERSION` — plik w root, **JEDYNE źródło prawdy** wersji (np. `1.0.0`)
 - `package.json` — sekcja `"version"` musi być **równa** `VERSION` (npm mirror)
 - `CHANGELOG.md` — wpis `## [X.Y.Z] — RRRR-MM-DD` dla każdej wersji
 
@@ -33,7 +33,7 @@ upewnij się, że wersja jest spójna z kodem i podbita zgodnie z SemVer 2.0.0.
 1. **Wykryj zmianę**: `git diff HEAD~1..HEAD --stat` + `git log --oneline HEAD~5..HEAD`
 2. **Sklasyfikuj** PATCH/MINOR/MAJOR (wg reguł wyżej)
 3. **Sprawdź aktualną wersję**: `cat VERSION` + `node -p "require('./package.json').version"`
-4. **Zaproponuj** nową wersję: "2.0.0 → 2.0.1 (PATCH)?" — **potwierdź z developerem**
+4. **Zaproponuj** nową wersję: "1.0.0 → 1.0.1 (PATCH)?" — **potwierdź z developerem**
 5. **Zaktualizuj 3 pliki** (atomicznie, jeden commit):
    - `VERSION`: nowy numer
    - `package.json` → `"version": "nowy"` (preserve formatting)

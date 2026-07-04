@@ -5,16 +5,16 @@ Projekt **WITROS Oferty PV** używa **Semantic Versioning 2.0.0**.
 ## Format
 
 ```
-major.minor.patch (np. 2.0.0)
+major.minor.patch (np. 1.0.0)
 ```
 
 ## Zasady
 
 | Zmiana                                          | Podbicie | Przykład          |
 | ----------------------------------------------- | -------- | ----------------- |
-| Naprawa błędu (fix)                             | patch    | `2.0.0` → `2.0.1` |
-| Nowa funkcja (feat)                             | minor    | `2.0.0` → `2.1.0` |
-| Zmiana łamiąca kompatybilność (BREAKING CHANGE) | major    | `2.0.0` → `3.0.0` |
+| Naprawa błędu (fix)                             | patch    | `1.0.0` → `1.0.1` |
+| Nowa funkcja (feat)                             | minor    | `1.0.0` → `1.1.0` |
+| Zmiana łamiąca kompatybilność (BREAKING CHANGE) | major    | `1.0.0` → `2.0.0` |
 
 ## Jedno źródło wersji
 
@@ -32,13 +32,13 @@ Wersja jest przechowywana w pliku `VERSION` w katalogu głównym projektu. Stamt
 Do podbijania wersji służy `standard-version`:
 
 ```bash
-# Podbicie patch (np. 2.0.0 → 2.0.1)
+# Podbicie patch (np. 1.0.0 → 1.0.1)
 npm run release:patch
 
-# Podbicie minor (np. 2.0.0 → 2.1.0)
+# Podbicie minor (np. 1.0.0 → 1.1.0)
 npm run release:minor
 
-# Podbicie major (np. 2.0.0 → 3.0.0)
+# Podbicie major (np. 1.0.0 → 2.0.0)
 npm run release:major
 
 # Symulacja (dry-run, bez zmian)
@@ -49,15 +49,15 @@ Każde wydanie:
 
 1. Podbija wersję w `VERSION` i `package.json`
 2. Aktualizuje `CHANGELOG.md`
-3. Tworzy commita z tagiem (np. `v2.1.0`)
+3. Tworzy commita z tagiem (np. `v1.1.0`)
 
 ## Baza danych
 
 Wersja bazy SQLite jest przechowywana w `PRAGMA user_version`:
 
+- `1.0.0` → `10000`
+- `1.0.1` → `10001`
+- `1.1.0` → `10100`
 - `2.0.0` → `20000`
-- `2.0.1` → `20001`
-- `2.1.0` → `20100`
-- `3.0.0` → `30000`
 
 Wersja bazy jest dostępna przez `GET /api/version` → pole `dbVersion`.

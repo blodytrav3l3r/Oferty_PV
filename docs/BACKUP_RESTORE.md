@@ -49,7 +49,7 @@ cp data/backup/backup_*.sqlite data/app_database.sqlite
 Baza SQLite przechowuje numer wersji w `PRAGMA user_version`:
 
 ```sql
-PRAGMA user_version;  -- zwraca np. 20000 (dla wersji 2.0.0)
+PRAGMA user_version;  -- zwraca np. 10000 (dla wersji 1.0.0)
 ```
 
 Stan bazy (backup, wersja, rozmiar) można sprawdzić przez `GET /health`.

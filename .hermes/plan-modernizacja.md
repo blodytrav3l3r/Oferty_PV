@@ -14,9 +14,9 @@ Wynik: raport ✔/⚠/❌.
 ---
 
 ## Etap 2 — Single Source of Truth wersji
-- `VERSION` plik (root, `2.0.0`)
+- `VERSION` plik (root, `1.0.0`)
 - `src/version.ts` — czyta VERSION, exportuje `{ version, commitHash, branch, buildDate }`
-- `package.json` → `"version": "2.0.0"` (ręcznie, potem auto)
+- `package.json` → `"version": "1.0.0"` (ręcznie, potem auto)
 - `src/swagger.ts` → import z `src/version.ts`
 
 ---
@@ -119,7 +119,7 @@ Tworzy Release z opisem z CHANGELOG.
 
 ## Etap 13 — Baza danych SQLite
 - Prisma migrations już robią wersjonowanie schematu
-- Dodać `PRAGMA user_version = 20000` (2.0.0 → 20000)
+- Dodać `PRAGMA user_version = 10000` (1.0.0 → 10000)
 - `/api/version` → `dbVersion` z `PRAGMA user_version`
 - `scripts/backup-db.js` — backup bazy
 - `scripts/restore-db.js` — restore bazy (ostrożnie)

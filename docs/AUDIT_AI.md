@@ -1,7 +1,7 @@
 # AUDIT — Moduł Telemetry AI (Learning Engine)
 
 **Data:** 2026-06-30
-**Wersja aplikacji:** 2.0.0
+**Wersja aplikacji:** 1.0.0
 **Audytor:** Learning Engine / Hermes Agent
 **Status:** wdrożony, uruchomiony produkcyjnie
 

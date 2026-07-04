@@ -347,7 +347,7 @@ cp data/backups/backup_2026-06-30_1234567890.sqlite data/app_database.sqlite
 Obecnie baza nie używa `PRAGMA user_version` do wersjonowania schematu. Zalecane jest dodanie:
 
 ```sql
-PRAGMA user_version = 200; -- wersja 2.0.0
+PRAGMA user_version = 100; -- wersja 1.0.0
 ```
 
 ---

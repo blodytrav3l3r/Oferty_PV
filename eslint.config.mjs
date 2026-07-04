@@ -71,8 +71,7 @@ export default tseslint.config(
             }
         },
         rules: {
-            'no-unused-vars': 'warn',
-            '@typescript-eslint/no-unused-vars': [
+            'no-unused-vars': [
                 'warn',
                 {
                     argsIgnorePattern: '^_',
@@ -80,7 +79,6 @@ export default tseslint.config(
                     caughtErrorsIgnorePattern: '^_'
                 }
             ],
-            '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
             'no-empty': 'off',
             'no-undef': 'off',

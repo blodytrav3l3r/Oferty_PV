@@ -1,6 +1,6 @@
 # Plan rozwoju — WITROS Oferty PV
 
-**Wersja:** 2.0.0  
+**Wersja:** 1.0.0  
 **Horyzont:** Q3–Q4 2026
 
 ---

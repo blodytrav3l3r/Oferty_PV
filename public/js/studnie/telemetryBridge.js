@@ -21,7 +21,7 @@
     const TIMEOUT_MS = 1500; // krótki, żeby nie blokować UI when offline
 
     /* ===== WERSJE ===== */
-    const SOLVER_VERSION = '2.0.0'; // src/version.ts
+    const SOLVER_VERSION = '1.0.0'; // src/version.ts
     const RULES_VERSION = '2026-06-30.1'; // data reguł doboru
 
     /* ===== STAN WEWNETRZNY ===== */

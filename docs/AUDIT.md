@@ -1,6 +1,6 @@
 # Raport audytu projektu — WITROS Oferty PV
 
-**Wersja projektu:** 2.0.0  
+**Wersja projektu:** 1.0.0  
 **Data audytu:** 2026-06-30  
 **Audytor:** Hermes Agent / Nous Research
 
@@ -139,7 +139,7 @@
 | .gitignore           | ✔      | 117 linii, dokładny                                      |
 | .gitattributes       | ✔      | 163 linie                                                |
 | Husky (pre-commit)   | ✔      | commitlint                                               |
-| Tagi wersji          | ⚠      | Brak tagów git — wersja 2.0.0 w package.json             |
+| Tagi wersji          | ⚠      | Brak tagów git — wersja 1.0.0 w package.json             |
 | VERSION file         | ❌     | Brak — wersja tylko w package.json                       |
 
 ---

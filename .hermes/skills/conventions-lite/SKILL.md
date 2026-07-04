@@ -13,7 +13,7 @@
 
 | Plik | Rola |
 |---|---|
-| `VERSION` (root) | **JEDYNE źródło prawdy** (np. `2.0.0`) |
+| `VERSION` (root) | **JEDYNE źródło prawdy** (np. `1.0.0`) |
 | `package.json` → `"version"` | mirror npm |
 | `CHANGELOG.md` | historia, format Keep a Changelog (najnowsza górą) |
 

@@ -3,7 +3,7 @@
 Pliki dot. wersjonowania w Oferty_PV:
 
 - **Agent**: `.hermes/agents/version-guardian.md` (prompt dla AI przy bump/CHANGELOG)
-- **SSoT**: `VERSION` (root, np. `2.0.0`)
+- **SSoT**: `VERSION` (root, np. `1.0.0`)
 - **Mirror**: `package.json` → pole `"version"` musi być równe VERSION
 - **Historia**: `CHANGELOG.md` (Keep a Changelog format, najnowsza na górze)
 
@@ -11,9 +11,9 @@ Pliki dot. wersjonowania w Oferty_PV:
 
 ```bash
 npm run version:check    # walidacja 3 plików (non-mutating)
-npm run version:patch    # bump PATCH (2.0.0 → 2.0.1)
-npm run version:minor    # bump MINOR (2.0.0 → 2.1.0)
-npm run version:major    # bump MAJOR (2.0.0 → 3.0.0)
+npm run version:patch    # bump PATCH (1.0.0 → 1.0.1)
+npm run version:minor    # bump MINOR (1.0.0 → 1.1.0)
+npm run version:major    # bump MAJOR (1.0.0 → 2.0.0)
 npm run version:set 2.1.5   # konkretna wersja
 ```
 

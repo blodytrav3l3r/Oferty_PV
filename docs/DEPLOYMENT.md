@@ -1,6 +1,6 @@
 # Wdrożenie — WITROS Oferty PV
 
-**Wersja:** 2.0.0  
+**Wersja:** 1.0.0  
 **Stack:** Express + Prisma + SQLite
 
 ---

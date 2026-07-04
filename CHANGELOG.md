@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.0.0] — 2026-07-04
+
+### Changed
+
+- **Reset numeracji** — nowy start wersjonowania od 1.0.0. Poprzednie wydanie 2.0.0 zachowane w historii poniżej.
+
+---
+
 ## [2.0.0] — 2026-06-30
 
 ### Added
