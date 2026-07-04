@@ -148,6 +148,9 @@ interface Window {
 
     /* ui.js */
     globalUsersMap: Map<string, unknown>;
+    checkBackendStatus(): Promise<void>;
+    startBackendPolling(): void;
+    stopBackendPolling(): void;
     showModal(options: {
         title?: string;
         content?: string;

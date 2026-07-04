@@ -1,6 +1,7 @@
 # CI/CD Pipeline dla WITROS Oferty PV
-# Uruchamiany na push (main, develop) i pull_request (main).
-# Zadania: lint, typecheck, testy, budowa Docker, weryfikacja wersji i placeholder deploy.
+# - push na develop → lint + typecheck + testy + deploy na test
+# - push na main → lint + typecheck + testy + Docker build + weryfikacja + deploy na produkcję
+# - PR na main → lint + typecheck + testy
 
 name: CI/CD Pipeline
 
@@ -75,8 +76,8 @@ jobs:
             - name: Run tests
               run: npm run test:quick
 
-    build:
-        name: Build (Docker)
+    docker-build:
+        name: Docker build + health check
         runs-on: ubuntu-latest
         needs: test
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -91,17 +92,17 @@ jobs:
                   docker run -d --name test-container witros-oferty:${{ github.sha }}
                   echo "Sprawdzanie stanu kontenera..."
                   for i in $(seq 1 15); do
-                    if docker exec test-container node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" 2>/dev/null; then
-                      echo "✅ Health check OK (próba $i)"
+                    if docker exec test-container node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" 2>/dev/null; then
+                      echo "[OK] Health check OK (proba $i)"
                       break
                     fi
                     if [ "$i" -eq 15 ]; then
-                      echo "❌ Health check FAILED po 15 próbach"
+                      echo "[FAIL] Health check nie powiodl sie po 15 probach"
                       docker logs test-container
                       docker stop test-container && docker rm test-container
                       exit 1
                     fi
-                    echo "  Próba $i/15 — oczekiwanie 2s..."
+                    echo "  Proba $i/15 — oczekiwanie 2s..."
                     sleep 2
                   done
                   docker stop test-container
@@ -129,13 +130,38 @@ jobs:
             - name: Dry-run standard-version
               run: npm run release:dry
 
-    deploy:
-        name: Deploy (placeholder)
+    deploy-test:
+        name: Deploy — test (develop)
         runs-on: ubuntu-latest
-        needs: [build, version-check]
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        needs: test
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        environment: test
         steps:
             - uses: actions/checkout@v4
 
-            - name: Deploy to production
-              run: echo "Krok wdrożenia — skonfiguruj strategię deploy (np. Render, SSH, Docker registry)"
+            - name: Deploy to Render (test)
+              if: secrets.RENDER_TEST_DEPLOY_HOOK != ''
+              run: |
+                  curl -s -X POST "${{ secrets.RENDER_TEST_DEPLOY_HOOK }}" | echo "  Triggered: $(cat)"
+
+            - name: Skip — brak RENDER_TEST_DEPLOY_HOOK
+              if: secrets.RENDER_TEST_DEPLOY_HOOK == ''
+              run: echo "[INFO] Pomijam deploy testowy — ustaw RENDER_TEST_DEPLOY_HOOK w secrets"
+
+    deploy-production:
+        name: Deploy — produkcja (main)
+        runs-on: ubuntu-latest
+        needs: [docker-build, version-check]
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        environment: production
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Deploy to Render (production)
+              if: secrets.RENDER_PROD_DEPLOY_HOOK != ''
+              run: |
+                  curl -s -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}" | echo "  Triggered: $(cat)"
+
+            - name: Skip — brak RENDER_PROD_DEPLOY_HOOK
+              if: secrets.RENDER_PROD_DEPLOY_HOOK == ''
+              run: echo "[INFO] Pomijam deploy produkcyjny — ustaw RENDER_PROD_DEPLOY_HOOK w secrets"

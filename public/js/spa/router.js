@@ -130,10 +130,10 @@ const SpaRouter = (() => {
         if (!el) return;
         if (module === 'studnie') {
             el.style.display = 'flex';
-            if (typeof startBackendPolling === 'function') startBackendPolling();
+            if (typeof window.startBackendPolling === 'function') window.startBackendPolling();
         } else {
             el.style.display = 'none';
-            if (typeof stopBackendPolling === 'function') stopBackendPolling();
+            if (typeof window.stopBackendPolling === 'function') window.stopBackendPolling();
         }
     }
 
