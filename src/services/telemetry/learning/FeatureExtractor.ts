@@ -258,7 +258,10 @@ export class FeatureExtractor {
         transitions?: TransitionSnapshotInput[];
         components?: ComponentInput[];
     }>): FeatureVector[] {
-        return records.map(r => this.extract(r.record, r.transitions, r.components));
+        const self = this;
+        return records.map(function (r) {
+            return self.extract(r.record, r.transitions, r.components);
+        });
     }
 
     /**

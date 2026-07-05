@@ -12,7 +12,6 @@ const config: Config.InitialOptions = {
     coverageProvider: 'v8',
     verbose: true,
     testTimeout: 10000,
-    setupFiles: ['<rootDir>/tests/jestSetupEnv.ts'],
     setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
 };
 

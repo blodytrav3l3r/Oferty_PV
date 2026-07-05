@@ -951,6 +951,31 @@ function renderComponentSubItems(
     let html = '';
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
+    const bd = typeof getItemPriceBreakdown === 'function' ? getItemPriceBreakdown(well, p, true, item) : null;
+    if (bd) {
+        var pehdLabel = '';
+        if (bd.pehd > 0) {
+            if (['dennica', 'styczna'].indexOf(p.componentType) !== -1) pehdLabel = well.wkladkaDennica;
+            else if (['plyta','plyta_redukcyjna','plyta_nastudzienna','stozek','zwienczenie','konus','plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].indexOf(p.componentType) !== -1) pehdLabel = well.wkladkaZwienczenie;
+            else if (['krag','krag_ot','rura'].indexOf(p.componentType) !== -1) pehdLabel = well.wkladkaNadbudowa;
+        }
+        if (bd.pehd > 0 && pehdLabel) {
+            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#0ea5e9;"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' + pehdLabel + '</td><td class="text-right">' + fmt(bd.pehd) + ' PLN</td></tr>';
+        }
+        if (bd.malowanieW > 0) {
+            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' + fmt(bd.malowanieW) + ' PLN</td></tr>';
+        }
+        if (bd.malowanieZ > 0) {
+            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' + fmt(bd.malowanieZ) + ' PLN</td></tr>';
+        }
+        if (bd.zelbet > 0) {
+            html += '<tr style="opacity:0.5; font-size:0.65rem; color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' + fmt(bd.zelbet) + ' PLN</td></tr>';
+        }
+        if (bd.nierdzewna > 0) {
+            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#a855f7;"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' + fmt(bd.nierdzewna) + ' PLN</td></tr>';
+        }
+    }
+
     if (isBase && well.doplata) {
         const doplataWellColor = well.doplata > 0 ? 'var(--success)' : 'var(--danger)';
         const doplataWellSign = well.doplata > 0 ? '+' : '';
@@ -1025,15 +1050,22 @@ function renderComponentSubItems(
         );
         if (kineta) {
             const kp = studnieProducts.find((x) => x.id === kineta.productId);
-            // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
             const kPrice =
                 (kineta.frozenPrice != null && window.isPreviewMode
                     ? kineta.frozenPrice
                     : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;">
-                <td colspan="3" class="pl-lg">↳ + ${kp ? kp.name : 'Kineta'}</td>
-                <td class="text-right">${fmt(kPrice)} PLN</td>
-            </tr>`;
+            html += '<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;"><td colspan="3" class="pl-lg">↳ + ' + (kp ? kp.name : 'Kineta') + '</td><td class="text-right">' + fmt(kPrice) + ' PLN</td></tr>';
+
+            if (kp && typeof getItemPriceBreakdown === 'function') {
+                var kBd = getItemPriceBreakdown(well, kp, true, kineta);
+                var kQ = kineta.quantity || 1;
+                if (kBd.malowanieW > 0) {
+                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" style="padding-left:1.5rem;">w cenie: malowanie wewnątrz</td><td class="text-right">' + fmt(kBd.malowanieW * kQ) + ' PLN</td></tr>';
+                }
+                if (kBd.malowanieZ > 0) {
+                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" style="padding-left:1.5rem;">w cenie: malowanie zewnątrz</td><td class="text-right">' + fmt(kBd.malowanieZ * kQ) + ' PLN</td></tr>';
+                }
+            }
         }
     }
 
@@ -1248,20 +1280,6 @@ function calculateLinePricing(
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-        const kinetaItem = well.config.find(
-            (c) => studnieProducts.find((x) => x.id === c.productId)?.componentType === 'kineta'
-        );
-        if (kinetaItem) {
-            const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
-            if (kinetaProd) {
-                // W zamówieniu użyj zamrożonej ceny kinety tylko w podglądzie; w ofercie/edycji przelicz na nowo
-                const kinetaPrice =
-                    kinetaItem.frozenPrice != null && window.isPreviewMode
-                        ? kinetaItem.frozenPrice
-                        : getItemAssessedPrice(well, kinetaProd, true, kinetaItem);
-                totalLinePrice += kinetaPrice * (kinetaItem.quantity || 1);
-            }
-        }
         totalLinePrice += wellTransportCost;
         if (well.doplata) totalLinePrice += well.doplata;
     }
@@ -2059,9 +2077,6 @@ async function saveOfferStudnie() {
         // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI)
         _sendAcceptanceTelemetry(wells, 'OFFER_SAVE');
 
-        // F1: zapisz przypadki do bazy CBR (fire-and-forget, nie blokuje UI)
-        _saveWellCasesToCBR(wells);
-
         return true;
     } catch (err) {
         logger.error('offerManager', '[OfferManager] Save error:', err);
@@ -2108,80 +2123,6 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
         }).catch(() => {}); // Cichy błąd — nie przeszkadzamy użytkownikowi
     } catch (e) {
         // Nigdy nie powinno wstrzymać UI
-    }
-}
-
-/**
- * Zapisuje przypadki studni do bazy CBR (Case-Based Reasoning).
- * Fire-and-forget: nie blokuje UI.
- * @param {Array} wellsArr - tablica studni
- */
-function _saveWellCasesToCBR(wellsArr) {
-    try {
-        var computeProfile = window.computeDiameterProfile;
-        if (typeof computeProfile !== 'function') return;
-
-        for (var i = 0; i < (wellsArr || []).length; i++) {
-            var w = wellsArr[i];
-            if (!w || !w.config || w.config.length === 0) continue;
-
-            var rzDna = w.rzednaDna != null ? parseFloat(w.rzednaDna) : 0;
-            var rzWlazu = w.rzednaWlazu != null ? parseFloat(w.rzednaWlazu) : 0;
-            var totalHeight = Math.round((rzWlazu - rzDna) * 1000);
-            if (totalHeight <= 0) continue;
-
-            var dn = parseInt(w.dn, 10);
-            if (isNaN(dn) || dn <= 0) continue;
-
-            var wellType = w.psiaBuda ? 'psia_buda' : w.stycznaNadbudowa1200 ? 'styczna' : 'standard';
-
-            var profile = computeProfile(w.config, w.dn);
-
-            var transitions = (w.przejscia || []).map(function (p) {
-                return {
-                    productId: p.productId,
-                    heightFromBottomMm: p.rzednaWlaczenia != null
-                        ? Math.round((parseFloat(p.rzednaWlaczenia) - rzDna) * 1000)
-                        : null,
-                    type: p.typPrzejscia || 'rura_przejściowa'
-                };
-            });
-
-            var componentSeq = (w.config || []).map(function (item) {
-                var prod = (window.studnieProducts || []).find(function (x) { return x.id === item.productId; });
-                return {
-                    productId: item.productId,
-                    name: prod ? prod.name : undefined,
-                    type: prod ? prod.componentType : undefined,
-                    heightMm: prod ? (parseInt(prod.height, 10) || 0) : 0,
-                    dn: prod ? prod.dn : undefined
-                };
-            });
-
-            var payload = {
-                dn: dn,
-                totalHeightMm: totalHeight,
-                wellType: wellType,
-                warehouse: w.magazyn || undefined,
-                kinetType: w.kineta || undefined,
-                inflowCount: (w.przejscia || []).length,
-                loadClass: w.obciazenie || undefined,
-                manholeClass: w.wlazKlasa || undefined,
-                coverType: w.pokrywaTyp || undefined,
-                componentSeq: componentSeq,
-                diameterProfile: profile,
-                transitions: transitions,
-                configSource: w.configSource || 'MANUAL'
-            };
-
-            fetch('/api/learning/cases', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(function () {});
-        }
-    } catch (e) {
-        // Cichy błąd — nie blokuje UI
     }
 }
 
@@ -2514,8 +2455,8 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     const tabValidity = document.getElementById('offer-tab-validity');
     if (tabValidity) tabValidity.value = normalized.validity || '7 dni';
-    setVal('transport-km', normalized.transportKm || 100);
-    setVal('transport-rate', normalized.transportRate || 10);
+    setVal('transport-km', normalized.transportKm ?? 100);
+    setVal('transport-rate', normalized.transportRate ?? 10);
     currentTransportMode = normalized.transportMode || 'full';
 
     wellDiscounts = normalized.wellDiscounts ? structuredClone(normalized.wellDiscounts) : {};

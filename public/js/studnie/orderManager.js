@@ -1876,8 +1876,8 @@ async function enterOrderEditMode(orderId) {
         setVal('invest-contractor', order.investContractor || '');
 
         // Wczytaj transport zamówienia (nie oferty)
-        setVal('transport-km', order.transportKm || 100);
-        setVal('transport-rate', order.transportRate || 10);
+        setVal('transport-km', order.transportKm ?? 100);
+        setVal('transport-rate', order.transportRate ?? 10);
         currentTransportMode = order.transportMode || 'full';
 
         logger.info('orderManager', '[enterOrderEditMode] fields filled, calling skipWizardToStep3...');

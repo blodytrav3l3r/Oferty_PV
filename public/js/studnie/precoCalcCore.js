@@ -187,6 +187,12 @@ function calcPrecoPricingPure(well, helpers) {
         result.bazowaIds.push(mainPipes[1]._oryginalnyIndex);
     }
 
+    result.kinetaGlowna = {
+        dn: result.bazowaDN,
+        etykiety: result.bazowaEtykiety,
+        ids: result.bazowaIds
+    };
+
     var kinetaRow = null;
     for (var kr = 0; kr < cennik.kinety.length; kr++) {
         if (cennik.kinety[kr].dn >= mainPipes[0].dnRury) { kinetaRow = cennik.kinety[kr]; break; }

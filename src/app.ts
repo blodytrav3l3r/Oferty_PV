@@ -188,7 +188,6 @@ import settingsRoutes from './routes/settings';
 import telemetryRoutes from './routes/telemetry';
 import telemetryAiRoutes from './routes/telemetryAi';
 import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
-import learningRoutes from './routes/learningRoutes';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -216,7 +215,6 @@ app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/telemetry', telemetryAiRoutes);
 // Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
 app.use('/api/telemetry', telemetryAiDashboardRoutes);
-app.use('/api/learning', apiLimiter, learningRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */

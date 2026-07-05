@@ -33,6 +33,13 @@ async function showMLDashboard() {
         return;
     }
 
+    // Toggle: kliknięcie zamyka istniejące okno
+    const existing = document.querySelector('.modal-overlay');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+
     const stats = await fetchMLStats();
     if (!stats || stats.status !== 'ok') {
         logger.warn('mlDashboard', 'Backend OR-Tools offline — statystyki ML niedostępne');
@@ -110,9 +117,6 @@ async function showMLDashboard() {
                 </button>
                 <button class="btn btn-sm btn-secondary" onclick="_importMLPreferences()" title="Import preferencji z pliku JSON">
                     <i data-lucide="upload"></i> Import
-                </button>
-                <button class="btn btn-sm btn-info" onclick="_openNewAIDashboard()" title="Nowy dashboard AI z preferencjami scoringowymi (Knowledge Base)">
-                    <i data-lucide="brain-circuit"></i> Dashboard V2
                 </button>
             </div>
             <button class="btn btn-sm" onclick="this.closest('.modal-overlay').remove()">Zamknij</button>
@@ -204,41 +208,6 @@ async function _importMLPreferences() {
         }
     };
     input.click();
-}
-
-/**
- * Otwiera nowy modal z Dashboard AI V2 (Knowledge Base).
- * Wywołuje window.aiDashboardRender() z aiDashboard.js.
- */
-function _openNewAIDashboard() {
-    document.querySelectorAll('.modal-overlay').forEach(function (m) { m.remove(); });
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.style.cssText = 'z-index:99999; padding:2rem;';
-    overlay.innerHTML =
-        '<div class="modal" style="max-width:1100px; padding:1.5rem; max-height:90vh; overflow-y:auto;">' +
-        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">' +
-        '<h3 style="color:#6366f1; font-weight:700; margin:0;"><i data-lucide="brain-circuit"></i> Dashboard AI V2 (Knowledge Base)</h3>' +
-        '<button class="btn btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">Zamknij</button>' +
-        '</div>' +
-        '<div id="ai-dashboard-container"></div>' +
-        '</div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) overlay.remove();
-    });
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-
-    var container = document.getElementById('ai-dashboard-container');
-    if (typeof window.aiDashboardRender === 'function') {
-        window.aiDashboardRender('ai-dashboard-container');
-    } else if (container) {
-        container.innerHTML =
-            '<div style="background:#2d1616;padding:1rem;color:#fca5a5;border-radius:8px">' +
-            'aiDashboard.js nie załadowany — sprawdź <code>studnie.html</code> &lt;script&gt; tag' +
-            '</div>';
-    }
 }
 
 // Eksportuj do globalnego scope

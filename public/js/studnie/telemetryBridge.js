@@ -249,45 +249,4 @@
             /* ignore */
         }
     };
-
-    /**
-     * Buduje profil średnic studni z listy komponentów.
-     * Zwraca tablicę {heightFrom, heightTo, diameter} dla każdego segmentu pionowego.
-     * @param {Array} configItems - lista elementów studni (well.config)
-     * @param {string} baseDn - domyślna średnica (well.dn)
-     * @returns {Array<{heightFrom: number, heightTo: number, diameter: number}>}
-     */
-    window.computeDiameterProfile = function (configItems, baseDn) {
-        var products = window.studnieProducts || [];
-        var productMap = {};
-        for (var i = 0; i < products.length; i++) {
-            productMap[products[i].id] = products[i];
-        }
-
-        var currentHeight = 0;
-        var profile = [];
-
-        for (var j = 0; j < (configItems || []).length; j++) {
-            var item = configItems[j];
-            if (!item || !item.productId) continue;
-            var prod = productMap[item.productId];
-            if (!prod) continue;
-            var height = parseInt(prod.height, 10) || 0;
-            if (height <= 0) continue;
-            var rawDn = prod.dn || baseDn || '0';
-            var diameter = parseInt(rawDn, 10) || 0;
-
-            var qty = parseInt(item.quantity, 10) || 1;
-            for (var k = 0; k < qty; k++) {
-                profile.push({
-                    heightFrom: currentHeight,
-                    heightTo: currentHeight + height,
-                    diameter: diameter
-                });
-                currentHeight += height;
-            }
-        }
-
-        return profile;
-    };
 })();

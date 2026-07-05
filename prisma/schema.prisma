@@ -223,42 +223,6 @@ model ai_transition_snapshots {
   @@index([configId], map: "idx_transitions_config")
 }
 
-// Baza przypadów studni (Case-Based Reasoning) — F1 AI Learning
-model ai_well_cases {
-  id              String   @id
-  // Parametry wejściowe studni
-  dn              Int
-  totalHeightMm   Int
-  wellType        String   // standard | psia_buda | styczna
-  warehouse       String?
-  producer        String?
-  // Kineta / obciążenie
-  kinetType       String?
-  inflowCount     Int?
-  loadClass       String?
-  manholeClass    String?
-  coverType       String?
-  // Geometria — JSON: kompletny pionowy profil, elementy, przejścia
-  componentSeq    String   // JSON: [{productId, name, type, heightMm, positionMm, dn}]
-  diameterProfile String   // JSON: [{heightFrom, heightTo, diameter}]
-  transitions     String   // JSON: [{fromDn, toDn, heightMm, positionMm, type}]
-  // Metadane
-  configHash      String?  // MD5 z componentSeq do deduplikacji
-  userId          String?
-  configSource    String?  // AUTO_AI | AUTO_JS | MANUAL
-  acceptanceCount Int      @default(1)
-  confidenceScore Float?
-  firstAcceptedAt DateTime @default(now())
-  lastAcceptedAt  DateTime @updatedAt
-  isArchived      Boolean  @default(false)
-
-  @@index([dn, wellType])
-  @@index([warehouse])
-  @@index([dn, totalHeightMm])
-  @@index([acceptanceCount])
-  @@unique([dn, totalHeightMm, wellType, configHash], name: "uniq_dn_height_type_hash")
-}
-
 // Logi audytowe (śledzenie zmian w bazie)
 model audit_logs {
   id         String   @id

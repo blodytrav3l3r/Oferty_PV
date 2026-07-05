@@ -188,7 +188,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
 /* ===== ZAPYTANIE DO BACKENDU (AI-FIRST) ===== */
 async function fetchConfigFromBackend(well, requiredMm, availProducts) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
 
     try {
         const effDn = well.dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : well.dn;
@@ -219,6 +219,7 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
                 : well.zakonczenie || null,
             wkladkaZwienczenie: well.wkladkaZwienczenie || 'brak',
             available_products: (() => {
+                // Dołącz wszystkie konusy dla danej DN (pomija filtr stopni)
                 const availIds = new Set(availProducts.map(p => p.id));
                 const extraKonus = studnieProducts.filter(
                     p => p.componentType === 'konus' &&
@@ -254,8 +255,7 @@ async function fetchConfigFromBackend(well, requiredMm, availProducts) {
         });
         if (!response.ok) return null;
         const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0) return null;
-        return data; // zwraca WSZYSTKIE warianty
+        return data.length > 0 ? data[0] : null;
     } catch (err) {
         logger.warn('wellSolver', 'Backend ML nie odpowiada — używam solvera JS:', err);
         return null;
@@ -373,112 +373,79 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 
     const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
-    // === KROK 0: Pobierz preferencje z bazy wiedzy (Phase 3) ===
-    /** @type {Object|null} */
-    let preferenceWeights = null;
-    try {
-        const prefsResp = await fetch(
-            `/api/learning/preferences?dn=${parseInt(effectiveDn)}&warehouse=${encodeURIComponent(well.magazyn || '')}`,
-            { credentials: 'same-origin' }
-        );
-        if (prefsResp.ok) {
-            const prefs = await prefsResp.json();
-            if (prefs && prefs.confidence > 0.1) {
-                preferenceWeights = prefs;
-                logger.info('wellSolver', '[AutoSelect] Preferencje załadowane (confidence=' + prefs.confidence + ')');
-            } else {
-                logger.info('wellSolver', '[AutoSelect] Preferencje puste (confidence=' + (prefs ? prefs.confidence : 0) + ') — brak danych');
-            }
-        }
-    } catch (e) {
-        logger.warn('wellSolver', '[AutoSelect] Błąd pobierania preferencji:', e);
-    }
-
     // === KROK 1: Backend AI (OR-Tools, 10s timeout) ===
     logger.info('wellSolver', '[AutoSelect] Wywołanie backendu OR-Tools...');
-    const backendData = await fetchConfigFromBackend(well, requiredMm, availProducts);
+    const backendResult = await fetchConfigFromBackend(well, requiredMm, availProducts);
 
-    if (Array.isArray(backendData) && backendData.length > 0) {
-        // Zapisz WSZYSTKIE warianty na well (do alternatyw UI)
-        well._backendVariants = backendData;
+    if (backendResult && backendResult.is_valid && backendResult.items.length > 0) {
+        const newConfig = buildConfigFromBackendResult(backendResult);
 
-        const backendResult = backendData[0]; // najlepszy (posortowany przez ranker)
+        // === WERYFIKACJA DENNICY ===
+        const dnProducts = availProducts.filter((p) => filterByWellParams(p, well));
+        const correctDennica = getLowestDennicaHybrid(dnProducts, dn, well.magazyn || 'Kluczbork', well.przejscia, well.rzednaDna, well.stycznaDn).dennica;
+        const configDennica = findDennicaInConfig(newConfig);
+        const dennicaWrong = correctDennica && configDennica && configDennica.id !== correctDennica.id;
+        if (dennicaWrong) {
+            logger.warn('wellSolver', `[AutoSelect] AI wybrało złą dennicę ${configDennica.id} (h=${configDennica.height}). Wymagana: ${correctDennica.id} (h=${correctDennica.height}). Fallback do JS.`);
+        }
 
-        if (backendResult && backendResult.is_valid && backendResult.items.length > 0) {
-            const newConfig = buildConfigFromBackendResult(backendResult);
-
-            // === WERYFIKACJA DENNICY ===
-            const dnProducts = availProducts.filter((p) => filterByWellParams(p, well));
-            const correctDennica = getLowestDennicaHybrid(dnProducts, dn, well.magazyn || 'Kluczbork', well.przejscia, well.rzednaDna, well.stycznaDn).dennica;
-            const configDennica = findDennicaInConfig(newConfig);
-            const dennicaWrong = correctDennica && configDennica && configDennica.id !== correctDennica.id;
-            if (dennicaWrong) {
-                logger.warn('wellSolver', `[AutoSelect] AI wybrało złą dennicę ${configDennica.id} (h=${configDennica.height}). Wymagana: ${correctDennica.id} (h=${correctDennica.height}). Fallback do JS.`);
-            }
-
-            // Walidacja redukcji
-            const redukcjaOk = !well.redukcjaDN1000 || (() => {
-                const targetDn = well.redukcjaTargetDN || 1000;
-                return !newConfig.some(item => {
-                    const p = studnieProducts.find(pr => pr.id === item.productId);
-                    if (p && (p.componentType === 'konus' || p.componentType === 'plyta_din' || p.componentType === 'krag' || p.componentType === 'krag_ot')) {
-                        if (parseInt(p.dn) !== targetDn && parseInt(p.dn) !== parseInt(well.dn)) {
-                            return true;
-                        }
+        // Walidacja redukcji
+        const redukcjaOk = !well.redukcjaDN1000 || (() => {
+            const targetDn = well.redukcjaTargetDN || 1000;
+            return !newConfig.some(item => {
+                const p = studnieProducts.find(pr => pr.id === item.productId);
+                if (p && (p.componentType === 'konus' || p.componentType === 'plyta_din' || p.componentType === 'krag' || p.componentType === 'krag_ot')) {
+                    if (parseInt(p.dn) !== targetDn && parseInt(p.dn) !== parseInt(well.dn)) {
+                        return true;
                     }
-                    return false;
-                });
-            })();
-
-            // Sprawdź czy backend uwzględnił wymuszone zakończenie
-            const forcedClosureId = well.redukcjaDN1000
-                ? well.redukcjaZakonczenie
-                : well.zakonczenie;
-            const forcedClosureOk = !forcedClosureId || newConfig.some(item => item.productId === forcedClosureId);
-            if (!forcedClosureOk) {
-                logger.warn('wellSolver', '[AutoSelect] Backend pominął wymuszone zakończenie. Fallback do JS.');
-            }
-
-            // Sprawdź czy istnieje jakiekolwiek zakończenie górne w configu
-            const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
-            const hasTopClosure = newConfig.some(item => {
-                const prod = studnieProducts.find(p => p.id === item.productId);
-                return prod && topClosureTypes.includes(prod.componentType);
-            });
-            if (!hasTopClosure) {
-                logger.warn('wellSolver', '[AutoSelect] Backend nie zawiera zakończenia górnego. Fallback do JS.');
-            }
-
-            // Sprawdź czy backend wybrał konus gdy dostępny (bez PEHD)
-            const isPEHD = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
-            const konusAvailable = !isPEHD && studnieProducts.some(
-                p => p.componentType === 'konus' && parseInt(p.dn) === parseInt(effectiveDn)
-            );
-            const hasKonus = newConfig.some(item => {
-                const prod = studnieProducts.find(p => p.id === item.productId);
-                return prod && prod.componentType === 'konus';
-            });
-            const konusOk = !konusAvailable || hasKonus || !!forcedClosureId;
-            if (!konusOk) {
-                logger.warn('wellSolver', '[AutoSelect] Backend pominął konus mimo dostępności. Fallback do JS.');
-            }
-
-            if (!dennicaWrong && redukcjaOk && forcedClosureOk && hasTopClosure && konusOk) {
-                applyBackendConfig(well, newConfig, backendResult, autoTriggered);
-                // Po zastosowaniu najlepszego wariantu, pokaż alternatywy
-                if (backendData.length > 1) {
-                    var wellIdx = (typeof currentWellIndex !== 'undefined') ? currentWellIndex : -1;
-                    _showAlternatives(well, backendData, wellIdx);
                 }
-                return;
-            }
+                return false;
+            });
+        })();
+
+        // Sprawdź czy backend uwzględnił wymuszone zakończenie
+        const forcedClosureId = well.redukcjaDN1000
+            ? well.redukcjaZakonczenie
+            : well.zakonczenie;
+        const forcedClosureOk = !forcedClosureId || newConfig.some(item => item.productId === forcedClosureId);
+        if (!forcedClosureOk) {
+            logger.warn('wellSolver', '[AutoSelect] Backend pominął wymuszone zakończenie. Fallback do JS.');
+        }
+
+        // Sprawdź czy istnieje jakiekolwiek zakończenie górne w configu
+        const topClosureTypes = ['konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'];
+        const hasTopClosure = newConfig.some(item => {
+            const prod = studnieProducts.find(p => p.id === item.productId);
+            return prod && topClosureTypes.includes(prod.componentType);
+        });
+        if (!hasTopClosure) {
+            logger.warn('wellSolver', '[AutoSelect] Backend nie zawiera zakończenia górnego. Fallback do JS.');
+        }
+
+        // Sprawdź czy backend wybrał konus gdy dostępny (bez PEHD)
+        const isPEHD = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+        const konusAvailable = !isPEHD && studnieProducts.some(
+            p => p.componentType === 'konus' && parseInt(p.dn) === parseInt(effectiveDn)
+        );
+        const hasKonus = newConfig.some(item => {
+            const prod = studnieProducts.find(p => p.id === item.productId);
+            return prod && prod.componentType === 'konus';
+        });
+        const konusOk = !konusAvailable || hasKonus || !!forcedClosureId;
+        if (!konusOk) {
+            logger.warn('wellSolver', '[AutoSelect] Backend pominął konus mimo dostępności. Fallback do JS.');
+        }
+
+        if (!dennicaWrong && redukcjaOk && forcedClosureOk && hasTopClosure && konusOk) {
+            applyBackendConfig(well, newConfig, backendResult, autoTriggered);
+            return;
         }
     }
 
     // === KROK 2: Fallback do JS solvera ===
     logger.warn('wellSolver', '[AutoSelect] Backend niedostępny lub odrzucił. Fallback do JS solvera.');
     const jsMsStart = (window.performance && window.performance.now) ? window.performance.now() : Date.now();
-    const jsResult = runJsAutoSelection(well, requiredMm, availProducts, preferenceWeights);
+    const jsResult = runJsAutoSelection(well, requiredMm, availProducts);
     if (jsResult.error) {
         showToast(jsResult.error, 'error');
         well.configStatus = 'ERROR';
@@ -618,7 +585,7 @@ function applyBackendConfig(well, newConfig, backendResult, autoTriggered) {
 }
 
 /* ===== LOKALNY SOLVER JS (FALLBACK) ===== */
-function runJsAutoSelection(well, requiredMm, availProducts, preferenceWeights) {
+function runJsAutoSelection(well, requiredMm, availProducts) {
     const dn = well.dn;
     const targetDn = well.redukcjaTargetDN || 1000;
     const effectiveDn = dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
@@ -1120,8 +1087,7 @@ function runJsAutoSelection(well, requiredMm, availProducts, preferenceWeights) 
                     isKonus: topCfg.prod && topCfg.prod.componentType === 'konus',
                     reductionForced: !!well.redukcjaDN1000,
                     hasReduction: false,
-                    otCount,
-                    preferenceWeights
+                    otCount
                 });
                 let score = scoreResult.score;
                 score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
@@ -1292,8 +1258,7 @@ function runJsAutoSelection(well, requiredMm, availProducts, preferenceWeights) 
                         bottomSectionH: bSec,
                         minBottomTotal: minLowerTotal,
                         dn: parseInt(dn) || 1200,
-                        otCount: redOtCount,
-                        preferenceWeights
+                        otCount: redOtCount
                     });
                     let score = scoreResult.score;
                     score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
@@ -1574,124 +1539,4 @@ function recalculateWellErrors(well) {
     well.configErrors = [...new Set(liveErrors)];
     well.configStatus =
         well.configErrors.length > 0 ? 'ERROR' : well.configSource ? 'OK' : well.configStatus || '';
-}
-
-/* ===== ALTERNATYWNE KONFIGURACJE (F2: multi-wariant) ===== */
-
-/**
- * Pokazuje panel alternatywnych konfiguracji po auto-doborze.
- * @param {Object} well - obiekt studni
- * @param {Array} variants - lista wariantów z backendu
- * @param {number} wellIdx - indeks studni w tablicy wells
- */
-function _showAlternatives(well, variants, wellIdx) {
-    if (wellIdx === undefined || wellIdx < 0) {
-        wellIdx = (typeof wells !== 'undefined' && Array.isArray(wells)) ? wells.indexOf(well) : -1;
-    }
-    if (!Array.isArray(variants) || variants.length <= 1) return;
-    var container = document.getElementById('alternatives-panel');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'alternatives-panel';
-        container.className = 'alternatives-panel';
-        var btnArea = document.querySelector('.auto-select-area, #btn-auto-select, [data-auto-select]');
-        if (btnArea) {
-            btnArea.parentNode.insertBefore(container, btnArea.nextSibling);
-        } else {
-            var cfgPanel = document.getElementById('well-config-panel') || document.getElementById('wizard-step-4') || document.querySelector('.well-config-section');
-            if (cfgPanel) cfgPanel.appendChild(container);
-            else document.body.appendChild(container);
-        }
-    }
-
-    var html = '<div class="alternatives-header">';
-    html += '<span class="alternatives-title"><i data-lucide="layers" aria-hidden="true"></i> Alternatywne konfiguracje</span>';
-    html += '<span class="alternatives-count">' + variants.length + ' wariantów</span>';
-    html += '<button class="alternatives-close" onclick="this.parentElement.parentElement.classList.remove(\'alternatives-open\')" title="Zwiń">&times;</button>';
-    html += '</div>';
-    html += '<div class="alternatives-list">';
-
-    for (var i = 0; i < variants.length; i++) {
-        var v = variants[i];
-        if (!v || !v.items) continue;
-        var score = v.score !== undefined && v.score !== null ? v.score.toFixed(1) : '?';
-        var stage = v.stage || '?';
-        var totalH = v.total_height_mm || 0;
-        var itemCount = (v.items || []).length;
-        var reasons = Array.isArray(v.score_reasons) ? v.score_reasons : [];
-        var firstReason = reasons.length > 0 ? reasons[0] : '';
-
-        var isActive = i === 0;
-        html += '<div class="alternatives-item' + (isActive ? ' active' : '') + '" onclick="applyWellAlternative(' + wellIdx + ',' + i + ')" title="Kliknij aby zastosować">';
-        html += '<span class="alt-index">#' + (i + 1) + '</span>';
-        html += '<span class="alt-score">' + score + '</span>';
-        html += '<span class="alt-info">' + stage + ' | ' + totalH + 'mm | ' + itemCount + ' el.</span>';
-        if (firstReason) {
-            html += '<span class="alt-reason" title="' + escapeHtml(firstReason) + '">' + escapeHtml(firstReason) + '</span>';
-        }
-        if (isActive) {
-            html += '<span class="alt-badge">AKTYWNY</span>';
-        }
-        html += '</div>';
-    }
-
-    html += '</div>';
-    container.innerHTML = html;
-    container.classList.add('alternatives-open');
-
-    if (window.lucide) window.lucide.createIcons({ root: container });
-}
-
-/**
- * Stosuje alternatywną konfigurację dla studni.
- * @param {number} wellIndex - indeks studni w tablicy wells
- * @param {number} variantIndex - indeks wariantu w well._backendVariants
- */
-window.applyWellAlternative = function applyWellAlternative(wellIndex, variantIndex) {
-    var well = typeof wells !== 'undefined' && Array.isArray(wells) ? wells[wellIndex] : null;
-    if (!well || !well._backendVariants) return;
-
-    var variant = well._backendVariants[variantIndex];
-    if (!variant || !variant.items) return;
-
-    var newConfig = buildConfigFromBackendResult(variant);
-    if (!newConfig || newConfig.length === 0) return;
-
-    well.config = newConfig;
-    well.configSource = 'AUTO_AI';
-    well.configStatus = 'OK';
-    well.configErrors = variant.errors || [];
-
-    try {
-        sortWellConfigByOrder();
-        if (typeof recalcGaskets === 'function') recalcGaskets(well);
-        if (typeof syncKineta === 'function') syncKineta(well);
-        renderWellConfig();
-        renderWellDiagram();
-        updateSummary();
-        if (typeof refreshAll === 'function') refreshAll();
-    } catch (e) {
-        logger.error('wellSolver', 'Błąd przy zmianie wariantu:', e);
-    }
-
-    // Odśwież panel alternatyw — zaznacz aktywny
-    _refreshAlternativesActive(well);
-};
-
-function _refreshAlternativesActive(well) {
-    var items = document.querySelectorAll('#alternatives-panel .alternatives-item');
-    if (!items.length) return;
-    for (var i = 0; i < items.length; i++) {
-        items[i].classList.remove('active');
-        var badge = items[i].querySelector('.alt-badge');
-        if (badge) badge.remove();
-    }
-    if (items[0]) items[0].classList.add('active');
-    var firstBadge = items[0] ? items[0].querySelector('.alt-badge') : null;
-    if (!firstBadge && items[0]) {
-        var b = document.createElement('span');
-        b.className = 'alt-badge';
-        b.textContent = 'AKTYWNY';
-        items[0].appendChild(b);
-    }
 }

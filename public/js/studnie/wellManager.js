@@ -477,11 +477,12 @@ function syncKineta(well) {
     });
 
     if (hasDennica && well.spocznikH && well.spocznikH !== 'brak') {
+        const SPOCZNIK_MAP = { '12': '1/2', '23': '2/3', '34': '3/4', '11': '1/1' };
         const kinetaProd = studnieProducts.find(
             (p) =>
                 p.componentType === 'kineta' &&
                 parseInt(p.dn) === parseInt(well.dn) &&
-                p.spocznikH === well.spocznikH
+                (SPOCZNIK_MAP[p.id.split('-').pop()] || '') === well.spocznikH
         );
         if (kinetaProd) {
             newConfig.push({
@@ -1512,6 +1513,125 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     return itemPrice;
 }
 
+function getItemPriceBreakdown(well, p, applyDiscount, item) {
+    let base = p.price || 0;
+    let pehd = 0;
+    let malowanieW = 0;
+    let malowanieZ = 0;
+    let zelbet = 0;
+    let nierdzewna = 0;
+
+    let discountPct = 0;
+    if (applyDiscount !== false && well.dn) {
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+        const activeDiscounts = getWellActiveDiscounts(well);
+        const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
+        if (p.componentType === 'dennica' || p.componentType === 'kineta' || p.componentType === 'styczna') {
+            discountPct = disc.dennica || 0;
+        } else {
+            discountPct = disc.nadbudowa || 0;
+        }
+    }
+    const mult = 1 - discountPct / 100;
+
+    if (p.componentType === 'kineta') {
+        let dennicaHeight = 0;
+        const dennicaItem = well.config.find(function (c) {
+            var pr = studnieProducts.find(function (x) { return x.id === c.productId; });
+            return pr && pr.componentType === 'dennica';
+        });
+        if (dennicaItem) {
+            var pPr = studnieProducts.find(function (x) { return x.id === dennicaItem.productId; });
+            dennicaHeight = pPr ? pPr.height || 0 : 0;
+        }
+
+        var h1m = parseFloat(p.hMin1);
+        var h1x = parseFloat(p.hMax1);
+        var h2m = parseFloat(p.hMin2);
+        var h2x = parseFloat(p.hMax2);
+        var h3m = parseFloat(p.hMin3);
+        var h3x = parseFloat(p.hMax3);
+
+        var kinetaBase = base;
+        if (!isNaN(h1m) && !isNaN(h1x) && dennicaHeight >= h1m && dennicaHeight <= h1x) {
+            kinetaBase = parseFloat(p.cena1) || 0;
+        } else if (!isNaN(h2m) && !isNaN(h2x) && dennicaHeight >= h2m && dennicaHeight <= h2x) {
+            kinetaBase = parseFloat(p.cena2) || 0;
+        } else if (!isNaN(h3m) && !isNaN(h3x) && dennicaHeight >= h3m && dennicaHeight <= h3x) {
+            kinetaBase = parseFloat(p.cena3) || 0;
+        }
+
+        base = kinetaBase * mult;
+
+        if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
+            if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
+                var kinetaArea = calcKinetaPaintingArea(well);
+                malowanieW = kinetaArea * well.malowanieWewCena;
+            }
+        } else if (well.malowanieW && well.malowanieW !== 'brak' && !well.malowanieWewCena && p.malowanieWewnetrzne) {
+            if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
+                malowanieW = parseFloat(p.malowanieWewnetrzne);
+            }
+        }
+        if (well.malowanieZ === 'zewnatrz' && well.malowanieZewCena) {
+            malowanieZ = (p.areaExt || 0) * well.malowanieZewCena;
+        } else if (well.malowanieZ === 'zewnatrz' && p.malowanieZewnetrzne && !well.malowanieZewCena) {
+            malowanieZ = parseFloat(p.malowanieZewnetrzne);
+        }
+
+        return { base: base, pehd: 0, malowanieW: malowanieW, malowanieZ: malowanieZ, zelbet: 0, nierdzewna: 0, total: base + malowanieW + malowanieZ };
+    }
+
+    base = base * mult;
+
+    var pehdType = null;
+    if (['dennica', 'styczna'].indexOf(p.componentType) !== -1) {
+        pehdType = well.wkladkaDennica;
+    } else if (['plyta', 'plyta_redukcyjna', 'plyta_nastudzienna', 'stozek', 'zwienczenie', 'konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].indexOf(p.componentType) !== -1) {
+        pehdType = well.wkladkaZwienczenie;
+    } else if (['krag', 'krag_ot', 'rura'].indexOf(p.componentType) !== -1) {
+        pehdType = well.wkladkaNadbudowa;
+    }
+
+    if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
+        if (!item || !item.disablePehd) {
+            pehd = parseFloat(p.doplataPEHD);
+            if (applyDiscount !== false && well.pehdDiscount) {
+                pehd *= 1 - well.pehdDiscount / 100;
+            }
+        }
+    }
+
+    if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
+        if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
+        } else if (well.malowanieW === 'cale') {
+            if (p.componentType !== 'dennica' && p.componentType !== 'styczna') {
+                malowanieW = (p.area || 0) * well.malowanieWewCena;
+            }
+        }
+    } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
+        if (well.malowanieW === 'cale' && p.componentType !== 'dennica' && p.componentType !== 'styczna') {
+            malowanieW = parseFloat(p.malowanieWewnetrzne);
+        }
+    }
+
+    if (well.malowanieZ === 'zewnatrz' && well.malowanieZewCena) {
+        malowanieZ = (p.areaExt || 0) * well.malowanieZewCena;
+    } else if (well.malowanieZ === 'zewnatrz' && p.malowanieZewnetrzne && !well.malowanieZewCena) {
+        malowanieZ = parseFloat(p.malowanieZewnetrzne);
+    }
+
+    if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica' && p.doplataZelbet) {
+        zelbet = parseFloat(p.doplataZelbet);
+    }
+
+    if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag_ot' || p.componentType === 'dennica') && p.doplataDrabNierdzewna) {
+        nierdzewna = parseFloat(p.doplataDrabNierdzewna);
+    }
+
+    return { base: base, pehd: pehd, malowanieW: malowanieW, malowanieZ: malowanieZ, zelbet: zelbet, nierdzewna: nierdzewna, total: base + pehd + malowanieW + malowanieZ + zelbet + nierdzewna };
+}
+
 function calcWellStats(well) {
     let price = 0,
         weight = 0,
@@ -1732,5 +1852,7 @@ function calcWellStats(well) {
         error: errorMessage
     };
 }
+
+window.getItemPriceBreakdown = getItemPriceBreakdown;
 
 // switchSidebarTab() przeniesiona do wellUI.js
