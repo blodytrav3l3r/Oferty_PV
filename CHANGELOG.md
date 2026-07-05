@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.3.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.2.0...v1.3.0) (2026-07-05)
+
+### Features
+
+- **studnie:** rozbicie wkładki PRECO na wszystkie elementy w zakładce Oferta ([69bfb53](https://github.com/blodytrav3l3r/Oferty_PV/commit/69bfb53d716b00937a89a3b3bf0d62074b5ee9a4))
+
+### Bug Fixes
+
+- **studnie:** przeniesienie nawigacji na koniec main ([195b5df](https://github.com/blodytrav3l3r/Oferty_PV/commit/195b5df2d03042088363c9037bb13a301b940984))
+
 ## [1.2.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.1.0...v1.2.0) (2026-07-05)
 
 ### Features
