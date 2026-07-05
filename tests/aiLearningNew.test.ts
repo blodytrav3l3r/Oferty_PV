@@ -550,4 +550,24 @@ describe('LearningEngine — runFullCycle z nowymi detektorami', () => {
         expect(s.initialized).toBe(true);
         expect(s.lastRunAt).not.toBeNull();
     });
+
+    it('P2-003: równoległe wywołania runFullCycle — drugi skipuje (mutex)', async () => {
+        const { LearningEngine } = await import('../src/services/telemetry/learning/LearningEngine');
+        const le = new LearningEngine();
+        const [a, b] = await Promise.all([le.runFullCycle(), le.runFullCycle()]);
+        const locks = [a, b].filter(function (s) { return s.error === 'already-running'; });
+        expect(locks.length).toBe(1);
+        const realRuns = [a, b].filter(function (s) { return s.error !== 'already-running'; });
+        expect(realRuns.length).toBe(1);
+        expect(realRuns[0].processed).toBeGreaterThanOrEqual(0);
+    });
+
+    it('P2-003: po zakończeniu cyklu mutex zwalnia się (można odpalić ponownie)', async () => {
+        const { LearningEngine } = await import('../src/services/telemetry/learning/LearningEngine');
+        const le = new LearningEngine();
+        const first = await le.runFullCycle();
+        expect(first.error).toBeUndefined();
+        const second = await le.runFullCycle();
+        expect(second.error).toBeUndefined();
+    });
 });

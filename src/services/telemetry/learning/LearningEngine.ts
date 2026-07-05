@@ -41,6 +41,7 @@ export class LearningEngine {
     private ranker: RankingEngine;
     private lastRunAt: string | null = null;
     private initialized: boolean = false;
+    private running: boolean = false;
 
     constructor() {
         this.kb = new KnowledgeBase();
@@ -61,6 +62,18 @@ export class LearningEngine {
      * 5) zapisze wszystko do Knowledge Base
      */
     async runFullCycle(): Promise<LearningRunSummary> {
+        if (this.running) {
+            logger.warn('LearningEngine', 'runFullCycle już trwa - pomijam (mutex lock)');
+            return {
+                processed: 0,
+                patternsDetected: 0,
+                persistedToKb: 0,
+                durationMs: 0,
+                error: 'already-running'
+            };
+        }
+        this.running = true;
+
         const startedAt = Date.now();
         let processed = 0;
         let persisted = 0;
@@ -277,6 +290,8 @@ export class LearningEngine {
                 durationMs: Date.now() - startedAt,
                 error: message
             };
+        } finally {
+            this.running = false;
         }
     }
 

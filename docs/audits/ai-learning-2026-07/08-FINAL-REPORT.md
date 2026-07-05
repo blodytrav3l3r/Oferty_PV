@@ -1,6 +1,6 @@
 # Raport końcowy audytu AI Learning System
 
-**Data:** 2026-07-04 (aktualizacja: 2026-07-05)
+**Data:** 2026-07-04 (aktualizacja: 2026-07-05, P2-003 + migracja CREATE)
 **Zakres:** 10 plików (7 core + 3 wspomagające), 5 faz wdrożenia F1-F5
 **Dokumentacja:** `docs/audits/ai-learning-2026-07/01-*.md` — `07-*.md`
 
@@ -8,7 +8,7 @@
 
 ## TL;DR
 
-**Stan po naprawie: 0/0 P0, 0/1 P1, 2/3 P2, 1/1 P3 zamknięte.** Otwarte: P2-003 (mutex w `runFullCycle` — niskie ryzyko bo CronService nie pozwala na duplikację). Do merga na develop: wszystkie fixy + nowe testy. 1290+55 testów przechodzi.
+**Stan po naprawie: 0/0 P0, 0/1 P1, 3/3 P2, 1/1 P3 zamknięte.** Wszystkie fixy dostarczone. 1297+2 (mutex) testów przechodzi.
 
 ---
 
@@ -22,13 +22,13 @@
 |----|------|---------|-----|--------|
 | P1-001 | `wellCaseService.ts:58-103` | Race condition: `findFirst` → create/update bez `@@unique` i transakcji. Concurrency (2× save) → duplikaty `ai_well_cases` | `@@unique([dn, totalHeightMm, wellType, configHash])` + `$transaction` z `findUnique` + catch P2002 | ✅ `prisma/db push`, migracja ręczna, testy race |
 
-### P2 — Średnie: 3 → 2 ✅ DONE, 1 ⏳ OPEN
+### P2 — Średnie: 3 → 3 ✅ DONE
 
 | ID | Plik | Problem | Fix | Status |
 |----|------|---------|-----|--------|
 | P2-001 | `public/studnie.html` | Cache-busting `?v=N` nieaktualne dla `wellSolver.js`, `wellConfigRules.js`, `offerManager.js` | Bump 3.0→3.1 | ✅ DONE |
 | P2-002 | `public/js/studnie/mlDashboard.js` | `aiDashboardRender()` niepodpięty do UI | Przycisk "Dashboard V2" w `showMLDashboard()` + `<script>` tag | ✅ DONE |
-| P2-003 | `LearningEngine.ts:63-256` | `runFullCycle()` brak mutex | `if (this.running) return` — niski priorytet, CronService już blokuje duplikację | ⏳ OPEN |
+| P2-003 | `LearningEngine.ts:63-296` | `runFullCycle()` brak mutex | Pole `private running` + guard `if (this.running) return` + reset w `finally`. CronService i tak blokuje duplikację, ale mutex zabezpiecza bezpośrednie wywołania z admin/UI | ✅ DONE |
 
 ### P3 — Niskie: 2 → 1 ✅ DONE
 
@@ -80,7 +80,21 @@
 - **Status:** oba pliki przechodzą `node -c`
 
 ### Commit #4 — P2-001
+
 - Bump: `wellSolver.js` 3.0→3.1, `wellConfigRules.js` 3.0→3.1, `offerManager.js` 3.0→3.1
+
+### Commit #5 — P2-003
+
+- Mutex w `LearningEngine.runFullCycle()`: `private running: boolean = false` + early-return gdy już trwa + `finally { this.running = false }`
+- 2 testy P2-003: równoległe wywołania → 1 wykonany, 1 short-circuited; sekwencyjne wywołania → oba przechodzą
+- **Status:** 1299/1299 testów przechodzi
+
+### Commit #6 — Migracja `ai_well_cases_create`
+
+- Ręczna migracja `20260705000001_ai_well_cases_create` — tworzy tabelę `ai_well_cases` + indeksy (matching schema.prisma)
+- Pierwotna migracja `20260705000000_ai_well_cases_unique` była tylko INDEX-em, brakowało CREATE TABLE
+- Bez tej migracji świeży `prisma migrate deploy` w innym środowisku failuje z `no such table: ai_well_cases`
+- **Status:** prisma migrate deploy OK, 1299/1299 testów przechodzi
 
 ### Faza B.4 — Smoke testy API AI
 - Nowy plik `tests/aiDashboardSmoke.test.ts` (4 testy HTTP API)
