@@ -96,6 +96,8 @@ jobs:
               run: npx prisma migrate deploy
 
             - name: Run tests
+              env:
+                  DATABASE_URL: file:../data/app_database.sqlite
               run: npm run test:quick
 
     docker-build:
