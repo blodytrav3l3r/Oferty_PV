@@ -51,6 +51,22 @@ export async function initStudnieProductsTable() {
         const data = await readPricelist(config.keyCurrent);
         if (!Array.isArray(data) || data.length === 0) return;
 
+        // Walidacja: wykryj stare polskie klucze, które powinny być już skonwertowane
+        const STALE_KEYS = [
+            'Pow. wewn. m²', 'Pow. zewn. m²', 'Dopłata Żelbet', 'Wys. spocznika',
+            'Hmin 1 mm', 'Hmax 1 mm', 'Cena 1 PLN', 'Hmin 2 mm', 'Hmax 2 mm',
+            'Cena 2 PLN', 'Hmin 3 mm', 'Hmax 3 mm', 'Cena 3 PLN'
+        ];
+        const staleProducts = (data as Record<string, unknown>[]).filter(
+            (p) => STALE_KEYS.some((k) => p[k] !== undefined && p[k] !== null)
+        );
+        if (staleProducts.length > 0) {
+            const sample = staleProducts.slice(0, 5).map((p) => p.id).join(', ');
+            const msg = `Seed studni zawiera ${staleProducts.length} produktów ze starymi polskimi kluczami (np. ${sample}...). Uruchom: node scripts/normalize-seed-studnie.mjs --apply`;
+            logger.error('ProductsStudnieV2', msg);
+            throw new Error(msg);
+        }
+
         // Kategorie — osobna, mała transakcja
         await prisma.$transaction(
             async (tx) => {
