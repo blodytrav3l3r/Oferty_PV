@@ -25,7 +25,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm install --no-audit --no-fund --ignore-scripts
 
             - name: Run ESLint (backend)
               run: npm run lint
@@ -49,7 +49,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm install --no-audit --no-fund --ignore-scripts
 
             - name: Typecheck backend
               run: npm run typecheck
@@ -71,7 +71,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm install --no-audit --no-fund --ignore-scripts
 
             - name: Run tests
               run: npm run test:quick
@@ -125,7 +125,7 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
-              run: npm ci
+              run: npm install --no-audit --no-fund --ignore-scripts
 
             - name: Dry-run standard-version
               run: npm run release:dry
