@@ -10,7 +10,6 @@
         <link rel="stylesheet" href="css/studnie.css?v=8.2" />
         <link rel="stylesheet" href="css/printModal.css?v=3.0" />
         <script src="js/shared/calcInput.js?v=3.0"></script>
-        <script src="js/admin/aiDashboard.js?v=3.1"></script>
     </head>
 
     <body class="studnie-page">
@@ -4054,30 +4053,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                 <!-- /well-app-layout -->
             </div>
             <!-- /section-builder -->
-            <!-- ===== WSP?LNY DOLNY PASEK NAWIGACJI ===== -->
-            <div class="wizard-nav-fixed" id="studnie-wizard-bottom-nav">
-                <div class="wizard-nav-left">
-                    <button
-                        class="wizard-btn wizard-btn-prev"
-                        id="studnie-nav-prev"
-                        onclick="wizardPrev()"
-                        style="display: none"
-                    >
-                        <i data-lucide="chevron-left"></i> Wstecz
-                    </button>
-                </div>
-                <span class="wizard-step-info" id="studnie-nav-step-info">Krok 1 z 5</span>
-                <div class="wizard-nav-right">
-                    <button
-                        class="wizard-btn wizard-btn-next"
-                        id="studnie-nav-next"
-                        onclick="wizardNext()"
-                    >
-                        <i data-lucide="chevron-right"></i> Dalej
-                    </button>
-                </div>
-            </div>
-
             <!-- ===== SECTION: OFFER ===== -->
             <div class="section" id="section-offer" style="padding-bottom: 200px">
                 <!-- Baner kontekstu: oferta / zamówienie -->
@@ -4504,6 +4479,29 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                 </div>
                 <div class="card">
                     <div id="studnie-pricelist-body"></div>
+                </div>
+            </div>
+            <!-- ===== WSPÓLNY DOLNY PASEK NAWIGACJI ===== -->
+            <div class="wizard-nav-fixed" id="studnie-wizard-bottom-nav">
+                <div class="wizard-nav-left">
+                    <button
+                        class="wizard-btn wizard-btn-prev"
+                        id="studnie-nav-prev"
+                        onclick="wizardPrev()"
+                        style="display: none"
+                    >
+                        <i data-lucide="chevron-left"></i> Wstecz
+                    </button>
+                </div>
+                <span class="wizard-step-info" id="studnie-nav-step-info">Krok 1 z 5</span>
+                <div class="wizard-nav-right">
+                    <button
+                        class="wizard-btn wizard-btn-next"
+                        id="studnie-nav-next"
+                        onclick="wizardNext()"
+                    >
+                        <i data-lucide="chevron-right"></i> Dalej
+                    </button>
                 </div>
             </div>
         </main>
@@ -5196,8 +5194,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/studnie/pricelistManager.js?v=3.0"></script>
         <script src="js/studnie/precoCalcCore.js?v=3.0"></script>
         <script src="js/studnie/wellManager.js?v=3.0"></script>
-        <script src="js/studnie/wellConfigRules.js?v=3.1"></script>
-        <script src="js/studnie/wellSolver.js?v=3.1"></script>
+        <script src="js/studnie/wellConfigRules.js?v=3.0"></script>
+        <script src="js/studnie/wellSolver.js?v=3.0"></script>
         <script src="js/studnie/wellTransitions.js?v=3.1"></script>
         <script src="js/studnie/wellPopups.js?v=3.0"></script>
         <script src="js/studnie/wellActions.js?v=3.0"></script>
@@ -5206,7 +5204,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/studnie/ruleEngine.js?v=3.0"></script>
         <script src="js/studnie/ringOptimizer.js?v=3.0"></script>
         <script src="js/studnie/wellDiagram.js?v=3.0"></script>
-        <script src="js/studnie/offerManager.js?v=3.1"></script>
+        <script src="js/studnie/offerManager.js?v=3.0"></script>
         <script src="js/studnie/mlDashboard.js?v=3.1"></script>
         <script src="js/studnie/excelTableManager.js?v=3.80"></script>
         <script src="js/studnie/orderManager.js?v=3.0"></script>
