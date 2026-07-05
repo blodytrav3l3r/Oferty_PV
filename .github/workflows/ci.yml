@@ -26,6 +26,8 @@ jobs:
 
             - name: Install dependencies
               run: npm install --no-audit --no-fund --ignore-scripts
+            - name: Generate Prisma client
+              run: npx prisma generate
 
             - name: Run ESLint (backend)
               run: npm run lint
@@ -50,6 +52,8 @@ jobs:
 
             - name: Install dependencies
               run: npm install --no-audit --no-fund --ignore-scripts
+            - name: Generate Prisma client
+              run: npx prisma generate
 
             - name: Typecheck backend
               run: npm run typecheck
@@ -72,6 +76,8 @@ jobs:
 
             - name: Install dependencies
               run: npm install --no-audit --no-fund --ignore-scripts
+            - name: Generate Prisma client
+              run: npx prisma generate
 
             - name: Run tests
               run: npm run test:quick
@@ -126,6 +132,8 @@ jobs:
 
             - name: Install dependencies
               run: npm install --no-audit --no-fund --ignore-scripts
+            - name: Generate Prisma client
+              run: npx prisma generate
 
             - name: Dry-run standard-version
               run: npm run release:dry
