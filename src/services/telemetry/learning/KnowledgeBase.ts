@@ -16,7 +16,10 @@ export type PatternType =
     | 'transition_layout'
     | 'manifold_substitution'
     | 'acceptance'
-    | 'usage_boost';
+    | 'usage_boost'
+    | 'closure_preference'
+    | 'prefer_product'
+    | 'avoid_product';
 
 export interface KnowledgePattern {
     id?: string;
@@ -124,12 +127,15 @@ export class KnowledgeBase {
         minConfidence: number = 0.3
     ): Promise<KnowledgePattern[]> {
         try {
+            const whereClause: Record<string, unknown> = {
+                status: 'active',
+                confidence: { gte: minConfidence }
+            };
+            if (dn !== 'all_dn' && dn !== '') {
+                whereClause.dn = dn;
+            }
             const rows = await prisma.ai_knowledge_base.findMany({
-                where: {
-                    dn,
-                    status: 'active',
-                    confidence: { gte: minConfidence }
-                },
+                where: whereClause as any,
                 orderBy: { confidence: 'desc' },
                 take: 50
             });
@@ -299,6 +305,52 @@ export class KnowledgeBase {
             });
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd archive: ${e}`);
+        }
+    }
+
+    /**
+     * Cykl czyszczenia KnowledgeBase:
+     * - oznacza jako 'stale' wzorce z confidence < 0.2 i hitCount < 5
+     * - archiwizuje wzorce 'stale' starsze niż 90 dni
+     */
+    async cleanupCycle(): Promise<number> {
+        let totalCleaned = 0;
+        const now = new Date();
+        try {
+            const staleThreshold = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+            const lowConfPatterns = await prisma.ai_knowledge_base.findMany({
+                where: {
+                    status: 'active',
+                    confidence: { lt: 0.2 },
+                    hitCount: { lt: 5 }
+                },
+                select: { id: true }
+            });
+            for (const p of lowConfPatterns) {
+                await prisma.ai_knowledge_base.update({
+                    where: { id: p.id },
+                    data: { status: 'stale', lastUpdatedAt: now.toISOString() }
+                });
+                totalCleaned++;
+            }
+            const oldStalePatterns = await prisma.ai_knowledge_base.findMany({
+                where: {
+                    status: 'stale',
+                    lastUpdatedAt: { lte: staleThreshold }
+                },
+                select: { id: true }
+            });
+            for (const p of oldStalePatterns) {
+                await prisma.ai_knowledge_base.update({
+                    where: { id: p.id },
+                    data: { status: 'archived', lastUpdatedAt: now.toISOString() }
+                });
+                totalCleaned++;
+            }
+            return totalCleaned;
+        } catch (e) {
+            logger.error('KnowledgeBase', `Błąd cleanupCycle: ${e}`);
+            return totalCleaned;
         }
     }
 }

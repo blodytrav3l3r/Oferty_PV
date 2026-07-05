@@ -23,14 +23,8 @@ export class RankingEngine {
         patterns: KnowledgePattern[],
         topN: number = 5
     ): RankedRecommendation[] {
-        const self = this;
-        const scored = patterns.map(function (p) {
-            return self._score(features, p);
-        });
-
-        scored.sort(function (a, b) {
-            return b.score - a.score;
-        });
+        const scored = patterns.map(p => this._score(features, p));
+        scored.sort((a, b) => b.score - a.score);
         return scored.slice(0, topN);
     }
 
