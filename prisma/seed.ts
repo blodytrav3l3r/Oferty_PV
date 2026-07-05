@@ -25,12 +25,6 @@ function toBool(val: any): boolean {
   return false;
 }
 
-function getField(obj: Record<string, any>, camelKey: string, polishKey?: string): any {
-  if (obj[camelKey] !== undefined) return obj[camelKey];
-  if (polishKey !== undefined && obj[polishKey] !== undefined) return obj[polishKey];
-  return undefined;
-}
-
 async function main() {
   console.log('Seeding database...');
 
@@ -98,19 +92,19 @@ async function main() {
 
     // ── ProductsStudnie ──
     const studnieProducts = studnieData.map((p: any) => {
-      const area = getField(p, 'area', 'Pow. wewn. m²');
-      const areaExt = getField(p, 'areaExt', 'Pow. zewn. m²');
-      const doplataZelbet = getField(p, 'doplataZelbet', 'Dopłata Żelbet');
-      const spocznikH = getField(p, 'spocznikH', 'Wys. spocznika');
-      const hMin1 = getField(p, 'hMin1', 'Hmin 1 mm');
-      const hMax1 = getField(p, 'hMax1', 'Hmax 1 mm');
-      const cena1 = getField(p, 'cena1', 'Cena 1 PLN');
-      const hMin2 = getField(p, 'hMin2', 'Hmin 2 mm');
-      const hMax2 = getField(p, 'hMax2', 'Hmax 2 mm');
-      const cena2 = getField(p, 'cena2', 'Cena 2 PLN');
-      const hMin3 = getField(p, 'hMin3', 'Hmin 3 mm');
-      const hMax3 = getField(p, 'hMax3', 'Hmax 3 mm');
-      const cena3 = getField(p, 'cena3', 'Cena 3 PLN');
+      const area = p.area;
+      const areaExt = p.areaExt;
+      const doplataZelbet = p.doplataZelbet;
+      const spocznikH = p.spocznikH;
+      const hMin1 = p.hMin1;
+      const hMax1 = p.hMax1;
+      const cena1 = p.cena1;
+      const hMin2 = p.hMin2;
+      const hMax2 = p.hMax2;
+      const cena2 = p.cena2;
+      const hMin3 = p.hMin3;
+      const hMax3 = p.hMax3;
+      const cena3 = p.cena3;
 
       return {
         id: p.id,
@@ -128,7 +122,7 @@ async function main() {
         magazynKLB: toBool(p.magazynKLB),
         formaStandardowa: toBool(p.formaStandardowa),
         formaStandardowaKLB: toBool(p.formaStandardowaKLB),
-        active: getField(p, 'active') !== undefined ? toBool(getField(p, 'active')) : true,
+        active: p.active !== undefined ? toBool(p.active) : true,
         zapasDol: p.zapasDol ?? null,
         zapasGora: p.zapasGora ?? null,
         zapasDolMin: p.zapasDolMin ?? null,
