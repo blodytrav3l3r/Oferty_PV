@@ -29,12 +29,6 @@ function toBool(v: unknown): boolean {
     return v === 1 || v === true;
 }
 
-function getField(obj: Record<string, unknown>, camelKey: string, polishKey?: string): unknown {
-    if (obj[camelKey] !== undefined) return obj[camelKey];
-    if (polishKey !== undefined && obj[polishKey] !== undefined) return obj[polishKey];
-    return undefined;
-}
-
 async function main() {
     console.log('=== Migracja danych produktów z settings → tabele ===\n');
 
@@ -101,19 +95,19 @@ async function main() {
         }
 
         for (const p of studnieProducts) {
-            const area = getField(p, 'area', 'Pow. wewn. m²');
-            const areaExt = getField(p, 'areaExt', 'Pow. zewn. m²');
-            const dZelb = getField(p, 'doplataZelbet', 'Dopłata Żelbet');
-            const spocznikH = getField(p, 'spocznikH', 'Wys. spocznika');
-            const hMin1 = getField(p, 'hMin1', 'Hmin 1 mm');
-            const hMax1 = getField(p, 'hMax1', 'Hmax 1 mm');
-            const c1 = getField(p, 'cena1', 'Cena 1 PLN');
-            const hMin2 = getField(p, 'hMin2', 'Hmin 2 mm');
-            const hMax2 = getField(p, 'hMax2', 'Hmax 2 mm');
-            const c2 = getField(p, 'cena2', 'Cena 2 PLN');
-            const hMin3 = getField(p, 'hMin3', 'Hmin 3 mm');
-            const hMax3 = getField(p, 'hMax3', 'Hmax 3 mm');
-            const c3 = getField(p, 'cena3', 'Cena 3 PLN');
+            const area = p.area;
+            const areaExt = p.areaExt;
+            const dZelb = p.doplataZelbet;
+            const spocznikH = p.spocznikH;
+            const hMin1 = p.hMin1;
+            const hMax1 = p.hMax1;
+            const c1 = p.cena1;
+            const hMin2 = p.hMin2;
+            const hMax2 = p.hMax2;
+            const c2 = p.cena2;
+            const hMin3 = p.hMin3;
+            const hMax3 = p.hMax3;
+            const c3 = p.cena3;
 
             await prisma.productsStudnie.upsert({
                 where: { id: String(p.id) },
