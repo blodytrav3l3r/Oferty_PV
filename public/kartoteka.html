@@ -40,7 +40,9 @@
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="app.html#/rury" target="_parent" class="nav-tile">
-                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                            <span class="nav-tile-icon"
+                                ><i data-lucide="cylinder" class="lucide-rotate-n90"></i
+                            ></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a
@@ -129,7 +131,9 @@
                         "
                     >
                         <!-- Type Filters -->
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <div
+                            style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap"
+                        >
                             <span
                                 style="
                                     font-size: 0.75rem;
@@ -138,12 +142,17 @@
                                     text-transform: uppercase;
                                     letter-spacing: 0.3px;
                                 "
-                            >Typ:</span>
+                                >Typ:</span
+                            >
                             <button
                                 class="btn btn-sm pv-type-filter-btn active"
                                 data-type-filter="all"
                                 onclick="filterByType('all')"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
                             >
                                 Wszystkie
                             </button>
@@ -151,7 +160,11 @@
                                 class="btn btn-sm btn-secondary pv-type-filter-btn"
                                 data-type-filter="offer"
                                 onclick="filterByType('offer')"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
                             >
                                 <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
                             </button>
@@ -159,17 +172,25 @@
                                 class="btn btn-sm btn-secondary pv-type-filter-btn"
                                 data-type-filter="studnia_oferta"
                                 onclick="filterByType('studnia_oferta')"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
                             >
                                 <i data-lucide="cylinder"></i> Studnie
                             </button>
                         </div>
 
                         <!-- Divider -->
-                        <div style="width: 1px; height: 24px; background: var(--border-glass);"></div>
+                        <div
+                            style="width: 1px; height: 24px; background: var(--border-glass)"
+                        ></div>
 
                         <!-- Status Filters -->
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <div
+                            style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap"
+                        >
                             <span
                                 style="
                                     font-size: 0.75rem;
@@ -178,28 +199,49 @@
                                     text-transform: uppercase;
                                     letter-spacing: 0.3px;
                                 "
-                            >Status:</span>
+                                >Status:</span
+                            >
                             <button
                                 class="btn btn-sm pv-filter-btn active"
                                 data-filter="all"
-                                onclick="window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('all')"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                                onclick="
+                                    window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('all')
+                                "
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
                             >
                                 Wszystkie
                             </button>
                             <button
                                 class="btn btn-sm btn-secondary pv-filter-btn"
                                 data-filter="with_order"
-                                onclick="window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('with_order')"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                                onclick="
+                                    window.pvSalesUI &&
+                                        window.pvSalesUI.setFilterLocalOffers('with_order')
+                                "
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
                             >
                                 <i data-lucide="package"></i> Z zamówieniem
                             </button>
                             <button
                                 class="btn btn-sm btn-secondary pv-filter-btn"
                                 data-filter="without_order"
-                                onclick="window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('without_order')"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                                onclick="
+                                    window.pvSalesUI &&
+                                        window.pvSalesUI.setFilterLocalOffers('without_order')
+                                "
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
                             >
                                 Bez zamówienia
                             </button>
@@ -210,17 +252,25 @@
                             class="btn btn-sm btn-secondary"
                             id="btn-compact-mode"
                             onclick="toggleCompactMode()"
-                            style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem;"
+                            style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem"
                             title="Przełącz tryb kompaktowy"
                         >
                             <i data-lucide="panel-right-close"></i> Kompakt
                         </button>
 
                         <!-- Search + Refresh row -->
-                        <div style="display: flex; flex: 1; gap: 0.5rem; align-items: center; min-width: 200px;">
+                        <div
+                            style="
+                                display: flex;
+                                flex: 1;
+                                gap: 0.5rem;
+                                align-items: center;
+                                min-width: 200px;
+                            "
+                        >
                             <div
                                 class="search-box"
-                                style="margin: 0; flex: 1; max-width: none; position: relative;"
+                                style="margin: 0; flex: 1; max-width: none; position: relative"
                             >
                                 <svg
                                     viewBox="0 0 24 24"
@@ -239,7 +289,20 @@
                                     <circle cx="11" cy="11" r="7" />
                                     <path d="m21 21-4.35-4.35" />
                                 </svg>
-                                <label for="pv-local-search-input" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Szukaj oferty</label>
+                                <label
+                                    for="pv-local-search-input"
+                                    style="
+                                        position: absolute;
+                                        width: 1px;
+                                        height: 1px;
+                                        padding: 0;
+                                        margin: -1px;
+                                        overflow: hidden;
+                                        clip: rect(0, 0, 0, 0);
+                                        border: 0;
+                                    "
+                                    >Szukaj oferty</label
+                                >
                                 <input
                                     type="text"
                                     id="pv-local-search-input"
@@ -251,7 +314,11 @@
                                         width: 100%;
                                         font-size: 0.8rem;
                                     "
-                                    oninput="window.pvSalesUI && window.pvSalesUI.filterLocalOffers && window.pvSalesUI.filterLocalOffers()"
+                                    oninput="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.filterLocalOffers &&
+                                            window.pvSalesUI.filterLocalOffers()
+                                    "
                                 />
                             </div>
 
@@ -259,12 +326,20 @@
                                 class="btn btn-secondary btn-sm"
                                 onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
                                 title="Odśwież bazę ofert"
-                                style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem; flex-shrink: 0;"
+                                style="
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                    flex-shrink: 0;
+                                "
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
                         </div>
                     </div>
+
+                    <!-- IE Toolbar -->
+                    <div id="ie-toolbar-host"></div>
 
                     <!-- Main Offers List -->
                     <section
@@ -280,7 +355,7 @@
                         <div
                             id="pv-local-offers-list"
                             class="kartoteka-offers-grid"
-                            style="display: flex; flex-direction: column; gap: 1rem;"
+                            style="display: flex; flex-direction: column; gap: 1rem"
                         >
                             <div
                                 style="
@@ -293,8 +368,16 @@
                                     border: 1px dashed var(--border-glass);
                                 "
                             >
-                                <i data-lucide="archive" style="width: 48px; height: 48px; opacity: 0.3; margin-bottom: 1rem;"></i>
-                                <div style="font-size: 0.9rem;">Ładowanie ofert z serwera...</div>
+                                <i
+                                    data-lucide="archive"
+                                    style="
+                                        width: 48px;
+                                        height: 48px;
+                                        opacity: 0.3;
+                                        margin-bottom: 1rem;
+                                    "
+                                ></i>
+                                <div style="font-size: 0.9rem">Ładowanie ofert z serwera...</div>
                             </div>
                         </div>
                     </section>
@@ -311,23 +394,41 @@
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
-        <script>if (typeof fetchGlobalUsers === 'function') fetchGlobalUsers();</script>
+        <script>
+            if (typeof fetchGlobalUsers === 'function') fetchGlobalUsers();
+        </script>
         <script src="js/shared/printModal.js?v=3.0"></script>
-        <link rel="stylesheet" href="css/printModal.css?v=3.0">
+        <link rel="stylesheet" href="css/printModal.css?v=3.0" />
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>
         <script src="js/rury/offerPrintManager.js?v=3.0"></script>
         <script type="module" src="js/sales/pvSalesUi.js?v=3.0"></script>
 
         <script src="js/sales/kartotekaInit.js?v=3.0"></script>
-        <script src="js/shared/iconsSlim.js?v=3.0"></script>
+        <script src="js/shared/iconsSlim.js?v=3.1"></script>
+
+        <!-- Import/Eksport ofert (feature flag) -->
+        <script src="js/import-export/shared/featureFlag.js?v=3.2"></script>
+        <script src="js/import-export/shared/xlsxImportShared.js?v=3.1"></script>
+        <script src="js/import-export/shared/conflictModal.js?v=3.1"></script>
+        <script src="js/import-export/shared/jsonOfferTransfer.js?v=3.1"></script>
+        <script src="js/import-export/rury/externalImport.js?v=3.1"></script>
+        <script src="js/import-export/rury/externalExportTemplate.js?v=3.2"></script>
+        <script src="js/import-export/rury/transferJson.js?v=3.1"></script>
+        <script src="js/import-export/studnie/externalImport.js?v=3.1"></script>
+        <script src="js/import-export/studnie/externalExportTemplate.js?v=3.2"></script>
+        <script src="js/import-export/studnie/transferJson.js?v=3.1"></script>
+        <script src="js/sales/pvImportExportToolbar.js?v=3.2"></script>
 
         <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> -->
         <script>
             if (window.top === window.self) {
                 const module =
-                    location.pathname.split('/').pop().replace(/\.html?$/, '') || 'kartoteka';
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'kartoteka';
                 window.location.replace('/app.html#/' + module);
             }
         </script>
-</body>
+    </body>
 </html>

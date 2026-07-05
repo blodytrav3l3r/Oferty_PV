@@ -76,7 +76,9 @@ class PVSalesUI {
 
     formatOrderLabel(order) {
         return this.escapeHtml(
-            order?.orderNumber || order?.offerNumber || (order?.id ? String(order.id).substring(0, 8) : 'Zamówienie')
+            order?.orderNumber ||
+                order?.offerNumber ||
+                (order?.id ? String(order.id).substring(0, 8) : 'Zamówienie')
         );
     }
 
@@ -102,13 +104,13 @@ class PVSalesUI {
     recalculateRuryTransportCost(items, transportKm, transportRate) {
         const costPerTrip = (Number(transportKm) || 0) * (Number(transportRate) || 0);
         if (costPerTrip <= 0) return 0;
-        const calcItems = (items || []).filter(
-            (i) => !i.autoAdded && Number(i.weight) > 0 && Number(i.quantity) > 0
-        ).map((i) => ({
-            weight: Number(i.weight),
-            transport: Number(i.transport),
-            quantity: Number(i.quantity)
-        }));
+        const calcItems = (items || [])
+            .filter((i) => !i.autoAdded && Number(i.weight) > 0 && Number(i.quantity) > 0)
+            .map((i) => ({
+                weight: Number(i.weight),
+                transport: Number(i.transport),
+                quantity: Number(i.quantity)
+            }));
         if (calcItems.length === 0) return 0;
         const result = calculateTransportTrips(calcItems);
         return result.totalTrips * costPerTrip;
@@ -149,7 +151,8 @@ class PVSalesUI {
             return Number(order.totalNetto || order.totalBrutto || 0);
         }
         const productsTotal = items.reduce((sum, item) => {
-            const unitBase = (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
+            const unitBase =
+                (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
             const surcharge = Number(item.surcharge) || 0;
             const pehdCost = Number(item.pehdCostPerUnit) || 0;
             return sum + (unitBase + surcharge + pehdCost) * (Number(item.quantity) || 0);
@@ -177,7 +180,8 @@ class PVSalesUI {
         try {
             const userStr = sessionStorage.getItem('user');
             if (!userStr) {
-                logger.info('pvSalesUi', 
+                logger.info(
+                    'pvSalesUi',
                     '[PVSalesUI] Czekam na dane użytkownika w sessionStorage (ponowienie za 500ms)...'
                 );
                 setTimeout(() => this.init(), 500);
@@ -252,7 +256,10 @@ class PVSalesUI {
                 });
             }
 
-            logger.info('pvSalesUi', `[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`);
+            logger.info(
+                'pvSalesUi',
+                `[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`
+            );
         } catch (error) {
             logger.warn('pvSalesUi', 'Nie udało się pobrać zamówień:', error.message);
         }
@@ -264,7 +271,8 @@ class PVSalesUI {
      */
     getOrderForOffer(offer) {
         const offerId = this.normalizeId(offer.id);
-        const orders = offerId && this.ordersMap.has(offerId) ? [...this.ordersMap.get(offerId)] : [];
+        const orders =
+            offerId && this.ordersMap.has(offerId) ? [...this.ordersMap.get(offerId)] : [];
 
         if (orders.length > 0) {
             return { hasOrder: true, orders, order: orders[0] };
@@ -281,7 +289,10 @@ class PVSalesUI {
     async loadLocalOffers() {
         const listDiv = document.getElementById('pv-local-offers-list');
         if (!listDiv) {
-            logger.warn('pvSalesUi', 'Nie znaleziono elementu listy ofert (id: pv-local-offers-list)');
+            logger.warn(
+                'pvSalesUi',
+                'Nie znaleziono elementu listy ofert (id: pv-local-offers-list)'
+            );
             return;
         }
 
@@ -294,7 +305,10 @@ class PVSalesUI {
             // Pobieramy oferty przez StorageService
             logger.info('pvSalesUi', 'loadLocalOffers: Wywołanie storageService.getOffers()...');
             const docs = await storageService.getOffers();
-            logger.info('pvSalesUi', `[PVSalesUI] loadLocalOffers: Pobrano ${docs.length} dokumentów.`);
+            logger.info(
+                'pvSalesUi',
+                `[PVSalesUI] loadLocalOffers: Pobrano ${docs.length} dokumentów.`
+            );
 
             if (docs.length === 0) {
                 listDiv.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Nie masz jeszcze żadnych zapisanych ofert.</div>`;
@@ -303,7 +317,8 @@ class PVSalesUI {
 
             this.allLocalOffers = docs;
             logger.info('pvSalesUi', 'loadLocalOffers: Filtrowanie i renderowanie...');
-            this.filterLocalOffers(); // Używa zintegrowanej logiki filtrowania z uwzględnieniem wyszukiwarki i filtrów statusu
+            this.filterLocalOffers();
+            if (window.PvImportExportToolbar) PvImportExportToolbar.init('ie-toolbar-host');
             logger.info('pvSalesUi', 'loadLocalOffers: Gotowe.');
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd pobierania ofert:', error);
@@ -312,7 +327,9 @@ class PVSalesUI {
                 <span style="font-size:0.85rem; opacity:0.8;">${this.escapeHtml(error.message || 'Wystąpił nieoczekiwany błąd sieciowy')}</span><br/>
                 <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.loadLocalOffers()"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button>
             </div>`;
-            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+            setTimeout(() => {
+                if (window.lucide) lucide.createIcons();
+            }, 50);
         }
     }
 
@@ -374,10 +391,12 @@ class PVSalesUI {
             ).toLowerCase();
 
             const offerOrders = this.ordersMap.get(this.normalizeId(offer.id));
-            const matchesOrderNumber = offerOrders && offerOrders.some(o => {
-                const on = o?.orderNumber || o?.data?.orderNumber || '';
-                return on.toLowerCase().includes(query);
-            });
+            const matchesOrderNumber =
+                offerOrders &&
+                offerOrders.some((o) => {
+                    const on = o?.orderNumber || o?.data?.orderNumber || '';
+                    return on.toLowerCase().includes(query);
+                });
 
             const matchesText =
                 !query ||
@@ -443,9 +462,13 @@ class PVSalesUI {
                 let orderItemsHtml = '';
 
                 if (hasOrder) {
-                    const hasModifiedOrder = orderList.some((ord) => this.getOrderChangeInfo(ord).changed);
-                    
-                    const badgeStateClass = hasModifiedOrder ? 'btn-order-badge modified' : 'btn-order-badge';
+                    const hasModifiedOrder = orderList.some(
+                        (ord) => this.getOrderChangeInfo(ord).changed
+                    );
+
+                    const badgeStateClass = hasModifiedOrder
+                        ? 'btn-order-badge modified'
+                        : 'btn-order-badge';
                     const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
 
                     orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${this.escapeHtml(order.id || '')}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
@@ -508,7 +531,9 @@ class PVSalesUI {
                     }
                     if (!priceVal && offer.price) priceVal = offer.price;
                 }
-                const icon = isWell ? '<i data-lucide="cylinder"></i>' : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
+                const icon = isWell
+                    ? '<i data-lucide="cylinder"></i>'
+                    : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
 
                 let itemCount = 0;
                 if (isWell) {
@@ -638,15 +663,18 @@ class PVSalesUI {
     showOfferOrdersPopup(offerId) {
         const offerKey = this.normalizeId(offerId);
         const offer = this.allLocalOffers.find((o) => this.normalizeId(o.id) === offerKey);
-        const orders = offerKey && this.ordersMap.has(offerKey) ? [...this.ordersMap.get(offerKey)] : [];
+        const orders =
+            offerKey && this.ordersMap.has(offerKey) ? [...this.ordersMap.get(offerKey)] : [];
 
         if (!orders || orders.length === 0) {
             showToast('Brak zamówień powiązanych z tą ofertą.', 'info');
             return;
         }
 
-        const offerLabel = offer && (offer.number || offer.title || offer.offerName) ?
-            (offer.number || offer.title || offer.offerName) : 'Oferta';
+        const offerLabel =
+            offer && (offer.number || offer.title || offer.offerName)
+                ? offer.number || offer.title || offer.offerName
+                : 'Oferta';
 
         let html = `
             <div class="modal-header">
@@ -658,7 +686,9 @@ class PVSalesUI {
         `;
 
         orders.forEach((ord) => {
-            const createdAt = ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('pl-PL') : 'brak daty';
+            const createdAt = ord.createdAt
+                ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
+                : 'brak daty';
             const orderLabel = this.formatOrderLabel(ord);
 
             html += `
@@ -689,7 +719,7 @@ class PVSalesUI {
             titleId: 'offer-orders-title',
             html: `<div class="modal">${html}</div>`
         });
-        
+
         try {
             if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
         } catch (err) {
@@ -720,9 +750,10 @@ class PVSalesUI {
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerId = buttonEl.getAttribute('data-offer-id');
                 const offerType = buttonEl.getAttribute('data-offer-type');
-                const relatedOrders = (this.ordersMap && offerId)
-                    ? [...(this.ordersMap.get(this.normalizeId(offerId)) || [])]
-                    : null;
+                const relatedOrders =
+                    this.ordersMap && offerId
+                        ? [...(this.ordersMap.get(this.normalizeId(offerId)) || [])]
+                        : null;
                 openPrintModal(offerId, orderId, offerType, relatedOrders);
             });
         });
@@ -759,9 +790,9 @@ class PVSalesUI {
         container.addEventListener('click', async (e) => {
             const btn = e.target.closest(
                 '.action-btn, .btn-order-badge, .btn-edit-order, .btn-change-owner, ' +
-                '.btn-edit-pv-offer, .btn-copy-pv-offer, .btn-history-pv-offer, ' +
-                '.btn-export-pv-offer, .btn-delete-pv-offer, .btn-delete-order, ' +
-                '.btn-history-order, .btn-karta-budowy'
+                    '.btn-edit-pv-offer, .btn-copy-pv-offer, .btn-history-pv-offer, ' +
+                    '.btn-export-pv-offer, .btn-delete-pv-offer, .btn-delete-order, ' +
+                    '.btn-history-order, .btn-karta-budowy'
             );
             if (!btn) return;
 
@@ -786,7 +817,11 @@ class PVSalesUI {
                 if (!editOrderId) return;
                 try {
                     if (window.parent?.SpaRouter) {
-                        window.parent.SpaRouter.openOfferInModule(editOfferType, editOrderId, 'order');
+                        window.parent.SpaRouter.openOfferInModule(
+                            editOfferType,
+                            editOrderId,
+                            'order'
+                        );
                     } else if (window.SpaRouter) {
                         window.SpaRouter.openOfferInModule(editOfferType, editOrderId, 'order');
                     } else {
@@ -812,7 +847,11 @@ class PVSalesUI {
             const offerType = btn.getAttribute('data-offer-type');
 
             // ---- EDIT / SZCZEGÓŁY ----
-            if (title.includes('edytuj') || title.includes('szczegóły') || title.includes('szczegoly')) {
+            if (
+                title.includes('edytuj') ||
+                title.includes('szczegóły') ||
+                title.includes('szczegoly')
+            ) {
                 if (isKartoteka) {
                     try {
                         window.parent.SpaRouter.openOfferInModule(typeAttr, id, 'edit');
@@ -852,13 +891,18 @@ class PVSalesUI {
             }
 
             // ---- PRINT / EXPORT / KARTA BUDOWY ----
-            if (title.includes('wydruk') || title.includes('drukuj') || title.includes('karta budowy')) {
+            if (
+                title.includes('wydruk') ||
+                title.includes('drukuj') ||
+                title.includes('karta budowy')
+            ) {
                 const printOfferId = btn.getAttribute('data-offer-id') || id;
                 const printOrderId = btn.getAttribute('data-order-id') || orderId || '';
                 const printOfferType = btn.getAttribute('data-offer-type') || typeAttr;
-                const printRelatedOrders = (this.ordersMap && printOfferId)
-                    ? [...(this.ordersMap.get(this.normalizeId(printOfferId)) || [])]
-                    : null;
+                const printRelatedOrders =
+                    this.ordersMap && printOfferId
+                        ? [...(this.ordersMap.get(this.normalizeId(printOfferId)) || [])]
+                        : null;
                 openPrintModal(printOfferId, printOrderId, printOfferType, printRelatedOrders);
                 return;
             }
@@ -1051,10 +1095,20 @@ class PVSalesUI {
     getAuditActionMeta(log) {
         const isDiff = log.newData && log.newData._diffMode === true;
         if (log.action === 'delete') {
-            return { className: 'action-delete', icon: 'trash-2', label: 'Usunięto', tone: 'danger' };
+            return {
+                className: 'action-delete',
+                icon: 'trash-2',
+                label: 'Usunięto',
+                tone: 'danger'
+            };
         }
         if (log.action === 'create') {
-            return { className: 'action-create', icon: 'sparkles', label: 'Utworzono', tone: 'create' };
+            return {
+                className: 'action-create',
+                icon: 'sparkles',
+                label: 'Utworzono',
+                tone: 'create'
+            };
         }
         if (isDiff) {
             return { className: 'action-diff', icon: 'pencil', label: 'Zmieniono', tone: 'diff' };
@@ -1108,7 +1162,10 @@ class PVSalesUI {
             const formatter =
                 typeof window.fmt === 'function'
                     ? window.fmt
-                    : (val) => Number(val || 0).toFixed(2).replace('.', ',');
+                    : (val) =>
+                          Number(val || 0)
+                              .toFixed(2)
+                              .replace('.', ',');
             return formatter(value);
         }
         if (typeof value === 'boolean') return value ? 'tak' : 'nie';
@@ -1135,9 +1192,11 @@ class PVSalesUI {
         const parts = [];
         const money = data.totalBrutto || data.totalNetto || data.totalTotalNetto;
         if (money) parts.push(`wartość: ${this.formatAuditValue(Number(money))} PLN`);
-        if (data.clientName || data.company) parts.push(`klient: ${this.escapeHtml(data.clientName || data.company)}`);
+        if (data.clientName || data.company)
+            parts.push(`klient: ${this.escapeHtml(data.clientName || data.company)}`);
         if (data.orderNumber) parts.push(`zamówienie: ${this.escapeHtml(data.orderNumber)}`);
-        if (data.offerNumber || data.number) parts.push(`oferta: ${this.escapeHtml(data.offerNumber || data.number)}`);
+        if (data.offerNumber || data.number)
+            parts.push(`oferta: ${this.escapeHtml(data.offerNumber || data.number)}`);
         if (type === 'order' && data.kartaBudowy) parts.push('zawiera kartę budowy');
         return parts.length ? parts.join(' • ') : 'Zapisano pełną migawkę dokumentu.';
     }
@@ -1210,10 +1269,7 @@ class PVSalesUI {
         }
 
         const canRestore =
-            log.action !== 'delete' &&
-            !isDiff &&
-            type !== 'order' &&
-            type !== 'production_order';
+            log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
         const restoreBtn = canRestore
             ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${id}', '${log.id}', '${type}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
             : '';
@@ -1642,8 +1698,7 @@ class PVSalesUI {
             this.openOfferForEdit(rebuiltData, id, type);
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd podglądu historii:', error);
-            if (typeof window.showToast === 'function')
-                window.showToast(error.message, 'error');
+            if (typeof window.showToast === 'function') window.showToast(error.message, 'error');
         }
     }
 
@@ -1671,7 +1726,7 @@ class PVSalesUI {
             newOffer.id = 'L_COPY_' + Date.now().toString(36);
 
             // Logika wersji
-            let oldNumber = newOffer.number || newOffer.offerNumber || '';
+            const oldNumber = newOffer.number || newOffer.offerNumber || '';
             let newNumber = oldNumber;
 
             // Szukamy końcówki /v2, /V2

@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.4.0] — 2026-07-05
+
+### Features
+
+- **offers:** dodanie import/eksport ofert w kartotece (XLSX zewn. + JSON 1:1) ([plan](#))
+    - Nowy toolbar w sekcji kartoteki z 4 przyciskami
+    - Import XLSX z kolumnami: NUMER_OFERTY, INDEKS_CZESCI, ILOSC, CENA_JEDNOSTKOWA, RABAT i inne
+    - Eksport XLSX do zewnętrznego systemu (ten sam format)
+    - Eksport/Import JSON 1:1 z przenoszeniem oferty + zamówień między urządzeniami
+    - Feature flag w tabeli settings (`feature_import_export_enabled`)
+    - Obsługa konfliktów: Pomiń / Nadpisz / Utwórz kopię
+    - Dennica: RABAT pusty, cena już po rabacie
+    - Audit logging wszystkich akcji importu/eksportu
+    - Dokumentacja usunięcia: `docs/import-export/REMOVAL-GUIDE.md`
+
 ## [1.3.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.2.0...v1.3.0) (2026-07-05)
 
 ### Features

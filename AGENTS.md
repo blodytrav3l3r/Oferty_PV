@@ -206,6 +206,19 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 
 ---
 
+---
+
+## Import/Eksport ofert (kartoteka)
+
+- Wszystkie pliki w `public/js/import-export/` + `public/js/sales/pvImportExportToolbar.js`
+- Backend: `src/routes/featureFlags.ts`
+- Feature flag: klucz `feature_import_export_enabled` w tabeli `settings` (ON domyślnie)
+- Toolbar widoczny tylko gdy flag ON → init w `pvSalesUi.js:307` (`PvImportExportToolbar.init`)
+- Nowe funkcje NIE modyfikują: `offerCrud.js`, `offerManager.js`, `offerItems.js`, `wizard.js`, `router.js`
+- Do usunięcia całości: patrz `docs/import-export/REMOVAL-GUIDE.md`
+
+---
+
 ## Przydatne komendy
 
 | Komenda                               | Co robi                                |
