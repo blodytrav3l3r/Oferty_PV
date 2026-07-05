@@ -5,7 +5,7 @@ function _findPrecoGroup(grupy, dnRury) {
     var bestMatchKey = null;
     var minDiff = Infinity;
     for (var key in grupy) {
-        if (!grupy.hasOwnProperty(key)) continue;
+        if (!Object.prototype.hasOwnProperty.call(grupy, key)) continue;
         var parts = key.split('-').map(Number);
         if (parts.length === 2) {
             var min = parts[0];

@@ -1087,6 +1087,42 @@ function renderComponentSubItems(
                 <td colspan="3" class="pl-lg">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size:0.6rem; color:var(--success);">(-' + discPreco + '%)</span>' : ''}</td>
                 <td class="text-right">${fmt(precoCost)} PLN</td>
             </tr>`;
+            if (precoAlloc.isBottomMostDennica && typeof calcPrecoPricing === 'function') {
+                var precoCalc = calcPrecoPricing(well);
+                if (precoCalc && precoCalc.suma > 0) {
+                    if (precoCalc.bazowa > 0 && precoCalc.kinetaGlowna) {
+                        var dnParts = precoCalc.kinetaGlowna.dn.map(function(d) { return 'DN' + d; });
+                        var etyParts = precoCalc.kinetaGlowna.etykiety.map(function(e) { return '[' + e + ']'; });
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ Kineta bazowa (' + dnParts.join(' / ') + ') ' + etyParts.join(' / ') + '</td><td class="text-right">' + fmt(precoCalc.bazowa * precoMult) + ' PLN</td></tr>';
+                    }
+                    if (precoCalc.skrzynki && precoCalc.skrzynki.suma > 0) {
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + skrzynki włazowe (' + precoCalc.skrzynki.ilosc + ' × ' + fmt(precoCalc.skrzynki.cenaSzt) + ' PLN)</td><td class="text-right">' + fmt(precoCalc.skrzynki.suma * precoMult) + ' PLN</td></tr>';
+                    }
+                    if (precoCalc.spadekKineta > 0) {
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + spadek kinety</td><td class="text-right">' + fmt(precoCalc.spadekKineta * precoMult) + ' PLN</td></tr>';
+                    }
+                    if (precoCalc.spadekMufa > 0) {
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + spadek mufy</td><td class="text-right">' + fmt(precoCalc.spadekMufa * precoMult) + ' PLN</td></tr>';
+                    }
+                    if (precoCalc.uniesienie > 0) {
+                        var mm = precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0 ? precoCalc.uniesieniaSzczegoly[0].mm : '';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + uniesienie' + (mm ? ' (' + mm + ' mm)' : '') + '</td><td class="text-right">' + fmt(precoCalc.uniesienie * precoMult) + ' PLN</td></tr>';
+                    }
+                    if (precoCalc.redukcja > 0) {
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + redukcja' + (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') + '</td><td class="text-right">' + fmt(precoCalc.redukcja * precoMult) + ' PLN</td></tr>';
+                    }
+                    if (precoCalc.dodWloty && precoCalc.dodWloty.length > 0) {
+                        for (var dwi = 0; dwi < precoCalc.dodWloty.length; dwi++) {
+                            var dw = precoCalc.dodWloty[dwi];
+                            var dwTyp = dw.typ === 'kaskada' ? 'kaskada' : dw.typ === 'sciana' ? 'ściana' : dw.typ === 'doplyw' ? 'dopływ' : (dw.typ || '');
+                            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + dod. wlot DN' + dw.dn + (dwTyp ? ' (' + dwTyp + ')' : '') + ' [' + (dw.label || '') + ']</td><td class="text-right">' + fmt(dw.cena * precoMult) + ' PLN</td></tr>';
+                        }
+                    }
+                    if (precoCalc.pelnaWysokosc && precoCalc.pelnaWysokosc.cena > 0) {
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + pełna wysokość (' + precoCalc.pelnaWysokosc.metry.toFixed(2) + ' m)</td><td class="text-right">' + fmt(precoCalc.pelnaWysokosc.cena * precoMult) + ' PLN</td></tr>';
+                    }
+                }
+            }
         } else if (precoAlloc.error && precoAlloc.isBottomMostDennica) {
             html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--danger);">
                 <td colspan="3" class="pl-lg">↳ ⚠ Wkładka PRECO — ${precoAlloc.error}</td>
