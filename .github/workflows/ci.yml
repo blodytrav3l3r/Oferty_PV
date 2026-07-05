@@ -29,6 +29,8 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
             - name: Apply Prisma migrations
+              env:
+                  DATABASE_URL: file:../data/app_database.sqlite
               run: npx prisma migrate deploy
 
             - name: Run ESLint (backend)
@@ -61,6 +63,8 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
             - name: Apply Prisma migrations
+              env:
+                  DATABASE_URL: file:../data/app_database.sqlite
               run: npx prisma migrate deploy
 
             - name: Typecheck backend
@@ -87,6 +91,8 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
             - name: Apply Prisma migrations
+              env:
+                  DATABASE_URL: file:../data/app_database.sqlite
               run: npx prisma migrate deploy
 
             - name: Run tests
@@ -145,6 +151,8 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
             - name: Apply Prisma migrations
+              env:
+                  DATABASE_URL: file:../data/app_database.sqlite
               run: npx prisma migrate deploy
 
             - name: Dry-run standard-version
