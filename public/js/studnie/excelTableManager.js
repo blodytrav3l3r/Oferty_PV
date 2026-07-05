@@ -218,6 +218,17 @@ function _excelWellMatchesTab(well, tab) {
     return String(well.dn) === String(tab);
 }
 
+/* Helper: znajdź referencyjną studnię do budowy kolumn gdy zakładka pusta */
+function _excelGetReferenceWell(dn) {
+    if (typeof wells === 'undefined' || !wells || wells.length === 0) {
+        return { magazyn: 'Kluczbork', dn: dn, nadbudowa: 'betonowa', dennicaMaterial: 'betonowa', stycznaNadbudowa1200: false, redukcjaDN1000: false, wkladkaZwienczenie: 'brak', wkladkaOsadnikPreco: 'brak', uszczelka: 'GSG', spocznik: 'brak', stopnie: 'brak', kineta: 'brak' };
+    }
+    for (var _i = 0; _i < wells.length; _i++) {
+        if (_excelWellMatchesTab(wells[_i], dn)) return wells[_i];
+    }
+    return wells[0];
+}
+
 function _excelGetMaxTransitions() {
     var tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
     var tabWells = typeof wells !== 'undefined' && Array.isArray(wells)
@@ -288,6 +299,9 @@ function _excelGetComponentsForDn(dn, well) {
 }
 
 function _excelBuildComponentColumns(dn, well) {
+    if (!well && typeof _excelGetReferenceWell === 'function') {
+        well = _excelGetReferenceWell(dn);
+    }
     const groups = _excelGetComponentsForDn(dn, well);
     const cols = [];
 
@@ -908,6 +922,14 @@ function _excelShortLabel(name, componentType) {
         case 'uszczelka': {
             var short = 'Uszcz.';
             var detail = name.replace(/^Uszczelka\s*/i, '').trim() || name;
+            var uType = (detail.match(/\b(GSG|SDV)\b/i) || [])[1] || '';
+            var uDn = (detail.match(/DN(\d+)/i) || [])[0] || '';
+            var uSuf = /\bpier/i.test(detail) ? ' PO' : (/\bNBR\b/i.test(detail) ? ' NBR' : '');
+            if (uType) {
+                detail = uType.toUpperCase() + (uDn ? ' ' + uDn.toUpperCase() : '') + uSuf;
+            } else if (detail.length > 14) {
+                detail = detail.substring(0, 12) + '…';
+            }
             return { short: short, detail: detail };
         }
         case 'styczna': {
@@ -1652,6 +1674,19 @@ function excelSwitchTab(tab) {
     _excelRenderTabs();
     _excelRenderTable(tab);
     _excelUpdateHeaderProdCodes();
+    /* Auto-focus na empty row gdy zakładka pusta */
+    if (typeof wells !== 'undefined' && wells.length > 0) {
+        var hasWellsInTab = false;
+        for (var _st = 0; _st < wells.length; _st++) {
+            if (_excelWellMatchesTab(wells[_st], tab)) { hasWellsInTab = true; break; }
+        }
+        if (!hasWellsInTab) {
+            setTimeout(function() {
+                var nameEl = document.getElementById('excel-empty-name');
+                if (nameEl) nameEl.focus();
+            }, 150);
+        }
+    }
 }
 
 /* ===== ADD WELL TO CURRENT TAB ===== */
@@ -1826,7 +1861,11 @@ function _excelRenderTable(dn) {
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     const maxTr = _excelMaxTransitions[dn] || 1;
-    const compCols = _excelBuildComponentColumns(dn, tabWells[0]);
+    var refWell = tabWells[0];
+    if (!refWell && typeof _excelGetReferenceWell === 'function') {
+        refWell = _excelGetReferenceWell(dn);
+    }
+    const compCols = _excelBuildComponentColumns(dn, refWell);
     const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].includes(dn);
 
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
@@ -2260,7 +2299,7 @@ function _excelRenderTable(dn) {
     html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};text-align:center;color:#334155;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">—</td>`;
 
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Nazwa studni… (Enter/zmiana dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Wpisz nazwę i Enter aby dodać" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
     html += `<td style="${tdEmpty}position:sticky;left:162px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(72)}" /></td>`;
