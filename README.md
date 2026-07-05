@@ -1,6 +1,6 @@
 # WITROS Oferty PV — Generator ofert handlowych
 
-**Wersja:** 1.0.0  
+**Wersja:** 1.3.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA  
 **Licencja:** ISC  
 **Autor:** WITROS
@@ -162,13 +162,31 @@ Po uruchomieniu serwera dokumentacja Swagger/OpenAPI dostępna jest pod adresem:
 
 ---
 
-## Screen
+## Contributing
 
-> TODO: Zrzut ekranu aplikacji
+Zapraszamy do kontrybucji! Prosimy o zapoznanie się z [CONTRIBUTING.md](CONTRIBUTING.md), która zawiera:
 
-```
-[Screen placeholder — wstaw zrzut ekranu głównego widoku aplikacji]
-```
+- **Branch strategy** — model Git Flow (`main`, `feature/*`, `fix/*`, `hotfix/*`, `release/*`)
+- **Conventional Commits** — wymagany format commitów
+- **Pull Requesty** — proces, wymagania i code review
+- **Code Review** — wskazówki dla recenzentów
+- **Wersjonowanie** — SemVer 2.0.0
+
+Zgłoszenia błędów i propozycje funkcji przyjmujemy przez [GitHub Issues](https://github.com/blodytrav3l3r/Oferty_PV/issues).
+
+---
+
+## Security
+
+Bezpieczeństwo projektu jest priorytetem. Jeśli znajdziesz podatność:
+
+1. **Nie otwieraj publicznego issue** — zgłoś ją prywatnie
+2. Wyślij szczegóły na **blodytrav3l3r@witros.pl** (odpowiedź w ciągu 48h)
+3. Możesz też otworzyć [GitHub Advisory](https://github.com/blodytrav3l3r/Oferty_PV/security/advisories)
+
+Pełna polityka bezpieczeństwa: [.github/SECURITY.md](.github/SECURITY.md)
+
+Wspierane wersje: obecnie **v1.x** (najnowsza).
 
 ---
 
