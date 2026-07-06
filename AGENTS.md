@@ -200,32 +200,10 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 
 ## Workflow
 
-### Przed zmianami
-
-1. `graphify query "<co robię>"` — zrozum kontekst
-2. Sprawdź `docs/errors-known.md` — czy znany bug pasuje
-
-### W trakcie
-
-3. Przestrzegaj ADR-ów (vanilla JS, SQLite, Express+Prisma)
-4. frontend JS: dodaj `window.X = X` na końcu pliku
-5. Po `innerHTML` = wywołaj `lucide.createIcons({root: container})`
-6. Zabezpiecz DOM queries: `if (el) el.addEventListener(...)`
-7. Wewnątrz `innerHTML`: zawsze `escapeHtml(str)` dla danych użytkownika
-
-### Po zmianach
-
-8. `graphify update .` — aktualizuj graf
-9. Jeśli zmieniłeś CSS/HTML: podbij `?v=N` w link/script tag
-10. `npm run typecheck` / `npm run typecheck:frontend` — walidacja
-11. `npm run version:check` — spójność wersji (robi to post-commit hook)
-12. Browser: `Ctrl+Shift+R` po dużej zmianie CSS
-
-### Commit
-
-13. Przed wykonaniem commita — **zapytaj użytkownika**: czy tylko commit, czy też `npm run release` (bump wersji + tag)
-14. Domyślnie: tylko commit. Release robimy na wyraźne życzenie.
-15. Po commicie NIE pytaj o release ponownie — czekaj na inicjatywę użytkownika.
+1. `graphify query "<co robię>"` — zrozum kontekst przed zmianami
+2. Przestrzegaj ADR-ów, escapeHtml, window.X, lucide.createIcons po innerHTML
+3. Po zmianach: `graphify update .`, podbij `?v=N` gdy CSS/HTML, `npm run typecheck`
+4. Commit tylko po zgodzie użytkownika. Domyślnie: commit bez release.
 
 ---
 
