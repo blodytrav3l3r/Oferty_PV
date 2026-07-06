@@ -4,6 +4,20 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.2.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.1.0...v1.2.0) (2026-07-05)
+
+### Features
+
+- **audit:** AI Learning System - full audit, fixes P1-P3, CI repair, 1299 tests ([41fe769](https://github.com/blodytrav3l3r/Oferty_PV/commit/41fe769f5c050c23e1cd42f39df29ff3a0d74f25))
+- **studnie:** health check python backendu z animacja statusu ([0a8b0fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/0a8b0fa05c0ea47bc55af1870de2094ef6e335c5))
+
+### Bug Fixes
+
+- **release:** aktualizacja regex changelog w check-version.mjs ([20cc300](https://github.com/blodytrav3l3r/Oferty_PV/commit/20cc300591f4cf17fe5b9b4f5d07fdaf18d2b7b3))
+- **release:** usunieto auto-bump z commit-msg hook ([a0a2d66](https://github.com/blodytrav3l3r/Oferty_PV/commit/a0a2d66c6094c2ee69b80f5b4612b1b9a3832b7e))
+- **studnie:** const visiblePrzejsciaTypes -> let (blokowal push) ([4f9b5db](https://github.com/blodytrav3l3r/Oferty_PV/commit/4f9b5db57999b2a0bc5367afc6a1d285677257b0))
+- **ui:** unifikacja wersji w ui i race condition vite↔backend ([0631a5b](https://github.com/blodytrav3l3r/Oferty_PV/commit/0631a5bbbf6a70025fa1883bc2eac9e6a8dd0a1d))
+
 ## 1.1.0 (2026-07-04)
 
 ### Features

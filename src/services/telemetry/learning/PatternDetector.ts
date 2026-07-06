@@ -211,6 +211,210 @@ export class PatternDetector {
     }
 
     /**
+     * Wykrywa wzorce RING_PATTERN: najczęściej akceptowane konfiguracje kręgów dla danego DN.
+     * Zamiast diffów między auto a final, patrzy na BEZPOŚREDNIO zaakceptowane configi.
+     */
+    detectRingPattern(
+        records: Array<{
+            dn: string;
+            componentSeq?: string;
+            wasAccepted: boolean;
+            acceptanceCount: number;
+        }>
+    ): KnowledgePattern[] {
+        const freq = new Map<string, { count: number; dn: string }>();
+        for (const r of records) {
+            if (!r.componentSeq) continue;
+            const weight = r.wasAccepted ? 2 : 1;
+            try {
+                const seq = JSON.parse(r.componentSeq) as Array<{ productId?: string; componentType?: string }>;
+                if (!Array.isArray(seq)) continue;
+                const rings = seq.filter(x => {
+                    const ct = (x.componentType || '').toLowerCase();
+                    return ct === 'krag' || ct === 'krag_ot';
+                });
+                if (rings.length === 0) continue;
+                const pattern = rings.map(x => x.productId || '?').join('|');
+                const key = r.dn + '|ring|' + pattern;
+                const existing = freq.get(key);
+                if (existing) {
+                    existing.count += weight;
+                } else {
+                    freq.set(key, { count: weight, dn: r.dn });
+                }
+            } catch { /* skip parse errors */ }
+        }
+
+        const patterns: KnowledgePattern[] = [];
+        for (const [key, val] of freq) {
+            if (val.count < 3) continue;
+            patterns.push({
+                patternType: 'ring_pattern',
+                patternKey: key,
+                dn: val.dn,
+                hitCount: val.count,
+                successCount: val.count,
+                rejectionCount: 0,
+                confidence: this._confidence(val.count),
+                description: 'Popularny układ kręgów w DN' + val.dn + ' (wystąpień: ' + val.count + ')',
+                recommendation: {
+                    ringPattern: key,
+                    occurrences: val.count
+                }
+            });
+        }
+        return patterns;
+    }
+
+    /**
+     * Wykrywa wzorce CLOSURE_PREFERENCE: preferencja konus vs DIN vs płyta dla danego DN.
+     */
+    detectClosurePreference(
+        records: Array<{
+            dn: string;
+            componentSeq?: string;
+            wasAccepted: boolean;
+        }>
+    ): KnowledgePattern[] {
+        const closureTypes = ['konus', 'plyta_din', 'plyta_zamykajaca', 'plyta_najazdowa', 'pierscien_odciazajacy'];
+        const freq = new Map<string, { konus: number; din: number; other: number; total: number }>();
+        for (const r of records) {
+            if (!r.componentSeq) continue;
+            const weight = r.wasAccepted ? 3 : 1;
+            try {
+                const seq = JSON.parse(r.componentSeq) as Array<{ componentType?: string }>;
+                if (!Array.isArray(seq)) continue;
+                const closure = seq.find(x => closureTypes.includes((x.componentType || '').toLowerCase()));
+                if (!closure) continue;
+                const ct = (closure.componentType || '').toLowerCase();
+                if (!freq.has(r.dn)) {
+                    freq.set(r.dn, { konus: 0, din: 0, other: 0, total: 0 });
+                }
+                const entry = freq.get(r.dn)!;
+                entry.total += weight;
+                if (ct === 'konus') entry.konus += weight;
+                else if (ct === 'plyta_din') entry.din += weight;
+                else entry.other += weight;
+            } catch { /* skip */ }
+        }
+
+        const patterns: KnowledgePattern[] = [];
+        for (const [dn, val] of freq) {
+            if (val.total < 5) continue;
+            const konusRatio = val.konus / val.total;
+            const dinRatio = val.din / val.total;
+            if (konusRatio > 0.7) {
+                patterns.push({
+                    patternType: 'closure_preference',
+                    patternKey: dn + '|prefer_konus',
+                    dn,
+                    hitCount: val.total,
+                    successCount: val.konus,
+                    rejectionCount: val.din + val.other,
+                    confidence: this._confidence(val.total),
+                    description: 'Preferencja konus w DN' + dn + ' (' + Math.round(konusRatio * 100) + '%)',
+                    recommendation: {
+                        preferredClosure: 'konus',
+                        ratio: konusRatio,
+                        totalCases: val.total
+                    }
+                });
+            }
+            if (dinRatio > 0.4) {
+                patterns.push({
+                    patternType: 'closure_preference',
+                    patternKey: dn + '|prefer_din',
+                    dn,
+                    hitCount: val.total,
+                    successCount: val.din,
+                    rejectionCount: val.konus + val.other,
+                    confidence: this._confidenceWithDecay(val.total, val.din, val.konus + val.other),
+                    description: 'Częste użycie DIN w DN' + dn + ' (' + Math.round(dinRatio * 100) + '%)',
+                    recommendation: {
+                        preferredClosure: 'plyta_din',
+                        ratio: dinRatio,
+                        totalCases: val.total
+                    }
+                });
+            }
+        }
+        return patterns;
+    }
+
+    /**
+     * Wykrywa wzorce PREFER_PRODUCT / AVOID_PRODUCT: produkty częściej akceptowane/odrzucane.
+     */
+    detectProductPreference(
+        records: Array<{
+            dn: string;
+            componentSeq?: string;
+            wasAccepted: boolean;
+            wasRejected: boolean;
+        }>
+    ): KnowledgePattern[] {
+        const productStats = new Map<string, { accepted: number; rejected: number; dn: string }>();
+        for (const r of records) {
+            if (!r.componentSeq) continue;
+            try {
+                const seq = JSON.parse(r.componentSeq) as Array<{ productId?: string }>;
+                if (!Array.isArray(seq)) continue;
+                for (const item of seq) {
+                    const pid = item.productId;
+                    if (!pid) continue;
+                    if (!productStats.has(pid)) {
+                        productStats.set(pid, { accepted: 0, rejected: 0, dn: r.dn });
+                    }
+                    const stat = productStats.get(pid)!;
+                    if (r.wasAccepted) stat.accepted++;
+                    if (r.wasRejected) stat.rejected++;
+                }
+            } catch { /* skip */ }
+        }
+
+        const patterns: KnowledgePattern[] = [];
+        for (const [pid, stat] of productStats) {
+            const total = stat.accepted + stat.rejected;
+            if (total < 3) continue;
+            const acceptRatio = stat.accepted / total;
+            if (acceptRatio > 0.85) {
+                patterns.push({
+                    patternType: 'prefer_product',
+                    patternKey: pid,
+                    dn: stat.dn,
+                    hitCount: total,
+                    successCount: stat.accepted,
+                    rejectionCount: stat.rejected,
+                    confidence: this._confidenceWithDecay(total, stat.accepted, stat.rejected),
+                    description: 'Preferowany produkt: ' + pid + ' (akceptacja ' + Math.round(acceptRatio * 100) + '%)',
+                    recommendation: {
+                        productId: pid,
+                        acceptRatio,
+                        totalCases: total
+                    }
+                });
+            }
+            if (acceptRatio < 0.3) {
+                patterns.push({
+                    patternType: 'avoid_product',
+                    patternKey: pid,
+                    dn: stat.dn,
+                    hitCount: total,
+                    successCount: 0,
+                    rejectionCount: total,
+                    confidence: this._confidenceWithDecay(total, 0, total),
+                    description: 'Unikany produkt: ' + pid + ' (odrzucenie ' + Math.round((1 - acceptRatio) * 100) + '%)',
+                    recommendation: {
+                        productId: pid,
+                        rejectRatio: 1 - acceptRatio,
+                        totalCases: total
+                    }
+                });
+            }
+        }
+        return patterns;
+    }
+
+    /**
      * Persist wykrytych wzorców do KnowledgeBase.
      */
     async persist(patterns: KnowledgePattern[]): Promise<number> {

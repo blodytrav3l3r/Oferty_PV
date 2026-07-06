@@ -2240,3 +2240,132 @@ select.form-input option {
     top: 3.2rem;
     z-index: 20;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ALTERNATYWNE KONFIGURACJE (F2: multi-wariant)
+   ═══════════════════════════════════════════════════════════ */
+.alternatives-panel {
+    display: none;
+    margin: 0.5rem 0;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 8px;
+    background: var(--color-bg, #fff);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 0.82rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+    opacity: 0;
+}
+.alternatives-panel.alternatives-open {
+    display: block;
+    max-height: 600px;
+    overflow-y: auto;
+    opacity: 1;
+}
+.alternatives-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--color-primary-light, #f0f4ff);
+    border-bottom: 1px solid var(--color-border, #d1d5db);
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.alternatives-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.alternatives-title svg {
+    width: 16px;
+    height: 16px;
+}
+.alternatives-count {
+    color: var(--color-text-secondary, #6b7280);
+    font-weight: 400;
+    font-size: 0.78rem;
+    background: var(--color-bg-secondary, #f3f4f6);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+}
+.alternatives-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--color-text-secondary, #6b7280);
+    padding: 0 0.25rem;
+    line-height: 1;
+}
+.alternatives-close:hover {
+    color: var(--color-text, #111);
+}
+.alternatives-list {
+    padding: 0.4rem 0;
+}
+.alternatives-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+}
+.alternatives-item:hover {
+    background: var(--color-hover, #f9fafb);
+}
+.alternatives-item.active {
+    background: var(--color-primary-light, #f0f4ff);
+    border-left-color: var(--color-primary, #2563eb);
+}
+.alt-index {
+    font-weight: 700;
+    color: var(--color-primary, #2563eb);
+    min-width: 1.8rem;
+    font-size: 0.78rem;
+}
+.alt-score {
+    font-weight: 600;
+    color: var(--color-accent, #059669);
+    min-width: 2.5rem;
+    font-size: 0.82rem;
+    text-align: center;
+    background: var(--color-bg-secondary, #f3f4f6);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+.alt-info {
+    flex: 1;
+    color: var(--color-text-secondary, #6b7280);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.alt-reason {
+    display: none;
+    color: var(--color-text-secondary, #6b7280);
+    font-size: 0.72rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.alternatives-item:hover .alt-reason {
+    display: inline;
+}
+.alt-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-primary, #2563eb);
+    background: var(--color-primary-light, #dbeafe);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}
