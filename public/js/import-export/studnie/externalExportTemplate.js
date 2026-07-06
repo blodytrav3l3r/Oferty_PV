@@ -14,7 +14,7 @@ window.StudnieExternalExportTemplate = {
             const wells = data.wells || [];
             let lp = 1;
             for (const well of wells) {
-                const components = well.components || [];
+                const components = well.config || well.components || [];
                 for (const comp of components) {
                     const isDennica =
                         comp.indeks &&
