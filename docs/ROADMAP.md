@@ -58,9 +58,10 @@
     - Obsługa języków: polski (domyślny), angielski
     - Przechowywanie preferencji językowej użytkownika
 
-2. **Eksport CSV/Excel**
-    - Eksport listy ofert i zamówień do formatów .xlsx i .csv
-    - Użycie biblioteki exceljs lub podobnej
+2. ~~**Eksport CSV/Excel**~~
+    - ~~Eksport listy ofert i zamówień do formatów .xlsx i .csv~~
+    - ~~Użycie biblioteki exceljs lub podobnej~~
+    - ✅ Zrealizowane: eksport XLSX dla rur i studni przez `public/js/import-export/` (SheetJS)
 
 3. **Dashboard statystyk**
     - Widok z wykresami: liczba ofert, wartość, statusy

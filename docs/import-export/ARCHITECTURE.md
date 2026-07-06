@@ -76,17 +76,19 @@ prisma/migrations/
 Kolumny:
 
 - `NUMER_OFERTY` (wymagany) — identyfikator oferty
-- `NR_STUDNI` (opcjonalny) — nazwa studni
-- `GLEBOKOSC` (opcjonalny) — głębokość
+- `NR_STUDNI` (opcjonalny) — dla studni: nazwa studni; dla rur: typ PEHD (`PEHD-3MM`, `PEHD-4MM` lub puste)
+- `GLEBOKOSC` (opcjonalny) — głębokość (tylko studnie)
 - `INDEKS_CZESCI` (wymagany) — kod produktu z cennika
 - `ILOSC` (wymagany) — ilość sztuk
 - `CENA_JEDNOSTKOWA` (wymagany) — cena jednostkowa
-- `WERS` (opcjonalny) — wersja oferty
-- `RABAT` (opcjonalny) — rabat w %; pusty dla dennicy (cena finalna)
-- `SREDNICA` (opcjonalny) — średnica
-- `ZAKONCZENIE` (opcjonalny) — typ zakończenia
-- `MAGA` (opcjonalny) — lokalizacja magazynowa
+- `WERSJA` (opcjonalny) — wersja oferty
+- `RABAT` (opcjonalny) — rabat w % (wartość 0–100); w generowanym XLSX stała liczba 2 miejsca po przecinku
+- `SREDNICA` (opcjonalny) — średnica (tylko studnie)
+- `ZAKONCZENIE` (opcjonalny) — typ zakończenia (tylko studnie)
+- `MAGAZYN` (opcjonalny) — lokalizacja magazynowa (tylko studnie)
 - `LP` (opcjonalny) — kolejność sortowania
+
+Kolumny specyficzne dla studni (`GLEBOKOSC`, `SREDNICA`, `ZAKONCZENIE`, `MAGAZYN`) pozostają puste w eksporcie rur. Kolumna `NR_STUDNI` ma odmienne znaczenie w zależności od modułu: dla studni to nazwa studni (grupowanie komponentów), dla rur to typ PEHD (wkładka polietylenowa).
 
 ## Format JSON 1:1
 

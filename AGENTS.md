@@ -239,6 +239,8 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 - Toolbar widoczny tylko gdy flag ON → init w `pvSalesUi.js:307` (`PvImportExportToolbar.init`)
 - Nowe funkcje NIE modyfikują: `offerCrud.js`, `offerManager.js`, `offerItems.js`, `wizard.js`, `router.js`
 - Do usunięcia całości: patrz `docs/import-export/REMOVAL-GUIDE.md`
+- Format XLSX (zewn.): 12 kolumn współdzielonych; `NR_STUDNI` dla rur = typ PEHD, dla studni = nazwa studni
+- Szczegóły formatu: `docs/import-export/ARCHITECTURE.md`
 
 ---
 
