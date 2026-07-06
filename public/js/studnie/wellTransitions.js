@@ -988,9 +988,6 @@ function refreshPrzejsciaVisibilityTiles() {
     if (counterEl)
         counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
 
-    // Sprawdzenie statusu serwera
-    checkBackendStatus();
-
     // Aktualizuj kazdy kafelek w miejscu
     const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
     tiles.forEach((tile) => {

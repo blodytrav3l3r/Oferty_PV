@@ -148,6 +148,9 @@ interface Window {
 
     /* ui.js */
     globalUsersMap: Map<string, unknown>;
+    checkBackendStatus(): Promise<void>;
+    startBackendPolling(): void;
+    stopBackendPolling(): void;
     showModal(options: {
         title?: string;
         content?: string;
@@ -172,6 +175,9 @@ interface Window {
     /* calcInput.js */
     parseCalcExpression(expr: string): number | null;
     resolveFieldValue(inputEl: HTMLElement | null | undefined): number | null;
+
+    /* telemetryBridge.js */
+    computeDiameterProfile(configItems: any[], baseDn?: string): Array<{heightFrom: number; heightTo: number; diameter: number}>;
 
     /** Dynamiczne właściwości — studnie/, rury/, spa/ */
     [key: string]: any;

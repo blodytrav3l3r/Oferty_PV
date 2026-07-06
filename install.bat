@@ -1,107 +1,108 @@
 @echo off
-chcp 65001 >nul
+REM ===========================================================
+REM  install.bat — Setup srodowiska developer-skiego (final)
+REM  Strategia: proste kroki, zero kolorow i delikatnych ANSI.
+REM ===========================================================
+
 setlocal
 cd /d "%~dp0"
 
-echo ====================================================
-echo   WITROS Oferty PV - instalator
-echo ====================================================
+echo ===========================================================
+echo   WITROS Oferty PV - Instalator
+echo ===========================================================
 echo.
 
-REM 1. Sprawdzenie Node.js
-echo [1/6] Sprawdzenie Node.js...
+REM 1. Node.js 20+
 where node >nul 2>nul
 if errorlevel 1 (
-    echo BLAD: Node.js nie jest zainstalowany.
-    echo Pobierz ze https://nodejs.org/ i zainstaluj LTS 18+.
+    echo [BLAD] Brak Node.js.
     pause
     exit /b 1
 )
-node --version
-echo OK
-echo.
+for /F "tokens=2" %%v in ('node --version') do echo [OK] Node.js %%v
 
-REM 2. Sprawdzenie npm
-echo [2/6] Sprawdzenie npm...
+REM 2. npm
 where npm >nul 2>nul
 if errorlevel 1 (
-    echo BLAD: npm nie jest dostepny.
+    echo [BLAD] Brak npm.
     pause
     exit /b 1
 )
-call npm --version
-echo OK
-echo.
+for /F "tokens=1" %%v in ('npm --version') do echo [OK] npm v%%v
 
-REM 3. Instalacja zaleznosci
-echo [3/6] Instalacja node_modules...
-if not exist "package.json" (
-    echo BLAD: brak package.json w katalogu %CD%
+REM 3. Git (opcjonalny)
+where git >nul 2>nul && echo [OK] Git || echo [INFO] Brak Git - husky hooks beda nieaktywne
+
+REM 4. Struktura
+if not exist "src" (
+    echo [BLAD] Brak katalogu src\
     pause
     exit /b 1
 )
-call npm install --no-audit --no-fund
+if not exist "prisma" (
+    echo [BLAD] Brak katalogu prisma\
+    pause
+    exit /b 1
+)
+echo [OK] Struktura OK
+
+REM 5. npm install
+echo [INFO] npm install (moze potrwac kilka minut)...
+if exist "package-lock.json" (
+    call npm ci --no-audit --no-fund
+) else (
+    call npm install --no-audit --no-fund
+)
 if errorlevel 1 (
-    echo BLAD: npm install nie powiodl sie.
+    echo [BLAD] npm install nie powiodl sie.
     pause
     exit /b 1
 )
-echo OK
-echo.
+echo [OK] node_modules zainstalowane
 
-REM 4. Prisma - generate
-echo [4/6] Prisma generate...
+REM 6. Prisma
+echo [INFO] Prisma generate...
 call npx prisma generate
 if errorlevel 1 (
-    echo BLAD: prisma generate nie powiodl sie.
+    echo [BLAD] prisma generate nie powiodl sie.
     pause
     exit /b 1
 )
-echo OK
-echo.
+echo [OK] Prisma Client OK
 
-REM 5. Prisma - db push (tworzy dev.db)
-echo [5/6] Prisma db push...
-call npx prisma db push --accept-data-loss
-if errorlevel 1 (
-    echo BLAD: prisma db push nie powiodl sie.
-    pause
-    exit /b 1
-)
-echo OK
-echo.
-
-REM 6. (Opcjonalnie) Seed
-if exist "prisma\seed.js" (
-    echo [6/6] Prisma seed...
-    call npx prisma db seed
-) else if exist "prisma\seed.ts" (
-    echo [6/6] Prisma seed (TypeScript)...
-    call npx prisma db seed
+REM 7. Schema DB
+echo [INFO] migrate db...
+if exist "migrations\migration_lock.toml" (
+    call npx prisma migrate deploy
+    if errorlevel 1 (
+        echo [INFO] migrate deploy nie powiodl sie - fallback db push
+        call npx prisma db push --skip-generate --accept-data-loss
+    )
 ) else (
-    echo [6/6] Pomijam seed (brak pliku seed)
+    call npx prisma db push --skip-generate --accept-data-loss
 )
-echo.
+if errorlevel 1 (
+    echo [BLAD] Prisma schema nie powiodl sie.
+    pause
+    exit /b 1
+)
+echo [OK] Schema OK
 
-echo ====================================================
-echo   GOTOWE
-echo ====================================================
-echo.
-echo Uruchomienie: npm start
-echo lub: node server.js
-echo.
-echo Aplikacja bedzie dostepna pod: http://localhost:3000
-echo Konto: admin / admin123
-echo.
-
-REM Pytanie o uruchomienie
-set /p RUN="Uruchomic serwer teraz? (T/N): "
-if /i "%RUN%"=="T" (
-    echo.
-    echo Uruchamiam server...
-    echo (Zatrzymanie: Ctrl+C)
-    echo.
-    call npm start
+REM 8. Seed (opcja)
+if exist "prisma\seed.ts" (
+    echo [INFO] Seed...
+    call npx ts-node prisma\seed.ts >nul 2>nul
+    if not errorlevel 1 (echo [OK] Seed OK)
 )
 
+REM 9. Typecheck
+echo [INFO] typecheck...
+call npx tsc --noEmit >nul 2>nul && echo [OK] Brak bledow || echo [WARN] Blad typecheck
+
+echo ===========================================================
+echo   Instalacja zakonczona
+echo ===========================================================
+echo.
+echo Uruchom dev.bat aby zaczac prace.
 pause
+endlocal

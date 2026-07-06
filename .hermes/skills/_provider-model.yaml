@@ -1,0 +1,112 @@
+# Provider Model v1 — Capability → service tier mapping (Provider Pattern)
+#
+# Manifest zachowuje `providers:` (lite, deklaratywne).
+# Ten plik rozszerza o:
+#   - service-level metadata (latency, failure_rate)
+#   - dependency patterns (which providers cluster together)
+#   - substitution rules for failed/missing implementations
+#
+# W runtime: Provider Resolver używa obu źródeł.
+# W development: developer aktualizuje oba pliki razem.
+
+version: 1
+
+# ════════════════════ SERVICE AGREEMENTS ════════════════════
+
+service_caps:
+  excel-debug:
+    description: "Specialised playbook for Excel-table bugs in Oferty_PV"
+    source_skills: [excel-debug]
+    tier_offered: [standard]
+    tier_default: standard
+    tier_recommended_for:
+      - "Standard bug in paste/copy or render"
+      - "Mid-complexity debug session"
+    fallback: []
+    notes: |
+      Pro tier (excel-debug-pro) is placeholder. Manifest v3 declares it;
+      actual SKILL.md content for pro-tier is not yet split.
+
+  planning:
+    description: "Plan mode (`.hermes/plan-*.md`)"
+    source_skills: [plan]
+    tier_offered: [lite, standard, pro]
+    tier_default: standard
+    tier_recommended_for:
+      - "lite: simple 1-2 files, no planning needed"
+      - "standard: typical feature/refactor"
+      - "pro: multi-component, complex deps"
+    fallback: []
+    notes: |
+      plan-lite at .hermes/skills/plan-lite/SKILL.md (small stub).
+      plan-pro placeholder - .hermes/skills/plan-pro/SKILL.md.
+
+  debug:
+    description: "Generic debugging playbook"
+    source_skills: [systematic-debugging]
+    tier_offered: [standard]
+    tier_default: standard
+    fallback: []
+
+  graphify:
+    description: "Knowledge graph build/query"
+    source_skills: [graphify]
+    tier_offered: [standard]
+    tier_default: standard
+    fallback: []
+
+# ════════════════════ SERVICE SUBSTITUTION ════════════════════
+
+substitution_rules:
+  - cap: planning
+    on_failure_of_tier: standard
+    substitute_with_tier: lite
+    rationale: "If plan/skill fails to load, fall back to plan-lite smaller stub"
+
+  - cap: excel-debug
+    on_failure_of_tier: standard
+    substitute_with_tier: literal          # no auto-downgrade
+    rationale: "Excel debugging too critical to substitute lite"
+
+# ════════════════════ DEPENDENCY PATTERNS ════════════════════
+
+patterns:
+  "core-skeleton":
+    description: "Almost everything requires conventions-lite + router"
+    required_capabilities: [project-conventions, skill-routing]
+
+  "excel-debug-cluster":
+    description: "Excel bugs require conventions + excel-debug"
+    required_capabilities: [project-conventions, excel-paste]
+    soft_capabilities: [debug, root-cause]
+
+  "complex-task-cluster":
+    description: "Big features often need multi-agent + planning"
+    required_capabilities: [project-conventions, planning]
+    soft_capabilities: [coding, reviewing]
+
+# ════════════════════ PERFORMANCE BUDGETS ════════════════════
+
+budget_prefabs:
+  mini:
+    cap_tokens: 30000
+    max_skills: 3
+    description: "When user says 'krótka odpowiedź', 'kilka zdan'"
+
+  standard:
+    cap_tokens: 100000
+    max_skills: 6
+    description: "Default — most tasks"
+
+  deep:
+    cap_tokens: 250000
+    max_skills: 10
+    description: "Multi-stage plan / audit / graph build"
+
+# ════════════════════ RUNTIME HOOKS ════════════════════
+
+runtime_hooks:
+  - name: before_load
+    description: "Hook before skills are injected into prompt"
+  - name: after_load
+    description: "Hook after Hermes returns; collect feedback"

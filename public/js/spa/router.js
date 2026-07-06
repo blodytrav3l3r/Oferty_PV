@@ -29,7 +29,7 @@ const SpaRouter = (() => {
                 {
                     id: 'builder',
                     icon: '<i data-lucide="edit"></i>',
-                    label: 'Konfiguracja',
+                    label: 'Konfiguracja'
                 },
                 { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },
                 { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik' }
@@ -42,7 +42,7 @@ const SpaRouter = (() => {
                 {
                     id: 'builder',
                     icon: '<i data-lucide="cylinder"></i>',
-                    label: 'Konfiguracja',
+                    label: 'Konfiguracja'
                 },
                 { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },
                 { id: 'pricelist', icon: '<i data-lucide="clipboard-list"></i>', label: 'Cennik' }
@@ -127,7 +127,14 @@ const SpaRouter = (() => {
 
     function toggleBackendIndicator(module) {
         const el = document.getElementById('backend-status-indicator');
-        if (el) el.style.display = module === 'studnie' ? 'flex' : 'none';
+        if (!el) return;
+        if (module === 'studnie') {
+            el.style.display = 'flex';
+            if (typeof window.startBackendPolling === 'function') window.startBackendPolling();
+        } else {
+            el.style.display = 'none';
+            if (typeof window.stopBackendPolling === 'function') window.stopBackendPolling();
+        }
     }
 
     function getTransitionLayer() {
@@ -296,6 +303,9 @@ const SpaRouter = (() => {
         updateAppNav(module);
         toggleBackendIndicator(module);
 
+        // Klasa body dla scope CSS modułów
+        document.body.classList.toggle('module-studnie', module === 'studnie');
+
         // Renderuj nawigację sekcji tylko przy przełączaniu modułów
         if (currentModule !== module) {
             renderSectionNav(module);
@@ -419,6 +429,12 @@ const SpaRouter = (() => {
                 roleEl.style.color = c.fg;
                 roleEl.style.border = '1px solid ' + c.border;
             }
+
+            window.currentUser = authData.user;
+
+            if (typeof updateAIDashboardVisibility === 'function') {
+                updateAIDashboardVisibility();
+            }
         } catch (e) {
             window.location.href = 'index.html';
             return;
@@ -489,7 +505,44 @@ const SpaRouter = (() => {
 
     document.addEventListener('DOMContentLoaded', init);
 
-    const api = { showSection, navigate, openOfferInModule, refreshModule };
+    function openAIDashboard() {
+        const module = currentModule || 'studnie';
+        const iframe = iframes[module];
+        if (
+            iframe &&
+            iframe.contentWindow &&
+            typeof iframe.contentWindow.showMLDashboard === 'function'
+        ) {
+            iframe.contentWindow.showMLDashboard();
+            return;
+        }
+        if (typeof window.showMLDashboard === 'function') {
+            window.showMLDashboard();
+            return;
+        }
+        logger.warn('router', '[SpaRouter] showMLDashboard nie jest dostępne w module:', module);
+    }
+
+    function updateAIDashboardVisibility() {
+        const btn = document.getElementById('nav-ai-dashboard');
+        if (!btn) return;
+        const user = window.currentUser;
+        const show = user && (user.role === 'admin' || user.role === 'pro');
+        btn.style.display = show ? 'inline-flex' : 'none';
+        if (show && window.lucide) {
+            window.lucide.createIcons({ root: btn });
+        }
+    }
+    window.updateAIDashboardVisibility = updateAIDashboardVisibility;
+
+    const api = {
+        showSection,
+        navigate,
+        openOfferInModule,
+        refreshModule,
+        openAIDashboard,
+        updateAIDashboardVisibility
+    };
     window.SpaRouter = api;
     return api;
 })();

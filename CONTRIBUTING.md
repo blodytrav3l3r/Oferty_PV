@@ -127,7 +127,7 @@ Projekt używa **Semantic Versioning** (SemVer 2.0.0):
 - `fix` → increment wersji **patch** (x.y.z+1)
 - `BREAKING CHANGE` → increment wersji **major** (x+1.0.0)
 
-Szczegóły: [VERSIONING.md](VERSIONING.md)
+Szczegóły: [VERSIONING.md](docs/VERSIONING.md)
 
 ---
 

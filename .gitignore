@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Vendoring przywrócimy w przyszłości od nowa
+/vendor/
+
 # Offline distribution packages (large binaries - distribute via ZIP/USB, not git)
 /vendor/node_modules.tar.gz
 /vendor/python_wheels/
@@ -72,6 +75,7 @@ everything-claude-code
 
 # Graphify auto-generated cache (knowledge graph - rebuild from source)
 graphify-out/
+public/graphify-out/
 
 # Kilo Agent Manager worktrees (each contains own node_modules/ + assets)
 .kilo/worktrees/
@@ -90,10 +94,12 @@ check_db_temp.js
 .agents/
 .opencode/
 .graphifyignore
+./~/
 
 # === Temp/working files ===
 scripts/tempRules.js
 data/app_database.sqlite.backup_*
+tmp/
 
 # === Local git hooks (powiązane z graphify które wykluczyliśmy) ===
 .githooks/
@@ -114,3 +120,19 @@ assets/
 
 # === Archived scripts (lokalne kopie starych wersji) ===
 scripts/archive/
+
+# === Temp files z batch ===
+temp_*.txt
+*.tmp
+witros_dev_port_check.*
+cookies.txt
+
+# Lokalne dane feedback loop
+.hermes/skills/_feedback.json
+
+# Konfiguracje agentów AI (autogenerowane)
+.claude/
+.codex/
+
+# Backup manifestów
+.hermes/skills/_manifest.v2.yaml.bak

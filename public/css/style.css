@@ -302,6 +302,7 @@
 }
 
 body {
+    margin: 0;
     font-family: 'Inter', system-ui, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);

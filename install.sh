@@ -1,85 +1,98 @@
-#!/bin/bash
-# WITROS Oferty PV - instalator (bash / git-bash / Linux / macOS)
+#!/usr/bin/env bash
+# ============================================================
+#  install.sh - Setup środowiska devs (bash, rewritten 2026-07-01)
+# ============================================================
 
 set -e
 cd "$(dirname "$0")"
 
-echo "===================================================="
-echo "  WITROS Oferty PV - instalator"
-echo "===================================================="
-echo
+ts() { date +%H:%M:%S; }
+log() { printf "\033[1;36m[%s]\033[0m [%s] %b\n" "$(ts)" "$1" "$2"; }
+err() { printf "\033[1;31m[%s] [ERR] %b\033[0m\n" "$(ts)" "$*"; exit 1; }
+warn() { printf "\033[1;33m[%s] [WARN] %b\033[0m\n" "$(ts)" "$*"; }
+
+log INIT "========================================================"
+log INIT "  WITROS Oferty PV - Instalator (bash)"
+log INIT "========================================================"
 
 # 1. Node.js
-echo "[1/6] Sprawdzenie Node.js..."
-if ! command -v node >/dev/null 2>&1; then
-    echo "BLAD: Node.js nie jest zainstalowany."
-    echo "Zainstaluj LTS 18+ ze strony https://nodejs.org/"
-    read -p "Enter..."
-    exit 1
-fi
-node --version
-echo "OK"
-echo
+log STEP "Krok 1/8 - Node.js 20+..."
+command -v node >/dev/null 2>&1 || err "Brak Node.js"
+NODE_VER=$(node --version)
+NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1 | tr -d 'v')
+[ "$NODE_MAJOR" -ge 20 ] || err "Wymagane Node.js >=20 (masz $NODE_VER)"
+log OK "Node.js $NODE_VER"
 
 # 2. npm
-echo "[2/6] Sprawdzenie npm..."
-if ! command -v npm >/dev/null 2>&1; then
-    echo "BLAD: npm nie jest dostepny."
-    read -p "Enter..."
-    exit 1
-fi
-npm --version
-echo "OK"
-echo
+log STEP "Krok 2/8 - npm..."
+command -v npm >/dev/null 2>&1 || err "Brak npm"
+log OK "npm $(npm --version)"
 
-# 3. zależności
-echo "[3/6] npm install..."
-if [ ! -f "package.json" ]; then
-    echo "BLAD: brak package.json w $(pwd)"
-    read -p "Enter..."
-    exit 1
-fi
-npm install --no-audit --no-fund
-echo "OK"
-echo
-
-# 4. Prisma generate
-echo "[4/6] prisma generate..."
-npx prisma generate
-echo "OK"
-echo
-
-# 5. Prisma db push
-echo "[5/6] prisma db push --accept-data-loss..."
-npx prisma db push --accept-data-loss
-echo "OK"
-echo
-
-# 6. Seed (opcja)
-echo "[6/6] Seed danych (opcja)..."
-if [ -f "prisma/seed.js" ] || [ -f "prisma/seed.ts" ] || [ -f "prisma/seed.mjs" ]; then
-    npx prisma db seed || echo "(seed pominiety - brak skryptu seed)"
+# 3. Git (opcjonalny)
+log STEP "Krok 3/8 - Git..."
+if command -v git >/dev/null 2>&1; then
+    log OK "Git OK"
 else
-    echo "(brak pliku seed - pomijam)"
+    warn "Brak Git - husky hooks nie beda dzialac"
 fi
-echo
 
-echo "===================================================="
-echo "  GOTOWE"
-echo "===================================================="
-echo
-echo "Uruchomienie: npm start"
-echo "lub: node server.js"
-echo
-echo "Aplikacja: http://localhost:3000"
-echo "Konto: admin / admin123"
-echo
+# 4. Struktura
+log STEP "Krok 4/8 - Struktura (src/public/tests/prisma)..."
+for d in src public tests prisma; do
+    [ -d "$d" ] || err "Brak katalogu $d/"
+done
+log OK "Struktura OK"
 
-read -p "Uruchomic serwer teraz? (T/N): " RUN
-if [[ "$RUN" =~ ^[TtYy]$ ]]; then
-    echo
-    echo "Uruchamiam server..."
-    echo "(Zatrzymanie: Ctrl+C)"
-    echo
-    npm start
+# 5. npm install
+log STEP "Krok 5/8 - npm install (moze potrwac kilka minut)..."
+if [ -f package-lock.json ]; then
+    npm ci --no-audit --no-fund
+else
+    npm install --no-audit --no-fund
 fi
+log OK "node_modules zainstalowane"
+
+# 6. Prisma
+log STEP "Krok 6/8 - Prisma generate + migrate..."
+npx prisma generate
+log OK "Prisma client"
+
+if [ -f "migrations/migration_lock.toml" ]; then
+    log STEP "  prisma migrate deploy..."
+    npx prisma migrate deploy || {
+        warn "migrate deploy nie powiodl sie - fallback db push"
+        npx prisma db push --skip-generate --accept-data-loss
+    }
+else
+    log STEP "  brak migrations - db push"
+    npx prisma db push --skip-generate --accept-data-loss
+fi
+log OK "Schema bazy aktualny"
+
+# 7. Seed
+log STEP "Krok 7/8 - Seed (opcjonalny)..."
+if [ -f "prisma/seed.ts" ]; then
+    if npx ts-node prisma/seed.ts; then
+        log OK "Seed OK"
+    else
+        warn "Seed nie powiodl sie - pomijam"
+    fi
+else
+    log SKIP "Brak prisma/seed.ts"
+fi
+
+# 8. Typecheck
+log STEP "Krok 8/8 - TypeScript typecheck..."
+if npx tsc --noEmit; then
+    log OK "Brak bledow typow"
+else
+    warn "Typecheck wykryl problemy - sprawdz przed startem"
+fi
+
+log OK "========================================================"
+log OK "  INSTALACJA ZAKONCZONA"
+log OK "========================================================"
+echo
+echo "Nastepne kroki:"
+echo "  bash dev.sh  / bash prod.sh"
+echo "  URL: http://localhost:3000"

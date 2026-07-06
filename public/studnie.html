@@ -6,13 +6,14 @@
         <meta name="description" content="WITROS — Kalkulator studni betonowych i żelbetowych" />
         <title>WITROS — Kalkulator Studni</title>
         <script src="js/studnie/headInit.js?v=3.0"></script>
-        <link rel="stylesheet" href="css/style.css?v=3.0" />
-        <link rel="stylesheet" href="css/studnie.css?v=3.6" />
+        <link rel="stylesheet" href="css/style.css?v=3.1" />
+        <link rel="stylesheet" href="css/studnie.css?v=8.2" />
         <link rel="stylesheet" href="css/printModal.css?v=3.0" />
         <script src="js/shared/calcInput.js?v=3.0"></script>
+        <script src="js/admin/aiDashboard.js?v=3.1"></script>
     </head>
 
-    <body>
+    <body class="studnie-page">
         <!-- HEADER -->
         <header class="header">
             <div class="header-inner">
@@ -213,7 +214,8 @@
                                     color: #f87171;
                                     cursor: pointer;
                                 "
-                                title="Przeciągnij tutaj, aby usunąć"
+                                title="Kliknij, aby usunąć studnię"
+                                onclick="removeWell(currentWellIndex)"
                                 onmouseenter="
                                     if (window.svgDragStartIndex >= 0) {
                                         this.style.background = 'rgba(239,68,68,0.3)';
@@ -3984,6 +3986,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 id="sidebar-list-content"
                                 style="
                                     flex: 1;
+                                    min-height: 0;
                                     display: flex;
                                     flex-direction: column;
                                     overflow: hidden;
@@ -4358,13 +4361,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     onclick="showOfferExportChoice()"
                                 >
                                     <i data-lucide="printer"></i> Wydruk
-                                </button>
-                                <button
-                                    class="summary-action-btn summary-action-btn--ai"
-                                    onclick="showMLDashboard()"
-                                    title="Dashboard AI — statystyki systemu uczenia"
-                                >
-                                    <i data-lucide="brain"></i>
                                 </button>
                             </div>
                         </div>
@@ -5172,7 +5168,16 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         </div>
 
         <div id="toast-container" class="toast-container"></div>
-        <script src="/js/versionDisplay.js"></script>
+        <!-- Pasywny moduł telemetry AI (NIE zmienia solvera) -->
+        <script src="/js/studnie/telemetryBridge.js"></script>
+        <!-- Rejestracja wersji solvera/reguł (raz na sesję) -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof window.telemetryRegisterSolverVersion === 'function') {
+                    window.telemetryRegisterSolverVersion();
+                }
+            });
+        </script>
         <script src="js/shared/xlsx.full.min.js"></script>
 
         <!-- PV script dependencies -->
@@ -5187,13 +5192,13 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/shared/clientManager.js?v=3.0"></script>
         <!-- Produkty studni ładowane z API (/api/products-studnie), seedowane z pliku serwera -->
         <script src="js/studnie/globals.js?v=3.0"></script>
-        <script src="js/studnie/uiHelpers.js?v=3.0"></script>
+        <script src="js/studnie/uiHelpers.js?v=3.2"></script>
         <script src="js/studnie/pricelistManager.js?v=3.0"></script>
         <script src="js/studnie/precoCalcCore.js?v=3.0"></script>
         <script src="js/studnie/wellManager.js?v=3.0"></script>
-        <script src="js/studnie/wellConfigRules.js?v=3.0"></script>
-        <script src="js/studnie/wellSolver.js?v=3.0"></script>
-        <script src="js/studnie/wellTransitions.js?v=3.0"></script>
+        <script src="js/studnie/wellConfigRules.js?v=3.1"></script>
+        <script src="js/studnie/wellSolver.js?v=3.1"></script>
+        <script src="js/studnie/wellTransitions.js?v=3.1"></script>
         <script src="js/studnie/wellPopups.js?v=3.0"></script>
         <script src="js/studnie/wellActions.js?v=3.0"></script>
         <script src="js/studnie/wellUI.js?v=3.0"></script>
@@ -5201,30 +5206,28 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/studnie/ruleEngine.js?v=3.0"></script>
         <script src="js/studnie/ringOptimizer.js?v=3.0"></script>
         <script src="js/studnie/wellDiagram.js?v=3.0"></script>
-        <script src="js/studnie/offerManager.js?v=3.0"></script>
-        <script src="js/studnie/mlDashboard.js?v=3.0"></script>
+        <script src="js/studnie/offerManager.js?v=3.1"></script>
+        <script src="js/studnie/mlDashboard.js?v=3.1"></script>
         <script src="js/studnie/excelTableManager.js?v=3.80"></script>
         <script src="js/studnie/orderManager.js?v=3.0"></script>
         <script src="js/studnie/printManager.js?v=3.0"></script>
         <script src="js/shared/printModal.js?v=3.0"></script>
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>
-        <script src="js/appStudnie.js?v=3.0"></script>
+        <script src="js/appStudnie.js?v=3.1"></script>
         <!-- Confirm modal is now created dynamically by appConfirm() in shared/ui.js -->
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
 
-        <!-- Stopka z wersją aplikacji -->
-        <footer
-            id="app-footer"
-            style="
-                text-align: center;
-                padding: 8px;
-                font-size: 0.75rem;
-                color: #666;
-                border-top: 1px solid #333;
-                margin-top: 20px;
-            "
-        >
-            <span id="app-version"></span>
-        </footer>
+        <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
+        <script>
+            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
+            if (window.top === window.self) {
+                const module =
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'studnie';
+                window.location.replace('/app.html#/' + module);
+            }
+        </script>
     </body>
 </html>

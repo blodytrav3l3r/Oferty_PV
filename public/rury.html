@@ -2051,7 +2051,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <!-- Toast container -->
         <div id="toast-container" class="toast-container"></div>
 
-        <script src="/js/versionDisplay.js"></script>
         <script src="js/shared/xlsx.full.min.js"></script>
         <script src="js/shared/formatters.js?v=3.0"></script>
         <script src="js/shared/auth.js?v=3.0"></script>
@@ -2079,20 +2078,18 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/app.js?v=3.0"></script>
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
 
-        <!-- Stopka z wersją aplikacji -->
-        <footer
-            id="app-footer"
-            style="
-                text-align: center;
-                padding: 8px;
-                font-size: 0.75rem;
-                color: #666;
-                border-top: 1px solid #333;
-                margin-top: 20px;
-            "
-        >
-            <span id="app-version"></span>
-        </footer>
+        <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
+        <script>
+            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
+            if (window.top === window.self) {
+                const module =
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'rury';
+                window.location.replace('/app.html#/' + module);
+            }
+        </script>
 
         <!-- ===== OFFER TRANSPORT MODAL (Rury) ===== -->
         <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000">
