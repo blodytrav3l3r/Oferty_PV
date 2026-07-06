@@ -138,7 +138,11 @@ router.post(
                 }
             });
         } catch (e: unknown) {
-            logger.error('auth', 'Błąd rejestracji:', e instanceof Error ? e.message : 'Unknown error');
+            logger.error(
+                'auth',
+                'Błąd rejestracji:',
+                e instanceof Error ? e.message : 'Unknown error'
+            );
             res.status(500).json({ error: 'Błąd serwera podczas rejestracji' });
         }
     }
@@ -146,10 +150,16 @@ router.post(
 
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
-    const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
-    if (token) await deleteSession(token);
-    res.clearCookie('authToken');
-    res.json({ ok: true });
+    try {
+        const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
+        if (token) await deleteSession(token);
+        res.clearCookie('authToken');
+        res.json({ ok: true });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Auth', 'Błąd wylogowania', message);
+        res.status(500).json({ error: 'Błąd serwera podczas wylogowania' });
+    }
 });
 
 // GET /api/auth/me
@@ -185,7 +195,11 @@ router.post(
 
             res.json({ ok: true });
         } catch (e: unknown) {
-            logger.error('auth', 'Błąd zmiany hasła:', e instanceof Error ? e.message : 'Unknown error');
+            logger.error(
+                'auth',
+                'Błąd zmiany hasła:',
+                e instanceof Error ? e.message : 'Unknown error'
+            );
             res.status(500).json({ error: 'Błąd serwera podczas zmiany hasła' });
         }
     }

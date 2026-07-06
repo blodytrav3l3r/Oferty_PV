@@ -1808,21 +1808,20 @@ async function savePrecoFromUI() {
     if (ok) refreshAll();
 }
 
-/** Ładuje domyślne wartości PRECO z API */
+/** Ładuje zapisane ceny PRECO z bazy */
 async function loadPrecoDefaults() {
-    if (!await appConfirm('Załadować domyślne ceny PRECO? Obecne wartości zostaną nadpisane.', { title: 'Reset cennika PRECO', type: 'warning' })) return;
     try {
-        const res = await fetchWithTimeout('/api/preco-pricing/default');
+        const res = await fetchWithTimeout('/api/preco-pricing');
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
             renderPrecoPriceList();
-            showToast('Załadowano domyślne ceny PRECO', 'info');
+            showToast('Wczytano zapisany cennik PRECO', 'info');
         } else {
-            showToast('Brak domyślnych cen PRECO na serwerze', 'error');
+            showToast('Brak zapisanych cen PRECO w bazie', 'error');
         }
     } catch (e) {
-        logger.error('pricelistManager', 'Błąd ładowania domyślnych PRECO:', e);
-        showToast('Błąd sieci przy ładowaniu domyślnych cen PRECO', 'error');
+        logger.error('pricelistManager', 'Błąd ładowania cennika PRECO:', e);
+        showToast('Błąd sieci przy ładowaniu cennika PRECO', 'error');
     }
 }

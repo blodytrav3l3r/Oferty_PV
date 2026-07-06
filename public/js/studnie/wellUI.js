@@ -157,6 +157,14 @@ function setupParamTiles() {
                 enforceLoadClassRulesWizard(paramName, val);
                 updateParamTilesUI();
 
+                // Pokaż/ukryj sub-opcje wkładki PEHD (które elementy mają wkładkę)
+                if (paramName === 'wkladka') {
+                    const subOptions = document.getElementById('wkladka-sub-options');
+                    if (subOptions) {
+                        subOptions.style.display = val !== 'brak' ? 'block' : 'none';
+                    }
+                }
+
                 // Śledzenie kreatora (zawsze)
                 wizardConfirmedParams.add(paramName);
                 validateWizardStep2();

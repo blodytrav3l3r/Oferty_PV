@@ -45,7 +45,8 @@ jest.mock('../src/utils/ownership', () => ({
             return user.subUsers.includes(ownerId);
         }
         return false;
-    })
+    }),
+    canReadDoc: jest.fn().mockReturnValue(true)
 }));
 
 jest.mock('../src/utils/roleFilter', () => ({
@@ -207,13 +208,21 @@ describe('Rury Order Export (Zamowienie) — GET /:id/export-pdf|docx', () => {
 
     describe('Regressja — stare endpointy karta działają', () => {
         it('GET /:id/export-karta-pdf nadal działa (200)', async () => {
-            const res = await request(app).get('/api/orders-rury/1700000000000_abcde/export-karta-pdf');
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app).get(
+                '/api/orders-rury/1700000000000_abcde/export-karta-pdf'
+            );
 
             expect(res.statusCode).toBe(200);
         });
 
         it('GET /:id/export-karta-docx nadal działa (200)', async () => {
-            const res = await request(app).get('/api/orders-rury/1700000000000_abcde/export-karta-docx');
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app).get(
+                '/api/orders-rury/1700000000000_abcde/export-karta-docx'
+            );
 
             expect(res.statusCode).toBe(200);
         });

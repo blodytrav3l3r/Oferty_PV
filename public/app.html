@@ -8,12 +8,9 @@
             content="WITROS — profesjonalny generator ofert handlowych na rury betonowe i studnie żelbetowe."
         />
         <title>WITROS — Generator Ofert</title>
-        <link
-            href="css/inter.css"
-            rel="stylesheet"
-        />
-        <link rel="stylesheet" href="css/style.css?v=3.0" />
-        <link rel="stylesheet" href="css/spa.css?v=3.0" />
+        <link href="css/inter.css" rel="stylesheet" />
+        <link rel="stylesheet" href="css/style.css?v=3.1" />
+        <link rel="stylesheet" href="css/spa.css?v=3.2" />
     </head>
 
     <body>
@@ -46,7 +43,9 @@
                             <span class="nav-tile-text">Studnie</span>
                         </a>
                         <a href="#/rury" class="nav-tile" id="spa-app-rury">
-                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                            <span class="nav-tile-icon"
+                                ><i data-lucide="cylinder" class="lucide-rotate-n90"></i
+                            ></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a href="#/kartoteka" class="nav-tile" id="spa-app-kartoteka">
@@ -100,18 +99,51 @@
                                 background: var(--bg-glass);
                             "
                         >
-                            <span
-                                style="
-                                    display: inline-block;
-                                    width: 10px;
-                                    height: 10px;
-                                    border-radius: 50%;
-                                    background: #fdba74;
-                                    box-shadow: 0 0 8px #fdba74;
-                                    transition: all 0.3s;
-                                "
-                            ></span>
+                            <span class="dot checking"></span>
                         </div>
+                        <button
+                            id="nav-ai-dashboard"
+                            onclick="SpaRouter.openAIDashboard()"
+                            title="Dashboard AI — statystyki systemu uczenia"
+                            style="
+                                display: none;
+                                padding: 0.35rem 0.8rem;
+                                border: 1px solid rgba(6, 182, 212, 0.4);
+                                border-radius: 6px;
+                                background: rgba(6, 182, 212, 0.12);
+                                color: #67e8f9;
+                                font:
+                                    500 0.75rem 'Inter',
+                                    sans-serif;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                                align-items: center;
+                                gap: 0.35rem;
+                            "
+                            onmouseenter="
+                                this.style.background = 'rgba(6, 182, 212, 0.25)';
+                                this.style.borderColor = 'rgba(6, 182, 212, 0.7)';
+                                this.style.color = '#a5f3fc';
+                            "
+                            onmouseleave="
+                                this.style.background = 'rgba(6, 182, 212, 0.12)';
+                                this.style.borderColor = 'rgba(6, 182, 212, 0.4)';
+                                this.style.color = '#67e8f9';
+                            "
+                        >
+                            <i data-lucide="brain" style="width: 14px; height: 14px"></i>
+                            <span>AI Dashboard</span>
+                        </button>
+                        <span
+                            id="app-version-toolbar"
+                            style="
+                                color: var(--text-secondary);
+                                font-size: 0.7rem;
+                                padding: 0.35rem 0.5rem;
+                                opacity: 0.65;
+                                font-feature-settings: 'tnum';
+                            "
+                        ></span>
                         <button
                             onclick="appLogout()"
                             style="
@@ -146,13 +178,15 @@
         <div id="spa-main"></div>
 
         <!-- ═══════ WSPÓLNE SKRYPTY (tylko autoryzacja wymagana przez router) ═══════ -->
-        <script src="js/shared/auth.js?v=3.0"></script>
+        <script src="js/shared/auth.js?v=3.2"></script>
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
 
         <!-- ═══════ ROUTER SPA ═══════ -->
-        <script src="js/spa/router.js?v=3.0"></script>
+        <script src="js/spa/router.js?v=3.3"></script>
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
-</body>
+        <script src="js/versionDisplay.js?v=3.2"></script>
+        <script src="js/studnie/backendStatus.js?v=3.2"></script>
+    </body>
 </html>

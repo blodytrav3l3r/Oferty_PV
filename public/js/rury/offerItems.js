@@ -12,43 +12,48 @@ function setupOfferForm() {
     const searchInput = document.getElementById('product-search');
     const dropdown = document.getElementById('product-dropdown');
 
-    searchInput.addEventListener('input', () => {
-        const val = searchInput.value.toLowerCase().trim();
-        if (val.length < 2) {
-            dropdown.classList.remove('show');
-            return;
-        }
-        const matches = products
-            .filter(
-                (p) =>
-                    p.category !== 'Akcesoria PEHD' &&
-                    (p.id.toLowerCase().includes(val) || p.name.toLowerCase().includes(val))
-            )
-            .slice(0, 15);
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const val = searchInput.value.toLowerCase().trim();
+            if (val.length < 2) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            const matches = products
+                .filter(
+                    (p) =>
+                        p.category !== 'Akcesoria PEHD' &&
+                        (p.id.toLowerCase().includes(val) || p.name.toLowerCase().includes(val))
+                )
+                .slice(0, 15);
 
-        if (matches.length === 0) {
-            dropdown.classList.remove('show');
-            return;
-        }
-        dropdown.innerHTML = matches
-            .map(
-                (p) =>
-                    `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
+            if (matches.length === 0) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            dropdown.innerHTML = matches
+                .map(
+                    (p) =>
+                        `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
         <span>${escapeHtml(p.name)}</span>
         <span class="price">${fmt(p.price)} PLN</span>
       </div>`
-            )
-            .join('');
-        dropdown.classList.add('show');
-    });
+                )
+                .join('');
+            dropdown.classList.add('show');
+        });
 
-    searchInput.addEventListener('blur', () =>
-        setTimeout(() => dropdown.classList.remove('show'), 200)
-    );
+        searchInput.addEventListener('blur', () =>
+            setTimeout(() => dropdown.classList.remove('show'), 200)
+        );
+    }
     document.getElementById('pricelist-search')?.addEventListener('input', renderPriceList);
 
     // Ustaw dzisiejszą datę i automatycznie wygeneruj numer oferty
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     setVal('offer-date', new Date().toISOString().slice(0, 10));
     setVal('offer-number', generateOfferNumber());
 
@@ -70,7 +75,8 @@ function toggleCatalog() {
     const btn = document.getElementById('toggle-catalog-btn');
     if (catalogVisible) {
         catalog.style.display = 'block';
-        btn.innerHTML = '<i data-lucide="folder-open" aria-hidden="true"></i> Ukryj katalog produktów';
+        btn.innerHTML =
+            '<i data-lucide="folder-open" aria-hidden="true"></i> Ukryj katalog produktów';
         if (window.lucide) lucide.createIcons();
         if (!activeCatalogCategory || activeCatalogCategory === 'Akcesoria PEHD')
             activeCatalogCategory = CATEGORIES.filter((c) => c !== 'Akcesoria PEHD')[0];
@@ -78,7 +84,8 @@ function toggleCatalog() {
         renderCatalogProducts();
     } else {
         catalog.style.display = 'none';
-        btn.innerHTML = '<i data-lucide="folder-open" aria-hidden="true"></i> Pokaż katalog produktów';
+        btn.innerHTML =
+            '<i data-lucide="folder-open" aria-hidden="true"></i> Pokaż katalog produktów';
         if (window.lucide) lucide.createIcons();
     }
 }
@@ -168,7 +175,10 @@ function generateOfferNumber() {
 /* ===== DODAWANIE POZYCJI ===== */
 
 function addOfferItem(productId) {
-    if (!Array.isArray(products)) { showToast('Katalog produktów jeszcze niezaładowany', 'error'); return; }
+    if (!Array.isArray(products)) {
+        showToast('Katalog produktów jeszcze niezaładowany', 'error');
+        return;
+    }
     const product = products.find((p) => p.id === productId);
     if (!product) return;
 
@@ -263,14 +273,12 @@ function doAddOfferItem(productId, customLengthM) {
         (i) => i.productId === productId && (i.customLengthM || null) === (customLengthM || null)
     );
     if (existingItemIndex !== -1) {
-        updateItem(
-            existingItemIndex,
-            'quantity',
-            activeItems[existingItemIndex].quantity + 1
-        );
+        updateItem(existingItemIndex, 'quantity', activeItems[existingItemIndex].quantity + 1);
         showToast(`Zwiększono ilość: ${product.name}`, 'info');
-        const ps = document.getElementById('product-search'); if (ps) ps.value = '';
-        const pd = document.getElementById('product-dropdown'); if (pd) pd.classList.remove('show');
+        const ps = document.getElementById('product-search');
+        if (ps) ps.value = '';
+        const pd = document.getElementById('product-dropdown');
+        if (pd) pd.classList.remove('show');
         return;
     }
 
@@ -301,9 +309,12 @@ function doAddOfferItem(productId, customLengthM) {
         const newIndex = activeItems.length - 1;
         updatePipeLength(newIndex, customLengthM, true);
     } else {
-        syncGaskets(); syncTransportSecurity();
-        const ps = document.getElementById('product-search'); if (ps) ps.value = '';
-        const pd = document.getElementById('product-dropdown'); if (pd) pd.classList.remove('show');
+        syncGaskets();
+        syncTransportSecurity();
+        const ps = document.getElementById('product-search');
+        if (ps) ps.value = '';
+        const pd = document.getElementById('product-dropdown');
+        if (pd) pd.classList.remove('show');
         renderOfferItems();
         showToast('Dodano: ' + product.name.substring(0, 40) + '...', 'success');
     }
@@ -313,7 +324,7 @@ function doAddOfferItem(productId, customLengthM) {
 
 function syncGaskets() {
     const activeItems = getActiveItemsArray();
-    if (!activeItems.some(i => i.ordered && !i.autoAdded)) {
+    if (!activeItems.some((i) => i.ordered && !i.autoAdded)) {
         // no ordered non-auto items, proceed normally
     } else if (!window.orderEditMode) {
         return; // ordered items exist and we're not in order edit mode — skip gasket sync
@@ -377,7 +388,7 @@ function syncGaskets() {
 
 /* ===== ZABEZPIECZENIE TRANSPORTU — STAN I TOGGLE ===== */
 
-let zabezpieczenieTransportuEnabled = true;
+const zabezpieczenieTransportuEnabled = true;
 window.zabezpieczenieTransportuEnabled = zabezpieczenieTransportuEnabled;
 
 window.setZabezpieczenieTransportu = function (enabled) {
@@ -389,10 +400,10 @@ window.setZabezpieczenieTransportu = function (enabled) {
 };
 
 function updateZabezpieczenieTransportuUI() {
-    document.querySelectorAll('.zt-toggle-tak-btn').forEach(el => {
+    document.querySelectorAll('.zt-toggle-tak-btn').forEach((el) => {
         el.classList.toggle('active', !!window.zabezpieczenieTransportuEnabled);
     });
-    document.querySelectorAll('.zt-toggle-nie-btn').forEach(el => {
+    document.querySelectorAll('.zt-toggle-nie-btn').forEach((el) => {
         el.classList.toggle('active', !window.zabezpieczenieTransportuEnabled);
     });
 }
@@ -402,7 +413,7 @@ window.updateZabezpieczenieTransportuUI = updateZabezpieczenieTransportuUI;
 
 function syncTransportSecurity(forceRemove) {
     const activeItems = getActiveItemsArray();
-    const hasNonAutoOrdered = activeItems.some(i => i.ordered && !i.autoAdded);
+    const hasNonAutoOrdered = activeItems.some((i) => i.ordered && !i.autoAdded);
     if (hasNonAutoOrdered && !window.orderEditMode && !forceRemove) return;
     if (forceRemove || !window.zabezpieczenieTransportuEnabled) {
         let removed = false;
@@ -509,7 +520,7 @@ function buildRuryColgroup(extraCols = 0) {
         '120px',
         '160px',
         '',
-        '160px',
+        '160px'
     ];
     const extra = [];
     for (let i = 0; i < extraCols; i++) extra.push('120px');
@@ -573,8 +584,9 @@ function renderOfferItems() {
     });
 
     // Backfill uid dla pozycji bez uid (nie mutujemy już flagi 'ordered' — obliczamy ją na bieżąco z ordersRury)
-    _items.forEach(item => {
-        if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    _items.forEach((item) => {
+        if (!item.uid)
+            item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     });
 
     // Wstępnie oblicz rozkład transportu dla wszystkich pozycji
@@ -596,93 +608,93 @@ function renderOfferItems() {
         }
         html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${dk}</td></tr>`;
         entries.forEach(({ item, originalIndex: i }) => {
-                const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
-                const pehdCost = item.pehdCostPerUnit || 0;
-                const surcharge = item.surcharge || 0;
-                const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
+            const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
+            const pehdCost = item.pehdCostPerUnit || 0;
+            const surcharge = item.surcharge || 0;
+            const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
 
-                const transportPerUnit = transportDist[item.productId] || 0;
-                const unitTotal = priceAfterDiscount + transportPerUnit;
-                const netto = unitTotal * item.quantity;
-                const hasLength = item.lengthM && item.lengthM > 0;
-                const metersVal = hasLength ? item.meters || 0 : '';
-                const autoTag = item.autoAdded
-                    ? ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>'
-                    : '';
-                const is1m = isOneMetrePipe(item.productId);
+            const transportPerUnit = transportDist[item.productId] || 0;
+            const unitTotal = priceAfterDiscount + transportPerUnit;
+            const netto = unitTotal * item.quantity;
+            const hasLength = item.lengthM && item.lengthM > 0;
+            const metersVal = hasLength ? item.meters || 0 : '';
+            const autoTag = item.autoAdded
+                ? ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>'
+                : '';
+            const is1m = isOneMetrePipe(item.productId);
 
-                let pName = escapeHtml(item.name);
-                if (item.pehdType === 'PEHD-3MM')
-                    pName +=
-                        ' <span style="color:var(--warn);font-weight:bold">+ PEHD 3mm</span>';
-                if (item.pehdType === 'PEHD-4MM')
-                    pName +=
-                        ' <span style="color:var(--warn);font-weight:bold">+ PEHD 4mm</span>';
+            let pName = escapeHtml(item.name);
+            if (item.pehdType === 'PEHD-3MM')
+                pName += ' <span style="color:var(--warn);font-weight:bold">+ PEHD 3mm</span>';
+            if (item.pehdType === 'PEHD-4MM')
+                pName += ' <span style="color:var(--warn);font-weight:bold">+ PEHD 4mm</span>';
 
-                let rowClass = '';
-                let rowStyle = '';
-                if (item.autoAdded) {
-                    rowStyle = 'background:rgba(var(--warn-rgb),0.04)';
-                } else if (is1m) {
-                    rowClass = 'row-1m';
-                }
-                const activePehdStyle =
-                    'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--warn); color:#1a1a1a; border:none; box-shadow:0 0 12px rgba(var(--warn-rgb),0.5); font-weight:700; border-radius:4px; min-width:88px; text-align:center;';
-                const inactivePehdStyle =
-                    'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease; min-width:88px; text-align:center; font-weight:600;';
+            let rowClass = '';
+            let rowStyle = '';
+            if (item.autoAdded) {
+                rowStyle = 'background:rgba(var(--warn-rgb),0.04)';
+            } else if (is1m) {
+                rowClass = 'row-1m';
+            }
+            const activePehdStyle =
+                'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--warn); color:#1a1a1a; border:none; box-shadow:0 0 12px rgba(var(--warn-rgb),0.5); font-weight:700; border-radius:4px; min-width:88px; text-align:center;';
+            const inactivePehdStyle =
+                'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease; min-width:88px; text-align:center; font-weight:600;';
 
-                const active3mm =
-                    item.pehdType === 'PEHD-3MM'
-                        ? `style="${activePehdStyle}"`
-                        : `style="${inactivePehdStyle}"`;
-                const active4mm =
-                    item.pehdType === 'PEHD-4MM'
-                        ? `style="${activePehdStyle}"`
-                        : `style="${inactivePehdStyle}"`;
+            const active3mm =
+                item.pehdType === 'PEHD-3MM'
+                    ? `style="${activePehdStyle}"`
+                    : `style="${inactivePehdStyle}"`;
+            const active4mm =
+                item.pehdType === 'PEHD-4MM'
+                    ? `style="${activePehdStyle}"`
+                    : `style="${inactivePehdStyle}"`;
 
-                const isOrdered = isItemInAnyOrder(item.uid);
-                const isLocked = isItemLocked(item);
+            const isOrdered = isItemInAnyOrder(item.uid);
+            const isLocked = isItemLocked(item);
 
-                const isEditableLength =
-                    cat === 'Rury Jajowe Betonowe' ||
-                    cat === 'Rury Jajowe Żelbetowe' ||
-                    cat === 'Duże Żelbetowe II';
-                const lengthEditor =
-                    isEditableLength && hasLength && !isLocked
-                        ? `<div class="length-editor" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
+            const isEditableLength =
+                cat === 'Rury Jajowe Betonowe' ||
+                cat === 'Rury Jajowe Żelbetowe' ||
+                cat === 'Duże Żelbetowe II';
+            const lengthEditor =
+                isEditableLength && hasLength && !isLocked
+                    ? `<div class="length-editor" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
                             <i data-lucide="ruler" style="width:11px;height:11px"></i>
                             <span>Dł:</span>
                             <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>
                             <i data-lucide="pencil" style="width:10px;height:10px;opacity:0.5"></i>
                         </div>`
-                        : '';
+                    : '';
 
-                const itemDiamRaw = (() => {
-                    let d = getProductDiameter(item.productId);
-                    if (!d && item.productId) {
-                        const parts = item.productId.split('-');
-                        if (parts.length >= 5) {
-                            const code = parseInt(parts[4]);
-                            if (!isNaN(code) && code > 0) d = code * 100;
-                        }
+            const itemDiamRaw = (() => {
+                let d = getProductDiameter(item.productId);
+                if (!d && item.productId) {
+                    const parts = item.productId.split('-');
+                    if (parts.length >= 5) {
+                        const code = parseInt(parts[4]);
+                        if (!isNaN(code) && code > 0) d = code * 100;
                     }
-                    return d || 0;
-                })();
-                const itemDiamAttr = itemDiamRaw > 0 ? `data-diameter="${itemDiamRaw}"` : '';
-                const isAuto = item.autoAdded === true;
-
-                let checkboxCell = '';
-                if (isOrdered) {
-                    checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Element dodany do zamówienia — nie można odznaczyć"></td>`;
-                } else if (isAuto) {
-                    checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
-                } else {
-                    checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
                 }
-                const orderedRowStyle = isOrdered ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);' : '';
-                const lockAttr = isLocked ? ' disabled' : '';
+                return d || 0;
+            })();
+            const itemDiamAttr = itemDiamRaw > 0 ? `data-diameter="${itemDiamRaw}"` : '';
+            const isAuto = item.autoAdded === true;
 
-                html += `<tr class="${rowClass}" data-uid="${item.uid}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>
+            let checkboxCell = '';
+            if (isOrdered) {
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Element dodany do zamówienia — nie można odznaczyć"></td>`;
+            } else if (isAuto) {
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
+            } else {
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
+            }
+            const orderedRowStyle = isOrdered
+                ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);'
+                : '';
+            const lockAttr = isLocked ? ' disabled' : '';
+
+            html += `<tr class="${rowClass}" data-uid="${item.uid}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>
           ${checkboxCell}
           <td class="rury-col-num" style="text-align:left">${lp++}</td>
           <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>
@@ -778,15 +790,19 @@ function updatePipeLength(index, newLengthM, skipRender = false) {
     item.meters = item.quantity * item.lengthM;
 
     if (!skipRender) {
-        syncGaskets(); syncTransportSecurity();
+        syncGaskets();
+        syncTransportSecurity();
         renderOfferItems();
         updateOfferSummary();
         if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
         showToast('Przeliczono uciętą rurę (waga, transport, nazwa)', 'info');
     } else {
-        syncGaskets(); syncTransportSecurity();
-        const ps = document.getElementById('product-search'); if (ps) ps.value = '';
-        const pd = document.getElementById('product-dropdown'); if (pd) pd.classList.remove('show');
+        syncGaskets();
+        syncTransportSecurity();
+        const ps = document.getElementById('product-search');
+        if (ps) ps.value = '';
+        const pd = document.getElementById('product-dropdown');
+        if (pd) pd.classList.remove('show');
         renderOfferItems();
         if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
         showToast('Dodano: ' + item.name.substring(0, 40) + '...', 'success');
@@ -824,7 +840,8 @@ function updateItem(index, field, value) {
         item.meters = numVal * item.lengthM;
     }
 
-    syncGaskets(); syncTransportSecurity();
+    syncGaskets();
+    syncTransportSecurity();
     renderOfferItems();
     if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
@@ -840,7 +857,8 @@ function updateItemMeters(index, metersValue) {
         if (meters === 0) item.quantity = 0;
     }
 
-    syncGaskets(); syncTransportSecurity();
+    syncGaskets();
+    syncTransportSecurity();
     renderOfferItems();
     if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
@@ -848,7 +866,8 @@ function updateItemMeters(index, metersValue) {
 function removeOfferItem(index) {
     if (isItemLocked(getActiveItemsArray()[index])) return;
     getActiveItemsArray().splice(index, 1);
-    syncGaskets(); syncTransportSecurity();
+    syncGaskets();
+    syncTransportSecurity();
     renderOfferItems();
     if (typeof syncOrderTableIfNeeded === 'function') syncOrderTableIfNeeded();
 }
@@ -858,7 +877,7 @@ function removeOfferItem(index) {
 window.toggleAllItemsForOrder = function (checked) {
     const section = document.querySelector('.section.active');
     if (!section) return;
-    section.querySelectorAll('.item-order-checkbox').forEach(cb => {
+    section.querySelectorAll('.item-order-checkbox').forEach((cb) => {
         if (!cb.disabled) cb.checked = checked;
     });
 };
@@ -880,32 +899,36 @@ window.collectSelectedItemsForOrder = function () {
     const section = document.querySelector('.section.active');
     if (!section) return [];
     const offerTabActive = section.id === 'section-offer';
-    const selector = offerTabActive ? '.offer-summary-checkbox:checked' : '.item-order-checkbox:checked';
+    const selector = offerTabActive
+        ? '.offer-summary-checkbox:checked'
+        : '.item-order-checkbox:checked';
     const selected = [];
     const seen = new Set();
     const items = getActiveItemsArray() || [];
-    section.querySelectorAll(selector).forEach(cb => {
+    section.querySelectorAll(selector).forEach((cb) => {
         if (cb.disabled) return;
         const uid = cb.dataset.uid;
         if (!uid || seen.has(uid)) return;
-        const item = items.find(it => it.uid === uid);
+        const item = items.find((it) => it.uid === uid);
         if (item && item.autoAdded && item.productId && item.productId.startsWith('ZT-')) return;
         seen.add(uid);
         if (item) selected.push(item);
     });
     {
         const selectedPipeQtyByDiam = {};
-        selected.forEach(it => {
+        selected.forEach((it) => {
             if (it.autoAdded) return;
-            const d = getProductDiameter(it.productId) || (() => {
-                if (!it.productId) return 0;
-                const parts = it.productId.split('-');
-                if (parts.length >= 5) {
-                    const code = parseInt(parts[4]);
-                    if (!isNaN(code) && code > 0) return code * 100;
-                }
-                return 0;
-            })();
+            const d =
+                getProductDiameter(it.productId) ||
+                (() => {
+                    if (!it.productId) return 0;
+                    const parts = it.productId.split('-');
+                    if (parts.length >= 5) {
+                        const code = parseInt(parts[4]);
+                        if (!isNaN(code) && code > 0) return code * 100;
+                    }
+                    return 0;
+                })();
             if (d > 0) {
                 selectedPipeQtyByDiam[d] = (selectedPipeQtyByDiam[d] || 0) + (it.quantity || 0);
             }
@@ -913,18 +936,20 @@ window.collectSelectedItemsForOrder = function () {
 
         const selectedDiameters = new Set(Object.keys(selectedPipeQtyByDiam).map(Number));
 
-        items.forEach(it => {
+        items.forEach((it) => {
             if (!it.autoAdded) return;
             if (seen.has(it.uid)) return;
-            const d = getProductDiameter(it.productId) || (() => {
-                if (!it.productId) return 0;
-                const parts = it.productId.split('-');
-                if (parts.length >= 5) {
-                    const code = parseInt(parts[4]);
-                    if (!isNaN(code) && code > 0) return code * 100;
-                }
-                return 0;
-            })();
+            const d =
+                getProductDiameter(it.productId) ||
+                (() => {
+                    if (!it.productId) return 0;
+                    const parts = it.productId.split('-');
+                    if (parts.length >= 5) {
+                        const code = parseInt(parts[4]);
+                        if (!isNaN(code) && code > 0) return code * 100;
+                    }
+                    return 0;
+                })();
             if (d > 0 && selectedDiameters.has(d)) {
                 const cloned = structuredClone(it);
                 if (cloned.productId && cloned.productId.startsWith('ZT-')) {
@@ -944,9 +969,13 @@ window.onPipeCheckboxChange = function (cb) {
     const diameter = parseInt(cb.dataset.diameter || '0');
     if (!diameter) return;
     const checked = cb.checked;
-    document.querySelectorAll(`.item-order-auto[data-diameter="${diameter}"]:not(:disabled), .offer-summary-auto[data-diameter="${diameter}"]:not(:disabled)`).forEach(autoCb => {
-        autoCb.checked = checked;
-    });
+    document
+        .querySelectorAll(
+            `.item-order-auto[data-diameter="${diameter}"]:not(:disabled), .offer-summary-auto[data-diameter="${diameter}"]:not(:disabled)`
+        )
+        .forEach((autoCb) => {
+            autoCb.checked = checked;
+        });
     if (typeof window.updateOrderSelectionCount === 'function') {
         window.updateOrderSelectionCount();
     }
@@ -977,9 +1006,11 @@ function showSectionRury(id) {
         if (ctxBanner && ctxBadge && ctxText) {
             ctxBanner.style.display = 'block';
             if (window.orderEditMode) {
-                ctxBadge.innerHTML = '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
+                ctxBadge.innerHTML =
+                    '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
                 ctxBadge.classList.add('badge-ok');
-                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+                ctxText.textContent =
+                    'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
             } else if (window.editingOfferId) {
                 ctxBadge.innerHTML = '<i data-lucide="edit" class="icon-xs"></i> Oferta (krok 3)';
                 ctxBadge.classList.add('badge-info');
@@ -994,7 +1025,7 @@ function showSectionRury(id) {
     } else if (id === 'builder') {
         const activeStep = document.querySelector('.wizard-step.active');
         const step = activeStep ? parseInt(activeStep.id.replace('wizard-step-', '')) : 1;
-        if (summaryBar) summaryBar.style.display = (step === 3 || step === 5) ? 'block' : 'none';
+        if (summaryBar) summaryBar.style.display = step === 3 || step === 5 ? 'block' : 'none';
     } else {
         if (summaryBar) summaryBar.style.display = 'none';
     }
@@ -1005,3 +1036,4 @@ function showSectionRury(id) {
 }
 
 window.showSectionRury = showSectionRury;
+window.showSection = showSectionRury;

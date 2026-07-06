@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const userEl = document.getElementById('header-username');
         const roleEl = document.getElementById('header-role-badge');
-        if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + user.username;
+        if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + escapeHtml(user.username);
         if (roleEl) {
             roleEl.textContent =
                 user.role === 'admin' ? 'ADMIN' : user.role === 'pro' ? 'PRO' : 'USER';

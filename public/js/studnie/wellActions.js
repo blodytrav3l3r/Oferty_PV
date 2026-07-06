@@ -442,6 +442,7 @@ function addWellComponent(productId) {
         well.autoLocked = true;
         updateAutoLockUI();
         showToast('Włączono tryb ręczny.', 'info');
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     }
     well.configSource = 'MANUAL';
 
@@ -599,6 +600,7 @@ function addWellComponent(productId) {
     renderWellsList();
     renderTiles(); // Aktualizacja podświetlenia
     updateHeightIndicator(); // Odśwież błędy
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
@@ -664,6 +666,9 @@ function removeWellComponent(index) {
     renderWellsList();
     renderTiles(); // Update highlight
     updateHeightIndicator(); // Odśwież błędy
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
+    /* Patch v=3.71 - sync Excel UI (AUTO/MAN mode button + Run button) */
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
 }
 
 function updateWellQuantity(index, value) {
@@ -682,6 +687,9 @@ function updateWellQuantity(index, value) {
     }
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
+    well.autoSelect = false;
+    well.autoLocked = true;
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     // Nie pozwalamy na zmianę ilości na > 1 dla elementów betonowych, ale zachowujemy funkcję do usuwania
     well.config[index].quantity = 1;
     renderWellConfig();
@@ -703,6 +711,9 @@ function clearWellConfig() {
     const well = getCurrentWell();
     if (!well) return;
     well.configSource = 'MANUAL';
+    well.autoSelect = false;
+    well.autoLocked = true;
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     well.config = [];
     refreshAll();
     showToast('Wyczyszczono konfigurację studni', 'info');
@@ -2063,6 +2074,23 @@ function sortWellConfigByOrder() {
         // Pozwala to na ręczne układanie elementów tej samej kategorii (np. kręgów tej samej średnicy) przez użytkownika.
         return 0;
     });
+    _moveWlazToTop(well);
+}
+
+function _moveWlazToTop(well) {
+    if (!well || !well.config || well.config.length < 2) return;
+    var wlazIdx = -1;
+    for (var i = 0; i < well.config.length; i++) {
+        var p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+        if (p && p.componentType === 'wlaz') {
+            wlazIdx = i;
+            break;
+        }
+    }
+    if (wlazIdx > 0) {
+        var item = well.config.splice(wlazIdx, 1)[0];
+        well.config.unshift(item);
+    }
 }
 
 // Eksport do window dla innych modułów

@@ -38,7 +38,9 @@ async function changeOfferUser() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML =
+                        '<i data-lucide="user"></i> Opiekun: ' +
+                        escapeHtml(editingOfferAssignedUserName);
 
                 if (editingOfferId) {
                     if (typeof window.saveOfferRury === 'function') {
@@ -68,7 +70,9 @@ window.toggleCard = function (contentId, iconId) {
     if (content && icon) {
         content.classList.toggle('hidden');
         const isHidden = content.classList.contains('hidden');
-        icon.innerHTML = isHidden ? '<i data-lucide="chevron-down"></i>' : '<i data-lucide="chevron-up"></i>';
+        icon.innerHTML = isHidden
+            ? '<i data-lucide="chevron-down"></i>'
+            : '<i data-lucide="chevron-up"></i>';
 
         // Jawnie ukryj elementy sticky wewnątrz, które mogą wychodzić poza granice overflow
         const stickyEls = content.querySelectorAll('.offer-search-row, .catalog-tabs');
@@ -124,7 +128,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Wyświetl info o użytkowniku w nagłówku
     const userEl = document.getElementById('header-username');
-    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + (currentUser.displayName || currentUser.username);
+    if (userEl)
+        userEl.innerHTML =
+            '<i data-lucide="user"></i> ' +
+            escapeHtml(currentUser.displayName || currentUser.username);
 
     const roleEl = document.getElementById('header-role-badge');
     if (roleEl) {
@@ -204,4 +211,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 100);
     }
 });
-

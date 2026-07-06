@@ -1,17 +1,30 @@
 import express from 'express';
-import prisma from '../../prismaClient';
+import prisma, { Prisma } from '../../prismaClient';
 import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER, EXPORT_LIMITER } from '../../middleware/rateLimiters';
-import { ruryOrdersBatchSchema, ruryOrderUpdateSchema, ruryOfferExportSchema } from '../../validators/offerSchemas';
+import {
+    ruryOrdersBatchSchema,
+    ruryOrderUpdateSchema,
+    ruryOfferExportSchema
+} from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
 import { canReadDoc, canWriteDoc } from '../../utils/ownership';
-import { buildRoleWhereSql } from '../../utils/roleFilter';
-import { generateRuryPDFFromContext, generateRuryOrderPDF, lookupOfferUsers, generateKartaBudowyRuryPDF } from '../../services/pdfGenerator';
+import { buildRoleWhereCondition } from '../../utils/roleFilter';
+import {
+    generateRuryPDFFromContext,
+    generateRuryOrderPDF,
+    lookupOfferUsers,
+    generateKartaBudowyRuryPDF
+} from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
-import { generateRuryDOCXFromContext, generateRuryOrderDOCX, generateKartaBudowyRuryDOCX } from '../../services/docx';
+import {
+    generateRuryDOCXFromContext,
+    generateRuryOrderDOCX,
+    generateKartaBudowyRuryDOCX
+} from '../../services/docx';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -22,8 +35,8 @@ const exportOrdersLimiter = EXPORT_LIMITER;
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const whereSql = authReq.user ? buildRoleWhereSql(authReq.user) : '';
-        const orders = await prisma.$queryRawUnsafe<
+        const whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        const orders = await prisma.$queryRaw<
             Array<{
                 id: string;
                 userId: string | null;
@@ -32,11 +45,11 @@ router.get('/', requireAuth, async (req, res) => {
                 createdAt: string | null;
                 data: string | null;
             }>
-        >(`SELECT id, "userId", "offerId", status, data,
+        >`SELECT id, "userId", "offerId", status, data,
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt"
-         FROM orders_rury_rel ${whereSql}`);
+         FROM orders_rury_rel ${whereCondition}`;
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
@@ -95,81 +108,87 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
     }
 });
 
-router.put('/', requireAuth, writeOrdersLimiter, validateData(ruryOrdersBatchSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const incoming = req.body.data || [];
+router.put(
+    '/',
+    requireAuth,
+    writeOrdersLimiter,
+    validateData(ruryOrdersBatchSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const incoming = req.body.data || [];
 
-        for (const o of incoming) {
-            let docId = o.id;
-            if (!docId) {
-                docId = crypto.randomUUID();
-            }
-
-            const {
-                id: _id,
-                type: _type,
-                userId: incomingUserId,
-                offerId,
-                createdAt: createdAtRaw,
-                status,
-                ...rest
-            } = o;
-            const dataStr = JSON.stringify(rest);
-
-            const createdAt = normalizeDate(createdAtRaw);
-
-            const old = await prisma.orders_rury_rel.findUnique({
-                where: { id: docId },
-                select: { data: true, userId: true }
-            });
-
-            const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-            if (!canWriteDoc(authReq.user, targetUserId)) {
-                return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
-            }
-            const newData = { ...rest };
-
-            if (old) {
-                logAudit(
-                    'order',
-                    docId,
-                    authReq.user?.id || '',
-                    'update',
-                    newData,
-                    parseJsonField<Record<string, unknown>>(old.data, {})
-                );
-            } else {
-                logAudit('order', docId, authReq.user?.id || '', 'create', newData);
-            }
-
-            await prisma.orders_rury_rel.upsert({
-                where: { id: docId },
-                create: {
-                    id: docId,
-                    userId: targetUserId,
-                    offerId: offerId || '',
-                    createdAt: createdAt,
-                    status: status || 'new',
-                    data: dataStr
-                },
-                update: {
-                    userId: targetUserId,
-                    offerId: offerId || '',
-                    createdAt: createdAt,
-                    status: status || 'new',
-                    data: dataStr
+            for (const o of incoming) {
+                let docId = o.id;
+                if (!docId) {
+                    docId = crypto.randomUUID();
                 }
-            });
-        }
 
-        res.json({ ok: true });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        logger.error('Orders', 'Błąd PUT orders-rury', message);
-        res.status(500).json({ error: message });
+                const {
+                    id: _id,
+                    type: _type,
+                    userId: incomingUserId,
+                    offerId,
+                    createdAt: createdAtRaw,
+                    status,
+                    ...rest
+                } = o;
+                const dataStr = JSON.stringify(rest);
+
+                const createdAt = normalizeDate(createdAtRaw);
+
+                const old = await prisma.orders_rury_rel.findUnique({
+                    where: { id: docId },
+                    select: { data: true, userId: true }
+                });
+
+                const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
+                if (!canWriteDoc(authReq.user, targetUserId)) {
+                    return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
+                }
+                const newData = { ...rest };
+
+                if (old) {
+                    logAudit(
+                        'order',
+                        docId,
+                        authReq.user?.id || '',
+                        'update',
+                        newData,
+                        parseJsonField<Record<string, unknown>>(old.data, {})
+                    );
+                } else {
+                    logAudit('order', docId, authReq.user?.id || '', 'create', newData);
+                }
+
+                await prisma.orders_rury_rel.upsert({
+                    where: { id: docId },
+                    create: {
+                        id: docId,
+                        userId: targetUserId,
+                        offerId: offerId || '',
+                        createdAt: createdAt,
+                        status: status || 'new',
+                        data: dataStr
+                    },
+                    update: {
+                        userId: targetUserId,
+                        offerId: offerId || '',
+                        createdAt: createdAt,
+                        status: status || 'new',
+                        data: dataStr
+                    }
+                });
+            }
+
+            res.json({ ok: true });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('Orders', 'Błąd PUT orders-rury', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // GET /api/orders-rury/:id/export-karta-pdf
 router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
@@ -183,7 +202,9 @@ router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
         if (!order || !canReadDoc(authReq.user, order.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
+        const safeId = String(id)
+            .replace(/[^a-z0-9_-]/gi, '_')
+            .slice(0, 100);
         const pdfBuffer = await generateKartaBudowyRuryPDF(id);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${safeId}.pdf"`);
@@ -207,7 +228,9 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
         if (!order || !canReadDoc(authReq.user, order.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
+        const safeId = String(id)
+            .replace(/[^a-z0-9_-]/gi, '_')
+            .slice(0, 100);
         const docxBuffer = await generateKartaBudowyRuryDOCX(id);
         res.setHeader(
             'Content-Type',
@@ -293,7 +316,7 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
         if (!parseResult.success) {
             return res.status(400).json({
                 error: 'Nieprawidłowe dane eksportu oferty',
-                details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
+                details: parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`)
             });
         }
         const body = parseResult.data as Record<string, unknown>;
@@ -345,7 +368,10 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
         const pdfBuffer = await generateRuryPDFFromContext(ctx);
         const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_zamowienie_${safeOrder}.pdf"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="oferta_rury_zamowienie_${safeOrder}.pdf"`
+        );
         res.send(pdfBuffer);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -364,7 +390,7 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
         if (!parseResult.success) {
             return res.status(400).json({
                 error: 'Nieprawidłowe dane eksportu oferty',
-                details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
+                details: parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`)
             });
         }
         const body = parseResult.data as Record<string, unknown>;
@@ -464,54 +490,60 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/:id', requireAuth, writeOrdersLimiter, validateData(ruryOrderUpdateSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const docId = req.params.id;
+router.patch(
+    '/:id',
+    requireAuth,
+    writeOrdersLimiter,
+    validateData(ruryOrderUpdateSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const docId = req.params.id;
 
-        const o = await prisma.orders_rury_rel.findUnique({
-            where: { id: docId },
-            select: { id: true, userId: true, status: true, data: true }
-        });
-        const isOwner = o && o.userId === authReq.user?.id;
-        const isProParent =
-            o &&
-            authReq.user?.role === 'pro' &&
-            (authReq.user?.subUsers || []).includes(o.userId || '');
-        if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
-            return res.status(404).json({ error: 'Zamówienie nie znalezione' });
-        }
-
-        const oldData = parseJsonField<Record<string, unknown>>(o.data, {});
-        const updatedData = { ...oldData, ...req.body };
-        delete updatedData.id;
-        delete updatedData.type;
-        delete updatedData.userId;
-        delete updatedData.offerId;
-        delete updatedData.status;
-        delete updatedData.createdAt;
-
-        const newStatus = req.body.status || o.status;
-        const newUserId = req.body.userId || o.userId;
-        const dataStr = JSON.stringify(updatedData);
-
-        await prisma.orders_rury_rel.update({
-            where: { id: docId },
-            data: {
-                status: newStatus,
-                userId: newUserId,
-                data: dataStr
+            const o = await prisma.orders_rury_rel.findUnique({
+                where: { id: docId },
+                select: { id: true, userId: true, status: true, data: true }
+            });
+            const isOwner = o && o.userId === authReq.user?.id;
+            const isProParent =
+                o &&
+                authReq.user?.role === 'pro' &&
+                (authReq.user?.subUsers || []).includes(o.userId || '');
+            if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+                return res.status(404).json({ error: 'Zamówienie nie znalezione' });
             }
-        });
 
-        logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
+            const oldData = parseJsonField<Record<string, unknown>>(o.data, {});
+            const updatedData = { ...oldData, ...req.body };
+            delete updatedData.id;
+            delete updatedData.type;
+            delete updatedData.userId;
+            delete updatedData.offerId;
+            delete updatedData.status;
+            delete updatedData.createdAt;
 
-        res.json({ ok: true });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+            const newStatus = req.body.status || o.status;
+            const newUserId = req.body.userId || o.userId;
+            const dataStr = JSON.stringify(updatedData);
+
+            await prisma.orders_rury_rel.update({
+                where: { id: docId },
+                data: {
+                    status: newStatus,
+                    userId: newUserId,
+                    data: dataStr
+                }
+            });
+
+            logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
+
+            res.json({ ok: true });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

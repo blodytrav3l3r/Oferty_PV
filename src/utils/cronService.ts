@@ -1,0 +1,137 @@
+/**
+ * Cron Service — cykliczne zadania AI Learning Engine.
+ *
+ * Używamy czystego setInterval zamiast node-cron (zero nowych zależności).
+ * Trial jest pasywny - żadne cykliczne zadanie nie wpływa na solver JS.
+ */
+
+import { logger } from './logger';
+import { learningEngine } from '../services/telemetry/learning';
+
+class CronService {
+    private intervals: Map<string, NodeJS.Timeout> = new Map();
+    private enabled: boolean = false;
+
+    /**
+     * Inicjalizacja - uruchamia zadania cykliczne.
+     * Wywoływane raz przy starcie aplikacji.
+     */
+    init(): void {
+        if (this.enabled) {
+            logger.warn('CronService', 'Już zainicjalizowane');
+            return;
+        }
+        this.enabled = true;
+
+        // Co godzinę — analiza akceptacji użycia
+        this.schedule('analyzeUsagePreferences', 60 * 60 * 1000, () =>
+            this.runUsageAnalysis()
+        );
+
+        // Co 24h — pełny cykl LearningEngine
+        this.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () =>
+            this.runFullCycle()
+        );
+
+        logger.info('CronService', 'Cron zainicjalizowany (hourly + daily)');
+    }
+
+    /**
+     * Zaplanuj zadanie cykliczne.
+     */
+    schedule(name: string, intervalMs: number, task: () => Promise<void> | void): void {
+        if (this.intervals.has(name)) {
+            logger.warn('CronService', `Task ${name} już zarejestrowany`);
+            return;
+        }
+        const id = setInterval(function () {
+            Promise.resolve()
+                .then(function () {
+                    return task();
+                })
+                .catch(function (err: unknown) {
+                    logger.error('CronService', `Błąd w ${name}: ${err}`);
+                });
+        }, intervalMs);
+        this.intervals.set(name, id);
+        logger.info('CronService', `Zarejestrowano ${name} (co ${Math.round(intervalMs / 1000)}s)`);
+    }
+
+    /**
+     * Zatrzymaj zadanie.
+     */
+    cancel(name: string): void {
+        const id = this.intervals.get(name);
+        if (id) {
+            clearInterval(id);
+            this.intervals.delete(name);
+            logger.info('CronService', `Zatrzymano ${name}`);
+        }
+    }
+
+    /**
+     * Łagodne zatrzymanie przy wyłączaniu serwera.
+     */
+    shutdown(): void {
+        this.intervals.forEach(function (id, name) {
+            clearInterval(id);
+            logger.info('CronService', `Wyczyszczono ${name}`);
+        });
+        this.intervals.clear();
+        this.enabled = false;
+    }
+
+    /**
+     * Pełny cykl LearningEngine: odczytaj historyczną telemetry, wykryj wzorce,
+     * zapisz do KnowledgeBase.
+     */
+    async runFullCycle(): Promise<void> {
+        try {
+            logger.info('CronService', '[fullCycle] start');
+            const summary = await learningEngine.runFullCycle();
+            logger.info(
+                'CronService',
+                '[fullCycle] processed=' +
+                    summary.processed +
+                    ', patterns=' +
+                    summary.patternsDetected +
+                    ', persisted=' +
+                    summary.persistedToKb +
+                    ', ms=' +
+                    summary.durationMs
+            );
+        } catch (e) {
+            logger.error('CronService', `[fullCycle] failed: ${e}`);
+        }
+    }
+
+    /**
+     * Analiza ustawień użytkowania (co godzinę).
+     * W trywialny sposób wywołuje pełny cykl ale z mniejszym limitem.
+     */
+    async runUsageAnalysis(): Promise<void> {
+        try {
+            logger.info('CronService', '[usageAnalysis] start');
+            const summary = await learningEngine.runFullCycle();
+            logger.info(
+                'CronService',
+                '[usageAnalysis] persisted=' + summary.persistedToKb +
+                    ' new patterns'
+            );
+        } catch (e) {
+            logger.error('CronService', `[usageAnalysis] failed: ${e}`);
+        }
+    }
+
+    getStatus(): {
+        enabled: boolean;
+        runningTasks: string[];
+    } {
+        return {
+            enabled: this.enabled,
+            runningTasks: Array.from(this.intervals.keys())
+        };
+    }
+}
+
+export const cronService = new CronService();

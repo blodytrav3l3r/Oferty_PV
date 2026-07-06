@@ -86,6 +86,7 @@ function createNewWell(name, dn = 1000) {
         rzednaDna: null,
         numer: '',
         autoLocked: false,
+        autoSelect: true,
         zakonczenie: offerDefaultZakonczenie,
         redukcjaDN1000: offerDefaultRedukcja,
         redukcjaMinH: offerDefaultRedukcjaMinH,
@@ -175,10 +176,12 @@ function isWellLocked(wellIdx) {
 
 // renderOfferLockBanner() przeniesiona do wellUI.js
 
-
 function addNewWell(dn = /** @type {string|number} */ (1000)) {
     if (enforceGlobalKonusPehdRule()) {
-        showToast('Nie można dodać nowej studni, dopóki nie rozwiążesz konfliktu Konus+PEHD w poprzedniej.', 'error');
+        showToast(
+            'Nie można dodać nowej studni, dopóki nie rozwiążesz konfliktu Konus+PEHD w poprzedniej.',
+            'error'
+        );
         return;
     }
     if (dn === 'styczna') {
@@ -199,7 +202,10 @@ function addNewWell(dn = /** @type {string|number} */ (1000)) {
 
 function duplicateWell(index) {
     if (enforceGlobalKonusPehdRule()) {
-        showToast('Nie można skopiować studni, dopóki nie rozwiążesz konfliktu Konus+PEHD.', 'error');
+        showToast(
+            'Nie można skopiować studni, dopóki nie rozwiążesz konfliktu Konus+PEHD.',
+            'error'
+        );
         return;
     }
     const src = wells[index];
@@ -215,6 +221,10 @@ function duplicateWell(index) {
 }
 
 async function removeWell(index) {
+    if (isOfferLocked()) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
     if (isWellLocked(index)) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
@@ -373,7 +383,7 @@ function calcPrecoPricing(well) {
         precoPricing: precoPricing,
         studnieProducts: studnieProducts,
         FLOW_TYPES: FLOW_TYPES,
-        showToast: (typeof showToast === 'function') ? showToast : undefined
+        showToast: typeof showToast === 'function' ? showToast : undefined
     });
 }
 
@@ -390,8 +400,6 @@ function isSettlingWell(well) {
     return true;
 }
 
-
-
 function syncKineta(well) {
     if (!well || !well.config) return;
 
@@ -399,14 +407,16 @@ function syncKineta(well) {
     if (well.kineta && well.kineta !== 'brak') {
         if (!well.spocznik || well.spocznik === 'brak') {
             well.spocznik = 'beton';
-            if (typeof showToast === 'function') showToast('Domyślny spocznik (Beton) został wybrany automatycznie.', 'info');
+            if (typeof showToast === 'function')
+                showToast('Domyślny spocznik (Beton) został wybrany automatycznie.', 'info');
         }
     } else {
         // Jeżeli kineta = brak → spocznik MUSI być brak
         if (well.spocznik && well.spocznik !== 'brak') {
             well.spocznik = 'brak';
             well.spocznikH = 'brak';
-            if (typeof showToast === 'function') showToast('Spocznik wyczyszczony. Wybierz najpierw Kinetę.', 'warning');
+            if (typeof showToast === 'function')
+                showToast('Spocznik wyczyszczony. Wybierz najpierw Kinetę.', 'warning');
         }
     }
 
@@ -420,12 +430,12 @@ function syncKineta(well) {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             return !(p && p.componentType === 'kineta');
         });
-        
+
         if (!well.wkladkaOsadnikH) {
             let dennicaHeight = 0;
             if (well.config) {
-                well.config.forEach(item => {
-                    const p = studnieProducts.find(pr => pr.id === item.productId);
+                well.config.forEach((item) => {
+                    const p = studnieProducts.find((pr) => pr.id === item.productId);
                     if (p && (p.componentType === 'dennica' || p.componentType === 'styczna')) {
                         dennicaHeight += (p.height || 0) * (item.quantity || 1);
                     }
@@ -436,16 +446,16 @@ function syncKineta(well) {
 
         // Czyszczenie starego kosztu
         if (well.config) {
-            well.config.forEach(item => {
+            well.config.forEach((item) => {
                 delete item._osadnikCost;
             });
         }
         return;
     }
-    
+
     // Wyczyść koszt osadnika jeśli wyłączono
     if (well.config) {
-        well.config.forEach(item => {
+        well.config.forEach((item) => {
             delete item._osadnikCost;
         });
     }
@@ -465,7 +475,6 @@ function syncKineta(well) {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType === 'dennica';
     });
-
 
     if (hasDennica && well.spocznikH && well.spocznikH !== 'brak') {
         const kinetaProd = studnieProducts.find(
@@ -488,7 +497,7 @@ function syncKineta(well) {
 
 function enforceGlobalKonusPehdRule() {
     if (typeof wells === 'undefined' || !wells || wells.length === 0) return false;
-    
+
     // Zapobieganie wielokrotnemu otwieraniu modala
     if (window.konusResolverOpen) return false;
 
@@ -496,11 +505,11 @@ function enforceGlobalKonusPehdRule() {
         const w = wells[i];
         if (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak') {
             let hasKonus = false;
-            
+
             // 1. Sprawdź obecną konfigurację
             if (w.config && w.config.length > 0) {
-                const found = w.config.some(c => {
-                    const p = studnieProducts.find(pr => pr.id === c.productId);
+                const found = w.config.some((c) => {
+                    const p = studnieProducts.find((pr) => pr.id === c.productId);
                     return p && p.componentType === 'konus';
                 });
                 if (found) hasKonus = true;
@@ -508,13 +517,13 @@ function enforceGlobalKonusPehdRule() {
 
             // 2. Sprawdź wymuszone domyślne zakończenia
             if (w.zakonczenie) {
-                const p = studnieProducts.find(pr => pr.id === w.zakonczenie);
+                const p = studnieProducts.find((pr) => pr.id === w.zakonczenie);
                 if (p && p.componentType === 'konus') {
                     hasKonus = true;
                 }
             }
             if (w.redukcjaZakonczenie) {
-                const p = studnieProducts.find(pr => pr.id === w.redukcjaZakonczenie);
+                const p = studnieProducts.find((pr) => pr.id === w.redukcjaZakonczenie);
                 if (p && p.componentType === 'konus') {
                     hasKonus = true;
                 }
@@ -522,7 +531,12 @@ function enforceGlobalKonusPehdRule() {
 
             if (hasKonus) {
                 if (typeof window.showKonusPehdResolverModal === 'function') {
-                    showToast('Wykryto niedozwoloną konfigurację (Konus + PEHD) w studni #' + (i + 1) + '. Wymagana zmiana.', 'error');
+                    showToast(
+                        'Wykryto niedozwoloną konfigurację (Konus + PEHD) w studni #' +
+                            (i + 1) +
+                            '. Wymagana zmiana.',
+                        'error'
+                    );
                     window.showKonusPehdResolverModal(i);
                     return true; // Zwracamy true, co oznacza że zablokowaliśmy akcję i pokazaliśmy modal
                 }
@@ -569,11 +583,11 @@ function refreshAll(skipSummary = false) {
     if (typeof updateStyczna1200Button === 'function') updateStyczna1200Button();
     updateParamTilesUI();
     renderWellParams();
-    
+
     if (!skipSummary) {
         renderOfferSummary();
     }
-    
+
     if (orderEditMode) renderOrderModeBanner();
 
     // Wymuszenie przetworzenia ikon tylko w zaktualizowanych kontenerach
@@ -597,10 +611,10 @@ async function updateWellParam(paramKey, value) {
     if (!well) return;
     const oldParamVal = well[paramKey];
     well[paramKey] = value;
-    
+
     // Zastosuj cenę malowania dla wszystkich studni w ofercie
     if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
-        wells.forEach(w => {
+        wells.forEach((w) => {
             w[paramKey] = value;
         });
         showToast('Zaktualizowano cenę malowania we wszystkich studniach', 'info');
@@ -625,7 +639,17 @@ async function updateWellParam(paramKey, value) {
 
     // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
     if (paramKey === 'kineta') {
-        const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+        const syncValues = [
+            'beton',
+            'beton_gfk',
+            'klinkier',
+            'preco',
+            'precotop',
+            'unolith',
+            'predl',
+            'kamionka',
+            'brak'
+        ];
         if (syncValues.includes(value)) {
             well.spocznik = value;
         }
@@ -645,10 +669,12 @@ async function updateWellParam(paramKey, value) {
 
     // Sprawdzenie konusa dla wkładki na zwieńczenie
     if (paramKey === 'wkladkaZwienczenie' && value !== 'brak') {
-        const hasKonus = well.config && well.config.some(c => {
-            const p = studnieProducts.find(pr => pr.id === c.productId);
-            return p && p.componentType === 'konus';
-        });
+        const hasKonus =
+            well.config &&
+            well.config.some((c) => {
+                const p = studnieProducts.find((pr) => pr.id === c.productId);
+                return p && p.componentType === 'konus';
+            });
         if (hasKonus && typeof window.showKonusPehdResolverModal === 'function') {
             window.showKonusPehdResolverModal(currentWellIndex);
         }
@@ -668,6 +694,8 @@ async function updateWellParam(paramKey, value) {
     }
 
     refreshAll();
+    /* Odśwież tabelę excela jeśli modal otwarty — tylko przy zmianie z zewnątrz */
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 }
 
 function resetWellParamsToDefaults() {
@@ -722,7 +750,17 @@ async function applyGlobalParamsToAllWells() {
         // Kineta → spocznik i reguły PRECO
         const kinetaVal = gp.kineta;
         if (kinetaVal) {
-            const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+            const syncValues = [
+                'beton',
+                'beton_gfk',
+                'klinkier',
+                'preco',
+                'precotop',
+                'unolith',
+                'predl',
+                'kamionka',
+                'brak'
+            ];
             if (syncValues.includes(kinetaVal)) {
                 well.spocznik = kinetaVal;
             }
@@ -736,17 +774,24 @@ async function applyGlobalParamsToAllWells() {
         enforceLoadClassRules(well, 'dennicaMaterial');
         // Konus + PEHD — wyzeruj wkładkę zwieńczenia
         if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
-            const hasKonus = well.config && well.config.some(c => {
-                const p = studnieProducts.find(pr => pr.id === c.productId);
-                return p && p.componentType === 'konus';
-            });
+            const hasKonus =
+                well.config &&
+                well.config.some((c) => {
+                    const p = studnieProducts.find((pr) => pr.id === c.productId);
+                    return p && p.componentType === 'konus';
+                });
             if (hasKonus) well.wkladkaZwienczenie = 'brak';
         }
         if (typeof updateConfigToMatchParams === 'function') {
             updateConfigToMatchParams(well);
         }
         currentWellIndex = index;
-        if (!well.autoLocked && well.rzednaWlazu != null && well.rzednaDna != null && well.rzednaWlazu > well.rzednaDna) {
+        if (
+            !well.autoLocked &&
+            well.rzednaWlazu != null &&
+            well.rzednaDna != null &&
+            well.rzednaWlazu > well.rzednaDna
+        ) {
             await autoSelectComponents(true);
         }
     }
@@ -845,10 +890,10 @@ async function updateParamInput(paramName, value) {
     const well = getCurrentWell();
     if (!well) return;
     well[paramName] = value;
-    
+
     // Zastosuj cenę malowania dla wszystkich studni w ofercie
     if (paramName === 'malowanieWewCena' || paramName === 'malowanieZewCena') {
-        wells.forEach(w => {
+        wells.forEach((w) => {
             w[paramName] = value;
         });
     }
@@ -866,7 +911,13 @@ function toggleAutoLock() {
         return;
     }
     well.autoLocked = !well.autoLocked;
+    /* Sync z Excelem - ustaw configSource na MANUAL gdy blokujemy */
+    well.configSource = well.autoLocked ? 'MANUAL' : 'AUTO';
+    well.autoSelect = !well.autoLocked;
     updateAutoLockUI();
+    /* Odswiez Excel jesli otwarty */
+    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
+    if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 }
 
 // updateAutoLockUI() przeniesiona do wellUI.js
@@ -893,13 +944,17 @@ async function confirmApp(message, callback, cancelCallback) {
 }
 
 function updateDiscount(dn, type, value) {
-
     const newValue = parseFloat(value) || 0;
     const oldDisc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
     const oldValue = oldDisc[type] || 0;
 
     // Sprawdź, czy potrzebny jest popup (tylko dla bazy stycznej i jeśli wartość faktycznie zmieniła się na > 0)
-    if ((dn === 'styczna' || dn === 'styczne') && type === 'dennica' && newValue > 0 && newValue !== oldValue) {
+    if (
+        (dn === 'styczna' || dn === 'styczne') &&
+        type === 'dennica' &&
+        newValue > 0 &&
+        newValue !== oldValue
+    ) {
         confirmApp(
             'Uwaga rabat na studnie styczną',
             () => {
@@ -943,7 +998,7 @@ function applyDiscount(dn, type, value) {
  */
 function updateGlobalPaintingCost(field, value) {
     const numVal = parseFloat(value) || 0;
-    wells.forEach(w => {
+    wells.forEach((w) => {
         w[field] = numVal;
 
         // Jeśli zmieniamy wewnętrzną, a zewnętrzna nie była ręcznie modyfikowana, zaktualizuj też zewnętrzną
@@ -960,9 +1015,12 @@ function updateGlobalPaintingCost(field, value) {
     // Brak toasta podczas szybkiego wpisywania w modalu by nie spamować (chyba że zmiana z konfiguratora bocznego)
     const offerModal = document.getElementById('offer-discounts-modal');
     const isOfferModalOpen = offerModal && offerModal.style.display === 'flex';
-    
+
     if (!isOfferModalOpen) {
-        showToast(`Zaktualizowano cenę malowania (${numVal} PLN/m²) we wszystkich studniach`, 'info');
+        showToast(
+            `Zaktualizowano cenę malowania (${numVal} PLN/m²) we wszystkich studniach`,
+            'info'
+        );
     }
 
     // W trybie zamówienia: zamrożone ceny blokują przeliczanie wyceny,
@@ -984,7 +1042,7 @@ function updateGlobalPaintingCost(field, value) {
         if (typeof updateOfferDiscountsPopupPrices === 'function') {
             updateOfferDiscountsPopupPrices();
         }
-        
+
         // Na żywo zaktualizuj też wizualnie pole zewnętrzne jeśli przypisywano automatycznie
         if (field === 'malowanieWewCena' && document.getElementById('offer-mal-zew-cena')) {
             const zewInput = document.getElementById('offer-mal-zew-cena');
@@ -1004,13 +1062,13 @@ function updateGlobalPaintingCost(field, value) {
  */
 function updateGlobalPehdDiscount(value) {
     const numVal = parseFloat(value) || 0;
-    wells.forEach(w => {
+    wells.forEach((w) => {
         w.pehdDiscount = numVal;
     });
 
     const offerModal = document.getElementById('offer-discounts-modal');
     const isOfferModalOpen = offerModal && offerModal.style.display === 'flex';
-    
+
     if (!isOfferModalOpen) {
         showToast(`Zaktualizowano rabat PEHD (${numVal}%) we wszystkich studniach`, 'info');
     }
@@ -1031,13 +1089,18 @@ function updateGlobalPehdDiscount(value) {
         if (typeof updateOfferDiscountsPopupPrices === 'function') {
             updateOfferDiscountsPopupPrices();
         }
-        
+
         // Zaktualizuj pole z ceną po rabacie, jeśli istnieje
         const priceAfterDiscountSpan = document.getElementById('offer-pehd-price-after-discount');
         if (priceAfterDiscountSpan) {
             let currentPehdPrice = 0;
             for (const p of studnieProducts) {
-                if (p.area > 0 && p.doplataPEHD > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta') {
+                if (
+                    p.area > 0 &&
+                    p.doplataPEHD > 0 &&
+                    p.componentType !== 'przejscie' &&
+                    p.componentType !== 'kineta'
+                ) {
                     currentPehdPrice = Math.round(p.doplataPEHD / p.area);
                     break;
                 }
@@ -1069,17 +1132,19 @@ function getDiscountedTotal() {
 function collectPipeGeometry(well) {
     if (!well.przejscia || well.przejscia.length === 0) return [];
 
-    return well.przejscia.map(pr => {
-        const prod = studnieProducts.find(p => p.id === pr.productId);
-        let dnMm = parseInt(pr.dn) || 0;
-        if (!dnMm && prod) dnMm = parseInt(prod.dn) || 0;
-        if (dnMm <= 0) return null;
+    return well.przejscia
+        .map((pr) => {
+            const prod = studnieProducts.find((p) => p.id === pr.productId);
+            let dnMm = parseInt(pr.dn) || 0;
+            if (!dnMm && prod) dnMm = parseInt(prod.dn) || 0;
+            if (dnMm <= 0) return null;
 
-        return {
-            dnMm,
-            angle: parseFloat(pr.angle) || 0
-        };
-    }).filter(Boolean);
+            return {
+                dnMm,
+                angle: parseFloat(pr.angle) || 0
+            };
+        })
+        .filter(Boolean);
 }
 
 /**
@@ -1145,8 +1210,8 @@ function calcStandardKinetaPaintingArea(well, R) {
     if (pipes.length === 0) {
         let dennicaH = 0;
         if (well.config) {
-            well.config.forEach(item => {
-                const pr = studnieProducts.find(x => x.id === item.productId);
+            well.config.forEach((item) => {
+                const pr = studnieProducts.find((x) => x.id === item.productId);
                 if (pr && (pr.componentType === 'dennica' || pr.componentType === 'styczna')) {
                     dennicaH = Math.max(dennicaH, pr.height || 0);
                 }
@@ -1162,8 +1227,8 @@ function calcStandardKinetaPaintingArea(well, R) {
     const { mainPair, tributaries } = identifyMainChannelAndTributaries(pipes);
 
     // Największa rura wyznacza głębokość koryta
-    const maxPipeDn = Math.max(...pipes.map(p => p.dnMm));
-    const channelDepth = (maxPipeDn / 2) / 1000; // [m]
+    const maxPipeDn = Math.max(...pipes.map((p) => p.dnMm));
+    const channelDepth = maxPipeDn / 2 / 1000; // [m]
     const spocznikHeight = channelDepth * spocznikFrac; // wys. ścianki nad kanałem [m]
 
     let channelArea = 0;
@@ -1186,7 +1251,7 @@ function calcStandardKinetaPaintingArea(well, R) {
     }
 
     // Dopływy — od ściany do kanału głównego (≈ R)
-    tributaries.forEach(trib => {
+    tributaries.forEach((trib) => {
         const r = trib.dnMm / 2000;
         const channelLen = R;
         channelArea += Math.PI * r * channelLen;
@@ -1224,7 +1289,7 @@ function calcOsadnikPaintingArea(well, R) {
     // Odjęcie otworów rur (pół-elipsy w ściance)
     const pipes = collectPipeGeometry(well);
     let holeArea = 0;
-    pipes.forEach(pipe => {
+    pipes.forEach((pipe) => {
         const r = pipe.dnMm / 2000;
         holeArea += (Math.PI * r * r) / 2;
     });
@@ -1258,7 +1323,8 @@ function getWellActiveDiscounts(well) {
     let activeDiscounts = wellDiscounts;
     // Jeśli studnia jest w zamówieniu (Zablokowana), użyj rabatów z momentu utworzenia zamówienia (z migawki)
     if (typeof isWellOrdered === 'function' && isWellOrdered(well)) {
-        const currentOfferId = typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : null;
+        const currentOfferId =
+            typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : null;
         if (currentOfferId && typeof getOrderForWellId === 'function') {
             const order = getOrderForWellId(well.id, currentOfferId);
             if (order && order.originalSnapshot && order.originalSnapshot.wellDiscounts) {
@@ -1276,7 +1342,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     if (applyDiscount && well.dn) {
         // Mapowanie dn na klucz rabatów (styczna -> styczne)
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        
+
         const activeDiscounts = getWellActiveDiscounts(well);
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
         if (
@@ -1323,13 +1389,26 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         // Dodaj malowanie do kinety przed wczesnym wyjściem
         // Dynamiczna powierzchnia — obliczona z geometrii rur, kątów i spocznika
         if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
-            if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
+            if (
+                well.malowanieW === 'kineta' ||
+                well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale'
+            ) {
                 const kinetaArea = calcKinetaPaintingArea(well);
                 itemPrice += kinetaArea * well.malowanieWewCena;
             }
-        } else if (well.malowanieW && well.malowanieW !== 'brak' && !well.malowanieWewCena && p.malowanieWewnetrzne) {
+        } else if (
+            well.malowanieW &&
+            well.malowanieW !== 'brak' &&
+            !well.malowanieWewCena &&
+            p.malowanieWewnetrzne
+        ) {
             // Legacy malowanie wewnątrz (fixed-price) — kineta
-            if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
+            if (
+                well.malowanieW === 'kineta' ||
+                well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale'
+            ) {
                 itemPrice += parseFloat(p.malowanieWewnetrzne);
             }
         }
@@ -1352,7 +1431,20 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     let pehdType = null;
     if (['dennica', 'styczna'].includes(p.componentType)) {
         pehdType = well.wkladkaDennica;
-    } else if (['plyta', 'plyta_redukcyjna', 'plyta_nastudzienna', 'stozek', 'zwienczenie', 'konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType)) {
+    } else if (
+        [
+            'plyta',
+            'plyta_redukcyjna',
+            'plyta_nastudzienna',
+            'stozek',
+            'zwienczenie',
+            'konus',
+            'plyta_din',
+            'plyta_najazdowa',
+            'plyta_zamykajaca',
+            'pierscien_odciazajacy'
+        ].includes(p.componentType)
+    ) {
         pehdType = well.wkladkaZwienczenie;
     } else if (['krag', 'krag_ot', 'rura'].includes(p.componentType)) {
         pehdType = well.wkladkaNadbudowa;
@@ -1362,7 +1454,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         if (!item || !item.disablePehd) {
             let pehdSurcharge = parseFloat(p.doplataPEHD);
             if (applyDiscount && well.pehdDiscount) {
-                pehdSurcharge *= (1 - well.pehdDiscount / 100);
+                pehdSurcharge *= 1 - well.pehdDiscount / 100;
             }
             itemPrice += pehdSurcharge;
         }
@@ -1382,7 +1474,11 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
             }
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
-        if (well.malowanieW === 'cale' && p.componentType !== 'dennica' && p.componentType !== 'styczna') {
+        if (
+            well.malowanieW === 'cale' &&
+            p.componentType !== 'dennica' &&
+            p.componentType !== 'styczna'
+        ) {
             itemPrice += parseFloat(p.malowanieWewnetrzne);
         }
         // Pominięte: dennica przy kineta_dennica i cale — kineta już obejmuje wnętrze dennicy
@@ -1405,7 +1501,11 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     }
 
     // Drabinka nierdzewna (dla kręgów z otworami i dennic)
-    if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag_ot' || p.componentType === 'dennica') && p.doplataDrabNierdzewna) {
+    if (
+        well.stopnie === 'nierdzewna' &&
+        (p.componentType === 'krag_ot' || p.componentType === 'dennica') &&
+        p.doplataDrabNierdzewna
+    ) {
         itemPrice += parseFloat(p.doplataDrabNierdzewna);
     }
 
@@ -1431,9 +1531,10 @@ function calcWellStats(well) {
 
     configReversed.forEach((item) => {
         // Rozwiąż poprawny wariant produktu wg parametrów studni (auto-korekta productId)
-        const p = typeof resolveEffectiveProduct === 'function'
-            ? resolveEffectiveProduct(well, item.productId, item)
-            : studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof resolveEffectiveProduct === 'function'
+                ? resolveEffectiveProduct(well, item.productId, item)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
         // Ceny bazowe (bez rabatu)
@@ -1480,7 +1581,7 @@ function calcWellStats(well) {
             }
             height += h;
             if (p.componentType !== 'uszczelka') {
-                lastWasDennica = (p.componentType === 'dennica');
+                lastWasDennica = p.componentType === 'dennica';
             }
         }
     });
@@ -1498,7 +1599,11 @@ function calcWellStats(well) {
         // Budowa configMap do sprawdzania, czy przejście jest w kręgu
         let configMap = [];
         if (typeof buildConfigMap === 'function') {
-            configMap = buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true);
+            configMap = buildConfigMap(
+                well,
+                (id) => studnieProducts.find((pr) => pr.id === id),
+                true
+            );
         }
 
         well.przejscia.forEach((item) => {
@@ -1510,21 +1615,28 @@ function calcWellStats(well) {
             const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
 
             if (!isInsitu && configMap.length > 0) {
-                let rzDna = parseFloat(well.rzednaDna) || 0;
+                const rzDna = parseFloat(well.rzednaDna) || 0;
                 let pel = parseFloat(item.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
-                let mmFromBottom = (pel - rzDna) * 1000;
+                const mmFromBottom = (pel - rzDna) * 1000;
 
                 if (typeof findAssignedElement === 'function') {
                     const assigned = findAssignedElement(mmFromBottom, configMap);
-                    if (assigned && assigned.entry && (assigned.entry.componentType === 'krag' || assigned.entry.componentType === 'krag_ot')) {
+                    if (
+                        assigned &&
+                        assigned.entry &&
+                        (assigned.entry.componentType === 'krag' ||
+                            assigned.entry.componentType === 'krag_ot')
+                    ) {
                         const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                         if (trDn > 0) {
-                            const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                            const drillingProducts = studnieProducts.filter(
+                                (x) => x.category === 'Wiercenie'
+                            );
                             let bestDrill = null;
                             let bestDnDiff = Infinity;
 
-                            drillingProducts.forEach(drill => {
+                            drillingProducts.forEach((drill) => {
                                 let drillDn = parseInt(drill.dn);
                                 if (isNaN(drillDn)) {
                                     const match = drill.id.match(/Wiercenie-(\d+)/i);
@@ -1561,7 +1673,7 @@ function calcWellStats(well) {
 
             price += dP;
             priceNadbudowa += dP;
-            
+
             if (item.doplata) {
                 price += item.doplata;
                 priceNadbudowa += item.doplata;
@@ -1622,4 +1734,3 @@ function calcWellStats(well) {
 }
 
 // switchSidebarTab() przeniesiona do wellUI.js
-

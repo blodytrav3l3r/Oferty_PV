@@ -15,7 +15,7 @@
 .rury-card {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
-    border-radius: var(--radius-md, 16px);
+    border-radius: var(--radius-md);
     padding: 1.2rem 1.5rem;
     box-shadow: var(--shadow-lg);
     transition: var(--transition);
@@ -263,9 +263,9 @@
     margin-top: 4px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: var(--bg);
+    background: var(--bg-input);
     font-size: 0.7rem;
-    color: var(--text);
+    color: var(--text-primary);
     cursor: pointer;
     white-space: nowrap;
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -768,7 +768,7 @@
 }
 
 /* ── Rury-specific wizard overrides ── */
-.wizard-step.active {
+.rury-app-layout .wizard-step.active {
     padding-bottom: 4rem;
 }
 
@@ -870,13 +870,6 @@
 }
 
 /* ===== KARTA BUDOWY — style identyczne ze Studnie ===== */
-.flex-wrap-start { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
-.flex-1-180 { flex: 1; min-width: 180px; }
-.flex-1-240 { flex: 1; min-width: 240px; }
-.flex-1-180-hidden { flex: 1; min-width: 180px; display: none; }
-.flex-2-240 { flex: 2; min-width: 240px; }
-.p-6-12 { padding: 0.6rem 1.2rem; }
-.form-input-wide { width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; }
 
 /* ===== KARTA BUDOWY — responsywność ===== */
 @media (max-width: 768px) {

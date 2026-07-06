@@ -24,32 +24,112 @@
 import { z } from 'zod';
 
 // =============================================================================
+// PRODUKTY (CENNIKI) — PATCH
+// =============================================================================
+
+/**
+ * Schemat dla PATCH /api/products/:id (rury)
+ * Wszystkie pola opcjonalne — tylko te, które są dozwolone do aktualizacji.
+ */
+export const productPatchSchema = z
+    .object({
+        name: z.string().optional(),
+        category: z.string().optional(),
+        price: z.number().optional(),
+        transport: z.number().nullable().optional(),
+        weight: z.number().nullable().optional(),
+        area: z.number().nullable().optional()
+    })
+    .passthrough();
+
+/**
+ * Schemat dla PATCH /api/products-studnie/:id (studnie)
+ * Wszystkie pola opcjonalne — pokrywa wszystkie dozwolone pola w productsStudnieV2.
+ */
+export const productStudniePatchSchema = z
+    .object({
+        name: z.string().optional(),
+        category: z.string().optional(),
+        componentType: z.string().optional(),
+        dn: z.union([z.string(), z.number()]).nullable().optional(),
+        height: z.number().nullable().optional(),
+        weight: z.number().nullable().optional(),
+        price: z.number().optional(),
+        area: z.number().nullable().optional(),
+        areaExt: z.number().nullable().optional(),
+        transport: z.number().nullable().optional(),
+        magazynWL: z.boolean().optional(),
+        magazynKLB: z.boolean().optional(),
+        formaStandardowa: z.boolean().optional(),
+        formaStandardowaKLB: z.boolean().optional(),
+        active: z.boolean().optional(),
+        zapasDol: z.number().nullable().optional(),
+        zapasGora: z.number().nullable().optional(),
+        zapasDolMin: z.number().nullable().optional(),
+        zapasGoraMin: z.number().nullable().optional(),
+        spocznikH: z.string().nullable().optional(),
+        hMin1: z.number().nullable().optional(),
+        hMax1: z.number().nullable().optional(),
+        cena1: z.number().nullable().optional(),
+        hMin2: z.number().nullable().optional(),
+        hMax2: z.number().nullable().optional(),
+        cena2: z.number().nullable().optional(),
+        hMin3: z.number().nullable().optional(),
+        hMax3: z.number().nullable().optional(),
+        cena3: z.number().nullable().optional(),
+        doplataPEHD: z.number().nullable().optional(),
+        doplataZelbet: z.number().nullable().optional(),
+        doplataDrabNierdzewna: z.number().nullable().optional(),
+        malowanieWewnetrzne: z.number().nullable().optional(),
+        malowanieZewnetrzne: z.number().nullable().optional()
+    })
+    .passthrough();
+
+/**
+ * Schemat dla PUT /api/preco-pricing — pełny zapis (data: obiekt lub tablica)
+ */
+export const precoPricingUpdateSchema = z.object({
+    data: z.union([z.record(z.string(), z.unknown()), z.array(z.record(z.string(), z.unknown()))])
+});
+
+/**
+ * Schemat dla PATCH /api/preco-pricing — częściowa aktualizacja (data: obiekt)
+ */
+export const precoPricingPatchSchema = z.object({
+    data: z.record(z.string(), z.unknown())
+});
+
+// =============================================================================
 // OFERTY RURY
 // =============================================================================
 
 /**
  * Pozycja w ofercie rur
  */
-export const offerItemSchema = z.object({
-    id: z.string().optional(),
-    productId: z.string().min(1, 'ID produktu jest wymagane'),
-    quantity: z.number().positive('Ilość musi być dodatnia'),
-    discount: z.number().min(0).max(100).optional(),
-    price: z.number().nonnegative('Cena nie może być ujemna').optional()
-}).passthrough();
+export const offerItemSchema = z
+    .object({
+        id: z.string().optional(),
+        productId: z.string().min(1, 'ID produktu jest wymagane'),
+        quantity: z.number().positive('Ilość musi być dodatnia'),
+        discount: z.number().min(0).max(100).optional(),
+        price: z.number().nonnegative('Cena nie może być ujemna').optional()
+    })
+    .passthrough();
 
 /**
  * Schemat tworzenia oferty rur
  */
-export const offerCreateSchema = z.object({
-    id: z.string().optional(),
-    clientId: z.string().min(1, 'ID klienta jest wymagane'),
-    state: z.enum(['draft', 'final']).default('draft'),
-    status: z.enum(['active', 'draft']).optional(),
-    transportCost: z.number().min(0).default(0),
-    items: z.array(offerItemSchema),
-    data: z.record(z.string(), z.unknown()).optional()
-}).passthrough();
+export const offerCreateSchema = z
+    .object({
+        id: z.string().optional(),
+        clientId: z.string().min(1, 'ID klienta jest wymagane'),
+        state: z.enum(['draft', 'final']).default('draft'),
+        status: z.enum(['active', 'draft']).optional(),
+        transportCost: z.number().min(0).default(0),
+        items: z.array(offerItemSchema),
+        data: z.record(z.string(), z.unknown()).optional()
+    })
+    .passthrough();
 
 /**
  * Schemat aktualizacji oferty rur (wszystkie pola opcjonalne)
@@ -71,71 +151,79 @@ export const offersBatchSchema = z.object({
 /**
  * Komponent studni w ofercie
  */
-export const wellComponentSchema = z.object({
-    id: z.string().optional(),
-    name: z.string().optional(),
-    typ: z.string().optional(),
-    componentType: z.string().optional(),
-    layer: z.string().optional(),
-    dn: z.number().positive().optional(),
-    height: z.number().nonnegative().optional(),
-    wysokoscUzytkowa: z.number().nonnegative().optional(),
-    waga: z.number().nonnegative().optional(),
-    pojemnosc: z.number().nonnegative().optional(),
-    iloscStopni: z.number().int().nonnegative().optional(),
-    position: z.number().int().nonnegative().optional(),
-    quantity: z.number().int().positive().default(1),
-    price: z.number().nonnegative().optional(),
-    isOverwritten: z.boolean().optional(),
-    overwrittenCost: z.number().nonnegative().optional()
-}).passthrough();
+export const wellComponentSchema = z
+    .object({
+        id: z.string().optional(),
+        name: z.string().optional(),
+        typ: z.string().optional(),
+        componentType: z.string().optional(),
+        layer: z.string().optional(),
+        dn: z.number().positive().optional(),
+        height: z.number().nonnegative().optional(),
+        wysokoscUzytkowa: z.number().nonnegative().optional(),
+        waga: z.number().nonnegative().optional(),
+        pojemnosc: z.number().nonnegative().optional(),
+        iloscStopni: z.number().int().nonnegative().optional(),
+        position: z.number().int().nonnegative().optional(),
+        quantity: z.number().int().positive().default(1),
+        price: z.number().nonnegative().optional(),
+        isOverwritten: z.boolean().optional(),
+        overwrittenCost: z.number().nonnegative().optional()
+    })
+    .passthrough();
 
 /**
  * Przejście szczelne w studni
  */
-export const passageConfigSchema = z.object({
-    kat: z.union([z.string(), z.number()]).optional(),
-    angle: z.union([z.string(), z.number()]).optional(),
-    DN: z.union([z.string(), z.number()]).optional(),
-    dnPrzejscia: z.union([z.string(), z.number()]).optional(),
-    typRury: z.string().optional(),
-    typPrzejscia: z.string().optional(),
-    heightFromBottom: z.number().nonnegative().optional(),
-    zapasDol: z.number().nonnegative().optional(),
-    zapasGora: z.number().nonnegative().optional(),
-    zapasDolMin: z.number().nonnegative().optional(),
-    zapasGoraMin: z.number().nonnegative().optional()
-}).passthrough();
+export const passageConfigSchema = z
+    .object({
+        kat: z.union([z.string(), z.number()]).optional(),
+        angle: z.union([z.string(), z.number()]).optional(),
+        DN: z.union([z.string(), z.number()]).optional(),
+        dnPrzejscia: z.union([z.string(), z.number()]).optional(),
+        typRury: z.string().optional(),
+        typPrzejscia: z.string().optional(),
+        heightFromBottom: z.number().nonnegative().optional(),
+        zapasDol: z.number().nonnegative().optional(),
+        zapasGora: z.number().nonnegative().optional(),
+        zapasDolMin: z.number().nonnegative().optional(),
+        zapasGoraMin: z.number().nonnegative().optional()
+    })
+    .passthrough();
 
 /**
  * Dane pojedynczej studni w ofercie
  */
-export const wellDataSchema = z.object({
-    id: z.string().optional(),
-    dn: z.union([z.number(), z.string().min(1, 'Średnica DN jest wymagana')]).optional(),
-    type: z.string().optional(),
-    totalPrice: z.number().nonnegative().optional(),
-    price: z.number().nonnegative().optional(),
-    zwienczenie: z.string().optional(),
-    components: z.array(wellComponentSchema).optional(),
-    passages: z.array(passageConfigSchema).optional(),
-    height: z.number().positive('Wysokość studni jest wymagana').optional(),
-    depth: z.number().nonnegative().optional()
-}).passthrough();
+export const wellDataSchema = z
+    .object({
+        id: z.string().optional(),
+        dn: z.union([z.number(), z.string().min(1, 'Średnica DN jest wymagana')]).optional(),
+        type: z.string().optional(),
+        totalPrice: z.number().nonnegative().optional(),
+        price: z.number().nonnegative().optional(),
+        zwienczenie: z.string().optional(),
+        components: z.array(wellComponentSchema).optional(),
+        passages: z.array(passageConfigSchema).optional(),
+        height: z.number().positive('Wysokość studni jest wymagana').optional(),
+        depth: z.number().nonnegative().optional()
+    })
+    .passthrough();
 
 /**
  * Schemat tworzenia oferty studni
  */
-export const offerStudnieCreateSchema = z.object({
-    id: z.string().optional(),
-    clientId: z.string().min(1, 'ID klienta jest wymagane'),
-    state: z.enum(['draft', 'final']).default('draft'),
-    status: z.enum(['active', 'draft']).optional(),
-    transportCost: z.number().min(0).default(0),
-    wells: z.array(wellDataSchema),
-    totalPrice: z.number().nonnegative().optional(),
-    data: z.record(z.string(), z.unknown()).optional()
-}).passthrough();
+export const offerStudnieCreateSchema = z
+    .object({
+        id: z.string().optional(),
+        clientId: z.string().min(1, 'ID klienta jest wymagane'),
+        state: z.enum(['draft', 'final']).default('draft'),
+        status: z.enum(['active', 'draft']).optional(),
+        transportCost: z.number().min(0).default(0),
+        wells: z.array(wellDataSchema),
+        totalPrice: z.number().nonnegative().optional(),
+        data: z.record(z.string(), z.unknown()).optional()
+    })
+    .passthrough();
 
 /**
  * Schemat aktualizacji oferty studni
@@ -190,17 +278,24 @@ function isValidNip(nip: string): boolean {
  */
 export const clientSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(1, 'Nazwa klienta jest wymagana').max(200, 'Nazwa klienta nie może przekraczać 200 znaków'),
-    nip: z.string().optional().refine(
-        (val) => !val || val.trim() === '' || isValidNip(val),
-        { message: 'Nieprawidłowy format NIP (wymagane 10 cyfr z poprawną sumą kontrolną)' }
-    ),
+    name: z
+        .string()
+        .min(1, 'Nazwa klienta jest wymagana')
+        .max(200, 'Nazwa klienta nie może przekraczać 200 znaków'),
+    nip: z
+        .string()
+        .optional()
+        .refine((val) => !val || val.trim() === '' || isValidNip(val), {
+            message: 'Nieprawidłowy format NIP (wymagane 10 cyfr z poprawną sumą kontrolną)'
+        }),
     address: z.string().max(500, 'Adres nie może przekraczać 500 znaków').optional(),
     contact: z.string().max(200, 'Kontakt nie może przekraczać 200 znaków').optional(),
-    phone: z.string().optional().refine(
-        (val) => !val || val.trim() === '' || /^[\d+\-() ]{7,20}$/.test(val),
-        { message: 'Nieprawidłowy format telefonu (7-20 znaków: cyfry, +, -, (), spacje)' }
-    ),
+    phone: z
+        .string()
+        .optional()
+        .refine((val) => !val || val.trim() === '' || /^[\d+\-() ]{7,20}$/.test(val), {
+            message: 'Nieprawidłowy format telefonu (7-20 znaków: cyfry, +, -, (), spacje)'
+        }),
     email: z.string().email('Nieprawidłowy format email').optional().or(z.literal(''))
 });
 
@@ -285,13 +380,15 @@ export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
 /**
  * Schemat pozycji zamówienia produkcyjnego (batch)
  */
-export const productionOrderItemSchema = z.object({
-    id: z.string().optional(),
-    userId: z.string().optional(),
-    orderId: z.string().optional(),
-    wellId: z.string().optional(),
-    elementIndex: z.number().int().optional()
-}).passthrough();
+export const productionOrderItemSchema = z
+    .object({
+        id: z.string().optional(),
+        userId: z.string().optional(),
+        orderId: z.string().optional(),
+        wellId: z.string().optional(),
+        elementIndex: z.number().int().optional()
+    })
+    .passthrough();
 
 /**
  * Schemat batcha zamówień produkcyjnych (PUT /)
@@ -303,21 +400,25 @@ export const productionOrdersBatchSchema = z.object({
 /**
  * Schemat tworzenia zamówienia produkcyjnego (POST /)
  */
-export const productionOrderCreateSchema = z.object({
-    wellId: z.string().min(1, 'ID studni jest wymagane'),
-    orderId: z.string().optional(),
-    userId: z.string().optional(),
-    elementIndex: z.number().int().optional()
-}).passthrough();
+export const productionOrderCreateSchema = z
+    .object({
+        wellId: z.string().min(1, 'ID studni jest wymagane'),
+        orderId: z.string().optional(),
+        userId: z.string().optional(),
+        elementIndex: z.number().int().optional()
+    })
+    .passthrough();
 
 /**
  * Schemat pozycji zamówienia studni (batch)
  */
-export const studnieOrderItemSchema = z.object({
-    id: z.string().optional(),
-    offerStudnieId: z.string().optional(),
-    status: z.string().optional()
-}).passthrough();
+export const studnieOrderItemSchema = z
+    .object({
+        id: z.string().optional(),
+        offerStudnieId: z.string().optional(),
+        status: z.string().optional()
+    })
+    .passthrough();
 
 /**
  * Schemat batcha zamówień studni (PUT /)
@@ -329,11 +430,13 @@ export const studnieOrdersBatchSchema = z.object({
 /**
  * Schemat aktualizacji zamówienia studni (PATCH /:id)
  */
-export const studnieOrderUpdateSchema = z.object({
-    status: z.string().optional(),
-    userId: z.string().optional(),
-    data: z.record(z.string(), z.unknown()).optional()
-}).passthrough();
+export const studnieOrderUpdateSchema = z
+    .object({
+        status: z.string().optional(),
+        userId: z.string().optional(),
+        data: z.record(z.string(), z.unknown()).optional()
+    })
+    .passthrough();
 
 export type ProductionOrderItemInput = z.infer<typeof productionOrderItemSchema>;
 export type ProductionOrdersBatchInput = z.infer<typeof productionOrdersBatchSchema>;
@@ -345,11 +448,13 @@ export type StudnieOrderUpdateInput = z.infer<typeof studnieOrderUpdateSchema>;
 /**
  * Schemat pozycji zamówienia rur (batch)
  */
-export const ruryOrderItemSchema = z.object({
-    id: z.string().optional(),
-    offerId: z.string().optional(),
-    status: z.string().optional()
-}).passthrough();
+export const ruryOrderItemSchema = z
+    .object({
+        id: z.string().optional(),
+        offerId: z.string().optional(),
+        status: z.string().optional()
+    })
+    .passthrough();
 
 /**
  * Schemat batcha zamówień rur (PUT /)
@@ -361,11 +466,13 @@ export const ruryOrdersBatchSchema = z.object({
 /**
  * Schemat aktualizacji zamówienia rur (PATCH /:id)
  */
-export const ruryOrderUpdateSchema = z.object({
-    status: z.string().optional(),
-    userId: z.string().optional(),
-    data: z.record(z.string(), z.unknown()).optional()
-}).passthrough();
+export const ruryOrderUpdateSchema = z
+    .object({
+        status: z.string().optional(),
+        userId: z.string().optional(),
+        data: z.record(z.string(), z.unknown()).optional()
+    })
+    .passthrough();
 
 export type RuryOrderItemInput = z.infer<typeof ruryOrderItemSchema>;
 export type RuryOrdersBatchInput = z.infer<typeof ruryOrdersBatchSchema>;
@@ -392,10 +499,7 @@ const nullishBoolean = z.preprocess(
     z.boolean().optional()
 );
 const nullishEnum = <T extends readonly [string, ...string[]]>(values: T) =>
-    z.preprocess(
-        (v) => (v === null || v === '' ? undefined : v),
-        z.enum(values).optional()
-    );
+    z.preprocess((v) => (v === null || v === '' ? undefined : v), z.enum(values).optional());
 
 /**
  * Schemat pozycji oferty wysyłanej do eksportu PDF/DOCX

@@ -185,22 +185,7 @@
     font-size: 0.8rem;
 }
 
-/* Status badges */
-.status-badge {
-    padding: 0.35rem 0.8rem;
-    border-radius: 10px;
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    position: relative;
-    overflow: hidden;
-}
+/* Status badges — base .status-badge is defined in style.css */
 .status-badge svg {
     width: 14px;
     height: 14px;
@@ -260,23 +245,7 @@
     border-color: rgba(148, 163, 184, 0.15);
 }
 
-/* Action buttons */
-.action-btn {
-    padding: 0.3rem 0.45rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-glass);
-    background: transparent;
-    cursor: pointer;
-    font-size: 0.72rem;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-    color: var(--text-secondary);
-    line-height: 1;
-    white-space: nowrap;
-}
-.action-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
-}
+/* Action buttons — base from style.css, only zlecenia variants */
 .action-btn-edit {
     border-color: rgba(var(--blue-rgb), 0.3);
     color: var(--blue-alt);

@@ -26,7 +26,7 @@ var isSavingOffer = false;
 /** @type {any} */
 var orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
 
-let expandedWellIndices = new Set();
+const expandedWellIndices = new Set();
 // clientsDb jest zarządzane przez AppState (shared/appState.js)
 // Używać AppState.clientsDb zamiast lokalnej zmiennej
 
@@ -71,7 +71,10 @@ function toggleCard(contentId, iconId) {
     if (!content) return;
     const isOpen = content.style.display !== 'none';
     content.style.display = isOpen ? 'none' : 'block';
-    if (icon) icon.innerHTML = isOpen ? '<span class="text-xs"><i data-lucide="chevron-down"></i></span>' : '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
+    if (icon)
+        icon.innerHTML = isOpen
+            ? '<span class="text-xs"><i data-lucide="chevron-down"></i></span>'
+            : '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
 }
 
 /* ===== NAWIGACJA ===== */
@@ -92,6 +95,11 @@ function showSectionStudnie(id) {
     document.getElementById('section-' + id)?.classList.add('active');
     document.querySelector(`.nav-btn[data-section="${id}"]`)?.classList.add('active');
 
+    // Cleanup well drag listeners when leaving builder section
+    if (id !== 'builder' && typeof window.cleanupWellDragListeners === 'function') {
+        window.cleanupWellDragListeners();
+    }
+
     if (id === 'pricelist') renderStudniePriceList();
     if (id === 'offer') {
         syncOfferClientSummary();
@@ -104,9 +112,11 @@ function showSectionStudnie(id) {
         if (ctxBanner && ctxBadge && ctxText) {
             ctxBanner.style.display = 'block';
             if (orderEditMode) {
-                ctxBadge.innerHTML = '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
+                ctxBadge.innerHTML =
+                    '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
                 ctxBadge.classList.add('badge-ok');
-                ctxText.textContent = 'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+                ctxText.textContent =
+                    'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
             } else if (editingOfferIdStudnie) {
                 ctxBadge.innerHTML = '<i data-lucide="edit" class="icon-xs"></i> Oferta (krok 3)';
                 ctxBadge.classList.add('badge-info');
@@ -120,7 +130,6 @@ function showSectionStudnie(id) {
         }
     }
 }
-
 
 function syncOfferClientSummary() {
     const v = (id) => document.getElementById(id)?.value || '—';
@@ -163,3 +172,5 @@ function normalizeId(id) {
     if (id.includes(':')) return id.split(':').pop();
     return id;
 }
+
+window.showSection = showSectionStudnie;

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# post-commit hook — sprawdza spójność wersji (non-blocking).
+# NIE blokuje commita. Wyświetla ostrzeżenie gdy VERSION ≠ package.json ≠ CHANGELOG.
+
+if command -v npm >/dev/null 2>&1; then
+    npm run version:check --silent 2>&1 || {
+        echo "⚠ Version Guardian: spójność wersji przerwana. Zobacz: npm run version:check"
+    }
+fi

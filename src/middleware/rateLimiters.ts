@@ -22,6 +22,16 @@ export const WRITE_LIMITER = createRateLimiter({
     message: DEFAULT_MSG
 });
 
+/**
+ * Rate limiter dla odczytów telemetry (dashboard, historia).
+ * Wyższe limity bo używany intensywnie przy pollingu.
+ */
+export const READ_LIMITER = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 600,
+    message: 'Zbyt wiele odczytów. Odczekaj chwilę.'
+});
+
 export const PRICELIST_WRITE_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 30,

@@ -59,18 +59,21 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
             // openPrintModal: isRuryOfferFromTypeOrId → showUniversalPrintModalRury
             // Sprawdza że wywołanie modal buildera dla rur przechodzi przez openPrintModal
-            const pattern = /isRuryOfferFromTypeOrId[\s\S]{0,500}showUniversalPrintModalRury\s*\(\s*offerId/;
+            const pattern =
+                /isRuryOfferFromTypeOrId[\s\S]{0,500}showUniversalPrintModalRury\s*\(\s*offerId/;
             expect(src).toMatch(pattern);
         });
 
         it('.btn-karta-budowy ma data-offer-type (dispatch Karta Budowy)', () => {
             // Sprawdza template HTML btn-karta-budowy
-            const pattern = /class="action-btn success btn-karta-budowy"[\s\S]{0,200}data-offer-type/;
+            const pattern =
+                /class="action-btn success btn-karta-budowy"[\s\S]{0,200}data-offer-type/;
             expect(src).toMatch(pattern);
         });
 
         it('.btn-print-order (modal) ma data-offer-type (dispatch Karta)', () => {
-            const pattern = /class="btn btn-sm btn-secondary btn-print-order"[\s\S]{0,250}data-offer-type/;
+            const pattern =
+                /class="btn btn-sm btn-secondary btn-print-order"[\s\S]{0,250}data-offer-type/;
             expect(src).toMatch(pattern);
         });
 
@@ -110,7 +113,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: rury modal exposes window.showUniversalPrintModalRury', () => {
         it('rury/offerPrintManager.js — window.showUniversalPrintModalRury jest zdefiniowane', () => {
             const src = readFile(RURY_PM);
-            expect(src).toMatch(/window\.showUniversalPrintModalRury\s*=\s*showUniversalPrintModalRury/);
+            expect(src).toMatch(
+                /window\.showUniversalPrintModalRury\s*=\s*showUniversalPrintModalRury/
+            );
         });
 
         it('rury/offerPrintManager.js — exportKartaDirectRury_action używa /api/orders-rury/ (nie studnie)', () => {
@@ -136,12 +141,16 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('rury/offerPrintManager.js EKSPORTUJE window.exportOfferDirectRury_action (nowa nazwa)', () => {
             const src = readFile(RURY_PM);
-            expect(src).toMatch(/window\.exportOfferDirectRury_action\s*=\s*exportOfferDirectRury_action/);
+            expect(src).toMatch(
+                /window\.exportOfferDirectRury_action\s*=\s*exportOfferDirectRury_action/
+            );
         });
 
         it('rury/offerPrintManager.js EKSPORTUJE window.exportKartaDirectRury_action (nowa nazwa)', () => {
             const src = readFile(RURY_PM);
-            expect(src).toMatch(/window\.exportKartaDirectRury_action\s*=\s*exportKartaDirectRury_action/);
+            expect(src).toMatch(
+                /window\.exportKartaDirectRury_action\s*=\s*exportKartaDirectRury_action/
+            );
         });
 
         it('rury/offerCrud.js onclick strings używają exportKartaDirectRury_action', () => {
@@ -167,15 +176,21 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         it('jest WSPÓLNA funkcja openPrintModal(offerId, orderId, offerType, relatedOrders)', () => {
             // Unifikacja: wszystkie 4 ścieżki (Wydruk + Karta budowy × rury + studnie)
             // idą przez jedną funkcję. 4. arg relatedOrders (z ordersMap) dodany dla kartoteki.
-            expect(src).toMatch(/function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/);
-            expect(src).toMatch(/openPrintModal\s*\(\s*printOfferId\s*,\s*printOrderId\s*,\s*printOfferType\s*,\s*printRelatedOrders\s*\)/);
+            expect(src).toMatch(
+                /function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/
+            );
+            expect(src).toMatch(
+                /openPrintModal\s*\(\s*printOfferId\s*,\s*printOrderId\s*,\s*printOfferType\s*,\s*printRelatedOrders\s*\)/
+            );
         });
 
         it('główny wiersz i popup UŻYWAJĄ openPrintModal (nie inline logic)', () => {
             // Dispatch czyta printRelatedOrders z this.ordersMap, więc odległość do openPrintModal wzrosła do ~500
-            const mainRow = /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
+            const mainRow =
+                /title\.includes\(['"]karta budowy['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
             // Popup btn-print-order handler jest w showOfferOrdersPopup (overlay)
-            const popup = /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
+            const popup =
+                /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
             expect(src).toMatch(mainRow);
             expect(src).toMatch(popup);
         });
@@ -216,15 +231,21 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('openPrintModal akceptuje 4. param relatedOrders', () => {
-            expect(src).toMatch(/function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/);
+            expect(src).toMatch(
+                /function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/
+            );
         });
 
         it('openPrintModal przekazuje relatedOrders do showUniversalPrintModalRury', () => {
-            expect(src).toMatch(/showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/);
+            expect(src).toMatch(
+                /showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/
+            );
         });
 
         it('openPrintModal przekazuje relatedOrders do showUniversalPrintModal', () => {
-            expect(src).toMatch(/showUniversalPrintModal\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/);
+            expect(src).toMatch(
+                /showUniversalPrintModal\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/
+            );
         });
 
         it('dispatch czyta relatedOrders z this.ordersMap (kartoteka)', () => {
@@ -245,7 +266,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('showUniversalPrintModalRury ma sygnaturę (offerId, orderId, relatedOrders)', () => {
-            expect(src).toMatch(/function showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/);
+            expect(src).toMatch(
+                /function showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/
+            );
         });
 
         it('rury modal preferuje przekazany relatedOrders nad getOrdersForOffer', () => {
@@ -268,7 +291,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('showUniversalPrintModal ma sygnaturę (offerId, orderId, relatedOrders)', () => {
             // Uwzględnia JSDoc type cast: window.showUniversalPrintModal = /** @type {...} */ (function(...) {
-            expect(src).toMatch(/window\.showUniversalPrintModal\s*=\s*(?:\/\*\*[^*/]*\*\/\s*)?(?:function\s*)?\(?\s*function\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/);
+            expect(src).toMatch(
+                /window\.showUniversalPrintModal\s*=\s*(?:\/\*\*[\s\S]*?\*\/\s*)?(?:function\s*)?\(?\s*function\s*\(\s*offerId\s*,\s*orderId\s*,\s*relatedOrders\s*\)/
+            );
         });
 
         it('studnie modal preferuje przekazany relatedOrders', () => {
@@ -316,7 +341,14 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         function loadInVm(
             file: string,
-            fetchMock: (url: string) => Promise<{ ok: boolean; status: number; blob: () => Promise<Blob>; text: () => Promise<string> }>
+            fetchMock: (
+                url: string
+            ) => Promise<{
+                ok: boolean;
+                status: number;
+                blob: () => Promise<Blob>;
+                text: () => Promise<string>;
+            }>
         ): { fetchCalls: FetchCall[]; window: Record<string, unknown> } {
             const fetchCalls: FetchCall[] = [];
             const mockFetch = (url: string, init?: { method?: string }) => {
@@ -331,9 +363,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                     createElement: () => ({
                         href: '',
                         download: '',
-                        click: () => {},
+                        click: () => {}
                     }),
-                    body: { appendChild: () => {}, removeChild: () => {} },
+                    body: { appendChild: () => {}, removeChild: () => {} }
                 },
                 logger: { error: () => {}, warn: () => {}, info: () => {} },
                 URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
@@ -342,7 +374,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                 showToast: () => {},
                 closeModal: () => {},
                 authHeaders: () => ({}),
-                lucide: { createIcons: () => {} },
+                lucide: { createIcons: () => {} }
             };
             sandbox.window = sandbox;
             sandbox.globalThis = sandbox;
@@ -354,12 +386,17 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             return { fetchCalls, window: sandbox.window as Record<string, unknown> };
         }
 
-        function okResponse(): Promise<{ ok: boolean; status: number; blob: () => Promise<Blob>; text: () => Promise<string> }> {
+        function okResponse(): Promise<{
+            ok: boolean;
+            status: number;
+            blob: () => Promise<Blob>;
+            text: () => Promise<string>;
+        }> {
             return Promise.resolve({
                 ok: true,
                 status: 200,
                 blob: () => Promise.resolve(new Blob(['mock'])),
-                text: () => Promise.resolve(''),
+                text: () => Promise.resolve('')
             });
         }
 
@@ -379,7 +416,10 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('STUDNIE: exportOfferDirect_action docx → /api/offers-studnie/{id}/export-docx', async () => {
             const { fetchCalls, window } = loadInVm(STUDNIE_PM, () => okResponse());
-            const fn = window.exportOfferDirect_action as (id: string, fmt: string) => Promise<void>;
+            const fn = window.exportOfferDirect_action as (
+                id: string,
+                fmt: string
+            ) => Promise<void>;
             await fn('stud_xyz', 'docx');
 
             expect(fetchCalls[0].url).toBe('/api/offers-studnie/stud_xyz/export-docx');
@@ -387,7 +427,10 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('RURY: exportOfferDirectRury_action wywołuje /api/offers-rury/{id}/export-pdf', async () => {
             const { fetchCalls, window } = loadInVm(RURY_PM, () => okResponse());
-            const fn = window.exportOfferDirectRury_action as (id: string, fmt: string) => Promise<void>;
+            const fn = window.exportOfferDirectRury_action as (
+                id: string,
+                fmt: string
+            ) => Promise<void>;
             expect(fn).toBeDefined();
 
             await fn('rura_abc', 'pdf');
@@ -398,7 +441,10 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('RURY: exportKartaDirectRury_action → /api/orders-rury/{id}/export-karta-pdf', async () => {
             const { fetchCalls, window } = loadInVm(RURY_PM, () => okResponse());
-            const fn = window.exportKartaDirectRury_action as (id: string, fmt: string) => Promise<void>;
+            const fn = window.exportKartaDirectRury_action as (
+                id: string,
+                fmt: string
+            ) => Promise<void>;
             expect(fn).toBeDefined();
 
             await fn('rura_order_1', 'pdf');
@@ -412,13 +458,20 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         function makeFailingFetch(
             status: number,
             textBody: string
-        ): (url: string) => Promise<{ ok: boolean; status: number; blob: () => Promise<Blob>; text: () => Promise<string> }> {
+        ): (
+            url: string
+        ) => Promise<{
+            ok: boolean;
+            status: number;
+            blob: () => Promise<Blob>;
+            text: () => Promise<string>;
+        }> {
             return () =>
                 Promise.resolve({
                     ok: false,
                     status,
                     blob: () => Promise.reject(new Error('no blob')),
-                    text: () => Promise.resolve(textBody),
+                    text: () => Promise.resolve(textBody)
                 });
         }
 
@@ -430,7 +483,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                 document: {
                     getElementById: () => null,
                     createElement: () => ({ href: '', download: '', click: () => {} }),
-                    body: { appendChild: () => {}, removeChild: () => {} },
+                    body: { appendChild: () => {}, removeChild: () => {} }
                 },
                 URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
                 fetch: makeFailingFetch(500, 'Oferta studni nie znaleziona'),
@@ -442,7 +495,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                 authHeaders: () => ({}),
                 // Ustawiamy editingOfferIdStudnie na inny id, żeby pominąć blok save-before-export
                 editingOfferIdStudnie: 'OTHER_ID',
-                lucide: { createIcons: () => {} },
+                lucide: { createIcons: () => {} }
             };
             sandbox.window = sandbox;
             sandbox.globalThis = sandbox;
@@ -472,7 +525,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                 document: {
                     getElementById: () => null,
                     createElement: () => ({ href: '', download: '', click: () => {} }),
-                    body: { appendChild: () => {}, removeChild: () => {} },
+                    body: { appendChild: () => {}, removeChild: () => {} }
                 },
                 logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
                 URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
@@ -483,7 +536,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
                 },
                 closeModal: () => {},
                 authHeaders: () => ({}),
-                lucide: { createIcons: () => {} },
+                lucide: { createIcons: () => {} }
             };
             sandbox.window = sandbox;
             sandbox.globalThis = sandbox;

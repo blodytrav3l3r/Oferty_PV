@@ -21,7 +21,7 @@ let editPrzejscieState = {
     spadekMufa: ''
 };
 
-let inlinePrzejsciaState = { type: null, dnId: null };
+const inlinePrzejsciaState = { type: null, dnId: null };
 let visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
 
 window.editPrzejscie = editPrzejscie;
@@ -52,7 +52,9 @@ window.editInlineSetType = function (type) {
     const przejsciaProducts = studnieProducts.filter(
         (pr) => pr.componentType === 'przejscie' && pr.active !== 0
     );
-    const dns = przejsciaProducts.filter((p) => p.category === type).sort((a, b) => a.dn - b.dn);
+    const dns = [...przejsciaProducts.filter((p) => p.category === type)].sort(
+        (a, b) => a.dn - b.dn
+    );
     if (dns.length > 0) editPrzejscieState.dnId = dns[0].id;
     else editPrzejscieState.dnId = null;
     renderWellPrzejscia();
@@ -63,7 +65,6 @@ window.editInlineSetDN = function (dnId) {
     editPrzejscieState.dnId = dnId;
     renderWellPrzejscia();
 };
-
 
 function renderInlinePrzejsciaApp(containerId) {
     const well = getCurrentWell();
@@ -195,7 +196,7 @@ function renderInlinePrzejsciaApp(containerId) {
                     <div class="ui-text-muted-sm">Rzędna [m]</div>
                     <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
                            onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
-                           value="${(well && (well.rzednaDna !== null && well.rzednaDna !== undefined)) ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
+                           value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
                            placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
@@ -311,11 +312,16 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 val = well.przejscia[index].doplata || '0';
                 step = '1';
             } else {
-                val = (well.przejscia[index].rzednaWlaczenia !== null && well.przejscia[index].rzednaWlaczenia !== undefined) ? well.przejscia[index].rzednaWlaczenia : '';
+                val =
+                    well.przejscia[index].rzednaWlaczenia !== null &&
+                    well.przejscia[index].rzednaWlaczenia !== undefined
+                        ? well.przejscia[index].rzednaWlaczenia
+                        : '';
                 step = '0.001';
             }
             const w = element.offsetWidth;
-            const useCalc = (field === 'rzednaWlaczenia' || field === 'heightMm' || field === 'doplata');
+            const useCalc =
+                field === 'rzednaWlaczenia' || field === 'heightMm' || field === 'doplata';
             const inpType = useCalc ? 'text' : 'number';
             const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
@@ -357,7 +363,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     well.przejscia[index].angleGony = ((numVal * 400) / 360).toFixed(2);
 
                     if (!well.przejscia[index].flowTypeManual) {
-                        well.przejscia[index].flowType = numVal === 0 ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
+                        well.przejscia[index].flowType =
+                            numVal === 0 ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
                     }
                 } else if (field === 'rzednaWlaczenia') {
                     if (isNaN(numVal)) {
@@ -398,10 +405,15 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 }
 
                 if (field === 'rzednaWlaczenia' || field === 'heightMm') {
-                    const isNowOsadnik = typeof isSettlingWell === 'function' ? isSettlingWell(well) : false;
+                    const isNowOsadnik =
+                        typeof isSettlingWell === 'function' ? isSettlingWell(well) : false;
                     if (!isNowOsadnik && well.wkladkaOsadnikPreco === 'tak') {
                         well.wkladkaOsadnikPreco = 'brak';
-                        if (window.showToast) window.showToast('Studnia przestała być osadnikiem. Wyłączono wkładkę.', 'info');
+                        if (window.showToast)
+                            window.showToast(
+                                'Studnia przestała być osadnikiem. Wyłączono wkładkę.',
+                                'info'
+                            );
                     }
                 }
 
@@ -484,7 +496,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     well.przejscia = sorted.map((s) => s.item);
 
     let totalPrice = 0;
-    let html = '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem; overflow-x:auto; padding-bottom:0.5rem;">';
+    let html =
+        '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem; overflow-x:auto; padding-bottom:0.5rem;">';
 
     let prevAssignedIndex = -999;
     let filteredCount = 0;
@@ -508,12 +521,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         const p = findProduct(item.productId);
         if (p) {
             const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
-            if (!isInsitu && assignedEntry && (assignedEntry.componentType === 'krag' || assignedEntry.componentType === 'krag_ot')) {
+            if (
+                !isInsitu &&
+                assignedEntry &&
+                (assignedEntry.componentType === 'krag' ||
+                    assignedEntry.componentType === 'krag_ot')
+            ) {
                 const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                 if (trDn > 0) {
-                    const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                    const drillingProducts = studnieProducts.filter(
+                        (x) => x.category === 'Wiercenie'
+                    );
                     let bestDnDiff = Infinity;
-                    drillingProducts.forEach(drill => {
+                    drillingProducts.forEach((drill) => {
                         let drillDn = parseInt(drill.dn);
                         if (isNaN(drillDn)) {
                             const match = drill.id.match(/Wiercenie-(\d+)/i);
@@ -546,7 +566,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
             const rawRGB = assignedBg.length > 7 ? assignedBg.substring(0, 7) : assignedBg;
-            if (index > 0) html += `<div style="height:0.5rem;"></div>`;
+            if (index > 0) html += '<div style="height:0.5rem;"></div>';
             html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(30,41,59,0.8) 100%); border-left:3px solid ${rawRGB}; border-radius:6px; color:var(--text-muted); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
                 <span style="font-size:0.9rem; filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
                 <span>Dotyczy:</span> 
@@ -698,7 +718,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     }
     if (countEl)
         countEl.textContent = `(${filterElementIndex != null ? filteredCount : well.przejscia.length})`;
-}
+};
 
 function movePrzejscie(index, direction) {
     if (isOfferLocked()) {
@@ -790,7 +810,12 @@ function savePrzejscieEdit(index) {
 
     well.przejscia[index] = {
         productId: newProductId,
-        rzednaWlaczenia: (rzedna !== null && rzedna !== undefined && rzedna !== '') ? parseCalcExpression(rzedna) !== null ? parseCalcExpression(rzedna).toFixed(3) : null : null,
+        rzednaWlaczenia:
+            rzedna !== null && rzedna !== undefined && rzedna !== ''
+                ? parseCalcExpression(rzedna) !== null
+                    ? parseCalcExpression(rzedna).toFixed(3)
+                    : null
+                : null,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
@@ -877,7 +902,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
-    let tilesHtml = allTypes
+    const tilesHtml = allTypes
         .map((t) => {
             const isVisible = visiblePrzejsciaTypes.has(t);
             return `
@@ -962,9 +987,6 @@ function refreshPrzejsciaVisibilityTiles() {
     const counterEl = overlay.querySelector('.przejscia-vis-counter');
     if (counterEl)
         counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
-
-    // Sprawdzenie statusu serwera
-    checkBackendStatus();
 
     // Aktualizuj kazdy kafelek w miejscu
     const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
@@ -1086,7 +1108,12 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     well.przejscia.push({
         id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         productId: id,
-        rzednaWlaczenia: (rzedna !== null && rzedna !== undefined && rzedna !== '') ? parseCalcExpression(rzedna) !== null ? parseCalcExpression(rzedna).toFixed(3) : null : null,
+        rzednaWlaczenia:
+            rzedna !== null && rzedna !== undefined && rzedna !== ''
+                ? parseCalcExpression(rzedna) !== null
+                    ? parseCalcExpression(rzedna).toFixed(3)
+                    : null
+                : null,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
@@ -1138,7 +1165,10 @@ window.openFlowTypePopup = function (index) {
         document.body.appendChild(modal);
     }
 
-    const showModal = (id, display) => { const el = document.getElementById(id); if (el) el.style.display = display; };
+    const showModal = (id, display) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = display;
+    };
     showModal('flow-type-modal', 'flex');
 
     document.getElementById('flow-wlot-btn').onclick = () => {
@@ -1229,8 +1259,9 @@ window.confirmChangePrzejscieType = function (index, newType) {
         delete well.przejscia[index].frozenDrillingPrice;
         delete well.przejscia[index].frozenDrillingName;
         delete well.przejscia[index].frozenDrillingDn;
-        
-        const m = document.getElementById('change-prz-type-modal'); if (m) m.style.display = 'none';
+
+        const m = document.getElementById('change-prz-type-modal');
+        if (m) m.style.display = 'none';
         refreshAll();
         autoSelectComponents(true);
         window.refreshZleceniaModalIfActive();
@@ -1307,7 +1338,8 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     delete well.przejscia[index].frozenDrillingName;
     delete well.przejscia[index].frozenDrillingDn;
 
-    const m = document.getElementById('change-prz-dn-modal'); if (m) m.style.display = 'none';
+    const m = document.getElementById('change-prz-dn-modal');
+    if (m) m.style.display = 'none';
     refreshAll();
     autoSelectComponents(true);
     window.refreshZleceniaModalIfActive();

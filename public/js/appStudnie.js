@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentUser.firstName && currentUser.lastName
             ? `${currentUser.firstName} ${currentUser.lastName}`
             : currentUser.username;
-    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + displayName;
+    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + escapeHtml(displayName);
     if (roleEl) {
         roleEl.textContent =
             currentUser.role === 'admin' ? 'ADMIN' : currentUser.role === 'pro' ? 'PRO' : 'USER';
@@ -62,11 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnChangeUser.style.display = 'inline-block';
     }
 
-    // Pokaż przycisk ML Dashboard dla admin/pro
-    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
-        document.querySelectorAll('.ml-dashboard-btn').forEach(btn => {
-            btn.style.display = 'flex';
-        });
+    // Pokaż przycisk AI Dashboard dla admin/pro
+    if (typeof updateAIDashboardVisibility === 'function') {
+        updateAIDashboardVisibility();
     }
 
     // URL params
@@ -82,13 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Inicjalizacja UI (bez danych — będą gotowe za chwilę)
         if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
         if (typeof renderSavedOffersStudnie === 'function') renderSavedOffersStudnie();
-        checkBackendStatus();
 
         // Auto-uzupełnienie daty i numeru oferty w kroku 1
         const dateEl = document.getElementById('offer-date');
         if (dateEl) dateEl.value = new Date().toISOString().slice(0, 10);
         const nrEl = document.getElementById('offer-number');
-        if (nrEl && typeof generateOfferNumberStudnie === 'function') nrEl.value = generateOfferNumberStudnie();
+        if (nrEl && typeof generateOfferNumberStudnie === 'function')
+            nrEl.value = generateOfferNumberStudnie();
 
         createNewWell(null, 1000);
         renderWellsList();
@@ -109,7 +107,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (orderId) {
         if (ordersStudnie.length === 0) {
-            logger.warn('appStudnie', '[AppStudnie] Zamówienia nie załadowały się za pierwszym razem, ponawiam...');
+            logger.warn(
+                'appStudnie',
+                '[AppStudnie] Zamówienia nie załadowały się za pierwszym razem, ponawiam...'
+            );
             ordersStudnie = await loadOrdersStudnie();
         }
         if (typeof enterOrderEditMode === 'function') {
@@ -128,14 +129,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (editId) {
         let doc = offersStudnie.find((o) => String(o.id) === String(editId));
         if (!doc && offersStudnie.length === 0) {
-            logger.warn('appStudnie', '[AppStudnie] Oferty nie załadowały się za pierwszym razem, ponawiam...');
+            logger.warn(
+                'appStudnie',
+                '[AppStudnie] Oferty nie załadowały się za pierwszym razem, ponawiam...'
+            );
             offersStudnie = await loadOffersStudnie();
             doc = offersStudnie.find((o) => String(o.id) === String(editId));
         }
         const restoreIdx = urlParams.get('restore');
 
         if (!doc) {
-            logger.error('appStudnie', '[AppStudnie] Nie znaleziono oferty o ID:', editId, 'w', offersStudnie.length, 'ofertach');
+            logger.error(
+                'appStudnie',
+                '[AppStudnie] Nie znaleziono oferty o ID:',
+                editId,
+                'w',
+                offersStudnie.length,
+                'ofertach'
+            );
             showToast('Nie znaleziono oferty do edycji.', 'error');
             showSection('builder');
         } else {
@@ -180,7 +191,8 @@ function waitForWellsAndOpen(targetWellId, targetElementIndex) {
 
             elapsed += POLL_INTERVAL;
             if (elapsed >= MAX_WAIT_MS) {
-                logger.error('appStudnie', 
+                logger.error(
+                    'appStudnie',
                     '[waitForWellsAndOpen] Timeout — wells[] puste po',
                     MAX_WAIT_MS,
                     'ms'
@@ -208,26 +220,44 @@ async function loadDataInBackground() {
         loadOrdersStudnie(),
         loadProductionOrders(),
         loadClientsDb(),
-        loadPrecoPricing(),
+        loadPrecoPricing()
     ]);
 
-    if (productsP.status === 'fulfilled') { studnieProducts = productsP.value; }
-    else { logger.error('appStudnie', '[AppStudnie] Błąd produktów:', productsP.reason); }
+    if (productsP.status === 'fulfilled') {
+        studnieProducts = productsP.value;
+    } else {
+        logger.error('appStudnie', '[AppStudnie] Błąd produktów:', productsP.reason);
+    }
 
-    if (offersP.status === 'fulfilled') { offersStudnie = offersP.value; }
-    else { logger.error('appStudnie', '[AppStudnie] Błąd ofert:', offersP.reason); }
+    if (offersP.status === 'fulfilled') {
+        offersStudnie = offersP.value;
+    } else {
+        logger.error('appStudnie', '[AppStudnie] Błąd ofert:', offersP.reason);
+    }
 
-    if (ordersP.status === 'fulfilled') { ordersStudnie = ordersP.value; }
-    else { logger.error('appStudnie', '[AppStudnie] Błąd zamówień:', ordersP.reason); }
+    if (ordersP.status === 'fulfilled') {
+        ordersStudnie = ordersP.value;
+    } else {
+        logger.error('appStudnie', '[AppStudnie] Błąd zamówień:', ordersP.reason);
+    }
 
-    if (prodOrdersP.status === 'fulfilled') { productionOrders = prodOrdersP.value; }
-    else { logger.warn('appStudnie', '[AppStudnie] Błąd zleceń produkcyjnych:', prodOrdersP.reason); }
+    if (prodOrdersP.status === 'fulfilled') {
+        productionOrders = prodOrdersP.value;
+    } else {
+        logger.warn('appStudnie', '[AppStudnie] Błąd zleceń produkcyjnych:', prodOrdersP.reason);
+    }
 
-    if (clientsP.status === 'fulfilled') { AppState.clientsDb = clientsP.value; }
-    else { logger.warn('appStudnie', '[AppStudnie] Błąd klientów:', clientsP.reason); }
+    if (clientsP.status === 'fulfilled') {
+        AppState.clientsDb = clientsP.value;
+    } else {
+        logger.warn('appStudnie', '[AppStudnie] Błąd klientów:', clientsP.reason);
+    }
 
-    if (precoP.status === 'fulfilled') { /* ustawione wewnątrz loadPrecoPricing */ }
-    else { logger.warn('appStudnie', '[AppStudnie] Błąd cennika PRECO:', precoP.reason); }
+    if (precoP.status === 'fulfilled') {
+        /* ustawione wewnątrz loadPrecoPricing */
+    } else {
+        logger.warn('appStudnie', '[AppStudnie] Błąd cennika PRECO:', precoP.reason);
+    }
 
     // Odśwież UI z nowymi danymi
     if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
@@ -242,8 +272,17 @@ async function loadDataInBackground() {
     // Jeśli studnia ma już ustawione rzędne, ale config jest pusty → auto-dobór
     if (typeof getCurrentWell === 'function') {
         const w = getCurrentWell();
-        if (w && w.rzednaWlazu != null && w.rzednaDna != null && (!w.config || w.config.length === 0) && studnieProducts.length > 0) {
-            logger.info('appStudnie', '[AppStudnie] Dane załadowane — uruchamiam auto-dobór dla istniejącej studni.');
+        if (
+            w &&
+            w.rzednaWlazu != null &&
+            w.rzednaDna != null &&
+            (!w.config || w.config.length === 0) &&
+            studnieProducts.length > 0
+        ) {
+            logger.info(
+                'appStudnie',
+                '[AppStudnie] Dane załadowane — uruchamiam auto-dobór dla istniejącej studni.'
+            );
             if (typeof autoSelectComponents === 'function') autoSelectComponents(true);
         }
     }

@@ -4,12 +4,12 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default tseslint.config(
-    {
-        ignores: ['node_modules/', 'data/', '*.sqlite', 'public/data/']
-    },
+    { ignores: ['node_modules/', 'data/', '*.sqlite', 'public/data/'] },
     eslint.configs.recommended,
-    ...tseslint.configs.recommended,
-    eslintConfigPrettier,
+    ...tseslint.configs.recommended.map((c) => ({
+        files: ['**/*.ts'],
+        ...c
+    })),
     {
         files: ['src/**/*.{js,ts}', 'server.ts', 'scripts/**/*.{js,ts}', 'tests/**/*.{js,ts}'],
         languageOptions: {
@@ -38,6 +38,24 @@ export default tseslint.config(
         }
     },
     {
+        files: ['scripts/**/*.mjs'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: {
+                ...globals.node
+            }
+        },
+        rules: {
+            'no-unused-vars': 'off',
+            'no-console': 'off',
+            semi: ['error', 'always'],
+            quotes: ['error', 'single', { avoidEscape: true }],
+            'no-empty': 'off',
+            'prefer-const': 'off'
+        }
+    },
+    {
         files: ['public/js/**/*.{js,ts}'],
         languageOptions: {
             parser: tseslint.parser,
@@ -53,8 +71,7 @@ export default tseslint.config(
             }
         },
         rules: {
-            'no-unused-vars': 'warn',
-            '@typescript-eslint/no-unused-vars': [
+            'no-unused-vars': [
                 'warn',
                 {
                     argsIgnorePattern: '^_',
@@ -62,7 +79,6 @@ export default tseslint.config(
                     caughtErrorsIgnorePattern: '^_'
                 }
             ],
-            '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
             'no-empty': 'off',
             'no-undef': 'off',
@@ -72,5 +88,6 @@ export default tseslint.config(
             'prefer-const': 'warn',
             'no-console': 'off'
         }
-    }
+    },
+    eslintConfigPrettier
 );

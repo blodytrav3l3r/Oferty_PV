@@ -41,7 +41,8 @@ jest.mock('../src/utils/logger', () => ({
 }));
 
 jest.mock('../src/utils/ownership', () => ({
-    canWriteDoc: jest.fn().mockReturnValue(true)
+    canWriteDoc: jest.fn().mockReturnValue(true),
+    canReadDoc: jest.fn().mockReturnValue(true)
 }));
 
 jest.mock('../src/utils/roleFilter', () => ({
@@ -181,7 +182,9 @@ describe('Studnie Order As Offer export — POST /:id/export-offer-pdf|docx', ()
 
             expect(res.statusCode).toBe(200);
             expect(res.headers['content-type']).toMatch(/application\/pdf/);
-            expect(res.headers['content-disposition']).toMatch(/oferta_studnie_zamowienie_ZAM-001\.pdf/);
+            expect(res.headers['content-disposition']).toMatch(
+                /oferta_studnie_zamowienie_ZAM-001\.pdf/
+            );
             expect(generateStudniePDFFromContext).toHaveBeenCalledTimes(1);
             const ctx = (generateStudniePDFFromContext as jest.Mock).mock.calls[0][0];
             expect(ctx.offerNumber).toBe('ZAM-001');
@@ -412,13 +415,7 @@ describe('Studnie Order As Offer export — POST /:id/export-offer-pdf|docx', ()
    ============================================================ */
 describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (vm)', () => {
     const PROJECT_ROOT = path.resolve(__dirname, '..');
-    const FILE_PATH = path.join(
-        PROJECT_ROOT,
-        'public',
-        'js',
-        'studnie',
-        'offerPrintManager.js'
-    );
+    const FILE_PATH = path.join(PROJECT_ROOT, 'public', 'js', 'studnie', 'offerPrintManager.js');
 
     function loadStudniePrintManager(): { context: any; source: string } {
         const source = fs.readFileSync(FILE_PATH, 'utf8');
@@ -492,10 +489,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         const source = fs.readFileSync(FILE_PATH, 'utf8');
         vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
         await context.exportStudnieOrderAsOffer_action('', 'pdf');
-        expect(context.showToast).toHaveBeenCalledWith(
-            'Brak ID zamówienia do eksportu',
-            'error'
-        );
+        expect(context.showToast).toHaveBeenCalledWith('Brak ID zamówienia do eksportu', 'error');
     });
 
     it('rejects invalid format (toast error)', async () => {
@@ -503,10 +497,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         const source = fs.readFileSync(FILE_PATH, 'utf8');
         vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
         await context.exportStudnieOrderAsOffer_action('ord-1', 'txt' as any);
-        expect(context.showToast).toHaveBeenCalledWith(
-            'Nieobsługiwany format eksportu',
-            'error'
-        );
+        expect(context.showToast).toHaveBeenCalledWith('Nieobsługiwany format eksportu', 'error');
     });
 
     it('warns when wells is empty (toast warning)', async () => {

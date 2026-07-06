@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # Instalacja bibliotek systemowych potrzebnych dla Prisma (OpenSSL)
 RUN apt-get update && apt-get install -y openssl sed && rm -rf /var/lib/apt/lists/*
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalujemy wszystkie zależności
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 COPY . .
 
