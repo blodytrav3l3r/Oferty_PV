@@ -318,7 +318,7 @@ class PVSalesUI {
             this.allLocalOffers = docs;
             logger.info('pvSalesUi', 'loadLocalOffers: Filtrowanie i renderowanie...');
             this.filterLocalOffers();
-            if (window.PvImportExportToolbar) PvImportExportToolbar.init('ie-toolbar-host');
+            if (window.PvImportExportToolbar) window.PvImportExportToolbar.init('ie-toolbar-host');
             logger.info('pvSalesUi', 'loadLocalOffers: Gotowe.');
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd pobierania ofert:', error);

@@ -141,15 +141,32 @@ export async function cleanupAuditLogs(): Promise<void> {
         const cutoffDate = new Date(
             Date.now() - MAX_AUDIT_AGE_DAYS * 24 * 60 * 60 * 1000
         ).toISOString();
-        const result = await prisma.audit_logs.deleteMany({
-            where: {
-                createdAt: { lt: cutoffDate }
-            }
-        });
-        if (result.count > 0) {
+        const BATCH_SIZE = 500;
+        let totalDeleted = 0;
+        let batchCount = 0;
+
+        while (true) {
+            const batch = await prisma.audit_logs.findMany({
+                where: { createdAt: { lt: cutoffDate } },
+                take: BATCH_SIZE,
+                select: { id: true },
+                orderBy: { createdAt: 'asc' }
+            });
+
+            if (batch.length === 0) break;
+
+            await prisma.audit_logs.deleteMany({
+                where: { id: { in: batch.map(r => r.id) } }
+            });
+
+            totalDeleted += batch.length;
+            batchCount++;
+        }
+
+        if (totalDeleted > 0) {
             logger.info(
                 'AuditLog',
-                `Wyczyszczono ${result.count} logów starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`
+                `Wyczyszczono ${totalDeleted} logów (${batchCount} batchy) starszych niż ${MAX_AUDIT_AGE_DAYS} dni.`
             );
         }
     } catch (e: unknown) {
@@ -158,13 +175,4 @@ export async function cleanupAuditLogs(): Promise<void> {
     }
 }
 
-// Uruchom czyszczenie przy ładowaniu modułu (tylko nie w testach)
-if (process.env.NODE_ENV !== 'test') {
-    cleanupAuditLogs().catch((err) =>
-        logger.error(
-            'AuditLog',
-            'Błąd czyszczenia logów przy starcie',
-            err instanceof Error ? err.message : String(err)
-        )
-    );
-}
+

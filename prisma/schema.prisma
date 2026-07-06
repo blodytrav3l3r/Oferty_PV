@@ -235,6 +235,7 @@ model audit_logs {
   createdAt  String?
 
   @@index([entityType, entityId], map: "idx_audit_entity")
+  @@index([createdAt], map: "idx_audit_created_at")
 }
 
 // Baza klientów
