@@ -69,10 +69,10 @@ router.get('/', requireAuth, async (req, res) => {
                 createdAt: offer.createdAt || null,
                 updatedAt: offer.updatedAt || offer.createdAt || null,
                 lastEditedBy: offer.userId,
+                ...rurySpread,
                 items: items,
                 transportCost: offer.transportCost || 0,
                 history: ruryHistory,
-                ...rurySpread
             });
         }
 
