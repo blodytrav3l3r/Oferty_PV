@@ -24,7 +24,7 @@ Przykłady niedopuszczalnych zachowań:
 
 ## Egzekwowanie
 
-Incydenty można zgłaszać na adres **blodytrav3l3r@witros.pl**. Wszystkie skargi zostaną rozpatrzone i doprowadzą do odpowiedniej reakcji.
+Incydenty można zgłaszać na adres **blodytrav3l3r@gmail.com**. Wszystkie skargi zostaną rozpatrzone i doprowadzą do odpowiedniej reakcji.
 
 ---
 

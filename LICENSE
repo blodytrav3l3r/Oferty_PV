@@ -1,10 +1,14 @@
-# Licencja WITROS Oferty PV
+# Licencja WITROS Oferty PV / WITROS Oferty PV License
 
-Copyright (c) 2026 WITROS. Wszelkie prawa zastrzeżone.
+Copyright (c) 2026 WITROS. Wszelkie prawa zastrzeżone / All rights reserved.
+
+---
+
+## PL — Licencja (polska wersja)
 
 ## 1. Zakres licencji
 
-Niniejsze oprogramowanie (zwane dalej "Oprogramowaniem") jest udostępniane na poniższych warunkach. **Korzystanie z Oprogramowania oznacza akceptację niniejszej licencji.**
+Niniejsze oprogramowanie (zwane dalej "Oprogramowaniem") jest udostępniane na poniższych warunkach. Korzystanie z Oprogramowania oznacza akceptację niniejszej licencji.
 
 ## 2. Dozwolony użytek
 
@@ -29,8 +33,45 @@ Bez zgody Autora wolno:
 
 Aby uzyskać licencję komercyjną, skontaktuj się:
 
-Email: blodytrav3l3r@witros.pl
+Email: blodytrav3l3r@gmail.com
 
 ## 5. Brak gwarancji
 
 Oprogramowanie jest dostarczane "tak jak jest", bez żadnej gwarancji, wyraźnej lub domniemanej. Autor nie ponosi odpowiedzialności za szkody wynikłe z używania Oprogramowania.
+
+---
+
+## EN — License (English version)
+
+## 1. Scope
+
+This software (the "Software") is made available under the following terms. Using the Software constitutes acceptance of this license.
+
+## 2. Permitted use
+
+Without the Author's consent, you may:
+- View, analyze, and study the source code
+- Install and run the Software for your own personal, non-commercial use
+- Create backup copies of the Software
+
+## 3. Restrictions — Author's consent required
+
+**The following is strictly prohibited without the Author's express written consent:**
+
+- Using the Software for commercial purposes, including:
+  - Selling, leasing, renting, or paid distribution
+  - Use in a business, company, or institution
+  - Providing services using the Software to third parties
+- Modifying, creating derivative works, or distributing them
+- Publicly distributing copies of the Software (including in public repositories)
+- Removing or modifying copyright notices
+
+## 4. Commercial licensing inquiries
+
+To obtain a commercial license, contact:
+
+Email: blodytrav3l3r@gmail.com
+
+## 5. Disclaimer of warranty
+
+The Software is provided "as is", without warranty of any kind, express or implied. The Author shall not be liable for any damages arising from the use of the Software.

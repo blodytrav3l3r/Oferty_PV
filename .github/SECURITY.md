@@ -14,7 +14,7 @@ Bezpieczeństwo projektu jest priorytetem. Prosimy o odpowiedzialne ujawnianie p
 ### Proces
 
 1. **Nie otwieraj publicznego issue** — zgłoś podatność prywatnie
-2. Wyślij email na **blodytrav3l3r@witros.pl** z opisem:
+2. Wyślij email na **blodytrav3l3r@gmail.com** z opisem:
     - Rodzaj podatności
     - Kroki do reprodukcji
     - Potencjalny wpływ

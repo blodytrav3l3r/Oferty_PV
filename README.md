@@ -177,7 +177,7 @@ Dependabot aktualizuje zależności automatycznie — merguj PRy przez "Squash a
 Bezpieczeństwo projektu jest priorytetem. Jeśli znajdziesz podatność:
 
 1. **Nie otwieraj publicznego issue** — zgłoś ją prywatnie
-2. Wyślij szczegóły na **blodytrav3l3r@witros.pl** (odpowiedź w ciągu 48h)
+2. Wyślij szczegóły na **blodytrav3l3r@gmail.com** (odpowiedź w ciągu 48h)
 3. Możesz też otworzyć [GitHub Advisory](https://github.com/blodytrav3l3r/Oferty_PV/security/advisories)
 
 Pełna polityka bezpieczeństwa: [.github/SECURITY.md](.github/SECURITY.md)
@@ -215,4 +215,4 @@ Oferty_PV/
 
 Własnościowa — szczegóły w pliku [LICENSE](LICENSE).
 
-Komercyjne wykorzystanie wymaga pisemnej zgody Autora. Zobacz [LICENSE](LICENSE) albo skontaktuj się przez blodytrav3l3r@witros.pl.
+Komercyjne wykorzystanie wymaga pisemnej zgody Autora. Zobacz [LICENSE](LICENSE) albo skontaktuj się przez blodytrav3l3r@gmail.com.
