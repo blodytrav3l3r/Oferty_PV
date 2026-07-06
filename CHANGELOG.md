@@ -4,6 +4,25 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.4.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.3.0...v1.4.0) (2026-07-06)
+
+### Features
+
+- **offers:** import/eksport oferty z feature flag ([3714b0a](https://github.com/blodytrav3l3r/Oferty_PV/commit/3714b0a17849d786b5bbc0a43aef7f81e8ecc1da))
+- **seed:** dodanie skryptu normalize-seed-studnie.mjs do ujednolicania nazw pol w seed studni ([0477003](https://github.com/blodytrav3l3r/Oferty_PV/commit/047700342b78f6a623addea4d9ec872f9783607a))
+- **studnie:** walidacja seed przy starcie backendu — wykrywa stare polskie klucze ([1ba201c](https://github.com/blodytrav3l3r/Oferty_PV/commit/1ba201cb15bf512c018c4f3df181652cec6c3560))
+
+### Bug Fixes
+
+- **api:** kolejność spread w ruryCrud — DB items mają priorytet nad JSON ([c155fe3](https://github.com/blodytrav3l3r/Oferty_PV/commit/c155fe3ec6a6ad1e87f3d97694bfecb889681c82))
+- **rury:** eliminacja duplikacji zt i utraty transport zero ([5fc4d02](https://github.com/blodytrav3l3r/Oferty_PV/commit/5fc4d02ee4fcf56073278e092c67120053a40c31))
+- **rury:** pehd w kolumnie nr_studni eksportu xlsx zewn ([de52a33](https://github.com/blodytrav3l3r/Oferty_PV/commit/de52a33f61690b976142d28e188e0758d292186f))
+- **studnie:** export XLSX — well.config zamiast well.components ([6bfd7c0](https://github.com/blodytrav3l3r/Oferty_PV/commit/6bfd7c0d9a41e7a43e6cec9f0ddbeb2a0a518745))
+- **studnie:** obsluga pustych zakladek DN w Excelu + skrocone etykiety uszczelek ([7c85cbf](https://github.com/blodytrav3l3r/Oferty_PV/commit/7c85cbfb683c4f179d5ec2a7442d643a3ac51713))
+- **studnie:** przycisk Przelicz zamiast oninput dla ceny PEHD ([5e5ef2e](https://github.com/blodytrav3l3r/Oferty_PV/commit/5e5ef2e3eaa86b490b3d6e4a5fa7e1bf972d7790))
+- **ui:** dodanie brakującej biblioteki SheetJS w kartoteka.html ([d6974c1](https://github.com/blodytrav3l3r/Oferty_PV/commit/d6974c1c86d287ea1dc3711afd2d808dc50d53c3))
+- **ui:** naprawa kodowania polskich znaków we wszystkich HTML/CSS ([4428368](https://github.com/blodytrav3l3r/Oferty_PV/commit/4428368475f5dc1c895779ecb14d3ecd6df1974a))
+
 ## [1.4.0] — 2026-07-05
 
 ### Features
