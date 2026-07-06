@@ -34,4 +34,4 @@ Nie dotyczy: dokumentacja, pliki konfiguracyjne IDE, grafika.
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-05_
+_Ostatnia aktualizacja: 2026-07-06_

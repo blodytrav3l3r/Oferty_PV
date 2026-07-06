@@ -1,6 +1,6 @@
 # WITROS Oferty PV — Generator ofert handlowych
 
-**Wersja:** 1.3.0  
+**Wersja:** 1.4.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA  
 **Licencja:** ISC  
 **Autor:** WITROS
@@ -164,15 +164,11 @@ Po uruchomieniu serwera dokumentacja Swagger/OpenAPI dostępna jest pod adresem:
 
 ## Contributing
 
-Zapraszamy do kontrybucji! Prosimy o zapoznanie się z [CONTRIBUTING.md](CONTRIBUTING.md), która zawiera:
-
-- **Branch strategy** — model Git Flow (`main`, `feature/*`, `fix/*`, `hotfix/*`, `release/*`)
-- **Conventional Commits** — wymagany format commitów
-- **Pull Requesty** — proces, wymagania i code review
-- **Code Review** — wskazówki dla recenzentów
-- **Wersjonowanie** — SemVer 2.0.0
+Projekt używa prostego workflow — wszystko na `main`. Szczegóły w [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Zgłoszenia błędów i propozycje funkcji przyjmujemy przez [GitHub Issues](https://github.com/blodytrav3l3r/Oferty_PV/issues).
+
+Dependabot aktualizuje zależności automatycznie — merguj PRy przez "Squash and merge".
 
 ---
 
