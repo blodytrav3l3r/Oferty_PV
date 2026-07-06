@@ -78,7 +78,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@commitlint/cli": "^21.0.2",
+        "@commitlint/cli": "^21.1.0",
         "@commitlint/config-conventional": "^21.0.2",
         "@eslint/js": "^9.39.4",
         "@types/bcryptjs": "^2.4.6",
