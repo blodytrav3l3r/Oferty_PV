@@ -652,7 +652,7 @@ body > .main > .section.active {
     cursor: not-allowed;
 }
 
-/* Kolory typ�w kafelk�w */
+/* Kolory typów kafelków */
 .tile[data-type='dennica'] {
     --tile-accent: #10b981;
 }
@@ -710,7 +710,7 @@ body > .main > .section.active {
     --tile-accent: #84cc16;
 }
 
-/* Zak�adki cennika */
+/* Zakładki cennika */
 .cennik-tab {
     padding: 0.45rem 1rem;
     border: 1px solid var(--border-glass);
@@ -778,7 +778,7 @@ body > .main > .section.active {
     margin-top: 0.2rem;
 }
 
-/* Zak�adki kreatora inline */
+/* Zakładki kreatora inline */
 .b-tab-btn {
     flex: 1;
     padding: 0.45rem;
@@ -805,7 +805,7 @@ body > .main > .section.active {
     color: var(--text-primary);
 }
 
-/* Zak�adki panelu bocznego */
+/* Zakładki panelu bocznego */
 .s-tab-btn {
     flex: 1;
     padding: 0.4rem;
@@ -864,7 +864,7 @@ body > .main > .section.active {
     box-shadow: 0 0 10px var(--warn-bg);
 }
 
-/* Style aplikacji Inline Transitions wykorzystuj�ce nazwy fs-* ale zlokalizowane */
+/* Style aplikacji Inline Transitions wykorzystujące nazwy fs-* ale zlokalizowane */
 .fs-sidebar {
     background: var(--bg-deep);
     border-right: 1px solid var(--bg-tertiary);
@@ -1249,7 +1249,7 @@ body > .main > .section.active {
     line-height: 1.3;
 }
 
-/* Og�lne okno potwierdzenia */
+/* Ogólne okno potwierdzenia */
 .app-confirm-overlay {
     position: fixed;
     top: 0;
@@ -1409,7 +1409,7 @@ body > .main > .section.active {
     align-items: center;
     justify-content: space-between;
     min-height: 57px;
-    /* dopasowanie do wysoko�ci paska przycisk�w */
+    /* dopasowanie do wysokości paska przycisków */
     box-shadow: var(--shadow-sm);
 }
 
@@ -1507,7 +1507,7 @@ body > .main > .section.active {
     }
 }
 
-/* --- STAN �ADOWANIA KREATORA --- */
+/* --- STAN ŁADOWANIA KREATORA --- */
 .wizard-loading-state .wizard-step {
     display: none !important;
 }
@@ -1634,7 +1634,7 @@ select.form-input option {
     height: 16px;
 }
 
-/* Styl etykiety dla checkbox�w */
+/* Styl etykiety dla checkboxów */
 .checkbox-label {
     display: flex;
     align-items: center;
@@ -2236,4 +2236,12 @@ select.form-input option {
     position: sticky;
     top: 3.2rem;
     z-index: 20;
+}
+
+/* Wcięcia dla sub-elementów w tabeli oferty studni */
+.pl-lg {
+    padding-left: 1.5rem !important;
+}
+.pl-xl {
+    padding-left: 3.0rem !important;
 }

@@ -54,6 +54,9 @@
         "release:major": "standard-version --release-as major",
         "release:dry": "standard-version --dry-run",
         "release:first": "standard-version --first-release",
+        "encoding:check": "node scripts/encoding-integrity.js check",
+        "encoding:fix": "node scripts/encoding-integrity.js fix",
+        "encoding:staged": "node scripts/encoding-integrity.js staged",
         "prepare": "husky"
     },
     "engines": {
@@ -124,6 +127,9 @@
         ],
         "*.{json,md,css,html}": [
             "prettier --write"
+        ],
+        "*.{html,css,js,ts,json,md,yml,yaml,sql,xml,mjs,cjs}": [
+            "node scripts/encoding-integrity.js staged"
         ]
     }
 }

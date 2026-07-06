@@ -20,11 +20,11 @@ window.RuryExternalExportTemplate = {
                     INDEKS_CZESCI: item.productId || '',
                     ILOSC: item.quantity || 0,
                     CENA_JEDNOSTKOWA: item.unitPrice || item.price || 0,
-                    WERS: 1,
+                    WERSJA: 1,
                     RABAT: item.discount ? (item.discount * 100).toFixed(2) : '',
                     SREDNICA: '',
                     ZAKONCZENIE: '',
-                    MAGA: '',
+                    MAGAZYN: '',
                     LP: i + 1
                 });
             }

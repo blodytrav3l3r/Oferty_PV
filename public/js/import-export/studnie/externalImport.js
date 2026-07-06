@@ -22,6 +22,7 @@ window.StudnieExternalImport = {
                     dn: r['SREDNICA'] || '',
                     depth: parseInt(r['GLEBOKOSC']) || 0,
                     name: wellName,
+                    magazyn: r['MAGAZYN'] === 'WL' ? 'Włocławek' : 'Kluczbork',
                     lp: parseInt(r['LP']) || Object.keys(wellMap).length + 1,
                     components: []
                 };
@@ -36,8 +37,7 @@ window.StudnieExternalImport = {
                 indeks: r['INDEKS_CZESCI'] || '',
                 ilosc: qty,
                 rabat: hasDiscount ? discount : 0,
-                cenaJednostkowa: hasDiscount ? unitPrice : finalPrice,
-                maga: r['MAGA'] || ''
+                cenaJednostkowa: hasDiscount ? unitPrice : finalPrice
             });
         }
 

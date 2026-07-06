@@ -6,11 +6,11 @@ window.XlsxImportShared = {
         'INDEKS_CZESCI',
         'ILOSC',
         'CENA_JEDNOSTKOWA',
-        'WERS',
+        'WERSJA',
         'RABAT',
         'SREDNICA',
         'ZAKONCZENIE',
-        'MAGA',
+        'MAGAZYN',
         'LP'
     ],
 

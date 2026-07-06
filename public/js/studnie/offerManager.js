@@ -1060,10 +1060,10 @@ function renderComponentSubItems(
                 var kBd = getItemPriceBreakdown(well, kp, true, kineta);
                 var kQ = kineta.quantity || 1;
                 if (kBd.malowanieW > 0) {
-                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" style="padding-left:1.5rem;">w cenie: malowanie wewnątrz</td><td class="text-right">' + fmt(kBd.malowanieW * kQ) + ' PLN</td></tr>';
+                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' + fmt(kBd.malowanieW * kQ) + ' PLN</td></tr>';
                 }
                 if (kBd.malowanieZ > 0) {
-                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" style="padding-left:1.5rem;">w cenie: malowanie zewnątrz</td><td class="text-right">' + fmt(kBd.malowanieZ * kQ) + ' PLN</td></tr>';
+                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' + fmt(kBd.malowanieZ * kQ) + ' PLN</td></tr>';
                 }
             }
         }
@@ -1125,33 +1125,33 @@ function renderComponentSubItems(
                     if (precoCalc.bazowa > 0 && precoCalc.kinetaGlowna) {
                         var dnParts = precoCalc.kinetaGlowna.dn.map(function(d) { return 'DN' + d; });
                         var etyParts = precoCalc.kinetaGlowna.etykiety.map(function(e) { return '[' + e + ']'; });
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ Kineta bazowa (' + dnParts.join(' / ') + ') ' + etyParts.join(' / ') + '</td><td class="text-right">' + fmt(precoCalc.bazowa * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' + dnParts.join(' / ') + ') ' + etyParts.join(' / ') + '</td><td class="text-right">' + fmt(precoCalc.bazowa * precoMult) + ' PLN</td></tr>';
                     }
                     if (precoCalc.skrzynki && precoCalc.skrzynki.suma > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + skrzynki włazowe (' + precoCalc.skrzynki.ilosc + ' × ' + fmt(precoCalc.skrzynki.cenaSzt) + ' PLN)</td><td class="text-right">' + fmt(precoCalc.skrzynki.suma * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' + precoCalc.skrzynki.ilosc + ' × ' + fmt(precoCalc.skrzynki.cenaSzt) + ' PLN)</td><td class="text-right">' + fmt(precoCalc.skrzynki.suma * precoMult) + ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekKineta > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + spadek kinety</td><td class="text-right">' + fmt(precoCalc.spadekKineta * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' + fmt(precoCalc.spadekKineta * precoMult) + ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekMufa > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + spadek mufy</td><td class="text-right">' + fmt(precoCalc.spadekMufa * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' + fmt(precoCalc.spadekMufa * precoMult) + ' PLN</td></tr>';
                     }
                     if (precoCalc.uniesienie > 0) {
                         var mm = precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0 ? precoCalc.uniesieniaSzczegoly[0].mm : '';
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + uniesienie' + (mm ? ' (' + mm + ' mm)' : '') + '</td><td class="text-right">' + fmt(precoCalc.uniesienie * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + uniesienie' + (mm ? ' (' + mm + ' mm)' : '') + '</td><td class="text-right">' + fmt(precoCalc.uniesienie * precoMult) + ' PLN</td></tr>';
                     }
                     if (precoCalc.redukcja > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + redukcja' + (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') + '</td><td class="text-right">' + fmt(precoCalc.redukcja * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + redukcja' + (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') + '</td><td class="text-right">' + fmt(precoCalc.redukcja * precoMult) + ' PLN</td></tr>';
                     }
                     if (precoCalc.dodWloty && precoCalc.dodWloty.length > 0) {
                         for (var dwi = 0; dwi < precoCalc.dodWloty.length; dwi++) {
                             var dw = precoCalc.dodWloty[dwi];
                             var dwTyp = dw.typ === 'kaskada' ? 'kaskada' : dw.typ === 'sciana' ? 'ściana' : dw.typ === 'doplyw' ? 'dopływ' : (dw.typ || '');
-                            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + dod. wlot DN' + dw.dn + (dwTyp ? ' (' + dwTyp + ')' : '') + ' [' + (dw.label || '') + ']</td><td class="text-right">' + fmt(dw.cena * precoMult) + ' PLN</td></tr>';
+                            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' + dw.dn + (dwTyp ? ' (' + dwTyp + ')' : '') + ' [' + (dw.label || '') + ']</td><td class="text-right">' + fmt(dw.cena * precoMult) + ' PLN</td></tr>';
                         }
                     }
                     if (precoCalc.pelnaWysokosc && precoCalc.pelnaWysokosc.cena > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" style="padding-left:1.5rem;">↳ + pełna wysokość (' + precoCalc.pelnaWysokosc.metry.toFixed(2) + ' m)</td><td class="text-right">' + fmt(precoCalc.pelnaWysokosc.cena * precoMult) + ' PLN</td></tr>';
+                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' + precoCalc.pelnaWysokosc.metry.toFixed(2) + ' m)</td><td class="text-right">' + fmt(precoCalc.pelnaWysokosc.cena * precoMult) + ' PLN</td></tr>';
                     }
                 }
             }
@@ -1974,7 +1974,8 @@ async function saveOfferStudnie() {
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
 
-    // Przygotuj wells z obliczonymi cenami dla backendu (PDF/Word export)
+    // Przygotuj wells z obliczonymi cenami dla backendu (PDF/Word/XLSX export)
+    const productMap = new Map(studnieProducts.map(p => [p.id, p]));
     const wellsForExport = wells.map((well) => {
         const stats = calcWellStats(well);
         const wellTransportCost =
@@ -1983,6 +1984,16 @@ async function saveOfferStudnie() {
                 : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        const discountKey = well.dn === 'styczna' ? 'styczne' : (well.dn || '');
+        const activeDiscounts = typeof getWellActiveDiscounts === 'function'
+            ? getWellActiveDiscounts(well)
+            : (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {});
+        const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0, preco: 0 };
+        const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
+        const precoMult = 1 - (disc.preco || 0) / 100;
+        const assignedPrzejscia =
+            typeof calculateAssignedPrzejscia === 'function'
+                ? calculateAssignedPrzejscia(well) : {};
         return {
             name: well.name,
             dn: well.dn,
@@ -1992,7 +2003,64 @@ async function saveOfferStudnie() {
             price: stats.price,
             transportCost: wellTransportCost,
             totalPrice: stats.price + wellTransportCost,
-            config: well.config,
+            rzednaWlazu: well.rzednaWlazu,
+            rzednaDna: well.rzednaDna,
+            magazyn: well.magazyn,
+            config: (well.config || []).map((item, index) => {
+                const p = productMap.get(item.productId);
+                if (!p) return { ...item };
+                if (p.componentType === 'kineta') {
+                    return { ...item, _xskip: true, _xp: 0 };
+                }
+                const isDennica = ['dennica', 'styczna'].includes(p.componentType);
+                const hasKineta = p.componentType === 'dennica' && well.config.some(c => {
+                    const kp = productMap.get(c.productId);
+                    return kp && kp.componentType === 'kineta';
+                });
+                const myPrzejscia = assignedPrzejscia[index] || [];
+                let hasSurcharge = hasKineta || myPrzejscia.length > 0;
+                if (!hasSurcharge && typeof getItemPriceBreakdown === 'function') {
+                    const bd = getItemPriceBreakdown(well, p, false, item);
+                    hasSurcharge = bd.pehd > 0 || bd.malowanieW > 0 || bd.malowanieZ > 0 || bd.zelbet > 0 || bd.nierdzewna > 0;
+                }
+                if (!hasSurcharge && typeof calculatePrecoAllocationForItem === 'function') {
+                    const pa = calculatePrecoAllocationForItem(well, index);
+                    if (pa.hasPreco && pa.allocatedCost > 0) hasSurcharge = true;
+                }
+                if (hasSurcharge) {
+                    let basePrice = typeof getItemAssessedPrice === 'function'
+                        ? getItemAssessedPrice(well, p, true, item)
+                        : (p.price || 0);
+                    if (p.componentType === 'dennica') {
+                        const ki = well.config.find(c => {
+                            const kp = productMap.get(c.productId);
+                            return kp && kp.componentType === 'kineta';
+                        });
+                        if (ki) {
+                            const kp = productMap.get(ki.productId);
+                            const kPrice = typeof getItemAssessedPrice === 'function'
+                                ? getItemAssessedPrice(well, kp, true, ki) : 0;
+                            basePrice += kPrice;
+                        }
+                    }
+                    for (const prz of myPrzejscia) {
+                        const pp = productMap.get(prz.productId);
+                        if (!pp) continue;
+                        basePrice += (pp.price || 0) * nadbudowaMult
+                            + (prz._drillingBasePrice || 0) * nadbudowaMult
+                            + (parseFloat(prz.doplata) || 0);
+                    }
+                    if (typeof calculatePrecoAllocationForItem === 'function') {
+                        const pa = calculatePrecoAllocationForItem(well, index);
+                        if (pa.hasPreco && pa.allocatedCost > 0) {
+                            basePrice += pa.allocatedCost * precoMult;
+                        }
+                    }
+                    return { ...item, _xp: basePrice };
+                }
+                const discountPct = isDennica ? (disc.dennica || 0) : (disc.nadbudowa || 0);
+                return { ...item, _xp: p.price || 0, _xd: discountPct };
+            }),
             przejscia: well.przejscia
         };
     });

@@ -424,7 +424,7 @@ body::before {
     border-left: 1px solid var(--bg-tertiary);
 }
 
-/* Podstawowa konfiguracja kafelk�w dla g�rnego menu */
+/* Podstawowa konfiguracja kafelków dla górnego menu */
 .nav-tile {
     display: flex;
     flex-direction: row;
@@ -1291,7 +1291,7 @@ tbody tr:hover {
     font-weight: 600;
 }
 
-/* Katalog produkt�w */
+/* Katalog produktów */
 .product-catalog {
     margin-bottom: 1.2rem;
     animation: fadeIn 0.3s ease;
@@ -1667,7 +1667,7 @@ tbody tr:hover {
     margin-top: 0.15rem;
 }
 
-/* Odznaki autora � renderowane inline w .offer-subtitle */
+/* Odznaki autora – renderowane inline w .offer-subtitle */
 .author-badge {
     display: inline-flex;
     align-items: center;
@@ -2234,7 +2234,7 @@ tbody tr:hover {
     }
 }
 
-/* Ujednolicony pasek filtr�w */
+/* Ujednolicony pasek filtrów */
 .kartoteka-filter-bar {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(var(--accent-rgb), 0.08));
     border: 1px solid rgba(var(--accent-rgb), 0.2);
@@ -2282,7 +2282,7 @@ tbody tr:hover {
     gap: 1rem;
 }
 
-/* Efekt shimmmera �adowania */
+/* Efekt shimmera ładowania */
 .kartoteka-offers-grid .loading-shimmer {
     position: relative;
     overflow: hidden;
@@ -2852,7 +2852,7 @@ tbody tr:hover {
         page-break-after: avoid;
     }
 
-    /* Siatka nag��wka oferty */
+    /* Siatka nagłówka oferty */
     .offer-header-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
@@ -2870,7 +2870,7 @@ tbody tr:hover {
         display: none !important;
     }
 
-    /* Nag��wek tylko do druku */
+    /* Nagłówek tylko do druku */
     .print-header {
         display: block !important;
         text-align: center;
@@ -2905,7 +2905,7 @@ tbody tr:hover {
 .print-footer {
     display: none;
 }
-/* --- Pomocnicze UI (wyodr�bnione ze styl�w inline) --- */
+/* --- Pomocnicze UI (wyodrębnione ze stylów inline) --- */
 .ui-text-muted-sm {
     font-size: 0.6rem;
     color: var(--text-muted);

@@ -75,7 +75,7 @@
     margin-top: 1px;
 }
 
-/* Zak�adki filtr�w */
+/* Zakładki filtrów */
 .zlecenia-header {
     display: flex;
     align-items: center;
@@ -172,7 +172,7 @@
     border-bottom: none;
 }
 
-/* Kolumna numeru zam�wienia */
+/* Kolumna numeru zamówienia */
 .order-num {
     font-family: 'JetBrains Mono', 'Consolas', monospace;
     font-size: 0.9rem;
@@ -209,7 +209,7 @@
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
 }
 
-/* Odznaka zam�wienia sprzeda�y */
+/* Odznaka zamówienia sprzedaży */
 .sales-order-badge {
     background: rgba(129, 140, 248, 0.08);
     color: var(--accent-hover);

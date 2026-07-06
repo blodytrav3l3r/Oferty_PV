@@ -13,7 +13,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger';
 
 import { ensureAdminExists } from './middleware/auth';
-import { httpsRedirect, securityHeaders } from './middleware/security';
+import { httpsRedirect, securityHeaders, charsetMiddleware } from './middleware/security';
 import { createRateLimiter } from './middleware/rateLimiter';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
@@ -131,6 +131,7 @@ app.use(
     })
 );
 app.use(securityHeaders);
+app.use(charsetMiddleware);
 app.use(httpsRedirect);
 app.use(compression());
 
