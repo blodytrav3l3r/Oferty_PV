@@ -2,7 +2,7 @@
 
 **Wersja:** 1.4.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA  
-**Licencja:** ISC  
+**Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** WITROS
 
 ---
@@ -213,4 +213,6 @@ Oferty_PV/
 
 ## Licencja
 
-ISC — szczegóły w pliku `package.json`.
+Własnościowa — szczegóły w pliku [LICENSE](LICENSE).
+
+Komercyjne wykorzystanie wymaga pisemnej zgody Autora. Zobacz [LICENSE](LICENSE) albo skontaktuj się przez blodytrav3l3r@witros.pl.

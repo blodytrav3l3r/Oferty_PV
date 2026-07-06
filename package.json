@@ -64,7 +64,7 @@
     },
     "keywords": [],
     "author": "",
-    "license": "ISC",
+    "license": "SEE LICENSE IN LICENSE",
     "description": "WITROS Oferty - Generator ofert handlowych (TypeScript + Prisma)",
     "dependencies": {
         "@eslint-community/eslint-utils": "^4.9.1",
