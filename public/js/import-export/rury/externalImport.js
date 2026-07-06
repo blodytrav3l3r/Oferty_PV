@@ -18,15 +18,16 @@ window.RuryExternalImport = {
             const unitPrice = parseFloat(r['CENA_JEDNOSTKOWA']) || 0;
             const qty = parseInt(r['ILOSC']) || 0;
             const hasDiscount = r['RABAT'] !== '';
-            const discount = hasDiscount ? parseFloat(r['RABAT']) / 100 || 0 : 0;
-            const finalPrice = hasDiscount ? unitPrice * (1 - discount) : unitPrice;
+            const discount = hasDiscount ? parseFloat(r['RABAT']) || 0 : 0;
+            const pehdType = r['NR_STUDNI'] || '';
 
             return {
                 productId: r['INDEKS_CZESCI'] || '',
                 quantity: qty,
                 discount: hasDiscount ? discount : 0,
-                unitPrice: hasDiscount ? unitPrice : finalPrice,
-                price: hasDiscount ? unitPrice : finalPrice
+                unitPrice: unitPrice,
+                price: unitPrice,
+                ...(pehdType ? { pehdType } : {})
             };
         });
 

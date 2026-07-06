@@ -15,13 +15,13 @@ window.RuryExternalExportTemplate = {
                 const item = items[i];
                 rows.push({
                     NUMER_OFERTY: offer.offer_number || offer.number || '',
-                    NR_STUDNI: '',
+                    NR_STUDNI: item.pehdType || '',
                     GLEBOKOSC: '',
                     INDEKS_CZESCI: item.productId || '',
                     ILOSC: item.quantity || 0,
                     CENA_JEDNOSTKOWA: item.unitPrice || item.price || 0,
                     WERSJA: 1,
-                    RABAT: item.discount ? (item.discount * 100).toFixed(2) : '',
+                    RABAT: item.discount ? item.discount.toFixed(2) : '',
                     SREDNICA: '',
                     ZAKONCZENIE: '',
                     MAGAZYN: '',
