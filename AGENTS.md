@@ -112,6 +112,29 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 
 ---
 
+## Zasady ogólne
+
+### Jakość kodu
+
+- Czytelność > inteligencja: nazwy zmiennych/funkcji muszą jednoznacznie opisywać intencję
+- YAGNI — zero zbędnej abstrakcji; nie dodawaj kodu "na zapas"
+- Unikaj magicznych liczb i stringów — używaj stałych z opisową nazwą
+- Nie kopiuj kodu bez refaktoryzacji: wydziel współną logikę do funkcji/modułów
+
+### Niezawodność
+
+- Testy są obowiązkowe: każda logika biznesowa → test jednostkowy; kluczowe przepływy → test integracyjny
+- Zawsze analizuj przypadki brzegowe i błędne dane wejściowe — kod ma być odporny na nieprzewidywalne dane
+- Błędy obsługuj jawnie (try/catch z konkretnym typem błędu), nigdy gołe `catch {}` ani silent fail
+- Najpierw poprawność, potem wydajność — optymalizuj dopiero gdy faktycznie występuje problem
+
+### Styl pracy
+
+- Zanim napiszesz kod — zaplanuj strukturę i przepływ danych (z użyciem graphify)
+- Każdy fragment kodu musi być gotowy do użycia w realnym systemie — kod produkcyjny, nie demo
+
+---
+
 ## Znane błędy (z `docs/errors-known.md`)
 
 | #   | Problem                              | Fix                                                |

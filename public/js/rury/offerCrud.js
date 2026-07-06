@@ -53,20 +53,32 @@ async function saveOffer() {
     const icEl = document.getElementById('invest-contractor');
     const investContractor = icEl ? icEl.value.trim() : '';
     const tabNotesEl = document.getElementById('offer-tab-notes');
-    const notes = tabNotesEl && tabNotesEl.value.trim() !== '' ? tabNotesEl.value.trim() : (() => { const nEl = document.getElementById('offer-notes'); return nEl ? nEl.value.trim() : ''; })();
-    
+    const notes =
+        tabNotesEl && tabNotesEl.value.trim() !== ''
+            ? tabNotesEl.value.trim()
+            : (() => {
+                  const nEl = document.getElementById('offer-notes');
+                  return nEl ? nEl.value.trim() : '';
+              })();
+
     const tabPaymentEl = document.getElementById('offer-tab-payment-terms');
     const paymentTermsEl = document.getElementById('offer-payment-terms');
-    const paymentTerms = tabPaymentEl && tabPaymentEl.value.trim() !== '' 
-        ? tabPaymentEl.value.trim() 
-        : (paymentTermsEl ? paymentTermsEl.value.trim() : 'Do uzgodnienia lub według indywidualnych warunków handlowych.');
-    
+    const paymentTerms =
+        tabPaymentEl && tabPaymentEl.value.trim() !== ''
+            ? tabPaymentEl.value.trim()
+            : paymentTermsEl
+              ? paymentTermsEl.value.trim()
+              : 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+
     const tabValidityEl = document.getElementById('offer-tab-validity');
     const validityEl = document.getElementById('offer-validity');
-    const validity = tabValidityEl && tabValidityEl.value.trim() !== '' 
-        ? tabValidityEl.value.trim() 
-        : (validityEl ? validityEl.value.trim() : '7 dni');
-        
+    const validity =
+        tabValidityEl && tabValidityEl.value.trim() !== ''
+            ? tabValidityEl.value.trim()
+            : validityEl
+              ? validityEl.value.trim()
+              : '7 dni';
+
     const tkEl = document.getElementById('transport-km');
     const transportKm = Number(tkEl ? tkEl.value : 0) || 0;
     const trEl = document.getElementById('transport-rate');
@@ -235,7 +247,10 @@ function clearOfferForm() {
     editingOfferAssignedUserName = '';
     editingOfferCreatedByUserId = null;
     editingOfferCreatedByUserName = '';
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     setVal('offer-number', generateOfferNumber());
     setVal('offer-date', new Date().toISOString().slice(0, 10));
     setVal('client-name', '');
@@ -258,7 +273,8 @@ function clearOfferForm() {
 
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
-    if (titleEl) titleEl.innerHTML = `<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)`;
+    if (titleEl)
+        titleEl.innerHTML = `<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)`;
     if (window.lucide) lucide.createIcons();
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
@@ -307,7 +323,8 @@ function renderSavedOffers() {
             const isOwner = currentUser && o.userId === currentUser.id;
             const isSubUserOffer = isPro && subUsers.includes(o.userId);
             const canEdit = isAdmin || isOwner || isSubUserOffer;
-            const _orderList = typeof getOrdersForOffer === 'function' ? getOrdersForOffer(o.id) : [];
+            const _orderList =
+                typeof getOrdersForOffer === 'function' ? getOrdersForOffer(o.id) : [];
             const _hasOrder = _orderList.length > 0;
 
             return `
@@ -354,14 +371,23 @@ function renderSavedOffers() {
         </div>`
                 : ''
         }
-        ${_hasOrder ? `<div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
-            ${_orderList.map(ord => {
-                const label = ord.orderNumber || ord.offerNumber || (ord.id ? ord.id.substring(0, 8) : '—');
-                return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
+        ${
+            _hasOrder
+                ? `<div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+            ${_orderList
+                .map((ord) => {
+                    const label =
+                        ord.orderNumber ||
+                        ord.offerNumber ||
+                        (ord.id ? ord.id.substring(0, 8) : '—');
+                    return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
                     <i data-lucide="package" class="icon-xxs"></i> Zamówienie ${label}
                 </span>`;
-            }).join('')}
-        </div>` : ''}
+                })
+                .join('')}
+        </div>`
+                : ''
+        }
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
         <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
@@ -370,7 +396,11 @@ function renderSavedOffers() {
         <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
         <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
         <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
-        ${_hasOrder ? _orderList.map(ord => `
+        ${
+            _hasOrder
+                ? _orderList
+                      .map(
+                          (ord) => `
             <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8)}
             </button>
@@ -380,7 +410,11 @@ function renderSavedOffers() {
             <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
                 <i data-lucide="edit"></i> Karta Word
             </button>
-        `).join('') : ''}
+        `
+                      )
+                      .join('')
+                : ''
+        }
         <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
       </div>
     </div>
@@ -428,7 +462,10 @@ async function loadOffer(id) {
         normalized.title ||
         normalized.offerName ||
         '';
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     setVal('offer-number', finalNumber);
     setVal('offer-date', normalized.date || new Date().toISOString().slice(0, 10));
     setVal('client-name', normalized.clientName || '');
@@ -445,17 +482,23 @@ async function loadOffer(id) {
             'Do uzgodnienia lub według indywidualnych warunków handlowych.';
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = normalized.validity || '7 dni';
-    setVal('transport-km', normalized.transportKm || 100);
-    setVal('transport-rate', normalized.transportRate || 10);
+    setVal('transport-km', normalized.transportKm ?? 100);
+    setVal('transport-rate', normalized.transportRate ?? 10);
     currentRuryTransportMode = normalized.transportMode || 'full';
     currentOfferItems = structuredClone(normalized.items || []);
 
     // Backfill uid dla starych itemów (flagi 'ordered' nie przechowujemy — obliczamy z ordersRury)
     if (typeof loadOrdersRury === 'function' && (!ordersRury || ordersRury.length === 0)) {
-        try { await loadOrdersRury(); } catch (e) { logger.error('offerCrud', 'Błąd ładowania zamówień rur:', e); showToast('Nie udało się załadować zamówień', 'warning'); }
+        try {
+            await loadOrdersRury();
+        } catch (e) {
+            logger.error('offerCrud', 'Błąd ładowania zamówień rur:', e);
+            showToast('Nie udało się załadować zamówień', 'warning');
+        }
     }
-    currentOfferItems.forEach(item => {
-        if (!item.uid) item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    currentOfferItems.forEach((item) => {
+        if (!item.uid)
+            item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     });
 
     // Uprawnienia
@@ -579,7 +622,7 @@ function showOfferHistory(id) {
         return;
     }
 
-    let historyHtml = offer.history
+    const historyHtml = offer.history
         .map((h, i) => {
             // Znajdź następny stan (albo następny element historii, albo bieżąca oferta)
             const nextState = i === offer.history.length - 1 ? offer : offer.history[i + 1];
@@ -650,7 +693,10 @@ function restoreOfferVersion(offerId, historyIndex) {
 
     // Wczytaj migawke jako nowa oferte z biezacym ID edycji
     editingOfferId = offer.id;
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     setVal('offer-number', snapshot.number || offer.number);
     setVal('offer-date', snapshot.date || offer.date);
     setVal('client-name', snapshot.clientName || '');
@@ -667,8 +713,8 @@ function restoreOfferVersion(offerId, historyIndex) {
             'Do uzgodnienia lub według indywidualnych warunków handlowych.';
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = snapshot.validity || '7 dni';
-    setVal('transport-km', snapshot.transportKm || 100);
-    setVal('transport-rate', snapshot.transportRate || 10);
+    setVal('transport-km', snapshot.transportKm ?? 100);
+    setVal('transport-rate', snapshot.transportRate ?? 10);
 
     currentOfferItems = structuredClone(snapshot.items || []);
     window.zabezpieczenieTransportuEnabled = true;

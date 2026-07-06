@@ -33,7 +33,11 @@ router.get('/:id', requireAuth, async (req, res) => {
             } catch (_e) {}
 
             let studnieHistory: unknown[] = [];
-            try { studnieHistory = JSON.parse(offer.history || '[]'); } catch { studnieHistory = []; }
+            try {
+                studnieHistory = JSON.parse(offer.history || '[]');
+            } catch {
+                studnieHistory = [];
+            }
 
             return res.json({
                 data: {
@@ -74,29 +78,53 @@ router.get('/:id', requireAuth, async (req, res) => {
         }));
 
         let ruryHistory: unknown[] = [];
-        try { ruryHistory = JSON.parse(offer.history || '[]'); } catch { ruryHistory = []; }
+        try {
+            ruryHistory = JSON.parse(offer.history || '[]');
+        } catch {
+            ruryHistory = [];
+        }
         let rurySpread: Record<string, unknown> = {};
         if (offer.data) {
-            try { rurySpread = JSON.parse(offer.data); } catch { rurySpread = {}; }
+            try {
+                rurySpread = JSON.parse(offer.data);
+            } catch {
+                rurySpread = {};
+            }
         }
 
-        res.json({
-            data: {
-                id: offer.id,
-                type: 'offer',
-                userId: offer.userId,
-                title: `Oferta ${offer.offer_number || offer.id}`,
-                price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
-                status: offer.state === 'final' ? 'active' : 'draft',
-                createdAt: offer.createdAt,
-                updatedAt: offer.updatedAt || offer.createdAt,
-                lastEditedBy: offer.userId,
-                items: items,
-                transportCost: offer.transportCost || 0,
-                history: ruryHistory,
-                ...rurySpread
-            }
-        });
+        // items z offer_items_rel (podstawowe pola), rozszerzone o autoAdded z JSON bloba
+        const { items: blobItems, ...cleanSpread } = rurySpread;
+        const hasBlobItems = Array.isArray(blobItems) && blobItems.length > 0;
+        let mergedItems: Record<string, unknown>[];
+        if (hasBlobItems) {
+            // Użyj pełnych itemów z JSON bloba (zawierają uid, autoAdded, pehdType itp.)
+            mergedItems = blobItems as Record<string, unknown>[];
+        } else {
+            // Fallback: itemy z offer_items_rel bez autoAdded
+            mergedItems = items.map((i) => ({ ...i, autoAdded: false }));
+        }
+
+        const responseData = {
+            id: offer.id,
+            type: 'offer',
+            userId: offer.userId,
+            title: `Oferta ${offer.offer_number || offer.id}`,
+            price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
+            status: offer.state === 'final' ? 'active' : 'draft',
+            createdAt: offer.createdAt,
+            updatedAt: offer.updatedAt || offer.createdAt,
+            lastEditedBy: offer.userId,
+            items: mergedItems,
+            transportCost: offer.transportCost || 0,
+            history: ruryHistory,
+            ...cleanSpread
+        };
+
+        // Nie nadpisuj items z cleanSpread (może zawierać nieaktualne dane),
+        // ale zachowaj pozostałe pola z JSON bloba
+        responseData.items = mergedItems;
+
+        res.json({ data: responseData });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         res.status(500).json({ error: message });

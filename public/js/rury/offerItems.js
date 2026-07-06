@@ -19,10 +19,11 @@ function setupOfferForm() {
                 dropdown.classList.remove('show');
                 return;
             }
+            const excludedCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu'];
             const matches = products
                 .filter(
                     (p) =>
-                        p.category !== 'Akcesoria PEHD' &&
+                        !excludedCategories.includes(p.category) &&
                         (p.id.toLowerCase().includes(val) || p.name.toLowerCase().includes(val))
                 )
                 .slice(0, 15);
@@ -57,8 +58,9 @@ function setupOfferForm() {
     setVal('offer-date', new Date().toISOString().slice(0, 10));
     setVal('offer-number', generateOfferNumber());
 
-    if (!activeCatalogCategory || activeCatalogCategory === 'Akcesoria PEHD') {
-        activeCatalogCategory = CATEGORIES.filter((c) => c !== 'Akcesoria PEHD')[0];
+    const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu'];
+    if (!activeCatalogCategory || hiddenCategories.includes(activeCatalogCategory)) {
+        activeCatalogCategory = CATEGORIES.filter((c) => !hiddenCategories.includes(c))[0];
     }
     renderCatalogTabs();
     renderCatalogProducts();
@@ -92,7 +94,8 @@ function toggleCatalog() {
 
 function renderCatalogTabs() {
     const container = document.getElementById('catalog-tabs');
-    container.innerHTML = CATEGORIES.filter((cat) => cat !== 'Akcesoria PEHD')
+    const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu'];
+    container.innerHTML = CATEGORIES.filter((cat) => !hiddenCategories.includes(cat))
         .map((cat) => {
             const count = products.filter((p) => p.category === cat).length;
             return `<button class="catalog-tab${cat === activeCatalogCategory ? ' active' : ''}" onclick="selectCatalogCategory('${cat}')">${cat} <span style="opacity:.6">(${count})</span></button>`;
@@ -418,7 +421,7 @@ function syncTransportSecurity(forceRemove) {
     if (forceRemove || !window.zabezpieczenieTransportuEnabled) {
         let removed = false;
         for (let i = activeItems.length - 1; i >= 0; i--) {
-            if (activeItems[i].autoAdded && activeItems[i].productId.startsWith('ZT-')) {
+            if (activeItems[i].productId?.startsWith('ZT-')) {
                 activeItems.splice(i, 1);
                 removed = true;
             }
@@ -447,13 +450,15 @@ function syncTransportSecurity(forceRemove) {
 
     for (let i = activeItems.length - 1; i >= 0; i--) {
         const item = activeItems[i];
-        if (item.autoAdded && item.productId.startsWith('ZT-')) {
-            if (req[item.productId] && req[item.productId].qty > 0) {
-                item.quantity = req[item.productId].qty;
-                req[item.productId].qty = 0;
-            } else {
-                activeItems.splice(i, 1);
-            }
+        if (!item.productId?.startsWith('ZT-')) continue;
+        const ztProduct = products.find((p) => p.id === item.productId);
+        if (!ztProduct || ztProduct.category !== 'Zabezpieczenie transportu') continue;
+        if (req[item.productId] && req[item.productId].qty > 0) {
+            item.quantity = req[item.productId].qty;
+            item.autoAdded = true;
+            req[item.productId].qty = 0;
+        } else {
+            activeItems.splice(i, 1);
         }
     }
 
