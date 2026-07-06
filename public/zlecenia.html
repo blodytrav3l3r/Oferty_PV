@@ -184,5 +184,14 @@
         <script src="js/shared/ui.js?v=3.0"></script>
         <script src="js/spa/zlecenia.js?v=3.1"></script>
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
+
+        <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> -->
+        <script>
+            if (window.top === window.self) {
+                const module =
+                    location.pathname.split('/').pop().replace(/\.html?$/, '') || 'zlecenia';
+                window.location.replace('/app.html#/' + module);
+            }
+        </script>
 </body>
 </html>

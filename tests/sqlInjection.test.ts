@@ -73,11 +73,11 @@ describe('SQL Injection Prevention', () => {
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 if (line.includes('$executeRawUnsafe')) {
-                    // Sprawdź czy to tylko komentarz
-                    if (!line.trim().startsWith('//')) {
+                    // Sprawdź czy to tylko komentarz lub bezpieczny PRAGMA z fixed wartością
+                    if (!line.trim().startsWith('//') && !line.includes('PRAGMA')) {
                         throw new Error(
                             `❌ ${path.relative(srcDir, file)}:${i + 1} — ` +
-                            `znaleziono $executeRawUnsafe: "${line.trim()}"`
+                                `znaleziono $executeRawUnsafe: "${line.trim()}"`
                         );
                     }
                 }

@@ -45,7 +45,8 @@ jest.mock('../src/utils/ownership', () => ({
             return user.subUsers.includes(ownerId);
         }
         return false;
-    })
+    }),
+    canReadDoc: jest.fn().mockReturnValue(true)
 }));
 
 jest.mock('../src/utils/roleFilter', () => ({
@@ -144,7 +145,9 @@ describe('Studnie Order Export (Zamowienie) — GET /:id/export-pdf|docx', () =>
         it('owner CAN export own order as Zamowienie PDF (200 + application/pdf + zamowienie_ filename)', async () => {
             (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
 
-            const res = await request(app).get('/api/orders-studnie/1700000000000_abcde/export-pdf');
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_abcde/export-pdf'
+            );
 
             expect(res.statusCode).toBe(200);
             expect(res.headers['content-type']).toMatch(/application\/pdf/);
@@ -158,7 +161,9 @@ describe('Studnie Order Export (Zamowienie) — GET /:id/export-pdf|docx', () =>
             currentUser = { id: 'admin1', role: 'admin', subUsers: [] };
             (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(otherUserOrder);
 
-            const res = await request(app).get('/api/orders-studnie/1700000000000_other/export-pdf');
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_other/export-pdf'
+            );
 
             expect(res.statusCode).toBe(200);
             expect(generateStudnieOrderPDF).toHaveBeenCalled();
@@ -182,7 +187,9 @@ describe('Studnie Order Export (Zamowienie) — GET /:id/export-pdf|docx', () =>
             currentUser = { id: 'user1', role: 'user', subUsers: [] };
             (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(otherUserOrder);
 
-            const res = await request(app).get('/api/orders-studnie/1700000000000_other/export-pdf');
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_other/export-pdf'
+            );
 
             expect(res.statusCode).toBe(404);
             expect(res.body).toEqual({ error: 'Zamówienie studni nie znalezione' });
@@ -203,7 +210,9 @@ describe('Studnie Order Export (Zamowienie) — GET /:id/export-pdf|docx', () =>
         it('owner CAN export own order as DOCX (200 + .docx)', async () => {
             (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
 
-            const res = await request(app).get('/api/orders-studnie/1700000000000_abcde/export-docx');
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_abcde/export-docx'
+            );
 
             expect(res.statusCode).toBe(200);
             expect(res.headers['content-type']).toMatch(/wordprocessingml\.document/);
@@ -215,7 +224,9 @@ describe('Studnie Order Export (Zamowienie) — GET /:id/export-pdf|docx', () =>
         it('non-owner gets 404', async () => {
             (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(otherUserOrder);
 
-            const res = await request(app).get('/api/orders-studnie/1700000000000_other/export-docx');
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_other/export-docx'
+            );
 
             expect(res.statusCode).toBe(404);
             expect(generateStudnieOrderDOCX).not.toHaveBeenCalled();
@@ -233,14 +244,22 @@ describe('Studnie Order Export (Zamowienie) — GET /:id/export-pdf|docx', () =>
 
     describe('Regressja — stare endpointy karta działają (mirror)', () => {
         it('GET /:id/export-karta-pdf nadal działa (200)', async () => {
-            const res = await request(app).get('/api/orders-studnie/1700000000000_abcde/export-karta-pdf');
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_abcde/export-karta-pdf'
+            );
 
             expect(res.statusCode).toBe(200);
             expect(generateKartaBudowyPDF).toHaveBeenCalledWith('1700000000000_abcde');
         });
 
         it('GET /:id/export-karta-docx nadal działa (200)', async () => {
-            const res = await request(app).get('/api/orders-studnie/1700000000000_abcde/export-karta-docx');
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app).get(
+                '/api/orders-studnie/1700000000000_abcde/export-karta-docx'
+            );
 
             expect(res.statusCode).toBe(200);
             expect(generateKartaBudowyDOCX).toHaveBeenCalledWith('1700000000000_abcde');

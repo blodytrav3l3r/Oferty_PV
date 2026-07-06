@@ -1,109 +1,226 @@
-# AGENTS.md — Oferty_PV (WITROS)
+# WITROS Oferty PV — Konwencje projektowe
 
-TRYB KOMUNIKACJI: /caveman lite (zawsze). Komentarze w kodzie tylko po polsku. Odpowiedzi po polsku.
-Bug → natychmiastowy fix, nie analiza. Złożone zadania (3+ pliki) → delegate_task z agentami.
+Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline, Roo Code).
 
-## Project structure
-```
-I:\GitHub\Oferty_PV\
-├── public/
-│   ├── js/studnie/
-│   │   ├── excelTableManager.js   — Excel table (~3350 linii)
-│   │   ├── wellManager.js         — Główny configurator studni
-│   │   ├── wellSolver.js          — Logika wyliczania studni
-│   │   ├── wellTransitions.js     — Renderer przejść
-│   │   ├── transitionRenderer.js  — Kafelki przejść
-│   │   ├── wellConfigRules.js     — Filtry produktów
-│   │   └── orderManager.js        — Zarządzanie zamówieniami
-│   └── studnie.html               — SPA strona
-├── data/app_database.sqlite        — Baza danych
-├── scripts/excel-validator.py      — Walidator Excela
-├── tests/                          — Testy Jest
-├── docs/errors-known.md            — Katalog znanych błędów
-└── tsconfig.frontend.json          — TypeScript config
-```
+---
 
-## Domain knowledge
+## Stack
 
-### Well diameters (DN)
-- DN1000, DN1200, DN1500, DN2000, DN2500, styczne
-- Reductions: well.redukcjaTargetDN (np. DN1200 → DN1000)
+- **Backend**: TypeScript + Express + Prisma + SQLite; `server.ts`, `src/`, `scripts/`, `tests/`
+- **Frontend**: Vanilla JS (bez frameworka), Vite dev server (`build:frontend`); moduły w `public/js/rury/` i `public/js/studnie/`
+- **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
+- **Python**: `well_configurator_backend/` — osobny serwis (OR-Tools solver), NIE dotykaj z Node.js
+- **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
 
-### Excel table column ordering
-AVR → Konus → Płyty nakrywające → Płyty redukcyjne → Krąg → KrOT
-→ Dennica → Uszczelki → H denn → Uszcz sum → Redukcja → Kineta → P.Buda → Akcje
+## Architektura (ADR)
 
-### Excel per-product columns
-- Uszczelki, R.Uszczelki: per-product (type:'number')
-- Product codes via `resolveEffectiveProduct()` (wellConfigRules.js:340)
-- Grouped columns: getAvailableProducts + filterByWellParams fallback
+Kluczowe decyzje — szczegóły w `docs/adr/`:
 
-### Excel transitions (przejscia)
-- Per-tab `_excelMaxTransitions[tab]`
-- Cleanup: keeps productId OR tempCategory OR rzednaWlaczenia
-- Type selection → tempCategory → render → DN dropdown enabled
+| ADR     | Decyzja                         | Plik                                 |
+| ------- | ------------------------------- | ------------------------------------ |
+| ADR-001 | SQLite jako baza produkcyjna    | `docs/adr/ADR-001-sqlite.md`         |
+| ADR-002 | Vanilla JS SPA (bez frameworka) | `docs/adr/ADR-002-vanilla-js.md`     |
+| ADR-003 | Vite jako bundler frontendu     | `docs/adr/ADR-003-vite.md`           |
+| ADR-004 | Express + Prisma backend        | `docs/adr/ADR-004-express-prisma.md` |
+| ADR-005 | Graphify do inteligencji kodu   | `docs/adr/ADR-005-graphify.md`       |
 
-## Operational Rules
+---
 
-### Token optimization
-- `/caveman lite` — bez fillerów, uprzejmości, zbędnych zdań
-- `execute_code` — batch 3+ tool calls z logiką
-- `delegate_task` — równoległe dla złożonych zadań
-- `read_file` z offset/limit — czytaj tylko potrzebne linie
-- `search_files` zamiast grepa w terminalu
+## Core Conventions
 
-### Debugging
-- Sprawdź `docs/errors-known.md` przed debugowaniem
-- Sprawdź cache JS (Ctrl+Shift+R, bump wersji, nowa karta)
-- Sprawdź konsolę przeglądarki przed pytaniem usera
-- Przy nadpisaniu pliku: `git checkout -- <path>` + ponów patche
+### 1. Język
 
-### Excel development
-- Po każdej zmianie: `npm run typecheck:frontend` + browser test
-- JS cache busting: bump `?v=X` w studnie.html + Ctrl+Shift+R
-- Nie dispatchuj 2+ subagentów na ten sam plik równolegle
-- Przed refaktorem Excela: utwórz tag git
+- Komunikacja z użytkownikiem: zawsze po **polsku** (wszystkie odpowiedzi, wyjaśnienia, opisy)
+- Komentarze, dokumentacja, commity, CHANGELOG: **polski**
+- Identyfikatory (`function fooBar`, `const MY_VAR`), klucze API: **angielski**
 
-## Frontend conventions
-- **API**: `api.get|post|put|del()` z `shared/api.js` — NIE `fetch()`
-- **Style**: `classList.add/remove` — NIE `element.style.xxx`
-- **Lucide**: `lucide.createIcons({root})` po każdym `innerHTML`
-- **Logger**: `window.logger.info|warn|error(tag, msg)` — NIE `console.log`
-- **Toast**: `showToast(msg, type)` (success|error|info)
-- **Confirm**: `appConfirm(msg)` → Promise<boolean>
-- **Escape**: `escapeHtml(str)` przy interpolacji HTML
-- **Auth header**: `x-auth-token` — NIE `Authorization: Bearer`
+### 2. Wersja (SSoT)
 
-## Commands
-| Komenda | Opis |
-|---------|------|
-| `npm run dev` | Dev server :3000 |
-| `npm run typecheck:frontend` | TypeScript check frontendu |
-| `npm run test` | Testy Jest (42 pass / 6 pre-existing FAIL) |
-| `python scripts/excel-validator.py` | Walidacja Excela |
-| `git commit --no-verify` | Commit (pre-push hook blokuje pre-existing) |
-| `git push origin main --no-verify` | Push na GitHub |
+- **`VERSION`** (root) — JEDYNE źródło prawdy
+- `package.json` — mirror (musi być zgodny, aktualizowany przez `standard-version`)
+- `CHANGELOG.md` — historia, generowany automatycznie przez `standard-version`
+- **Release flow** (profesjonalny — NIE bump po każdym commicie):
+    ```bash
+    # 1. Pracuj, commituj conventional commits
+    git commit -m "feat(scope): ..."
+    git commit -m "fix(scope): ..."
+    # 2. Gdy gotowy na wydanie:
+    npm run release          # auto: patch/minor/major z commitów
+    npm run release:patch    # wymuś patch
+    npm run release:minor    # wymuś minor
+    npm run release:major    # wymuś major
+    npm run release:dry      # podgląd bez zmian
+    # 3. Wyślij tag
+    git push --follow-tags
+    ```
+- `standard-version` (`.versionrc.json`) aktualizuje VERSION + package.json + CHANGELOG + tworzy tag
+- `npm run version:check` — sprawdza spójność VERSION / package.json / CHANGELOG
+- `npm run version:bump` — niskopoziomowy bump (do awaryjnego użycia)
+- Po bumpie zrestartuj backend (`npx ts-node-dev ./server.ts`)
+- NIE taguj git-a ręcznie — robi to `npm run release`
 
-## Testing protocol
-1. `npm run typecheck:frontend`
-2. `python scripts/excel-validator.py`
-3. `npm run test`
-4. Browser: log in admin/admin123, navigate to studnie.html?edit=offer_..., open Excel
-5. git add + git commit --no-verify + git push origin main --no-verify
+### 3. SPA — jedyne entry point
 
-## Transition cleanup rule
-`_excelCleanEmptyPrzejscia` keeps transitions with:
-- productId (completed selection)
-- tempCategory (in-progress type selection)
-- rzednaWlaczenia (partially filled)
-Removes only truly empty objects.
+- `app.html` = entry point routera SPA
+- Moduły to iframe wewnątrz `app.html`; router ukrywa `.header` iframe'a
+- Bezpośredni URL modułu → redirect do `app.html#/<module>` (skrypt w każdym HTML)
+- `<footer>` w modułach — usunięty. Wersja żyje w toolbarze `app.html`
+- Po zmianach w SPA: sprawdź `router.js` + `spa.css`
 
-## Restore points
-In-memory snapshots of wells array (max 5).
-`_excelSaveRestorePoint(name)`, `excelRestorePoint(idx)`, `_excelAutoRestorePoint()`.
+### 4. Conventional Commits
 
-## Known test failures (pre-existing)
-- `printDispatch.test.ts` — relatedOrders pattern change
-- `studnieOrderExport.test.ts` — order structure change
-- `ruryOrderExport.test.ts` — j.w.
-- `pricelistService.test.ts`, `studnieOrderAsOffer.test.ts`, `i18n/comments.test.ts`
+- Typy: `feat|fix|refactor|chore|docs|perf|test|style`
+- Scope: z `commitlint.config.js` (rury, studnie, offers, api, ui, auth, release, ...)
+- Title: małą literą, max 72 znaki
+- Body: wyjaśnienie co/dlaczego po polsku
+
+### 5. Cache-busting
+
+- CSS/JS linki z `?v=N` — bump przy zmianie pliku
+- Express: `Cache-Control: no-store` dla HTML
+- Browser: `Ctrl+Shift+R` po dużej zmianie CSS/JS
+
+### 6. Code style
+
+- single quotes, semicolons always, no tabs (Prettier)
+- `public/js/` NIE jest sprawdzane przez tsc ani eslint — weryfikacja manualna + `node -c <file>`
+
+### 7. Globals (frontend JS)
+
+- Wszystkie helpery globalne (bez ES modules); dostępne przez `window.X` lub hoisting
+- Wzorzec: na końcu pliku `window.foo = foo;`
+- `lucide.createIcons({root: container})` po każdym `innerHTML = ...` z `data-lucide`
+
+---
+
+## Graphify (inteligencja kodu)
+
+Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i relacjami między plikami.
+
+### Zanim szukasz w kodzie:
+
+1. `graphify query "<pytanie>"` — zapytanie do grafu (scoped subgraph, mniejszy niż grep)
+2. `graphify path "<A>" "<B>"` — relacje między plikami
+3. `graphify explain "<koncept>"" — wyjaśnienie konceptu
+
+### Zasady:
+
+- Dirty graph files NIE są powodem do pominięcia graphify (normalne po hookach)
+- `graphify-out/wiki/index.md` → używaj do broad navigation zamiast grep
+- `graphify-out/GRAPH_REPORT.md` → tylko dla broad architecture review
+- **Po zmianach kodu**: `graphify update .` (AST-only, bez kosztów API)
+
+---
+
+## Znane błędy (z `docs/errors-known.md`)
+
+| #   | Problem                              | Fix                                                |
+| --- | ------------------------------------ | -------------------------------------------------- |
+| 1   | Seed timeout SQLite (824 produkty)   | chunk 25/tx, `busy_timeout=30000`, sequential init |
+| 2   | Concurrent IIFE race (SQLITE_BUSY)   | IIFE → funkcje, `await` sekwencyjnie               |
+| 3   | XSS w innerHTML                      | Zawsze `escapeHtml(str)` przy interpolacji         |
+| 4   | Kalkulator comma/dot                 | `value.replace(',', '.')` przed safeEval           |
+| 5   | PEHD button duplikacja stylów        | Tylko CSS klasa `.pehd-btn`, NIE inline style      |
+| 6   | `isLocked` TDZ                       | Hoist deklaracji przed użyciem                     |
+| 7   | colspan 13→15 tryb porównania        | Dynamiczny colspan                                 |
+| 8   | `toggleAllItemsForOrder` brak guard  | `if (checkbox)` przed toggle                       |
+| 9   | N+1 queries (Prisma)                 | batch `findMany` + Map, NIE pętla z `findUnique`   |
+| 10  | Null na DOM queries                  | `if (el) el.addEventListener(...)`                 |
+| 11  | Audit log cleanup timeout            | chunk `deleteMany` + indeks na `createdAt`         |
+| 12  | `ensureAdminExists` timeout          | Sequential init (products → admin → listen)        |
+| 13  | CSP blokuje inline onclick           | Helmet: `scriptSrc: ["'self'", "'unsafe-inline'"]` |
+| 14  | Spinner w input[type=number]         | `::-webkit-inner-spin-button { appearance: none }` |
+| 15  | `sort()` mutacja oryginalnej tablicy | `[...array].sort(...)`                             |
+
+---
+
+## Rury — szczegóły implementacji
+
+### Sortowanie (krok 3 + zakładka Oferta)
+
+- Logika mirror w: `offerItems.js:578-635` (pełna tabela z subheaders) i `offerSummaryTab.js:111-153` (bez subheaders)
+- Algorytm: `grouped[category][diamKey]` → sort kat wg `CATEGORIES.indexOf()` → sort średnic numerycznie → wewnątrz (cat,diam) Bosy-Bosy pierwsze, potem `lengthM` asc
+- Fallback średnicy: `productId.split('-')[4]` jako int\*100 gdy `getProductDiameter` zwraca null
+- `CATEGORIES` kolejność: Rury Betonowe → Żelbetowe KL.A → Żelbetowe KL.S → Duże Żelbetowe II → Rury Jajowe Betonowe → Rury Jajowe Żelbetowe → Akcesoria PEHD → Uszczelki → Zabezpieczenie transportu
+
+### Tabele
+
+- Krok 5: `updateRuryOrderSummary` kopiuje innerHTML z `#offer-items-body` do `#order-items-body`; edytowalna tylko w `orderEditMode`
+- Dynamic colgroup: `buildRuryColgroup(extraCols)` — 13 lub 15 kolumn
+- Krok 3: 13 kolumn (Lp, Nazwa, PEHD 3mm, PEHD 4mm, Długość, Ilość, Cena jedn, Rabat, Po rabacie, Transp/szt, Netto, Status, Usuń)
+- Zakładka Oferta: 9-11 kolumn (checkbox, Lp, Produkt, Cena jedn, Rabat, Po rabacie, Transp/szt, Ilość, Razem netto, +Cena z oferty, +Różnica)
+- Lp+Nazwa LEFT; reszta right; `.rury-col-num` dla tabular-nums
+- Nagłówki kat/średnic: `text-align: left`
+
+### CSS szczegóły
+
+- `.rury-table tbody tr:not(.offer-cat-header):not(.offer-diam-header) td:first-child` — specificity fix
+- `.pehd-btn`: `min-width:88px`, `padding:0.3rem 0.6rem`, `font-size:0.72rem`, `font-weight:600`
+- Akcje PEHD i delete: zawsze widoczne (NIE ukrywaj nawet w locked offer)
+- Spinner input: `appearance: none` + `-moz-appearance: textfield`
+
+### AutoAdded
+
+- Checkboxy: manual (unchecked, enabled, clickable, title "Zaznacz aby dodać do zamówienia")
+- Backfill uid + ordered: `item.uid = 'rur_' + Date.now() + '_' + Math.random()...`
+
+---
+
+## Studnie — szczegóły implementacji
+
+- Sortowanie tabeli oferty: tylko po DN numerycznie (`parseInt(a.well.dn) - parseInt(b.well.dn)`); `dn === 'styczna' ? Infinity`
+- Brak category grouping (offerManager.js:402-407)
+- Tryb zamówienia: `orderEditMode` + `originalSnapshot`; kolumny porównania "Cena z oferty", "Różnica"
+- Layout: 3-kolumnowy grid (diagram | konfig | lista studni) z `clamp()` + `minmax(0, 1fr)`
+
+---
+
+## Workflow
+
+### Przed zmianami
+
+1. `graphify query "<co robię>"` — zrozum kontekst
+2. Sprawdź `docs/errors-known.md` — czy znany bug pasuje
+
+### W trakcie
+
+3. Przestrzegaj ADR-ów (vanilla JS, SQLite, Express+Prisma)
+4. frontend JS: dodaj `window.X = X` na końcu pliku
+5. Po `innerHTML` = wywołaj `lucide.createIcons({root: container})`
+6. Zabezpiecz DOM queries: `if (el) el.addEventListener(...)`
+7. Wewnątrz `innerHTML`: zawsze `escapeHtml(str)` dla danych użytkownika
+
+### Po zmianach
+
+8. `graphify update .` — aktualizuj graf
+9. Jeśli zmieniłeś CSS/HTML: podbij `?v=N` w link/script tag
+10. `npm run typecheck` / `npm run typecheck:frontend` — walidacja
+11. `npm run version:check` — spójność wersji (robi to post-commit hook)
+12. Browser: `Ctrl+Shift+R` po dużej zmianie CSS
+
+### Commit
+
+13. Przed wykonaniem commita — **zapytaj użytkownika**: czy tylko commit, czy też `npm run release` (bump wersji + tag)
+14. Domyślnie: tylko commit. Release robimy na wyraźne życzenie.
+15. Po commicie NIE pytaj o release ponownie — czekaj na inicjatywę użytkownika.
+
+---
+
+## Przydatne komendy
+
+| Komenda                               | Co robi                                |
+| ------------------------------------- | -------------------------------------- |
+| `npm run dev:backend`                 | Uruchom backend (ts-node-dev)          |
+| `npm run typecheck`                   | TypeScript backend check               |
+| `npm run typecheck:frontend`          | TypeScript frontend check              |
+| `npm run test:quick`                  | Smoke tests (Jest bez coverage)        |
+| `npm run lint`                        | ESLint (tylko src/)                    |
+| `npm run format`                      | Prettier                               |
+| `npm run version:check`               | Sprawdź spójność VERSION/pkg/CHANGELOG |
+| `npm run version:patch\|minor\|major` | Bump wersji (niskopoziomowy, awaryjny) |
+| `npm run release:patch\|minor\|major` | Release + CHANGELOG + tag (zalecane)   |
+| `npm run release:dry`                 | Podgląd release bez zmian              |
+| `graphify query "<q>"`                | Zapytaj graf wiedzy                    |
+| `graphify path "<A>" "<B>"`           | Relacje między plikami                 |
+| `graphify explain "<koncept>"`        | Wyjaśnij koncept                       |
+| `graphify update .`                   | Aktualizuj graf po zmianach            |

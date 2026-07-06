@@ -10,7 +10,7 @@
         <title>WITROS — Generator Ofert</title>
         <link rel="stylesheet" href="css/style.css?v=3.0" />
         <link rel="stylesheet" href="css/rury.css" />
-        <link rel="stylesheet" href="css/printModal.css?v=3.0">
+        <link rel="stylesheet" href="css/printModal.css?v=3.0" />
     </head>
 
     <body>
@@ -47,7 +47,9 @@
                             class="nav-tile active"
                             style="--nav-accent: var(--accent); --nav-glow: var(--accent-bg)"
                         >
-                            <span class="nav-tile-icon"><i data-lucide="cylinder" class="lucide-rotate-n90"></i></span>
+                            <span class="nav-tile-icon"
+                                ><i data-lucide="cylinder" class="lucide-rotate-n90"></i
+                            ></span>
                             <span class="nav-tile-text">Rury</span>
                         </a>
                         <a href="app.html#/kartoteka" target="_parent" class="nav-tile">
@@ -62,21 +64,24 @@
                         <button
                             class="nav-btn nav-tile active nav-accent-builder"
                             data-section="builder"
-                            id="nav-builder">
+                            id="nav-builder"
+                        >
                             <span class="nav-tile-icon"><i data-lucide="edit"></i></span>
                             <span class="nav-tile-text">Konfiguracja</span>
                         </button>
                         <button
                             class="nav-btn nav-tile nav-accent-offer"
                             data-section="offer"
-                            id="nav-offer">
+                            id="nav-offer"
+                        >
                             <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
                             <span class="nav-tile-text">Oferta</span>
                         </button>
                         <button
                             class="nav-btn nav-tile nav-accent-pricelist"
                             data-section="pricelist"
-                            id="nav-pricelist">
+                            id="nav-pricelist"
+                        >
                             <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
                             <span class="nav-tile-text">Cennik</span>
                         </button>
@@ -127,64 +132,184 @@
                 <!-- ===== FAZA 1: DANE KLIENTA I OFERTY (identyczny HTML jak studnie) ===== -->
                 <div class="wizard-step active" id="wizard-step-1">
                     <div class="wizard-card">
-                        <div class="wizard-card-header gap-2" style="display: flex; align-items: center; margin-bottom: 0.8rem; padding-bottom: 0.6rem; border-bottom: 1px solid #1b2334">
-                            <div style="font-size: 1.4rem; background: #1a1a3e; width: 2.4rem; height: 2.4rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <div
+                            class="wizard-card-header gap-2"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                margin-bottom: 0.8rem;
+                                padding-bottom: 0.6rem;
+                                border-bottom: 1px solid #1b2334;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 1.4rem;
+                                    background: #1a1a3e;
+                                    width: 2.4rem;
+                                    height: 2.4rem;
+                                    border-radius: 10px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    flex-shrink: 0;
+                                "
+                            >
                                 <i data-lucide="clipboard-list"></i>
                             </div>
                             <div>
-                                <h2 id="offer-form-title" class="wizard-card-title" style="margin: 0; font-size: 1.15rem; font-weight: 700;">Dane klienta i oferty</h2>
-                                <p class="wizard-card-subtitle" style="margin: 0; font-size: 0.75rem; color: #71717a;">Uzupełnij dane klienta i podstawowe informacje o ofercie</p>
+                                <h2
+                                    id="offer-form-title"
+                                    class="wizard-card-title"
+                                    style="margin: 0; font-size: 1.15rem; font-weight: 700"
+                                >
+                                    Dane klienta i oferty
+                                </h2>
+                                <p
+                                    class="wizard-card-subtitle"
+                                    style="margin: 0; font-size: 0.75rem; color: #71717a"
+                                >
+                                    Uzupełnij dane klienta i podstawowe informacje o ofercie
+                                </p>
                             </div>
                             <div class="gap-2" style="display: flex; margin-left: auto">
-                                <button class="btn btn-secondary btn-sm" onclick="showClientsDb()" style="padding: 0.4rem 0.8rem; font-size: 0.75rem"><i data-lucide="folder-open"></i> Wczytaj klienta</button>
-                                <button class="btn btn-primary btn-sm" onclick="saveClientToDb()" style="padding: 0.4rem 0.8rem; font-size: 0.75rem"><i data-lucide="save"></i> Zapisz klienta</button>
+                                <button
+                                    class="btn btn-secondary btn-sm"
+                                    onclick="showClientsDb()"
+                                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+                                >
+                                    <i data-lucide="folder-open"></i> Wczytaj klienta
+                                </button>
+                                <button
+                                    class="btn btn-primary btn-sm"
+                                    onclick="saveClientToDb()"
+                                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+                                >
+                                    <i data-lucide="save"></i> Zapisz klienta
+                                </button>
                             </div>
                         </div>
 
                         <div class="wizard-card-body">
-                            <div class="wizard-section-title"><i data-lucide="user"></i> Dane klienta</div>
+                            <div class="wizard-section-title">
+                                <i data-lucide="user"></i> Dane klienta
+                            </div>
                             <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr">
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="client-name">Firma</label>
-                                    <input class="wizard-form-input" id="client-name" placeholder="Budimex S.A." />
+                                    <input
+                                        class="wizard-form-input"
+                                        id="client-name"
+                                        placeholder="Budimex S.A."
+                                    />
                                 </div>
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="client-nip">NIP</label>
-                                    <input class="wizard-form-input" id="client-nip" placeholder="1234567890" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+                                    <input
+                                        class="wizard-form-input"
+                                        id="client-nip"
+                                        placeholder="1234567890"
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    />
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="client-address">Adres firmy</label>
-                                    <input class="wizard-form-input" id="client-address" placeholder="ul. Przykładowa 1, Warszawa" />
+                                    <label class="wizard-form-label" for="client-address"
+                                        >Adres firmy</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        id="client-address"
+                                        placeholder="ul. Przykładowa 1, Warszawa"
+                                    />
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="client-contact">Kontakt</label>
-                                    <input class="wizard-form-input" id="client-contact" placeholder="Jan Kowalski, 600 100 200" />
+                                    <label class="wizard-form-label" for="client-contact"
+                                        >Kontakt</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        id="client-contact"
+                                        placeholder="Jan Kowalski, 600 100 200"
+                                    />
                                 </div>
                             </div>
 
-                            <div class="wizard-section-title" style="margin-top: 1.2rem"><i data-lucide="hard-hat"></i> Inwestycja</div>
-                            <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr">
+                            <div class="wizard-section-title" style="margin-top: 1.2rem">
+                                <i data-lucide="hard-hat"></i> Inwestycja
+                            </div>
+                            <div
+                                class="wizard-form-grid"
+                                style="grid-template-columns: 1fr 1fr 1fr"
+                            >
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="invest-name">Obiekt</label>
-                                    <input class="wizard-form-input" id="invest-name" placeholder="Budowa kanalizacji deszczowej" />
+                                    <label class="wizard-form-label" for="invest-name"
+                                        >Obiekt</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        id="invest-name"
+                                        placeholder="Budowa kanalizacji deszczowej"
+                                    />
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="invest-address">Adres</label>
-                                    <input class="wizard-form-input" id="invest-address" placeholder="ul. Nowa 5, Kraków" />
+                                    <label class="wizard-form-label" for="invest-address"
+                                        >Adres</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        id="invest-address"
+                                        placeholder="ul. Nowa 5, Kraków"
+                                    />
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="invest-contractor">Wykonawca</label>
-                                    <input class="wizard-form-input" id="invest-contractor" placeholder="Firma budowlana XYZ" />
+                                    <label class="wizard-form-label" for="invest-contractor"
+                                        >Wykonawca</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        id="invest-contractor"
+                                        placeholder="Firma budowlana XYZ"
+                                    />
                                 </div>
                             </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1.2rem; margin-bottom: 0.5rem">
-                                <div class="wizard-section-title" style="margin: 0"><i data-lucide="file-text"></i> Oferta</div>
-                                <button id="btn-change-offer-user" class="btn btn-sm" style="display:none; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); color:#818cf8; font-size:0.75rem; font-weight:700; padding:0.3rem 0.6rem;" onclick="changeOfferUser()"><i data-lucide="user"></i> Zmień opiekuna</button>
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: flex-end;
+                                    margin-top: 1.2rem;
+                                    margin-bottom: 0.5rem;
+                                "
+                            >
+                                <div class="wizard-section-title" style="margin: 0">
+                                    <i data-lucide="file-text"></i> Oferta
+                                </div>
+                                <button
+                                    id="btn-change-offer-user"
+                                    class="btn btn-sm"
+                                    style="
+                                        display: none;
+                                        background: rgba(99, 102, 241, 0.1);
+                                        border: 1px solid rgba(99, 102, 241, 0.3);
+                                        color: #818cf8;
+                                        font-size: 0.75rem;
+                                        font-weight: 700;
+                                        padding: 0.3rem 0.6rem;
+                                    "
+                                    onclick="changeOfferUser()"
+                                >
+                                    <i data-lucide="user"></i> Zmień opiekuna
+                                </button>
                             </div>
-                            <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr">
+                            <div
+                                class="wizard-form-grid"
+                                style="grid-template-columns: 1fr 1fr 1fr 1fr"
+                            >
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="offer-number">Nr oferty</label>
+                                    <label class="wizard-form-label" for="offer-number"
+                                        >Nr oferty</label
+                                    >
                                     <input class="wizard-form-input" id="offer-number" />
                                 </div>
                                 <div class="wizard-form-group">
@@ -192,36 +317,85 @@
                                     <input class="wizard-form-input" type="date" id="offer-date" />
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="transport-km">Kilometry</label>
-                                    <input class="wizard-form-input" type="number" step="1" id="transport-km" value="100" oninput="onRuryTransportFormChange()" />
+                                    <label class="wizard-form-label" for="transport-km"
+                                        >Kilometry</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        type="number"
+                                        step="1"
+                                        id="transport-km"
+                                        value="100"
+                                        oninput="onRuryTransportFormChange()"
+                                    />
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="transport-rate">PLN/km</label>
-                                    <input class="wizard-form-input" type="number" step="0.1" id="transport-rate" value="10" oninput="onRuryTransportFormChange()" />
+                                    <label class="wizard-form-label" for="transport-rate"
+                                        >PLN/km</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        type="number"
+                                        step="0.1"
+                                        id="transport-rate"
+                                        value="10"
+                                        oninput="onRuryTransportFormChange()"
+                                    />
                                 </div>
                             </div>
-                            <div class="wizard-form-grid" style="grid-template-columns: 1fr; margin-top: 0.3rem">
+                            <div
+                                class="wizard-form-grid"
+                                style="grid-template-columns: 1fr; margin-top: 0.3rem"
+                            >
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="offer-notes">Uwagi</label>
-                                    <textarea class="wizard-form-textarea" id="offer-notes" rows="5" placeholder="np. Cena obejmuje transport do 100 km..." style="resize: vertical; min-height: 140px; height: 140px;"></textarea>
+                                    <textarea
+                                        class="wizard-form-textarea"
+                                        id="offer-notes"
+                                        rows="5"
+                                        placeholder="np. Cena obejmuje transport do 100 km..."
+                                        style="resize: vertical; min-height: 140px; height: 140px"
+                                    ></textarea>
                                 </div>
                             </div>
-                            <div class="wizard-form-grid" style="grid-template-columns: 3fr 1fr; margin-top: 0.3rem">
+                            <div
+                                class="wizard-form-grid"
+                                style="grid-template-columns: 3fr 1fr; margin-top: 0.3rem"
+                            >
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="offer-payment-terms">Warunki płatności</label>
-                                    <textarea class="wizard-form-textarea" id="offer-payment-terms" rows="1" style="resize: vertical; font-size: 0.8rem; width: 100%; min-height: 34px; height: 34px;">Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
+                                    <label class="wizard-form-label" for="offer-payment-terms"
+                                        >Warunki płatności</label
+                                    >
+                                    <textarea
+                                        class="wizard-form-textarea"
+                                        id="offer-payment-terms"
+                                        rows="1"
+                                        style="
+                                            resize: vertical;
+                                            font-size: 0.8rem;
+                                            width: 100%;
+                                            min-height: 34px;
+                                            height: 34px;
+                                        "
+                                    >
+Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
+                                    >
                                 </div>
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="offer-validity">Data ważności oferty</label>
-                                    <input class="wizard-form-input" id="offer-validity" value="7 dni" onclick="this.select()" />
+                                    <label class="wizard-form-label" for="offer-validity"
+                                        >Data ważności oferty</label
+                                    >
+                                    <input
+                                        class="wizard-form-input"
+                                        id="offer-validity"
+                                        value="7 dni"
+                                        onclick="this.select()"
+                                    />
                                 </div>
                             </div>
                             <div class="wizard-nav">
                                 <div></div>
-                                <button
-                                    class="wizard-btn wizard-btn-next"
-                                    onclick="phaseNext()"
-                                >
+                                <button class="wizard-btn wizard-btn-next" onclick="phaseNext()">
                                     Dalej →
                                 </button>
                             </div>
@@ -233,32 +407,68 @@
                 <div class="wizard-step" id="wizard-step-2">
                     <div class="rury-card">
                         <div class="rury-card-header">
-                            <span class="rury-card-title"><i data-lucide="search"></i> Wyszukaj produkty</span>
+                            <span class="rury-card-title"
+                                ><i data-lucide="search"></i> Wyszukaj produkty</span
+                            >
                             <div class="zt-toggle-wrap">
                                 <span class="zt-toggle-label">Zabezp. transp.</span>
                                 <div class="zt-toggle-group">
-<button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak" onclick="setZabezpieczenieTransportu(true)">TAK</button>
-                                        <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                                    <button
+                                        class="zt-toggle-btn zt-toggle-tak-btn active"
+                                        id="zt-toggle-tak"
+                                        onclick="setZabezpieczenieTransportu(true)"
+                                    >
+                                        TAK
+                                    </button>
+                                    <button
+                                        class="zt-toggle-btn zt-toggle-nie-btn"
+                                        id="zt-toggle-nie"
+                                        onclick="setZabezpieczenieTransportu(false)"
+                                    >
+                                        NIE
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        <div class="offer-search-row" style="position: static; margin: 0 -1rem 0.5rem; padding: 0.3rem 0.6rem;">
+                        <div
+                            class="offer-search-row"
+                            style="position: static; margin: 0 -1rem 0.5rem; padding: 0.3rem 0.6rem"
+                        >
                             <div class="offer-product-search">
                                 <div class="search-box">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
                                         <circle cx="11" cy="11" r="7" />
                                         <path d="m21 21-4.35-4.35" />
                                     </svg>
-                                    <input class="rury-form-input" id="product-search" placeholder="Wyszukaj produkt po nazwie lub indeksie..." style="padding-left: 2.4rem" autocomplete="off" />
+                                    <input
+                                        class="rury-form-input"
+                                        id="product-search"
+                                        placeholder="Wyszukaj produkt po nazwie lub indeksie..."
+                                        style="padding-left: 2.4rem"
+                                        autocomplete="off"
+                                    />
                                 </div>
                                 <div class="product-dropdown" id="product-dropdown"></div>
                             </div>
-                            <button class="btn btn-secondary offer-catalog-btn" id="toggle-catalog-btn" onclick="toggleCatalog()">
+                            <button
+                                class="btn btn-secondary offer-catalog-btn"
+                                id="toggle-catalog-btn"
+                                onclick="toggleCatalog()"
+                            >
                                 <i data-lucide="folder-open"></i> Ukryj katalog produktów
                             </button>
                         </div>
                         <div id="product-catalog" class="product-catalog">
-                            <div class="catalog-tabs" id="catalog-tabs" style="position:static"></div>
+                            <div
+                                class="catalog-tabs"
+                                id="catalog-tabs"
+                                style="position: static"
+                            ></div>
                             <div class="catalog-products" id="catalog-products"></div>
                         </div>
                     </div>
@@ -267,13 +477,30 @@
                 <!-- ===== FAZA 3: OFERTA (PODSUMOWANIE) ===== -->
                 <div class="wizard-step" id="wizard-step-3">
                     <div class="rury-card" style="padding-bottom: 0">
-                        <div class="rury-card-header" style="margin-bottom:0.8rem; border-bottom:none; padding-bottom:0;">
-                            <span class="rury-card-title"><i data-lucide="package"></i> Pozycje oferty</span>
+                        <div
+                            class="rury-card-header"
+                            style="margin-bottom: 0.8rem; border-bottom: none; padding-bottom: 0"
+                        >
+                            <span class="rury-card-title"
+                                ><i data-lucide="package"></i> Pozycje oferty</span
+                            >
                             <div class="zt-toggle-wrap">
                                 <span class="zt-toggle-label">Zabezp. transp.</span>
                                 <div class="zt-toggle-group">
-                                    <button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak-3" onclick="setZabezpieczenieTransportu(true)">TAK</button>
-                                    <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie-3" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                                    <button
+                                        class="zt-toggle-btn zt-toggle-tak-btn active"
+                                        id="zt-toggle-tak-3"
+                                        onclick="setZabezpieczenieTransportu(true)"
+                                    >
+                                        TAK
+                                    </button>
+                                    <button
+                                        class="zt-toggle-btn zt-toggle-nie-btn"
+                                        id="zt-toggle-nie-3"
+                                        onclick="setZabezpieczenieTransportu(false)"
+                                    >
+                                        NIE
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -283,26 +510,57 @@
                                     <colgroup id="offer-colgroup"></colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="width:36px;text-align:center"><input type="checkbox" id="select-all-items" onchange="toggleAllItemsForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
-                                            <th style="text-align:left">Lp.</th>
-                                            <th style="text-align:left">Nazwa produktu</th>
-                                            <th style="text-align:right"><span class="text-center-block">Cena jedn.</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Metry</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Ilość</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Rabat</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Po rabacie</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Dopłata</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Transport</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Netto</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Wersja handlowa</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Akcje</span></th>
+                                            <th style="width: 36px; text-align: center">
+                                                <input
+                                                    type="checkbox"
+                                                    id="select-all-items"
+                                                    onchange="toggleAllItemsForOrder(this.checked)"
+                                                    style="
+                                                        cursor: pointer;
+                                                        width: 16px;
+                                                        height: 16px;
+                                                    "
+                                                />
+                                            </th>
+                                            <th style="text-align: left">Lp.</th>
+                                            <th style="text-align: left">Nazwa produktu</th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Cena jedn.</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Metry</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Ilość</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Rabat</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Po rabacie</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Dopłata</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Transport</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Netto</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block"
+                                                    >Wersja handlowa</span
+                                                >
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Akcje</span>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody id="offer-items-body">
                                         <tr class="rury-table-empty">
-                                            <td colspan="13">
-                                                Wróć do kroku 2 aby dodać produkty
-                                            </td>
+                                            <td colspan="13">Wróć do kroku 2 aby dodać produkty</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -310,150 +568,439 @@
 
                             <!-- Transport breakdown -->
                             <div id="transport-breakdown" class="rury-transport-info"></div>
-
                         </div>
-
                     </div>
                 </div>
-
-
 
                 <!-- ===== FAZA 4: KARTA BUDOWY ===== -->
                 <div class="wizard-step" id="wizard-step-4">
                     <div class="wizard-card">
-                        <div class="wizard-card-content" style="padding: 1rem 0;">
-
+                        <div class="wizard-card-content" style="padding: 1rem 0">
                             <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamówienia -->
-                            <div class="gap-3" style="display: flex; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem">
-                                <div style="flex: 1; min-width: 0;">
-                                    <select id="step4-copy-order-select" class="form-input form-input-wide">
-                                        <option value="">Wybierz kartę budowy do skopiowania</option>
+                            <div
+                                class="gap-3"
+                                style="
+                                    display: flex;
+                                    align-items: flex-start;
+                                    padding: 0.6rem 1.2rem 0.4rem;
+                                "
+                            >
+                                <div style="flex: 1; min-width: 0">
+                                    <select
+                                        id="step4-copy-order-select"
+                                        class="form-input form-input-wide"
+                                    >
+                                        <option value="">
+                                            Wybierz kartę budowy do skopiowania
+                                        </option>
                                     </select>
-                                    <div id="step4-copy-order-help" style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem;">Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.</div>
+                                    <div
+                                        id="step4-copy-order-help"
+                                        style="
+                                            font-size: 0.65rem;
+                                            color: var(--text-muted);
+                                            margin-top: 0.3rem;
+                                        "
+                                    >
+                                        Wybierz istniejące zamówienie, aby skopiować jego dane Karty
+                                        Budowy.
+                                    </div>
                                 </div>
-                                <button type="button" id="step4-copy-toggle-btn" class="wizard-btn wizard-btn-secondary" onclick="copyKartaBudowyFromOrder()" style="flex: 0 0 auto; white-space: nowrap; margin-top: 0;">
+                                <button
+                                    type="button"
+                                    id="step4-copy-toggle-btn"
+                                    class="wizard-btn wizard-btn-secondary"
+                                    onclick="copyKartaBudowyFromOrder()"
+                                    style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
+                                >
                                     Kopiuj Kartę Budowy z zamówienia
                                 </button>
                             </div>
 
                             <!-- Wiersz 1: Emaile i numer oferty -->
-                            <div class="gap-4" style="display: flex; align-items: flex-start; flex-wrap: wrap; padding: 0.4rem 1.2rem 0.6rem">
+                            <div
+                                class="gap-4"
+                                style="
+                                    display: flex;
+                                    align-items: flex-start;
+                                    flex-wrap: wrap;
+                                    padding: 0.4rem 1.2rem 0.6rem;
+                                "
+                            >
                                 <div class="flex-1-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#f59e0b; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #f59e0b;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Aktualnie przypisane emaile do faktury
                                     </label>
-                                    <input type="email" id="step4-email-faktura" class="form-input" placeholder="np. faktura@firma.pl" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.2); color: var(--text-muted); cursor: not-allowed;" readonly />
+                                    <input
+                                        type="email"
+                                        id="step4-email-faktura"
+                                        class="form-input"
+                                        placeholder="np. faktura@firma.pl"
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                            background: rgba(0, 0, 0, 0.2);
+                                            color: var(--text-muted);
+                                            cursor: not-allowed;
+                                        "
+                                        readonly
+                                    />
                                 </div>
                                 <div class="flex-1-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#10b981; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #10b981;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Email e-faktura
-                                        <span style="font-size:0.65rem; color:#10b981; font-weight:800; margin-left:0.3rem;">(TU DOPISYWAĆ)</span>
+                                        <span
+                                            style="
+                                                font-size: 0.65rem;
+                                                color: #10b981;
+                                                font-weight: 800;
+                                                margin-left: 0.3rem;
+                                            "
+                                            >(TU DOPISYWAĆ)</span
+                                        >
                                     </label>
-                                    <input type="email" id="step4-email-efaktura" class="form-input" placeholder="np. efaktura@firma.pl" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="email"
+                                        id="step4-email-efaktura"
+                                        class="form-input"
+                                        placeholder="np. efaktura@firma.pl"
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                                 <div class="flex-1-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #818cf8;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Zamówienie według oferty nr.
                                     </label>
-                                    <input type="text" id="step4-offer-nr-input" class="form-input" placeholder="np. OF/2026/001, OF/2026/002" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem;">Numery ofert oddzielaj przecinkiem</div>
+                                    <input
+                                        type="text"
+                                        id="step4-offer-nr-input"
+                                        class="form-input"
+                                        placeholder="np. OF/2026/001, OF/2026/002"
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
+                                    <div
+                                        style="
+                                            font-size: 0.65rem;
+                                            color: var(--text-muted);
+                                            margin-top: 0.3rem;
+                                        "
+                                    >
+                                        Numery ofert oddzielaj przecinkiem
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Wiersz 2: Adres i Płatności -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-2-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#3b82f6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #3b82f6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Adres wysyłki faktury
                                     </label>
-                                    <input type="text" id="step4-adres-wysylki" class="form-input" placeholder="Wpisz adres wysyłki faktury..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-adres-wysylki"
+                                        class="form-input"
+                                        placeholder="Wpisz adres wysyłki faktury..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
-                                <div style="flex: 1; min-width: 150px;">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#a855f7; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div style="flex: 1; min-width: 150px">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #a855f7;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Warunki płatności
                                     </label>
-                                    <select id="step4-warunki-platnosci" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-warunki-platnosci"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="przelew">Przelew</option>
                                         <option value="gotówka">Gotówka</option>
                                         <option value="przedpłata">Przedpłata</option>
                                     </select>
                                 </div>
-                                <div style="flex: 1; min-width: 100px; max-width: 150px;">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#a855f7; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div style="flex: 1; min-width: 100px; max-width: 150px">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #a855f7;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Ilość dni
                                     </label>
-                                    <input type="number" id="step4-ilosc-dni" class="form-input" placeholder="np. 14" min="0" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="number"
+                                        id="step4-ilosc-dni"
+                                        class="form-input"
+                                        placeholder="np. 14"
+                                        min="0"
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 3: Ubezpieczenie -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#14b8a6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #14b8a6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Ubezpieczenie
                                     </label>
-                                    <input type="text" id="step4-ubezpieczenie" class="form-input" placeholder="Wpisz dane ubezpieczenia..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-ubezpieczenie"
+                                        class="form-input"
+                                        placeholder="Wpisz dane ubezpieczenia..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 4: Osoba do kontaktu -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#ec4899; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #ec4899;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Osoba do kontaktu tel. / email
                                     </label>
-                                    <input type="text" id="step4-osoba-kontakt" class="form-input" placeholder="Wpisz dane osoby do kontaktu..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-osoba-kontakt"
+                                        class="form-input"
+                                        placeholder="Wpisz dane osoby do kontaktu..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 5: Transport -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#f43f5e; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #f43f5e;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Zabezpieczenie transportu
                                     </label>
-                                    <select id="step4-zabezpieczenie-transportu" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-zabezpieczenie-transportu"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
-                                        <option value="Podkłady jednorazowe">Podkłady jednorazowe</option>
+                                        <option value="Podkłady jednorazowe">
+                                            Podkłady jednorazowe
+                                        </option>
                                         <option value="Podkłady zwrotne">Podkłady zwrotne</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#f97316; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #f97316;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Rodzaj transportu
                                     </label>
-                                    <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-rodzaj-transportu"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="W kółko">W kółko</option>
                                         <option value="Spedycja">Spedycja</option>
-                                        <option value="Transport P.V." selected>Transport P.V.</option>
+                                        <option value="Transport P.V." selected>
+                                            Transport P.V.
+                                        </option>
                                         <option value="Odbiór własny">Odbiór własny</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#8b5cf6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #8b5cf6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Wyliczony transport z zam.
                                     </label>
-                                    <input type="text" id="step4-wyliczony-transport" class="form-input" placeholder="Brak danych" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; background: rgba(30,41,59,0.8); color: #e2e8f0;" />
+                                    <input
+                                        type="text"
+                                        id="step4-wyliczony-transport"
+                                        class="form-input"
+                                        placeholder="Brak danych"
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                            background: rgba(30, 41, 59, 0.8);
+                                            color: #e2e8f0;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 6: Rodzaj studni, Uszczelka do studni, Rodzaj stopni -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#38bdf8; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #38bdf8;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Rodzaj studni
                                     </label>
-                                    <select id="step4-rodzaj-studni" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-rodzaj-studni"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy">Nie dotyczy</option>
                                         <option value="Beton" selected>Beton</option>
                                         <option value="Żelbet">Żelbet</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#22d3ee; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #22d3ee;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Uszczelka do studni
                                     </label>
-                                    <select id="step4-uszczelka-studni" class="form-input form-input-wide" onchange="document.getElementById('step4-uszczelka-studni-inne-wrap').style.display = this.value === 'Inne' ? 'block' : 'none'">
+                                    <select
+                                        id="step4-uszczelka-studni"
+                                        class="form-input form-input-wide"
+                                        onchange="
+                                            document.getElementById(
+                                                'step4-uszczelka-studni-inne-wrap'
+                                            ).style.display =
+                                                this.value === 'Inne' ? 'block' : 'none'
+                                        "
+                                    >
                                         <option value="Nie dotyczy">Nie dotyczy</option>
                                         <option value="Brak" selected>Brak</option>
                                         <option value="GSG">GSG</option>
@@ -463,39 +1010,122 @@
                                         <option value="Inne">Inne</option>
                                     </select>
                                 </div>
-                                <div class="flex-1-180-hidden" id="step4-uszczelka-studni-inne-wrap">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#22d3ee; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div
+                                    class="flex-1-180-hidden"
+                                    id="step4-uszczelka-studni-inne-wrap"
+                                >
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #22d3ee;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Jakie (Inne)
                                     </label>
-                                    <input type="text" id="step4-uszczelka-studni-inne" class="form-input" placeholder="Wpisz uszczelkę..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-uszczelka-studni-inne"
+                                        class="form-input"
+                                        placeholder="Wpisz uszczelkę..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#eab308; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #eab308;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Rodzaj stopni
                                     </label>
-                                    <select id="step4-rodzaj-stopni" class="form-input form-input-wide" onchange="document.getElementById('step4-rodzaj-stopni-inne-wrap').style.display = this.value === 'Inne' ? 'block' : 'none'">
+                                    <select
+                                        id="step4-rodzaj-stopni"
+                                        class="form-input form-input-wide"
+                                        onchange="
+                                            document.getElementById(
+                                                'step4-rodzaj-stopni-inne-wrap'
+                                            ).style.display =
+                                                this.value === 'Inne' ? 'block' : 'none'
+                                        "
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Brak">Brak</option>
                                         <option value="Drabinka">Drabinka</option>
-                                        <option value="Drabinka nierdzewna">Drabinka nierdzewna</option>
+                                        <option value="Drabinka nierdzewna">
+                                            Drabinka nierdzewna
+                                        </option>
                                         <option value="Inne">Inne</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180-hidden" id="step4-rodzaj-stopni-inne-wrap">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#eab308; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #eab308;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Jakie (Inne)
                                     </label>
-                                    <input type="text" id="step4-rodzaj-stopni-inne" class="form-input" placeholder="Wpisz rodzaj stopni..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-rodzaj-stopni-inne"
+                                        class="form-input"
+                                        placeholder="Wpisz rodzaj stopni..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 7: Kineta i Wysokość spocznika -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#a855f7; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #a855f7;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Kineta
                                     </label>
-                                    <select id="step4-kineta" class="form-input form-input-wide" onchange="document.getElementById('step4-kineta-inne-wrap').style.display = this.value === 'Inne' ? 'block' : 'none'">
+                                    <select
+                                        id="step4-kineta"
+                                        class="form-input form-input-wide"
+                                        onchange="
+                                            document.getElementById(
+                                                'step4-kineta-inne-wrap'
+                                            ).style.display =
+                                                this.value === 'Inne' ? 'block' : 'none'
+                                        "
+                                    >
                                         <option value="Nie dotyczy">Nie dotyczy</option>
                                         <option value="Brak" selected>Brak</option>
                                         <option value="Beton">Beton</option>
@@ -510,16 +1140,49 @@
                                     </select>
                                 </div>
                                 <div class="flex-1-180-hidden" id="step4-kineta-inne-wrap">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#a855f7; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #a855f7;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Jakie (Inne)
                                     </label>
-                                    <input type="text" id="step4-kineta-inne" class="form-input" placeholder="Wpisz rodzaj kinety..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-kineta-inne"
+                                        class="form-input"
+                                        placeholder="Wpisz rodzaj kinety..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#14b8a6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #14b8a6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Wysokość spocznika
                                     </label>
-                                    <select id="step4-wysokosc-spocznika" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-wysokosc-spocznika"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="1/2">1/2</option>
                                         <option value="2/3">2/3</option>
@@ -528,10 +1191,23 @@
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#f43f5e; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #f43f5e;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Usytuowanie
                                     </label>
-                                    <select id="step4-usytuowanie" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-usytuowanie"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy">Nie dotyczy</option>
                                         <option value="Linia dolna" selected>Linia dolna</option>
                                         <option value="Linia górna">Linia górna</option>
@@ -541,8 +1217,18 @@
 
                             <!-- Wiersz 8: Kaskada i Ślepa kineta -->
                             <div class="flex-wrap-start p-6-12">
-                                <div style="flex: 1; min-width: 140px;">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#3b82f6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div style="flex: 1; min-width: 140px">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #3b82f6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Kaskada
                                     </label>
                                     <select id="step4-kaskada" class="form-input form-input-wide">
@@ -551,87 +1237,220 @@
                                         <option value="Nie">Nie</option>
                                     </select>
                                 </div>
-                                <div style="flex: 2; min-width: 180px;">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#3b82f6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div style="flex: 2; min-width: 180px">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #3b82f6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Uwagi (Kaskada)
                                     </label>
-                                    <input type="text" id="step4-kaskada-uwagi" class="form-input" placeholder="Wpisz uwagi..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-kaskada-uwagi"
+                                        class="form-input"
+                                        placeholder="Wpisz uwagi..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
-                                <div style="flex: 1; min-width: 140px;">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#8b5cf6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div style="flex: 1; min-width: 140px">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #8b5cf6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Ślepa kineta
                                     </label>
-                                    <select id="step4-slepa-kineta" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-slepa-kineta"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Tak">Tak</option>
                                         <option value="Nie">Nie</option>
                                     </select>
                                 </div>
-                                <div style="flex: 2; min-width: 180px;">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#8b5cf6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                <div style="flex: 2; min-width: 180px">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #8b5cf6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Uwagi (Ślepa kineta)
                                     </label>
-                                    <input type="text" id="step4-slepa-kineta-uwagi" class="form-input" placeholder="Wpisz uwagi..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-slepa-kineta-uwagi"
+                                        class="form-input"
+                                        placeholder="Wpisz uwagi..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 9: Redukcja kinety, Przejścia tulejowe, Przejścia szczelne -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#10b981; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #10b981;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Redukcja kinety
                                     </label>
-                                    <select id="step4-redukcja-kinety" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-redukcja-kinety"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Nie">Nie</option>
                                         <option value="Tak">Tak</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#0ea5e9; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #0ea5e9;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Przejścia tulejowe
                                     </label>
-                                    <select id="step4-przejscia-tulejowe" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-przejscia-tulejowe"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Tak">Tak</option>
                                         <option value="Nie">Nie</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#8b5cf6; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #8b5cf6;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Przejścia szczelne
                                     </label>
-                                    <select id="step4-przejscia-szczelne" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-przejscia-szczelne"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="W zakresie P.V.">W zakresie P.V.</option>
                                         <option value="Dostarcza klient">Dostarcza klient</option>
                                     </select>
                                 </div>
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#cbd5e1; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #cbd5e1;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Przejścia zamówione
                                     </label>
-                                    <select id="step4-przejscia-zamowione" class="form-input form-input-wide" onchange="handlePrzejsciaZamowioneChange(this)">
+                                    <select
+                                        id="step4-przejscia-zamowione"
+                                        class="form-input form-input-wide"
+                                        onchange="handlePrzejsciaZamowioneChange(this)"
+                                    >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Tak">Tak</option>
                                         <option value="Nie">Nie</option>
                                     </select>
                                 </div>
                                 <div class="flex-2-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#cbd5e1; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #cbd5e1;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Data zamówienia
                                     </label>
-                                    <input type="date" id="step4-data-zamowienia" class="form-input form-input-wide" />
+                                    <input
+                                        type="date"
+                                        id="step4-data-zamowienia"
+                                        class="form-input form-input-wide"
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 10: Właściwości betonu, Pozostałe właściwości -->
                             <div class="flex-wrap-start p-6-12">
                                 <div class="flex-1-180">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#cbd5e1; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #cbd5e1;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Właściwości betonu
                                     </label>
-                                    <select id="step4-wlasciwosci-betonu" class="form-input form-input-wide">
+                                    <select
+                                        id="step4-wlasciwosci-betonu"
+                                        class="form-input form-input-wide"
+                                    >
                                         <option value="C40/50" selected>C40/50</option>
                                         <option value="C40/50 HSR">C40/50 HSR</option>
                                         <option value="C45/55">C45/55</option>
@@ -641,24 +1460,101 @@
                                     </select>
                                 </div>
                                 <div class="flex-2-240">
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#cbd5e1; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                                    <label
+                                        style="
+                                            display: block;
+                                            font-size: 0.75rem;
+                                            font-weight: 700;
+                                            color: #cbd5e1;
+                                            margin-bottom: 0.4rem;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.3px;
+                                        "
+                                    >
                                         Pozostałe właściwości
                                     </label>
-                                    <input type="text" id="step4-pozostale-wlasciwosci" class="form-input" placeholder="Wpisz właściwości (np. Agresja mrozowa)..." style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem;" />
+                                    <input
+                                        type="text"
+                                        id="step4-pozostale-wlasciwosci"
+                                        class="form-input"
+                                        placeholder="Wpisz właściwości (np. Agresja mrozowa)..."
+                                        style="
+                                            width: 100%;
+                                            font-size: 0.85rem;
+                                            padding: 0.6rem 0.8rem;
+                                        "
+                                    />
                                 </div>
                             </div>
 
                             <!-- Wiersz 11: Przejścia szczelne — szczegóły z oferty -->
-                            <div style="padding: 0.6rem 1.2rem;">
-                                <div style="background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.2); border-radius: 10px; padding: 0.8rem; position: relative;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                                        <label class="gap-2" style="display:flex; align-items:center; font-size:0.75rem; font-weight:700; color:#a78bfa; text-transform:uppercase; letter-spacing:0.3px">
-                                            <i data-lucide="link"></i> Przejścia szczelne — szczegóły z oferty
+                            <div style="padding: 0.6rem 1.2rem">
+                                <div
+                                    style="
+                                        background: rgba(139, 92, 246, 0.06);
+                                        border: 1px solid rgba(139, 92, 246, 0.2);
+                                        border-radius: 10px;
+                                        padding: 0.8rem;
+                                        position: relative;
+                                    "
+                                >
+                                    <div
+                                        style="
+                                            display: flex;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            margin-bottom: 0.6rem;
+                                        "
+                                    >
+                                        <label
+                                            class="gap-2"
+                                            style="
+                                                display: flex;
+                                                align-items: center;
+                                                font-size: 0.75rem;
+                                                font-weight: 700;
+                                                color: #a78bfa;
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.3px;
+                                            "
+                                        >
+                                            <i data-lucide="link"></i> Przejścia szczelne —
+                                            szczegóły z oferty
                                         </label>
-                                        <button type="button" id="step4-add-custom-przejscie-btn" onclick="addCustomPrzejscieRow()" class="gap-1" style="display:flex; align-items:center; background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3); color:#c4b5fd; font-size:0.65rem; font-weight:700; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; transition:all 0.15s; text-transform:uppercase; letter-spacing:0.3px"
-                                            onmouseenter="this.style.background='rgba(139,92,246,0.25)';this.style.borderColor='rgba(139,92,246,0.5)'"
-                                            onmouseleave="this.style.background='rgba(139,92,246,0.12)';this.style.borderColor='rgba(139,92,246,0.3)'">
-                                            <i data-lucide="plus" style="width:12px;height:12px;"></i> Dodaj niestandardowe
+                                        <button
+                                            type="button"
+                                            id="step4-add-custom-przejscie-btn"
+                                            onclick="addCustomPrzejscieRow()"
+                                            class="gap-1"
+                                            style="
+                                                display: flex;
+                                                align-items: center;
+                                                background: rgba(139, 92, 246, 0.12);
+                                                border: 1px solid rgba(139, 92, 246, 0.3);
+                                                color: #c4b5fd;
+                                                font-size: 0.65rem;
+                                                font-weight: 700;
+                                                padding: 0.3rem 0.6rem;
+                                                border-radius: 6px;
+                                                cursor: pointer;
+                                                transition: all 0.15s;
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.3px;
+                                            "
+                                            onmouseenter="
+                                                this.style.background = 'rgba(139,92,246,0.25)';
+                                                this.style.borderColor = 'rgba(139,92,246,0.5)';
+                                            "
+                                            onmouseleave="
+                                                this.style.background = 'rgba(139,92,246,0.12)';
+                                                this.style.borderColor = 'rgba(139,92,246,0.3)';
+                                            "
+                                        >
+                                            <i
+                                                data-lucide="plus"
+                                                style="width: 12px; height: 12px"
+                                            ></i>
+                                            Dodaj niestandardowe
                                         </button>
                                     </div>
                                     <div id="step4-przejscia-details-table"></div>
@@ -666,29 +1562,70 @@
                             </div>
 
                             <!-- Wiersz 12: Uwagi ogólne -->
-                            <div style="padding: 0.6rem 1.2rem;">
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#cbd5e1; margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.3px;">
+                            <div style="padding: 0.6rem 1.2rem">
+                                <label
+                                    style="
+                                        display: block;
+                                        font-size: 0.75rem;
+                                        font-weight: 700;
+                                        color: #cbd5e1;
+                                        margin-bottom: 0.4rem;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.3px;
+                                    "
+                                >
                                     Uwagi
                                 </label>
-                                <textarea id="step4-uwagi-ogolne" class="form-input" rows="9" style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem; resize: vertical;" placeholder="Wpisz uwagi..."></textarea>
+                                <textarea
+                                    id="step4-uwagi-ogolne"
+                                    class="form-input"
+                                    rows="9"
+                                    style="
+                                        width: 100%;
+                                        font-size: 0.85rem;
+                                        padding: 0.6rem 0.8rem;
+                                        resize: vertical;
+                                    "
+                                    placeholder="Wpisz uwagi..."
+                                ></textarea>
                             </div>
-
                         </div>
                     </div>
                 </div>
 
                 <!-- ===== FAZA 5: ZAMÓWIENIE (PODGLĄD) ===== -->
                 <div class="wizard-step" id="wizard-step-5">
-
                     <!-- Karta: Pozycje zamówienia -->
-                    <div class="card" style="margin-bottom:1rem;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:0.6rem;">
-                            <div class="card-title-sm" style="margin-bottom:0;"><i data-lucide="bar-chart-2"></i> Pozycje zamówienia</div>
+                    <div class="card" style="margin-bottom: 1rem">
+                        <div
+                            style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 1rem;
+                                margin-bottom: 0.6rem;
+                            "
+                        >
+                            <div class="card-title-sm" style="margin-bottom: 0">
+                                <i data-lucide="bar-chart-2"></i> Pozycje zamówienia
+                            </div>
                             <div class="zt-toggle-wrap">
                                 <span class="zt-toggle-label">Zabezp. transp.</span>
                                 <div class="zt-toggle-group">
-                                    <button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak-5" onclick="setZabezpieczenieTransportu(true)">TAK</button>
-                                    <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie-5" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                                    <button
+                                        class="zt-toggle-btn zt-toggle-tak-btn active"
+                                        id="zt-toggle-tak-5"
+                                        onclick="setZabezpieczenieTransportu(true)"
+                                    >
+                                        TAK
+                                    </button>
+                                    <button
+                                        class="zt-toggle-btn zt-toggle-nie-btn"
+                                        id="zt-toggle-nie-5"
+                                        onclick="setZabezpieczenieTransportu(false)"
+                                    >
+                                        NIE
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -698,19 +1635,49 @@
                                     <colgroup id="order-colgroup"></colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="width:36px;text-align:center" title="Status zamówienia"><i data-lucide="check-circle" style="width:12px;height:12px;opacity:0.6"></i></th>
-                                            <th style="text-align:left">Lp.</th>
-                                            <th style="text-align:left">Nazwa produktu</th>
-                                            <th style="text-align:right"><span class="text-center-block">Cena jedn.</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Metry</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Ilość</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Rabat</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Po rabacie</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Dopłata</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Transport</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Netto</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Wersja handlowa</span></th>
-                                            <th style="text-align:right"><span class="text-center-block">Akcje</span></th>
+                                            <th
+                                                style="width: 36px; text-align: center"
+                                                title="Status zamówienia"
+                                            >
+                                                <i
+                                                    data-lucide="check-circle"
+                                                    style="width: 12px; height: 12px; opacity: 0.6"
+                                                ></i>
+                                            </th>
+                                            <th style="text-align: left">Lp.</th>
+                                            <th style="text-align: left">Nazwa produktu</th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Cena jedn.</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Metry</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Ilość</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Rabat</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Po rabacie</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Dopłata</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Transport</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Netto</span>
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block"
+                                                    >Wersja handlowa</span
+                                                >
+                                            </th>
+                                            <th style="text-align: right">
+                                                <span class="text-center-block">Akcje</span>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody id="order-items-body">
@@ -725,19 +1692,33 @@
                             <div id="order-transport-breakdown" class="rury-transport-info"></div>
                         </div>
                     </div>
-
                 </div>
-
-
             </div>
 
             <!-- ===== SECTION: OFFER (PODSUMOWANIE) ===== -->
-            <div class="section" id="section-offer" style="padding-bottom: 220px;">
+            <div class="section" id="section-offer" style="padding-bottom: 220px">
                 <!-- Baner kontekstu: oferta / zamówienie -->
-                <div id="offer-context-banner" style="display:none; margin-bottom:0.75rem;">
-                    <div class="card gap-3" style="padding:0.5rem 0.75rem; display:flex; align-items:center">
-                        <span id="offer-context-badge" class="gap-1" style="display:inline-flex; align-items:center; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.72rem; font-weight:700"></span>
-                        <span id="offer-context-text" style="font-size:0.78rem; color:var(--text-secondary);"></span>
+                <div id="offer-context-banner" style="display: none; margin-bottom: 0.75rem">
+                    <div
+                        class="card gap-3"
+                        style="padding: 0.5rem 0.75rem; display: flex; align-items: center"
+                    >
+                        <span
+                            id="offer-context-badge"
+                            class="gap-1"
+                            style="
+                                display: inline-flex;
+                                align-items: center;
+                                padding: 0.2rem 0.6rem;
+                                border-radius: 6px;
+                                font-size: 0.72rem;
+                                font-weight: 700;
+                            "
+                        ></span>
+                        <span
+                            id="offer-context-text"
+                            style="font-size: 0.78rem; color: var(--text-secondary)"
+                        ></span>
                     </div>
                 </div>
                 <!-- Dane klienta i oferty -->
@@ -751,38 +1732,55 @@
                             width: 100%;
                         "
                     >
-                        <span id="offer-form-title-rury"><i data-lucide="clipboard-list"></i> Dane klienta i oferty</span>
+                        <span id="offer-form-title-rury"
+                            ><i data-lucide="clipboard-list"></i> Dane klienta i oferty</span
+                        >
                     </div>
                     <div class="card-content" style="margin-top: 0.5rem">
                         <div
-                            id="offer-client-summary" class="gap-2" style="
+                            id="offer-client-summary"
+                            class="gap-2"
+                            style="
                                 display: grid;
                                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
                                 font-size: 0.78rem;
-                                color: var(--text-secondary);"
+                                color: var(--text-secondary);
+                            "
                         >
                             <div>
-                                <span style="color: var(--text-muted); font-size: 0.65rem">Firma:</span>
+                                <span style="color: var(--text-muted); font-size: 0.65rem"
+                                    >Firma:</span
+                                >
                                 <span id="offer-disp-name">—</span>
                             </div>
                             <div>
-                                <span style="color: var(--text-muted); font-size: 0.65rem">NIP:</span>
+                                <span style="color: var(--text-muted); font-size: 0.65rem"
+                                    >NIP:</span
+                                >
                                 <span id="offer-disp-nip">—</span>
                             </div>
                             <div>
-                                <span style="color: var(--text-muted); font-size: 0.65rem">Nr oferty:</span>
+                                <span style="color: var(--text-muted); font-size: 0.65rem"
+                                    >Nr oferty:</span
+                                >
                                 <span id="offer-disp-number">—</span>
                             </div>
                             <div>
-                                <span style="color: var(--text-muted); font-size: 0.65rem">Data:</span>
+                                <span style="color: var(--text-muted); font-size: 0.65rem"
+                                    >Data:</span
+                                >
                                 <span id="offer-disp-date">—</span>
                             </div>
                             <div>
-                                <span style="color: var(--text-muted); font-size: 0.65rem">Inwestycja:</span>
+                                <span style="color: var(--text-muted); font-size: 0.65rem"
+                                    >Inwestycja:</span
+                                >
                                 <span id="offer-disp-invest">—</span>
                             </div>
                             <div>
-                                <span style="color: var(--text-muted); font-size: 0.65rem">Transport:</span>
+                                <span style="color: var(--text-muted); font-size: 0.65rem"
+                                    >Transport:</span
+                                >
                                 <span id="offer-disp-transport">—</span>
                             </div>
                         </div>
@@ -790,9 +1788,11 @@
                 </div>
 
                 <!-- UWAGI DO OFERTY -->
-                <div class="card" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.8rem;">
+                <div class="card" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.8rem">
                     <div class="card-header-row">
-                        <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">
+                        <label
+                            style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700"
+                        >
                             <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
                         </label>
                     </div>
@@ -801,21 +1801,37 @@
                         class="wizard-form-input"
                         rows="4"
                         placeholder="Wpisz uwagi do oferty..."
-                        style="resize: vertical; width: 100%; font-size: 0.75rem;"
+                        style="resize: vertical; width: 100%; font-size: 0.75rem"
                     ></textarea>
                 </div>
 
                 <!-- WARUNKI PŁATNOŚCI + DATA WAŻNOŚCI -->
-                <div class="card" style="margin-bottom: 1rem; padding: 0.8rem;">
+                <div class="card" style="margin-bottom: 1rem; padding: 0.8rem">
                     <div class="card-header-row">
-                        <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">
+                        <label
+                            style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700"
+                        >
                             <i data-lucide="credit-card"></i> Warunki płatności
                         </label>
-                        <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">Data ważności</label>
+                        <label
+                            style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700"
+                            >Data ważności</label
+                        >
                     </div>
                     <div class="gap-3" style="display: grid; grid-template-columns: 3fr 1fr">
-                        <textarea id="offer-tab-payment-terms" class="wizard-form-input" rows="2" placeholder="Domyślnie przepisywane z kroku 1..." style="resize: vertical; width: 100%; font-size: 0.75rem;"></textarea>
-                        <input id="offer-tab-validity" class="wizard-form-input" style="width: 100%; font-size: 0.75rem; text-align: right;" onclick="this.select()" />
+                        <textarea
+                            id="offer-tab-payment-terms"
+                            class="wizard-form-input"
+                            rows="2"
+                            placeholder="Domyślnie przepisywane z kroku 1..."
+                            style="resize: vertical; width: 100%; font-size: 0.75rem"
+                        ></textarea>
+                        <input
+                            id="offer-tab-validity"
+                            class="wizard-form-input"
+                            style="width: 100%; font-size: 0.75rem; text-align: right"
+                            onclick="this.select()"
+                        />
                     </div>
                 </div>
 
@@ -829,19 +1845,32 @@
                         <div class="zt-toggle-wrap">
                             <span class="zt-toggle-label">Zabezp. transp.</span>
                             <div class="zt-toggle-group">
-                                <button class="zt-toggle-btn zt-toggle-tak-btn active" id="zt-toggle-tak-oferta" onclick="setZabezpieczenieTransportu(true)">TAK</button>
-                                <button class="zt-toggle-btn zt-toggle-nie-btn" id="zt-toggle-nie-oferta" onclick="setZabezpieczenieTransportu(false)">NIE</button>
+                                <button
+                                    class="zt-toggle-btn zt-toggle-tak-btn active"
+                                    id="zt-toggle-tak-oferta"
+                                    onclick="setZabezpieczenieTransportu(true)"
+                                >
+                                    TAK
+                                </button>
+                                <button
+                                    class="zt-toggle-btn zt-toggle-nie-btn"
+                                    id="zt-toggle-nie-oferta"
+                                    onclick="setZabezpieczenieTransportu(false)"
+                                >
+                                    NIE
+                                </button>
                             </div>
                         </div>
                     </div>
                     <div id="offer-tab-summary-body"></div>
                 </div>
-
             </div>
 
             <div class="section" id="section-pricelist">
                 <div class="rury-toolbar">
-                    <h2 class="rury-toolbar-title"><i data-lucide="clipboard-list"></i> Cennik produktów</h2>
+                    <h2 class="rury-toolbar-title">
+                        <i data-lucide="clipboard-list"></i> Cennik produktów
+                    </h2>
                     <div class="rury-toolbar-spacer"></div>
                     <div class="search-box" style="margin: 0; width: 100%; max-width: 350px">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -858,7 +1887,11 @@
                     <button class="btn btn-primary" onclick="showAddProductModal()">
                         <i data-lucide="plus"></i> Dodaj
                     </button>
-                    <button class="btn btn-secondary" id="btn-save-pricelist" onclick="savePriceList()">
+                    <button
+                        class="btn btn-secondary"
+                        id="btn-save-pricelist"
+                        onclick="savePriceList()"
+                    >
                         <i data-lucide="save"></i> Zapisz
                     </button>
                     <button class="btn btn-secondary" onclick="exportRuryToExcel()">
@@ -885,59 +1918,129 @@
             <!-- ===== WSPÓLNY DOLNY PASEK NAWIGACJI ===== -->
             <div class="wizard-nav wizard-nav-fixed" id="wizard-bottom-nav">
                 <div class="wizard-nav-left">
-                    <button class="wizard-btn wizard-btn-prev" id="wizard-nav-prev" onclick="phasePrev()"><i data-lucide="chevron-left"></i> Wstecz</button>
+                    <button
+                        class="wizard-btn wizard-btn-prev"
+                        id="wizard-nav-prev"
+                        onclick="phasePrev()"
+                    >
+                        <i data-lucide="chevron-left"></i> Wstecz
+                    </button>
                 </div>
                 <span class="wizard-step-info" id="wizard-nav-step-info">Krok 1 z 5</span>
                 <div class="wizard-nav-right">
-                    <button class="wizard-btn wizard-btn-next" id="wizard-nav-next" onclick="phaseNext()"><i data-lucide="chevron-right"></i> Dalej</button>
+                    <button
+                        class="wizard-btn wizard-btn-next"
+                        id="wizard-nav-next"
+                        onclick="phaseNext()"
+                    >
+                        <i data-lucide="chevron-right"></i> Dalej
+                    </button>
                 </div>
             </div>
 
             <!-- ===== FIXED PASEEK PODSUMOWANIA OFERTY (KROK 3) ===== -->
-            <div class="rury-summary-bar" id="rury-summary-bar" style="display: none;">
+            <div class="rury-summary-bar" id="rury-summary-bar" style="display: none">
                 <div class="rury-summary-grid">
                     <div class="rury-summary-card">
                         <div class="rury-summary-label">Cena Netto</div>
-                        <div class="rury-summary-value accent" id="sum-netto-products">0,00 PLN</div>
+                        <div class="rury-summary-value accent" id="sum-netto-products">
+                            0,00 PLN
+                        </div>
                     </div>
                     <div
                         class="rury-summary-card has-borders"
                         onclick="openRuryTransportPopup()"
-                        style="cursor: pointer; transition: background 0.2s;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                        onmouseout="this.style.background='transparent'"
+                        style="cursor: pointer; transition: background 0.2s"
+                        onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+                        onmouseout="this.style.background = 'transparent'"
                         title="Kliknij aby zmienić koszt transportu"
                     >
                         <div class="rury-summary-label">Koszt transportu</div>
-                        <div class="rury-summary-value warn gap-2" id="sum-transport-cost" style="display: flex; align-items: center; justify-content: center">
-                            <i data-lucide="truck" style="width: 20px; height: 20px;"></i> 0,00 PLN
+                        <div
+                            class="rury-summary-value warn gap-2"
+                            id="sum-transport-cost"
+                            style="display: flex; align-items: center; justify-content: center"
+                        >
+                            <i data-lucide="truck" style="width: 20px; height: 20px"></i> 0,00 PLN
                         </div>
-                        <div id="rury-active-transport-info" style="font-size: 0.72rem; color: #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; text-align: center; margin-top: 0.15rem;">
-                            <div style="margin-bottom: 2px;">Ilość aut: <span style="color: #cbd5e1; font-weight: 600;" id="rury-transport-count">0</span></div>
-                            <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;" id="rury-transport-rate">0,00 PLN</span></div>
+                        <div
+                            id="rury-active-transport-info"
+                            style="
+                                font-size: 0.72rem;
+                                color: #94a3b8;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+                                line-height: 1.3;
+                                text-align: center;
+                                margin-top: 0.15rem;
+                            "
+                        >
+                            <div style="margin-bottom: 2px">
+                                Ilość aut:
+                                <span
+                                    style="color: #cbd5e1; font-weight: 600"
+                                    id="rury-transport-count"
+                                    >0</span
+                                >
+                            </div>
+                            <div>
+                                Cena rejsu:
+                                <span
+                                    style="color: #cbd5e1; font-weight: 600"
+                                    id="rury-transport-rate"
+                                    >0,00 PLN</span
+                                >
+                            </div>
                         </div>
                     </div>
                     <div class="rury-summary-card">
                         <div class="rury-summary-label">Zabezpieczenie transportu</div>
-                        <div class="rury-summary-value" id="sum-zabezpieczenie" style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">0,00 PLN</div>
+                        <div
+                            class="rury-summary-value"
+                            id="sum-zabezpieczenie"
+                            style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
+                        >
+                            0,00 PLN
+                        </div>
                     </div>
                     <div class="rury-summary-card">
                         <div class="rury-summary-label">RAZEM Netto</div>
                         <div class="rury-summary-value-lg" id="sum-total-netto">0,00 PLN</div>
                         <div class="rury-summary-sub" id="sum-brutto-details">Brutto: 0,00 PLN</div>
                     </div>
-                    <div class="rury-summary-card" style="border-left: 1px solid var(--border-glass);">
-                        <button class="rury-btn-discount" onclick="showItemDiscountModal()">% Edytuj rabaty</button>
+                    <div
+                        class="rury-summary-card"
+                        style="border-left: 1px solid var(--border-glass)"
+                    >
+                        <button class="rury-btn-discount" onclick="showItemDiscountModal()">
+                            % Edytuj rabaty
+                        </button>
                     </div>
                     <!-- Akcje oferty -->
-                    <div class="rury-summary-card rury-summary-actions" style="border-left: 1px solid var(--border-glass);">
-                        <button class="rury-action-btn rury-action-btn--print" onclick="showUniversalPrintModalRury(editingOfferId)">
+                    <div
+                        class="rury-summary-card rury-summary-actions"
+                        style="border-left: 1px solid var(--border-glass)"
+                    >
+                        <button
+                            class="rury-action-btn rury-action-btn--print"
+                            onclick="showUniversalPrintModalRury(editingOfferId)"
+                        >
                             <i data-lucide="printer"></i> Wydruk
                         </button>
-                        <button class="rury-action-btn rury-action-btn--save" id="btn-save-offer-order" onclick="saveOfferOrOrder()">
+                        <button
+                            class="rury-action-btn rury-action-btn--save"
+                            id="btn-save-offer-order"
+                            onclick="saveOfferOrOrder()"
+                        >
                             <i data-lucide="save"></i> Zapisz ofertę
                         </button>
-                        <button class="rury-action-btn rury-action-btn--order" id="btn-order-create" onclick="createOrderFromOffer()">
+                        <button
+                            class="rury-action-btn rury-action-btn--order"
+                            id="btn-order-create"
+                            onclick="createOrderFromOffer()"
+                        >
                             <i data-lucide="shopping-cart"></i> Utwórz zamówienie
                         </button>
                     </div>
@@ -975,60 +2078,345 @@
         <script src="js/app.js?v=3.0"></script>
         <script src="js/shared/iconsSlim.js?v=3.0"></script>
 
+        <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
+        <script>
+            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
+            if (window.top === window.self) {
+                const module =
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'rury';
+                window.location.replace('/app.html#/' + module);
+            }
+        </script>
+
         <!-- ===== OFFER TRANSPORT MODAL (Rury) ===== -->
-        <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 16px; width: 95%; max-width: 820px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-glass);">
-                    <div id="rury-transport-modal-title" class="gap-2" style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; color: #eab308">
-                        <i data-lucide="truck" style="width: 18px; height: 18px;"></i> Koszty Transportu
+        <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000">
+            <div
+                style="
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border-glass);
+                    border-radius: 16px;
+                    width: 95%;
+                    max-width: 820px;
+                    overflow: hidden;
+                    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+                "
+            >
+                <div
+                    style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 1rem 1.5rem;
+                        background: rgba(0, 0, 0, 0.2);
+                        border-bottom: 1px solid var(--border-glass);
+                    "
+                >
+                    <div
+                        id="rury-transport-modal-title"
+                        class="gap-2"
+                        style="
+                            font-weight: 800;
+                            font-size: 0.9rem;
+                            display: flex;
+                            align-items: center;
+                            color: #eab308;
+                        "
+                    >
+                        <i data-lucide="truck" style="width: 18px; height: 18px"></i> Koszty
+                        Transportu
                     </div>
-                    <button class="btn btn-icon" onclick="handleRuryTransportCancel()" style="color: var(--text-muted);"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
+                    <button
+                        class="btn btn-icon"
+                        onclick="handleRuryTransportCancel()"
+                        style="color: var(--text-muted)"
+                    >
+                        <i data-lucide="x" style="width: 16px; height: 16px"></i>
+                    </button>
                 </div>
-                <div style="padding: 2rem 1.5rem;">
-                    <p style="color: var(--text-muted); margin-bottom: 1.75rem; font-size: 0.72rem; line-height: 1.5;">Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi oferty i ulegnie przedawnieniu tylko po odrzuceniu zmian.</p>
+                <div style="padding: 2rem 1.5rem">
+                    <p
+                        style="
+                            color: var(--text-muted);
+                            margin-bottom: 1.75rem;
+                            font-size: 0.72rem;
+                            line-height: 1.5;
+                        "
+                    >
+                        Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi
+                        oferty i ulegnie przedawnieniu tylko po odrzuceniu zmian.
+                    </p>
                     <div class="gap-4" style="display: flex; align-items: flex-end">
-                        <div class="form-group" style="flex: 1; margin: 0;">
-                            <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Odległość (km)</label>
-                            <input type="number" id="rury-transport-modal-km" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" oninput="if(typeof syncRuryTransportFromModal === 'function') syncRuryTransportFromModal()">
+                        <div class="form-group" style="flex: 1; margin: 0">
+                            <label
+                                style="
+                                    font-size: 0.65rem;
+                                    color: var(--text-muted);
+                                    margin-bottom: 0.6rem;
+                                    display: block;
+                                    font-weight: 600;
+                                "
+                                >Odległość (km)</label
+                            >
+                            <input
+                                type="number"
+                                id="rury-transport-modal-km"
+                                class="input-modern"
+                                style="
+                                    width: 100%;
+                                    font-size: 0.9rem;
+                                    font-weight: 700;
+                                    padding: 0.75rem;
+                                    text-align: center;
+                                    border-radius: 12px;
+                                    border: 1px solid var(--border-glass);
+                                    background: rgba(0, 0, 0, 0.2);
+                                    color: var(--text-heading);
+                                "
+                                min="0"
+                                oninput="
+                                    if (typeof syncRuryTransportFromModal === 'function')
+                                        syncRuryTransportFromModal();
+                                "
+                            />
                         </div>
-                        <div class="form-group" style="flex: 1; margin: 0;">
-                            <label style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.6rem; display: block; font-weight: 600;">Stawka (PLN/km)</label>
-                            <input type="number" id="rury-transport-modal-rate" class="input-modern" style="width: 100%; font-size: 0.9rem; font-weight: 700; padding: 0.75rem; text-align: center; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading);" min="0" step="0.01" oninput="if(typeof syncRuryTransportFromModal === 'function') syncRuryTransportFromModal()">
+                        <div class="form-group" style="flex: 1; margin: 0">
+                            <label
+                                style="
+                                    font-size: 0.65rem;
+                                    color: var(--text-muted);
+                                    margin-bottom: 0.6rem;
+                                    display: block;
+                                    font-weight: 600;
+                                "
+                                >Stawka (PLN/km)</label
+                            >
+                            <input
+                                type="number"
+                                id="rury-transport-modal-rate"
+                                class="input-modern"
+                                style="
+                                    width: 100%;
+                                    font-size: 0.9rem;
+                                    font-weight: 700;
+                                    padding: 0.75rem;
+                                    text-align: center;
+                                    border-radius: 12px;
+                                    border: 1px solid var(--border-glass);
+                                    background: rgba(0, 0, 0, 0.2);
+                                    color: var(--text-heading);
+                                "
+                                min="0"
+                                step="0.01"
+                                oninput="
+                                    if (typeof syncRuryTransportFromModal === 'function')
+                                        syncRuryTransportFromModal();
+                                "
+                            />
                         </div>
                     </div>
-                    <div style="margin-top: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
-                        <label style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">Tryb transportu:</label>
-                        <button id="rury-transport-mode-btn" type="button" onclick="toggleRuryTransportMode()" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-heading); font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: all 0.15s;">
-                            <i data-lucide="truck" style="width: 12px; height: 12px;"></i>
+                    <div
+                        style="
+                            margin-top: 0.8rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 0.6rem;
+                        "
+                    >
+                        <label
+                            style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600"
+                            >Tryb transportu:</label
+                        >
+                        <button
+                            id="rury-transport-mode-btn"
+                            type="button"
+                            onclick="toggleRuryTransportMode()"
+                            style="
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 0.35rem;
+                                padding: 0.3rem 0.7rem;
+                                border-radius: 8px;
+                                border: 1px solid var(--border-glass);
+                                background: rgba(0, 0, 0, 0.2);
+                                color: var(--text-heading);
+                                font-size: 0.7rem;
+                                font-weight: 700;
+                                cursor: pointer;
+                                transition: all 0.15s;
+                            "
+                        >
+                            <i data-lucide="truck" style="width: 12px; height: 12px"></i>
                             <span id="rury-transport-mode-label">Pełne</span>
                         </button>
                     </div>
-                    <div id="rury-transport-modal-trips-info" style="margin-top: 1rem; text-align: center; font-size: 0.7rem; color: var(--text-muted);"></div>
-                    <div id="rury-transport-modal-cost-details" class="gap-3" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr">
-                        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
-                            <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Koszt / transport</div>
-                            <div id="rury-transport-modal-cost-per-trip" style="font-size: 0.9rem; font-weight: 800; color: #fbbf24;">0 PLN</div>
+                    <div
+                        id="rury-transport-modal-trips-info"
+                        style="
+                            margin-top: 1rem;
+                            text-align: center;
+                            font-size: 0.7rem;
+                            color: var(--text-muted);
+                        "
+                    ></div>
+                    <div
+                        id="rury-transport-modal-cost-details"
+                        class="gap-3"
+                        style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr"
+                    >
+                        <div
+                            style="
+                                background: rgba(0, 0, 0, 0.2);
+                                border: 1px solid var(--border-glass);
+                                padding: 0.75rem;
+                                border-radius: 10px;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 0.6rem;
+                                    color: var(--text-muted);
+                                    text-transform: uppercase;
+                                    font-weight: 700;
+                                    margin-bottom: 0.3rem;
+                                    letter-spacing: 1px;
+                                "
+                            >
+                                Koszt / transport
+                            </div>
+                            <div
+                                id="rury-transport-modal-cost-per-trip"
+                                style="font-size: 0.9rem; font-weight: 800; color: #fbbf24"
+                            >
+                                0 PLN
+                            </div>
                         </div>
-                        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
-                            <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Ilość transportów</div>
-                            <div id="rury-transport-modal-count" style="font-size: 0.9rem; font-weight: 800; color: #60a5fa;">0</div>
+                        <div
+                            style="
+                                background: rgba(0, 0, 0, 0.2);
+                                border: 1px solid var(--border-glass);
+                                padding: 0.75rem;
+                                border-radius: 10px;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 0.6rem;
+                                    color: var(--text-muted);
+                                    text-transform: uppercase;
+                                    font-weight: 700;
+                                    margin-bottom: 0.3rem;
+                                    letter-spacing: 1px;
+                                "
+                            >
+                                Ilość transportów
+                            </div>
+                            <div
+                                id="rury-transport-modal-count"
+                                style="font-size: 0.9rem; font-weight: 800; color: #60a5fa"
+                            >
+                                0
+                            </div>
                         </div>
-                        <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); padding: 0.75rem; border-radius: 10px; text-align: center;">
-                            <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: 1px;">Koszt transportu</div>
-                            <div id="rury-transport-modal-total-cost" style="font-size: 0.9rem; font-weight: 800; color: #34d399;">0 PLN</div>
+                        <div
+                            style="
+                                background: rgba(0, 0, 0, 0.2);
+                                border: 1px solid var(--border-glass);
+                                padding: 0.75rem;
+                                border-radius: 10px;
+                                text-align: center;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 0.6rem;
+                                    color: var(--text-muted);
+                                    text-transform: uppercase;
+                                    font-weight: 700;
+                                    margin-bottom: 0.3rem;
+                                    letter-spacing: 1px;
+                                "
+                            >
+                                Koszt transportu
+                            </div>
+                            <div
+                                id="rury-transport-modal-total-cost"
+                                style="font-size: 0.9rem; font-weight: 800; color: #34d399"
+                            >
+                                0 PLN
+                            </div>
                         </div>
                     </div>
-                    <div style="margin-top: 1.75rem; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-glass); padding: 1rem; border-radius: 12px;">
-                        <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 2px;">Aktualna Łączna Suma Netto</div>
-                        <div id="rury-transport-modal-total-val" style="font-size: 1.05rem; font-weight: 900; color: var(--success); letter-spacing: -1px;">0 PLN</div>
+                    <div
+                        style="
+                            margin-top: 1.75rem;
+                            text-align: center;
+                            background: rgba(0, 0, 0, 0.3);
+                            border: 1px dashed var(--border-glass);
+                            padding: 1rem;
+                            border-radius: 12px;
+                        "
+                    >
+                        <div
+                            style="
+                                font-size: 0.65rem;
+                                color: var(--text-muted);
+                                text-transform: uppercase;
+                                font-weight: 700;
+                                margin-bottom: 0.25rem;
+                                letter-spacing: 2px;
+                            "
+                        >
+                            Aktualna Łączna Suma Netto
+                        </div>
+                        <div
+                            id="rury-transport-modal-total-val"
+                            style="
+                                font-size: 1.05rem;
+                                font-weight: 900;
+                                color: var(--success);
+                                letter-spacing: -1px;
+                            "
+                        >
+                            0 PLN
+                        </div>
                     </div>
                 </div>
-                <div class="gap-3" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: flex-end">
-                    <button class="btn btn-secondary" onclick="handleRuryTransportCancel()" style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700;">Zamknij</button>
-                    <button class="btn btn-primary" onclick="handleRuryTransportSave()" style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800;"><i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem;"></i> Zastosuj</button>
+                <div
+                    class="gap-3"
+                    style="
+                        padding: 1rem 1.5rem;
+                        border-top: 1px solid var(--border-glass);
+                        background: rgba(0, 0, 0, 0.2);
+                        display: flex;
+                        justify-content: flex-end;
+                    "
+                >
+                    <button
+                        class="btn btn-secondary"
+                        onclick="handleRuryTransportCancel()"
+                        style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700"
+                    >
+                        Zamknij
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        onclick="handleRuryTransportSave()"
+                        style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800"
+                    >
+                        <i
+                            data-lucide="check"
+                            style="width: 11px; height: 11px; margin-right: 0.25rem"
+                        ></i>
+                        Zastosuj
+                    </button>
                 </div>
             </div>
         </div>
-</body>
+    </body>
 </html>
-

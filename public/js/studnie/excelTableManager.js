@@ -6,6 +6,14 @@ let _excelActiveTab = '1000';
 let _excelCreatingLock = false;
 let _excelRefreshTimer = null;
 let _excelSelectedCols = [];
+let _excelSelectedCells = []; // [{wIdx, colIdx}] — selekcja pojedynczych komórek
+let _excelLastClickedCell = null; // {wIdx, colIdx} dla Shift+click zakresu
+let _excelLastDataCol = -1; // ostatnia fokusowana kolumna (indeks td.children) dla strzałek do/z empty-row
+let _excelDragState = null; // {anchor: {wIdx,colIdx}, mode: 'new'|'add'}
+let _excelDragThrottle = null;
+let _excelFocusOverlayEl = null; // globalny overlay div nad aktualnie fokusowaną komórką
+let _excelFocusRaf = null; // throttling dla scroll/resize update
+let _excelRowSelectStates = {}; // {wIdx: bool} — checkbox column state w Excelu
 let _excelDirty = false;
 let _excelFullscreen = false;
 let _excelPollInterval = null;
@@ -71,31 +79,63 @@ function _excelGetColumnStructureHash(well) {
 }
 
 function _excelStartPolling() {
-    if (_excelPollInterval) return;
-    var lastConfigHash = null;
-    var lastColHash = null;
+    if (_excelPollInterval || typeof wells === 'undefined') return;
+    /* Snapshot dla taniego porownywania - hash konfigow wszystkich studni */
+    var lastSnapshot = '';
     _excelPollInterval = setInterval(function() {
-        if (_excelUserEditing) return; /* pomiń gdy user edytuje komórkę */
-        var well = typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0
-            ? wells[currentWellIndex] : null;
-        if (!well) return;
-        /* Sprawdź najpierw strukturę kolumn — jeśli się zmieniła, pełen re-render */
-        var colHash = _excelGetColumnStructureHash(well);
-        if (lastColHash !== null && lastColHash !== colHash) {
-            _excelRenderTable(_excelActiveTab);
-            lastConfigHash = _excelGetWellConfigHash(well);
-            lastColHash = colHash;
-            return;
+        if (_excelUserEditing) return;
+        if (!document.getElementById('excel-table-overlay')) return;
+        var snap = _excelBuildWellsSnapshot();
+        if (snap !== lastSnapshot) {
+            lastSnapshot = snap;
+            /* Lekka aktualizacja — nie re-render caly, tylko tryb AUTO/MAN */
+            _excelSyncAutoManualUI();
         }
-        if (lastColHash === null) lastColHash = colHash;
-        
-        /* Jeśli tylko config się zmienił — odśwież tylko kody */
-        var configHash = _excelGetWellConfigHash(well);
-        if (lastConfigHash !== null && lastConfigHash !== configHash) {
-            _excelUpdateHeaderProdCodes();
+    }, 200);
+    /* Inicjalny snapshot */
+    lastSnapshot = _excelBuildWellsSnapshot();
+}
+
+/* Snapshot stanu configSource + autoSelect wszystkich studzien */
+function _excelBuildWellsSnapshot() {
+    if (typeof wells === 'undefined') return '';
+    var parts = [];
+    for (var i = 0; i < wells.length; i++) {
+        var w = wells[i];
+        if (!w) continue;
+        parts.push(i + ':' + (w.configSource || '-') + ':' + (w.autoSelect === false ? '0' : '1') + ':' + (w.config ? w.config.length : 0));
+    }
+    return parts.join('|');
+}
+
+/* Synchronizuje przyciski AUTO/MAN w UI bez pelnego re-render */
+function _excelSyncAutoManualUI() {
+    if (typeof wells === 'undefined') return;
+    for (var i = 0; i < wells.length; i++) {
+        var w = wells[i];
+        if (!w) continue;
+        var btnMode = document.getElementById('excel-mode-btn-' + i);
+        var btnRun = document.getElementById('excel-run-auto-' + i);
+        if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
+        /* Sync autoSelect z configSource (gdy glowny panel zmieni configSource) */
+        if (w.configSource === 'AUTO' && w.autoSelect === false) w.autoSelect = true;
+        if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
+        var isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
+        btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
+        btnMode.style.background = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
+        btnMode.style.color = isAuto ? '#c7d2fe' : '#fbbf24';
+        btnMode.title = isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)';
+        if (btnRun) {
+            btnRun.disabled = !isAuto;
+            btnRun.style.opacity = isAuto ? '1' : '0.4';
+            btnRun.style.cursor = isAuto ? 'pointer' : 'not-allowed';
+            btnRun.style.background = isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)';
+            btnRun.style.color = isAuto ? '#c7d2fe' : '#64748b';
+            btnRun.style.borderColor = isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)';
+            btnRun.title = isAuto ? 'Uruchom auto-dobór elementów dla tej studni' : 'Przełącz na Auto aby uruchomić';
         }
-        lastConfigHash = configHash;
-    }, 1500);
+    }
+    _excelUpdateBulkButtons();
 }
 
 function _excelStopPolling() {
@@ -110,9 +150,13 @@ function _excelDebouncedRefresh() {
     if (_excelRefreshTimer) clearTimeout(_excelRefreshTimer);
     _excelRefreshTimer = setTimeout(() => {
         _excelRefreshTimer = null;
-        if (typeof refreshAll === 'function') refreshAll(true);
-        _excelUpdateHeaderProdCodes(); /* odśwież kody po zmianie configu przez refreshAll */
-    }, 300);
+        /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
+        _excelUpdateHeaderProdCodes();
+        /* Odśwież główny panel gdy Excel jest otwarty */
+        if (typeof window.updateSummary === 'function') window.updateSummary();
+        if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+        if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    }, 800);
 }
 
 const KINETA_OPTIONS = [
@@ -1171,9 +1215,9 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
     }
     var escOnCh = onChange.replace(/"/g, '&quot;');
     return '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' + (width ? 'width:' + width + 'px;' : '') + '"'
-        + ' onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)">'
+        + ' onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();var s=this.querySelector(\'select\');if(typeof s.showPicker===\'function\'){s.showPicker()}else{s.focus();s.click()}}">'
         + '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"'
-        + ' onchange="' + escOnCh + ';this.previousElementSibling.textContent=this.options[this.selectedIndex].text">'
+        + ' onchange="' + escOnCh + ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text">'
         + optHtml + '</select>'
         + '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' + (label || '&mdash;') + '</div>'
         + '</div>';
@@ -1228,8 +1272,10 @@ function excelFilterWells(value) {
             row.style.display = '';
             return;
         }
-        var nameCell = row.querySelector('td:nth-child(2) input, td:nth-child(2)');
-        var name = nameCell ? (nameCell.value || nameCell.textContent || '').toLowerCase() : '';
+        /* Najpierw szukaj inputa — dopiero potem fallback do TD */
+        var nameInp = row.querySelector('td:nth-child(2) input');
+        var name = nameInp ? nameInp.value : (row.querySelector('td:nth-child(2)') || {}).textContent || '';
+        name = (name || '').toLowerCase();
         row.style.display = name.indexOf(q) >= 0 ? '' : 'none';
     });
 }
@@ -1263,7 +1309,18 @@ function openExcelTableModal() {
     _excelDirty = false;
 
     const existing = document.getElementById('excel-table-overlay');
-    if (existing) existing.remove();
+    if (existing) {
+        /* Wyczyść stary capture handler przed usunięciem overlay */
+        var _oldContainer = document.getElementById('excel-table-container');
+        if (_oldContainer && /** @type {any} */ (_oldContainer)._arrowHandler) {
+            document.removeEventListener('keydown', /** @type {any} */ (_oldContainer)._arrowHandler, true);
+        }
+        /* Wyczyść stary capture paste handler */
+        if (_oldContainer) {
+            _oldContainer.removeEventListener('paste', _excelHandlePaste, true);
+        }
+        existing.remove();
+    }
 
     const overlay = document.createElement('div');
     overlay.id = 'excel-table-overlay';
@@ -1305,18 +1362,20 @@ function openExcelTableModal() {
             #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.25); border-radius:4px; }
             #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.35); }
             #excel-table-overlay ::-webkit-scrollbar-corner { background:transparent; }
-            #excel-table-container input:focus { border-color:rgba(99,102,241,0.5) !important; }
-            #excel-table-container select:focus { border-color:rgba(99,102,241,0.5) !important; }
-            #excel-table-container td.excel-col-selected { background:rgba(99,102,241,0.12) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.25); }
+            #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(99,102,241,0.25) !important; }
+            #excel-table-container td.excel-col-selected { outline:2px solid rgba(99,102,241,0.3); outline-offset:-2px; }
+            #excel-table-container td.excel-col-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
+            #excel-table-container td.cell-selected { outline:2px solid rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.06); }
+            #excel-table-container td.cell-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
+            #excel-table-container td.drag-preview { outline:2px dashed rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.03); }
+            #excel-table-container td.drag-preview .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
-            #excel-table-container table { min-width:100%; border-collapse:collapse; }
             #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
             #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
-            #excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02) !important; }
+            #excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02); }
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
-            #excel-table-container thead th { position:relative; }
-            #excel-table-container thead { position:sticky;top:0;z-index:10; }
+            #excel-table-container thead { position:sticky;top:0;z-index:50;background:#161923;isolation:isolate; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
@@ -1354,9 +1413,10 @@ function openExcelTableModal() {
     const container = document.getElementById('excel-table-container');
     if (container && !/** @type {any} */ (container)._excelListenersAttached) {
         /** @type {any} */ (container)._excelListenersAttached = true;
-        /* Użyj capture phase na dokumencie — przechwytuje strzałki ZANIM input/select je przetworzy */
+        /* Capture phase — przechwytuje strzałki ZANIM input/select je przetworzy */
         var _arrowHandler = function(e) {
-            if (!container.contains(e.target)) return;
+            var tgt = e.target;
+            if (!tgt || !container.contains(tgt)) return;
             if (!e.key.startsWith('Arrow')) return;
             e.stopPropagation();
             e.stopImmediatePropagation();
@@ -1365,21 +1425,99 @@ function openExcelTableModal() {
         };
         document.addEventListener('keydown', _arrowHandler, true);
         /** @type {any} */ (container)._arrowHandler = _arrowHandler;
-        /* Delegowany klik — zamiast inline onclick na każdym TR */
-        container.addEventListener('click', function(e) {
+        /* Delegowany focusin — aktywuje wiersz dla każdego elementu który dostanie focus */
+        container.addEventListener('focusin', function(e) {
             var row = e.target.closest('tr[data-widx]');
-            if (row && !e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select')) {
-                excelSelectRow(parseInt(row.getAttribute('data-widx')));
+            if (!row) return;
+            var wIdx = parseInt(row.getAttribute('data-widx'), 10);
+            if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+                excelSelectRow(wIdx);
             }
         });
+        /* Delegowany klik — excel-like cell selection */
+        container.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            var td = e.target.closest('td');
+            var row = e.target.closest('tr[data-widx]');
+            if (!row || !td) return;
+            var wIdx = parseInt(row.getAttribute('data-widx'), 10);
+            if (isNaN(wIdx)) return;
+            var colIdx = Array.from(row.children).indexOf(td);
+            /* Shift+click = zakres */
+            if (e.shiftKey) {
+                e.stopPropagation();
+                _excelSelectCell(wIdx, colIdx, false, true);
+                return;
+            }
+            /* Ctrl+click = toggle */
+            if (e.ctrlKey) {
+                e.stopPropagation();
+                _excelSelectCell(wIdx, colIdx, true, false);
+                return;
+            }
+            /* Zwykły klik = zaznacz komórkę + wiersz */
+            _excelSelectCell(wIdx, colIdx, false, false);
+            if (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex) {
+                excelSelectRow(wIdx);
+            }
+        });
+        /* Bind copy na document, paste z capture na kontenerze */
+        document.addEventListener('copy', _excelHandleCopy);
+        /* useCapture=true: wychwytuje event ZANIM dotrze do inputów w tabeli */
+        container.addEventListener('paste', _excelHandlePaste, true);
+        /* Bind keydown dla skrótów */
+        container.addEventListener('keydown', _excelHandleKeydown);
+        /* Checkbox column change listener */
+        container.addEventListener('change', _excelOnRowSelectChange);
+        /* Drag-selection: mousedown + mousemove + mouseup */
+        container.addEventListener('mousedown', _excelOnMouseDown);
+        document.addEventListener('mousemove', _excelOnMouseMove);
+        document.addEventListener('mouseup', _excelOnMouseUp);
+        /* Focus overlay - singleton div podążający za aktualnie fokusowaną komórką */
+        if (!document.getElementById('excel-focus-overlay')) {
+            var ov = document.createElement('div');
+            ov.id = 'excel-focus-overlay';
+            ov.style.cssText = 'position:fixed;pointer-events:none;z-index:99998;border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
+            document.body.appendChild(ov);
+            _excelFocusOverlayEl = ov;
+        } else {
+            _excelFocusOverlayEl = document.getElementById('excel-focus-overlay');
+            _excelFocusOverlayEl.style.display = 'none';
+        }
+        container.addEventListener('focusin', _excelOnFocusIn);
+        container.addEventListener('focusout', _excelOnFocusOut);
+        document.addEventListener('scroll', _excelOnOverlayScroll, true);
+        window.addEventListener('resize', _excelOnOverlayScroll);
     }
 
     _excelActiveTab = DN_TABS[0];
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
+    /* Nie zaznaczaj żadnego wiersza przy otwarciu — usuń aktywny styl z pierwszej studni */
+    if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
+        var firstRow = document.querySelector('#excel-table-container tr[data-widx="' + currentWellIndex + '"]');
+        if (firstRow) {
+            var baseRef = firstRow.getAttribute('data-base-bg');
+            if (baseRef) {
+                firstRow.style.background = baseRef;
+                firstRow.setAttribute('data-orig-bg', baseRef);
+                /* Przywróć tło sticky kolumn */
+                var stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
+                stTds.forEach(function(td) { td.style.background = baseRef; });
+            }
+        }
+        currentWellIndex = -1;
+    }
     _excelStopPolling();
     _excelStartPolling();
     _excelUpdateWellCount();
+    /* Migracja autoSelect - wszystkie istniejace studnie dostaja default true */
+    if (typeof wells !== 'undefined') {
+        wells.forEach(function(w) {
+            if (w && typeof w.autoSelect === 'undefined') w.autoSelect = true;
+        });
+    }
+    _excelUpdateBulkButtons();
 
     if (typeof lucide !== 'undefined') lucide.createIcons({ root: overlay });
 }
@@ -1411,20 +1549,28 @@ function excelSelectRow(wIdx) {
                 prevRow.style.background = base;
                 prevRow.setAttribute('data-orig-bg', base);
             }
+            /* Przywróć tło sticky kolumn do base-bg */
+            var prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
+            var baseBg = prevRow.getAttribute('data-base-bg') || '#0a0d16';
+            prevStickyTds.forEach(function(td) { td.style.background = baseBg; });
         }
     }
 
-    // Zaznacz nowy aktywny wiersz
+    // Zaznacz nowy aktywny wiersz - tylko tło, zero ramek
     const newRow = container.querySelector(`tr[data-widx="${wIdx}"]`);
     if (newRow) {
         const activeBg = newRow.getAttribute('data-active-bg');
         if (activeBg) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
+            /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
+            var stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
+            stickyTds.forEach(function(td) { td.style.background = activeBg; });
         }
     }
 
     _excelUpdateLeftPreview(wIdx);
+    /* Aktualizuj h3 — kody produktów ZALEŻĄ od zaznaczonej studni */
     _excelUpdateHeaderProdCodes();
 }
 
@@ -1445,6 +1591,23 @@ function closeExcelTableModal() {
         if (_container && /** @type {any} */ (_container)._arrowHandler) {
             document.removeEventListener('keydown', /** @type {any} */ (_container)._arrowHandler, true);
         }
+        /* Usuń globalne handlery copy/paste */
+        document.removeEventListener('copy', _excelHandleCopy);
+        document.removeEventListener('paste', _excelHandlePaste);
+        if (_container) _container.removeEventListener('paste', _excelHandlePaste, true);
+        /* Drag-selection cleanup */
+        if (_container) _container.removeEventListener('mousedown', _excelOnMouseDown);
+        document.removeEventListener('mousemove', _excelOnMouseMove);
+        document.removeEventListener('mouseup', _excelOnMouseUp);
+        /* Focus overlay cleanup */
+        if (_container) {
+            _container.removeEventListener('focusin', _excelOnFocusIn);
+            _container.removeEventListener('focusout', _excelOnFocusOut);
+            _container.removeEventListener('change', _excelOnRowSelectChange);
+        }
+        document.removeEventListener('scroll', _excelOnOverlayScroll, true);
+        window.removeEventListener('resize', _excelOnOverlayScroll);
+        if (_excelFocusOverlayEl) _excelFocusOverlayEl.style.display = 'none';
         overlay.remove();
     }
     _excelDirty = false;
@@ -1535,6 +1698,7 @@ async function _excelAutoSelectForWell(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
     if (well.rzednaWlazu == null || well.rzednaDna == null) return;
+    if (well.autoSelect === false) return; /* Manual skip */
     if (typeof autoSelectComponents !== 'function') return;
     var savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     try {
@@ -1545,6 +1709,83 @@ async function _excelAutoSelectForWell(wIdx) {
         _excelUpdateHeaderProdCodes();
     } finally {
         if (savedIdx >= 0) currentWellIndex = savedIdx;
+    }
+}
+
+/* Per-row toggle: przelacz well.autoSelect (bez regresami Auto/Manual naglowka) */
+function _excelToggleWellAutoMode(wIdx) {
+    if (typeof wells === 'undefined' || !wells[wIdx]) return;
+    _excelSaveUndoSnapshot();
+    wells[wIdx].autoSelect = wells[wIdx].autoSelect === false;
+    /* Synchornizuj configSource z glownym panelem */
+    wells[wIdx].configSource = wells[wIdx].autoSelect !== false ? 'AUTO' : 'MANUAL';
+    /* Synchornizuj autoLocked - glowny panel sprawdza to dla przycisku Auto */
+    if (wells[wIdx].autoSelect === false) wells[wIdx].autoLocked = true;
+    else wells[wIdx].autoLocked = false;
+    /* Lekki update - tylko jeden TD, bez calego _excelRenderTable (mniej migotania) */
+    var btn = document.getElementById('excel-mode-btn-' + wIdx);
+    var runBtn = document.getElementById('excel-run-auto-' + wIdx);
+    if (!btn) return;
+    var nowAuto = wells[wIdx].autoSelect !== false;
+    btn.textContent = nowAuto ? 'AUTO' : 'MANUAL';
+    btn.style.background = nowAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
+    btn.style.color = nowAuto ? '#c7d2fe' : '#fbbf24';
+    btn.title = nowAuto ? 'Auto (klik = przelacz na Manual)' : 'Manual (klik = przelacz na Auto)';
+    if (runBtn) {
+        runBtn.disabled = !nowAuto;
+        runBtn.style.opacity = nowAuto ? '1' : '0.4';
+        runBtn.style.cursor = nowAuto ? 'pointer' : 'not-allowed';
+        runBtn.style.background = nowAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)';
+        runBtn.style.color = nowAuto ? '#c7d2fe' : '#64748b';
+        runBtn.style.borderColor = nowAuto ? '#6366f1' : 'rgba(100,116,139,0.3)';
+        runBtn.style.pointerEvents = nowAuto ? 'auto' : 'none';
+        runBtn.title = nowAuto ? 'Uruchom auto-dobor elementow dla tej studni' : 'Przelacz na Auto aby uruchomic';
+    }
+    /* Odswiez glowny panel (configSource zmieniony przez nas) */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
+    showToast(nowAuto ? 'Auto wl.' : 'Manual wl.', 'info');
+}
+
+/* Per-row Run: uruchom solver dla konkretnej studni.
+   Wzorzec jak przycisk Auto w konfiguratorze: najpierw wyczysc config,
+   potem wywolaj autoSelectComponents (prawdziwy dobór od nowa). */
+async function _excelRunAutoSelectForWell(wIdx) {
+    if (typeof wells === 'undefined' || !wells[wIdx]) return;
+    var well = wells[wIdx];
+    if (!well) return;
+    if (well.autoSelect === false) {
+        showToast('Przełącz w tryb Auto aby uruchomić', 'warning');
+        return;
+    }
+    if (well.rzednaWlazu == null || well.rzednaDna == null) {
+        showToast('Uzupełnij Rz. włazu i Rz. dna przed autodor.', 'warning');
+        return;
+    }
+    if (typeof autoSelectComponents !== 'function') {
+        showToast('Auto-dobór nie dostępny (autoSelectComponents brak)', 'error');
+        return;
+    }
+    var runBtn = document.getElementById('excel-run-auto-' + wIdx);
+    var savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+    if (runBtn) runBtn.textContent = '...';
+    try {
+        currentWellIndex = wIdx;
+        /* WZORZEC z wellActions.js:1390 - czyscimy config i przeładowujemy solver */
+        well.configSource = 'AUTO';
+        well.config = [];
+        await autoSelectComponents(true);
+        _excelClearResCache(well);
+        _excelRenderTable(_excelActiveTab);
+        _excelUpdateHeaderProdCodes();
+        showToast('Auto-dobór dla studni #' + wIdx + ' OK', 'success');
+    } catch (e) {
+        console.error('Auto-dobór fail:', e);
+        showToast('Błąd auto-doboru: ' + (e?.message || e), 'error');
+    } finally {
+        currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
+        if (runBtn) runBtn.textContent = '▶';
     }
 }
 
@@ -1604,28 +1845,39 @@ function _excelRenderTable(dn) {
     const thBase =
         'padding:0.4rem 0.5rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
     const th2Base =
-        'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;opacity:0.7;line-height:1.3;';
+        'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
     const th3Base =
-        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;';
+        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#161923;';
 
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
 
+    /* === KOLUMNA 0: Checkbox - select-all przeniesiony do H1 (gorny) === */
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></th>`;
+    /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
+    var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
+    var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(99,102,241,0.2);"><b style="color:#fbbf24;">A/M</b></th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
+    /* === KOLUMNA 2: Lp. — sticky left:0 === */
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">Lp.</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:30;min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;border-right:1px solid rgba(255,255,255,0.1);">Nr Studni</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;">·</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:30;min-width:130px;text-align:left;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Włazu</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">Rz. Dna</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:78px;text-align:right;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:${dnColor};min-width:65px;text-align:center;">Wys.</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:${dnColor};min-width:65px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:${dnColor};min-width:65px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:30;min-width:78px;text-align:right;">Rz. Włazu</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:30;min-width:78px;text-align:right;">Rz. Dna</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:30;min-width:78px;text-align:right;">·</th>`;
+    h1 += `<th style="${thBase}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:30;min-width:65px;text-align:center;">Wys.</th>`;
+    h2 += `<th style="${th2Base}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:30;min-width:65px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:30;min-width:65px;text-align:center;">·</th>`;
 
     for (let i = 0; i < maxTr; i++) {
         h1 += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
@@ -1750,9 +2002,9 @@ function _excelRenderTable(dn) {
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">·</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">·</th>`;
 
-    html += `<tr style="position:sticky;top:0;z-index:20;">${h3}</tr>`;
-    html += `<tr style="position:sticky;top:1.4rem;z-index:20;">${h1}</tr>`;
-    html += `<tr style="position:sticky;top:3.2rem;z-index:20;">${h2}</tr>`;
+    html += `<tr style="position:sticky;top:0;z-index:20;background:#161923;">${h3}</tr>`;
+    html += `<tr style="position:sticky;top:1.4rem;z-index:20;background:#161923;">${h1}</tr>`;
+    html += `<tr style="position:sticky;top:3.2rem;z-index:20;background:#161923;">${h2}</tr>`;
     html += '</thead><tbody>';
 
     /* Wykryj duplikaty nazw — we wszystkich średnicach */
@@ -1825,28 +2077,43 @@ function _excelRenderTable(dn) {
             styczne: '#602848'
         }[dupColorKey] || '#2a4a80';
         const hoverBg = isDup && isActive ? hoverActiveDupSolid : isDup ? hoverDupSolid : isActive ? '#263460' : '#141722';
-        const rowBorder = 'none';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};outline:${rowBorder};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
+        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
 
         const tdBase = `${_EXCEL_FONT}`;
 
+        /* Checkbox column - NIE sticky, normalnie w flow */
+        const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
+        const isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
+        const autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
+        const autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
+        html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:28px;">
+            <input type="checkbox" class="excel-row-select" data-widx="${wIdx}"${cbChecked} tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" />
+        </td>`;
+        /* AUTO/MAN mode badge + Run-Auto buttons - NIE sticky */
+        const modeTitle = isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)';
+        const runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
+        html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;">
+            <button type="button" id="excel-mode-btn-${wIdx}" data-widx="${wIdx}" onclick="_excelToggleWellAutoMode(${wIdx})" title="${modeTitle}" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;height:18px;">${isAuto ? 'AUTO' : 'MANUAL'}</button>
+            <button type="button" id="excel-run-auto-${wIdx}" data-widx="${wIdx}" onclick="_excelRunAutoSelectForWell(${wIdx})" title="${isAuto ? 'Uruchom auto-dobór elementów dla tej studni' : 'Przełącz na Auto aby uruchomić'}" ${runDisabled} style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:${isAuto ? 'pointer' : 'not-allowed'};background:${isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)'};color:${isAuto ? '#c7d2fe' : '#64748b'};border:1px solid ${isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)'};height:18px;line-height:1;">\u25b6</button>
+        </td>`;
+
         /* Lp. */
-        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:#13151f;text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">${idx + 1}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:${rowBg};text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">${idx + 1}</td>`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu, sticky */
-        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:#13151f;border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelRenameWell(${wIdx},this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:${rowBg};border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelOnNameChange(${wIdx},this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
 
         /* Rz. Włazu */
-        html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Rz. Dna */
-        html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
 
         /* Wys. — auto */
         const height = _excelCalcWellHeight(well);
-        html += `<td style="${tdBase}text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '—'}</td>`;
+        html += `<td style="${tdBase}position:sticky;left:318px;z-index:5;background:${rowBg};text-align:center;color:${dnColor};font-weight:600;" data-cell="height-${wIdx}">${height || '\u2014'}</td>`;
 
         /* Przejścia */
         for (let i = 0; i < maxTr; i++) {
@@ -1893,8 +2160,8 @@ function _excelRenderTable(dn) {
             var dnHtml = _excelOverlaySelectHtml(dnOpts2, prz.productId,
                 "excelOnPrzejscieChange(" + wIdx + "," + i + ",'productId',this.value)", 110);
 
-            html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${hasExplicitRzWl ? prz.rzednaWlaczenia : ''}" placeholder="${rzWlPlaceholder}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
-            html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
+            html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${hasExplicitRzWl ? prz.rzednaWlaczenia : ''}" placeholder="${rzWlPlaceholder}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+            html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
             html += `<td style="${tdBase}text-align:left;">${typeHtml}</td>`;
             html += `<td style="${tdBase}text-align:left;">${dnHtml}</td>`;
         }
@@ -1927,7 +2194,7 @@ function _excelRenderTable(dn) {
             const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
             var disabledAttr = '';
             html += `<td style="${tdBase}text-align:center;min-width:95px;">`
-                + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
+                + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
                 + `</td>`;
         });
 
@@ -1993,16 +2260,16 @@ function _excelRenderTable(dn) {
     html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};text-align:center;color:#334155;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">—</td>`;
 
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Nazwa studni… (Enter/zmiana dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Nazwa studni… (Enter/zmiana dodaje)" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:162px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Rz. Dna */
-    html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onfocus="excelCellFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:240px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(72)}" /></td>`;
 
     /* Wys. — placeholder */
-    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:318px;z-index:5;background:${emptyRowBg};text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
 
     /* Przejścia — puste */
     for (let i = 0; i < maxTr; i++) {
@@ -2064,9 +2331,10 @@ function _excelRenderTable(dn) {
     _excelInitColumnResize();
     _excelInitColumnSelect();
     _excelUpdateHeaderProdCodes();
-    /* Odśwież ikony Lucide po zmianie DOM */
+    _excelApplyStickyColumns();
+    /* Odśwież ikony Lucide w kontenerze (nie skanuj całego dokumentu) */
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
-        try { lucide.createIcons(); } catch(e) {}
+        try { lucide.createIcons({ root: container }); } catch(e) {}
     }
 
     // Przywróć fokus po re-renderze
@@ -2076,11 +2344,57 @@ function _excelRenderTable(dn) {
             const navEls = _excelGetNavElements(targetRow);
             const restoreEl = navEls[savedFocus.colIdx];
             if (restoreEl && !restoreEl.disabled) {
+                /* Ustaw currentWellIndex ZANIM focus, by excelCellFocus nie
+                   wywolal excelSelectRow (focus triggeruje onfocus -> excelCellFocus) */
+                if (typeof savedFocus.wIdx !== 'undefined' && !isNaN(savedFocus.wIdx)) {
+                    currentWellIndex = savedFocus.wIdx;
+                }
                 restoreEl.focus();
                 // Jeśli to input, zaznacz zawartość
                 if (restoreEl.tagName === 'INPUT' && restoreEl.select) {
                     restoreEl.select();
                 }
+            }
+        }
+    }
+    /* Ponownie zastosuj filtr wyszukiwarki po re-renderze */
+    var searchInput = document.getElementById('excel-search-input');
+    if (searchInput && searchInput.value) excelFilterWells(searchInput.value);
+}
+
+/** Wymuś poprawne sticky left — dopasowuje do rzeczywistej szerokości kolumn */
+function _excelApplyStickyColumns() {
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const table = container.querySelector('table');
+    if (!table) return;
+    /* Zmierz rzeczywiste szerokości pierwszych 7 kolumn (checkbox, tryb, Lp, NrStudni, RzWlazu, RzDna, Wys) */
+    const firstRow = table.querySelector('thead tr');
+    if (!firstRow) return;
+    const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+7)');
+    if (stickyThs.length < 2) return;
+    var leftPos = 0;
+    var offsets = [0];
+    for (var i = 0; i < stickyThs.length - 1; i++) {
+        leftPos += /** @type {HTMLElement} */ (stickyThs[i]).offsetWidth;
+        offsets.push(leftPos);
+    }
+    /* Zastosuj do wszystkich th i td w pierwszych 7 kolumnach */
+    var sel = 'th:nth-child(-n+7), td:nth-child(-n+7)';
+    var cells = table.querySelectorAll(sel);
+    for (var i = 0; i < cells.length; i++) {
+        var colIdx = 0;
+        var el = cells[i];
+        var prev = el.previousElementSibling;
+        while (prev) { colIdx++; prev = prev.previousElementSibling; }
+        if (colIdx < 7 && offsets[colIdx] != null) {
+            el.style.left = offsets[colIdx] + 'px';
+            el.style.position = 'sticky';
+            // Z-index: 30 dla thead, 5 dla tbody
+            if (el.closest('thead')) {
+                el.style.zIndex = '30';
+            } else {
+                el.style.zIndex = '5';
             }
         }
     }
@@ -2095,7 +2409,11 @@ function _excelInitColumnResize() {
 
     const headers = table.querySelectorAll('thead tr:first-child th');
     headers.forEach((th) => {
-        th.style.position = 'relative';
+        // Tylko ustaw position:relative dla kolumn ktore nie maja sticky w inline
+        // (sticky columns maja position:sticky;left:N ustawione przez _excelApplyStickyColumns)
+        if (th.style.position !== 'sticky') {
+            th.style.position = 'relative';
+        }
 
         const handle = document.createElement('div');
         handle.className = 'excel-col-resize-handle';
@@ -2265,6 +2583,675 @@ function _excelToggleColClass(colIdx, add) {
     });
 }
 
+/* ===== CELL SELECTION (Excel-like) ===== */
+function _excelToggleCellClass(wIdx, colIdx, add) {
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const td = container.querySelector('tr[data-widx="' + wIdx + '"] td:nth-child(' + (colIdx + 1) + ')');
+    if (!td) return;
+    if (add) td.classList.add('cell-selected');
+    else td.classList.remove('cell-selected');
+}
+
+function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
+    if (shift && _excelLastClickedCell) {
+        _excelDeselectAllCells();
+        var minR = Math.min(_excelLastClickedCell.wIdx, wIdx);
+        var maxR = Math.max(_excelLastClickedCell.wIdx, wIdx);
+        var minC = Math.min(_excelLastClickedCell.colIdx, colIdx);
+        var maxC = Math.max(_excelLastClickedCell.colIdx, colIdx);
+        for (var r = minR; r <= maxR; r++) {
+            for (var c = minC; c <= maxC; c++) {
+                _excelSelectedCells.push({ wIdx: r, colIdx: c });
+                _excelToggleCellClass(r, c, true);
+            }
+        }
+    } else if (ctrl) {
+        var idx = _excelSelectedCells.findIndex(function(cell) { return cell.wIdx === wIdx && cell.colIdx === colIdx; });
+        if (idx >= 0) {
+            _excelSelectedCells.splice(idx, 1);
+            _excelToggleCellClass(wIdx, colIdx, false);
+        } else {
+            _excelSelectedCells.push({ wIdx: wIdx, colIdx: colIdx });
+            _excelToggleCellClass(wIdx, colIdx, true);
+        }
+    } else {
+        _excelDeselectAllCells();
+        _excelSelectedCells.push({ wIdx: wIdx, colIdx: colIdx });
+        _excelToggleCellClass(wIdx, colIdx, true);
+    }
+    _excelLastClickedCell = { wIdx: wIdx, colIdx: colIdx };
+}
+
+function _excelOnMouseDown(e) {
+    if (e.button !== 0) return; // tylko lewy przycisk
+    var td = e.target.closest('td');
+    if (!td) return;
+    var tr = td.closest('tr[data-widx]');
+    if (!tr || !tr.children) return;
+    var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+    var colIdx = Array.prototype.indexOf.call(tr.children, td);
+    if (isNaN(wIdx) || colIdx < 0) return;
+
+    _excelDragState = {
+        anchor: { wIdx: wIdx, colIdx: colIdx },
+        mode: (e.ctrlKey || e.metaKey) ? 'add' : 'new',
+        end: { wIdx: wIdx, colIdx: colIdx },
+        active: true,
+        thresholdMet: false,
+        additiveFromShift: false
+    };
+
+    /* Zaznacz anchor natychmiast (action-only-on-mousedown dla czystego drag) */
+    if (!e.ctrlKey && !e.shiftKey) {
+        _excelDeselectAllCells();
+        _excelSelectCell(wIdx, colIdx, false, false);
+    } else if (e.shiftKey && _excelLastClickedCell) {
+        _excelDeselectAllCells();
+        for (var r = Math.min(_excelLastClickedCell.wIdx, wIdx); r <= Math.max(_excelLastClickedCell.wIdx, wIdx); r++) {
+            for (var c = Math.min(_excelLastClickedCell.colIdx, colIdx); c <= Math.max(_excelLastClickedCell.colIdx, colIdx); c++) {
+                _excelSelectCell(r, c, false, false);
+            }
+        }
+    }
+    /* Dla ctrl: nic nie rob (toggle bedzie przy mouseup) */
+}
+
+function _excelOnMouseMove(e) {
+    if (!_excelDragState || !_excelDragState.active) return;
+    /* nie aktualizuj jeszcze dragu, czekaj na dragstart */
+    var td = e.target.closest('td');
+    if (!td) return;
+    var tr = td.closest('tr[data-widx]');
+    if (!tr || !tr.children) return;
+    var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+    var colIdx = Array.prototype.indexOf.call(tr.children, td);
+    if (isNaN(wIdx) || colIdx < 0) return;
+    if (wIdx === _excelDragState.end.wIdx && colIdx === _excelDragState.end.colIdx) return;
+
+    _excelDragState.end = { wIdx: wIdx, colIdx: colIdx };
+    /* Live preview */
+    if (_excelDragThrottle) return;
+    _excelDragThrottle = true;
+    requestAnimationFrame(function() {
+        _excelDragThrottle = false;
+        if (!_excelDragState) return;
+        _excelClearDragPreview();
+        var s = _excelDragState.anchor;
+        var e2 = _excelDragState.end;
+        var rMin = Math.min(s.wIdx, e2.wIdx);
+        var rMax = Math.max(s.wIdx, e2.wIdx);
+        var cMin = Math.min(s.colIdx, e2.colIdx);
+        var cMax = Math.max(s.colIdx, e2.colIdx);
+        for (var r = rMin; r <= rMax; r++) {
+            for (var c = cMin; c <= cMax; c++) {
+                var row = document.querySelector('tr[data-widx="' + r + '"]');
+                if (!row || !row.children[c]) continue;
+                /* Nie nadpisuj juz-faktycznie-zaznaczonych komorek, tylko preview */
+                if (_excelDragState.mode === 'new') {
+                    row.children[c].classList.add('drag-preview');
+                }
+            }
+        }
+    });
+}
+
+function _excelOnMouseUp() {
+    if (!_excelDragState) return;
+    if (_excelDragThrottle) {
+        _excelDragThrottle = false;
+    }
+    var s = _excelDragState.anchor;
+    var en = _excelDragState.end;
+    var mode = _excelDragState.mode;
+    var minR = Math.min(s.wIdx, en.wIdx);
+    var maxR = Math.max(s.wIdx, en.wIdx);
+    var minC = Math.min(s.colIdx, en.colIdx);
+    var maxC = Math.max(s.colIdx, en.colIdx);
+
+    /* Real selection commmit */
+    if ((maxR - minR) > 0 || (maxC - minC) > 0) {
+        /* rzeczywiscie drag (nie klik) */
+        if (mode === 'new') {
+            _excelDeselectAllCells();
+            _excelSelectRange(s.wIdx, s.colIdx, en.wIdx, en.colIdx, false);
+        } else {
+            /* 'add' mode: dodaj zakres do istniejacej selekcji */
+            _excelSelectRange(s.wIdx, s.colIdx, en.wIdx, en.colIdx, true);
+        }
+    } else if (mode === 'new') {
+        /* Sam anchor replacement: pojedyncze klikniecie = zaznacz komorke */
+        _excelDeselectAllCells();
+        _excelSelectCell(s.wIdx, s.colIdx, false, false);
+    }
+    _excelClearDragPreview();
+    _excelDragState = null;
+}
+
+/* ===== FOCUS OVERLAY ===== */
+function _excelPositionFocusOverlay(td) {
+    if (!_excelFocusOverlayEl) return;
+    if (!td || !document.body.contains(td)) {
+        _excelFocusOverlayEl.style.display = 'none';
+        return;
+    }
+    var r = td.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) {
+        _excelFocusOverlayEl.style.display = 'none';
+        return;
+    }
+    _excelFocusOverlayEl.style.display = 'block';
+    _excelFocusOverlayEl.style.top = (r.top - 2) + 'px';
+    _excelFocusOverlayEl.style.left = (r.left - 2) + 'px';
+    _excelFocusOverlayEl.style.width = (r.width + 4) + 'px';
+    _excelFocusOverlayEl.style.height = (r.height + 4) + 'px';
+}
+
+function _excelOnFocusIn(e) {
+    if (!_excelFocusOverlayEl) return;
+    var target = e.target;
+    if (!target) return;
+    /* Dla overlay select: target = .excel-sel-wrap (lub inner button/input/select);
+       szukamy td */
+    var td = target.closest('td');
+    if (!td) return;
+    /* Wymazujemy timer jezeli jest */
+    if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
+    _excelFocusRaf = requestAnimationFrame(function() {
+        _excelFocusRaf = null;
+        _excelPositionFocusOverlay(td);
+    });
+}
+
+/* Alternatywna wersja - wywolywana bezposrednio dla overlay select (.excel-sel-wrap) */
+function _excelSelWrapFocus(selWrap) {
+    if (!_excelFocusOverlayEl) return;
+    var td = selWrap.closest('td');
+    if (!td) return;
+    if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
+    _excelFocusRaf = requestAnimationFrame(function() {
+        _excelFocusRaf = null;
+        _excelPositionFocusOverlay(td);
+    });
+}
+
+/* ===== ROW SELECT CHEKBOX CHANGE HANDLER ===== */
+function _excelOnRowSelectChange(e) {
+    var target = e.target;
+    if (!target) return;
+    /* Row checkbox - per studnia */
+    if (target.classList && target.classList.contains('excel-row-select')) {
+        var wIdx = parseInt(target.getAttribute('data-widx'), 10);
+        if (!isNaN(wIdx)) {
+            _excelRowSelectStates[wIdx] = target.checked;
+            _excelUpdateBulkButtons();
+            /* sync select-all checkbox */
+            var allBoxes = document.querySelectorAll('#excel-table-container tbody tr[data-widx] input.excel-row-select');
+            var allChecked = Array.from(allBoxes).every(function(cb) { return cb.checked; });
+            var hdrAll = document.getElementById('excel-select-all');
+            if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = allChecked;
+        }
+    }
+    /* Select-all checkbox jest obslugiwany inline onchange -> _excelToggleSelectAll */
+}
+
+function _excelOnFocusOut(e) {
+    if (!_excelFocusOverlayEl) return;
+    /* Delay — sprawdzamy czy focus nie przeskoczyl do innej komórki w kontenerze */
+    setTimeout(function() {
+        var ae = document.activeElement;
+        var stillInContainer = ae && document.getElementById('excel-table-container') && document.getElementById('excel-table-container').contains(ae);
+        if (!stillInContainer) {
+            if (_excelFocusOverlayEl) _excelFocusOverlayEl.style.display = 'none';
+        }
+    }, 30);
+}
+
+function _excelOnOverlayScroll() {
+    if (!_excelFocusOverlayEl) return;
+    if (_excelFocusOverlayEl.style.display === 'none') return;
+    /* throttling: jeden requestAnimationFrame na wiele scroll events */
+    if (_excelFocusRaf) return;
+    _excelFocusRaf = requestAnimationFrame(function() {
+        _excelFocusRaf = null;
+        var ae = document.activeElement;
+        if (!ae) return;
+        var td = ae.closest('td');
+        if (!td) return;
+        _excelPositionFocusOverlay(td);
+    });
+}
+
+function _excelDeselectAllCells() {
+    if (_excelSelectedCells.length === 0) return;
+    const copy = [..._excelSelectedCells];
+    _excelSelectedCells = [];
+    copy.forEach(function(cell) { _excelToggleCellClass(cell.wIdx, cell.colIdx, false); });
+}
+
+/* ===== DRAG SELECTION ===== */
+function _excelClearDragPreview() {
+    document.querySelectorAll('#excel-table-container td.drag-preview').forEach(function(td) {
+        td.classList.remove('drag-preview');
+    });
+}
+
+function _excelSelectedCount() {
+    return _excelSelectedCells.length;
+}
+
+/* ===== SELECT ALL ===== */
+function _excelSelectAllCells() {
+    _excelDeselectAllCells();
+    _excelDeselectAllCols();
+    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    for (var r = 0; r < rows.length; r++) {
+        var tds = rows[r].querySelectorAll('td');
+        for (var c = 0; c < tds.length; c++) {
+            var td = tds[c];
+            if (td.querySelector('input,select')) {
+                _excelSelectCell(r, c, false, false);
+            }
+        }
+    }
+}
+
+/* ===== ROW CHECKBOX + AUTO/MANUAL BATCH ===== */
+function _excelBulkSetMode(enabled) {
+    if (typeof wells === 'undefined') return;
+    var sel = [];
+    for (var i = 0; i < wells.length; i++) {
+        if (_excelRowSelectStates[i]) sel.push(i);
+    }
+    var targets;
+    if (sel.length === 0) {
+        targets = [];
+        for (var i = 0; i < wells.length; i++) {
+            if (wells[i]) targets.push(i);
+        }
+        if (targets.length === 0) return;
+        showToast('Brak zaznaczonych — zastosowano do ' + targets.length + ' studni', 'info');
+    } else {
+        targets = sel;
+        showToast((enabled ? 'Auto' : 'Manual') + ' dla ' + targets.length + ' studni', 'success');
+    }
+    _excelSaveUndoSnapshot();
+    targets.forEach(function(i) {
+        if (wells[i]) {
+            wells[i].autoSelect = enabled;
+            wells[i].configSource = enabled ? 'AUTO' : 'MANUAL'; /* sync z glownym panelem */
+            wells[i].autoLocked = !enabled; /* sync autoLocked */
+        }
+    });
+    _excelRenderTable(_excelActiveTab);
+    /* Odswiez glowny panel */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
+}
+
+function _excelToggleSelectAll(checked) {
+    _excelRowSelectStates = {};
+    if (typeof wells !== 'undefined') {
+        for (var i = 0; i < wells.length; i++) {
+            _excelRowSelectStates[i] = checked;
+        }
+    }
+    var boxes = document.querySelectorAll('.excel-row-select');
+    boxes.forEach(function(cb) { cb.checked = checked; });
+    var hdrAll = document.getElementById('excel-select-all');
+    if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
+    _excelUpdateBulkButtons();
+}
+
+function _excelUpdateBulkButtons() {
+    var btnAuto = document.getElementById('excel-bulk-auto');
+    var btnManual = document.getElementById('excel-bulk-manual');
+    var count = 0;
+    for (var k in _excelRowSelectStates) {
+        if (_excelRowSelectStates.hasOwnProperty(k) && _excelRowSelectStates[k]) count++;
+    }
+    if (btnAuto) btnAuto.textContent = 'Auto';
+    if (btnManual) btnManual.textContent = 'Manual';
+}
+
+function _excelSelectRange(startW, startC, endW, endC, additive) {
+    if (!additive) _excelDeselectAllCells();
+    var rMin = Math.min(startW, endW);
+    var rMax = Math.max(startW, endW);
+    var cMin = Math.min(startC, endC);
+    var cMax = Math.max(startC, endC);
+    for (var r = rMin; r <= rMax; r++) {
+        for (var c = cMin; c <= cMax; c++) {
+            var row = document.querySelector('tr[data-widx="' + r + '"]');
+            if (!row || !row.children[c]) continue;
+            var existing = _excelSelectedCells.find(function(cl){ return cl.wIdx===r && cl.colIdx===c; });
+            if (!existing) _excelSelectCell(r, c, false, false);
+        }
+    }
+}
+
+/* ===== COPY / PASTE (Excel-like) ===== */
+
+function _excelGetPasteColIdx(row) {
+    if (!row) return 2;
+    var active = document.activeElement;
+    if (active && row.contains(active)) {
+        var td = active.closest('td');
+        if (td) {
+            var ci = Array.from(row.children).indexOf(td);
+            if (ci >= 2) return ci;
+        }
+    }
+    return 2; /* fallback: pierwsza kolumna po Lp+NrStudni */
+}
+function _excelHandleCopy(e) {
+    /* Tylko gdy Excel otwarty */
+    if (!document.getElementById('excel-table-overlay')) return;
+    if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
+    e.preventDefault();
+    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    if (rows.length === 0) return;
+    var text = '';
+    if (_excelSelectedCells.length > 0) {
+        var cellMap = {};
+        var minR = Infinity, maxR = -Infinity, minC = Infinity, maxC = -Infinity;
+        _excelSelectedCells.forEach(function(cell) {
+            if (!cellMap[cell.wIdx]) cellMap[cell.wIdx] = {};
+            cellMap[cell.wIdx][cell.colIdx] = true;
+            if (cell.wIdx < minR) minR = cell.wIdx;
+            if (cell.wIdx > maxR) maxR = cell.wIdx;
+            if (cell.colIdx < minC) minC = cell.colIdx;
+            if (cell.colIdx > maxC) maxC = cell.colIdx;
+        });
+        for (var r = minR; r <= maxR; r++) {
+            var line = [];
+            for (var c = minC; c <= maxC; c++) {
+                var val = '';
+                if (cellMap[r] && cellMap[r][c]) {
+                    var row = rows[r];
+                    if (row) {
+                        var td = row.children[c];
+                        var target = td ? td.querySelector('input, select') : null;
+                        if (target) { var _sel = /** @type {HTMLSelectElement} */ (target); val = _sel.tagName === 'SELECT' ? (_sel.options[_sel.selectedIndex] ? _sel.options[_sel.selectedIndex].text : '') : (/** @type {HTMLInputElement} */(target)).value || ''; }
+                    }
+                }
+                line.push(val);
+            }
+            text += line.join('\t') + '\n';
+        }
+    } else if (_excelSelectedCols.length > 0) {
+        var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        rows.forEach(function(row) {
+            var line = [];
+            cols.forEach(function(colIdx) {
+                var td = row.children[colIdx];
+                var target = td ? td.querySelector('input, select') : null;
+                line.push(target ? (function(t){var _s=/** @type {HTMLSelectElement} */(t);return _s.tagName==='SELECT'?(_s.options[_s.selectedIndex]?_s.options[_s.selectedIndex].text:''):(/** @type {HTMLInputElement} */(t)).value||'';})(target) : '');
+            });
+            text += line.join('\t') + '\n';
+        });
+    }
+    if (text) {
+        if (e.clipboardData) {
+            e.clipboardData.setData('text/plain', text);
+        } else if (window.clipboardData) {
+            window.clipboardData.setData('text', text);
+        }
+    }
+}
+
+function _excelHandlePaste(e) {
+    /* Tylko gdy Excel otwarty */
+    if (!document.getElementById('excel-table-overlay')) return;
+    var cb = e.clipboardData || window.clipboardData;
+    if (!cb) return;
+    var text = cb.getData('text');
+    if (!text || !text.trim()) return;
+    /* Zawsze przejmij event gdy jesteśmy w kontenerze (capture phase) */
+    e.preventDefault();
+    e.stopPropagation();
+
+    /* Paste w pusty wiersz → utwórz nowe studnie */
+    var _emptyInput = document.getElementById('excel-empty-name');
+    if (_emptyInput && _emptyInput === document.activeElement) {
+        _excelPasteCreateWells(text);
+        return;
+    }
+
+    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    if (rows.length === 0) return;
+    var lines = text.trim().split('\n');
+    for (var _pi = 0; _pi < lines.length; _pi++) {
+        lines[_pi] = lines[_pi].replace(/\r$/, '');
+    }
+    if (_excelSelectedCells.length > 0) {
+        var cellList = _excelSelectedCells.sort(function(a,b){return a.wIdx-b.wIdx||a.colIdx-b.colIdx;});
+        var cellRows = {};
+        cellList.forEach(function(c) {
+            if (!cellRows[c.wIdx]) cellRows[c.wIdx] = [];
+            cellRows[c.wIdx].push(c.colIdx);
+        });
+        var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
+        var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
+        var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
+        /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby */
+        var availableRows = rows.length - _baseWIdx;
+        if (lines.length > availableRows) {
+            lines = lines.slice(0, availableRows);
+            if (lines.length === 0) { showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning'); return; }
+            showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
+        }
+        var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
+        /* Użyj batch/sync paste — obsłuż duże zestawy */
+        var _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
+        _pasteFn(lines, _baseWIdx, _firstCol, null);
+    } else if (_excelSelectedCols.length > 0) {
+        var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
+        if (lines.length > rows.length) {
+            lines = lines.slice(0, rows.length);
+            showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
+        }
+        lines.forEach(function(line, i) {
+            var parts = line.split('	');
+            cols.forEach(function(colIdx, ci) {
+                if (ci >= parts.length) return;
+                var tdInner = rows[i] ? rows[i].children[colIdx] : null;
+                var target = tdInner ? tdInner.querySelector('input, select') : null;
+                if (!target) return;
+                _excelSetCellValue(target, parts[ci].trim());
+            });
+        });
+    } else {
+        /* Wykryj startowy wiersz z aktywnego elementu w tabeli */
+        var startWIdx = -1; // -1 = nie wykryto aktywnego wiersza
+        var _ae = document.activeElement;
+        if (_ae) {
+            var _tr = _ae.closest('tr[data-widx]');
+            if (_tr) startWIdx = parseInt(_tr.getAttribute('data-widx') || '0') || 0;
+        }
+        if (startWIdx < 0) {
+            /* brak fokusu w konkretnym wierszu — szukaj input/select wewnatrz kontenera jako fallback */
+            var focusedInput = document.querySelector('#excel-table-container input:focus, #excel-table-container select:focus, #excel-table-container .excel-sel-wrap:focus-within');
+            if (focusedInput) {
+                var _ftr = focusedInput.closest('tr[data-widx]');
+                if (_ftr) startWIdx = parseInt(_ftr.getAttribute('data-widx') || '0') || 0;
+            }
+        }
+        if (startWIdx < 0) {
+            /* nadal brak — paste do wszystkich istniejących wierszy od 0 */
+            startWIdx = 0;
+        }
+        var colIdx = _excelGetPasteColIdx(
+            document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
+        );
+        /* Wkleja tylko w istniejące — obcina nadmiar (bez auto-add nowych pustych wierszy) */
+        var availableRows = rows.length - startWIdx;
+        if (lines.length > availableRows) {
+            lines = lines.slice(0, availableRows);
+            if (lines.length === 0) { showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning'); return; }
+            showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
+        }
+        /* Użyj batch/sync paste — obsłuż duże zestawy */
+        (lines.length > 100 ? _excelPasteBatch : _excelPasteSync)(lines, startWIdx, colIdx, null);
+    }
+    showToast('Wklejono', 'info');
+}
+
+/* ===== BATCH PASTE (async chunked) ===== */
+var _excelPasteCancelFlag = false;
+
+function _excelShowPasteProgress(now, total) {
+    var pct = Math.min(100, Math.round(now / total * 100));
+    var el = document.getElementById('excel-paste-progress');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'excel-paste-progress';
+        el.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:99999;background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.75rem 1rem;min-width:260px;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+        el.innerHTML = '<div style="font-size:0.65rem;color:#94a3b8;margin-bottom:0.35rem;">Wklejanie... <span id="excel-paste-pct">0%</span></div>'
+            + '<div style="height:4px;background:#0c0e14;border-radius:2px;overflow:hidden;">'
+            + '<div id="excel-paste-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);transition:width 0.15s;"></div></div>';
+        document.body.appendChild(el);
+    }
+    var bar = document.getElementById('excel-paste-bar');
+    var pctEl = document.getElementById('excel-paste-pct');
+    if (bar) bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function _excelHidePasteProgress() {
+    var el = document.getElementById('excel-paste-progress');
+    if (el) el.remove();
+}
+
+/**
+ * Wkleja dane wsadowo w chunkach przez requestAnimationFrame.
+ * Nie blokuje UI.
+ */
+function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
+    var CHUNK = 50;
+    var idx = 0;
+    var total = lines.length;
+    if (total < 100) {
+        _excelPasteSync(lines, startWIdx, startColIdx);
+        if (doneCallback) doneCallback();
+        return;
+    }
+    _excelShowPasteProgress(0, total);
+    function tick() {
+        var end = Math.min(idx + CHUNK, total);
+        for (; idx < end; idx++) {
+            if (_excelPasteCancelFlag) {
+                _excelHidePasteProgress();
+                _excelPasteCancelFlag = false;
+                showToast('Wklejanie przerwane', 'warning');
+                return;
+            }
+            var line = lines[idx];
+            var parts = line.split('	');
+            var wIdx = startWIdx + idx;
+            parts.forEach(function(v, ci) {
+                var colIdx = startColIdx + ci;
+                var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+                if (!row) return;
+                var tdEl = row.children[colIdx];
+                var target = tdEl ? tdEl.querySelector('input, select') : null;
+                if (target) _excelSetCellValue(target, v.trim());
+            });
+        }
+        _excelShowPasteProgress(idx, total);
+        if (idx < total) {
+            requestAnimationFrame(tick);
+        } else {
+            _excelHidePasteProgress();
+            if (doneCallback) doneCallback();
+        }
+    }
+    requestAnimationFrame(tick);
+}
+
+/** Synchroniczne wklejenie (do 99 wierszy) */
+function _excelPasteSync(lines, startWIdx, startColIdx) {
+    for (var si = 0; si < lines.length; si++) {
+        var parts = lines[si].split('	');
+        var wIdx = startWIdx + si;
+        parts.forEach(function(v, ci) {
+            var colIdx = startColIdx + ci;
+            var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+            if (!row) return;
+            var tdEl = row.children[colIdx];
+            var target = tdEl ? tdEl.querySelector('input, select') : null;
+            if (target) _excelSetCellValue(target, v.trim());
+        });
+    }
+}
+
+function _excelMarkAsManual(wIdx) {
+    if (typeof wells === 'undefined' || !wells[wIdx]) return;
+    var w = wells[wIdx];
+    if (w.autoSelect !== false || w.configSource !== 'MANUAL' || w.autoLocked !== true) {
+        w.autoSelect = false;
+        w.configSource = 'MANUAL';
+        w.autoLocked = true;
+        if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
+        if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
+    }
+}
+
+/**
+ * Ustawia wartość komórki (input lub select) i dispatchuje eventy.
+ * @param {Element} target
+ * @param {string} val
+ */
+function _excelSetCellValue(target, val) {
+    if (target.tagName === 'SELECT') {
+        var _sel = /** @type {HTMLSelectElement} */ (target);
+        var opt = Array.from(_sel.options).find(function(o) { return o.value === val || o.text === val; });
+        if (opt) { _sel.value = opt.value; _sel.dispatchEvent(new Event('change', { bubbles: true })); }
+    } else if (target.tagName === 'INPUT') {
+        /* Normalizuj separator dziesietny — MS Excel z PL wysyla przecinek, input type=number wymaga kropki */
+        var normalizedVal = val;
+        var inputType = /** @type {HTMLInputElement} */ (target).type;
+        if (inputType === 'number' && typeof normalizedVal === 'string' && normalizedVal.indexOf(',') >= 0 && normalizedVal.indexOf('.') < 0) {
+            normalizedVal = normalizedVal.replace(',', '.');
+        }
+        /** @type {HTMLInputElement} */ (target).value = normalizedVal;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+/**
+ * Zapewnia że tabela ma co najmniej `neededTotal` wierszy w aktywnym tabie.
+ * Tworzy brakujące studnie, re-renderuje tabelę i zwraca zaktualizowany NodeList rows.
+ * @param {number} neededTotal
+ * @param {NodeListOf<Element>} currentRows
+ * @returns {NodeListOf<Element>}
+ */
+function _excelEnsureRowCount(neededTotal, currentRows) {
+    var deficit = neededTotal - currentRows.length;
+    if (deficit <= 0) return currentRows;
+    var dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab, 10);
+    _excelSaveUndoSnapshot();
+    for (var i = 0; i < deficit; i++) {
+        var well = typeof createNewWell === 'function'
+            ? createNewWell(null, /** @type {any} */ (dn))
+            : {
+                id: 'well_' + Date.now() + '_' + i,
+                name: (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')',
+                dn: dn, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null,
+                kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500
+            };
+        wells.push(well);
+        _excelAutoSetWlaz(well);
+    }
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    return document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+}
+
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */
 function excelCreateFromEmpty() {
     if (_excelCreatingLock) return;
@@ -2349,75 +3336,31 @@ function excelCreateFromEmpty() {
 
 /* ===== CELL FOCUS (Excel highlight) ===== */
 function excelCellFocus(el) {
-    el.style.outline = '1px solid rgba(99,102,241,0.5)';
-    el.style.background = 'rgba(99,102,241,0.06)';
-    if (el.tagName === 'INPUT') el.select();
-    _excelUserEditing = true; /* blokuje polling */
-
-    // Ustaw aktywną studnię = wiersz w którym jest kursor
-    var tr = el.closest('tr[data-widx]');
-    if (tr) {
-        var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
-        if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
-            excelSelectRow(wIdx);
-        }
+    if (el.tagName === 'INPUT') {
+        el.select();
     }
+    _excelUserEditing = true; /* blokuje polling */
+    /* Wybór wiersza obsługuje delegowany focusin na container — nie dubluj logiki */
 }
 function excelCellBlur(el) {
-    el.style.outline = 'none';
-    el.style.background = '#13151f';
+    /* Przywróć tło komórki z data-orig-bg na TD (nie na INPUT) */
+    if (el.tagName === 'INPUT') {
+        var td = el.closest('td');
+        if (td) td.style.boxShadow = '';
+    }
     _excelUserEditing = false; /* wznawia polling */
 }
 
 /* ===== TAB KEY NAVIGATION ===== */
 function _excelHandleTab(e) {
-    const target = e.target;
-    if (!target || (target.tagName !== 'INPUT' && !(target.tagName === 'DIV' && target.classList.contains('excel-sel-wrap')))) return;
-
-    const container = document.getElementById('excel-table-container');
-    if (!container || !container.contains(target)) return;
-
-    const inputs = Array.from(
-        container.querySelectorAll('input:not([disabled]), select:not([disabled])')
-    );
-    const idx = inputs.indexOf(target);
-    if (idx === -1) return;
-
-    e.preventDefault();
-    const next = e.shiftKey ? inputs[idx - 1] : inputs[idx + 1];
-    if (next) {
-        next.focus();
-        if (next.tagName === 'INPUT') next.select();
-    }
-}
-
-/* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
-function _excelHandleArrow(e) {
-    // Zawsze blokuj scroll — niezależnie od dalszej logiki
-    e.preventDefault();
-    /* Zapamiętaj pozycję scrolla przed zmianą focusa */
-    var _scrollContainer = document.getElementById('excel-table-container');
-    var _savedScroll = _scrollContainer ? { left: _scrollContainer.scrollLeft, top: _scrollContainer.scrollTop } : null;
-
     let target = e.target;
     if (!target) return;
-
-    // Normalizuj target — selecty to overlay pattern (DIV.excel-sel-wrap > hidden SELECT)
-    // Sprowadź do fokusowego elementu: INPUT lub DIV.excel-sel-wrap
+    // Normalizuj target — SELECT → wrapper, wrapper OK, INPUT OK
     if (target.tagName === 'SELECT') {
-        // Ukryty select — fokus powinien być na wrapperze
-        var wrap = target.closest('.excel-sel-wrap');
-        if (wrap) target = wrap;
-    } else if (target.tagName !== 'INPUT' && target.classList && target.classList.contains('excel-sel-wrap')) {
-        // Już na wrapperze — OK
-    } else if (target.tagName !== 'INPUT') {
-        // Inny element — sprawdź czy jest wewnątrz wrappera
-        var parentWrap = target.closest && target.closest('.excel-sel-wrap');
-        if (parentWrap) {
-            target = parentWrap;
-        } else {
-            return;
-        }
+        var w = target.closest('.excel-sel-wrap');
+        if (w) target = w;
+    } else if (target.tagName !== 'INPUT' && !(target.classList && target.classList.contains('excel-sel-wrap'))) {
+        return;
     }
 
     const container = document.getElementById('excel-table-container');
@@ -2425,17 +3368,109 @@ function _excelHandleArrow(e) {
 
     const tr = target.closest('tr');
     if (!tr) return;
+    const navEls = _excelGetNavElements(tr);
+    var idx = navEls.indexOf(target);
+    if (idx === -1) return;
 
-    // Znajdź wszystkie wiersze data (pomiń empty-row)
+    // Szukaj następnego/poprzedniego nawigacyjnego elementu w wierszu lub następnych wierszach
+    e.preventDefault();
+    var allRows = Array.from(container.querySelectorAll('tbody tr[data-widx]'));
+    var rowIdx = allRows.indexOf(tr);
+    var next = null;
+    if (!e.shiftKey) {
+        next = navEls[idx + 1];
+        if (!next && allRows[rowIdx + 1]) {
+            var nextRowEls = _excelGetNavElements(allRows[rowIdx + 1]);
+            next = nextRowEls[0];
+        }
+    } else {
+        next = navEls[idx - 1];
+        if (!next && allRows[rowIdx - 1]) {
+            var prevRowEls = _excelGetNavElements(allRows[rowIdx - 1]);
+            next = prevRowEls[prevRowEls.length - 1];
+        }
+    }
+    if (next) {
+        _excelFocusNavEl(next, navEls, e.shiftKey ? 'left' : 'right');
+    }
+}
+
+/* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
+function _excelHandleArrow(e) {
+    /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie */
+    var emptyInput = document.getElementById('excel-empty-name');
+    var emptyRzw = document.getElementById('excel-empty-rzw');
+    var emptyRzd = document.getElementById('excel-empty-rzd');
+    if (emptyInput && (e.target === emptyInput || e.target === emptyRzw || e.target === emptyRzd)) {
+        e.preventDefault();
+        if (e.key === 'ArrowDown') {
+            return; /* nic poniżej */
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            var drUp = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+            var lastRowUp = drUp[drUp.length - 1];
+            if (lastRowUp) {
+                var lastElsUp = _excelGetNavElements(lastRowUp);
+                /* Wybor kolumny z zapisanej wartosci _excelLastDataCol */
+                var targetEl = null;
+                var savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
+                if (savedCol >= 0 && savedCol < lastRowUp.children.length) {
+                    var tdAtCol = lastRowUp.children[savedCol];
+                    if (tdAtCol) {
+                        var inpAtCol = tdAtCol.querySelector('input, select, .excel-sel-wrap');
+                        if (inpAtCol) targetEl = inpAtCol;
+                    }
+                }
+                if (!targetEl && lastElsUp.length > 0) {
+                    /* Fallback: ostatni focusowalny element w ostatnim wierszu */
+                    targetEl = lastElsUp[lastElsUp.length - 1];
+                }
+                if (targetEl) _excelFocusNavEl(targetEl, lastElsUp, 'up');
+            }
+            return;
+        }
+        if (e.key === 'ArrowRight' || e.key === 'Tab') {
+            e.preventDefault();
+            if (e.target === emptyInput && emptyRzw) emptyRzw.focus();
+            else if (e.target === emptyRzw && emptyRzd) emptyRzd.focus();
+            return;
+        }
+        if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
+            e.preventDefault();
+            if (e.target === emptyRzd && emptyRzw) emptyRzw.focus();
+            else if (e.target === emptyRzw && emptyInput) emptyInput.focus();
+            return;
+        }
+        return;
+    }
+
+    let target = e.target;
+    if (!target) return;
+
+    // Normalizuj target do elementu nawigacyjnego: INPUT lub DIV.excel-sel-wrap
+    target = _excelNormalizeNavTarget(target);
+    if (!target) return;
+
+    const container = document.getElementById('excel-table-container');
+    if (!container || !container.contains(target)) return;
+
+    const tr = target.closest('tr');
+    if (!tr) return;
+
+    // Znajdź wiersze data (pomiń empty-row)
     const allRows = Array.from(container.querySelectorAll('tbody tr'));
     const dataRows = allRows.filter(r => r.hasAttribute('data-widx'));
     const currentRowIdx = dataRows.indexOf(tr);
     if (currentRowIdx === -1) return;
 
-    // Zbierz fokusowalne elementy: INPUT + DIV.excel-sel-wrap (nie ukryte selecty!)
+    // Zbierz fokusowalne elementy: INPUT + DIV.excel-sel-wrap
     const rowEls = _excelGetNavElements(tr);
     const colIdx = rowEls.indexOf(target);
-    if (colIdx === -1) return;
+    if (colIdx === -1) {
+        if (typeof window.logger !== 'undefined') window.logger.warn('excel-nav', 'colIdx=-1 target=' + target.tagName + ' class=' + (target.className || ''));
+        return;
+    }
 
     let next = null;
 
@@ -2444,21 +3479,31 @@ function _excelHandleArrow(e) {
     } else if (e.key === 'ArrowLeft') {
         next = rowEls[colIdx - 1] || null;
     } else if (e.key === 'ArrowDown') {
-        const nextRow = dataRows[currentRowIdx + 1];
-        if (nextRow) {
-            /* Aktualizuj lewy panel — select nowej studni */
-            var downWIdx = parseInt(nextRow.getAttribute('data-widx'));
-            if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
-                excelSelectRow(downWIdx);
+        var nextRow = dataRows[currentRowIdx + 1];
+        if (!nextRow) {
+            /* zapamietaj indeks td.children (nie index z rowEls) */
+            var tddx = target.closest('td');
+            if (tddx && tddx.parentElement === tr) {
+                _excelLastDataCol = Array.prototype.indexOf.call(tr.children, tddx);
             }
-            const nextEls = _excelGetNavElements(nextRow);
-            next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
-            next = _excelSkipDisabled(next, nextEls, colIdx, 1);
+            /* ostatni rzad danych — przejdz do pustego wiersza */
+            var emptyInput = document.getElementById('excel-empty-name');
+            if (emptyInput) {
+                e.preventDefault();
+                _excelFocusNavEl(emptyInput, [], 'down');
+            }
+            return;
         }
+        var downWIdx = parseInt(nextRow.getAttribute('data-widx'));
+        if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
+            excelSelectRow(downWIdx);
+        }
+        var nextEls = _excelGetNavElements(nextRow);
+        next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
+        next = _excelSkipDisabled(next, nextEls, colIdx, 1);
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
         if (prevRow) {
-            /* Aktualizuj lewy panel — select nowej studni */
             var upWIdx = parseInt(prevRow.getAttribute('data-widx'));
             if (!isNaN(upWIdx) && typeof currentWellIndex !== 'undefined' && upWIdx !== currentWellIndex) {
                 excelSelectRow(upWIdx);
@@ -2469,19 +3514,29 @@ function _excelHandleArrow(e) {
         }
     }
 
-    // Nawigacja — focusuj następny element
-    e.preventDefault();
     if (next) {
         _excelFocusNavEl(next, rowEls, e.key.replace('Arrow', '').toLowerCase());
-        // select() tylko dla INPUT
-        if (next.tagName === 'INPUT' && !next.disabled && next.select) next.select();
     }
+}
 
-    /* Po zmianie focusa przywróć scroll — zabezpieczenie przed re-layoutem */
-    if (_savedScroll && _scrollContainer) {
-        _scrollContainer.scrollLeft = _savedScroll.left;
-        _scrollContainer.scrollTop = _savedScroll.top;
+/** Normalizuj dowolny target do elementu nawigacyjnego (INPUT lub DIV.excel-sel-wrap) */
+function _excelNormalizeNavTarget(el) {
+    if (!el) return null;
+    // INPUT — OK
+    if (el.tagName === 'INPUT') return el;
+    // SELECT — szukaj wrappera, fallback na sam SELECT
+    if (el.tagName === 'SELECT') {
+        var wrap = el.closest('.excel-sel-wrap');
+        return wrap || el;
     }
+    // DIV.excel-sel-wrap — OK
+    if (el.classList && el.classList.contains('excel-sel-wrap')) return el;
+    // Inny element wewnątrz wrappera
+    if (el.closest) {
+        var parentWrap = el.closest('.excel-sel-wrap');
+        if (parentWrap) return parentWrap;
+    }
+    return null;
 }
 
 /** Zbierz fokusowalne elementy nawigacji w wierszu: INPUT + DIV.excel-sel-wrap */
@@ -2537,28 +3592,63 @@ function _excelIsDisabledNav(el) {
     return false;
 }
 
-/** Focusuj element nawigacji, pomijając disabled */
+/** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow) */
 function _excelFocusNavEl(el, rowEls, dir) {
     if (!el) return;
-    if (_excelIsDisabledNav(el)) {
-        var curIdx = rowEls.indexOf(el);
-        var step = (dir === 'right' || dir === 'down') ? 1 : -1;
-        var nxt = rowEls[curIdx + step];
-        if (nxt) _excelFocusNavEl(nxt, rowEls, dir);
-        return;
+    var step = (dir === 'right' || dir === 'down') ? 1 : -1;
+    var limit = rowEls.length + 1; /* max iteracji = rozmiar wiersza + 1 */
+    var cur = el;
+    while (cur && limit-- > 0) {
+        if (!_excelIsDisabledNav(cur)) {
+            cur.focus();
+            /* Scroll-into-view bez scrollIntoView (nie uwzglednia sticky headera) */
+            var container = document.getElementById('excel-table-container');
+            var headerEl = document.querySelector('#excel-table-container thead');
+            var headerH = headerEl ? (/** @type {HTMLElement} */ (headerEl)).offsetHeight : 60;
+            var MARGIN = 5;
+            /* Reczna korekta scroll — element MUSI byc widoczny ponizej sticky headera */
+            if (container) {
+                var elRect = cur.getBoundingClientRect();
+                var containerRect = container.getBoundingClientRect();
+                /* Jesli element jest nad widocznym obszarem (elRect.top < containerRect.top + headerH)
+                   lub calkowicie poza viewport — przewin w dol */
+                if (elRect.top < containerRect.top + headerH + MARGIN) {
+                    /* Element za wysoko / zakryty headerm — przewin w dol */
+                    var diffDown = (containerRect.top + headerH + MARGIN) - elRect.top;
+                    container.scrollTop -= diffDown;
+                } else if (elRect.top + elRect.height > containerRect.bottom) {
+                    /* Element za nisko — przewin w gore (w gore kontenera) */
+                    var diffUp = elRect.bottom - containerRect.bottom + MARGIN;
+                    container.scrollTop += diffUp;
+                }
+            }
+            if (cur.tagName === 'INPUT' && !cur.disabled && cur.select) cur.select();
+            var tr = cur.closest('tr[data-widx]');
+            if (tr) {
+                var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+                if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+                    excelSelectRow(wIdx);
+                }
+            }
+            return;
+        }
+        var curIdx = rowEls.indexOf(cur);
+        cur = rowEls[curIdx + step] || null;
     }
-    el.focus();
 }
 
 /* ===== HANDLERS ===== */
 function excelOnRzednaChange(wIdx) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (!row) return;
+    _excelMarkAsManual(wIdx);
     _excelClearResCache(wells[wIdx]);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
-    const rzWlazu = rzWlazuInput ? parseFloat(rzWlazuInput.value) || null : null;
-    const rzDna = rzDnaInput ? parseFloat(rzDnaInput.value) || null : null;
+    const rzWlazu = rzWlazuInput ? parseFloat(rzWlazuInput.value) : null;
+    const rzDnaRaw = rzDnaInput ? parseFloat(rzDnaInput.value) : null;
+    /* Użyj null tylko gdy nie da się sparsować (gdy NaN lub pusty) */
+    const rzDna = rzDnaRaw !== null && !isNaN(rzDnaRaw) ? rzDnaRaw : null;
 
     /* Walidacja: rzędna włazu musi być większa od rzędnej dna */
     if (rzWlazu !== null && rzDna !== null && rzWlazu <= rzDna) {
@@ -2577,9 +3667,9 @@ function excelOnRzednaChange(wIdx) {
     if (_excelAutoSelectEnabled && rzWlazu !== null && rzDna !== null && rzWlazu > rzDna
         && typeof autoSelectComponents === 'function') {
         _excelAutoSelectForWell(wIdx);
-    } else {
-        _excelDebouncedRefresh();
     }
+    /* Nie wywołuj _excelDebouncedRefresh — wysokość nie zmienia kodów h3,
+       a _excelRefreshAutoCells juz zaktualizowalo height/uszcz cells */
 }
 
 /* ===== DODAWANIE / USUWANIE KOLUMNY PRZEJŚCIA ===== */
@@ -2648,6 +3738,7 @@ function _excelCleanEmptyPrzejscia(well) {
 }
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
+    _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     /* Nie twórz pustego przejścia, jeśli wartość jest pusta i nie ma jeszcze przejścia */
     var hasExisting = trIdx < wells[wIdx].przejscia.length;
@@ -2689,8 +3780,8 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         }
     }
     // Renderuj ponownie tabelę, by zaktualizować listę średnic (DN)
+    currentWellIndex = -1;
     _excelRenderTable(_excelActiveTab);
-    _excelUpdateLeftPreview(wIdx);
     _excelDebouncedRefresh();
 }
 
@@ -2711,6 +3802,15 @@ function _excelMarkManual(well) {
     if (!well) return;
     well.autoLocked = true;
     well.configSource = 'MANUAL';
+    well.autoSelect = false;
+    if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
+    if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
+    /* Wymus pelny rerendem tabeli Excela — zeby btnMode.textContent == MANUAL */
+    if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+    /* Odswiez glowny panel */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
 function _excelInsertConfigItem(well, componentType, productId, qty) {
@@ -2896,6 +3996,8 @@ function _excelMoveWlazToTop(well) {
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
+    _excelSaveUndoSnapshot();
+    _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
     _excelClearResCache(well);
@@ -2959,7 +4061,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     }
     _excelMarkManual(well);
 
-    /* Auto-konwersja krag ↔ krag_ot: jeśli studnia ma przejścia → OT, jeśli nie → zwykły */
+    /* Auto-konwersja krag ↔ krag_ot: jesli studnia ma przejscia → OT, jesli nie → zwykly */
     if (newQty > 0 && (componentType === 'krag' || componentType === 'krag_ot')) {
         const hasPrzejscia = well.przejscia && well.przejscia.length > 0;
         const shouldBeOT = hasPrzejscia;
@@ -3048,9 +4150,14 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             }
         }
     }
+    /* Odswiez glowny panel po zmianie konfiguracji */
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
 function excelOnKinetaChange(wIdx, value) {
+    _excelMarkAsManual(wIdx);
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
     _excelUpdateLeftPreview(wIdx);
@@ -3058,6 +4165,7 @@ function excelOnKinetaChange(wIdx, value) {
 }
 
 function excelOnPsiaBudaChange(wIdx, checked) {
+    _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     if (checked) {
         /* Backup parametrów przed włączeniem */
@@ -3087,6 +4195,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
 async function excelOnReductionSelectChange(wIdx, value) {
+    _excelSaveUndoSnapshot();
     var well = wells[wIdx];
     if (!well) return;
     if (!value) {
@@ -3321,6 +4430,8 @@ function excelRefreshParamsPopup(wIdx) {
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
 function excelOnNameChange(wIdx, value) {
+    _excelSaveUndoSnapshot();
+    _excelMarkAsManual(wIdx);
     const name = (value || '').trim();
     if (!name) return;
     wells[wIdx].name = name;
@@ -3430,8 +4541,10 @@ function excelShowAddDialog() {
 function _excelCreateFromDialog() {
     var name = (document.getElementById('dlg-name')?.value || '').trim();
     var dn = document.getElementById('dlg-dn')?.value || '1000';
-    var rzw = parseFloat(document.getElementById('dlg-rzw')?.value) || null;
-    var rzd = parseFloat(document.getElementById('dlg-rzd')?.value) || null;
+    var rzwParsed = parseFloat(document.getElementById('dlg-rzw')?.value);
+    var rzdParsed = parseFloat(document.getElementById('dlg-rzd')?.value);
+    var rzw = isNaN(rzwParsed) ? null : rzwParsed;
+    var rzd = isNaN(rzdParsed) ? null : rzdParsed;
     if (!name) { showToast('Podaj nazwę studni', 'error'); return; }
     if (wells.some(function(w) { return w.name === name; })) { showToast('Nazwa "' + name + '" już istnieje', 'error'); return; }
     if (rzw === null) { showToast('Podaj rządną włazu', 'error'); return; }
@@ -3548,58 +4661,292 @@ function _excelImportPasteList() {
         added++;
     });
     var overlay = document.getElementById('excel-paste-dialog-overlay');
-    if (overlay) overlay.remove();
+    if (added === 0) { showToast('Nie dodano żadnej studni (duplikaty?)', 'info'); return; }
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-    _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
-    if (added > 0) {
-        showToast('Dodano ' + added + ' studni', 'success');
-        if (_excelAutoSelectEnabled) {
-            for (var k = 0; k < added; k++) {
-                (function(idx) {
-                    setTimeout(function() {
-                        var w = wells[wells.length - added + idx];
-                        if (w && w.rzednaWlazu != null && w.rzednaDna != null) _excelAutoSelectForWell(wells.length - added + idx);
-                    }, 200 + idx * 300);
-                })(k);
-            }
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    if (_excelAutoSelectEnabled) {
+        for (var k = 0; k < added; k++) {
+            (function(idx) {
+                setTimeout(function() {
+                    var nwi = wells.length - added + idx;
+                    var w = wells[nwi];
+                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                        _excelAutoSelectForWell(nwi).catch(function(e) {
+                            if (console.warn) console.warn('AutoSelect pominiety dla nowej studni:', e.message || e);
+                        });
+                    }
+                }, 200 + idx * 300);
+            })(k);
         }
     }
     _excelDebouncedRefresh();
 }
 
-/* ===== PASTE KOLUMN ===== */
-function _excelHandlePaste(e) {
-    if (_excelSelectedCols.length === 0) return;
-    var colIdx = _excelSelectedCols[0];
-    if (colIdx === undefined || colIdx === null || colIdx < 2) return; /* Lp.(0) + Nr Studni(1) = skip */
-    var cb = e.clipboardData || window.clipboardData;
-    if (!cb) return;
-    var text = cb.getData('text');
-    if (!text || !text.trim()) return;
-    e.preventDefault();
-    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-    if (rows.length === 0) return;
-    var values = text.trim().split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-    rows.forEach(function(row, i) {
-        if (i >= values.length) return;
-        var inputs = row.querySelectorAll('input, select');
-        var target = inputs[colIdx];
-        if (!target) return;
-        if (target.tagName === 'SELECT') {
-            var selEl = /** @type {HTMLSelectElement} */ (target);
-            var opt = Array.from(selEl.options).find(function(o) { return o.value === values[i] || o.text === values[i]; });
-            if (opt) { selEl.value = opt.value; selEl.dispatchEvent(new Event('change', { bubbles: true })); }
-        } else if (target.tagName === 'INPUT') {
-            target.value = values[i];
-            target.dispatchEvent(new Event('input', { bubbles: true }));
-            target.dispatchEvent(new Event('change', { bubbles: true }));
+/* ===== UNDO / REDO (simple snapshot stack) ===== */
+let _excelUndoStack = [];
+let _excelRedoStack = [];
+const _EXCEL_UNDO_LIMIT = 20;
+
+function _excelSaveUndoSnapshot() {
+    if (typeof wells === 'undefined') return;
+    _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
+    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelRedoStack = [];
+}
+
+function _excelUndo() {
+    if (_excelUndoStack.length === 0) return;
+    _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
+    var snap = _excelUndoStack.pop();
+    wells.splice(0, wells.length, ...snap);
+    _excelRenderTable(_excelActiveTab);
+    showToast('Cofnięto', 'info');
+}
+
+function _excelRedo() {
+    if (_excelRedoStack.length === 0) return;
+    _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
+    var snap = _excelRedoStack.pop();
+    wells.splice(0, wells.length, ...snap);
+    _excelRenderTable(_excelActiveTab);
+    showToast('Przywrócono', 'info');
+}
+
+/* ===== PASTE DO PUSTEGO WIERSZA → nowe studnie ===== */
+function _excelPasteCreateWells(text) {
+    var parsed = _excelParsePasteData(text);
+    /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
+    if (parsed.length === 0) {
+        var lines = text.trim().split(String.fromCharCode(10)).map(function(l) { return l.replace(String.fromCharCode(13), '').trim(); }).filter(function(l) { return l; });
+        if (lines.length > 0) {
+            var dn = _excelActiveTab || '1000';
+            _excelSaveUndoSnapshot();
+            var added = 0;
+            for (var fi = 0; fi < lines.length; fi++) {
+                var name = lines[fi];
+                if (!name) continue;
+                var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
+                if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
+                var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+                well.name = name; /* pozwól na duplikaty */
+                wells.push(well);
+                _excelAutoSetWlaz(well);
+                added++;
+            }
+            if (added > 0) {
+                _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+                _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+                _excelDebouncedRefresh();
+                showToast('Dodano ' + added + ' studni', 'success');
+                return;
+            }
+            showToast('Brak danych do wklejenia', 'info');
+            return;
         }
+        showToast('Nie rozpoznano danych', 'error');
+        return;
+    }
+    var dn = _excelActiveTab || '1000';
+    _excelSaveUndoSnapshot();
+    var added = 0;
+    parsed.forEach(function(row) {
+        var name = String(row.name || '').trim();
+        if (!name) return;
+        /* pozwól na duplikaty — nie sprawdzamy 'wells.some' */
+        var dnVal = row.dn || String(dn);
+        dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
+        if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
+        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',','.')) : null;
+        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',','.')) : 0;
+        var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: rzw, rzednaDna: rzd, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+        if (rzw !== null) well.rzednaWlazu = rzw;
+        if (rzd !== null) well.rzednaDna = rzd;
+        wells.push(well);
+        _excelAutoSetWlaz(well);
+        added++;
     });
-    showToast('Wklejono wartości', 'info');
+    if (added === 0) { showToast('Nie dodano żadnej studni', 'info'); return; }
+    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+    _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+    if (_excelAutoSelectEnabled) {
+        for (var k = 0; k < added; k++) {
+            (function(idx) {
+                setTimeout(function() {
+                    var nwi = wells.length - added + idx;
+                    var w = wells[nwi];
+                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                        _excelAutoSelectForWell(nwi).catch(function(e) {
+                            if (console.warn) console.warn('AutoSelect pominiety dla nowej studni:', e.message || e);
+                        });
+                    }
+                }, 200 + idx * 300);
+            })(k);
+        }
+    }
+    _excelDebouncedRefresh();
+    showToast('Dodano ' + added + ' studni', 'success');
+}
+
+/* ===== KEYBOARD SHORTCUTS (Excel-like) ===== */
+function _excelHandleKeydown(e) {
+    /* Tylko gdy kontener Excela jest otwarty */
+    var overlay = document.getElementById('excel-table-overlay');
+    if (!overlay) return;
+
+    var isCtrl = e.ctrlKey || e.metaKey;
+
+    /* Ctrl+Z = undo */
+    if (isCtrl && !e.shiftKey && e.key === 'z') { e.preventDefault(); _excelUndo(); return; }
+    /* Ctrl+Y / Ctrl+Shift+Z = redo */
+    if ((isCtrl && !e.shiftKey && e.key === 'y') || (isCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) { e.preventDefault(); _excelRedo(); return; }
+
+    /* Delete = wyczyść zaznaczone komórki */
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; /* edycja w komórce */
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+            if (!row) return;
+            var inputs = row.querySelectorAll('input, select');
+            var target = inputs[cell.colIdx];
+            if (!target) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = '';
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = '';
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Wyczyszczono ' + _excelSelectedCells.length + ' komórek', 'info');
+        return;
+    }
+
+    /* Ctrl+A = zaznacz wszystko */
+    if (isCtrl && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        var allRows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelDeselectAllCells();
+        allRows.forEach(function(row, rIdx) {
+            var tds = row.querySelectorAll('td');
+            tds.forEach(function(td, cIdx) {
+                if (cIdx < 2) return; /* pomiń Lp + Nr Studni */
+                _excelSelectedCells.push({ wIdx: rIdx, colIdx: cIdx });
+                td.classList.add('cell-selected');
+            });
+        });
+        _excelLastClickedCell = null;
+        showToast('Zaznaczono wszystkie komórki', 'info');
+        return;
+    }
+
+    /* Ctrl+X = wytnij */
+    if (isCtrl && (e.key === 'x' || e.key === 'X')) {
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        /* Uzyj oryginalnego eventu — clipboardData istnieje w keydown */
+        _excelHandleCopy(/** @type {any} */ (e));
+        /* Potem wyczyść */
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+            if (!row) return;
+            var inputs = row.querySelectorAll('input, select');
+            var target = inputs[cell.colIdx];
+            if (!target) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = '';
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = '';
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Wycinanie: ' + _excelSelectedCells.length + ' komórek', 'info');
+        return;
+    }
+
+    /* Ctrl+D = kopiuj w dół */
+    if (isCtrl && (e.key === 'd' || e.key === 'D')) {
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            if (cell.wIdx === 0) return;
+            var srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
+            var dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+            if (!srcRow || !dstRow) return;
+            var tdDst = dstRow.children[cell.colIdx];
+            var tdSrc = srcRow.children[cell.colIdx];
+            var target = tdDst ? tdDst.querySelector('input, select') : null;
+            var src = tdSrc ? tdSrc.querySelector('input, select') : null;
+            if (!target || !src) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (src).value;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Skopiowano w dół', 'info');
+        return;
+    }
+
+    /* Ctrl+R = kopiuj w prawo */
+    if (isCtrl && (e.key === 'r' || e.key === 'R')) {
+        if (_excelSelectedCells.length === 0) return;
+        e.preventDefault();
+        _excelSaveUndoSnapshot();
+        var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        _excelSelectedCells.forEach(function(cell) {
+            if (cell.colIdx <= 1) return;
+            var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+            if (!row) return;
+            var tdR = row.children[cell.colIdx];
+            var tdRSrc = row.children[cell.colIdx - 1];
+            var target = tdR ? tdR.querySelector('input, select') : null;
+            var src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
+            if (!target || !src) return;
+            if (target.tagName === 'SELECT') {
+                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (target.tagName === 'INPUT') {
+                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (src).value;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+        showToast('Skopiowano w prawo', 'info');
+        return;
+    }
 }
 
 /* ===== GLOBALNA ODSWIEŻALKA ===== */
 window.refreshExcelFromConfig = function () {
     if (!document.getElementById('excel-table-overlay')) return; // modal zamknięty
     _excelRenderTable(_excelActiveTab);
+};
+
+/* Sync UI z wells[i].configSource/autoSelect (bez pelnego re-render) — dla zmian z glownego panelu */
+window._excelSyncAutoManualUI = function () {
+    if (!document.getElementById('excel-table-overlay')) return;
+    var fn = /** @type {any} */ (window._excelSyncAutoManualUI);
+    if (fn._inProgress) return;
+    fn._inProgress = true;
+    try {
+        _excelSyncAutoManualUI();
+    } finally {
+        fn._inProgress = false;
+    }
 };

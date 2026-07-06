@@ -1,11 +1,66 @@
-﻿/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
+/* ═══════════════════════════════════════════════════════════
+   PEŁNA WYSOKOŚĆ LAYOUTU — FLEX CHAIN (scoped: studnie.html)
+   body → .main → .section.active → .well-app-layout → kolumny
+   Wysokość wynika z drzewa DOM, NIE z calc(100vh - N).
+   ═══════════════════════════════════════════════════════════ */
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+body > .header {
+    flex: 0 0 auto;
+}
+
+/* .main odbiera resztę wysokości po headerze */
+body.studnie-page > .main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    /* nadpisuje style.css padding:0.8rem 1.5rem 2rem */
+    padding: 0.8rem 0 0 0 !important;
+}
+
+/* header full-width w widoku Studnie */
+body.studnie-page .header-inner {
+    max-width: 100%;
+    padding: 0.3rem 0;
+}
+
+/* .section.active — акtywna zakładka */
+body > .main > .section.active {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
 .well-app-layout {
     display: grid;
-    grid-template-columns: 350px 1fr 350px;
+    grid-template-columns: clamp(260px, 18vw, 420px) minmax(0, 1fr) clamp(280px, 20vw, 460px);
     gap: 0;
-    margin: -0.8rem -1.5rem -2rem -1.5rem;
+    flex: 1;
+    min-height: 0;
+    margin: -0.8rem 0 0 0;
+    width: 100%;
+    max-width: none;
     background: var(--bg-primary);
-    height: calc(100vh - 57px);
 }
 
 .well-center-column,
@@ -13,17 +68,29 @@
 .wells-sidebar,
 .wells-sidebar-panel {
     box-sizing: border-box;
+    min-width: 0;
+}
+
+/* Wizard bottom nav — w kontekście studnie.html: statyczny (nie fixed),
+   uczestniczy w flex chain razem z .well-app-layout */
+.wizard-nav-fixed {
+    flex: 0 0 auto;
+    width: 100%;
+    position: static !important;
+    left: auto;
+    right: auto;
+    bottom: auto;
 }
 
 @media (max-width: 1400px) {
     .well-app-layout {
-        grid-template-columns: 300px 1fr 300px;
+        grid-template-columns: clamp(240px, 16vw, 350px) minmax(0, 1fr) clamp(250px, 18vw, 380px);
     }
 }
 
 @media (max-width: 1200px) {
     .well-app-layout {
-        grid-template-columns: 1fr 240px;
+        grid-template-columns: 1fr clamp(200px, 22vw, 280px);
     }
 
     .well-diagram-panel {
@@ -40,7 +107,7 @@
 /* ── Modyfikator układu dla kroków 1 i 2 ── */
 .well-app-layout.intro-mode {
     grid-template-columns: 1fr;
-    max-width: 1200px;
+    max-width: min(90vw, 1400px);
     margin: 0 auto;
     height: auto;
     overflow: visible;
@@ -57,12 +124,11 @@
     border-right: 1px solid var(--border-glass);
     border-radius: 0;
     padding: 0.8rem 1.2rem;
-    height: calc(100vh - 57px);
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    position: sticky;
-    top: 0;
-    z-index: 10;
     overflow: hidden;
 }
 
@@ -128,14 +194,12 @@
 
 /* ── Prawo: Panel boczny studni ── */
 .wells-sidebar {
-    height: calc(100vh - 57px);
+    height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-glass);
-    position: sticky;
-    top: 0;
-    z-index: 10;
     overflow: hidden;
 }
 
@@ -145,13 +209,19 @@
     border-radius: 0;
     padding: 0.8rem 1.2rem;
     flex: 1;
+    min-height: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .well-center-column {
-    height: calc(100vh - 57px);
+    height: 100%;
+    width: 100%;
+    justify-self: stretch;
+    min-height: 0;
+    min-width: 0;
     overflow-y: auto;
     padding: 0 1rem 4.5rem;
 }
@@ -185,6 +255,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex: 0 0 auto;
     min-height: 57px;
     box-shadow: var(--shadow-sm);
     background: var(--bg-secondary);
@@ -201,6 +272,7 @@
 
 #wells-list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 4px;
@@ -224,7 +296,9 @@
         600 0.72rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
 }
 
 .wells-add-btn:hover {
@@ -241,7 +315,10 @@
     padding: 0.4rem 0.6rem;
     margin-bottom: 0.25rem;
     cursor: pointer;
-    transition: border-color 0.15s ease-out, background-color 0.15s ease-out, transform 0.15s ease-out;
+    transition:
+        border-color 0.15s ease-out,
+        background-color 0.15s ease-out,
+        transform 0.15s ease-out;
     position: relative;
 }
 
@@ -416,7 +493,10 @@
     border-radius: 8px;
     padding: 0.4rem 0.5rem;
     cursor: pointer;
-    transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
@@ -489,7 +569,9 @@
         600 0.75rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
+    transition:
+        border-color 0.15s,
+        color 0.15s;
 }
 
 .dn-btn:hover {
@@ -537,7 +619,9 @@
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
 }
 
 .config-remove-btn:hover {
@@ -553,7 +637,10 @@
     padding: 1px 5px;
     border-radius: 3px;
     cursor: pointer;
-    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s;
     line-height: 1;
 }
 
@@ -637,7 +724,9 @@
         600 0.8rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: border-color 0.25s, color 0.25s;
+    transition:
+        border-color 0.25s,
+        color 0.25s;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -702,7 +791,9 @@
     color: var(--text-muted);
     font-weight: 600;
     cursor: pointer;
-    transition: color 0.2s, background-color 0.2s;
+    transition:
+        color 0.2s,
+        background-color 0.2s;
     font-size: 0.75rem;
 }
 
@@ -727,7 +818,9 @@
     color: var(--text-muted);
     font-weight: 700;
     cursor: pointer;
-    transition: color 0.2s, background-color 0.2s;
+    transition:
+        color 0.2s,
+        background-color 0.2s;
     font-size: 0.72rem;
     display: flex;
     align-items: center;
@@ -756,7 +849,9 @@
     font-size: 0.72rem;
     font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+    transition:
+        border-color 0.15s ease-in-out,
+        color 0.15s ease-in-out;
     white-space: nowrap;
 }
 
@@ -792,7 +887,11 @@
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -833,7 +932,10 @@
     padding: 1.5rem;
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.3s, transform 0.3s, background-color 0.3s;
+    transition:
+        border-color 0.3s,
+        transform 0.3s,
+        background-color 0.3s;
     position: relative;
     overflow: hidden;
 }
@@ -869,7 +971,7 @@
     border-radius: 20px;
     padding: 2rem;
     animation: slideUp 0.4s ease-out;
-    max-width: 800px;
+    max-width: min(100%, 800px);
     margin: 0 auto;
     width: 100%;
 }
@@ -963,7 +1065,9 @@
         600 0.65rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
 }
 
 .wizard-summary-edit:first-of-type {
@@ -1076,7 +1180,10 @@
         600 0.6rem 'Inter',
         sans-serif;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .przejscia-vis-action-btn:hover {
@@ -1095,7 +1202,10 @@
     padding: 0.4rem 0.5rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
     text-align: center;
     user-select: none;
 }
@@ -1197,7 +1307,9 @@
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
+    transition:
+        background-color 0.2s,
+        transform 0.2s;
 }
 
 .app-confirm-btn-ok {
@@ -1411,7 +1523,7 @@
     display: inline-block;
     width: 14px;
     height: 14px;
-    border: 2px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-top-color: var(--blue-hover);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
@@ -1419,8 +1531,12 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* ─── Studnie: option background ─── */
@@ -1431,60 +1547,134 @@ select.form-input option {
 
 /* ─── Klasy narzędziowe do migracji stylów inline ─── */
 /* Font size */
-.fs-085 { font-size: 0.85rem; }
-.fs-075 { font-size: 0.75rem; }
-.fs-065 { font-size: 0.65rem; }
-.fs-09 { font-size: 0.9rem; }
-.fs-08 { font-size: 0.8rem; }
-.fs-078 { font-size: 0.78rem; }
-.fs-07 { font-size: 0.7rem; }
-.fs-072 { font-size: 0.72rem; }
-.fs-06 { font-size: 0.6rem; }
-.fs-055 { font-size: 0.55rem; }
-.fs-058 { font-size: 0.58rem; }
-.fs-1 { font-size: 1rem; }
-.fs-115 { font-size: 1.15rem; }
-.fs-14 { font-size: 1.4rem; }
+.fs-085 {
+    font-size: 0.85rem;
+}
+.fs-075 {
+    font-size: 0.75rem;
+}
+.fs-065 {
+    font-size: 0.65rem;
+}
+.fs-09 {
+    font-size: 0.9rem;
+}
+.fs-08 {
+    font-size: 0.8rem;
+}
+.fs-078 {
+    font-size: 0.78rem;
+}
+.fs-07 {
+    font-size: 0.7rem;
+}
+.fs-072 {
+    font-size: 0.72rem;
+}
+.fs-06 {
+    font-size: 0.6rem;
+}
+.fs-055 {
+    font-size: 0.55rem;
+}
+.fs-058 {
+    font-size: 0.58rem;
+}
+.fs-1 {
+    font-size: 1rem;
+}
+.fs-115 {
+    font-size: 1.15rem;
+}
+.fs-14 {
+    font-size: 1.4rem;
+}
 
 /* Font weight */
-.fw-5 { font-weight: 500; }
-.fw-6 { font-weight: 600; }
-.fw-7 { font-weight: 700; }
-.fw-8 { font-weight: 800; }
+.fw-5 {
+    font-weight: 500;
+}
+.fw-6 {
+    font-weight: 600;
+}
+.fw-7 {
+    font-weight: 700;
+}
+.fw-8 {
+    font-weight: 800;
+}
 
 /* Pomocnicze flex */
-.flex-row { display: flex; flex-direction: row; }
-.flex-center { display: flex; align-items: center; }
-.flex-center-gap-2 { display: flex; align-items: center; gap: 0.2rem; }
-.flex-center-gap-5 { display: flex; align-items: center; gap: 5px; }
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+.flex-center {
+    display: flex;
+    align-items: center;
+}
+.flex-center-gap-2 {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+.flex-center-gap-5 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
 
 /* Wymiary flex */
 
 /* Wymiary ikon */
-.icon-sm { width: 16px; height: 16px; }
-.icon-check { accent-color: var(--accent); width: 16px; height: 16px; }
+.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+.icon-check {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+}
 
 /* Styl etykiety dla checkbox�w */
-.checkbox-label { display: flex; align-items: center; gap: 5px; cursor: pointer; color: #d4d4d8; font-size: 0.85rem; }
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: #d4d4d8;
+    font-size: 0.85rem;
+}
 
 /* Padding */
-.p-6-8 { padding: 0.6rem 0.8rem; }
-.p-5-6 { padding: 0.5rem 0.6rem; }
+.p-6-8 {
+    padding: 0.6rem 0.8rem;
+}
+.p-5-6 {
+    padding: 0.5rem 0.6rem;
+}
 
 /* Szerokie pola formularza */
 
 /* Kolory tekstu */
-.text-warn { color: var(--warn); }
+.text-warn {
+    color: var(--warn);
+}
 
 /* Margins - PRZENIESIONE do style.css (shared) */
 
 /* Misc padding */
-.p-2 { padding: 0.2rem; }
+.p-2 {
+    padding: 0.2rem;
+}
 
 /* Tekst z nowrap - PRZENIESIONE do style.css (shared) */
 
 /* Misc */
-.text-muted { color: var(--text-muted); }
+.text-muted {
+    color: var(--text-muted);
+}
 
 /* ─── Modal transportu oferty: ukryj spinner ─── */
 .spinner-hidden .spinner-border {
@@ -1521,20 +1711,34 @@ select.form-input option {
         height: 56px;
         box-sizing: border-box;
     }
-    .wizard-nav-left { gap: 0.4rem; }
-    .wizard-nav-right { gap: 0.4rem; }
-    .wizard-nav-fixed .wizard-btn { min-width: 90px; height: 34px; padding: 0 0.7rem; font-size: 0.75rem; }
-    .wizard-nav-fixed .wizard-step-info { font-size: 0.6rem; padding: 0.2rem 0.6rem; height: 26px; letter-spacing: 0.4px; }
+    .wizard-nav-left {
+        gap: 0.4rem;
+    }
+    .wizard-nav-right {
+        gap: 0.4rem;
+    }
+    .wizard-nav-fixed .wizard-btn {
+        min-width: 90px;
+        height: 34px;
+        padding: 0 0.7rem;
+        font-size: 0.75rem;
+    }
+    .wizard-nav-fixed .wizard-step-info {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.6rem;
+        height: 26px;
+        letter-spacing: 0.4px;
+    }
 }
 
 @media (max-width: 600px) {
     .wizard-form-grid {
         grid-template-columns: 1fr;
     }
-    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr"] {
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr'] {
         grid-template-columns: 1fr !important;
     }
-    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr 1fr"] {
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr 1fr'] {
         grid-template-columns: 1fr !important;
     }
     .wizard-summary-bar {
@@ -1547,28 +1751,29 @@ select.form-input option {
     }
 
     /* Panel 3-kolumnowy w parametrach (już po polsku) */
-    div[style*="grid-template-columns: 1fr 1fr 1fr"][style*="gap: 0.7rem"] {
+    div[style*='grid-template-columns: 1fr 1fr 1fr'][style*='gap: 0.7rem'] {
         grid-template-columns: 1fr !important;
     }
 }
-#offer-transport-modal input[type=number] {
+#offer-transport-modal input[type='number'] {
     -moz-appearance: textfield;
     appearance: textfield;
 }
 
-#excel-table-container input[type="number"]::-webkit-inner-spin-button,
-#excel-table-container input[type="number"]::-webkit-outer-spin-button {
+#excel-table-container input[type='number']::-webkit-inner-spin-button,
+#excel-table-container input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-#excel-table-container input[type="number"] {
+#excel-table-container input[type='number'] {
     -moz-appearance: textfield;
     appearance: none;
 }
 
-#excel-table-container input[type="text"],
-#excel-table-container input[type="number"] {
+#excel-table-container input[type='text'],
+#excel-table-container input[type='number'] {
     width: 100% !important;
+    height: 100% !important;
     box-sizing: border-box !important;
     padding: 0.3rem 0.45rem;
     background: transparent;
@@ -1586,17 +1791,93 @@ select.form-input option {
     color: #e2e8f0;
 }
 
-#excel-table-container td {
-    padding: 0;
+#excel-table-container .excel-sel-wrap {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
 }
 
-#excel-table-container input[type="checkbox"] {
+#excel-table-container .excel-sel-wrap > div {
+    padding: 0.3rem 0.45rem !important;
+    font-size: 0.7rem !important;
+    font-family:
+        Inter,
+        Segoe UI,
+        sans-serif !important;
+    letter-spacing: 0.1px !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#excel-table-container td {
+    padding: 0;
+    height: 1px; /* Trik CSS: pozwala dzieciom z height: 100% wypełnić pełną wysokość wiersza */
+}
+
+#excel-table-container input[type='checkbox'] {
     display: block;
     margin: 0.3rem auto;
 }
 
-#excel-table-container tbody tr:focus-within {
-    outline: 2px solid rgba(99,102,241,0.7);
+#excel-table-container tbody tr:focus-within td {
+    position: relative;
+}
+
+/* Górna linia podświetlenia wiersza na wierzchu */
+#excel-table-container tbody tr:focus-within td::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-top: 2px solid rgba(99, 102, 241, 0.95);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Dolna linia podświetlenia wiersza na wierzchu */
+#excel-table-container tbody tr:focus-within td::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.95);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Lewa krawędź na pierwszej komórce */
+#excel-table-container tbody tr:focus-within td:first-child::before {
+    height: 100%;
+    border-left: 2px solid rgba(99, 102, 241, 0.95);
+}
+
+/* Prawa krawędź na ostatniej komórce */
+#excel-table-container tbody tr:focus-within td:last-child::after {
+    height: 100%;
+    border-right: 2px solid rgba(99, 102, 241, 0.95);
+}
+
+/* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
+#excel-table-container tbody tr:focus-within td {
+    color: #e2e8f0 !important;
+}
+
+/* Kolumna Lp. — lepszy kontrast w aktywnym wierszu */
+#excel-table-container tbody tr:focus-within td:first-child {
+    color: #a5b4fc !important; /* Przyjemny pastelowy fioletowy dla aktywnego indeksu */
+}
+
+/* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
+#excel-table-container tbody tr:focus-within td[data-cell^='height-'] {
+    color: #f8fafc !important;
 }
 
 #excel-table-container td[data-cell] {
@@ -1605,16 +1886,16 @@ select.form-input option {
 
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .fs-inputs-pane,
-  .wizard-step,
-  .przejscia-vis-popup,
-  .app-confirm-overlay,
-  .main.studnie-view-transitioning::after,
-  .zlecenia-overlay,
-  .loading-spinner-inline {
-    animation: none !important;
-    transition: none !important;
-  }
+    .fs-inputs-pane,
+    .wizard-step,
+    .przejscia-vis-popup,
+    .app-confirm-overlay,
+    .main.studnie-view-transitioning::after,
+    .zlecenia-overlay,
+    .loading-spinner-inline {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 
 /* ── Akcje w dolnym pasku podsumowania ── */
@@ -1634,19 +1915,27 @@ select.form-input option {
 .summary-action-btn {
     padding: 0.4rem 0.6rem;
     border-radius: 8px;
-    font: 600 0.72rem 'Inter', sans-serif;
+    font:
+        600 0.72rem 'Inter',
+        sans-serif;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
-    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        transform 0.15s;
     white-space: nowrap;
     width: 100%;
     height: 100%;
     border: none;
 }
-.summary-action-btn:hover { transform: translateY(-1px); }
+.summary-action-btn:hover {
+    transform: translateY(-1px);
+}
 .summary-action-btn--save {
     background: rgba(16, 185, 129, 0.15);
     border: 1px solid rgba(16, 185, 129, 0.4);
@@ -1683,12 +1972,8 @@ select.form-input option {
     border-color: rgba(99, 102, 241, 0.6);
     color: var(--accent-text);
 }
-.summary-action-btn--ai {
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #a5b4fc;
-    grid-column: 2;
-    grid-row: 2;
+/* Przycisk AI Dashboard w górnym pasku nawigacji — widoczny tylko admin/pro przez JS */
+#nav-ai-dashboard {
     display: none;
 }
 
@@ -1734,13 +2019,17 @@ select.form-input option {
     color: var(--text-primary);
     margin: 0;
 }
-.studnie-summary-value.accent { color: var(--accent-hover); }
+.studnie-summary-value.accent {
+    color: var(--accent-hover);
+}
 .studnie-summary-value.success {
     color: var(--success);
     font-weight: 800;
     font-size: 1.6rem;
 }
-.studnie-summary-value.warn { color: var(--warn); }
+.studnie-summary-value.warn {
+    color: var(--warn);
+}
 .studnie-summary-sub {
     font-size: 0.75rem;
     color: var(--text-muted);
@@ -1755,50 +2044,328 @@ select.form-input option {
 }
 
 /* ── Transition Renderer hover classes ── */
-.prz-field { background:rgba(255,255,255,0.03); border-radius:4px; transition:background-color 0.2s; cursor:pointer; padding:0.15rem 0.4rem; }
-.prz-field:hover { color:#60a5fa !important; background:rgba(255,255,255,0.1) !important; }
+.prz-field {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+}
+.prz-field:hover {
+    color: #60a5fa !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
 
-.prz-btn-edit { background:rgba(96,165,250,0.15); border:1px solid rgba(96,165,250,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#60a5fa; transition:background-color 0.2s, border-color 0.2s; }
-.prz-btn-edit:hover { background:rgba(96,165,250,0.3) !important; }
+.prz-btn-edit {
+    background: rgba(96, 165, 250, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.35rem;
+    color: #60a5fa;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+.prz-btn-edit:hover {
+    background: rgba(96, 165, 250, 0.3) !important;
+}
 
-.prz-btn-delete { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:8px; cursor:pointer; font-size:0.9rem; padding:0.35rem; color:#ef4444; transition:background-color 0.2s, border-color 0.2s; }
-.prz-btn-delete:hover { background:rgba(239,68,68,0.3) !important; }
+.prz-btn-delete {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.35rem;
+    color: #ef4444;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+.prz-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.3) !important;
+}
 
-.prz-field-color { transition:color 0.2s; cursor:pointer; }
-.prz-field-color:hover { color:#60a5fa !important; }
+.prz-field-color {
+    transition: color 0.2s;
+    cursor: pointer;
+}
+.prz-field-color:hover {
+    color: #60a5fa !important;
+}
 
-.prz-field-dn { transition:color 0.2s; cursor:pointer; }
-.prz-field-dn:hover { color:#c084fc !important; }
+.prz-field-dn {
+    transition: color 0.2s;
+    cursor: pointer;
+}
+.prz-field-dn:hover {
+    color: #c084fc !important;
+}
 
-.prz-field-height { transition:background-color 0.2s; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; }
-.prz-field-height:hover { color:#fbbf24 !important; background:rgba(255,255,255,0.1) !important; }
+.prz-field-height {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+.prz-field-height:hover {
+    color: #fbbf24 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
 
-.prz-field-angle { transition:background-color 0.2s, transform 0.2s; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; will-change:transform; }
-.prz-field-angle:hover { transform:scale(1.15); background:rgba(255,255,255,0.1); transform-origin:center center; }
+.prz-field-angle {
+    transition:
+        background-color 0.2s,
+        transform 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    will-change: transform;
+}
+.prz-field-angle:hover {
+    transform: scale(1.15);
+    background: rgba(255, 255, 255, 0.1);
+    transform-origin: center center;
+}
 
-.prz-field-rzedna { transition:background-color 0.2s; cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; }
-.prz-field-rzedna:hover { color:#60a5fa !important; background:rgba(255,255,255,0.1) !important; }
+.prz-field-rzedna {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+.prz-field-rzedna:hover {
+    color: #60a5fa !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
 
-.prz-field-doplata { cursor:pointer; padding:0.15rem 0.4rem; background:rgba(255,255,255,0.03); border-radius:4px; transition:background-color 0.2s; }
-.prz-field-doplata:hover { background:rgba(255,255,255,0.1) !important; }
+.prz-field-doplata {
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.prz-field-doplata:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
 
 /* ── Well Popups hover classes ── */
-.pehd-card { background:rgba(255,255,255,0.03); border:2px solid rgba(255,255,255,0.06); border-radius:12px; cursor:pointer; transition:background-color 0.2s, border-color 0.2s; }
-.pehd-card:hover { border-color:#6366f1 !important; background:rgba(99,102,241,0.05) !important; transform:translateY(-3px); }
+.pehd-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+.pehd-card:hover {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.05) !important;
+    transform: translateY(-3px);
+}
 
-.pehd-btn-cancel { padding:0.6rem 1.2rem; background:transparent; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#cbd5e1; cursor:pointer; transition:background-color 0.2s, border-color 0.2s, color 0.2s; }
-.pehd-btn-cancel:hover { background:rgba(255,255,255,0.1) !important; color:#fff !important; }
+.pehd-btn-cancel {
+    padding: 0.6rem 1.2rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        color 0.2s;
+}
+.pehd-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
 
 /* ── Excel table header aesthetic improvements ── */
-#excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
-#excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
-#excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02) !important; }
-#excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
-#excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
-#excel-table-container thead th { position:relative; }
-#excel-table-container table { border-collapse:collapse; }
+#excel-table-container .h3-prodcode {
+    font-size: 0.5rem;
+    font-weight: 600;
+    color: #a4b3cb;
+    line-height: 1.45;
+}
+#excel-table-container .h3-prodprice {
+    font-size: 0.55rem;
+    color: #34d399;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+    background: rgba(52, 211, 153, 0.07);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-top: 2px;
+    display: inline-block;
+}
+#excel-table-container tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+#excel-table-container .excel-resize-handle {
+    width: 4px !important;
+    background: rgba(255, 255, 255, 0.08);
+}
+#excel-table-container .excel-resize-handle:hover {
+    background: rgba(99, 102, 241, 0.5) !important;
+}
+#excel-table-container thead th {
+    position: relative;
+}
+#excel-table-container table {
+    border-collapse: collapse;
+}
 
 /* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
-.excel-th-h3 { position:sticky;top:0;z-index:20; }
-.excel-th-h1 { position:sticky;top:1.4rem;z-index:20; }
-.excel-th-h2 { position:sticky;top:3.2rem;z-index:20; }
+.excel-th-h3 {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+.excel-th-h1 {
+    position: sticky;
+    top: 1.4rem;
+    z-index: 20;
+}
+.excel-th-h2 {
+    position: sticky;
+    top: 3.2rem;
+    z-index: 20;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ALTERNATYWNE KONFIGURACJE (F2: multi-wariant)
+   ═══════════════════════════════════════════════════════════ */
+.alternatives-panel {
+    display: none;
+    margin: 0.5rem 0;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 8px;
+    background: var(--color-bg, #fff);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 0.82rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+    opacity: 0;
+}
+.alternatives-panel.alternatives-open {
+    display: block;
+    max-height: 600px;
+    overflow-y: auto;
+    opacity: 1;
+}
+.alternatives-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--color-primary-light, #f0f4ff);
+    border-bottom: 1px solid var(--color-border, #d1d5db);
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.alternatives-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.alternatives-title svg {
+    width: 16px;
+    height: 16px;
+}
+.alternatives-count {
+    color: var(--color-text-secondary, #6b7280);
+    font-weight: 400;
+    font-size: 0.78rem;
+    background: var(--color-bg-secondary, #f3f4f6);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+}
+.alternatives-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--color-text-secondary, #6b7280);
+    padding: 0 0.25rem;
+    line-height: 1;
+}
+.alternatives-close:hover {
+    color: var(--color-text, #111);
+}
+.alternatives-list {
+    padding: 0.4rem 0;
+}
+.alternatives-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+}
+.alternatives-item:hover {
+    background: var(--color-hover, #f9fafb);
+}
+.alternatives-item.active {
+    background: var(--color-primary-light, #f0f4ff);
+    border-left-color: var(--color-primary, #2563eb);
+}
+.alt-index {
+    font-weight: 700;
+    color: var(--color-primary, #2563eb);
+    min-width: 1.8rem;
+    font-size: 0.78rem;
+}
+.alt-score {
+    font-weight: 600;
+    color: var(--color-accent, #059669);
+    min-width: 2.5rem;
+    font-size: 0.82rem;
+    text-align: center;
+    background: var(--color-bg-secondary, #f3f4f6);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+.alt-info {
+    flex: 1;
+    color: var(--color-text-secondary, #6b7280);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.alt-reason {
+    display: none;
+    color: var(--color-text-secondary, #6b7280);
+    font-size: 0.72rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.alternatives-item:hover .alt-reason {
+    display: inline;
+}
+.alt-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-primary, #2563eb);
+    background: var(--color-primary-light, #dbeafe);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}

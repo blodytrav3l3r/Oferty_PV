@@ -62,11 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnChangeUser.style.display = 'inline-block';
     }
 
-    // Pokaż przycisk ML Dashboard dla admin/pro
-    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
-        document.querySelectorAll('.ml-dashboard-btn').forEach((btn) => {
-            btn.style.display = 'flex';
-        });
+    // Pokaż przycisk AI Dashboard dla admin/pro
+    if (typeof updateAIDashboardVisibility === 'function') {
+        updateAIDashboardVisibility();
     }
 
     // URL params
@@ -82,7 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Inicjalizacja UI (bez danych — będą gotowe za chwilę)
         if (typeof renderStudniePriceList === 'function') renderStudniePriceList();
         if (typeof renderSavedOffersStudnie === 'function') renderSavedOffersStudnie();
-        checkBackendStatus();
 
         // Auto-uzupełnienie daty i numeru oferty w kroku 1
         const dateEl = document.getElementById('offer-date');

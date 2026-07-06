@@ -48,13 +48,17 @@ function goToWizardStep(step) {
         }
         const target = document.getElementById('wizard-step-4');
         if (target) target.classList.add('active');
-        
-        // Załaduj dane tylko jeśli jesteśmy w trybie edycji zamówienia 
+
+        // Załaduj dane tylko jeśli jesteśmy w trybie edycji zamówienia
         // (przy nowym zamówieniu funkcja jest już wywoływana z parametrem w orderManager.js)
-        if (typeof orderEditMode !== 'undefined' && orderEditMode && typeof initKartaBudowyStep4 === 'function') {
+        if (
+            typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            typeof initKartaBudowyStep4 === 'function'
+        ) {
             initKartaBudowyStep4();
         }
-        
+
         return;
     }
 
@@ -72,7 +76,7 @@ function goToWizardStep(step) {
 
     const target = document.getElementById('wizard-step-' + step);
     if (target) target.classList.add('active');
-    
+
     if (step === 3) updateWizardSummaryBar();
     if (step === 2) validateWizardStep2();
 }
@@ -96,7 +100,10 @@ function enterWizardOrderMode() {
 
     // W trybie oferty (edytujemy ofertę) blokuj przejście do zamówienia
     if (editingOfferIdStudnie) {
-        showToast('Przejdź do zamówienia przez przycisk "Utwórz zamówienie" w podsumowaniu', 'info');
+        showToast(
+            'Przejdź do zamówienia przez przycisk "Utwórz zamówienie" w podsumowaniu',
+            'info'
+        );
         currentWizardStep = 3;
         updateWizardIndicator();
         return;
@@ -110,10 +117,14 @@ function enterWizardOrderMode() {
         return;
     }
 
-    const oId = typeof normalizeId === 'function' ? normalizeId(editingOfferIdStudnie) : editingOfferIdStudnie;
-    const order = (typeof ordersStudnie !== 'undefined' && ordersStudnie)
-        ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
-        : null;
+    const oId =
+        typeof normalizeId === 'function'
+            ? normalizeId(editingOfferIdStudnie)
+            : editingOfferIdStudnie;
+    const order =
+        typeof ordersStudnie !== 'undefined' && ordersStudnie
+            ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId)
+            : null;
 
     if (order) {
         // Wczytaj zamówienie do edycji
@@ -121,7 +132,10 @@ function enterWizardOrderMode() {
             enterOrderEditMode(order.id);
         }
     } else {
-        showToast('Brak zamówienia dla tej oferty. Utwórz zamówienie z poziomu podsumowania oferty.', 'info');
+        showToast(
+            'Brak zamówienia dla tej oferty. Utwórz zamówienie z poziomu podsumowania oferty.',
+            'info'
+        );
         currentWizardStep = 3;
         updateWizardIndicator();
     }
@@ -133,20 +147,20 @@ function enterWizardOrderMode() {
 async function exitWizardOrderMode(targetStep = 3) {
     orderEditMode = null;
     if (typeof renderOrderModeBanner === 'function') renderOrderModeBanner();
-    
+
     if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
         if (typeof loadSavedOfferStudnie === 'function') {
             await loadSavedOfferStudnie(editingOfferIdStudnie, null, 'builder', true);
         }
     }
-    
+
     if (typeof refreshAll === 'function') refreshAll();
-    
+
     // Teraz po załadowaniu przejdź do docelowego kroku
     if (targetStep) {
         goToWizardStep(targetStep);
     }
-    
+
     showToast('<i data-lucide="bar-chart-2"></i> Powrót do edycji oferty', 'info');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -315,7 +329,9 @@ function updateStudnieBottomNav() {
 
         if (step === 4) {
             nextBtn.innerHTML = '<i data-lucide="arrow-right"></i> Przejdź do zamówienia';
-            nextBtn.onclick = function () { step4NextAction(); };
+            nextBtn.onclick = function () {
+                step4NextAction();
+            };
         } else if (step === 3) {
             nextBtn.innerHTML = '<i data-lucide="check"></i> Zakończ';
             nextBtn.onclick = async function () {
@@ -384,10 +400,13 @@ function updateWizardSummaryBar() {
         if (well) {
             const nadbudowa = well.nadbudowa === 'zelbetowa' ? 'Żelbet' : 'Beton';
             const denMat = well.dennicaMaterial === 'zelbetowa' ? 'Żelbet' : 'Beton';
-            let wklArr = [];
-            if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') wklArr.push(`D:${well.wkladkaDennica}`);
-            if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') wklArr.push(`N:${well.wkladkaNadbudowa}`);
-            if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') wklArr.push(`Z:${well.wkladkaZwienczenie}`);
+            const wklArr = [];
+            if (well.wkladkaDennica && well.wkladkaDennica !== 'brak')
+                wklArr.push(`D:${well.wkladkaDennica}`);
+            if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak')
+                wklArr.push(`N:${well.wkladkaNadbudowa}`);
+            if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
+                wklArr.push(`Z:${well.wkladkaZwienczenie}`);
             const wkl = wklArr.length > 0 ? ` | PEHD [${wklArr.join(', ')}]` : '';
             wsbParams.textContent = `Nadb: ${nadbudowa} | Den: ${denMat}${wkl}`;
         } else {
@@ -404,7 +423,9 @@ function skipWizardToStep3() {
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
 async function loadStudnieProducts() {
-    var result = /** @type {any} */ (await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000));
+    var result = /** @type {any} */ (
+        await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000)
+    );
     if (!result || !Array.isArray(result.data)) {
         logger.error('uiHelpers', '[Studnie] Błąd loadStudnieProducts: brak danych po 3 próbach');
         showToast('Nie udało się załadować cennika studni z serwera', 'error');
@@ -436,43 +457,6 @@ async function saveStudnieProducts(data) {
     const result = await api.put('/api/products-studnie', { data });
     return result !== null;
 }
-
-/* ===== SPRAWDZANIE STATUSU BACKENDU ===== */
-async function checkBackendStatus() {
-    const indicators = [
-        document.querySelector('#backend-status-indicator span'),
-        window.parent !== window && window.parent.document
-            ? window.parent.document.querySelector('#backend-status-indicator span')
-            : null
-    ];
-    try {
-        const response = await fetchWithTimeout(`http://${window.location.hostname}:8000/api/v1/health`, {
-            method: 'GET'
-        }, 5000);
-        if (response.ok) {
-            isBackendOnline = true;
-            indicators.forEach((indicator) => {
-                if (indicator) {
-                    indicator.style.background = '#4ade80'; // jasny zielony
-                    indicator.style.boxShadow = '0 0 8px #4ade80';
-                    indicator.parentElement.title = 'Serwer OR-Tools połączony';
-                }
-            });
-        } else {
-            throw new Error('Backend response not ok');
-        }
-    } catch (e) {
-        isBackendOnline = false;
-        indicators.forEach((indicator) => {
-            if (indicator) {
-                indicator.style.background = 'var(--danger-hover)'; // czerwony
-                indicator.style.boxShadow = '0 0 8px var(--danger-hover)';
-                indicator.parentElement.title = 'Serwer obliczeniowy OFFLINE (działa tryb JS)';
-            }
-        });
-    }
-}
-setInterval(checkBackendStatus, 15000); // Sprawdź co 15 sekund (pierwsze sprawdzenie w DOMContentLoaded w app_studnie.js)
 
 /* ===== CENNIK PRECO — load / save / defaults ===== */
 

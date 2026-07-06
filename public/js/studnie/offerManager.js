@@ -76,6 +76,22 @@ function renderOfferSummary() {
         }
         if (window.lucide) window.lucide.createIcons({ root: saveBtn });
     }
+
+    // Widoczność przycisku AI Dashboard (tylko admin/pro)
+    updateAIDashboardVisibility();
+}
+/**
+ * Odświeża widoczność przycisku AI Dashboard na podstawie roli użytkownika.
+ * Wywoływana z renderOfferSummary oraz przy starcie strony.
+ */
+function updateAIDashboardVisibility() {
+    const aiDashboardBtn = document.getElementById('nav-ai-dashboard');
+    if (!aiDashboardBtn) return;
+    const showAi = currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro');
+    aiDashboardBtn.style.display = showAi ? 'flex' : 'none';
+    if (showAi && window.lucide) {
+        window.lucide.createIcons({ root: aiDashboardBtn.parentElement });
+    }
 }
 
 function generateOfferNotes(onlyIfEmpty = false) {
@@ -2007,6 +2023,9 @@ async function saveOfferStudnie() {
         // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI)
         _sendAcceptanceTelemetry(wells, 'OFFER_SAVE');
 
+        // F1: zapisz przypadki do bazy CBR (fire-and-forget, nie blokuje UI)
+        _saveWellCasesToCBR(wells);
+
         return true;
     } catch (err) {
         logger.error('offerManager', '[OfferManager] Save error:', err);
@@ -2053,6 +2072,80 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
         }).catch(() => {}); // Cichy błąd — nie przeszkadzamy użytkownikowi
     } catch (e) {
         // Nigdy nie powinno wstrzymać UI
+    }
+}
+
+/**
+ * Zapisuje przypadki studni do bazy CBR (Case-Based Reasoning).
+ * Fire-and-forget: nie blokuje UI.
+ * @param {Array} wellsArr - tablica studni
+ */
+function _saveWellCasesToCBR(wellsArr) {
+    try {
+        var computeProfile = window.computeDiameterProfile;
+        if (typeof computeProfile !== 'function') return;
+
+        for (var i = 0; i < (wellsArr || []).length; i++) {
+            var w = wellsArr[i];
+            if (!w || !w.config || w.config.length === 0) continue;
+
+            var rzDna = w.rzednaDna != null ? parseFloat(w.rzednaDna) : 0;
+            var rzWlazu = w.rzednaWlazu != null ? parseFloat(w.rzednaWlazu) : 0;
+            var totalHeight = Math.round((rzWlazu - rzDna) * 1000);
+            if (totalHeight <= 0) continue;
+
+            var dn = parseInt(w.dn, 10);
+            if (isNaN(dn) || dn <= 0) continue;
+
+            var wellType = w.psiaBuda ? 'psia_buda' : w.stycznaNadbudowa1200 ? 'styczna' : 'standard';
+
+            var profile = computeProfile(w.config, w.dn);
+
+            var transitions = (w.przejscia || []).map(function (p) {
+                return {
+                    productId: p.productId,
+                    heightFromBottomMm: p.rzednaWlaczenia != null
+                        ? Math.round((parseFloat(p.rzednaWlaczenia) - rzDna) * 1000)
+                        : null,
+                    type: p.typPrzejscia || 'rura_przejściowa'
+                };
+            });
+
+            var componentSeq = (w.config || []).map(function (item) {
+                var prod = (window.studnieProducts || []).find(function (x) { return x.id === item.productId; });
+                return {
+                    productId: item.productId,
+                    name: prod ? prod.name : undefined,
+                    type: prod ? prod.componentType : undefined,
+                    heightMm: prod ? (parseInt(prod.height, 10) || 0) : 0,
+                    dn: prod ? prod.dn : undefined
+                };
+            });
+
+            var payload = {
+                dn: dn,
+                totalHeightMm: totalHeight,
+                wellType: wellType,
+                warehouse: w.magazyn || undefined,
+                kinetType: w.kineta || undefined,
+                inflowCount: (w.przejscia || []).length,
+                loadClass: w.obciazenie || undefined,
+                manholeClass: w.wlazKlasa || undefined,
+                coverType: w.pokrywaTyp || undefined,
+                componentSeq: componentSeq,
+                diameterProfile: profile,
+                transitions: transitions,
+                configSource: w.configSource || 'MANUAL'
+            };
+
+            fetch('/api/learning/cases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(function () {});
+        }
+    } catch (e) {
+        // Cichy błąd — nie blokuje UI
     }
 }
 
@@ -2799,6 +2892,7 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
 
 const dragOverCount = 0; // dla wizualizacji drag & drop
 
+// eslint-disable-next-line prefer-const
 let isBackendOnline = false;
 
 // Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
