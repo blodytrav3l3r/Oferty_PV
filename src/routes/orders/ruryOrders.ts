@@ -468,7 +468,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_rury_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || (authReq.user?.role !== 'admin' && o.userId !== authReq.user?.id)) {
+        if (!o || !canReadDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
