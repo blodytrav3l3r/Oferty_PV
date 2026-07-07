@@ -584,7 +584,7 @@ class PVSalesUI {
                 const isClickable = this.role === 'admin' || this.role === 'pro';
 
                 return `
-                <div class="modern-offer-card" data-offer-id="${offer.id}">
+                <div class="modern-offer-card" data-offer-id="${this.escapeHtml(offer.id)}">
                     <!-- Status Indicator -->
                     <div class="offer-status-indicator ${hasOrder ? 'has-order' : 'no-order'}"></div>
 
@@ -596,17 +596,17 @@ class PVSalesUI {
                                 ${icon}
                             </div>
                             <div class="offer-title-section">
-                                <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
+                                <h3 class="offer-title">${this.escapeHtml(offer.number || offer.title || offer.offerName || 'Oferta bez numeru')}</h3>
                                 <div class="offer-subtitle">
-                                    <span class="offer-client">${clientInfo}</span>
-                                    ${investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${investInfo}</span>` : ''}
-                                    ${creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>` : ''}
-                                    ${userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>` : ''}
+                                    <span class="offer-client">${this.escapeHtml(clientInfo)}</span>
+                                    ${investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${this.escapeHtml(investInfo)}</span>` : ''}
+                                    ${creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${this.escapeHtml(creatorName)}</span>` : ''}
+                                    ${userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${this.escapeHtml(offer.id)}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${this.escapeHtml(userName)}</span>` : ''}
                                 </div>
                             </div>
                             <div class="offer-price-section">
                                 <div class="offer-price">${typeof formatCurrency === 'function' ? formatCurrency(priceVal) : priceVal.toFixed(2) + ' PLN'}</div>
-                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
+                                <div class="offer-meta">${this.escapeHtml(dateStr)} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
                             </div>
                         </div>
 
@@ -624,7 +624,7 @@ class PVSalesUI {
                                 ${
                                     isLocalList
                                         ? `
-                                        <button class="action-btn primary text-btn" data-id="${offer.id}" data-type="${offer.type}" title="Edytuj ofertę">
+                                        <button class="action-btn primary text-btn" data-id="${this.escapeHtml(offer.id)}" data-type="${this.escapeHtml(offer.type)}" title="Edytuj ofertę">
                                             <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
                                         </button>
                                         <button class="action-btn secondary text-btn" data-id="${offer.id}" title="Skopiuj ofertę">

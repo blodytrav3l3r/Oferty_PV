@@ -132,7 +132,7 @@ async function saveOffer() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
                 if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
@@ -514,7 +514,7 @@ async function loadOffer(id) {
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
     if (titleEl)
-        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
+        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${escapeHtml(normalized.number || id)}</span>`;
     if (window.lucide) lucide.createIcons();
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');

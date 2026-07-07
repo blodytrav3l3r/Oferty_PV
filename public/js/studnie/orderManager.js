@@ -3133,7 +3133,7 @@ function renderZleceniaSvgPreview(well) {
 
     if (info) {
         const stats = calcWellStats(well);
-        info.innerHTML = `<strong>${well.name}</strong> — DN${well.dn} — H: ${fmtInt(stats.height)}mm — ${fmtInt(stats.weight)}kg`;
+        info.innerHTML = `<strong>${escapeHtml(well.name)}</strong> — DN${escapeHtml(String(well.dn))} — H: ${fmtInt(stats.height)}mm — ${fmtInt(stats.weight)}kg`;
     }
 }
 

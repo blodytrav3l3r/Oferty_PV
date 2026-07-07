@@ -637,9 +637,9 @@ function renderWellHeaderRow(
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${well.name}</td>
+        <td style="font-weight:700; color:${Number(well.doplata) < 0 ? 'var(--danger)' : Number(well.doplata) > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
-        <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
+        <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${escapeHtml(String(well.dn))}</td>
         ${offerPriceCell}
         <td class="text-right" style="font-weight:800; color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
         ${priceDiffCell}
@@ -677,9 +677,9 @@ function getWellBadges(change, isOrdered, well) {
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
-                title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
+                title="Zamówienie ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
                 style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb),0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb),0.4); display:inline-flex; align-items:center; gap:3px;">
-                <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}
+                <i data-lucide="package" aria-hidden="true"></i> ${escapeHtml(wellOrder.orderNumber)}
             </span>`;
         } else {
             html +=
@@ -1813,7 +1813,7 @@ async function changeOfferUser() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
 
                 if (editingOfferIdStudnie) {
                     saveOfferStudnie();
@@ -1907,7 +1907,7 @@ async function changeOfferUserFromListStudnie(offerId) {
                     editingOfferAssignedUserName = offer.userName;
                     const btnChangeUser = document.getElementById('btn-change-offer-user');
                     if (btnChangeUser)
-                        btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${offer.userName}`;
+                        btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(offer.userName)}`;
                 }
             }
         }
@@ -1998,7 +1998,7 @@ async function saveOfferStudnie() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
             }
         } catch (e) {
             logger.error('offerManager', 'Błąd wyboru opiekuna:', e);

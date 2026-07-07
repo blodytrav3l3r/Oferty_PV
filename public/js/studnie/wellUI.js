@@ -962,10 +962,10 @@ window.renderWellsList = function renderWellsList() {
                         ? getOrderForWellId(w.id, editingOfferIdStudnie)
                         : null;
                 if (wellOrder && wellOrder.orderNumber) {
-                    wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
-                        onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
+                    wellLockBadge = `<span title="Studnia na zamówieniu ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
+                        onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
                         style="font-size:0.55rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
-                        <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
+                        <i data-lucide="package" style="width:10px; height:10px;"></i>${escapeHtml(wellOrder.orderNumber)}
                     </span>`;
                 } else {
                     wellLockBadge =
