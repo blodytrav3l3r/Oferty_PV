@@ -61,10 +61,12 @@ export class KnowledgeBase {
             });
 
             if (existing) {
-                const history = existing.changeHistory
-                    ? JSON.parse(existing.changeHistory)
-                    : [];
-                history.push({ at: now, hitCount: pattern.hitCount, confidence: pattern.confidence });
+                const history = existing.changeHistory ? JSON.parse(existing.changeHistory) : [];
+                history.push({
+                    at: now,
+                    hitCount: pattern.hitCount,
+                    confidence: pattern.confidence
+                });
 
                 await prisma.ai_knowledge_base.update({
                     where: { id: existing.id },
@@ -119,10 +121,7 @@ export class KnowledgeBase {
     /**
      * Lista wzorców wg DN (do rekomendacji).
      */
-    async getPatternsForDn(
-        dn: string,
-        minConfidence: number = 0.3
-    ): Promise<KnowledgePattern[]> {
+    async getPatternsForDn(dn: string, minConfidence: number = 0.3): Promise<KnowledgePattern[]> {
         try {
             const rows = await prisma.ai_knowledge_base.findMany({
                 where: {
@@ -141,9 +140,7 @@ export class KnowledgeBase {
                     dn: r.dn ?? undefined,
                     context: r.context ? JSON.parse(r.context) : undefined,
                     description: r.description ?? undefined,
-                    recommendation: r.recommendation
-                        ? JSON.parse(r.recommendation)
-                        : undefined,
+                    recommendation: r.recommendation ? JSON.parse(r.recommendation) : undefined,
                     hitCount: r.hitCount,
                     confidence: r.confidence,
                     successCount: r.successCount,
@@ -187,11 +184,7 @@ export class KnowledgeBase {
     /**
      * Oznacz rekomendację jako zaakceptowaną/odrzuconą (pasywne — nie wpływa na solver).
      */
-    async decideRecommendation(
-        id: string,
-        accepted: boolean,
-        decidedBy: string
-    ): Promise<void> {
+    async decideRecommendation(id: string, accepted: boolean, decidedBy: string): Promise<void> {
         try {
             await prisma.ai_recommendations.update({
                 where: { id },
@@ -273,18 +266,18 @@ export class KnowledgeBase {
             };
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd getStats: ${e}`);
-        return {
-            total: 0,
-            active: 0,
-            stale: 0,
-            archived: 0,
-            avgConfidence: 0,
-            totalRecommendations: 0,
-            acceptedRecommendations: 0,
-            rejectedRecommendations: 0,
-            byPatternType: {},
-            recentDetected: 0
-        };
+            return {
+                total: 0,
+                active: 0,
+                stale: 0,
+                archived: 0,
+                avgConfidence: 0,
+                totalRecommendations: 0,
+                acceptedRecommendations: 0,
+                rejectedRecommendations: 0,
+                byPatternType: {},
+                recentDetected: 0
+            };
         }
     }
 

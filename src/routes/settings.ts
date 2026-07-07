@@ -22,29 +22,35 @@ router.get('/year-letter', requireAuth, async (_req, res) => {
     }
 });
 
-router.put('/year-letter', requireAuth, requireAdmin, validateData(yearLetterSchema), async (req, res) => {
-    try {
-        const { letter } = req.body;
-
-        const year = new Date().getFullYear();
-        const key = 'year_letter_' + year;
-
+router.put(
+    '/year-letter',
+    requireAuth,
+    requireAdmin,
+    validateData(yearLetterSchema),
+    async (req, res) => {
         try {
-            await prisma.settings.update({
-                where: { key },
-                data: { value: letter.toUpperCase() }
-            });
-        } catch {
-            await prisma.settings.create({
-                data: { key, value: letter.toUpperCase() }
-            });
-        }
+            const { letter } = req.body;
 
-        res.json({ ok: true, letter: letter.toUpperCase(), year });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+            const year = new Date().getFullYear();
+            const key = 'year_letter_' + year;
+
+            try {
+                await prisma.settings.update({
+                    where: { key },
+                    data: { value: letter.toUpperCase() }
+                });
+            } catch {
+                await prisma.settings.create({
+                    data: { key, value: letter.toUpperCase() }
+                });
+            }
+
+            res.json({ ok: true, letter: letter.toUpperCase(), year });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 export default router;

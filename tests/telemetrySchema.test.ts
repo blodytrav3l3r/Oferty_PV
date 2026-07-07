@@ -33,15 +33,9 @@ describe('telemetryConfigSchema', () => {
             rzWlazu: 109.5,
             wellHeight: 4000,
             warehouse: 'KLB',
-            appliedReductions: [
-                { productId: 'P1', componentType: 'redukcja' }
-            ],
-            appliedKonus: [
-                { productId: 'P2', componentType: 'konus' }
-            ],
-            appliedHatches: [
-                { productId: 'P3', componentType: 'właz' }
-            ],
+            appliedReductions: [{ productId: 'P1', componentType: 'redukcja' }],
+            appliedKonus: [{ productId: 'P2', componentType: 'konus' }],
+            appliedHatches: [{ productId: 'P3', componentType: 'właz' }],
             allComponentIds: ['P1', 'P2', 'P3'],
             transitions: [
                 {
@@ -81,9 +75,7 @@ describe('telemetryConfigSchema', () => {
         ['AUTO_JS', 'AUTO_PYTHON', 'MANUAL', 'AI_SUGGEST'].forEach(function (s) {
             expect(telemetryConfigSchema.safeParse({ solverSource: s }).success).toBe(true);
         });
-        expect(
-            telemetryConfigSchema.safeParse({ solverSource: 'HACK' }).success
-        ).toBe(false);
+        expect(telemetryConfigSchema.safeParse({ solverSource: 'HACK' }).success).toBe(false);
     });
 
     it('akceptuje predictionSnapshot jako null', () => {
@@ -170,13 +162,10 @@ describe('telemetryEventSchema', () => {
 describe('telemetryVersionSchema', () => {
     it('wymaga componentType i version', () => {
         expect(
-            telemetryVersionSchema.safeParse({ componentType: 'solver', version: '2.0.0' })
-                .success
+            telemetryVersionSchema.safeParse({ componentType: 'solver', version: '2.0.0' }).success
         ).toBe(true);
-        expect(telemetryVersionSchema.safeParse({ componentType: 'solver' }).success)
-            .toBe(false);
-        expect(telemetryVersionSchema.safeParse({ version: '2.0.0' }).success)
-            .toBe(false);
+        expect(telemetryVersionSchema.safeParse({ componentType: 'solver' }).success).toBe(false);
+        expect(telemetryVersionSchema.safeParse({ version: '2.0.0' }).success).toBe(false);
     });
 
     it('akceptuje componentType z listy', () => {
@@ -208,12 +197,8 @@ describe('telemetryAcceptanceSchema', () => {
             }).success
         ).toBe(true);
 
-        expect(
-            telemetryAcceptanceSchema.safeParse({ accepted: true }).success
-        ).toBe(false);
-        expect(
-            telemetryAcceptanceSchema.safeParse({ telemetryId: 'a1' }).success
-        ).toBe(false);
+        expect(telemetryAcceptanceSchema.safeParse({ accepted: true }).success).toBe(false);
+        expect(telemetryAcceptanceSchema.safeParse({ telemetryId: 'a1' }).success).toBe(false);
     });
 });
 
@@ -235,13 +220,15 @@ describe('telemetry - pasywność', () => {
     });
 
     it('schema akceptuje bardzo duży payload (bez limitu znaków)', () => {
-        const hugeComponents = Array(500).fill(0).map(function (_, i) {
-            return {
-                productId: 'P' + i,
-                componentType: 'krag',
-                dn: '1000'
-            };
-        });
+        const hugeComponents = Array(500)
+            .fill(0)
+            .map(function (_, i) {
+                return {
+                    productId: 'P' + i,
+                    componentType: 'krag',
+                    dn: '1000'
+                };
+            });
         const r = telemetryConfigSchema.safeParse({
             solverSource: 'AUTO_JS',
             allComponentIds: hugeComponents.map(function (c) {

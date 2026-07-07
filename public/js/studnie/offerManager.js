@@ -951,28 +951,64 @@ function renderComponentSubItems(
     let html = '';
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
-    const bd = typeof getItemPriceBreakdown === 'function' ? getItemPriceBreakdown(well, p, true, item) : null;
+    const bd =
+        typeof getItemPriceBreakdown === 'function'
+            ? getItemPriceBreakdown(well, p, true, item)
+            : null;
     if (bd) {
         var pehdLabel = '';
         if (bd.pehd > 0) {
-            if (['dennica', 'styczna'].indexOf(p.componentType) !== -1) pehdLabel = well.wkladkaDennica;
-            else if (['plyta','plyta_redukcyjna','plyta_nastudzienna','stozek','zwienczenie','konus','plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].indexOf(p.componentType) !== -1) pehdLabel = well.wkladkaZwienczenie;
-            else if (['krag','krag_ot','rura'].indexOf(p.componentType) !== -1) pehdLabel = well.wkladkaNadbudowa;
+            if (['dennica', 'styczna'].indexOf(p.componentType) !== -1)
+                pehdLabel = well.wkladkaDennica;
+            else if (
+                [
+                    'plyta',
+                    'plyta_redukcyjna',
+                    'plyta_nastudzienna',
+                    'stozek',
+                    'zwienczenie',
+                    'konus',
+                    'plyta_din',
+                    'plyta_najazdowa',
+                    'plyta_zamykajaca',
+                    'pierscien_odciazajacy'
+                ].indexOf(p.componentType) !== -1
+            )
+                pehdLabel = well.wkladkaZwienczenie;
+            else if (['krag', 'krag_ot', 'rura'].indexOf(p.componentType) !== -1)
+                pehdLabel = well.wkladkaNadbudowa;
         }
         if (bd.pehd > 0 && pehdLabel) {
-            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#0ea5e9;"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' + pehdLabel + '</td><td class="text-right">' + fmt(bd.pehd) + ' PLN</td></tr>';
+            html +=
+                '<tr style="opacity:0.5; font-size:0.65rem; color:#0ea5e9;"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' +
+                pehdLabel +
+                '</td><td class="text-right">' +
+                fmt(bd.pehd) +
+                ' PLN</td></tr>';
         }
         if (bd.malowanieW > 0) {
-            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' + fmt(bd.malowanieW) + ' PLN</td></tr>';
+            html +=
+                '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                fmt(bd.malowanieW) +
+                ' PLN</td></tr>';
         }
         if (bd.malowanieZ > 0) {
-            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' + fmt(bd.malowanieZ) + ' PLN</td></tr>';
+            html +=
+                '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
+                fmt(bd.malowanieZ) +
+                ' PLN</td></tr>';
         }
         if (bd.zelbet > 0) {
-            html += '<tr style="opacity:0.5; font-size:0.65rem; color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' + fmt(bd.zelbet) + ' PLN</td></tr>';
+            html +=
+                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
+                fmt(bd.zelbet) +
+                ' PLN</td></tr>';
         }
         if (bd.nierdzewna > 0) {
-            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#a855f7;"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' + fmt(bd.nierdzewna) + ' PLN</td></tr>';
+            html +=
+                '<tr style="opacity:0.5; font-size:0.65rem; color:#a855f7;"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
+                fmt(bd.nierdzewna) +
+                ' PLN</td></tr>';
         }
     }
 
@@ -1054,16 +1090,27 @@ function renderComponentSubItems(
                 (kineta.frozenPrice != null && window.isPreviewMode
                     ? kineta.frozenPrice
                     : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
-            html += '<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;"><td colspan="3" class="pl-lg">↳ + ' + (kp ? kp.name : 'Kineta') + '</td><td class="text-right">' + fmt(kPrice) + ' PLN</td></tr>';
+            html +=
+                '<tr style="opacity:0.6; font-size:0.7rem; color:#f472b6;"><td colspan="3" class="pl-lg">↳ + ' +
+                (kp ? kp.name : 'Kineta') +
+                '</td><td class="text-right">' +
+                fmt(kPrice) +
+                ' PLN</td></tr>';
 
             if (kp && typeof getItemPriceBreakdown === 'function') {
                 var kBd = getItemPriceBreakdown(well, kp, true, kineta);
                 var kQ = kineta.quantity || 1;
                 if (kBd.malowanieW > 0) {
-                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' + fmt(kBd.malowanieW * kQ) + ' PLN</td></tr>';
+                    html +=
+                        '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                        fmt(kBd.malowanieW * kQ) +
+                        ' PLN</td></tr>';
                 }
                 if (kBd.malowanieZ > 0) {
-                    html += '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' + fmt(kBd.malowanieZ * kQ) + ' PLN</td></tr>';
+                    html +=
+                        '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
+                        fmt(kBd.malowanieZ * kQ) +
+                        ' PLN</td></tr>';
                 }
             }
         }
@@ -1123,35 +1170,93 @@ function renderComponentSubItems(
                 var precoCalc = calcPrecoPricing(well);
                 if (precoCalc && precoCalc.suma > 0) {
                     if (precoCalc.bazowa > 0 && precoCalc.kinetaGlowna) {
-                        var dnParts = precoCalc.kinetaGlowna.dn.map(function(d) { return 'DN' + d; });
-                        var etyParts = precoCalc.kinetaGlowna.etykiety.map(function(e) { return '[' + e + ']'; });
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' + dnParts.join(' / ') + ') ' + etyParts.join(' / ') + '</td><td class="text-right">' + fmt(precoCalc.bazowa * precoMult) + ' PLN</td></tr>';
+                        var dnParts = precoCalc.kinetaGlowna.dn.map(function (d) {
+                            return 'DN' + d;
+                        });
+                        var etyParts = precoCalc.kinetaGlowna.etykiety.map(function (e) {
+                            return '[' + e + ']';
+                        });
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
+                            dnParts.join(' / ') +
+                            ') ' +
+                            etyParts.join(' / ') +
+                            '</td><td class="text-right">' +
+                            fmt(precoCalc.bazowa * precoMult) +
+                            ' PLN</td></tr>';
                     }
                     if (precoCalc.skrzynki && precoCalc.skrzynki.suma > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' + precoCalc.skrzynki.ilosc + ' × ' + fmt(precoCalc.skrzynki.cenaSzt) + ' PLN)</td><td class="text-right">' + fmt(precoCalc.skrzynki.suma * precoMult) + ' PLN</td></tr>';
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
+                            precoCalc.skrzynki.ilosc +
+                            ' × ' +
+                            fmt(precoCalc.skrzynki.cenaSzt) +
+                            ' PLN)</td><td class="text-right">' +
+                            fmt(precoCalc.skrzynki.suma * precoMult) +
+                            ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekKineta > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' + fmt(precoCalc.spadekKineta * precoMult) + ' PLN</td></tr>';
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
+                            fmt(precoCalc.spadekKineta * precoMult) +
+                            ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekMufa > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' + fmt(precoCalc.spadekMufa * precoMult) + ' PLN</td></tr>';
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
+                            fmt(precoCalc.spadekMufa * precoMult) +
+                            ' PLN</td></tr>';
                     }
                     if (precoCalc.uniesienie > 0) {
-                        var mm = precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0 ? precoCalc.uniesieniaSzczegoly[0].mm : '';
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + uniesienie' + (mm ? ' (' + mm + ' mm)' : '') + '</td><td class="text-right">' + fmt(precoCalc.uniesienie * precoMult) + ' PLN</td></tr>';
+                        var mm =
+                            precoCalc.uniesieniaSzczegoly &&
+                            precoCalc.uniesieniaSzczegoly.length > 0
+                                ? precoCalc.uniesieniaSzczegoly[0].mm
+                                : '';
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + uniesienie' +
+                            (mm ? ' (' + mm + ' mm)' : '') +
+                            '</td><td class="text-right">' +
+                            fmt(precoCalc.uniesienie * precoMult) +
+                            ' PLN</td></tr>';
                     }
                     if (precoCalc.redukcja > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + redukcja' + (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') + '</td><td class="text-right">' + fmt(precoCalc.redukcja * precoMult) + ' PLN</td></tr>';
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + redukcja' +
+                            (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') +
+                            '</td><td class="text-right">' +
+                            fmt(precoCalc.redukcja * precoMult) +
+                            ' PLN</td></tr>';
                     }
                     if (precoCalc.dodWloty && precoCalc.dodWloty.length > 0) {
                         for (var dwi = 0; dwi < precoCalc.dodWloty.length; dwi++) {
                             var dw = precoCalc.dodWloty[dwi];
-                            var dwTyp = dw.typ === 'kaskada' ? 'kaskada' : dw.typ === 'sciana' ? 'ściana' : dw.typ === 'doplyw' ? 'dopływ' : (dw.typ || '');
-                            html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' + dw.dn + (dwTyp ? ' (' + dwTyp + ')' : '') + ' [' + (dw.label || '') + ']</td><td class="text-right">' + fmt(dw.cena * precoMult) + ' PLN</td></tr>';
+                            var dwTyp =
+                                dw.typ === 'kaskada'
+                                    ? 'kaskada'
+                                    : dw.typ === 'sciana'
+                                      ? 'ściana'
+                                      : dw.typ === 'doplyw'
+                                        ? 'dopływ'
+                                        : dw.typ || '';
+                            html +=
+                                '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
+                                dw.dn +
+                                (dwTyp ? ' (' + dwTyp + ')' : '') +
+                                ' [' +
+                                (dw.label || '') +
+                                ']</td><td class="text-right">' +
+                                fmt(dw.cena * precoMult) +
+                                ' PLN</td></tr>';
                         }
                     }
                     if (precoCalc.pelnaWysokosc && precoCalc.pelnaWysokosc.cena > 0) {
-                        html += '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' + precoCalc.pelnaWysokosc.metry.toFixed(2) + ' m)</td><td class="text-right">' + fmt(precoCalc.pelnaWysokosc.cena * precoMult) + ' PLN</td></tr>';
+                        html +=
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
+                            precoCalc.pelnaWysokosc.metry.toFixed(2) +
+                            ' m)</td><td class="text-right">' +
+                            fmt(precoCalc.pelnaWysokosc.cena * precoMult) +
+                            ' PLN</td></tr>';
                     }
                 }
             }
@@ -1864,48 +1969,6 @@ async function saveOfferStudnie() {
         totalWeight += stats.weight;
     });
 
-    // --- TELEMETRIA: Pętla Sprzężenia Zwrotnego ---
-    // Znajdź pierwszą studnię która została zmieniona z AUTO_AI na MANUAL i nie ma zapisanego powodu
-    const unjustifiedWell = wells.find(
-        (w) => w.configSource === 'MANUAL' && w.originalAutoConfig && !w.overrideReason
-    );
-
-    if (unjustifiedWell) {
-        await showTelemetryPopup(unjustifiedWell, async (reason) => {
-            unjustifiedWell.overrideReason = reason;
-
-            // Wyślij log telemetryczny na CITO w tle do nowej tabeli SQLite
-            try {
-                await fetch(`http://${window.location.hostname}:8000/api/v1/telemetry/override`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        originalConfig: unjustifiedWell.originalAutoConfig,
-                        finalConfig: unjustifiedWell.config,
-                        overrideReason: reason,
-                        wellParams: {
-                            dn: unjustifiedWell.dn,
-                            target_height_mm:
-                                unjustifiedWell.rzednaWlazu && unjustifiedWell.rzednaDna != null
-                                    ? Math.round(
-                                          (unjustifiedWell.rzednaWlazu -
-                                              (unjustifiedWell.rzednaDna || 0)) *
-                                              1000
-                                      )
-                                    : 0,
-                            use_reduction: unjustifiedWell.redukcjaDN1000 || false,
-                            psia_buda: unjustifiedWell.psiaBuda || false,
-                            warehouse: unjustifiedWell.magazyn === 'Włocławek' ? 'WL' : 'KLB',
-                            transition_count: (unjustifiedWell.przejscia || []).length
-                        }
-                    })
-                });
-            } catch (e) {
-                logger.error('offerManager', 'Błąd wysyłki telemetrii:', e);
-            }
-        });
-        isSavingOffer = false;
-    }
     // --- KONIEC TELEMETRII ---
 
     isSavingOffer = true;
@@ -1975,7 +2038,7 @@ async function saveOfferStudnie() {
     }
 
     // Przygotuj wells z obliczonymi cenami dla backendu (PDF/Word/XLSX export)
-    const productMap = new Map(studnieProducts.map(p => [p.id, p]));
+    const productMap = new Map(studnieProducts.map((p) => [p.id, p]));
     const wellsForExport = wells.map((well) => {
         const stats = calcWellStats(well);
         const wellTransportCost =
@@ -1984,16 +2047,20 @@ async function saveOfferStudnie() {
                 : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
-        const discountKey = well.dn === 'styczna' ? 'styczne' : (well.dn || '');
-        const activeDiscounts = typeof getWellActiveDiscounts === 'function'
-            ? getWellActiveDiscounts(well)
-            : (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {});
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn || '';
+        const activeDiscounts =
+            typeof getWellActiveDiscounts === 'function'
+                ? getWellActiveDiscounts(well)
+                : typeof wellDiscounts !== 'undefined'
+                  ? wellDiscounts
+                  : {};
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0, preco: 0 };
         const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
         const precoMult = 1 - (disc.preco || 0) / 100;
         const assignedPrzejscia =
             typeof calculateAssignedPrzejscia === 'function'
-                ? calculateAssignedPrzejscia(well) : {};
+                ? calculateAssignedPrzejscia(well)
+                : {};
         return {
             name: well.name,
             dn: well.dn,
@@ -2013,42 +2080,53 @@ async function saveOfferStudnie() {
                     return { ...item, _xskip: true, _xp: 0 };
                 }
                 const isDennica = ['dennica', 'styczna'].includes(p.componentType);
-                const hasKineta = p.componentType === 'dennica' && well.config.some(c => {
-                    const kp = productMap.get(c.productId);
-                    return kp && kp.componentType === 'kineta';
-                });
+                const hasKineta =
+                    p.componentType === 'dennica' &&
+                    well.config.some((c) => {
+                        const kp = productMap.get(c.productId);
+                        return kp && kp.componentType === 'kineta';
+                    });
                 const myPrzejscia = assignedPrzejscia[index] || [];
                 let hasSurcharge = hasKineta || myPrzejscia.length > 0;
                 if (!hasSurcharge && typeof getItemPriceBreakdown === 'function') {
                     const bd = getItemPriceBreakdown(well, p, false, item);
-                    hasSurcharge = bd.pehd > 0 || bd.malowanieW > 0 || bd.malowanieZ > 0 || bd.zelbet > 0 || bd.nierdzewna > 0;
+                    hasSurcharge =
+                        bd.pehd > 0 ||
+                        bd.malowanieW > 0 ||
+                        bd.malowanieZ > 0 ||
+                        bd.zelbet > 0 ||
+                        bd.nierdzewna > 0;
                 }
                 if (!hasSurcharge && typeof calculatePrecoAllocationForItem === 'function') {
                     const pa = calculatePrecoAllocationForItem(well, index);
                     if (pa.hasPreco && pa.allocatedCost > 0) hasSurcharge = true;
                 }
                 if (hasSurcharge) {
-                    let basePrice = typeof getItemAssessedPrice === 'function'
-                        ? getItemAssessedPrice(well, p, true, item)
-                        : (p.price || 0);
+                    let basePrice =
+                        typeof getItemAssessedPrice === 'function'
+                            ? getItemAssessedPrice(well, p, true, item)
+                            : p.price || 0;
                     if (p.componentType === 'dennica') {
-                        const ki = well.config.find(c => {
+                        const ki = well.config.find((c) => {
                             const kp = productMap.get(c.productId);
                             return kp && kp.componentType === 'kineta';
                         });
                         if (ki) {
                             const kp = productMap.get(ki.productId);
-                            const kPrice = typeof getItemAssessedPrice === 'function'
-                                ? getItemAssessedPrice(well, kp, true, ki) : 0;
+                            const kPrice =
+                                typeof getItemAssessedPrice === 'function'
+                                    ? getItemAssessedPrice(well, kp, true, ki)
+                                    : 0;
                             basePrice += kPrice;
                         }
                     }
                     for (const prz of myPrzejscia) {
                         const pp = productMap.get(prz.productId);
                         if (!pp) continue;
-                        basePrice += (pp.price || 0) * nadbudowaMult
-                            + (prz._drillingBasePrice || 0) * nadbudowaMult
-                            + (parseFloat(prz.doplata) || 0);
+                        basePrice +=
+                            (pp.price || 0) * nadbudowaMult +
+                            (prz._drillingBasePrice || 0) * nadbudowaMult +
+                            (parseFloat(prz.doplata) || 0);
                     }
                     if (typeof calculatePrecoAllocationForItem === 'function') {
                         const pa = calculatePrecoAllocationForItem(well, index);
@@ -2058,7 +2136,7 @@ async function saveOfferStudnie() {
                     }
                     return { ...item, _xp: basePrice };
                 }
-                const discountPct = isDennica ? (disc.dennica || 0) : (disc.nadbudowa || 0);
+                const discountPct = isDennica ? disc.dennica || 0 : disc.nadbudowa || 0;
                 return { ...item, _xp: p.price || 0, _xd: discountPct };
             }),
             przejscia: well.przejscia
@@ -2156,80 +2234,29 @@ async function saveOfferStudnie() {
 }
 
 /**
- * Pasywne uczenie — wysyła konfiguracje studni do backendu ML.
+ * Pasywne uczenie — wysyła konfiguracje studni do Express (/api/telemetry/ai/config).
  * Fire-and-forget: nie blokuje UI, nie wymaga interakcji użytkownika.
  * @param {Array} wellsArr - tablica studni
  * @param {string} signalType - 'OFFER_SAVE' lub 'ORDER_CONFIRM'
  */
 function _sendAcceptanceTelemetry(wellsArr, signalType) {
-    try {
-        const payload = {
-            signalType: signalType,
-            wells: (wellsArr || [])
-                .map((w) => {
-                    const rzDna = w.rzednaDna != null ? w.rzednaDna : 0;
-                    const targetH =
-                        w.rzednaWlazu != null && w.rzednaWlazu > rzDna
-                            ? Math.round((w.rzednaWlazu - rzDna) * 1000)
-                            : 0;
-                    return {
-                        dn: w.dn,
-                        targetHeightMm: targetH,
-                        configSource: w.configSource || 'MANUAL',
-                        config: w.config || []
-                    };
-                })
-                .filter((w) => w.config.length > 0)
-        };
-
-        if (payload.wells.length === 0) return;
-
-        fetch(`http://${window.location.hostname}:8000/api/v1/telemetry/acceptance`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).catch(() => {}); // Cichy błąd — nie przeszkadzamy użytkownikowi
-    } catch (e) {
-        // Nigdy nie powinno wstrzymać UI
-    }
-}
-
-function showTelemetryPopup(well, callback) {
-    return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.style.zIndex = '99999';
-        overlay.innerHTML = `
-        <div class="modal" style="max-width:500px; padding:1.5rem;">
-            <h3 style="color:var(--warn); font-weight:700; margin-bottom:0.5rem;"><i data-lucide="bot"></i> Pętla Sprzężenia AI</h3>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">
-                Zauważyliśmy, że w studni <strong>${well.name}</strong> odrzuciłeś autokonfigurację wygenerowaną przez system i ręcznie ułożyłeś własne elementy.
-                <br/><br/>
-                Wybierz powód z listy, by pomóc algorytmowi uczyć się na Twoim doświadczeniu!
-            </p>
-            <div style="margin-bottom:1.5rem;">
-                <select id="telemetry-reason" class="ui-input" style="width:100%; font-size:0.9rem;">
-                    <option value="Błąd algorytmu - kolizja łączeń itp." selected>Błąd algorytmu - kolizja łączeń itp.</option>
-                    <option value="Optymalizacja pod względem produkcji">Optymalizacja pod względem produkcji</option>
-                    <option value="Optymalizacja wysokości dennicy">Optymalizacja wysokości dennicy</option>
-                    <option value="Inne powody własne">Inne powody własne</option>
-                </select>
-            </div>
-            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-                <button class="btn btn-primary" id="btn-telemetry-confirm">Wyślij powód i zapisz dokument</button>
-            </div>
-        </div>`;
-
-        document.body.appendChild(overlay);
-
-        document.getElementById('btn-telemetry-confirm').onclick = () => {
-            const r = document.getElementById('telemetry-reason').value;
-            overlay.remove();
-            callback(r);
-            resolve();
-        };
+    if (!Array.isArray(wellsArr) || wellsArr.length === 0) return;
+    if (typeof window.telemetryRecordConfig !== 'function') return;
+    wellsArr.forEach(function (w) {
+        if (!w.config || w.config.length === 0) return;
+        try {
+            window.telemetryRecordConfig({
+                well: w,
+                configItems: w.config || [],
+                solverSource: w.configSource || 'MANUAL',
+                wasAccepted: signalType === 'ORDER_CONFIRM',
+                computationMs: 0,
+                iterationCount: 0,
+                checkedVariants: 0
+            });
+        } catch (e) {
+            // silent
+        }
     });
 }
 

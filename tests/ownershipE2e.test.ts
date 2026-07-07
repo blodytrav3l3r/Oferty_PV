@@ -139,13 +139,15 @@ describe('Ownership E2E — offers routes', () => {
             const res = await request(app)
                 .post('/api/offers')
                 .send({
-                    data: [{
-                        id: 'o-new',
-                        userId: 'other-user',
-                        clientId: 'client-1',
-                        status: 'active',
-                        items: []
-                    }]
+                    data: [
+                        {
+                            id: 'o-new',
+                            userId: 'other-user',
+                            clientId: 'client-1',
+                            status: 'active',
+                            items: []
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(403);
@@ -161,12 +163,14 @@ describe('Ownership E2E — offers routes', () => {
             const res = await request(app)
                 .post('/api/offers')
                 .send({
-                    data: [{
-                        id: 'o-new',
-                        clientId: 'client-1',
-                        status: 'active',
-                        items: []
-                    }]
+                    data: [
+                        {
+                            id: 'o-new',
+                            clientId: 'client-1',
+                            status: 'active',
+                            items: []
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(200);
@@ -185,13 +189,15 @@ describe('Ownership E2E — offers routes', () => {
             const res = await request(app)
                 .post('/api/offers')
                 .send({
-                    data: [{
-                        id: 'o-new',
-                        userId: 'sub-user',
-                        clientId: 'client-1',
-                        status: 'active',
-                        items: []
-                    }]
+                    data: [
+                        {
+                            id: 'o-new',
+                            userId: 'sub-user',
+                            clientId: 'client-1',
+                            status: 'active',
+                            items: []
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(200);
@@ -210,13 +216,15 @@ describe('Ownership E2E — offers routes', () => {
             const res = await request(app)
                 .post('/api/offers')
                 .send({
-                    data: [{
-                        id: 'o-new',
-                        userId: 'sub-user',
-                        clientId: 'client-1',
-                        status: 'active',
-                        items: []
-                    }]
+                    data: [
+                        {
+                            id: 'o-new',
+                            userId: 'sub-user',
+                            clientId: 'client-1',
+                            status: 'active',
+                            items: []
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(200);
@@ -233,13 +241,15 @@ describe('Ownership E2E — offers routes', () => {
             const res = await request(app)
                 .post('/api/offers')
                 .send({
-                    data: [{
-                        id: 'o-new',
-                        userId: 'random-user',
-                        clientId: 'client-1',
-                        status: 'active',
-                        items: []
-                    }]
+                    data: [
+                        {
+                            id: 'o-new',
+                            userId: 'random-user',
+                            clientId: 'client-1',
+                            status: 'active',
+                            items: []
+                        }
+                    ]
                 });
 
             expect(res.statusCode).toBe(403);

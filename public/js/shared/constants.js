@@ -63,11 +63,15 @@
 
         if (lines.length === 0) return { totalTrips: 0, saved: 0 };
 
-        var totalDedicated = lines.reduce(function (s, v) { return s + v; }, 0);
+        var totalDedicated = lines.reduce(function (s, v) {
+            return s + v;
+        }, 0);
         var saved = 0;
 
         if (partials.length > 1) {
-            partials.sort(function (a, b) { return b.weight - a.weight; });
+            partials.sort(function (a, b) {
+                return b.weight - a.weight;
+            });
             var used = new Set();
             for (var i = 0; i < partials.length; i++) {
                 if (used.has(i)) continue;

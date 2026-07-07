@@ -31,7 +31,7 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         order_counters: {
-            findUnique: jest.fn(),
+            findUnique: jest.fn()
         },
         users: {
             findMany: jest.fn(),
@@ -83,7 +83,13 @@ describe('Users Routes', () => {
         // For tests that need specific users
         app.use((req: any, _res: any, next) => {
             if (req.headers['x-user-role']) {
-                req.user = { id: req.headers['x-user-id'], role: req.headers['x-user-role'], subUsers: req.headers['x-subusers'] ? JSON.parse(req.headers['x-subusers'] as string) : [] };
+                req.user = {
+                    id: req.headers['x-user-id'],
+                    role: req.headers['x-user-role'],
+                    subUsers: req.headers['x-subusers']
+                        ? JSON.parse(req.headers['x-subusers'] as string)
+                        : []
+                };
             }
             next();
         });
@@ -93,8 +99,12 @@ describe('Users Routes', () => {
     describe('GET /api/users', () => {
         it('powinien zwrócić listę użytkowników dla admina oraz wyliczyć nextOrderNumber', async () => {
             (prisma.users.findMany as jest.Mock).mockResolvedValue(mockUsers);
-            (prisma.order_counters.findUnique as jest.Mock).mockResolvedValueOnce({ lastNumber: 2 }); // Admin counter
-            (prisma.order_counters.findUnique as jest.Mock).mockRejectedValueOnce(new Error('no counter')); // User counter fallback
+            (prisma.order_counters.findUnique as jest.Mock).mockResolvedValueOnce({
+                lastNumber: 2
+            }); // Admin counter
+            (prisma.order_counters.findUnique as jest.Mock).mockRejectedValueOnce(
+                new Error('no counter')
+            ); // User counter fallback
 
             const res = await request(app)
                 .get('/api/users')
@@ -134,13 +144,15 @@ describe('Users Routes', () => {
 
             expect(res.statusCode).toBe(200);
             expect(bcrypt.hash).toHaveBeenCalledWith('newpassword', 10);
-            expect(prisma.users.update).toHaveBeenCalledWith(expect.objectContaining({
-                where: { id: 'user-id' },
-                data: expect.objectContaining({
-                    firstName: 'NewName',
-                    subUsers: '["some-id"]'
+            expect(prisma.users.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: 'user-id' },
+                    data: expect.objectContaining({
+                        firstName: 'NewName',
+                        subUsers: '["some-id"]'
+                    })
                 })
-            }));
+            );
         });
 
         it('powinien zwrócić 409 jeśli username istnieje', async () => {

@@ -230,8 +230,6 @@ async function savePriceList() {
     }
 }
 
-
-
 /* ===== MODAL DODAWANIA PRODUKTU ===== */
 
 function showAddProductModal() {
@@ -261,7 +259,10 @@ function showAddProductModal() {
 }
 
 function addProduct() {
-    const g = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const g = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value : '';
+    };
     const id = g('np-id').trim();
     const name = g('np-name').trim();
     const price = parseFloat(g('np-price'));
@@ -374,13 +375,17 @@ function importRuryFromExcel(event) {
 
                     // Sprawdź wymagane pola
                     if (!product.id || !product.name) {
-                        logger.warn('pricelistUi', `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`);
+                        logger.warn(
+                            'pricelistUi',
+                            `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`
+                        );
                         return null;
                     }
 
                     // Sprawdź duplikaty w pliku importu
                     if (seenIds.has(product.id)) {
-                        logger.warn('pricelistUi', 
+                        logger.warn(
+                            'pricelistUi',
                             `[Import] Wiersz ${index + 2} pominięty: duplikat ID ${product.id}`
                         );
                         return null;
@@ -422,7 +427,9 @@ function importRuryFromExcel(event) {
             updateSaveBtn();
             renderPriceList();
             showToast(
-                'Pomyślnie zaimportowano ' + normalized.length + ' pozycji — kliknij Zapisz by zachować',
+                'Pomyślnie zaimportowano ' +
+                    normalized.length +
+                    ' pozycji — kliknij Zapisz by zachować',
                 'success'
             );
         } catch (err) {

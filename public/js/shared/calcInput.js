@@ -11,8 +11,12 @@
         if (expr === '') return null;
         let pos = 0;
 
-        function peek() { return pos < expr.length ? expr[pos] : '\0'; }
-        function consume() { return pos < expr.length ? expr[pos++] : '\0'; }
+        function peek() {
+            return pos < expr.length ? expr[pos] : '\0';
+        }
+        function consume() {
+            return pos < expr.length ? expr[pos++] : '\0';
+        }
 
         function parseNumber() {
             let start = pos;

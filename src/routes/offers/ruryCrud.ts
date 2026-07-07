@@ -8,12 +8,8 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
-import {
-    OfferMapped
-} from '../../types/models';
-import {
-    offersBatchSchema
-} from '../../validators/offerSchemas';
+import { OfferMapped } from '../../types/models';
+import { offersBatchSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -28,7 +24,7 @@ router.get('/', requireAuth, async (req, res) => {
             where: roleClause
         });
 
-        const offerIds = offers.map(o => o.id);
+        const offerIds = offers.map((o) => o.id);
         const allItemsRaw = await prisma.offer_items_rel.findMany({
             where: { offerId: { in: offerIds } }
         });
@@ -53,10 +49,18 @@ router.get('/', requireAuth, async (req, res) => {
             }));
 
             let ruryHistory: unknown[] = [];
-            try { ruryHistory = JSON.parse(offer.history || '[]'); } catch { ruryHistory = []; }
+            try {
+                ruryHistory = JSON.parse(offer.history || '[]');
+            } catch {
+                ruryHistory = [];
+            }
             let rurySpread: Record<string, unknown> = {};
             if (offer.data) {
-                try { rurySpread = JSON.parse(offer.data); } catch { rurySpread = {}; }
+                try {
+                    rurySpread = JSON.parse(offer.data);
+                } catch {
+                    rurySpread = {};
+                }
             }
 
             mapped.push({
@@ -72,7 +76,7 @@ router.get('/', requireAuth, async (req, res) => {
                 ...rurySpread,
                 items: items,
                 transportCost: offer.transportCost || 0,
-                history: ruryHistory,
+                history: ruryHistory
             });
         }
 
@@ -83,228 +87,248 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const incoming = req.body.data || [req.body];
+router.post(
+    '/',
+    requireAuth,
+    writeOffersLimiter,
+    validateData(offersBatchSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const incoming = req.body.data || [req.body];
 
-        const results: Record<string, unknown>[] = [];
-        for (const o of incoming) {
-            let docId = o.id;
-            if (!docId) docId = uuidv4();
+            const results: Record<string, unknown>[] = [];
+            for (const o of incoming) {
+                let docId = o.id;
+                if (!docId) docId = uuidv4();
 
-            let newHistory: unknown[] = [];
-            const old = await prisma.offers_rel.findUnique({
-                where: { id: docId }
-            });
-
-            let effectiveUserId: string;
-            if (old) {
-                if (!canWriteDoc(authReq.user, old.userId)) {
-                    return res.status(403).json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
-                }
-                effectiveUserId = old.userId || authReq.user?.id || '';
-            } else {
-                const resolved = resolveWriteUserId(authReq.user, o.userId);
-                if (!resolved.allowed) {
-                    return res.status(403).json({ error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika' });
-                }
-                effectiveUserId = resolved.effectiveUserId;
-            }
-
-            if (old) {
-                try {
-                    newHistory = JSON.parse(old.history || '[]');
-                } catch (_e) {}
-                const oldItems = await prisma.offer_items_rel.findMany({
-                    where: { offerId: docId }
+                let newHistory: unknown[] = [];
+                const old = await prisma.offers_rel.findUnique({
+                    where: { id: docId }
                 });
-                const snapshot = {
-                    updatedAt: old.updatedAt || old.createdAt,
-                    state: old.state,
-                    transportCost: old.transportCost,
-                    items: oldItems.map((i) => ({
-                        productId: i.productId,
-                        quantity: i.quantity,
-                        discount: i.discount,
-                        price: i.price
-                    }))
-                };
-                newHistory.unshift(snapshot);
-                if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
 
-                logAudit(
-                    'offer',
-                    docId,
-                    authReq.user?.id || '',
-                    'update',
-                    {
+                let effectiveUserId: string;
+                if (old) {
+                    if (!canWriteDoc(authReq.user, old.userId)) {
+                        return res
+                            .status(403)
+                            .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
+                    }
+                    effectiveUserId = old.userId || authReq.user?.id || '';
+                } else {
+                    const resolved = resolveWriteUserId(authReq.user, o.userId);
+                    if (!resolved.allowed) {
+                        return res
+                            .status(403)
+                            .json({
+                                error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
+                            });
+                    }
+                    effectiveUserId = resolved.effectiveUserId;
+                }
+
+                if (old) {
+                    try {
+                        newHistory = JSON.parse(old.history || '[]');
+                    } catch (_e) {}
+                    const oldItems = await prisma.offer_items_rel.findMany({
+                        where: { offerId: docId }
+                    });
+                    const snapshot = {
+                        updatedAt: old.updatedAt || old.createdAt,
+                        state: old.state,
+                        transportCost: old.transportCost,
+                        items: oldItems.map((i) => ({
+                            productId: i.productId,
+                            quantity: i.quantity,
+                            discount: i.discount,
+                            price: i.price
+                        }))
+                    };
+                    newHistory.unshift(snapshot);
+                    if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
+
+                    logAudit(
+                        'offer',
+                        docId,
+                        authReq.user?.id || '',
+                        'update',
+                        {
+                            state: o.status === 'active' ? 'final' : 'draft',
+                            transportCost: o.transportCost,
+                            items: o.items
+                        },
+                        snapshot
+                    );
+                } else {
+                    logAudit('offer', docId, authReq.user?.id || '', 'create', {
                         state: o.status === 'active' ? 'final' : 'draft',
                         transportCost: o.transportCost,
                         items: o.items
+                    });
+                }
+
+                const state = o.status === 'active' ? 'final' : 'draft';
+                const created = (() => {
+                    const raw = o.createdAt;
+                    if (typeof raw === 'number') return new Date(raw).toISOString();
+                    if (raw instanceof Date) return raw.toISOString();
+                    if (typeof raw === 'string') {
+                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
+                        return raw;
+                    }
+                    return new Date().toISOString();
+                })();
+                const updated = new Date().toISOString();
+                const offerNumber = o.offer_number || o.number || '';
+                const dataStr = JSON.stringify(o);
+
+                await prisma.offers_rel.upsert({
+                    where: { id: docId },
+                    create: {
+                        id: docId,
+                        userId: effectiveUserId,
+                        offer_number: offerNumber,
+                        state: state,
+                        createdAt: created,
+                        updatedAt: updated,
+                        transportCost: o.transportCost || 0,
+                        history: JSON.stringify(newHistory),
+                        data: dataStr
                     },
-                    snapshot
-                );
-            } else {
-                logAudit('offer', docId, authReq.user?.id || '', 'create', {
-                    state: o.status === 'active' ? 'final' : 'draft',
-                    transportCost: o.transportCost,
-                    items: o.items
-                });
-            }
-
-            const state = o.status === 'active' ? 'final' : 'draft';
-            const created = (() => {
-                const raw = o.createdAt;
-                if (typeof raw === 'number') return new Date(raw).toISOString();
-                if (raw instanceof Date) return raw.toISOString();
-                if (typeof raw === 'string') {
-                    if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                    return raw;
-                }
-                return new Date().toISOString();
-            })();
-            const updated = new Date().toISOString();
-            const offerNumber = o.offer_number || o.number || '';
-            const dataStr = JSON.stringify(o);
-
-            await prisma.offers_rel.upsert({
-                where: { id: docId },
-                create: {
-                    id: docId,
-                    userId: effectiveUserId,
-                    offer_number: offerNumber,
-                    state: state,
-                    createdAt: created,
-                    updatedAt: updated,
-                    transportCost: o.transportCost || 0,
-                    history: JSON.stringify(newHistory),
-                    data: dataStr
-                },
-                update: {
-                    userId: effectiveUserId,
-                    offer_number: offerNumber,
-                    state: state,
-                    updatedAt: updated,
-                    transportCost: o.transportCost || 0,
-                    history: JSON.stringify(newHistory),
-                    data: dataStr
-                }
-            });
-
-            await prisma.offer_items_rel.deleteMany({
-                where: { offerId: docId }
-            });
-            const items = o.items || [];
-            for (const item of items) {
-                const itemId = item.id || uuidv4();
-                const itemPrice = item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
-                await prisma.offer_items_rel.create({
-                    data: {
-                        id: itemId,
-                        offerId: docId,
-                        productId: item.productId,
-                        quantity: item.quantity || 0,
-                        discount: item.discount || 0,
-                        price: itemPrice
+                    update: {
+                        userId: effectiveUserId,
+                        offer_number: offerNumber,
+                        state: state,
+                        updatedAt: updated,
+                        transportCost: o.transportCost || 0,
+                        history: JSON.stringify(newHistory),
+                        data: dataStr
                     }
                 });
-            }
-            results.push({ id: docId, ok: true });
-        }
 
-        logger.info(
-            'Offers',
-            `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`
-        );
-        res.json({ ok: true, results });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        logger.error('Offers', 'Błąd POST offers', message);
-        res.status(500).json({ error: message });
+                await prisma.offer_items_rel.deleteMany({
+                    where: { offerId: docId }
+                });
+                const items = o.items || [];
+                for (const item of items) {
+                    const itemId = item.id || uuidv4();
+                    const itemPrice =
+                        item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
+                    await prisma.offer_items_rel.create({
+                        data: {
+                            id: itemId,
+                            offerId: docId,
+                            productId: item.productId,
+                            quantity: item.quantity || 0,
+                            discount: item.discount || 0,
+                            price: itemPrice
+                        }
+                    });
+                }
+                results.push({ id: docId, ok: true });
+            }
+
+            logger.info(
+                'Offers',
+                `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`
+            );
+            res.json({ ok: true, results });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('Offers', 'Błąd POST offers', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
-router.put('/', requireAuth, writeOffersLimiter, validateData(offersBatchSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const docId = req.body.id;
-        if (docId) {
-            const existing = await prisma.offers_rel.findUnique({
-                where: { id: docId },
-                select: { userId: true }
-            });
-            if (existing && !canWriteDoc(authReq.user, existing.userId)) {
-                return res.status(403).json({ error: 'Forbidden' });
-            }
-        }
-
-        const incoming = req.body.data || [];
-
-        for (const o of incoming) {
-            let docId = o.id;
-            if (!docId) {
-                docId = crypto.randomUUID();
+router.put(
+    '/',
+    requireAuth,
+    writeOffersLimiter,
+    validateData(offersBatchSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const docId = req.body.id;
+            if (docId) {
+                const existing = await prisma.offers_rel.findUnique({
+                    where: { id: docId },
+                    select: { userId: true }
+                });
+                if (existing && !canWriteDoc(authReq.user, existing.userId)) {
+                    return res.status(403).json({ error: 'Forbidden' });
+                }
             }
 
-            const state = o.status === 'active' ? 'final' : 'draft';
-            const created = (() => {
-                const raw = o.createdAt;
-                if (typeof raw === 'number') return new Date(raw).toISOString();
-                if (raw instanceof Date) return raw.toISOString();
-                if (typeof raw === 'string') {
-                    if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                    return raw;
-                }
-                return new Date().toISOString();
-            })();
-            const dataStr = JSON.stringify(o);
+            const incoming = req.body.data || [];
 
-            await prisma.offers_rel.upsert({
-                where: { id: docId },
-                create: {
-                    id: docId,
-                    userId: authReq.user?.id,
-                    state: state,
-                    createdAt: created,
-                    transportCost: o.transportCost || 0,
-                    data: dataStr
-                },
-                update: {
-                    userId: authReq.user?.id,
-                    state: state,
-                    createdAt: created,
-                    transportCost: o.transportCost || 0,
-                    data: dataStr
+            for (const o of incoming) {
+                let docId = o.id;
+                if (!docId) {
+                    docId = crypto.randomUUID();
                 }
-            });
 
-            await prisma.offer_items_rel.deleteMany({
-                where: { offerId: docId }
-            });
-            const items = o.items || [];
-            for (const item of items) {
-                const itemId = item.id || uuidv4();
-                const itemPrice = item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
-                await prisma.offer_items_rel.create({
-                    data: {
-                        id: itemId,
-                        offerId: docId,
-                        productId: item.productId,
-                        quantity: item.quantity || 0,
-                        discount: item.discount || 0,
-                        price: itemPrice
+                const state = o.status === 'active' ? 'final' : 'draft';
+                const created = (() => {
+                    const raw = o.createdAt;
+                    if (typeof raw === 'number') return new Date(raw).toISOString();
+                    if (raw instanceof Date) return raw.toISOString();
+                    if (typeof raw === 'string') {
+                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
+                        return raw;
+                    }
+                    return new Date().toISOString();
+                })();
+                const dataStr = JSON.stringify(o);
+
+                await prisma.offers_rel.upsert({
+                    where: { id: docId },
+                    create: {
+                        id: docId,
+                        userId: authReq.user?.id,
+                        state: state,
+                        createdAt: created,
+                        transportCost: o.transportCost || 0,
+                        data: dataStr
+                    },
+                    update: {
+                        userId: authReq.user?.id,
+                        state: state,
+                        createdAt: created,
+                        transportCost: o.transportCost || 0,
+                        data: dataStr
                     }
                 });
-            }
-        }
 
-        res.json({ ok: true });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+                await prisma.offer_items_rel.deleteMany({
+                    where: { offerId: docId }
+                });
+                const items = o.items || [];
+                for (const item of items) {
+                    const itemId = item.id || uuidv4();
+                    const itemPrice =
+                        item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
+                    await prisma.offer_items_rel.create({
+                        data: {
+                            id: itemId,
+                            offerId: docId,
+                            productId: item.productId,
+                            quantity: item.quantity || 0,
+                            discount: item.discount || 0,
+                            price: itemPrice
+                        }
+                    });
+                }
+            }
+
+            res.json({ ok: true });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

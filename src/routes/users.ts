@@ -13,7 +13,10 @@ const adminUsersLimiter = ADMIN_USERS_LIMITER;
 /**
  * POMOCNICZE: Pobieranie licznika zamówień
  */
-async function getNextOrderNumber(user: { id: string; orderStartNumber?: number | null; symbol?: string | null }, year: number): Promise<string> {
+async function getNextOrderNumber(
+    user: { id: string; orderStartNumber?: number | null; symbol?: string | null },
+    year: number
+): Promise<string> {
     const startNum = user.orderStartNumber || 1;
     const symbol = user.symbol || '??';
 
@@ -72,87 +75,94 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
 });
 
 // PUT /api/users/:id (tylko administrator)
-router.put('/:id', requireAuth, requireAdmin, adminUsersLimiter, validateData(userUpdateSchema), async (req, res) => {
-    const {
-        username,
-        password,
-        role,
-        firstName,
-        lastName,
-        phone,
-        email,
-        symbol,
-        subUsers,
-        orderStartNumber,
-        productionOrderStartNumber
-    } = req.body;
-    const userId = req.params.id;
+router.put(
+    '/:id',
+    requireAuth,
+    requireAdmin,
+    adminUsersLimiter,
+    validateData(userUpdateSchema),
+    async (req, res) => {
+        const {
+            username,
+            password,
+            role,
+            firstName,
+            lastName,
+            phone,
+            email,
+            symbol,
+            subUsers,
+            orderStartNumber,
+            productionOrderStartNumber
+        } = req.body;
+        const userId = req.params.id;
 
-    try {
-        const user = await prisma.users.findUnique({
-            where: { id: userId }
-        });
-        if (!user) {
-            return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
-        }
-
-        if (username && username !== user.username) {
-            const existing = await prisma.users.findUnique({
-                where: { username }
+        try {
+            const user = await prisma.users.findUnique({
+                where: { id: userId }
             });
-            if (existing) return res.status(409).json({ error: 'Login zajęty' });
-        }
-
-        let newPassword = user.password;
-        if (password) {
-            newPassword = await bcrypt.hash(password, 10);
-        }
-
-        const newRole = role || user.role;
-        const newFirstName = firstName !== undefined ? firstName : user.firstName;
-        const newLastName = lastName !== undefined ? lastName : user.lastName;
-        const newPhone = phone !== undefined ? phone : user.phone;
-        const newEmail = email !== undefined ? email : user.email;
-        const newSymbol = symbol !== undefined ? symbol : user.symbol;
-        const newOrderStartNumber =
-            orderStartNumber !== undefined
-                ? parseInt(orderStartNumber) || 1
-                : user.orderStartNumber;
-        const newProdOrderStartNumber =
-            productionOrderStartNumber !== undefined
-                ? parseInt(productionOrderStartNumber) || 1
-                : user.productionOrderStartNumber || 1;
-
-        const newSubUsersString =
-            subUsers !== undefined
-                ? Array.isArray(subUsers)
-                    ? JSON.stringify(subUsers)
-                    : '[]'
-                : user.subUsers;
-
-        await prisma.users.update({
-            where: { id: userId },
-            data: {
-                username: username || user.username,
-                password: newPassword,
-                role: newRole,
-                firstName: newFirstName,
-                lastName: newLastName,
-                phone: newPhone,
-                email: newEmail,
-                symbol: newSymbol,
-                subUsers: newSubUsersString,
-                orderStartNumber: newOrderStartNumber,
-                productionOrderStartNumber: newProdOrderStartNumber
+            if (!user) {
+                return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
             }
-        });
 
-        res.json({ ok: true });
-    } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+            if (username && username !== user.username) {
+                const existing = await prisma.users.findUnique({
+                    where: { username }
+                });
+                if (existing) return res.status(409).json({ error: 'Login zajęty' });
+            }
+
+            let newPassword = user.password;
+            if (password) {
+                newPassword = await bcrypt.hash(password, 10);
+            }
+
+            const newRole = role || user.role;
+            const newFirstName = firstName !== undefined ? firstName : user.firstName;
+            const newLastName = lastName !== undefined ? lastName : user.lastName;
+            const newPhone = phone !== undefined ? phone : user.phone;
+            const newEmail = email !== undefined ? email : user.email;
+            const newSymbol = symbol !== undefined ? symbol : user.symbol;
+            const newOrderStartNumber =
+                orderStartNumber !== undefined
+                    ? parseInt(orderStartNumber) || 1
+                    : user.orderStartNumber;
+            const newProdOrderStartNumber =
+                productionOrderStartNumber !== undefined
+                    ? parseInt(productionOrderStartNumber) || 1
+                    : user.productionOrderStartNumber || 1;
+
+            const newSubUsersString =
+                subUsers !== undefined
+                    ? Array.isArray(subUsers)
+                        ? JSON.stringify(subUsers)
+                        : '[]'
+                    : user.subUsers;
+
+            await prisma.users.update({
+                where: { id: userId },
+                data: {
+                    username: username || user.username,
+                    password: newPassword,
+                    role: newRole,
+                    firstName: newFirstName,
+                    lastName: newLastName,
+                    phone: newPhone,
+                    email: newEmail,
+                    symbol: newSymbol,
+                    subUsers: newSubUsersString,
+                    orderStartNumber: newOrderStartNumber,
+                    productionOrderStartNumber: newProdOrderStartNumber
+                }
+            });
+
+            res.json({ ok: true });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // DELETE /api/users/:id (tylko administrator)
 router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, res) => {
@@ -177,7 +187,17 @@ router.get('/for-assignment', requireAuth, async (req, res) => {
     try {
         const users = await prisma.users.findMany();
 
-        const mapUser = (u: { id: string; username: string; role: string; firstName?: string | null; lastName?: string | null; phone?: string | null; email?: string | null; symbol?: string | null; orderStartNumber?: number | null }) => ({
+        const mapUser = (u: {
+            id: string;
+            username: string;
+            role: string;
+            firstName?: string | null;
+            lastName?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            symbol?: string | null;
+            orderStartNumber?: number | null;
+        }) => ({
             id: u.id,
             username: u.username,
             role: u.role,

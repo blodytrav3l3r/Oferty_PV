@@ -16,7 +16,8 @@ function renderOfferSummaryTab() {
     if (dispDate) dispDate.textContent = document.getElementById('offer-date')?.value || '—';
 
     const dispInvest = document.getElementById('offer-disp-invest');
-    if (dispInvest) dispInvest.textContent = document.getElementById('offer-invest-name')?.value || '—';
+    if (dispInvest)
+        dispInvest.textContent = document.getElementById('offer-invest-name')?.value || '—';
 
     const dispTransport = document.getElementById('offer-disp-transport');
     if (dispTransport) {
@@ -59,10 +60,17 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     }
 
     const orderEditModeActive = window.orderEditMode;
-    const orderData = orderEditModeActive && typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
+    const orderData =
+        orderEditModeActive && typeof getCurrentRuryOrder === 'function'
+            ? getCurrentRuryOrder()
+            : null;
     const showPriceComparison = !!(orderData && orderData.originalSnapshot);
     const snapshotByUid = showPriceComparison
-        ? new Map((orderData.originalSnapshot.items || []).filter(si => si.uid).map(si => [si.uid, si]))
+        ? new Map(
+              (orderData.originalSnapshot.items || [])
+                  .filter((si) => si.uid)
+                  .map((si) => [si.uid, si])
+          )
         : null;
 
     const transportDist = calculateTransportDistribution(items, costPerTrip);
@@ -75,7 +83,11 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const snapCostPerTrip = snapKm * snapRate;
         const snapMode = snap.transportMode || 'full';
         const snapItems = snap.items || [];
-        if (snapItems.length > 0 && snapCostPerTrip > 0 && typeof calculateTransportDistribution === 'function') {
+        if (
+            snapItems.length > 0 &&
+            snapCostPerTrip > 0 &&
+            typeof calculateTransportDistribution === 'function'
+        ) {
             const savedMode = currentRuryTransportMode;
             currentRuryTransportMode = snapMode;
             snapTransportDist = calculateTransportDistribution(snapItems, snapCostPerTrip);
@@ -90,13 +102,13 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             const offerOrders = getOrdersForOffer(offerId);
             if (offerOrders.length > 0) {
                 const orderedUids = new Set();
-                offerOrders.forEach(order => {
-                    (order.items || []).forEach(it => {
+                offerOrders.forEach((order) => {
+                    (order.items || []).forEach((it) => {
                         if (it.uid) orderedUids.add(it.uid);
                     });
                 });
                 const total = items.length;
-                const ordered = items.filter(it => it.uid && orderedUids.has(it.uid)).length;
+                const ordered = items.filter((it) => it.uid && orderedUids.has(it.uid)).length;
                 const percent = total > 0 ? Math.round((ordered / total) * 100) : 0;
                 if (ordered > 0) {
                     const color = percent >= 100 ? 'var(--success-hover)' : 'var(--blue-hover)';
@@ -120,7 +132,9 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         }
     }
 
-    let html = progressHtml + `<div class="table-wrap table-wrap-scroll"><table style="width:100%; table-layout:auto;">
+    let html =
+        progressHtml +
+        `<div class="table-wrap table-wrap-scroll"><table style="width:100%; table-layout:auto;">
       <thead>
         <tr>
           <th style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" onchange="toggleAllOfferSummaryForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
@@ -144,7 +158,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
     const { flat } = getSortedRuryItems(items);
     const sortedItems = [];
-    flat.forEach(g => g.entries.forEach(e => sortedItems.push(e)));
+    flat.forEach((g) => g.entries.forEach((e) => sortedItems.push(e)));
 
     const catGroups = {};
 
@@ -183,9 +197,15 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         }
 
         let pName = escapeHtml(item.name);
-        if (item.pehdType === 'PEHD-3MM') pName += ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:#1a1a1a; font-weight:700;">+ PEHD 3mm</span>';
-        if (item.pehdType === 'PEHD-4MM') pName += ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:#1a1a1a; font-weight:700;">+ PEHD 4mm</span>';
-        if (item.autoAdded) pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
+        if (item.pehdType === 'PEHD-3MM')
+            pName +=
+                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:#1a1a1a; font-weight:700;">+ PEHD 3mm</span>';
+        if (item.pehdType === 'PEHD-4MM')
+            pName +=
+                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:#1a1a1a; font-weight:700;">+ PEHD 4mm</span>';
+        if (item.autoAdded)
+            pName +=
+                ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
         if (item.surcharge) {
             const isPos = item.surcharge > 0;
             const color = isPos ? '#34d399' : '#f87171';
@@ -194,7 +214,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
         }
 
-        const isOrdered = (typeof isItemInAnyOrder === 'function') ? isItemInAnyOrder(item.uid) : false;
+        const isOrdered =
+            typeof isItemInAnyOrder === 'function' ? isItemInAnyOrder(item.uid) : false;
         const summDiamRaw = getProductDiameter(item.productId) || 0;
         const summDiamAttr = summDiamRaw > 0 ? `data-diameter="${summDiamRaw}"` : '';
         const summAutoClass = item.autoAdded ? ' offer-summary-auto' : '';
@@ -208,12 +229,14 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         if (snapOfferPrice !== null) {
             const diff = netto - snapOfferPrice;
             const diffSign = diff >= 0 ? '+' : '';
-            const diffColor = diff > 0 ? '#f87171' : (diff < 0 ? '#34d399' : 'var(--text-muted)');
+            const diffColor = diff > 0 ? '#f87171' : diff < 0 ? '#34d399' : 'var(--text-muted)';
             offerCell = `<td style="text-align:right;font-weight:600;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(snapOfferPrice)} PLN</td>`;
             diffCell = `<td style="text-align:right;font-weight:700;color:${diffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${diffSign}${fmt(diff)} PLN</td>`;
         } else if (showPriceComparison) {
-            offerCell = '<td style="text-align:right;color:var(--text-muted);font-weight:600;white-space:nowrap;padding:0.5rem 0.75rem;">—</td>';
-            diffCell = '<td style="text-align:right;color:var(--text-muted);padding:0.5rem 0.75rem;">—</td>';
+            offerCell =
+                '<td style="text-align:right;color:var(--text-muted);font-weight:600;white-space:nowrap;padding:0.5rem 0.75rem;">—</td>';
+            diffCell =
+                '<td style="text-align:right;color:var(--text-muted);padding:0.5rem 0.75rem;">—</td>';
         }
 
         html += `<tr style="border-bottom:1px solid var(--border-glass); ${isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : ''}">
@@ -241,11 +264,12 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         });
 
         html += '<tfoot>';
-        sortedCats.forEach(cat => {
+        sortedCats.forEach((cat) => {
             const g = catGroups[cat];
             const catDiff = g.sumCurrent - g.sumOffer;
             const catDiffSign = catDiff >= 0 ? '+' : '';
-            const catDiffColor = catDiff > 0 ? '#f87171' : (catDiff < 0 ? '#34d399' : 'var(--text-muted)');
+            const catDiffColor =
+                catDiff > 0 ? '#f87171' : catDiff < 0 ? '#34d399' : 'var(--text-muted)';
             html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
                 <td colspan="9" style="padding:0.6rem 0.5rem;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
                 <td class="text-right" style="font-size:0.85rem;color:var(--success);font-weight:700;white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumCurrent)} PLN</td>
@@ -256,7 +280,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
         const totalDiff = totalNetto - totalOffer;
         const totalDiffSign = totalDiff >= 0 ? '+' : '';
-        const totalDiffColor = totalDiff > 0 ? '#f87171' : (totalDiff < 0 ? '#34d399' : 'var(--text-muted)');
+        const totalDiffColor =
+            totalDiff > 0 ? '#f87171' : totalDiff < 0 ? '#34d399' : 'var(--text-muted)';
         html += `<tr style="border-top:2px solid var(--border-glass);">
             <td colspan="9" style="font-weight:700;font-size:0.9rem;color:var(--text-primary);padding:1rem 0.5rem;white-space:nowrap;">RAZEM (${items.length} pozycji)</td>
             <td class="text-right" style="font-weight:800;font-size:1rem;color:var(--success);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalNetto)} PLN</td>
@@ -269,13 +294,13 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     html += `</table></div>`;
     container.innerHTML = html;
 
-    if (window.lucide) window.lucide.createIcons({root: container});
+    if (window.lucide) window.lucide.createIcons({ root: container });
 }
 
 /* ===== SELEKCJA POZYCJI W ZAKŁADCE OFERTA ===== */
 
 window.toggleAllOfferSummaryForOrder = function (checked) {
-    document.querySelectorAll('.offer-summary-checkbox').forEach(cb => {
+    document.querySelectorAll('.offer-summary-checkbox').forEach((cb) => {
         cb.checked = checked;
     });
 };

@@ -33,9 +33,17 @@
     }
 
     window.logger = {
-        debug: function (module, msg, extra) { log('debug', module, msg, extra); },
-        info: function (module, msg, extra) { log('info', module, msg, extra); },
-        warn: function (module, msg, extra) { log('warn', module, msg, extra); },
-        error: function (module, msg, extra) { log('error', module, msg, extra); }
+        debug: function (module, msg, extra) {
+            log('debug', module, msg, extra);
+        },
+        info: function (module, msg, extra) {
+            log('info', module, msg, extra);
+        },
+        warn: function (module, msg, extra) {
+            log('warn', module, msg, extra);
+        },
+        error: function (module, msg, extra) {
+            log('error', module, msg, extra);
+        }
     };
 })();

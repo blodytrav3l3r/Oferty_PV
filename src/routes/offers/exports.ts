@@ -22,7 +22,9 @@ router.get('/:id/export-pdf', requireAuth, async (req, res) => {
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
+        const safeId = String(id)
+            .replace(/[^a-z0-9_-]/gi, '_')
+            .slice(0, 100);
         const pdfBuffer = await generateOfferRuryPDF(id);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${safeId}.pdf"`);
@@ -46,7 +48,9 @@ router.get('/studnie/:id/export-pdf', requireAuth, async (req, res) => {
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
+        const safeId = String(id)
+            .replace(/[^a-z0-9_-]/gi, '_')
+            .slice(0, 100);
         const pdfBuffer = await generateOfferStudniePDF(id);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${safeId}.pdf"`);
@@ -70,7 +74,9 @@ router.get('/:id/export-docx', requireAuth, async (req, res) => {
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
+        const safeId = String(id)
+            .replace(/[^a-z0-9_-]/gi, '_')
+            .slice(0, 100);
         const docxBuffer = await generateOfferRuryDOCX(id);
         res.setHeader(
             'Content-Type',
@@ -97,13 +103,18 @@ router.get('/studnie/:id/export-docx', requireAuth, async (req, res) => {
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id).replace(/[^a-z0-9_-]/gi, '_').slice(0, 100);
+        const safeId = String(id)
+            .replace(/[^a-z0-9_-]/gi, '_')
+            .slice(0, 100);
         const docxBuffer = await generateOfferStudnieDOCX(id);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${safeId}.docx"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="oferta_studnie_${safeId}.docx"`
+        );
         res.send(docxBuffer);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

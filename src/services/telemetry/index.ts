@@ -5,9 +5,7 @@
  * doboru elementów studni. Moduł ten zbiera dane do późniejszej analizy AI.
  */
 
-export {
-    telemetryService
-} from './telemetryService';
+export { telemetryService } from './telemetryService';
 
 export type {
     SolverSource,

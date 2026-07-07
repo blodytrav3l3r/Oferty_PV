@@ -109,17 +109,32 @@ describe('resolveWriteUserId', () => {
     });
 
     it('admin can create for any userId', () => {
-        expect(resolveWriteUserId(admin, 'subA')).toEqual({ allowed: true, effectiveUserId: 'subA' });
-        expect(resolveWriteUserId(admin, null)).toEqual({ allowed: true, effectiveUserId: 'admin1' });
+        expect(resolveWriteUserId(admin, 'subA')).toEqual({
+            allowed: true,
+            effectiveUserId: 'subA'
+        });
+        expect(resolveWriteUserId(admin, null)).toEqual({
+            allowed: true,
+            effectiveUserId: 'admin1'
+        });
     });
 
     it('regular user: missing userId → own id', () => {
-        expect(resolveWriteUserId(regularUser, null)).toEqual({ allowed: true, effectiveUserId: 'user1' });
-        expect(resolveWriteUserId(regularUser, undefined)).toEqual({ allowed: true, effectiveUserId: 'user1' });
+        expect(resolveWriteUserId(regularUser, null)).toEqual({
+            allowed: true,
+            effectiveUserId: 'user1'
+        });
+        expect(resolveWriteUserId(regularUser, undefined)).toEqual({
+            allowed: true,
+            effectiveUserId: 'user1'
+        });
     });
 
     it('regular user CANNOT create for another userId', () => {
-        expect(resolveWriteUserId(regularUser, 'user2')).toEqual({ allowed: false, effectiveUserId: '' });
+        expect(resolveWriteUserId(regularUser, 'user2')).toEqual({
+            allowed: false,
+            effectiveUserId: ''
+        });
     });
 
     it('pro can create for self', () => {
@@ -131,7 +146,10 @@ describe('resolveWriteUserId', () => {
     });
 
     it('pro CANNOT create for unrelated user', () => {
-        expect(resolveWriteUserId(pro, 'randomUser')).toEqual({ allowed: false, effectiveUserId: '' });
+        expect(resolveWriteUserId(pro, 'randomUser')).toEqual({
+            allowed: false,
+            effectiveUserId: ''
+        });
     });
 
     it('CRITICAL: user1 cannot pretend to be user2 by sending userId in body', () => {

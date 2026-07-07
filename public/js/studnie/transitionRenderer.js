@@ -51,7 +51,7 @@ function getClockIndex(item, opts) {
         return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
     });
     const idx = sorted.indexOf(item);
-    return idx >= 0 ? (idx + 1) : '';
+    return idx >= 0 ? idx + 1 : '';
 }
 
 // ──────────────────────────────────────
@@ -60,12 +60,13 @@ function getClockIndex(item, opts) {
 
 function classifyFlowType(item, globalIndex) {
     if (!item.flowTypeManual) {
-        item.flowType = (item.angle === 0 || item.angle === '0')
-            ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
+        item.flowType = item.angle === 0 || item.angle === '0' ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
     }
     if (!item.flowType) {
-        item.flowType = globalIndex === 0 && (item.angle === 0 || item.angle === '0')
-            ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
+        item.flowType =
+            globalIndex === 0 && (item.angle === 0 || item.angle === '0')
+                ? FLOW_TYPES.WYLOT
+                : FLOW_TYPES.WLOT;
     }
 }
 
@@ -153,7 +154,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     // Kolumna dopłata (non-discountable)
     const doplataVal = item.doplata != null ? item.doplata : 0;
-    const doplataColor = doplataVal > 0 ? '#10b981' : (doplataVal < 0 ? '#ef4444' : '#fbbf24');
+    const doplataColor = doplataVal > 0 ? '#10b981' : doplataVal < 0 ? '#ef4444' : '#fbbf24';
     const doplataHTML = showPrice
         ? `<div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
@@ -165,9 +166,12 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     if (!item.id) item.id = 'prz-legacy-' + globalIndex + '-' + Math.floor(Math.random() * 1000);
 
     const clockIdx = getClockIndex(item, opts);
-    const numDisplay = clockIdx !== '' && clockIdx !== undefined ? `<div title="Oznaczenie zegarowe" style="position:absolute; top:-6px; right:-6px; background:#1e293b; border:1px solid ${flow.border}; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:${flow.color}; box-shadow:0 1px 3px rgba(0,0,0,0.5);">${clockIdx}</div>` : '';
+    const numDisplay =
+        clockIdx !== '' && clockIdx !== undefined
+            ? `<div title="Oznaczenie zegarowe" style="position:absolute; top:-6px; right:-6px; background:#1e293b; border:1px solid ${flow.border}; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:${flow.color}; box-shadow:0 1px 3px rgba(0,0,0,0.5);">${clockIdx}</div>`
+            : '';
 
-    const extraPadding = (opts.drillingBasePrice > 0 && opts.drillingProd) ? '0.85rem' : '0.4rem';
+    const extraPadding = opts.drillingBasePrice > 0 && opts.drillingProd ? '0.85rem' : '0.4rem';
     return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
       <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:55px; min-width:55px; transition:all 0.2s;">
@@ -268,7 +272,13 @@ function buildConfigMap(well, findProductFn, includeName = false) {
         } else {
             h = (p.height || 0) * cItem.quantity;
         }
-        const entry = { index: j, start: currY, end: currY + h, componentType: p.componentType, productId: p.id };
+        const entry = {
+            index: j,
+            start: currY,
+            end: currY + h,
+            componentType: p.componentType,
+            productId: p.id
+        };
         if (includeName) {
             const badge = typeBadge[p.componentType] || { bg: '#333333' };
             entry.name = p.name;

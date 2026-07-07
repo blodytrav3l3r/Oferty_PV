@@ -37,7 +37,11 @@ const AppState = {
      */
     _validateArray(value, fieldName) {
         if (!Array.isArray(value)) {
-            logger.warn('appState', `[AppState] ${fieldName} musi być tablicą, otrzymano:`, typeof value);
+            logger.warn(
+                'appState',
+                `[AppState] ${fieldName} musi być tablicą, otrzymano:`,
+                typeof value
+            );
             return false;
         }
         return true;
@@ -51,7 +55,11 @@ const AppState = {
      */
     _validateStringOrNull(value, fieldName) {
         if (value !== null && typeof value !== 'string') {
-            logger.warn('appState', `[AppState] ${fieldName} musi być stringiem lub null, otrzymano:`, typeof value);
+            logger.warn(
+                'appState',
+                `[AppState] ${fieldName} musi być stringiem lub null, otrzymano:`,
+                typeof value
+            );
             return false;
         }
         return true;
@@ -60,75 +68,103 @@ const AppState = {
     /* ===== GETTERY / SETTERY ===== */
 
     /** Aktualnie zalogowany użytkownik (obiekt lub null) */
-    get currentUser() { return this._currentUser; },
+    get currentUser() {
+        return this._currentUser;
+    },
     set currentUser(value) {
         if (value !== null && typeof value !== 'object') {
-            logger.warn('appState', '[AppState] currentUser musi być obiektem lub null, otrzymano:', typeof value);
+            logger.warn(
+                'appState',
+                '[AppState] currentUser musi być obiektem lub null, otrzymano:',
+                typeof value
+            );
             return;
         }
         this._currentUser = value;
     },
 
     /** Tablica produktów załadowanych z cennika */
-    get products() { return this._products; },
+    get products() {
+        return this._products;
+    },
     set products(value) {
         if (!this._validateArray(value, 'products')) return;
         this._products = value;
     },
 
     /** Tablica zapisanych ofert */
-    get offers() { return this._offers; },
+    get offers() {
+        return this._offers;
+    },
     set offers(value) {
         if (!this._validateArray(value, 'offers')) return;
         this._offers = value;
     },
 
     /** Baza klientów (kartoteka) */
-    get clientsDb() { return this._clientsDb; },
+    get clientsDb() {
+        return this._clientsDb;
+    },
     set clientsDb(value) {
         if (!this._validateArray(value, 'clientsDb')) return;
         this._clientsDb = value;
     },
 
     /** Pozycje bieżącej edytowanej oferty */
-    get currentOfferItems() { return this._currentOfferItems; },
+    get currentOfferItems() {
+        return this._currentOfferItems;
+    },
     set currentOfferItems(value) {
         if (!this._validateArray(value, 'currentOfferItems')) return;
         this._currentOfferItems = value;
     },
 
     /** ID aktualnie edytowanej oferty (string lub null) */
-    get editingOfferId() { return this._editingOfferId; },
+    get editingOfferId() {
+        return this._editingOfferId;
+    },
     set editingOfferId(value) {
         if (!this._validateStringOrNull(value, 'editingOfferId')) return;
         this._editingOfferId = value;
     },
 
     /** ID przypisanego użytkownika-opiekuna (string lub null) */
-    get editingOfferAssignedUserId() { return this._editingOfferAssignedUserId; },
+    get editingOfferAssignedUserId() {
+        return this._editingOfferAssignedUserId;
+    },
     set editingOfferAssignedUserId(value) {
         if (!this._validateStringOrNull(value, 'editingOfferAssignedUserId')) return;
         this._editingOfferAssignedUserId = value;
     },
 
     /** Nazwa wyświetlana przypisanego opiekuna */
-    get editingOfferAssignedUserName() { return this._editingOfferAssignedUserName; },
+    get editingOfferAssignedUserName() {
+        return this._editingOfferAssignedUserName;
+    },
     set editingOfferAssignedUserName(value) {
         if (typeof value !== 'string') {
-            logger.warn('appState', '[AppState] editingOfferAssignedUserName musi być stringiem, otrzymano:', typeof value);
+            logger.warn(
+                'appState',
+                '[AppState] editingOfferAssignedUserName musi być stringiem, otrzymano:',
+                typeof value
+            );
             return;
         }
         this._editingOfferAssignedUserName = value;
     },
 
     /** Czy sekcja rozkładu transportu jest rozwinięta */
-    get isTransportBreakdownExpanded() { return this._isTransportBreakdownExpanded; },
+    get isTransportBreakdownExpanded() {
+        return this._isTransportBreakdownExpanded;
+    },
     set isTransportBreakdownExpanded(value) {
         this._isTransportBreakdownExpanded = Boolean(value);
     },
 
     /** Aktualny krok kreatora (1-5) */
-    get currentWizardStep() { return this._currentWizardStep; },
+    get currentWizardStep() {
+        return this._currentWizardStep;
+    },
     set currentWizardStep(value) {
         this._currentWizardStep = Math.max(1, Math.min(5, Number(value) || 1));
     },
@@ -189,8 +225,12 @@ const _appStateGlobalAliases = [
 
 _appStateGlobalAliases.forEach((key) => {
     Object.defineProperty(window, key, {
-        get() { return AppState[key]; },
-        set(value) { AppState[key] = value; },
+        get() {
+            return AppState[key];
+        },
+        set(value) {
+            AppState[key] = value;
+        },
         configurable: true,
         enumerable: true
     });

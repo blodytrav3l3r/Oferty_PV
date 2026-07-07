@@ -89,7 +89,7 @@ function enforceOtRings() {
                 product: p
             });
             cy += actualHeight;
-            lastWasDennica = (p.componentType === 'dennica');
+            lastWasDennica = p.componentType === 'dennica';
         }
     }
 
@@ -168,7 +168,10 @@ function upgradeToOtRing(seg, currentProd, currentId) {
     if (otProd) {
         if (seg.configItem.productId !== otProd.id) {
             seg.configItem.productId = otProd.id;
-            logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`);
+            logger.info(
+                'wellDiagram',
+                `[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`
+            );
             return true;
         }
         return false;
@@ -187,7 +190,10 @@ function upgradeToOtRing(seg, currentProd, currentId) {
     }
     if (seg.configItem.productId !== dynamicOtId) {
         seg.configItem.productId = dynamicOtId;
-        logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`);
+        logger.info(
+            'wellDiagram',
+            `[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`
+        );
         return true;
     }
     return false;
@@ -200,15 +206,16 @@ function degradeFromOtRing(seg, currentProd, currentId) {
     // Najbezpieczniejsza degradacja: znajdź zwykły krąg o tym samym wymiarze
     const stdProd = studnieProducts.find(
         (p) =>
-            p.componentType === 'krag' &&
-            p.dn === currentProd.dn &&
-            p.height === currentProd.height
+            p.componentType === 'krag' && p.dn === currentProd.dn && p.height === currentProd.height
     );
 
     if (stdProd) {
         if (seg.configItem.productId !== stdProd.id) {
             seg.configItem.productId = stdProd.id;
-            logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`);
+            logger.info(
+                'wellDiagram',
+                `[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`
+            );
             return true;
         }
         return false;
@@ -219,7 +226,10 @@ function degradeFromOtRing(seg, currentProd, currentId) {
     const baseProduct = studnieProducts.find((p) => p.id === baseStripped);
     if (baseProduct && seg.configItem.productId !== baseProduct.id) {
         seg.configItem.productId = baseProduct.id;
-        logger.info('wellDiagram', `[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`);
+        logger.info(
+            'wellDiagram',
+            `[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`
+        );
         return true;
     }
     // BARDZO WAŻNE: Jeśli nie znaleziono bazy, NIE nadpisujemy na nieistniejące ID,
@@ -276,24 +286,48 @@ const SVG_COLORS = {
     transitionActive: '#38bdf8',
     transitionStroke: '#0ea5e9',
     transitionBack: 'rgba(71,85,105,0.4)',
-    transitionBackStroke: 'rgba(100,116,139,0.5)',
+    transitionBackStroke: 'rgba(100,116,139,0.5)'
 };
 
 /** Mapa kolorów i etykiet dla typów komponentów studni */
 const COMPONENT_THEME = {
     wlaz: { fill: SVG_COLORS.wlaz, stroke: SVG_COLORS.wlaz_stroke, label: 'Właz' },
-    plyta_din: { fill: SVG_COLORS.plyta_din, stroke: SVG_COLORS.plyta_din_stroke, label: 'Płyta DIN' },
-    plyta_najazdowa: { fill: SVG_COLORS.plyta_najazdowa, stroke: SVG_COLORS.plyta_najazdowa_stroke, label: 'Pł. Odci.' },
-    plyta_zamykajaca: { fill: SVG_COLORS.plyta_zamykajaca, stroke: SVG_COLORS.plyta_zamykajaca_stroke, label: 'Pł. Odci.' },
-    pierscien_odciazajacy: { fill: SVG_COLORS.pierscien_odciazajacy, stroke: SVG_COLORS.pierscien_odciazajacy_stroke, label: 'PO' },
+    plyta_din: {
+        fill: SVG_COLORS.plyta_din,
+        stroke: SVG_COLORS.plyta_din_stroke,
+        label: 'Płyta DIN'
+    },
+    plyta_najazdowa: {
+        fill: SVG_COLORS.plyta_najazdowa,
+        stroke: SVG_COLORS.plyta_najazdowa_stroke,
+        label: 'Pł. Odci.'
+    },
+    plyta_zamykajaca: {
+        fill: SVG_COLORS.plyta_zamykajaca,
+        stroke: SVG_COLORS.plyta_zamykajaca_stroke,
+        label: 'Pł. Odci.'
+    },
+    pierscien_odciazajacy: {
+        fill: SVG_COLORS.pierscien_odciazajacy,
+        stroke: SVG_COLORS.pierscien_odciazajacy_stroke,
+        label: 'PO'
+    },
     konus: { fill: SVG_COLORS.konus, stroke: SVG_COLORS.konus_stroke, label: 'Konus' },
     avr: { fill: SVG_COLORS.avr, stroke: SVG_COLORS.avr_stroke, label: 'AVR' },
     krag: { fill: SVG_COLORS.krag, stroke: SVG_COLORS.krag_stroke, label: 'Krąg' },
-    krag_ot: { fill: SVG_COLORS.krag_ot, stroke: SVG_COLORS.krag_ot_stroke, label: 'Krąg wiercony' },
+    krag_ot: {
+        fill: SVG_COLORS.krag_ot,
+        stroke: SVG_COLORS.krag_ot_stroke,
+        label: 'Krąg wiercony'
+    },
     osadnik: { fill: SVG_COLORS.osadnik, stroke: SVG_COLORS.osadnik_stroke, label: 'Osadnik' },
     dennica: { fill: SVG_COLORS.dennica, stroke: SVG_COLORS.dennica_stroke, label: 'Dennica' },
     styczna: { fill: SVG_COLORS.styczna, stroke: SVG_COLORS.styczna_stroke, label: 'Styczna' },
-    plyta_redukcyjna: { fill: SVG_COLORS.plyta_redukcyjna, stroke: SVG_COLORS.plyta_redukcyjna_stroke, label: 'Płyta red.' }
+    plyta_redukcyjna: {
+        fill: SVG_COLORS.plyta_redukcyjna,
+        stroke: SVG_COLORS.plyta_redukcyjna_stroke,
+        label: 'Płyta red.'
+    }
 };
 
 /* ===== BUDOWANIE WIDOCZNYCH KOMPONENTÓW ===== */
@@ -326,7 +360,7 @@ function buildVisibleComponents(well) {
                 isPlaceholder: !!item.isPlaceholder
             });
             if (p.componentType !== 'uszczelka') {
-                lastWasDennica = (p.componentType === 'dennica');
+                lastWasDennica = p.componentType === 'dennica';
             }
         }
     });
@@ -388,7 +422,10 @@ function getElementOuterDn(comp, bodyDN) {
  */
 function calculateCanvasParams(visible, bodyDN) {
     const svgW = 340;
-    const mL = 75, mR = 25, mT = 15, mB = 22;
+    const mL = 75,
+        mR = 25,
+        mT = 15,
+        mB = 22;
     const drawW = svgW - mL - mR;
 
     // Przewidzenie najszerszego elementu
@@ -446,9 +483,15 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
         svg += `<line x1="${x + 4}" y1="${oy + h * 0.15}" x2="${x + w - 4}" y2="${oy + h * 0.15}" stroke="${c.stroke}" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.4"/>`;
     } else {
         // Kręgi, płyty, pierścienie, AVR i inne prostokątne elementy
-        const rx = (ct === 'avr' || ct === 'plyta_din' || ct === 'plyta_redukcyjna' ||
-            ct === 'plyta_zamykajaca' || ct === 'pierscien_odciazajacy' ||
-            ct === 'plyta_najazdowa') ? 2 : 2;
+        const rx =
+            ct === 'avr' ||
+            ct === 'plyta_din' ||
+            ct === 'plyta_redukcyjna' ||
+            ct === 'plyta_zamykajaca' ||
+            ct === 'pierscien_odciazajacy' ||
+            ct === 'plyta_najazdowa'
+                ? 2
+                : 2;
         svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
 
         // Otwory wierconego kręgu
@@ -529,7 +572,11 @@ function drawAllComponents(visible, canvas) {
         const w = Math.max(mmToPx(outerDn), 20);
         const x = cx - w / 2;
 
-        const c = COMPONENT_THEME[comp.componentType] || { fill: SVG_COLORS.fallback, stroke: SVG_COLORS.fallback_stroke, label: '' };
+        const c = COMPONENT_THEME[comp.componentType] || {
+            fill: SVG_COLORS.fallback,
+            stroke: SVG_COLORS.fallback_stroke,
+            label: ''
+        };
 
         const isPlaceholder = comp.isPlaceholder;
         const pointerEvents = isPlaceholder ? 'pointer-events="none"' : '';
@@ -598,9 +645,7 @@ function drawTransitions(well, canvas, dimLinesY) {
         dimLinesY.push(prY + radiusH);
 
         // Oblicz offset X na podstawie kąta włączenia
-        const numericBodyDN = typeof bodyDN === 'number'
-            ? bodyDN
-            : 1000;
+        const numericBodyDN = typeof bodyDN === 'number' ? bodyDN : 1000;
         const bw = mmToPx(numericBodyDN);
         const offset = Math.sin((angle * Math.PI) / 180) * (bw / 2 - radiusW);
         const px = cx + offset;
@@ -624,7 +669,10 @@ function parseTransitionGeometry(pr, bottomElev) {
     if (isNaN(pel)) pel = 0;
 
     const pprod = studnieProducts.find((x) => x.id === pr.productId);
-    let prW = 160, prH = 160, isEgg = false, isRect = false;
+    let prW = 160,
+        prH = 160,
+        isEgg = false,
+        isRect = false;
 
     if (pprod && pprod.category === 'Otwór KPED') {
         prW = 1020;
@@ -691,7 +739,9 @@ function drawSegmentDimensions(dimLinesY, pxMm, well, canvas) {
     if (dimLinesY.length === 0) return '';
 
     const { mT, drawH } = canvas;
-    const uniqueY = [...new Set(dimLinesY.map((v) => Math.round(v * 10) / 10))].sort((a, b) => b - a);
+    const uniqueY = [...new Set(dimLinesY.map((v) => Math.round(v * 10) / 10))].sort(
+        (a, b) => b - a
+    );
     const dX = 52;
     const dimColor = SVG_COLORS.dimLine;
 
@@ -819,16 +869,18 @@ function calculatePrecoInsertHeight(well) {
  * dla każdego przejścia z niepustym DN.
  */
 function buildTransitionRanges(przejscia, rzDna) {
-    return przejscia.map((p) => {
-        const prod = studnieProducts.find(pr => pr.id === p.productId);
-        let dnRury = parseInt(p.dn) || 0;
-        if (!dnRury && prod) dnRury = parseInt(prod.dn) || 0;
-        if (dnRury <= 0) return null;
+    return przejscia
+        .map((p) => {
+            const prod = studnieProducts.find((pr) => pr.id === p.productId);
+            let dnRury = parseInt(p.dn) || 0;
+            if (!dnRury && prod) dnRury = parseInt(prod.dn) || 0;
+            if (dnRury <= 0) return null;
 
-        const rzWlaczenia = parseFloat(p.rzednaWlaczenia) || rzDna;
-        const mmFromBottom = (rzWlaczenia - rzDna) * 1000;
-        return { bottom: mmFromBottom, top: mmFromBottom + dnRury };
-    }).filter(Boolean);
+            const rzWlaczenia = parseFloat(p.rzednaWlaczenia) || rzDna;
+            const mmFromBottom = (rzWlaczenia - rzDna) * 1000;
+            return { bottom: mmFromBottom, top: mmFromBottom + dnRury };
+        })
+        .filter(Boolean);
 }
 
 /**
@@ -860,11 +912,12 @@ function mergeOverlappingRanges(ranges) {
  * są realizowane w wkładce, powyżej — w ścianie studni.
  */
 function drawPrecoInsertLine(well, canvas) {
-    if (well.kineta !== 'preco' && well.kineta !== 'precotop' && well.wkladkaOsadnikPreco !== 'tak') return '';
+    if (well.kineta !== 'preco' && well.kineta !== 'precotop' && well.wkladkaOsadnikPreco !== 'tak')
+        return '';
 
     let insertHeightMm = null;
     let kinetaLabel = '';
-    
+
     if (well.wkladkaOsadnikPreco === 'tak') {
         insertHeightMm = parseFloat(well.wkladkaOsadnikH) || null;
         kinetaLabel = 'Wkładka osadnika';
@@ -872,7 +925,7 @@ function drawPrecoInsertLine(well, canvas) {
         insertHeightMm = calculatePrecoInsertHeight(well);
         kinetaLabel = well.kineta === 'precotop' ? 'PrecoTop' : 'Preco';
     }
-    
+
     if (!insertHeightMm || insertHeightMm <= 0) return '';
 
     const { pxMm, mT, drawH, cx, bodyDN } = canvas;
@@ -898,14 +951,14 @@ function drawPrecoInsertLine(well, canvas) {
     if (well.precoFullHeight === 'tak' || well.precoFullHeight === true) {
         let dennicaHeight = 0;
         if (well.config) {
-            well.config.forEach(item => {
-                const p = studnieProducts.find(pr => pr.id === item.productId);
+            well.config.forEach((item) => {
+                const p = studnieProducts.find((pr) => pr.id === item.productId);
                 if (p && (p.componentType === 'dennica' || p.componentType === 'styczna')) {
                     dennicaHeight += (p.height || 0) * (item.quantity || 1);
                 }
             });
         }
-        
+
         if (dennicaHeight > insertHeightMm) {
             const lineYFull = mT + drawH - dennicaHeight * pxMm;
             if (lineYFull >= mT && lineYFull <= mT + drawH) {
@@ -976,5 +1029,6 @@ function renderWellDiagram(targetSvg, targetWell) {
     // Oznaczenie DN na dole
     const dnLabelSvg = drawDnLabel(canvas.cx, bodyDN, canvas);
 
-    svg.innerHTML = componentsSvg + transitionsSvg + precoLineSvg + segmentDimSvg + totalHeightSvg + dnLabelSvg;
+    svg.innerHTML =
+        componentsSvg + transitionsSvg + precoLineSvg + segmentDimSvg + totalHeightSvg + dnLabelSvg;
 }

@@ -10,9 +10,7 @@ function toggleSubUsersList() {
     const listObj = document.getElementById('sub-users-list');
     if (role === 'pro') {
         container.classList.remove('hidden');
-        const regularUsers = adminUsers.filter(
-            (u) => u.role !== 'admin' && u.id !== editingUserId
-        );
+        const regularUsers = adminUsers.filter((u) => u.role !== 'admin' && u.id !== editingUserId);
         if (regularUsers.length === 0) {
             listObj.innerHTML =
                 '<span class="text-muted">Brak innych użytkowników do przypisania</span>';
@@ -36,13 +34,11 @@ function toggleSubUsersList() {
 
 function updateSubUsers(checkbox) {
     if (checkbox.checked) {
-        if (!selectedSubUsers.includes(checkbox.value))
-            selectedSubUsers.push(checkbox.value);
+        if (!selectedSubUsers.includes(checkbox.value)) selectedSubUsers.push(checkbox.value);
     } else {
         selectedSubUsers = selectedSubUsers.filter((id) => id !== checkbox.value);
     }
 }
-
 
 window.addEventListener('DOMContentLoaded', async () => {
     const token = getAuthToken();
@@ -118,7 +114,9 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         const visibleModal = document.querySelector('.modal.show, .modal:not(.hidden)');
         if (visibleModal) {
-            const closeBtn = visibleModal.querySelector('[data-bs-dismiss="modal"], .modal-close, .btn-close');
+            const closeBtn = visibleModal.querySelector(
+                '[data-bs-dismiss="modal"], .modal-close, .btn-close'
+            );
             if (closeBtn) closeBtn.click();
             else visibleModal.classList.add('hidden');
         }
@@ -139,9 +137,7 @@ function showLoggedIn(user) {
     document.getElementById('user-section').classList.remove('hidden');
     document.querySelector('.container').classList.add('logged-in');
     document.getElementById('user-display-name').textContent =
-        user.firstName && user.lastName
-            ? user.firstName + ' ' + user.lastName
-            : user.username;
+        user.firstName && user.lastName ? user.firstName + ' ' + user.lastName : user.username;
     document.getElementById('user-avatar-initial').textContent = user.username
         .charAt(0)
         .toUpperCase();
@@ -283,7 +279,9 @@ async function loadUsers() {
         if (typeof lucide !== 'undefined') {
             lucide.createIcons({ root: tbody });
         }
-    } catch (e) { logger.error('dashboard', 'loadUsers error:', e); }
+    } catch (e) {
+        logger.error('dashboard', 'loadUsers error:', e);
+    }
 }
 
 function updateStatsBar() {
@@ -303,13 +301,19 @@ function startEditUser(id) {
     const u = adminUsers.find((x) => x.id === id);
     if (!u) return;
     editingUserId = id;
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     setVal('new-user-firstname', u.firstName || '');
     setVal('new-user-lastname', u.lastName || '');
     setVal('new-user-symbol', u.symbol || '');
     setVal('new-user-login', u.username);
     const pwd = document.getElementById('new-user-password');
-    if (pwd) { pwd.value = ''; pwd.placeholder = 'Nowe hasło (opcjonalnie)'; }
+    if (pwd) {
+        pwd.value = '';
+        pwd.placeholder = 'Nowe hasło (opcjonalnie)';
+    }
     setVal('new-user-email', u.email || '');
     setVal('new-user-phone', u.phone || '');
     setVal('new-user-order-start', u.orderStartNumber || 1);
@@ -321,7 +325,8 @@ function startEditUser(id) {
     const modeLabel = document.getElementById('form-mode-label');
     if (modeLabel) {
         modeLabel.classList.remove('hidden');
-        modeLabel.innerHTML = '<i data-lucide="pencil"></i> EDYCJA: ' + escapeHtml(u.firstName || u.username);
+        modeLabel.innerHTML =
+            '<i data-lucide="pencil"></i> EDYCJA: ' + escapeHtml(u.firstName || u.username);
     }
     const addBtn = document.getElementById('add-user-btn');
     if (addBtn) addBtn.innerHTML = '<i data-lucide="save"></i> Zapisz';
@@ -335,7 +340,10 @@ function startEditUser(id) {
 
 function cancelEditUser() {
     editingUserId = null;
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     const modeLabel = document.getElementById('form-mode-label');
     if (modeLabel) modeLabel.classList.add('hidden');
     setVal('new-user-firstname', '');
@@ -343,7 +351,10 @@ function cancelEditUser() {
     setVal('new-user-symbol', '');
     setVal('new-user-login', '');
     const pwd = document.getElementById('new-user-password');
-    if (pwd) { pwd.value = ''; pwd.placeholder = 'Hasło'; }
+    if (pwd) {
+        pwd.value = '';
+        pwd.placeholder = 'Hasło';
+    }
     setVal('new-user-email', '');
     setVal('new-user-phone', '');
     setVal('new-user-order-start', 1);
@@ -364,7 +375,10 @@ function cancelEditUser() {
 }
 
 async function createUser() {
-    const g = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const g = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+    };
     const firstName = g('new-user-firstname');
     const lastName = g('new-user-lastname');
     const symbol = g('new-user-symbol');
@@ -427,7 +441,9 @@ async function deleteUser(id) {
     try {
         await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
         loadUsers();
-    } catch (e) { logger.error('dashboard', 'deleteUser error:', e); }
+    } catch (e) {
+        logger.error('dashboard', 'deleteUser error:', e);
+    }
 }
 
 function showChangePassword() {
@@ -475,9 +491,7 @@ async function loadYearLetter() {
 }
 
 async function saveYearLetter() {
-    const letter = (document.getElementById('year-letter-input').value || '')
-        .trim()
-        .toUpperCase();
+    const letter = (document.getElementById('year-letter-input').value || '').trim().toUpperCase();
     if (!letter || letter.length !== 1) {
         alert('Litera musi być pojedynczym znakiem (A-Z)');
         return;

@@ -93,11 +93,16 @@
         if (!cfg || !Array.isArray(cfg.orders) || cfg.orders.length === 0) return '';
         const pdfAction = escapeHtml(cfg.actionPdf);
         const docxAction = escapeHtml(cfg.actionDocx);
-        const rows = cfg.orders.map(ord => {
-            const idEsc = escapeHtml(ord.id);
-            const ordNum = escapeHtml(ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—'));
-            const status = ord.status ? `<span class="upm-status upm-status-${escapeHtml(ord.status)}">${escapeHtml(ord.status)}</span>` : '';
-            return `
+        const rows = cfg.orders
+            .map((ord) => {
+                const idEsc = escapeHtml(ord.id);
+                const ordNum = escapeHtml(
+                    ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—')
+                );
+                const status = ord.status
+                    ? `<span class="upm-status upm-status-${escapeHtml(ord.status)}">${escapeHtml(ord.status)}</span>`
+                    : '';
+                return `
                 <div class="upm-row upm-row-orders">
                     <span class="upm-row-label" title="Zamówienie ${ordNum}">ZAM: ${ordNum}${status}</span>
                     <div class="upm-row-actions">
@@ -105,7 +110,8 @@
                         <button class="upm-btn-sm upm-btn-docx" data-action="${docxAction}" data-id="${idEsc}" data-format="docx">Word</button>
                     </div>
                 </div>`;
-        }).join('');
+            })
+            .join('');
         return `
             <div class="upm-section" data-section="orders">
                 <div class="upm-section-header">
@@ -122,10 +128,13 @@
         if (!cfg || !Array.isArray(cfg.orders) || cfg.orders.length === 0) return '';
         const pdfAction = escapeHtml(cfg.actionPdf);
         const docxAction = escapeHtml(cfg.actionDocx);
-        const rows = cfg.orders.map(ord => {
-            const idEsc = escapeHtml(ord.id);
-            const ordNum = escapeHtml(ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—'));
-            return `
+        const rows = cfg.orders
+            .map((ord) => {
+                const idEsc = escapeHtml(ord.id);
+                const ordNum = escapeHtml(
+                    ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—')
+                );
+                return `
                 <div class="upm-row upm-row-karta">
                     <span class="upm-row-label" title="Karta Budowy ${ordNum}">KB: ${ordNum}</span>
                     <div class="upm-row-actions">
@@ -133,7 +142,8 @@
                         <button class="upm-btn-sm upm-btn-docx" data-action="${docxAction}" data-id="${idEsc}" data-format="docx">Word</button>
                     </div>
                 </div>`;
-        }).join('');
+            })
+            .join('');
         return `
             <div class="upm-section" data-section="karta">
                 <div class="upm-section-header">
@@ -161,7 +171,7 @@
             return;
         }
         try {
-            /** @type {Function} */(window[action])(id, format);
+            /** @type {Function} */ (window[action])(id, format);
         } catch (e) {
             logger.error('printModal', 'printModal: błąd wywołania', action, e);
         }
@@ -184,7 +194,8 @@
             renderKartaSection(config.kartaSection);
 
         if (!sectionsHtml.trim()) {
-            if (typeof showToast === 'function') showToast('Brak aktywnego dokumentu do wydruku', 'error');
+            if (typeof showToast === 'function')
+                showToast('Brak aktywnego dokumentu do wydruku', 'error');
             return;
         }
 

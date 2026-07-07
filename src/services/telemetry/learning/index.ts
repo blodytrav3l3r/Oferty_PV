@@ -13,29 +13,14 @@ export { FeedbackProcessor } from './FeedbackProcessor';
 export { ConfidenceCalculator } from './ConfidenceCalculator';
 export { LearningEngine, learningEngine } from './LearningEngine';
 
-export type {
-    ExtractedFeature,
-    FeatureVector
-} from './FeatureExtractor';
+export type { ExtractedFeature, FeatureVector } from './FeatureExtractor';
 
-export type {
-    PatternType,
-    KnowledgePattern,
-    RecommendationRecord
-} from './KnowledgeBase';
+export type { PatternType, KnowledgePattern, RecommendationRecord } from './KnowledgeBase';
 
-export type {
-    RankedRecommendation
-} from './RankingEngine';
+export type { RankedRecommendation } from './RankingEngine';
 
-export type {
-    TopRecommendation
-} from './RecommendationEngine';
+export type { TopRecommendation } from './RecommendationEngine';
 
-export type {
-    FeedbackEvent
-} from './FeedbackProcessor';
+export type { FeedbackEvent } from './FeedbackProcessor';
 
-export type {
-    LearningRunSummary
-} from './LearningEngine';
+export type { LearningRunSummary } from './LearningEngine';

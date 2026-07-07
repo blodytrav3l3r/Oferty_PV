@@ -20,9 +20,15 @@ function backup() {
 }
 
 const CATEGORIES_RURY_ORDER = [
-    'Rury Betonowe', 'Żelbetowe KL. A (II)', 'Żelbetowe KL. S (I)',
-    'Duże Żelbetowe II', 'Rury Jajowe Betonowe', 'Rury Jajowe Żelbetowe',
-    'Akcesoria PEHD', 'Uszczelki', 'Zabezpieczenie transportu'
+    'Rury Betonowe',
+    'Żelbetowe KL. A (II)',
+    'Żelbetowe KL. S (I)',
+    'Duże Żelbetowe II',
+    'Rury Jajowe Betonowe',
+    'Rury Jajowe Żelbetowe',
+    'Akcesoria PEHD',
+    'Uszczelki',
+    'Zabezpieczenie transportu'
 ];
 
 function toBool(v: unknown): boolean {
@@ -38,8 +44,12 @@ async function main() {
     const ruryRow = await prisma.settings.findUnique({ where: { key: 'pricelist_rury' } });
     const studnieRow = await prisma.settings.findUnique({ where: { key: 'pricelist_studnie' } });
 
-    const ruryProducts: Record<string, unknown>[] = ruryRow ? JSON.parse(ruryRow.value || '[]') : [];
-    const studnieProducts: Record<string, unknown>[] = studnieRow ? JSON.parse(studnieRow.value || '[]') : [];
+    const ruryProducts: Record<string, unknown>[] = ruryRow
+        ? JSON.parse(ruryRow.value || '[]')
+        : [];
+    const studnieProducts: Record<string, unknown>[] = studnieRow
+        ? JSON.parse(studnieRow.value || '[]')
+        : [];
 
     console.log(`Rury: ${ruryProducts.length} produktów`);
     console.log(`Studnie: ${studnieProducts.length} produktów\n`);
@@ -89,7 +99,11 @@ async function main() {
                 await prisma.categoriesStudnie.upsert({
                     where: { name: catName },
                     update: { componentType: p.componentType ? String(p.componentType) : null },
-                    create: { name: catName, componentType: p.componentType ? String(p.componentType) : null, order: 0 }
+                    create: {
+                        name: catName,
+                        componentType: p.componentType ? String(p.componentType) : null,
+                        order: 0
+                    }
                 });
             }
         }
@@ -143,9 +157,12 @@ async function main() {
                     cena3: c3 != null ? Number(c3) : null,
                     doplataPEHD: p.doplataPEHD != null ? Number(p.doplataPEHD) : null,
                     doplataZelbet: dZelb != null ? Number(dZelb) : null,
-                    doplataDrabNierdzewna: p.doplataDrabNierdzewna != null ? Number(p.doplataDrabNierdzewna) : null,
-                    malowanieWewnetrzne: p.malowanieWewnetrzne != null ? Number(p.malowanieWewnetrzne) : null,
-                    malowanieZewnetrzne: p.malowanieZewnetrzne != null ? Number(p.malowanieZewnetrzne) : null
+                    doplataDrabNierdzewna:
+                        p.doplataDrabNierdzewna != null ? Number(p.doplataDrabNierdzewna) : null,
+                    malowanieWewnetrzne:
+                        p.malowanieWewnetrzne != null ? Number(p.malowanieWewnetrzne) : null,
+                    malowanieZewnetrzne:
+                        p.malowanieZewnetrzne != null ? Number(p.malowanieZewnetrzne) : null
                 },
                 create: {
                     id: String(p.id),
@@ -180,9 +197,12 @@ async function main() {
                     cena3: c3 != null ? Number(c3) : null,
                     doplataPEHD: p.doplataPEHD != null ? Number(p.doplataPEHD) : null,
                     doplataZelbet: dZelb != null ? Number(dZelb) : null,
-                    doplataDrabNierdzewna: p.doplataDrabNierdzewna != null ? Number(p.doplataDrabNierdzewna) : null,
-                    malowanieWewnetrzne: p.malowanieWewnetrzne != null ? Number(p.malowanieWewnetrzne) : null,
-                    malowanieZewnetrzne: p.malowanieZewnetrzne != null ? Number(p.malowanieZewnetrzne) : null
+                    doplataDrabNierdzewna:
+                        p.doplataDrabNierdzewna != null ? Number(p.doplataDrabNierdzewna) : null,
+                    malowanieWewnetrzne:
+                        p.malowanieWewnetrzne != null ? Number(p.malowanieWewnetrzne) : null,
+                    malowanieZewnetrzne:
+                        p.malowanieZewnetrzne != null ? Number(p.malowanieZewnetrzne) : null
                 }
             });
         }
@@ -193,5 +213,8 @@ async function main() {
 }
 
 main()
-    .catch((e) => { console.error('Migration failed:', e); process.exit(1); })
+    .catch((e) => {
+        console.error('Migration failed:', e);
+        process.exit(1);
+    })
     .finally(() => prisma.$disconnect());

@@ -186,12 +186,13 @@ Zapisz **adres IPv4** (np. `192.168.1.105`).
 **3. Znajdź sekcję** „Port Forwarding" / „Przekierowanie portów".
 
 **4. Dodaj regułę:**
-| Pole | Wartość |
-|------|---------|
-| Port zewnętrzny | `3000` |
-| Port wewnętrzny | `3000` |
-| Adres IP | `192.168.1.105` (Twój komputer) |
-| Protokół | TCP |
+
+| Pole            | Wartość                         |
+| --------------- | ------------------------------- |
+| Port zewnętrzny | `3000`                          |
+| Port wewnętrzny | `3000`                          |
+| Adres IP        | `192.168.1.105` (Twój komputer) |
+| Protokół        | TCP                             |
 
 **5. Sprawdź swój publiczny adres IP:**
 Wejdź na [https://whatismyip.com](https://whatismyip.com) i skopiuj adres.

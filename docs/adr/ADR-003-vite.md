@@ -2,7 +2,7 @@
 
 **Status:** Zaakceptowany  
 **Data:** 2026-06-20  
-**Autor:** Hermes Agent  
+**Autor:** Hermes Agent
 
 ## Kontekst
 
@@ -43,20 +43,20 @@ export default defineConfig({
                 rury: 'public/rury.html',
                 kartoteka: 'public/kartoteka.html',
                 zlecenia: 'public/zlecenia.html',
-                app: 'public/app.html',
-            },
-        },
+                app: 'public/app.html'
+            }
+        }
     },
     server: {
-        proxy: { '/api': 'http://localhost:3000' },
-    },
+        proxy: { '/api': 'http://localhost:3000' }
+    }
 });
 ```
 
 ## Alternatywy odrzucone
 
-| Alternatywa | Powód odrzucenia |
-|------------|------------------|
-| Webpack 5 | Wolniejszy HMR, dużo configu, starsza technologia |
+| Alternatywa        | Powód odrzucenia                                     |
+| ------------------ | ---------------------------------------------------- |
+| Webpack 5          | Wolniejszy HMR, dużo configu, starsza technologia    |
 | esbuild standalone | Brak HMR, plugin system, i obsługi HTML entry points |
-| Parcel | Mniejsza społeczność, problemy z konfiguracją proxy |
+| Parcel             | Mniejsza społeczność, problemy z konfiguracją proxy  |

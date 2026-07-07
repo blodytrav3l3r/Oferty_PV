@@ -62,7 +62,11 @@ export async function ensurePrecoSeeded(): Promise<void> {
 
         const raw = fs.readFileSync(seedPath, 'utf-8');
         let data: unknown[] = [];
-        try { data = JSON.parse(raw); } catch { data = []; }
+        try {
+            data = JSON.parse(raw);
+        } catch {
+            data = [];
+        }
         if (!Array.isArray(data) || data.length === 0) {
             logger.warn('Seed', 'Pusty plik seed: data/seed_preco.json');
             return;
@@ -95,7 +99,11 @@ export async function ensureProductsSeeded(config: PricelistConfig): Promise<voi
 
         const raw = fs.readFileSync(seedPath, 'utf-8');
         let products: unknown[] = [];
-        try { products = JSON.parse(raw); } catch { products = []; }
+        try {
+            products = JSON.parse(raw);
+        } catch {
+            products = [];
+        }
         if (!Array.isArray(products) || products.length === 0) {
             logger.warn('Seed', `Pusty plik seed: ${seedPath} dla ${config.label}`);
             return;
@@ -123,7 +131,11 @@ export async function ensureProductsSeeded(config: PricelistConfig): Promise<voi
 export async function readPricelist(key: string): Promise<Record<string, unknown>[]> {
     const row = await prisma.settings.findUnique({ where: { key } });
     if (row) {
-        try { return JSON.parse(row.value || '[]'); } catch { return []; }
+        try {
+            return JSON.parse(row.value || '[]');
+        } catch {
+            return [];
+        }
     }
     return [];
 }

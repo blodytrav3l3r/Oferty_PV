@@ -73,10 +73,13 @@ function createTestApp() {
     const app = express();
     app.use(express.json());
     app.use('/api/offers', offersRouter);
-    app.use('/api/offers-studnie', (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        req.url = '/studnie' + (req.url === '/' ? '' : req.url);
-        offersRouter(req, res, next);
-    });
+    app.use(
+        '/api/offers-studnie',
+        (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            req.url = '/studnie' + (req.url === '/' ? '' : req.url);
+            offersRouter(req, res, next);
+        }
+    );
     app.use('/api/clients', clientsRouter);
     app.use('/api/products', productsRouter);
     app.use('/api/telemetry', telemetryRouter);
@@ -87,11 +90,11 @@ function createTestApp() {
 
 describe('API Validation Tests', () => {
     let app: express.Express;
-    
+
     beforeEach(() => {
         app = createTestApp();
     });
-    
+
     const authHeader = { 'x-user-id': 'test-user-id', 'x-user-role': 'admin' };
 
     describe('POST /api/offers - walidacja ofert rur', () => {
@@ -106,13 +109,10 @@ describe('API Validation Tests', () => {
         });
 
         it('powinien zwrócić 400 gdy items nie jest tablicą', async () => {
-            const res = await request(app)
-                .post('/api/offers')
-                .set(authHeader)
-                .send({
-                    clientId: 'client-1',
-                    items: 'not-an-array'
-                });
+            const res = await request(app).post('/api/offers').set(authHeader).send({
+                clientId: 'client-1',
+                items: 'not-an-array'
+            });
             expect(res.statusCode).toBe(400);
         });
 
@@ -151,13 +151,10 @@ describe('API Validation Tests', () => {
         });
 
         it('powinien zwrócić 400 gdy wells nie jest tablicą', async () => {
-            const res = await request(app)
-                .post('/api/offers-studnie')
-                .set(authHeader)
-                .send({
-                    clientId: 'client-1',
-                    wells: 'not-an-array'
-                });
+            const res = await request(app).post('/api/offers-studnie').set(authHeader).send({
+                clientId: 'client-1',
+                wells: 'not-an-array'
+            });
             expect(res.statusCode).toBe(400);
         });
 
@@ -175,12 +172,9 @@ describe('API Validation Tests', () => {
 
     describe('PUT /api/clients - walidacja klientów', () => {
         it('powinien zwrócić 400 gdy data nie jest tablicą', async () => {
-            const res = await request(app)
-                .put('/api/clients')
-                .set(authHeader)
-                .send({
-                    data: 'not-an-array'
-                });
+            const res = await request(app).put('/api/clients').set(authHeader).send({
+                data: 'not-an-array'
+            });
             expect(res.statusCode).toBe(400);
         });
 
@@ -207,67 +201,49 @@ describe('API Validation Tests', () => {
 
     describe('PUT /api/products - walidacja cenników', () => {
         it('powinien zaakceptować pustą tablicę (reset cennika)', async () => {
-            const res = await request(app)
-                .put('/api/products')
-                .set(authHeader)
-                .send({
-                    data: []
-                });
+            const res = await request(app).put('/api/products').set(authHeader).send({
+                data: []
+            });
             expect(res.statusCode).toBe(200);
         });
 
         it('powinien zwrócić 400 gdy brakuje data', async () => {
-            const res = await request(app)
-                .put('/api/products')
-                .set(authHeader)
-                .send({});
+            const res = await request(app).put('/api/products').set(authHeader).send({});
             expect(res.statusCode).toBe(400);
         });
     });
 
     describe('POST /api/telemetry/override - walidacja telemetryczna', () => {
         it('powinien zwrócić 400 gdy brakuje overrideReason', async () => {
-            const res = await request(app)
-                .post('/api/telemetry/override')
-                .set(authHeader)
-                .send({
-                    originalConfig: {},
-                    finalConfig: {}
-                });
+            const res = await request(app).post('/api/telemetry/override').set(authHeader).send({
+                originalConfig: {},
+                finalConfig: {}
+            });
             expect(res.statusCode).toBe(400);
         });
     });
 
     describe('PUT /api/users/:id - walidacja użytkowników', () => {
         it('powinien zwrócić 400 gdy email jest nieprawidłowy', async () => {
-            const res = await request(app)
-                .put('/api/users/test-id')
-                .set(authHeader)
-                .send({
-                    email: 'invalid-email'
-                });
+            const res = await request(app).put('/api/users/test-id').set(authHeader).send({
+                email: 'invalid-email'
+            });
             expect(res.statusCode).toBe(400);
         });
 
         it('powinien zwrócić 400 gdy hasło jest za krótkie', async () => {
-            const res = await request(app)
-                .put('/api/users/test-id')
-                .set(authHeader)
-                .send({
-                    password: '123'
-                });
+            const res = await request(app).put('/api/users/test-id').set(authHeader).send({
+                password: '123'
+            });
             expect(res.statusCode).toBe(400);
         });
     });
 
     describe('PUT /api/settings/year-letter - walidacja ustawień', () => {
         it('powinien zwrócić 400 gdy litera jest za długa', async () => {
-            const res = await request(app)
-                .put('/api/settings/year-letter')
-                .set(authHeader)
-                .send({
-                    letter: 'AB'
-                });
+            const res = await request(app).put('/api/settings/year-letter').set(authHeader).send({
+                letter: 'AB'
+            });
             expect(res.statusCode).toBe(400);
         });
     });
@@ -276,13 +252,25 @@ describe('API Validation Tests', () => {
         it('powinien zwrócić 200 z tablicą klientów', async () => {
             const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockResolvedValue([
-                { id: '1', name: 'Firma ABC', nip: '1234567890', userId: 'user-id', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: null },
-                { id: '2', name: 'Firma XYZ', nip: '9876543210', userId: 'user-id', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: null }
+                {
+                    id: '1',
+                    name: 'Firma ABC',
+                    nip: '1234567890',
+                    userId: 'user-id',
+                    createdAt: '2026-01-01T00:00:00.000Z',
+                    updatedAt: null
+                },
+                {
+                    id: '2',
+                    name: 'Firma XYZ',
+                    nip: '9876543210',
+                    userId: 'user-id',
+                    createdAt: '2026-01-01T00:00:00.000Z',
+                    updatedAt: null
+                }
             ]);
 
-            const res = await request(app)
-                .get('/api/clients')
-                .set(authHeader);
+            const res = await request(app).get('/api/clients').set(authHeader);
 
             expect(res.statusCode).toBe(200);
             expect(res.body.data).toHaveLength(2);
@@ -293,9 +281,7 @@ describe('API Validation Tests', () => {
             const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockResolvedValue([]);
 
-            const res = await request(app)
-                .get('/api/clients')
-                .set(authHeader);
+            const res = await request(app).get('/api/clients').set(authHeader);
 
             expect(res.statusCode).toBe(200);
             expect(res.body.data).toHaveLength(0);
@@ -305,9 +291,7 @@ describe('API Validation Tests', () => {
             const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockRejectedValue(new Error('DB connection failed'));
 
-            const res = await request(app)
-                .get('/api/clients')
-                .set(authHeader);
+            const res = await request(app).get('/api/clients').set(authHeader);
 
             expect(res.statusCode).toBe(500);
             expect(res.body.error).toBeDefined();
@@ -316,12 +300,15 @@ describe('API Validation Tests', () => {
         it('powinien normalizować timestampy do ISO', async () => {
             const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockResolvedValue([
-                { id: '1', name: 'Firma ABC', createdAt: '1779296688240', updatedAt: '1779296688306' }
+                {
+                    id: '1',
+                    name: 'Firma ABC',
+                    createdAt: '1779296688240',
+                    updatedAt: '1779296688306'
+                }
             ]);
 
-            const res = await request(app)
-                .get('/api/clients')
-                .set(authHeader);
+            const res = await request(app).get('/api/clients').set(authHeader);
 
             expect(res.statusCode).toBe(200);
             expect(res.body.data[0].createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);

@@ -14,7 +14,7 @@ export default defineConfig({
                 studnie: path.resolve(__dirname, 'public/studnie.html'),
                 kartoteka: path.resolve(__dirname, 'public/kartoteka.html'),
                 zlecenia: path.resolve(__dirname, 'public/zlecenia.html'),
-                app: path.resolve(__dirname, 'public/app.html'),
+                app: path.resolve(__dirname, 'public/app.html')
             },
             output: {
                 entryFileNames: 'js/[name]-[hash].js',
@@ -25,19 +25,19 @@ export default defineConfig({
                         if (id.includes('xlsx')) return 'vendor-xlsx';
                         return 'vendor';
                     }
-                },
-            },
+                }
+            }
         },
         target: 'es2015',
-        minify: 'esbuild',
+        minify: 'esbuild'
     },
     server: {
         port: 5173,
         proxy: {
-            '/api': 'http://localhost:3000',
-        },
+            '/api': 'http://localhost:3000'
+        }
     },
     esbuild: {
-        legalComments: 'none',
-    },
+        legalComments: 'none'
+    }
 });

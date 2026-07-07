@@ -2,12 +2,12 @@
 
 **Status:** Zaakceptowany  
 **Data:** 2026-06-20  
-**Autor:** Hermes Agent  
+**Autor:** Hermes Agent
 
 ## Kontekst
 
-Projekt ma 48+ plików TypeScript (backend) i 30+ plików JS (frontend, ~37k linii). 
-Znajdowanie funkcji, zależności i kodu bez narzędzi AI jest czasochłonne. 
+Projekt ma 48+ plików TypeScript (backend) i 30+ plików JS (frontend, ~37k linii).
+Znajdowanie funkcji, zależności i kodu bez narzędzi AI jest czasochłonne.
 Grep/cat zużywają dużo tokenów przy pracy z AI agentami.
 
 ## Decyzja
@@ -45,8 +45,8 @@ graphify explain "magazynWL vs magazynKLB"
 
 ## Alternatywy odrzucone
 
-| Alternatywa | Powód odrzucenia |
-|------------|------------------|
-| grep/rg | Brak zrozumienia struktury kodu (tylko tekst), dużo wyników, tokenochłonne |
-| ctags/cscope | Nieaktualizowane dynamicznie, brak interfejsu query |
-| GitHub Copilot Search | Wymaga GitHub, nie działa na AST offline |
+| Alternatywa           | Powód odrzucenia                                                           |
+| --------------------- | -------------------------------------------------------------------------- |
+| grep/rg               | Brak zrozumienia struktury kodu (tylko tekst), dużo wyników, tokenochłonne |
+| ctags/cscope          | Nieaktualizowane dynamicznie, brak interfejsu query                        |
+| GitHub Copilot Search | Wymaga GitHub, nie działa na AST offline                                   |

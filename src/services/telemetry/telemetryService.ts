@@ -159,7 +159,7 @@ class TelemetryService {
             logger.info(
                 'Telemetry',
                 `Zapisano konfigurację ${telemetryId} ` +
-                `(well=${payload.wellId || 'brak'}, transitions=${transitionsCreated}, history=${configHistoryCreated})`
+                    `(well=${payload.wellId || 'brak'}, transitions=${transitionsCreated}, history=${configHistoryCreated})`
             );
 
             return {
@@ -253,7 +253,10 @@ class TelemetryService {
                     createdAt: now
                 }
             });
-            logger.info('Telemetry', `Zarejestrowano wersję ${input.componentType}:${input.version}`);
+            logger.info(
+                'Telemetry',
+                `Zarejestrowano wersję ${input.componentType}:${input.version}`
+            );
             return { success: true, id };
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
@@ -265,9 +268,7 @@ class TelemetryService {
     /**
      * Pobiera najnowsze rekordy telemetry (bez paginacji - do dashboardu admina).
      */
-    async listRecent(
-        limit: number = 100
-    ): Promise<Array<Record<string, unknown>>> {
+    async listRecent(limit: number = 100): Promise<Array<Record<string, unknown>>> {
         try {
             const logs = await prisma.ai_telemetry_logs.findMany({
                 orderBy: { createdAt: 'desc' },
@@ -350,10 +351,7 @@ class TelemetryService {
      * Oznacza konfigurację jako zaakceptowaną przez użytkownika
      * (pasuje do passive_learner.record_acceptance).
      */
-    async recordAcceptance(
-        telemetryId: string,
-        accepted: boolean
-    ): Promise<void> {
+    async recordAcceptance(telemetryId: string, accepted: boolean): Promise<void> {
         try {
             await prisma.ai_telemetry_logs.update({
                 where: { id: telemetryId },
@@ -367,16 +365,17 @@ class TelemetryService {
                 }
             });
         } catch (e) {
-            logger.warn('Telemetry', `Nie udało się zaktualizować acceptance dla ${telemetryId}: ${e}`);
+            logger.warn(
+                'Telemetry',
+                `Nie udało się zaktualizować acceptance dla ${telemetryId}: ${e}`
+            );
         }
     }
 
     /**
      * Pomocnik: bezpieczna deserializacja JSON z obiektu Prisma.
      */
-    private _safeDeserialize<T extends Record<string, unknown>>(
-        obj: T
-    ): Record<string, unknown> {
+    private _safeDeserialize<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
         const result: Record<string, unknown> = { ...obj };
         const jsonFields = [
             'ringHeights',

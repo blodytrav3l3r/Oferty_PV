@@ -1,10 +1,10 @@
 /**
  * Skrypt migracyjny: zamiana emoji na tagi Lucide <i data-lucide="..."></i>
- * 
+ *
  * Problem poprzedniej wersji: regex Unicode nie łapał wielobajtowych emoji
  * (np. 🏗️ = U+1F3D7 + U+FE0F), więc powstawały tagi data-lucide="undefined".
- * 
- * Rozwiązanie: iterujemy po konkretnych string-ach emoji z mapy, 
+ *
+ * Rozwiązanie: iterujemy po konkretnych string-ach emoji z mapy,
  * zamieniając je dokładnie (string.replaceAll).
  */
 const fs = require('fs');
@@ -104,7 +104,7 @@ const ICON_MAP = {
     '📖': 'book-open',
     '🔵': 'circle',
     '🟣': 'circle',
-    '🟠': 'circle',
+    '🟠': 'circle'
 };
 
 function replaceEmojisInContent(content) {
@@ -148,15 +148,14 @@ function processFile(filePath) {
 
 function addLucideScripts(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
-    
+
     if (content.includes('lucide.min.js') || content.includes('lucide@latest')) {
         return; // Już posiada bibliotekę lucide
     }
 
     // Dodaj przed </body>
     if (content.includes('</body>')) {
-        const scripts = 
-`    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>
+        const scripts = `    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>
     <script src="js/shared/iconMap.js?v=1.6"><\/script>
 `;
         content = content.replace('</body>', scripts + '</body>');
@@ -170,9 +169,15 @@ const publicDir = path.join(__dirname, 'public');
 
 console.log('\n=== FAZA 1: Zamiana emoji w plikach HTML ===');
 const htmlFiles = [
-    'index.html', 'app.html', 'rury.html', 'studnie.html', 
-    'kartoteka.html', 'zlecenia.html',
-    'templates/etykieta.html', 'templates/oferta_studnie.html', 'templates/zlecenie.html'
+    'index.html',
+    'app.html',
+    'rury.html',
+    'studnie.html',
+    'kartoteka.html',
+    'zlecenia.html',
+    'templates/etykieta.html',
+    'templates/oferta_studnie.html',
+    'templates/zlecenie.html'
 ];
 let totalHtml = 0;
 for (const f of htmlFiles) {

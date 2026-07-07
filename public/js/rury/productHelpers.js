@@ -104,8 +104,10 @@ function getSortedRuryItems(items) {
         });
         diamKeys.forEach((dk) => {
             grouped[cat][dk].sort((a, b) => {
-                const aBB = a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
-                const bBB = b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
+                const aBB =
+                    a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
+                const bBB =
+                    b.item.name.toLowerCase().includes('bosy') || b.item.productId.endsWith('-B00');
                 if (aBB !== bBB) return aBB ? -1 : 1;
                 return (a.item.lengthM || 0) - (b.item.lengthM || 0);
             });

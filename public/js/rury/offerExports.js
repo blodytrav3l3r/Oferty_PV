@@ -71,10 +71,12 @@ function exportOfferPDF(id) {
     // Przelicz transport dla PDF
     const transportResult = calculateTransports(offer.items);
     const offerMode = offer.transportMode || 'full';
-    const exportTransports = offerMode === 'fractional'
-        ? offer.items.filter(i => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
-            .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
-        : transportResult.totalTransports;
+    const exportTransports =
+        offerMode === 'fractional'
+            ? offer.items
+                  .filter((i) => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
+                  .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
+            : transportResult.totalTransports;
     const transportCost = exportTransports * costPerTrip;
     const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
 
@@ -146,7 +148,7 @@ function exportOfferPDF(id) {
     <div class="info-box"><h3>Podsumowanie</h3>
       <div>Pozycji: ${offer.items.length}</div>
       <div>Łączna waga: ${fmtInt(totalWeight)} kg</div>
-      <div>Transportów: ${(typeof formatTransportCount === 'function') ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports}</div>
+      <div>Transportów: ${typeof formatTransportCount === 'function' ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports}</div>
     </div>
   </div>
   <table>
@@ -169,7 +171,7 @@ function exportOfferPDF(id) {
   ${transportHtml}
   <div class="summary">
     <div class="summary-row"><span>RAZEM netto (produkty + transport):</span><span>${fmt(totalNetto)} PLN</span></div>
-    ${costPerTrip > 0 ? `<div class="summary-row transport"><span>w tym transport: ${offer.transportKm || '?'} km × ${fmt(offer.transportRate || 0)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${(typeof formatTransportCount === 'function') ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports} kursów</span><span>${fmt(transportCost)} PLN</span></div>` : ''}
+    ${costPerTrip > 0 ? `<div class="summary-row transport"><span>w tym transport: ${offer.transportKm || '?'} km × ${fmt(offer.transportRate || 0)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${typeof formatTransportCount === 'function' ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports} kursów</span><span>${fmt(transportCost)} PLN</span></div>` : ''}
     <div class="summary-row"><span>RAZEM netto:</span><span>${fmt(totalNetto)} PLN</span></div>
     <div class="summary-row"><span>VAT (23%):</span><span>${fmt(totalVat)} PLN</span></div>
     <div class="summary-row total"><span>SUMA BRUTTO:</span><span>${fmt(totalBrutto)} PLN</span></div>
@@ -308,7 +310,8 @@ function renderDiscountModalItems() {
             pName +=
                 ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb),0.3); vertical-align:middle;">+ PEHD 4mm</span>';
         if (item.autoAdded)
-            pName += ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
+            pName +=
+                ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
 
         const isGasket =
             item.autoAdded ||
@@ -410,7 +413,8 @@ function applyItemDiscounts() {
     });
 
     closeModal();
-    syncGaskets(); syncTransportSecurity();
+    syncGaskets();
+    syncTransportSecurity();
     renderOfferItems();
     updateOfferSummary();
     if (typeof renderOfferSummaryTab === 'function') renderOfferSummaryTab();
@@ -427,10 +431,12 @@ function exportOfferXlsx(id) {
     const transportResult = calculateTransports(offer.items);
     const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
     const xlsxMode = offer.transportMode || 'full';
-    const xlsxTransports = xlsxMode === 'fractional'
-        ? offer.items.filter(i => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
-            .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
-        : transportResult.totalTransports;
+    const xlsxTransports =
+        xlsxMode === 'fractional'
+            ? offer.items
+                  .filter((i) => !i.autoAdded && i.weight && i.weight > 0 && i.quantity > 0)
+                  .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
+            : transportResult.totalTransports;
     const transportCost = xlsxTransports * costPerTrip;
 
     // ─── Sheet 1: OFERTA ───
@@ -534,9 +540,19 @@ function exportOfferXlsx(id) {
 
     // Szerokości kolumn
     ws['!cols'] = [
-        { wch: 5 }, { wch: 20 }, { wch: 55 }, { wch: 12 }, { wch: 12 },
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 },
-        { wch: 14 }, { wch: 14 }, { wch: 10 }
+        { wch: 5 },
+        { wch: 20 },
+        { wch: 55 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 10 }
     ];
 
     // Formatowanie liczb dla kolumn walutowych

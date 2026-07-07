@@ -59,9 +59,15 @@ describe('telemetryRoutes E2E - schema walidacja', () => {
 
     it('akceptuje event z 9 możliwymi eventType', () => {
         const types = [
-            'auto_run', 'user_change', 'accept', 'reject',
-            'save_offer', 'create_order', 'telemetry_reason',
-            'rule_violation', 'fallback_triggered'
+            'auto_run',
+            'user_change',
+            'accept',
+            'reject',
+            'save_offer',
+            'create_order',
+            'telemetry_reason',
+            'rule_violation',
+            'fallback_triggered'
         ];
         types.forEach((t) => {
             expect(telemetryEventSchema.safeParse({ eventType: t }).success).toBe(true);
@@ -97,11 +103,13 @@ describe('telemetryRoutes E2E - schema walidacja', () => {
 
 describe('Telemetry wysokopoziomowe', () => {
     it('schema akceptuje specjalny payload z dużą liczbą przejść', () => {
-        const transitions = Array(50).fill(0).map((_, i) => ({
-            transitionNo: i + 1,
-            dn: '160',
-            heightFromBottomMm: i * 50 + 100
-        }));
+        const transitions = Array(50)
+            .fill(0)
+            .map((_, i) => ({
+                transitionNo: i + 1,
+                dn: '160',
+                heightFromBottomMm: i * 50 + 100
+            }));
         const r = telemetryConfigSchema.safeParse({
             solverSource: 'AUTO_JS',
             transitions
@@ -278,11 +286,13 @@ describe('PatternDetector - detekcja wzorców', () => {
 
     it('detectDennicaSwap: minimum 3 powtórzeń', () => {
         const out = pd.detectDennicaSwap(
-            Array(2).fill(0).map(() => ({
-                dn: '1200',
-                originalConfig: [{ productId: 'DEN-A', componentType: 'dennica' }],
-                finalConfig: [{ productId: 'DEN-B', componentType: 'dennica' }]
-            })),
+            Array(2)
+                .fill(0)
+                .map(() => ({
+                    dn: '1200',
+                    originalConfig: [{ productId: 'DEN-A', componentType: 'dennica' }],
+                    finalConfig: [{ productId: 'DEN-B', componentType: 'dennica' }]
+                })),
             '1200'
         );
         expect(out.length).toBe(0); // za mało danych
@@ -290,27 +300,31 @@ describe('PatternDetector - detekcja wzorców', () => {
 
     it('detectTransitionLayout: pomija poniżej progu', () => {
         const out = pd.detectTransitionLayout(
-            Array(2).fill(0).map(() => ({
-                dn: '1200',
-                transitionsCount: 3,
-                layout: 'mixed',
-                transitionAvgHeight: 500,
-                accepted: 1,
-                rejected: 0
-            }))
+            Array(2)
+                .fill(0)
+                .map(() => ({
+                    dn: '1200',
+                    transitionsCount: 3,
+                    layout: 'mixed',
+                    transitionAvgHeight: 500,
+                    accepted: 1,
+                    rejected: 0
+                }))
         );
         expect(out.length).toBe(0);
     });
 
     it('detectReductionChoice: generuje wzorce', () => {
-        const records = Array(5).fill(0).map((_, i) => ({
-            dn: '1200',
-            reductionUsed: i % 2 === 0,
-            wellHeight: 3000 + i * 100,
-            transitionCount: 2,
-            wasAccepted: true,
-            wasRejected: false
-        }));
+        const records = Array(5)
+            .fill(0)
+            .map((_, i) => ({
+                dn: '1200',
+                reductionUsed: i % 2 === 0,
+                wellHeight: 3000 + i * 100,
+                transitionCount: 2,
+                wasAccepted: true,
+                wasRejected: false
+            }));
         const out = pd.detectReductionChoice(records);
         expect(out.length).toBeGreaterThan(0);
     });
@@ -325,12 +339,14 @@ describe('PreferenceEngine - budowanie preferencji', () => {
     });
 
     it('buildSubstitution: wyciąga zamiany z poprawnych korekt', () => {
-        const corrections = Array(3).fill(0).map((_, i) => ({
-            dn: '1200',
-            originalConfig: [{ productId: 'Den-A' + i, componentType: 'dennica' }],
-            finalConfig: [{ productId: 'Den-B' + i, componentType: 'dennica' }],
-            overrideReason: 'reason-' + i
-        }));
+        const corrections = Array(3)
+            .fill(0)
+            .map((_, i) => ({
+                dn: '1200',
+                originalConfig: [{ productId: 'Den-A' + i, componentType: 'dennica' }],
+                finalConfig: [{ productId: 'Den-B' + i, componentType: 'dennica' }],
+                overrideReason: 'reason-' + i
+            }));
         const out = pe.buildSubstitution(corrections);
         // 3 korekty z różnymi produktami (brak kolizji)
         // brak wzorca z identycznym patternKey
@@ -338,23 +354,27 @@ describe('PreferenceEngine - budowanie preferencji', () => {
     });
 
     it('buildAddition: minimum 3 by stworzyc', () => {
-        const corr = Array(3).fill(0).map(() => ({
-            dn: '1200',
-            originalConfig: [],
-            finalConfig: [{ productId: 'X', componentType: 'seal' }],
-            overrideReason: ''
-        }));
+        const corr = Array(3)
+            .fill(0)
+            .map(() => ({
+                dn: '1200',
+                originalConfig: [],
+                finalConfig: [{ productId: 'X', componentType: 'seal' }],
+                overrideReason: ''
+            }));
         const out = pe.buildAddition(corr);
         expect(Array.isArray(out)).toBe(true);
     });
 
     it('buildRemoval: minimum 3', () => {
-        const corr = Array(3).fill(0).map(() => ({
-            dn: '1200',
-            originalConfig: [{ productId: 'X', componentType: 'seal' }],
-            finalConfig: [],
-            overrideReason: ''
-        }));
+        const corr = Array(3)
+            .fill(0)
+            .map(() => ({
+                dn: '1200',
+                originalConfig: [{ productId: 'X', componentType: 'seal' }],
+                finalConfig: [],
+                overrideReason: ''
+            }));
         const out = pe.buildRemoval(corr);
         expect(Array.isArray(out)).toBe(true);
     });
@@ -620,7 +640,7 @@ describe('CronService - harmonogram', () => {
 
 describe('Bezpieczeństwo API - role', () => {
     it('Schemat telemetry odrzuca lateral injection nazwy', () => {
-        const malicious = "javascript:alert(1)";
+        const malicious = 'javascript:alert(1)';
         const r = telemetryConfigSchema.safeParse({
             solverSource: 'AUTO_JS',
             wellId: malicious
@@ -652,18 +672,20 @@ describe('Bezpieczeństwo API - role', () => {
 describe('Równoległe zapisy telemetry', () => {
     it('5 równoległych upsertów sukces', async () => {
         const time = Date.now();
-        const promises = Array(5).fill(0).map((_, i) => {
-            const key = 'par_' + time + '_' + i;
-            return kb().upsertPattern({
-                patternType: 'dennica_swap',
-                patternKey: key,
-                hitCount: i,
-                confidence: i * 0.1,
-                successCount: i,
-                rejectionCount: 0,
-                dn: 'PAR_DN'
+        const promises = Array(5)
+            .fill(0)
+            .map((_, i) => {
+                const key = 'par_' + time + '_' + i;
+                return kb().upsertPattern({
+                    patternType: 'dennica_swap',
+                    patternKey: key,
+                    hitCount: i,
+                    confidence: i * 0.1,
+                    successCount: i,
+                    rejectionCount: 0,
+                    dn: 'PAR_DN'
+                });
             });
-        });
         const result = await Promise.all(promises);
         expect(result.length).toBe(5);
         await prisma.ai_knowledge_base.deleteMany({

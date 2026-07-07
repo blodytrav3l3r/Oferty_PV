@@ -9,8 +9,10 @@ async function checkDatabase() {
         FROM offers_studnie_rel
     `;
     console.log('OFERTY STUDNI:', (studnieOffers as any[]).length);
-    (studnieOffers as any[]).forEach(o => {
-        console.log(`  - ${o.id} | nr: ${o.offer_number || 'brak'} | user: ${o.userId} | state: ${o.state}`);
+    (studnieOffers as any[]).forEach((o) => {
+        console.log(
+            `  - ${o.id} | nr: ${o.offer_number || 'brak'} | user: ${o.userId} | state: ${o.state}`
+        );
     });
 
     // Oferty rur
@@ -19,8 +21,10 @@ async function checkDatabase() {
         FROM offers_rel
     `;
     console.log('\nOFERTY RUR:', (ruryOffers as any[]).length);
-    (ruryOffers as any[]).forEach(o => {
-        console.log(`  - ${o.id} | nr: ${o.offer_number || 'brak'} | user: ${o.userId} | state: ${o.state}`);
+    (ruryOffers as any[]).forEach((o) => {
+        console.log(
+            `  - ${o.id} | nr: ${o.offer_number || 'brak'} | user: ${o.userId} | state: ${o.state}`
+        );
     });
 
     // Zamówienia studni
@@ -29,8 +33,10 @@ async function checkDatabase() {
         FROM orders_studnie_rel
     `;
     console.log('\nZAMÓWIENIA STUDNI:', (orders as any[]).length);
-    (orders as any[]).forEach(o => {
-        console.log(`  - ${o.id} | offerId: ${o.offerStudnieId} | user: ${o.userId} | status: ${o.status}`);
+    (orders as any[]).forEach((o) => {
+        console.log(
+            `  - ${o.id} | offerId: ${o.offerStudnieId} | user: ${o.userId} | status: ${o.status}`
+        );
     });
 
     // Zlecenia produkcyjne
@@ -39,11 +45,13 @@ async function checkDatabase() {
         FROM production_orders_rel
     `;
     console.log('\nZLECENIA PRODUKCYJNE:', (production as any[]).length);
-    (production as any[]).forEach(o => {
+    (production as any[]).forEach((o) => {
         console.log(`  - ${o.id} | orderId: ${o.orderId} | user: ${o.userId}`);
     });
 
     console.log('\n=== KONIEC ===');
 }
 
-checkDatabase().catch(console.error).finally(() => process.exit());
+checkDatabase()
+    .catch(console.error)
+    .finally(() => process.exit());

@@ -2,11 +2,11 @@
 
 **Status:** Zaakceptowany  
 **Data:** 2026-06-20  
-**Autor:** Hermes Agent  
+**Autor:** Hermes Agent
 
 ## Kontekst
 
-System WITROS Oferty wymaga bazy danych dla ofert, produktów, klientów i użytkowników. 
+System WITROS Oferty wymaga bazy danych dla ofert, produktów, klientów i użytkowników.
 Rozważano: PostgreSQL (standard dla web apps), SQLite, MySQL.
 
 ## Decyzja
@@ -30,7 +30,7 @@ Rozważano: PostgreSQL (standard dla web apps), SQLite, MySQL.
 
 ## Alternatywy odrzucone
 
-| Alternatywa | Powód odrzucenia |
-|------------|------------------|
-| PostgreSQL | Wyższy koszt hostingu ($15+/mies.), konieczność zarządzania serwerem |
-| MySQL | Podobnie jak PostgreSQL, dodatkowe obciążenie operacyjne |
+| Alternatywa | Powód odrzucenia                                                     |
+| ----------- | -------------------------------------------------------------------- |
+| PostgreSQL  | Wyższy koszt hostingu ($15+/mies.), konieczność zarządzania serwerem |
+| MySQL       | Podobnie jak PostgreSQL, dodatkowe obciążenie operacyjne             |

@@ -26,7 +26,12 @@ interface ApiClient {
     del<T = unknown>(url: string, opts?: ApiRequestOptions): Promise<T | null>;
     patch<T = unknown>(url: string, body?: unknown, opts?: ApiRequestOptions): Promise<T | null>;
     request<T = unknown>(url: string, opts?: ApiRequestOptions): Promise<T | null>;
-    getWithRetry<T = unknown>(url: string, opts?: ApiRequestOptions, retries?: number, delayMs?: number): Promise<T | null>;
+    getWithRetry<T = unknown>(
+        url: string,
+        opts?: ApiRequestOptions,
+        retries?: number,
+        delayMs?: number
+    ): Promise<T | null>;
 }
 
 /* ===== Logger ===== */
@@ -140,7 +145,9 @@ interface Window {
     calcTransportCount(weight: number, mode: string): number;
     calcTransportCost(weight: number, km: number, rate: number, mode: string): number;
     formatTransportCount(count: number, mode: string): string;
-    calculateTransportTrips(items: Array<{ weight: number; transport: number; quantity: number }>): { totalTrips: number; saved: number };
+    calculateTransportTrips(
+        items: Array<{ weight: number; transport: number; quantity: number }>
+    ): { totalTrips: number; saved: number };
 
     /* clientManager.js */
     clientsDb: ClientData[];
@@ -187,7 +194,11 @@ declare var lucide: {
     replace?: (element?: HTMLElement) => void;
     icons?: Record<string, string[]>;
 };
-declare var fetchWithTimeout: (url: string, options?: RequestInit, timeoutMs?: number) => Promise<Response>;
+declare var fetchWithTimeout: (
+    url: string,
+    options?: RequestInit,
+    timeoutMs?: number
+) => Promise<Response>;
 declare function showModal(options: {
     title?: string;
     content?: string;

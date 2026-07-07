@@ -47,12 +47,7 @@ export class RankingEngine {
         const dnMatch = p.dn === features.dn ? 0.1 : 0;
 
         // 3. Świeżość - jeśli niedawno wykryto
-        const recencyBoost =
-            p.hitCount > 10
-                ? 0.05
-                : p.hitCount > 5
-                  ? 0.03
-                  : 0;
+        const recencyBoost = p.hitCount > 10 ? 0.05 : p.hitCount > 5 ? 0.03 : 0;
 
         const score = Math.min(base + dnMatch + recencyBoost, 1.0);
 

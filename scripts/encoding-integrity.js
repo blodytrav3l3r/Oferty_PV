@@ -3,15 +3,94 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const IGNORE_DIRS = new Set(['node_modules', '.git', 'venv', 'dist', 'well_configurator_backend', 'data', 'generated', 'graphify-out', '.husky/_']);
-const IGNORE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.otf', '.svg', '.sqlite', '.db', '.exe', '.dll', '.obj', '.bin', '.dat', '.xlsx', '.xls', '.docx', '.pdf']);
-const IGNORE_FILES = new Set(['package-lock.json', '.gitignore', '.dockerignore', 'xlsx.full.min.js']);
-const TEXT_EXTENSIONS = new Set(['.html', '.js', '.ts', '.css', '.json', '.md', '.yml', '.yaml', '.sh', '.bat', '.ps1', '.py', '.sql', '.env', '.txt', '.mjs', '.cjs', '.mts', '.cts', '.xml', '.cfg', '.ini', '.conf', '.rc', '.properties', '.toml']);
-const W1250_EXTS = new Set(['.html', '.js', '.ts', '.css', '.json', '.md', '.yml', '.yaml', '.py', '.sql', '.env', '.txt', '.xml']);
+const IGNORE_DIRS = new Set([
+    'node_modules',
+    '.git',
+    'venv',
+    'dist',
+    'well_configurator_backend',
+    'data',
+    'generated',
+    'graphify-out',
+    '.husky/_'
+]);
+const IGNORE_EXT = new Set([
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.ico',
+    '.woff',
+    '.woff2',
+    '.ttf',
+    '.eot',
+    '.otf',
+    '.svg',
+    '.sqlite',
+    '.db',
+    '.exe',
+    '.dll',
+    '.obj',
+    '.bin',
+    '.dat',
+    '.xlsx',
+    '.xls',
+    '.docx',
+    '.pdf'
+]);
+const IGNORE_FILES = new Set([
+    'package-lock.json',
+    '.gitignore',
+    '.dockerignore',
+    'xlsx.full.min.js'
+]);
+const TEXT_EXTENSIONS = new Set([
+    '.html',
+    '.js',
+    '.ts',
+    '.css',
+    '.json',
+    '.md',
+    '.yml',
+    '.yaml',
+    '.sh',
+    '.bat',
+    '.ps1',
+    '.py',
+    '.sql',
+    '.env',
+    '.txt',
+    '.mjs',
+    '.cjs',
+    '.mts',
+    '.cts',
+    '.xml',
+    '.cfg',
+    '.ini',
+    '.conf',
+    '.rc',
+    '.properties',
+    '.toml'
+]);
+const W1250_EXTS = new Set([
+    '.html',
+    '.js',
+    '.ts',
+    '.css',
+    '.json',
+    '.md',
+    '.yml',
+    '.yaml',
+    '.py',
+    '.sql',
+    '.env',
+    '.txt',
+    '.xml'
+]);
 
 function shouldIgnore(dir) {
     const parts = dir.split(path.sep);
-    return parts.some(p => IGNORE_DIRS.has(p));
+    return parts.some((p) => IGNORE_DIRS.has(p));
 }
 
 function walkDir(dir, files = []) {
@@ -23,12 +102,16 @@ function walkDir(dir, files = []) {
                 if (!shouldIgnore(full)) walkDir(full, files);
             } else if (entry.isFile()) {
                 const ext = path.extname(entry.name).toLowerCase();
-                if (!IGNORE_EXT.has(ext) && !IGNORE_FILES.has(entry.name) && TEXT_EXTENSIONS.has(ext)) {
+                if (
+                    !IGNORE_EXT.has(ext) &&
+                    !IGNORE_FILES.has(entry.name) &&
+                    TEXT_EXTENSIONS.has(ext)
+                ) {
                     files.push(full);
                 }
             }
         }
-    } catch { }
+    } catch {}
     return files;
 }
 
@@ -41,16 +124,19 @@ function validateUTF8(buffer) {
     while (i < buffer.length) {
         const byte = buffer[i];
 
-        if (byte <= 0x7F) {
+        if (byte <= 0x7f) {
             if (continuationBytes > 0) {
-                invalidBytes.push({ pos: i - continuationBytes, reason: 'expected continuation byte (truncated sequence)' });
+                invalidBytes.push({
+                    pos: i - continuationBytes,
+                    reason: 'expected continuation byte (truncated sequence)'
+                });
                 continuationBytes = 0;
             }
             i++;
             continue;
         }
 
-        if ((byte & 0xC0) === 0x80) {
+        if ((byte & 0xc0) === 0x80) {
             if (continuationBytes > 0) {
                 continuationBytes--;
                 i++;
@@ -61,9 +147,12 @@ function validateUTF8(buffer) {
             continue;
         }
 
-        if ((byte & 0xE0) === 0xC0) {
+        if ((byte & 0xe0) === 0xc0) {
             if (continuationBytes > 0) {
-                invalidBytes.push({ pos: i, reason: 'expected continuation byte (truncated sequence)' });
+                invalidBytes.push({
+                    pos: i,
+                    reason: 'expected continuation byte (truncated sequence)'
+                });
                 continuationBytes = 0;
             }
             if (i + 1 >= buffer.length) {
@@ -71,8 +160,11 @@ function validateUTF8(buffer) {
                 i++;
                 continue;
             }
-            if ((buffer[i + 1] & 0xC0) !== 0x80) {
-                invalidBytes.push({ pos: i, reason: 'invalid 2-byte sequence (second byte not continuation)' });
+            if ((buffer[i + 1] & 0xc0) !== 0x80) {
+                invalidBytes.push({
+                    pos: i,
+                    reason: 'invalid 2-byte sequence (second byte not continuation)'
+                });
                 i++;
                 continue;
             }
@@ -80,9 +172,12 @@ function validateUTF8(buffer) {
             continue;
         }
 
-        if ((byte & 0xF0) === 0xE0) {
+        if ((byte & 0xf0) === 0xe0) {
             if (continuationBytes > 0) {
-                invalidBytes.push({ pos: i, reason: 'expected continuation byte (truncated sequence)' });
+                invalidBytes.push({
+                    pos: i,
+                    reason: 'expected continuation byte (truncated sequence)'
+                });
                 continuationBytes = 0;
             }
             if (i + 2 >= buffer.length) {
@@ -90,8 +185,11 @@ function validateUTF8(buffer) {
                 i++;
                 continue;
             }
-            if ((buffer[i + 1] & 0xC0) !== 0x80 || (buffer[i + 2] & 0xC0) !== 0x80) {
-                invalidBytes.push({ pos: i, reason: 'invalid 3-byte sequence (continuation bytes)' });
+            if ((buffer[i + 1] & 0xc0) !== 0x80 || (buffer[i + 2] & 0xc0) !== 0x80) {
+                invalidBytes.push({
+                    pos: i,
+                    reason: 'invalid 3-byte sequence (continuation bytes)'
+                });
                 i++;
                 continue;
             }
@@ -99,9 +197,12 @@ function validateUTF8(buffer) {
             continue;
         }
 
-        if ((byte & 0xF8) === 0xF0) {
+        if ((byte & 0xf8) === 0xf0) {
             if (continuationBytes > 0) {
-                invalidBytes.push({ pos: i, reason: 'expected continuation byte (truncated sequence)' });
+                invalidBytes.push({
+                    pos: i,
+                    reason: 'expected continuation byte (truncated sequence)'
+                });
                 continuationBytes = 0;
             }
             if (i + 3 >= buffer.length) {
@@ -109,7 +210,11 @@ function validateUTF8(buffer) {
                 i++;
                 continue;
             }
-            if ((buffer[i + 1] & 0xC0) !== 0x80 || (buffer[i + 2] & 0xC0) !== 0x80 || (buffer[i + 3] & 0xC0) !== 0x80) {
+            if (
+                (buffer[i + 1] & 0xc0) !== 0x80 ||
+                (buffer[i + 2] & 0xc0) !== 0x80 ||
+                (buffer[i + 3] & 0xc0) !== 0x80
+            ) {
                 invalidBytes.push({ pos: i, reason: 'invalid 4-byte sequence' });
                 i++;
                 continue;
@@ -128,7 +233,7 @@ function validateUTF8(buffer) {
 function countUFFFD(buffer) {
     let count = 0;
     for (let i = 0; i < buffer.length - 2; i++) {
-        if (buffer[i] === 0xEF && buffer[i + 1] === 0xBF && buffer[i + 2] === 0xBD) count++;
+        if (buffer[i] === 0xef && buffer[i + 1] === 0xbf && buffer[i + 2] === 0xbd) count++;
     }
     return count;
 }
@@ -136,23 +241,28 @@ function countUFFFD(buffer) {
 function countPolishUTF8(buffer) {
     let count = 0;
     for (let i = 0; i < buffer.length - 1; i++) {
-        if ((buffer[i] === 0xC4 || buffer[i] === 0xC5) && (buffer[i + 1] & 0x80)) count++;
+        if ((buffer[i] === 0xc4 || buffer[i] === 0xc5) && buffer[i + 1] & 0x80) count++;
     }
     return count;
 }
 
 function detectW1250(buffer) {
     const w1250Ranges = {
-        low: { start: 0x80, end: 0x9F },
-        mid: { start: 0xA0, end: 0xFF }
+        low: { start: 0x80, end: 0x9f },
+        mid: { start: 0xa0, end: 0xff }
     };
     let w1250Count = 0;
     let totalNonASCII = 0;
 
     for (let i = 0; i < buffer.length; i++) {
-        if (buffer[i] > 0x7F) totalNonASCII++;
+        if (buffer[i] > 0x7f) totalNonASCII++;
         if (buffer[i] >= w1250Ranges.low.start && buffer[i] <= w1250Ranges.mid.end) {
-            if ((buffer[i] & 0xC0) !== 0x80 && (buffer[i] & 0xE0) !== 0xC0 && (buffer[i] & 0xF0) !== 0xE0 && (buffer[i] & 0xF8) !== 0xF0) {
+            if (
+                (buffer[i] & 0xc0) !== 0x80 &&
+                (buffer[i] & 0xe0) !== 0xc0 &&
+                (buffer[i] & 0xf0) !== 0xe0 &&
+                (buffer[i] & 0xf8) !== 0xf0
+            ) {
                 w1250Count++;
             }
         }
@@ -176,10 +286,14 @@ function analyzeFile(filePath) {
         const { w1250Count, totalNonASCII } = detectW1250(buffer);
         if (totalNonASCII > 0 && totalNonASCII === utf8Result.invalidBytes.length) {
             result.status = 'FIXABLE';
-            result.issues.push(`Windows-1250 encoding (${w1250Count} non-ASCII bytes) — run encoding:fix`);
+            result.issues.push(
+                `Windows-1250 encoding (${w1250Count} non-ASCII bytes) — run encoding:fix`
+            );
         } else {
             result.status = 'ERROR';
-            result.issues.push(`Invalid UTF-8 (${utf8Result.invalidBytes.length} invalid byte positions)`);
+            result.issues.push(
+                `Invalid UTF-8 (${utf8Result.invalidBytes.length} invalid byte positions)`
+            );
         }
     }
 
@@ -204,14 +318,18 @@ function fixFile(filePath) {
     const utf8Result = validateUTF8(buffer);
 
     if (utf8Result.isValid) {
-        console.log(`  SKIP: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — already valid UTF-8`);
+        console.log(
+            `  SKIP: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — already valid UTF-8`
+        );
         return false;
     }
 
     // Skip binary files by extension
     const ext = path.extname(filePath).toLowerCase();
     if (!W1250_EXTS.has(ext)) {
-        console.log(`  SKIP: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — non-text extension`);
+        console.log(
+            `  SKIP: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — non-text extension`
+        );
         return false;
     }
 
@@ -223,7 +341,9 @@ function fixFile(filePath) {
         // Verify the result is valid UTF-8
         const verifyResult = validateUTF8(utf8Buffer);
         if (!verifyResult.isValid) {
-            console.log(`  FAIL: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — conversion produced invalid UTF-8`);
+            console.log(
+                `  FAIL: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — conversion produced invalid UTF-8`
+            );
             return false;
         }
 
@@ -246,7 +366,10 @@ function main() {
         console.log('='.repeat(50));
 
         const files = fs.statSync(target).isDirectory() ? walkDir(target) : [target];
-        let okCount = 0, warnCount = 0, errorCount = 0, fixableCount = 0;
+        let okCount = 0,
+            warnCount = 0,
+            errorCount = 0,
+            fixableCount = 0;
 
         for (const file of files) {
             const result = analyzeFile(file);
@@ -267,7 +390,9 @@ function main() {
         }
 
         console.log('='.repeat(50));
-        console.log(`OK: ${okCount} | WARN: ${warnCount} | FIXABLE: ${fixableCount} | ERROR: ${errorCount} | Total: ${files.length}`);
+        console.log(
+            `OK: ${okCount} | WARN: ${warnCount} | FIXABLE: ${fixableCount} | ERROR: ${errorCount} | Total: ${files.length}`
+        );
 
         if (errorCount > 0 || fixableCount > 0) {
             process.exit(1);
@@ -277,7 +402,9 @@ function main() {
         console.log('='.repeat(50));
 
         const files = fs.statSync(target).isDirectory() ? walkDir(target) : [target];
-        let fixedCount = 0, skipCount = 0, failCount = 0;
+        let fixedCount = 0,
+            skipCount = 0,
+            failCount = 0;
 
         for (const file of files) {
             const result = analyzeFile(file);
@@ -298,7 +425,10 @@ function main() {
         const { execSync } = require('child_process');
         let staged;
         try {
-            staged = execSync('git diff --cached --name-only --diff-filter=ACM', { cwd: ROOT, encoding: 'utf-8' }).trim();
+            staged = execSync('git diff --cached --name-only --diff-filter=ACM', {
+                cwd: ROOT,
+                encoding: 'utf-8'
+            }).trim();
         } catch {
             console.log('Not a git repository or git not available');
             process.exit(0);
@@ -310,7 +440,10 @@ function main() {
         }
 
         const stagedFiles = staged.split('\n').filter(Boolean);
-        let okCount = 0, warnCount = 0, errorCount = 0, fixableCount = 0;
+        let okCount = 0,
+            warnCount = 0,
+            errorCount = 0,
+            fixableCount = 0;
 
         for (const relFile of stagedFiles) {
             const fullPath = path.join(ROOT, relFile);
@@ -335,7 +468,9 @@ function main() {
         }
 
         console.log('='.repeat(50));
-        console.log(`OK: ${okCount} | WARN: ${warnCount} | FIXABLE: ${fixableCount} | ERROR: ${errorCount}`);
+        console.log(
+            `OK: ${okCount} | WARN: ${warnCount} | FIXABLE: ${fixableCount} | ERROR: ${errorCount}`
+        );
 
         if (errorCount > 0 || fixableCount > 0) {
             console.log('\n\u2716 Encoding check FAILED. Fix with: npm run encoding:fix');

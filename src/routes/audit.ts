@@ -14,7 +14,9 @@ const MAX_LIMIT = 100;
  *  - pro:   widzi logi swoje + swoich subUsers
  *  - user:  widzi tylko swoje
  */
-function buildAuditUserFilter(user: { role: string; id: string; subUsers?: string[] }): { userId?: { in: string[] } | string } {
+function buildAuditUserFilter(user: { role: string; id: string; subUsers?: string[] }): {
+    userId?: { in: string[] } | string;
+} {
     if (user.role === 'admin') return {};
     if (user.role === 'pro') {
         const ids = [user.id, ...(user.subUsers || [])].filter(
@@ -33,7 +35,9 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT);
         const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
-        const userFilter = authReq.user ? buildAuditUserFilter(authReq.user) : { userId: '__none__' };
+        const userFilter = authReq.user
+            ? buildAuditUserFilter(authReq.user)
+            : { userId: '__none__' };
         const where = { entityType, entityId, ...userFilter };
 
         const total = await prisma.audit_logs.count({ where });
@@ -98,7 +102,9 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
     try {
         const { entityType, entityId, logId } = req.params;
 
-        const userFilter = authReq.user ? buildAuditUserFilter(authReq.user) : { userId: '__none__' };
+        const userFilter = authReq.user
+            ? buildAuditUserFilter(authReq.user)
+            : { userId: '__none__' };
 
         const targetLog = await prisma.audit_logs.findFirst({
             where: { id: logId, entityType, entityId, ...userFilter }
@@ -116,7 +122,7 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
             orderBy: { createdAt: 'desc' }
         });
 
-        let baseLogRow: typeof baseLogs[number] | null = null;
+        let baseLogRow: (typeof baseLogs)[number] | null = null;
         for (const log of baseLogs) {
             if (log.action === 'create' || log.action === 'delete') {
                 baseLogRow = log;

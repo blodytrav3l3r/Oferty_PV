@@ -46,10 +46,10 @@
 
 /**
  * Buduje tablicę segmentów z konfiguracji (odwróconej).
- * 
+ *
  * WARSTWA 2 (Layout Engine):
  * Używana przez Layout i Solver do dzielenia konfiguracji na segmenty.
- * 
+ *
  * @param {Array} configItems - konfiguracja [{productId, quantity}]
  * @param {boolean} psiaBuda - czy jest psia buda
  * @returns {Array<ConfigSegment>} segmenty z start/end
@@ -79,7 +79,7 @@ function buildConfigSegmentMap(configItems, psiaBuda) {
 
 /**
  * Filtruje listę produktów na podstawie parametrów studni.
- * 
+ *
  * @param {Object} p - produkt z bazy
  * @param {Object} well - aktualnie edytowana studnia
  * @returns {boolean} czy produkt jest dostępny
@@ -285,7 +285,9 @@ window.ensureReliefRingPair = function (well) {
 
     const hasReliefPlate = well.config.some((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
-        return p && (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa');
+        return (
+            p && (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa')
+        );
     });
 
     // Jeśli nie ma żadnego elementu odciążającego, nic nie robimy
@@ -303,8 +305,9 @@ window.ensureReliefRingPair = function (well) {
     // 1. Jeśli jest pierścień a nie ma płyty -> dodaj płytę
     if (hasReliefRing && !hasReliefPlate) {
         const plate = getAvailableProducts(well).find(
-            (p) => (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa') && 
-                   parseInt(p.dn) === targetDn
+            (p) =>
+                (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa') &&
+                parseInt(p.dn) === targetDn
         );
         if (plate) {
             well.config.push({ productId: plate.id, quantity: 1, autoAdded: true });
@@ -315,8 +318,7 @@ window.ensureReliefRingPair = function (well) {
     // 2. Jeśli jest płyta a nie ma pierścienia -> dodaj pierścień
     if (hasReliefPlate && !hasReliefRing) {
         const ring = getAvailableProducts(well).find(
-            (p) => p.componentType === 'pierscien_odciazajacy' && 
-                   parseInt(p.dn) === targetDn
+            (p) => p.componentType === 'pierscien_odciazajacy' && parseInt(p.dn) === targetDn
         );
         if (ring) {
             well.config.push({ productId: ring.id, quantity: 1, autoAdded: true });
@@ -379,8 +381,7 @@ window.resolveEffectiveProduct = function (well, productId, configItem) {
                     dynamicProd = structuredClone(baseSub);
                     dynamicProd.id = dynamicOtId;
                     dynamicProd.componentType = 'krag_ot';
-                    if (!dynamicProd.name.endsWith(' z otworem'))
-                        dynamicProd.name += ' z otworem';
+                    if (!dynamicProd.name.endsWith(' z otworem')) dynamicProd.name += ' z otworem';
                     studnieProducts.push(dynamicProd);
                 }
                 if (configItem) configItem.productId = dynamicOtId;
@@ -397,12 +398,12 @@ window.resolveEffectiveProduct = function (well, productId, configItem) {
 
 /**
  * Osadza OT warianty kręgów tam, gdzie przejścia wymagają wiercenia.
- * 
+ *
  * WARSTWA 2 (Layout Engine):
  * Zamiast generować kręgi osobno, a później łatać na OT (applyDrilledRings),
  * od razu zwraca layout z odpowiednimi kręgami OT w odpowiednich pozycjach.
  * Używana przez solver wewnątrz pętli solve().
- * 
+ *
  * @param {Object} dennicaItem - produkt dennicy (lub obiekt z productId)
  * @param {Array} ringItems - wybrane kręgi z DP [{productId, quantity, _h}]
  * @param {Object} well - obiekt studni
@@ -413,15 +414,15 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
     const result = { rings: [], needsTallerDennica: false };
     if (!well.przejscia || well.przejscia.length === 0) {
         // Bez przejść: zwróć oryginalne kręgi (quantity zachowane)
-        result.rings = (ringItems || []).map(ki => ({
-            productId: ki.productId, quantity: ki.quantity || 1
+        result.rings = (ringItems || []).map((ki) => ({
+            productId: ki.productId,
+            quantity: ki.quantity || 1
         }));
         return result;
     }
 
     const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : 0;
-    const denH = dennicaItem && dennicaItem.height
-        ? parseFloat(dennicaItem.height) : 0;
+    const denH = dennicaItem && dennicaItem.height ? parseFloat(dennicaItem.height) : 0;
 
     // Zbuduj płaską listę itemów (dennica + kręgi) z pozycjami
     const flatItems = [];
@@ -430,7 +431,8 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
     flatItems.push({
         productId: dennicaItem?.productId || '',
         height: denH,
-        start: 0, end: denH,
+        start: 0,
+        end: denH,
         origItem: dennicaItem,
         isDennica: true,
         si: 0
@@ -444,7 +446,8 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
             flatItems.push({
                 productId: ki.productId,
                 height: h,
-                start: y, end: y + h,
+                start: y,
+                end: y + h,
                 origItem: ki,
                 isDennica: false,
                 si: flatItems.length
@@ -461,7 +464,7 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
         const pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const mmFromBottom = (pel - rzDna) * 1000;
-        const pprod = studnieProducts.find(x => x.id === pr.productId);
+        const pprod = studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
 
         let dnVal = 160;
@@ -485,31 +488,36 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
         for (let si = 1; si < flatItems.length; si++) {
             const fi = flatItems[si];
             if (fi.isDennica) continue;
-            if ((holeCenter >= fi.start && holeCenter < fi.end || crossesJoint && si === 1 && holeCenter < fi.start) && !alreadyNeedsOT.has(si)) {
+            if (
+                ((holeCenter >= fi.start && holeCenter < fi.end) ||
+                    (crossesJoint && si === 1 && holeCenter < fi.start)) &&
+                !alreadyNeedsOT.has(si)
+            ) {
                 alreadyNeedsOT.add(si);
 
-                const ringProd = studnieProducts.find(p => p.id === fi.productId);
+                const ringProd = studnieProducts.find((p) => p.id === fi.productId);
                 if (!ringProd) break;
                 // Tylko kręgi mogą być zastąpione OT variantem
                 if (ringProd.componentType !== 'krag') break;
 
                 // Znajdź lub utwórz OT variant
-                let otProd = availProducts.find(p =>
-                    (p.componentType === 'krag_ot' ||
-                     String(p.id).toLowerCase().endsWith('ot') ||
-                     String(p.name).toLowerCase().includes('wiercony')) &&
-                    p.dn === ringProd.dn && p.height === ringProd.height
+                let otProd = availProducts.find(
+                    (p) =>
+                        (p.componentType === 'krag_ot' ||
+                            String(p.id).toLowerCase().endsWith('ot') ||
+                            String(p.name).toLowerCase().includes('wiercony')) &&
+                        p.dn === ringProd.dn &&
+                        p.height === ringProd.height
                 );
 
                 if (!otProd) {
                     const dynamicId = ringProd.id + '_OT';
-                    otProd = studnieProducts.find(p => p.id === dynamicId);
+                    otProd = studnieProducts.find((p) => p.id === dynamicId);
                     if (!otProd) {
                         otProd = structuredClone(ringProd);
                         otProd.id = dynamicId;
                         otProd.componentType = 'krag_ot';
-                        if (!otProd.name.includes('wiercony'))
-                            otProd.name += ' wiercony';
+                        if (!otProd.name.includes('wiercony')) otProd.name += ' wiercony';
                         studnieProducts.push(otProd);
                     }
                 }
@@ -538,7 +546,7 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
 
 /**
  * Unifikuje scoring layoutów z obu ścieżek (standardowej i redukcyjnej).
- * 
+ *
  * ZASADY (kolejność priorytetów — kara rosnąco):
  *   rings        → 10 × liczba kręgów
  *   diff         → 5 (lub 15 dla redukcji) × |odchyłka|
@@ -549,7 +557,7 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
  *   bottomSect   → DN/400 × wysokość sekcji (tylko redukcja)
  *   oversizedBtm → 50 × mm nadmiaru (tylko redukcja)
  *   reductions   → 5000000 (gdy redukcja wymagana ale nie użyta)
- * 
+ *
  * @param {Object} opts
  * @param {number} opts.ringCount - liczba kręgów
  * @param {number} opts.diff - odchyłka wysokości [mm]

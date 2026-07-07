@@ -7,6 +7,7 @@
 **Kontekst**: Render Persistent Disk (sieciowy) + SQLite 1 writer = wolne zapisy.
 
 **Fix** (v2, `2418394`):
+
 - chunk 25 produktów na transakcję (33 transakcje zamiast 1)
 - `PRAGMA busy_timeout = 30000` w prismaClient.ts
 - sekwencyjne init: rury → studnie → admin → listen

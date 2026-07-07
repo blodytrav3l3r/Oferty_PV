@@ -36,9 +36,7 @@ function checkWithNodeSqlite() {
     const sqlite = require('node:sqlite');
     const db = new sqlite.DatabaseSync(DB_PATH, { readOnly: true });
     try {
-        const stmt = db.prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name = ?"
-        );
+        const stmt = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?");
         const missing = [];
         for (const tbl of REQUIRED_TABLES) {
             const row = stmt.get(tbl);
@@ -56,9 +54,12 @@ function checkWithCli() {
     const missing = [];
     for (const tbl of REQUIRED_TABLES) {
         try {
-            execSync(`sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='table' AND name='${tbl}' LIMIT 1"`, {
-                stdio: 'pipe'
-            });
+            execSync(
+                `sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='table' AND name='${tbl}' LIMIT 1"`,
+                {
+                    stdio: 'pipe'
+                }
+            );
         } catch (e) {
             missing.push(tbl);
         }
@@ -74,7 +75,9 @@ function check() {
             try {
                 return checkWithCli();
             } catch (cliErr) {
-                console.error('[check-db] Brak node:sqlite i sqlite3 CLI. Nie moge zweryfikowac bazy.');
+                console.error(
+                    '[check-db] Brak node:sqlite i sqlite3 CLI. Nie moge zweryfikowac bazy.'
+                );
                 process.exit(2);
             }
         }
@@ -85,7 +88,9 @@ function check() {
 const missing = check();
 
 if (missing.length === 0) {
-    console.log('[check-db] OK - wszystkie ' + REQUIRED_TABLES.length + ' tabel telemetry/AI istnieja.');
+    console.log(
+        '[check-db] OK - wszystkie ' + REQUIRED_TABLES.length + ' tabel telemetry/AI istnieja.'
+    );
     process.exit(0);
 }
 

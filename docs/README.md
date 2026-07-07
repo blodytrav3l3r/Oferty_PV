@@ -4,17 +4,17 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 
 ## Tech Stack
 
-| Warstwa | Technologia |
-|---------|-------------|
-| Backend | TypeScript, Express.js, Prisma (SQLite) |
-| Frontend | Vanilla JS (ES6), HTML5, CSS3 |
-| Walidacja | Zod |
-| PDF | Puppeteer |
-| MS Word | docxtemplater / docx |
-| Testy | Jest + ts-jest + supertest |
-| Python | FastAPI, OR-Tools CP-SAT, SQLAlchemy |
-| Ikonki | Lucide (slim build, 76 ikon) |
-| Font | Inter (self-hosted) |
+| Warstwa   | Technologia                             |
+| --------- | --------------------------------------- |
+| Backend   | TypeScript, Express.js, Prisma (SQLite) |
+| Frontend  | Vanilla JS (ES6), HTML5, CSS3           |
+| Walidacja | Zod                                     |
+| PDF       | Puppeteer                               |
+| MS Word   | docxtemplater / docx                    |
+| Testy     | Jest + ts-jest + supertest              |
+| Python    | FastAPI, OR-Tools CP-SAT, SQLAlchemy    |
+| Ikonki    | Lucide (slim build, 76 ikon)            |
+| Font      | Inter (self-hosted)                     |
 
 ## Uruchomienie
 
@@ -32,18 +32,18 @@ start_all.bat           # Node.js + Python AI Backend
 
 ## Skrypty NPM
 
-| Komenda | Opis |
-|---------|------|
-| `npm run dev` | Dev server (ts-node-dev, hot reload) |
-| `npm run build` | Kompilacja TypeScript |
-| `npm test` | Testy z coverage |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier format |
-| `npm run prisma:studio` | Prisma Studio (GUI bazy) |
-| `npm run prisma:migrate` | Migracje bazy danych |
-| `npm run graphify:watch` | Graphify watch (graf wiedzy) |
-| `npm start` | Serwer produkcyjny |
-| `npm run backup` | Backup bazy danych |
+| Komenda                  | Opis                                 |
+| ------------------------ | ------------------------------------ |
+| `npm run dev`            | Dev server (ts-node-dev, hot reload) |
+| `npm run build`          | Kompilacja TypeScript                |
+| `npm test`               | Testy z coverage                     |
+| `npm run lint`           | ESLint                               |
+| `npm run format`         | Prettier format                      |
+| `npm run prisma:studio`  | Prisma Studio (GUI bazy)             |
+| `npm run prisma:migrate` | Migracje bazy danych                 |
+| `npm run graphify:watch` | Graphify watch (graf wiedzy)         |
+| `npm start`              | Serwer produkcyjny                   |
+| `npm run backup`         | Backup bazy danych                   |
 
 ## Architektura
 

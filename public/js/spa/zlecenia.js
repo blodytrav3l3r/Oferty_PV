@@ -10,8 +10,16 @@ const AppZlecenia = (() => {
     let autoRefreshInterval = null;
 
     const statusMap = {
-        draft: { label: 'Oczekujące', class: 'status-draft', icon: '<i data-lucide="hourglass-2"></i>' },
-        accepted: { label: 'Zatwierdzone', class: 'status-accepted', icon: '<i data-lucide="check-check"></i>' }
+        draft: {
+            label: 'Oczekujące',
+            class: 'status-draft',
+            icon: '<i data-lucide="hourglass-2"></i>'
+        },
+        accepted: {
+            label: 'Zatwierdzone',
+            class: 'status-accepted',
+            icon: '<i data-lucide="check-check"></i>'
+        }
     };
 
     /* ===== INIT ===== */
@@ -83,7 +91,9 @@ const AppZlecenia = (() => {
 
     /** Escape for JS single-quoted strings inside onclick attributes */
     function escapeJsStr(str) {
-        return String(str ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return String(str ?? '')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'");
     }
 
     /** Prosta interpolacja szablonu: zastępuje {{KEY}} wartościami z dataObj */
@@ -446,9 +456,13 @@ const AppZlecenia = (() => {
         const totalSlots = Math.max(przejscia.length, 4);
 
         // Mapuj unikalne kąty do numerów etykiet dla grupowania wizualnego
-        const uniqueAngles = [...new Set(przejscia.map(p => parseFloat(p.angle) || 0))].sort((a, b) => a - b);
+        const uniqueAngles = [...new Set(przejscia.map((p) => parseFloat(p.angle) || 0))].sort(
+            (a, b) => a - b
+        );
         const angleToLabelNum = {};
-        uniqueAngles.forEach((a, idx) => { angleToLabelNum[a] = idx; });
+        uniqueAngles.forEach((a, idx) => {
+            angleToLabelNum[a] = idx;
+        });
 
         const rows = [];
         for (let i = 0; i < totalSlots; i++) {
@@ -487,18 +501,24 @@ const AppZlecenia = (() => {
         const lineHeight = 10;
 
         const svgParts = [];
-        svgParts.push(`<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`);
-        svgParts.push(`<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`);
-        svgParts.push(`<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`);
+        svgParts.push(
+            `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`
+        );
+        svgParts.push(
+            `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`
+        );
+        svgParts.push(
+            `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`
+        );
 
         const labels = [];
 
-        const wylot = przejscia.find(p => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
+        const wylot = przejscia.find((p) => p.flowType === 'wylot' || parseFloat(p.angle) === 0);
 
         // Etykiety z displayIndex — zgodne z tabelą i rzeczywistym flowType
         ensureDisplayIndices(przejscia);
         const labelsMap = new Map();
-        przejscia.forEach(p => {
+        przejscia.forEach((p) => {
             const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
             labelsMap.set(p, `${prefix} ${p.displayIndex}`);
         });
@@ -510,7 +530,9 @@ const AppZlecenia = (() => {
             const y = center + radius * Math.cos(rad);
             const isWylot = p === wylot;
 
-            svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`);
+            svgParts.push(
+                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`
+            );
 
             const labelRadius = radius + 40;
             const lx = center + labelRadius * Math.sin(rad);
@@ -550,17 +572,21 @@ const AppZlecenia = (() => {
             if (currentLine) lines.push(currentLine);
 
             labels.push({
-                origX: lx, origY: ly, lx, ly,
-                anchor, offsetX,
-                isRight: (lx >= center),
+                origX: lx,
+                origY: ly,
+                lx,
+                ly,
+                anchor,
+                offsetX,
+                isRight: lx >= center,
                 lines,
                 textAngle: `${angle}°${hText}`
             });
         });
 
         // Anti-overlap pass
-        const leftLabels = labels.filter(l => !l.isRight).sort((a, b) => a.ly - b.ly);
-        const rightLabels = labels.filter(l => l.isRight).sort((a, b) => a.ly - b.ly);
+        const leftLabels = labels.filter((l) => !l.isRight).sort((a, b) => a.ly - b.ly);
+        const rightLabels = labels.filter((l) => l.isRight).sort((a, b) => a.ly - b.ly);
 
         function spreadLabels(arr) {
             const requiredGapBase = 8 + lineHeight;
@@ -586,14 +612,14 @@ const AppZlecenia = (() => {
         let minY = center - radius - 5;
         let maxY = center + radius + 5;
 
-        labels.forEach(l => {
+        labels.forEach((l) => {
             const textHeight = (l.lines.length + 1) * lineHeight;
             if (l.ly - 5 < minY) minY = l.ly - 5;
             if (l.ly + textHeight > maxY) maxY = l.ly + textHeight;
 
             // Szerokość tekstu szacunkowo ~8px na literę
             const svgTexts = [...l.lines, l.textAngle];
-            const maxTextLen = Math.max(...svgTexts.map(t => t.length));
+            const maxTextLen = Math.max(...svgTexts.map((t) => t.length));
             const textW = maxTextLen * 8;
 
             if (l.anchor === 'end') {
@@ -601,14 +627,18 @@ const AppZlecenia = (() => {
             } else if (l.anchor === 'start') {
                 if (l.lx + l.offsetX + textW + 10 > maxX) maxX = l.lx + l.offsetX + textW + 10;
             } else {
-                if (l.lx + l.offsetX - textW / 2 - 10 < minX) minX = l.lx + l.offsetX - textW / 2 - 10;
-                if (l.lx + l.offsetX + textW / 2 + 10 > maxX) maxX = l.lx + l.offsetX + textW / 2 + 10;
+                if (l.lx + l.offsetX - textW / 2 - 10 < minX)
+                    minX = l.lx + l.offsetX - textW / 2 - 10;
+                if (l.lx + l.offsetX + textW / 2 + 10 > maxX)
+                    maxX = l.lx + l.offsetX + textW / 2 + 10;
             }
 
             // Linia prowadząca (leader line)
             if (Math.abs(l.origY - l.ly) > 2) {
-                const lineDist = (l.ly > l.origY) ? -8 : 8;
-                svgParts.push(`<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`);
+                const lineDist = l.ly > l.origY ? -8 : 8;
+                svgParts.push(
+                    `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`
+                );
             }
             let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" fill="#000">`;
             l.lines.forEach((line, li) => {

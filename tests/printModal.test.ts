@@ -43,16 +43,22 @@ function loadPrintModalInSandbox() {
         setImmediate: (cb: () => void) => cb()
     };
     sandbox.window = sandbox;
-    sandbox.window.lucide = { createIcons: (opts?: any) => createIconsCalls.push(JSON.stringify(opts)) };
+    sandbox.window.lucide = {
+        createIcons: (opts?: any) => createIconsCalls.push(JSON.stringify(opts))
+    };
     sandbox.window.showToast = (msg: string, type: string) => showToastCalls.push({ msg, type });
     sandbox.window.__testCallRegistry = calls;
     sandbox.window.__testClick = (action: string, id: string, format: string) => {
         calls.push({ action, id, format });
     };
-    sandbox.window.__testAction1 = (id: string, format: string) => calls.push({ action: 'action1', id, format });
-    sandbox.window.__testAction2 = (id: string, format: string) => calls.push({ action: 'action2', id, format });
-    sandbox.window.__testAction3 = (id: string, format: string) => calls.push({ action: 'action3', id, format });
-    sandbox.window.__testAction4 = (id: string, format: string) => calls.push({ action: 'action4', id, format });
+    sandbox.window.__testAction1 = (id: string, format: string) =>
+        calls.push({ action: 'action1', id, format });
+    sandbox.window.__testAction2 = (id: string, format: string) =>
+        calls.push({ action: 'action2', id, format });
+    sandbox.window.__testAction3 = (id: string, format: string) =>
+        calls.push({ action: 'action3', id, format });
+    sandbox.window.__testAction4 = (id: string, format: string) =>
+        calls.push({ action: 'action4', id, format });
 
     vm.createContext(sandbox);
     vm.runInContext(source, sandbox, { filename: 'printModal.js' });
@@ -188,7 +194,8 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
             documentMock._elements['universal-print-modal'] = modalEl;
 
             const btn: any = {
-                getAttribute: (n: string) => n === 'data-action' ? '__testAction1' : n === 'data-id' ? 'off-1' : 'pdf'
+                getAttribute: (n: string) =>
+                    n === 'data-action' ? '__testAction1' : n === 'data-id' ? 'off-1' : 'pdf'
             };
 
             const clickHandler = registeredListeners[0];
@@ -210,7 +217,8 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
             sandbox.window.showUniversalPrintModal({});
 
             const btn = {
-                getAttribute: (n: string) => n === 'data-action' ? '__testAction1' : n === 'data-id' ? 'off-1' : 'pdf'
+                getAttribute: (n: string) =>
+                    n === 'data-action' ? '__testAction1' : n === 'data-id' ? 'off-1' : 'pdf'
             };
             documentMock._elements['universal-print-modal'] = null;
 
@@ -224,7 +232,11 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
         it('dispatcher NIE loguje bledu dla __upm_close (handled by dedykowany listener)', () => {
             const { sandbox, documentMock, registeredListeners, calls } = loadPrintModalInSandbox();
             sandbox.window.showUniversalPrintModal({
-                offerSection: { id: 'off-1', actionPdf: '__testAction1', actionDocx: '__testAction1' }
+                offerSection: {
+                    id: 'off-1',
+                    actionPdf: '__testAction1',
+                    actionDocx: '__testAction1'
+                }
             });
 
             const modalEl: any = { id: 'universal-print-modal', contains: () => true };
@@ -233,15 +245,19 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
             const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
             const btn: any = {
-                getAttribute: (n: string) => n === 'data-action' ? '__upm_close' : n === 'data-id' ? '' : ''
+                getAttribute: (n: string) =>
+                    n === 'data-action' ? '__upm_close' : n === 'data-id' ? '' : ''
             };
 
             const clickHandler = registeredListeners[0];
             clickHandler({
-                target: { closest: (sel: string) => sel === '[data-action]' ? btn : null }
+                target: { closest: (sel: string) => (sel === '[data-action]' ? btn : null) }
             } as any);
 
-            expect(errorSpy).not.toHaveBeenCalledWith('printModal: brak globalnej funkcji', '__upm_close');
+            expect(errorSpy).not.toHaveBeenCalledWith(
+                'printModal: brak globalnej funkcji',
+                '__upm_close'
+            );
             expect(calls).toEqual([]);
 
             errorSpy.mockRestore();
@@ -252,7 +268,10 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
         it('wyświetla toast gdy brak jakiejkolwiek sekcji', () => {
             const { sandbox, showToastCalls } = loadPrintModalInSandbox();
             sandbox.window.showUniversalPrintModal({});
-            expect(showToastCalls).toContainEqual({ msg: 'Brak aktywnego dokumentu do wydruku', type: 'error' });
+            expect(showToastCalls).toContainEqual({
+                msg: 'Brak aktywnego dokumentu do wydruku',
+                type: 'error'
+            });
         });
 
         it('renderuje 4 sekcje gdy wszystkie podane', () => {

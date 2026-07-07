@@ -156,7 +156,7 @@ export async function cleanupAuditLogs(): Promise<void> {
             if (batch.length === 0) break;
 
             await prisma.audit_logs.deleteMany({
-                where: { id: { in: batch.map(r => r.id) } }
+                where: { id: { in: batch.map((r) => r.id) } }
             });
 
             totalDeleted += batch.length;
@@ -174,5 +174,3 @@ export async function cleanupAuditLogs(): Promise<void> {
         logger.error('AuditLog', 'Błąd czyszczenia logów', message);
     }
 }
-
-

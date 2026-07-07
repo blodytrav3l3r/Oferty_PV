@@ -341,9 +341,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         function loadInVm(
             file: string,
-            fetchMock: (
-                url: string
-            ) => Promise<{
+            fetchMock: (url: string) => Promise<{
                 ok: boolean;
                 status: number;
                 blob: () => Promise<Blob>;
@@ -458,9 +456,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         function makeFailingFetch(
             status: number,
             textBody: string
-        ): (
-            url: string
-        ) => Promise<{
+        ): (url: string) => Promise<{
             ok: boolean;
             status: number;
             blob: () => Promise<Blob>;

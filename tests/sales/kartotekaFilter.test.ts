@@ -3,16 +3,8 @@ function offerMatchesSearch(offer: any, query: string, ordersMap: Map<string, an
     query = query.toLowerCase();
 
     const num = (offer.number || offer.title || offer.offerName || '').toLowerCase();
-    const client = (
-        offer.clientName ||
-        (offer.data && offer.data.clientName) ||
-        ''
-    ).toLowerCase();
-    const nip = (
-        offer.clientNip ||
-        (offer.data && offer.data.clientNip) ||
-        ''
-    ).toLowerCase();
+    const client = (offer.clientName || (offer.data && offer.data.clientName) || '').toLowerCase();
+    const nip = (offer.clientNip || (offer.data && offer.data.clientNip) || '').toLowerCase();
     const budowa = (
         offer.investName ||
         offer.budowa ||
@@ -28,10 +20,12 @@ function offerMatchesSearch(offer: any, query: string, ordersMap: Map<string, an
 
     const offerId = String(offer.id);
     const orders = ordersMap.get(offerId);
-    const matchesOrderNumber = orders && orders.some(o => {
-        const on = o?.orderNumber || o?.data?.orderNumber || '';
-        return on.toLowerCase().includes(query);
-    });
+    const matchesOrderNumber =
+        orders &&
+        orders.some((o) => {
+            const on = o?.orderNumber || o?.data?.orderNumber || '';
+            return on.toLowerCase().includes(query);
+        });
 
     return !!(
         num.includes(query) ||
@@ -47,12 +41,12 @@ describe('Kartoteka — wyszukiwanie po numerze zamówienia', () => {
     const offers = [
         { id: '1', number: 'OFF-123', clientName: 'Acme Corp', investName: 'Budowa A' },
         { id: '2', number: 'OFF-456', clientName: 'Beta Ltd', budowa: 'Budowa B' },
-        { id: '3', number: 'OFF-789', clientName: 'Gamma Sp. z o.o.', investName: 'Budowa C' },
+        { id: '3', number: 'OFF-789', clientName: 'Gamma Sp. z o.o.', investName: 'Budowa C' }
     ];
 
     const ordersMap = new Map<string, any[]>([
         ['1', [{ orderNumber: 'ZAM-001', data: { orderNumber: 'ZAM-001' } }]],
-        ['2', [{ orderNumber: 'ZAM-002', data: { orderNumber: 'ZAM-002' } }]],
+        ['2', [{ orderNumber: 'ZAM-002', data: { orderNumber: 'ZAM-002' } }]]
     ]);
 
     it('zwraca ofertę gdy query pasuje do numeru zamówienia', () => {
@@ -87,7 +81,7 @@ describe('Kartoteka — wyszukiwanie po numerze zamówienia', () => {
 
     it('wyszukuje po data.orderNumber (JSON blob)', () => {
         const map = new Map<string, any[]>([
-            ['99', [{ orderNumber: null, data: { orderNumber: 'ZAM-999' } }]],
+            ['99', [{ orderNumber: null, data: { orderNumber: 'ZAM-999' } }]]
         ]);
         expect(offerMatchesSearch({ id: '99', number: 'OFF-999' }, 'ZAM-999', map)).toBe(true);
     });
@@ -97,9 +91,7 @@ describe('Kartoteka — wyszukiwanie po numerze zamówienia', () => {
     });
 
     it('wyszukuje po orderNumber (gdy data jest puste)', () => {
-        const map = new Map<string, any[]>([
-            ['7', [{ orderNumber: 'ZAM-777', data: {} }]],
-        ]);
+        const map = new Map<string, any[]>([['7', [{ orderNumber: 'ZAM-777', data: {} }]]]);
         expect(offerMatchesSearch({ id: '7', number: 'OFF-777' }, 'ZAM-777', map)).toBe(true);
     });
 });

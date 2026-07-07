@@ -49,9 +49,11 @@ function _excelGetWellConfigHash(well) {
         well.powlokaNameW || '',
         well.powlokaNameZ || ''
     ].join('|');
-    var parts = (well.config || []).map(function(item) {
-        return (item.productId || '') + ':' + (item.quantity || 0);
-    }).join(',');
+    var parts = (well.config || [])
+        .map(function (item) {
+            return (item.productId || '') + ':' + (item.quantity || 0);
+        })
+        .join(',');
     return wellParams + '|' + parts;
 }
 
@@ -82,7 +84,7 @@ function _excelStartPolling() {
     if (_excelPollInterval || typeof wells === 'undefined') return;
     /* Snapshot dla taniego porownywania - hash konfigow wszystkich studni */
     var lastSnapshot = '';
-    _excelPollInterval = setInterval(function() {
+    _excelPollInterval = setInterval(function () {
         if (_excelUserEditing) return;
         if (!document.getElementById('excel-table-overlay')) return;
         var snap = _excelBuildWellsSnapshot();
@@ -103,7 +105,15 @@ function _excelBuildWellsSnapshot() {
     for (var i = 0; i < wells.length; i++) {
         var w = wells[i];
         if (!w) continue;
-        parts.push(i + ':' + (w.configSource || '-') + ':' + (w.autoSelect === false ? '0' : '1') + ':' + (w.config ? w.config.length : 0));
+        parts.push(
+            i +
+                ':' +
+                (w.configSource || '-') +
+                ':' +
+                (w.autoSelect === false ? '0' : '1') +
+                ':' +
+                (w.config ? w.config.length : 0)
+        );
     }
     return parts.join('|');
 }
@@ -124,7 +134,9 @@ function _excelSyncAutoManualUI() {
         btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
         btnMode.style.background = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
         btnMode.style.color = isAuto ? '#c7d2fe' : '#fbbf24';
-        btnMode.title = isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)';
+        btnMode.title = isAuto
+            ? 'Auto (klik = przełącz na Manual)'
+            : 'Manual (klik = przełącz na Auto)';
         if (btnRun) {
             btnRun.disabled = !isAuto;
             btnRun.style.opacity = isAuto ? '1' : '0.4';
@@ -132,7 +144,9 @@ function _excelSyncAutoManualUI() {
             btnRun.style.background = isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)';
             btnRun.style.color = isAuto ? '#c7d2fe' : '#64748b';
             btnRun.style.borderColor = isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)';
-            btnRun.title = isAuto ? 'Uruchom auto-dobór elementów dla tej studni' : 'Przełącz na Auto aby uruchomić';
+            btnRun.title = isAuto
+                ? 'Uruchom auto-dobór elementów dla tej studni'
+                : 'Przełącz na Auto aby uruchomić';
         }
     }
     _excelUpdateBulkButtons();
@@ -221,7 +235,20 @@ function _excelWellMatchesTab(well, tab) {
 /* Helper: znajdź referencyjną studnię do budowy kolumn gdy zakładka pusta */
 function _excelGetReferenceWell(dn) {
     if (typeof wells === 'undefined' || !wells || wells.length === 0) {
-        return { magazyn: 'Kluczbork', dn: dn, nadbudowa: 'betonowa', dennicaMaterial: 'betonowa', stycznaNadbudowa1200: false, redukcjaDN1000: false, wkladkaZwienczenie: 'brak', wkladkaOsadnikPreco: 'brak', uszczelka: 'GSG', spocznik: 'brak', stopnie: 'brak', kineta: 'brak' };
+        return {
+            magazyn: 'Kluczbork',
+            dn: dn,
+            nadbudowa: 'betonowa',
+            dennicaMaterial: 'betonowa',
+            stycznaNadbudowa1200: false,
+            redukcjaDN1000: false,
+            wkladkaZwienczenie: 'brak',
+            wkladkaOsadnikPreco: 'brak',
+            uszczelka: 'GSG',
+            spocznik: 'brak',
+            stopnie: 'brak',
+            kineta: 'brak'
+        };
     }
     for (var _i = 0; _i < wells.length; _i++) {
         if (_excelWellMatchesTab(wells[_i], dn)) return wells[_i];
@@ -231,11 +258,14 @@ function _excelGetReferenceWell(dn) {
 
 function _excelGetMaxTransitions() {
     var tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
-    var tabWells = typeof wells !== 'undefined' && Array.isArray(wells)
-        ? wells.filter(function(w) { return _excelWellMatchesTab(w, tab); })
-        : [];
-    var max = tabWells.reduce(function(m, w) {
-        return (w.przejscia && w.przejscia.length > m) ? w.przejscia.length : m;
+    var tabWells =
+        typeof wells !== 'undefined' && Array.isArray(wells)
+            ? wells.filter(function (w) {
+                  return _excelWellMatchesTab(w, tab);
+              })
+            : [];
+    var max = tabWells.reduce(function (m, w) {
+        return w.przejscia && w.przejscia.length > m ? w.przejscia.length : m;
     }, 0);
     return Math.max(max, _excelMaxTransitions[tab] || 1);
 }
@@ -256,10 +286,11 @@ function _excelCreatePrzejscie() {
 function _excelGetComponentsForDn(dn, well) {
     if (typeof studnieProducts === 'undefined' || !studnieProducts) return {};
     const mag =
-        well && well.magazyn ? well.magazyn
-            : (typeof wells !== 'undefined' && wells.length > 0
-                ? wells[0].magazyn || 'Kluczbork'
-                : 'Kluczbork');
+        well && well.magazyn
+            ? well.magazyn
+            : typeof wells !== 'undefined' && wells.length > 0
+              ? wells[0].magazyn || 'Kluczbork'
+              : 'Kluczbork';
     const isWl = mag.includes('oc') || mag.includes('Włoc');
     const field = isWl ? 'magazynWL' : 'magazynKLB';
 
@@ -271,8 +302,11 @@ function _excelGetComponentsForDn(dn, well) {
     if (dn === 'styczna') {
         const effDn = well && well.stycznaNadbudowa1200 ? 1200 : 1000;
         products = products.filter(
-            (p) => p.dn === 'styczna' || p.dn === null || p.componentType === 'styczna' ||
-                  parseInt(p.dn) === effDn
+            (p) =>
+                p.dn === 'styczna' ||
+                p.dn === null ||
+                p.componentType === 'styczna' ||
+                parseInt(p.dn) === effDn
         );
     } else {
         products = products.filter((p) => parseInt(p.dn) === parseInt(dn) || p.dn === null);
@@ -340,11 +374,19 @@ function _excelBuildComponentColumns(dn, well) {
     if (hasRedTab) {
         /* Sprawdź czy KTÓRAŚ studnia w zakładce ma redukcję */
         var anyRed = false;
-        var tabWellsList = typeof wells !== 'undefined' ? wells.filter(function(w) {
-            return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna');
-        }) : [];
+        var tabWellsList =
+            typeof wells !== 'undefined'
+                ? wells.filter(function (w) {
+                      return (
+                          String(w.dn) === String(dn) || (dn === 'styczne' && w.dn === 'styczna')
+                      );
+                  })
+                : [];
         for (var ri = 0; ri < tabWellsList.length; ri++) {
-            if (tabWellsList[ri].redukcjaDN1000) { anyRed = true; break; }
+            if (tabWellsList[ri].redukcjaDN1000) {
+                anyRed = true;
+                break;
+            }
         }
         var targetDns = [];
         if (anyRed) {
@@ -357,26 +399,40 @@ function _excelBuildComponentColumns(dn, well) {
             /* refWell: preferuj studnię Z redukcją — filterByWellParams może blokować płyty redukcyjne na studni bez redukcji */
             var refWell = null;
             for (var rwi = 0; rwi < tabWellsList.length; rwi++) {
-                if (tabWellsList[rwi].redukcjaDN1000) { refWell = tabWellsList[rwi]; break; }
+                if (tabWellsList[rwi].redukcjaDN1000) {
+                    refWell = tabWellsList[rwi];
+                    break;
+                }
             }
-            if (!refWell) refWell = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
-            var mainDn = dn === 'styczne' ? (refWell && refWell.stycznaNadbudowa1200 ? 1200 : 1000) : parseInt(String(dn));
+            if (!refWell)
+                refWell =
+                    well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
+            var mainDn =
+                dn === 'styczne'
+                    ? refWell && refWell.stycznaNadbudowa1200
+                        ? 1200
+                        : 1000
+                    : parseInt(String(dn));
             var mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
-            var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function(p) { return p.dn !== null; });
+            var allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function (p) {
+                return p.dn !== null;
+            });
 
-            targetDns.forEach(function(tDn) {
+            targetDns.forEach(function (tDn) {
                 /* Buduj Zestawy kolumn DLA KAŻDEGO tDn */
                 var redGroups = _excelGetComponentsForDn(String(tDn), refWell);
                 var redDnSpecific = {};
-                Object.keys(redGroups).forEach(function(gk) {
-                    redDnSpecific[gk] = redGroups[gk].filter(function(p) { return p.dn !== null; });
+                Object.keys(redGroups).forEach(function (gk) {
+                    redDnSpecific[gk] = redGroups[gk].filter(function (p) {
+                        return p.dn !== null;
+                    });
                 });
 
                 var dnPfx = targetDns.length > 1 ? tDn + '_' : '';
                 var dnLbl = targetDns.length > 1 ? '(' + tDn + ') ' : '';
 
                 /* Red. AVR */
-                (redDnSpecific['avr'] || []).forEach(function(p) {
+                (redDnSpecific['avr'] || []).forEach(function (p) {
                     var nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
                     var lbl = _excelShortLabel(p.name || '', 'avr');
                     cols.push({
@@ -393,13 +449,17 @@ function _excelBuildComponentColumns(dn, well) {
                     });
                 });
                 /* Red. Konus */
-                var rKonus = [...(redDnSpecific['konus'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var rKonus = [...(redDnSpecific['konus'] || [])].sort(function (a, b) {
+                    return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
+                });
                 var seenRKH = {};
-                rKonus.forEach(function(p) {
+                rKonus.forEach(function (p) {
                     var h = parseInt(p.height) || 0;
                     if (h > 0 && !seenRKH[h]) {
                         seenRKH[h] = true;
-                        var matching = rKonus.filter(function(k) { return parseInt(k.height) === h; });
+                        var matching = rKonus.filter(function (k) {
+                            return parseInt(k.height) === h;
+                        });
                         var lbl = _excelShortLabel(p.name || '', 'konus');
                         cols.push({
                             key: 'red_konus_' + dnPfx + h,
@@ -416,22 +476,45 @@ function _excelBuildComponentColumns(dn, well) {
                     }
                 });
                 /* Red. Płyty nakrywające */
-                ['plyta_din','plyta_najazdowa','plyta_zamykajaca','pierscien_odciazajacy'].forEach(function(ct) {
-                    var prods = [...(redDnSpecific[ct] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                [
+                    'plyta_din',
+                    'plyta_najazdowa',
+                    'plyta_zamykajaca',
+                    'pierscien_odciazajacy'
+                ].forEach(function (ct) {
+                    var prods = [...(redDnSpecific[ct] || [])].sort(function (a, b) {
+                        return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
+                    });
                     if (ct === 'plyta_din') {
-                        prods = prods.filter(function(p) { return parseInt(p.height) === 200; });
+                        prods = prods.filter(function (p) {
+                            return parseInt(p.height) === 200;
+                        });
                     }
                     var seenH = {};
-                    prods.forEach(function(p) {
+                    prods.forEach(function (p) {
                         var h = parseInt(p.height) || 0;
                         if (h > 0 && !seenH[h]) {
                             seenH[h] = true;
-                            var matching = prods.filter(function(k) { return parseInt(k.height) === h; });
+                            var matching = prods.filter(function (k) {
+                                return parseInt(k.height) === h;
+                            });
                             var lbl = _excelShortLabel(p.name || '', ct);
                             var det = ct === 'pierscien_odciazajacy' ? '' : String(h);
                             cols.push({
                                 key: 'red_' + ct + '_' + dnPfx + h + '_' + h,
-                                label: 'R.' + (ct === 'plyta_din' ? 'Pł.DIN' : ct === 'plyta_najazdowa' ? 'Pł.najazd' : ct === 'plyta_zamykajaca' ? 'Pł.zamyk' : 'Pierśc.odc') + ' ' + dnLbl + 'H=' + h,
+                                label:
+                                    'R.' +
+                                    (ct === 'plyta_din'
+                                        ? 'Pł.DIN'
+                                        : ct === 'plyta_najazdowa'
+                                          ? 'Pł.najazd'
+                                          : ct === 'plyta_zamykajaca'
+                                            ? 'Pł.zamyk'
+                                            : 'Pierśc.odc') +
+                                    ' ' +
+                                    dnLbl +
+                                    'H=' +
+                                    h,
                                 shortLabel: 'R.' + lbl.short,
                                 detailLabel: det,
                                 type: 'number',
@@ -445,13 +528,17 @@ function _excelBuildComponentColumns(dn, well) {
                     });
                 });
                 /* Red. Kręgi */
-                var rKreg = [...(redDnSpecific['krag'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var rKreg = [...(redDnSpecific['krag'] || [])].sort(function (a, b) {
+                    return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
+                });
                 var seenRKH2 = {};
-                rKreg.forEach(function(p) {
+                rKreg.forEach(function (p) {
                     var h = parseInt(p.height) || 0;
                     if (h > 0 && !seenRKH2[h]) {
                         seenRKH2[h] = true;
-                        var matching = rKreg.filter(function(k) { return parseInt(k.height) === h; });
+                        var matching = rKreg.filter(function (k) {
+                            return parseInt(k.height) === h;
+                        });
                         var lbl = _excelShortLabel(p.name || '', 'krag');
                         cols.push({
                             key: 'red_krag_' + dnPfx + h,
@@ -468,7 +555,7 @@ function _excelBuildComponentColumns(dn, well) {
                     }
                 });
                 /* Red. Osadniki (per produkt) */
-                (redDnSpecific['osadnik'] || []).forEach(function(p) {
+                (redDnSpecific['osadnik'] || []).forEach(function (p) {
                     var lbl = _excelShortLabel(p.name || '', 'osadnik');
                     cols.push({
                         key: 'red_osadnik_' + dnPfx + p.id,
@@ -484,13 +571,17 @@ function _excelBuildComponentColumns(dn, well) {
                     });
                 });
                 /* Red. Kręgi OT */
-                var rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function (a, b) {
+                    return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
+                });
                 var seenROtH = {};
-                rKragOt.forEach(function(p) {
+                rKragOt.forEach(function (p) {
                     var h = parseInt(p.height) || 0;
                     if (h > 0 && !seenROtH[h]) {
                         seenROtH[h] = true;
-                        var matching = rKragOt.filter(function(k) { return parseInt(k.height) === h; });
+                        var matching = rKragOt.filter(function (k) {
+                            return parseInt(k.height) === h;
+                        });
                         var lbl = _excelShortLabel(p.name || '', 'krag_ot');
                         cols.push({
                             key: 'red_krag_ot_' + dnPfx + h,
@@ -507,13 +598,17 @@ function _excelBuildComponentColumns(dn, well) {
                     }
                 });
                 /* R.Dennica */
-                var rDennica = [...(redDnSpecific['dennica'] || [])].sort(function(a,b) { return (parseFloat(a.height)||0) - (parseFloat(b.height)||0); });
+                var rDennica = [...(redDnSpecific['dennica'] || [])].sort(function (a, b) {
+                    return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
+                });
                 var seenRDH = {};
-                rDennica.forEach(function(p) {
+                rDennica.forEach(function (p) {
                     var h = parseInt(p.height) || 0;
                     if (h > 0 && !seenRDH[h]) {
                         seenRDH[h] = true;
-                        var matching = rDennica.filter(function(k) { return parseInt(k.height) === h; });
+                        var matching = rDennica.filter(function (k) {
+                            return parseInt(k.height) === h;
+                        });
                         var lbl = _excelShortLabel(p.name || '', 'dennica');
                         cols.push({
                             key: 'red_dennica_' + dnPfx + h,
@@ -532,7 +627,7 @@ function _excelBuildComponentColumns(dn, well) {
             }); // koniec tDn loop
 
             /* Płyty redukcyjne — dodawane RAZ (niezależnie od targetDns, bo mają dn studni głównej) */
-            allRedPlyta.forEach(function(p) {
+            allRedPlyta.forEach(function (p) {
                 var lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
                 cols.push({
                     key: 'red_plyta_red_' + p.id,
@@ -543,7 +638,7 @@ function _excelBuildComponentColumns(dn, well) {
                     componentType: 'plyta_redukcyjna',
                     productId: p.id,
                     height: p.height,
-                    fromReduction: false, /* płyty redukcyjne mają dn studni głównej, nie targetu */
+                    fromReduction: false /* płyty redukcyjne mają dn studni głównej, nie targetu */,
                     targetDn: null
                 });
             });
@@ -775,23 +870,36 @@ function _excelBuildComponentColumns(dn, well) {
     var hasRedTabU = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTabU) {
         var anyRedU = false;
-        var tabWellsListU = typeof wells !== 'undefined' ? wells.filter(function(w) {
-            return (String(w.dn) === String(dn)) || ((dn === 'styczne') && w.dn === 'styczna');
-        }) : [];
+        var tabWellsListU =
+            typeof wells !== 'undefined'
+                ? wells.filter(function (w) {
+                      return (
+                          String(w.dn) === String(dn) || (dn === 'styczne' && w.dn === 'styczna')
+                      );
+                  })
+                : [];
         for (var riU = 0; riU < tabWellsListU.length; riU++) {
-            if (tabWellsListU[riU].redukcjaDN1000) { anyRedU = true; break; }
+            if (tabWellsListU[riU].redukcjaDN1000) {
+                anyRedU = true;
+                break;
+            }
         }
         if (anyRedU) {
             var refWellU = null;
             for (var rwiU = 0; rwiU < tabWellsListU.length; rwiU++) {
-                if (tabWellsListU[rwiU].redukcjaDN1000) { refWellU = tabWellsListU[rwiU]; break; }
+                if (tabWellsListU[rwiU].redukcjaDN1000) {
+                    refWellU = tabWellsListU[rwiU];
+                    break;
+                }
             }
-            if (!refWellU) refWellU = well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
+            if (!refWellU)
+                refWellU =
+                    well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
             var targetDnsU = [1000];
             if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
                 targetDnsU.push(1200);
             }
-            targetDnsU.forEach(function(tDn) {
+            targetDnsU.forEach(function (tDn) {
                 var redGroupsU = _excelGetComponentsForDn(String(tDn), refWellU);
                 var uszczProductsU = redGroupsU['uszczelka'] || [];
                 if (typeof filterSealsByWellType === 'function') {
@@ -799,7 +907,7 @@ function _excelBuildComponentColumns(dn, well) {
                 }
                 var dnPfxU = targetDnsU.length > 1 ? tDn + '_' : '';
                 var dnLblU = targetDnsU.length > 1 ? '(' + tDn + ') ' : '';
-                uszczProductsU.forEach(function(p) {
+                uszczProductsU.forEach(function (p) {
                     var lbl = _excelShortLabel(p.name || '', 'uszczelka');
                     cols.push({
                         key: 'red_uszczelka_' + dnPfxU + p.id,
@@ -822,7 +930,7 @@ function _excelBuildComponentColumns(dn, well) {
     if (typeof filterSealsByWellType === 'function') {
         mainUszczProducts = filterSealsByWellType(mainUszczProducts, well);
     }
-    mainUszczProducts.forEach(function(p) {
+    mainUszczProducts.forEach(function (p) {
         var lbl = _excelShortLabel(p.name || '', 'uszczelka');
         cols.push({
             key: 'uszczelka_' + p.id,
@@ -844,7 +952,11 @@ function _excelShortLabel(name, componentType) {
     var n = (name || '').trim();
     switch (componentType) {
         case 'avr': {
-            var size = n.replace(/Pierścień AVR\s*/i, '').trim().replace(/mm$/i, '') || '';
+            var size =
+                n
+                    .replace(/Pierścień AVR\s*/i, '')
+                    .trim()
+                    .replace(/mm$/i, '') || '';
             return { short: 'AVR', detail: size };
         }
         case 'konus': {
@@ -924,7 +1036,7 @@ function _excelShortLabel(name, componentType) {
             var detail = name.replace(/^Uszczelka\s*/i, '').trim() || name;
             var uType = (detail.match(/\b(GSG|SDV)\b/i) || [])[1] || '';
             var uDn = (detail.match(/DN(\d+)/i) || [])[0] || '';
-            var uSuf = /\bpier/i.test(detail) ? ' PO' : (/\bNBR\b/i.test(detail) ? ' NBR' : '');
+            var uSuf = /\bpier/i.test(detail) ? ' PO' : /\bNBR\b/i.test(detail) ? ' NBR' : '';
             if (uType) {
                 detail = uType.toUpperCase() + (uDn ? ' ' + uDn.toUpperCase() : '') + uSuf;
             } else if (detail.length > 14) {
@@ -947,10 +1059,7 @@ function _excelShortLabel(name, componentType) {
 function _excelWrapDetail(detail) {
     if (!detail || detail === '·') return '·';
     // Łam przed "bez stopni", "drabinka nierdzewna", "z otworami"
-    var br = detail.replace(
-        /\s+(bez stopni|drabinka nierdzewna|z otworami?)\s*$/i,
-        '<br>$1'
-    );
+    var br = detail.replace(/\s+(bez stopni|drabinka nierdzewna|z otworami?)\s*$/i, '<br>$1');
     return br;
 }
 
@@ -995,7 +1104,7 @@ function _excelCalcUszczelkaCount(well) {
 
 function _excelCountProductInConfig(well, componentType, height, productId, targetDn) {
     let count = 0;
-    var filterDn = (targetDn !== undefined && targetDn !== null) ? targetDn : well.dn;
+    var filterDn = targetDn !== undefined && targetDn !== null ? targetDn : well.dn;
     (well.config || []).forEach((item) => {
         const p = _excelGetResolution(well, item);
         if (!p) return;
@@ -1018,9 +1127,12 @@ function _excelGetResolution(well, item) {
     var key = item.productId;
     if (!well.__resCache[key]) {
         var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
-        well.__resCache[key] = typeof resolveEffectiveProduct === 'function'
-            ? resolveEffectiveProduct(well, item.productId, item)
-            : sz.find(function(pr) { return pr.id === item.productId; });
+        well.__resCache[key] =
+            typeof resolveEffectiveProduct === 'function'
+                ? resolveEffectiveProduct(well, item.productId, item)
+                : sz.find(function (pr) {
+                      return pr.id === item.productId;
+                  });
     }
     return well.__resCache[key];
 }
@@ -1042,8 +1154,13 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
         var resolved = _excelGetResolution(well, item);
         if (!resolved) continue;
         if (resolved.componentType !== ct) continue;
-        if (height !== undefined && height !== null && height !== ''
-            && parseInt(resolved.height) !== parseInt(height)) continue;
+        if (
+            height !== undefined &&
+            height !== null &&
+            height !== '' &&
+            parseInt(resolved.height) !== parseInt(height)
+        )
+            continue;
         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(targetDn)) continue;
@@ -1056,25 +1173,41 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
 
     /* 2. FALLBACK: pierwszy dostępny produkt dla tego ct+height — zgodnie z filtrami studni */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
-        var avail = getAvailableProducts(well).filter(function(p) {
-            try { return filterByWellParams(p, well); } catch (e) { return true; }
+        var avail = getAvailableProducts(well).filter(function (p) {
+            try {
+                return filterByWellParams(p, well);
+            } catch (e) {
+                return true;
+            }
         });
-        var fallback = avail.filter(function(p) { return p.componentType === ct; });
+        var fallback = avail.filter(function (p) {
+            return p.componentType === ct;
+        });
         if (height !== undefined && height !== null && height !== '') {
-            fallback = fallback.filter(function(p) { return parseInt(p.height) === parseInt(height); });
+            fallback = fallback.filter(function (p) {
+                return parseInt(p.height) === parseInt(height);
+            });
         }
         /* Dla kolumn redukcji: preferuj produkt pasujący do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
-            var dnMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(targetDn); });
+            var dnMatch = fallback.filter(function (p) {
+                return p.dn !== null && parseInt(p.dn) === parseInt(targetDn);
+            });
             if (dnMatch.length > 0) return dnMatch[0].id;
-            var univ = fallback.filter(function(p) { return p.dn === null; });
+            var univ = fallback.filter(function (p) {
+                return p.dn === null;
+            });
             if (univ.length > 0) return univ[0].id;
             return null;
         }
         /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
-        var mainMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(well.dn); });
+        var mainMatch = fallback.filter(function (p) {
+            return p.dn !== null && parseInt(p.dn) === parseInt(well.dn);
+        });
         if (mainMatch.length > 0) return mainMatch[0].id;
-        var mainUniv = fallback.filter(function(p) { return p.dn === null; });
+        var mainUniv = fallback.filter(function (p) {
+            return p.dn === null;
+        });
         return mainUniv.length > 0 ? mainUniv[0].id : null;
         return null; /* nie pokazuj kodu z innego DN */
     }
@@ -1093,8 +1226,13 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
         var resolved = _excelGetResolution(well, item);
         if (!resolved) continue;
         if (resolved.componentType !== ct) continue;
-        if (height !== undefined && height !== null && height !== ''
-            && parseInt(resolved.height) !== parseInt(height)) continue;
+        if (
+            height !== undefined &&
+            height !== null &&
+            height !== '' &&
+            parseInt(resolved.height) !== parseInt(height)
+        )
+            continue;
         /* Dla kolumn redukcji: produkt musi pasować do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(targetDn)) continue;
@@ -1103,48 +1241,74 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(well.dn)) continue;
         }
         /* Mamy dopasowany config item — pobierz cenę */
-        var price = typeof getItemAssessedPrice === 'function'
-            ? getItemAssessedPrice(well, resolved, true, item)
-            : (resolved.price || 0);
-        var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
+        var price =
+            typeof getItemAssessedPrice === 'function'
+                ? getItemAssessedPrice(well, resolved, true, item)
+                : resolved.price || 0;
+        var fmt =
+            typeof fmtInt === 'function'
+                ? fmtInt
+                : function (n) {
+                      return Math.round(n || 0).toLocaleString('pl-PL');
+                  };
         return fmt(price) + ' PLN';
     }
-    
+
     /* 2. FALLBACK: pierwszy dostępny produkt */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
-        var avail = getAvailableProducts(well).filter(function(p) { return filterByWellParams(p, well); });
-        var fallback = avail.filter(function(p) {
-            return p.componentType === ct
-                && (height === undefined || height === null || height === ''
-                    || parseInt(p.height) === parseInt(height));
+        var avail = getAvailableProducts(well).filter(function (p) {
+            return filterByWellParams(p, well);
+        });
+        var fallback = avail.filter(function (p) {
+            return (
+                p.componentType === ct &&
+                (height === undefined ||
+                    height === null ||
+                    height === '' ||
+                    parseInt(p.height) === parseInt(height))
+            );
         });
         /* Dla kolumn redukcji: preferuj produkt pasujący do targetDn */
         var matchedFallback = null;
         if (targetDn !== undefined && targetDn !== null) {
-            var dnMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(targetDn); });
+            var dnMatch = fallback.filter(function (p) {
+                return p.dn !== null && parseInt(p.dn) === parseInt(targetDn);
+            });
             if (dnMatch.length > 0) matchedFallback = dnMatch[0];
             else {
-                var univ = fallback.filter(function(p) { return p.dn === null; });
+                var univ = fallback.filter(function (p) {
+                    return p.dn === null;
+                });
                 if (univ.length > 0) matchedFallback = univ[0];
             }
         } else {
             /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
-            var mainMatch = fallback.filter(function(p) { return p.dn !== null && parseInt(p.dn) === parseInt(well.dn); });
+            var mainMatch = fallback.filter(function (p) {
+                return p.dn !== null && parseInt(p.dn) === parseInt(well.dn);
+            });
             if (mainMatch.length > 0) matchedFallback = mainMatch[0];
             else {
-                var mainUniv = fallback.filter(function(p) { return p.dn === null; });
+                var mainUniv = fallback.filter(function (p) {
+                    return p.dn === null;
+                });
                 if (mainUniv.length > 0) matchedFallback = mainUniv[0];
             }
         }
         if (matchedFallback) {
-            var price = typeof getItemAssessedPrice === 'function'
-                ? getItemAssessedPrice(well, matchedFallback, true, null)
-                : (matchedFallback.price || 0);
-            var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
+            var price =
+                typeof getItemAssessedPrice === 'function'
+                    ? getItemAssessedPrice(well, matchedFallback, true, null)
+                    : matchedFallback.price || 0;
+            var fmt =
+                typeof fmtInt === 'function'
+                    ? fmtInt
+                    : function (n) {
+                          return Math.round(n || 0).toLocaleString('pl-PL');
+                      };
             return fmt(price) + ' PLN';
         }
     }
-    
+
     return ''; /* brak ceny */
 }
 
@@ -1164,20 +1328,36 @@ function _excelUpdateHeaderProdCodes() {
             }
         }
     }
-    var well = (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 ? wells[currentWellIndex] : null) || tabWell;
-    codes.forEach(function(span, idx) {
+    var well =
+        (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0
+            ? wells[currentWellIndex]
+            : null) || tabWell;
+    codes.forEach(function (span, idx) {
         var isPerProduct = span.getAttribute('data-per-product') === '1';
         var ct = span.getAttribute('data-ct');
         var height = span.getAttribute('data-height');
-        var redTarget = (span.getAttribute('data-reddn') || '') ? (well && (well.redukcjaTargetDN || parseInt(span.getAttribute('data-reddn')) || 1000)) : null;
+        var redTarget =
+            span.getAttribute('data-reddn') || ''
+                ? well &&
+                  (well.redukcjaTargetDN || parseInt(span.getAttribute('data-reddn')) || 1000)
+                : null;
         if (isPerProduct) {
             /* Kolumny per-produkt: kod stały, ale cenę trzeba odświeżyć */
             if (prices && prices[idx]) {
                 var ppid = span.textContent && span.textContent.trim();
                 if (ppid) {
-                    var _prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === ppid; });
+                    var _prod = (
+                        typeof studnieProducts !== 'undefined' ? studnieProducts : []
+                    ).find(function (pr) {
+                        return pr.id === ppid;
+                    });
                     if (_prod && _prod.price) {
-                        var _fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
+                        var _fmt =
+                            typeof fmtInt === 'function'
+                                ? fmtInt
+                                : function (n) {
+                                      return Math.round(n || 0).toLocaleString('pl-PL');
+                                  };
                         prices[idx].textContent = _fmt(_prod.price) + ' PLN';
                     }
                 }
@@ -1188,7 +1368,9 @@ function _excelUpdateHeaderProdCodes() {
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
         if (prices && prices[idx]) {
-            prices[idx].textContent = pid ? (_excelGetWellProdPrice(well, ct, height, redTarget) || '') : '';
+            prices[idx].textContent = pid
+                ? _excelGetWellProdPrice(well, ct, height, redTarget) || ''
+                : '';
         }
     });
 }
@@ -1207,10 +1389,14 @@ function _excelGetWlazFromConfig(well) {
 function _excelAutoSetWlaz(well) {
     if (!well) return;
     const avail = (typeof getAvailableProducts === 'function' ? getAvailableProducts(well) : [])
-        .filter((p) => p.componentType === 'wlaz' && (p.dn == null || parseInt(p.dn) === parseInt(well.dn)))
+        .filter(
+            (p) =>
+                p.componentType === 'wlaz' && (p.dn == null || parseInt(p.dn) === parseInt(well.dn))
+        )
         .filter((p) => typeof filterByWellParams !== 'function' || filterByWellParams(p, well));
     if (avail.length === 0) return;
-    const defaultWlazH = typeof window.offerDefaultWlazH !== 'undefined' ? window.offerDefaultWlazH : 150;
+    const defaultWlazH =
+        typeof window.offerDefaultWlazH !== 'undefined' ? window.offerDefaultWlazH : 150;
     const chosen = avail.find((p) => parseInt(p.height) === defaultWlazH) || avail[0];
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
@@ -1229,27 +1415,47 @@ function _excelCellInp(w) {
 function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
     var label = '';
     for (var i = 0; i < opts.length; i++) {
-        if (opts[i][0] === curVal) { label = opts[i][1]; break; }
+        if (opts[i][0] === curVal) {
+            label = opts[i][1];
+            break;
+        }
     }
     var optHtml = '';
     for (var i = 0; i < opts.length; i++) {
-        optHtml += '<option value="' + (opts[i][0] || '').replace(/"/g, '&quot;') + '"' + (opts[i][0] === curVal ? ' selected' : '') + '>' + opts[i][1] + '</option>';
+        optHtml +=
+            '<option value="' +
+            (opts[i][0] || '').replace(/"/g, '&quot;') +
+            '"' +
+            (opts[i][0] === curVal ? ' selected' : '') +
+            '>' +
+            opts[i][1] +
+            '</option>';
     }
     var escOnCh = onChange.replace(/"/g, '&quot;');
-    return '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' + (width ? 'width:' + width + 'px;' : '') + '"'
-        + ' onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();var s=this.querySelector(\'select\');if(typeof s.showPicker===\'function\'){s.showPicker()}else{s.focus();s.click()}}">'
-        + '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"'
-        + ' onchange="' + escOnCh + ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text">'
-        + optHtml + '</select>'
-        + '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' + (label || '&mdash;') + '</div>'
-        + '</div>';
+    return (
+        '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' +
+        (width ? 'width:' + width + 'px;' : '') +
+        '"' +
+        " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\">" +
+        '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"' +
+        ' onchange="' +
+        escOnCh +
+        ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text">' +
+        optHtml +
+        '</select>' +
+        '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
+        (label || '&mdash;') +
+        '</div>' +
+        '</div>'
+    );
 }
 
 /* ===== OVERLAY POSITIONING ===== */
 function _excelPositionOverlay(overlay) {
     if (!overlay) return;
     if (_excelFullscreen) {
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+        overlay.style.cssText =
+            'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
         return;
     }
     const diagramPanel = document.querySelector('.well-diagram-panel');
@@ -1259,11 +1465,15 @@ function _excelPositionOverlay(overlay) {
         const topBar = document.querySelector('header') || document.querySelector('.header');
         const bottomBar = document.getElementById('offer-summary-footer-fixed');
         const topOffset = topBar ? topBar.getBoundingClientRect().bottom : diaRect.top;
-        const bottomOffset = (bottomBar && bottomBar.offsetHeight > 0) ? bottomBar.getBoundingClientRect().top : (diaRect.top + diaRect.height);
+        const bottomOffset =
+            bottomBar && bottomBar.offsetHeight > 0
+                ? bottomBar.getBoundingClientRect().top
+                : diaRect.top + diaRect.height;
         const h = Math.max(bottomOffset - topOffset, 100);
         overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${h}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
     } else {
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+        overlay.style.cssText =
+            'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
     }
 }
 
@@ -1289,14 +1499,16 @@ function excelFilterWells(value) {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
     const rows = container.querySelectorAll('tbody tr[data-widx]');
-    rows.forEach(function(row) {
+    rows.forEach(function (row) {
         if (!q) {
             row.style.display = '';
             return;
         }
         /* Najpierw szukaj inputa — dopiero potem fallback do TD */
         var nameInp = row.querySelector('td:nth-child(2) input');
-        var name = nameInp ? nameInp.value : (row.querySelector('td:nth-child(2)') || {}).textContent || '';
+        var name = nameInp
+            ? nameInp.value
+            : (row.querySelector('td:nth-child(2)') || {}).textContent || '';
         name = (name || '').toLowerCase();
         row.style.display = name.indexOf(q) >= 0 ? '' : 'none';
     });
@@ -1317,12 +1529,15 @@ function openExcelTableModal() {
 
     /* Inicjalizuj _excelMaxTransitions dla WSZYSTKICH zakładek */
     var _allTabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
-    _allTabs.forEach(function(t) {
-        var _tw = (typeof wells !== 'undefined' && Array.isArray(wells))
-            ? wells.filter(function(w) { return _excelWellMatchesTab(w, t); })
-            : [];
-        var _tm = _tw.reduce(function(m, w) {
-            return (w.przejscia && w.przejscia.length > m) ? w.przejscia.length : m;
+    _allTabs.forEach(function (t) {
+        var _tw =
+            typeof wells !== 'undefined' && Array.isArray(wells)
+                ? wells.filter(function (w) {
+                      return _excelWellMatchesTab(w, t);
+                  })
+                : [];
+        var _tm = _tw.reduce(function (m, w) {
+            return w.przejscia && w.przejscia.length > m ? w.przejscia.length : m;
         }, 0);
         _excelMaxTransitions[t] = Math.max(1, _tm);
     });
@@ -1335,7 +1550,11 @@ function openExcelTableModal() {
         /* Wyczyść stary capture handler przed usunięciem overlay */
         var _oldContainer = document.getElementById('excel-table-container');
         if (_oldContainer && /** @type {any} */ (_oldContainer)._arrowHandler) {
-            document.removeEventListener('keydown', /** @type {any} */ (_oldContainer)._arrowHandler, true);
+            document.removeEventListener(
+                'keydown',
+                /** @type {any} */ (_oldContainer)._arrowHandler,
+                true
+            );
         }
         /* Wyczyść stary capture paste handler */
         if (_oldContainer) {
@@ -1361,7 +1580,9 @@ function openExcelTableModal() {
     });
 
     /* Nasłuchuj resize — odśwież pozycjonowanie */
-    var _resizeHandler = function() { _excelPositionOverlay(overlay); };
+    var _resizeHandler = function () {
+        _excelPositionOverlay(overlay);
+    };
     window.addEventListener('resize', _resizeHandler);
     /* Zapisz handler do usunięcia przy close */
     /** @type {any} */ (overlay)._resizeHandler = _resizeHandler;
@@ -1433,10 +1654,10 @@ function openExcelTableModal() {
 
     // Delegowany klik na wiersze — bardziej niezawodny niż inline onclick
     const container = document.getElementById('excel-table-container');
-    if (container && !/** @type {any} */ (container)._excelListenersAttached) {
+    if (container && !(/** @type {any} */ (container)._excelListenersAttached)) {
         /** @type {any} */ (container)._excelListenersAttached = true;
         /* Capture phase — przechwytuje strzałki ZANIM input/select je przetworzy */
-        var _arrowHandler = function(e) {
+        var _arrowHandler = function (e) {
             var tgt = e.target;
             if (!tgt || !container.contains(tgt)) return;
             if (!e.key.startsWith('Arrow')) return;
@@ -1448,16 +1669,19 @@ function openExcelTableModal() {
         document.addEventListener('keydown', _arrowHandler, true);
         /** @type {any} */ (container)._arrowHandler = _arrowHandler;
         /* Delegowany focusin — aktywuje wiersz dla każdego elementu który dostanie focus */
-        container.addEventListener('focusin', function(e) {
+        container.addEventListener('focusin', function (e) {
             var row = e.target.closest('tr[data-widx]');
             if (!row) return;
             var wIdx = parseInt(row.getAttribute('data-widx'), 10);
-            if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+            if (
+                !isNaN(wIdx) &&
+                (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)
+            ) {
                 excelSelectRow(wIdx);
             }
         });
         /* Delegowany klik — excel-like cell selection */
-        container.addEventListener('click', function(e) {
+        container.addEventListener('click', function (e) {
             if (e.target.closest('button')) return;
             var td = e.target.closest('td');
             var row = e.target.closest('tr[data-widx]');
@@ -1499,7 +1723,8 @@ function openExcelTableModal() {
         if (!document.getElementById('excel-focus-overlay')) {
             var ov = document.createElement('div');
             ov.id = 'excel-focus-overlay';
-            ov.style.cssText = 'position:fixed;pointer-events:none;z-index:99998;border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
+            ov.style.cssText =
+                'position:fixed;pointer-events:none;z-index:99998;border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
             document.body.appendChild(ov);
             _excelFocusOverlayEl = ov;
         } else {
@@ -1517,7 +1742,9 @@ function openExcelTableModal() {
     _excelRenderTable(_excelActiveTab);
     /* Nie zaznaczaj żadnego wiersza przy otwarciu — usuń aktywny styl z pierwszej studni */
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
-        var firstRow = document.querySelector('#excel-table-container tr[data-widx="' + currentWellIndex + '"]');
+        var firstRow = document.querySelector(
+            '#excel-table-container tr[data-widx="' + currentWellIndex + '"]'
+        );
         if (firstRow) {
             var baseRef = firstRow.getAttribute('data-base-bg');
             if (baseRef) {
@@ -1525,7 +1752,9 @@ function openExcelTableModal() {
                 firstRow.setAttribute('data-orig-bg', baseRef);
                 /* Przywróć tło sticky kolumn */
                 var stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
-                stTds.forEach(function(td) { td.style.background = baseRef; });
+                stTds.forEach(function (td) {
+                    td.style.background = baseRef;
+                });
             }
         }
         currentWellIndex = -1;
@@ -1535,7 +1764,7 @@ function openExcelTableModal() {
     _excelUpdateWellCount();
     /* Migracja autoSelect - wszystkie istniejace studnie dostaja default true */
     if (typeof wells !== 'undefined') {
-        wells.forEach(function(w) {
+        wells.forEach(function (w) {
             if (w && typeof w.autoSelect === 'undefined') w.autoSelect = true;
         });
     }
@@ -1574,7 +1803,9 @@ function excelSelectRow(wIdx) {
             /* Przywróć tło sticky kolumn do base-bg */
             var prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
             var baseBg = prevRow.getAttribute('data-base-bg') || '#0a0d16';
-            prevStickyTds.forEach(function(td) { td.style.background = baseBg; });
+            prevStickyTds.forEach(function (td) {
+                td.style.background = baseBg;
+            });
         }
     }
 
@@ -1587,7 +1818,9 @@ function excelSelectRow(wIdx) {
             newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
             var stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
-            stickyTds.forEach(function(td) { td.style.background = activeBg; });
+            stickyTds.forEach(function (td) {
+                td.style.background = activeBg;
+            });
         }
     }
 
@@ -1611,7 +1844,11 @@ function closeExcelTableModal() {
         /* Usuń handler strzałek (capture phase) */
         var _container = document.getElementById('excel-table-container');
         if (_container && /** @type {any} */ (_container)._arrowHandler) {
-            document.removeEventListener('keydown', /** @type {any} */ (_container)._arrowHandler, true);
+            document.removeEventListener(
+                'keydown',
+                /** @type {any} */ (_container)._arrowHandler,
+                true
+            );
         }
         /* Usuń globalne handlery copy/paste */
         document.removeEventListener('copy', _excelHandleCopy);
@@ -1678,10 +1915,13 @@ function excelSwitchTab(tab) {
     if (typeof wells !== 'undefined' && wells.length > 0) {
         var hasWellsInTab = false;
         for (var _st = 0; _st < wells.length; _st++) {
-            if (_excelWellMatchesTab(wells[_st], tab)) { hasWellsInTab = true; break; }
+            if (_excelWellMatchesTab(wells[_st], tab)) {
+                hasWellsInTab = true;
+                break;
+            }
         }
         if (!hasWellsInTab) {
-            setTimeout(function() {
+            setTimeout(function () {
                 var nameEl = document.getElementById('excel-empty-name');
                 if (nameEl) nameEl.focus();
             }, 150);
@@ -1774,7 +2014,9 @@ function _excelToggleWellAutoMode(wIdx) {
         runBtn.style.color = nowAuto ? '#c7d2fe' : '#64748b';
         runBtn.style.borderColor = nowAuto ? '#6366f1' : 'rgba(100,116,139,0.3)';
         runBtn.style.pointerEvents = nowAuto ? 'auto' : 'none';
-        runBtn.title = nowAuto ? 'Uruchom auto-dobor elementow dla tej studni' : 'Przelacz na Auto aby uruchomic';
+        runBtn.title = nowAuto
+            ? 'Uruchom auto-dobor elementow dla tej studni'
+            : 'Przelacz na Auto aby uruchomic';
     }
     /* Odswiez glowny panel (configSource zmieniony przez nas) */
     if (typeof window.updateSummary === 'function') window.updateSummary();
@@ -1871,9 +2113,8 @@ function _excelRenderTable(dn) {
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
 
-    let html = '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
-
-
+    let html =
+        '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
 
     /* THEAD — sticky, trzy wiersze */
     html += '<thead>';
@@ -1983,35 +2224,85 @@ function _excelRenderTable(dn) {
         } else {
             /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni */
             var dynProdCode = null;
-            if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 && wells[currentWellIndex]) {
-                dynProdCode = _excelGetWellProdCode(wells[currentWellIndex], ct, c.height, c.fromReduction ? (c.targetDn || wells[currentWellIndex].redukcjaTargetDN || 1000) : null);
+            if (
+                typeof currentWellIndex !== 'undefined' &&
+                currentWellIndex >= 0 &&
+                wells[currentWellIndex]
+            ) {
+                dynProdCode = _excelGetWellProdCode(
+                    wells[currentWellIndex],
+                    ct,
+                    c.height,
+                    c.fromReduction
+                        ? c.targetDn || wells[currentWellIndex].redukcjaTargetDN || 1000
+                        : null
+                );
             }
-            var fallbackCode = c.products && c.products[0] && c.products[0].id || null;
+            var fallbackCode = (c.products && c.products[0] && c.products[0].id) || null;
             colCodeId = dynProdCode || fallbackCode;
         }
         const codeDisp = colCodeId || null;
         const perProdAttr = isPerProduct ? ' data-per-product="1"' : '';
-        const fallbackAttr = isPerProduct ? '' : ` data-fallback="${escapeHtml(c.products && c.products[0] && c.products[0].id || '')}"`;
+        const fallbackAttr = isPerProduct
+            ? ''
+            : ` data-fallback="${escapeHtml((c.products && c.products[0] && c.products[0].id) || '')}"`;
 
         const colCode = codeDisp
-            ? (function() {
-                var priceHtml = '';
-                if (isPerProduct && codeDisp) {
-                    try {
-                        /* Znajdź produkt w studnieProducts i pobierz cenę bez filtrowania */
-                        var prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(function(pr) { return pr.id === codeDisp; });
-                        if (prod && prod.price) {
-                            var fmt = typeof fmtInt === 'function' ? fmtInt : function(n) { return Math.round(n || 0).toLocaleString('pl-PL'); };
-                            priceHtml = fmt(prod.price) + ' PLN';
-                        }
-                    } catch(e) { console.error('priceHtml error:', e); }
-                }
-                return '<br><span class="h3-prodcode" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + fallbackAttr + ' data-reddn="' + (c.fromReduction ? (c.targetDn || '1000') : '') + '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;">' + escapeHtml(codeDisp) + '</span><br><span class="h3-prodprice" data-ct="' + ct + '" data-height="' + (c.height != null ? c.height : '') + '"' + perProdAttr + ' style="display:block;">' + priceHtml + '</span>';
-            })()
+            ? (function () {
+                  var priceHtml = '';
+                  if (isPerProduct && codeDisp) {
+                      try {
+                          /* Znajdź produkt w studnieProducts i pobierz cenę bez filtrowania */
+                          var prod = (
+                              typeof studnieProducts !== 'undefined' ? studnieProducts : []
+                          ).find(function (pr) {
+                              return pr.id === codeDisp;
+                          });
+                          if (prod && prod.price) {
+                              var fmt =
+                                  typeof fmtInt === 'function'
+                                      ? fmtInt
+                                      : function (n) {
+                                            return Math.round(n || 0).toLocaleString('pl-PL');
+                                        };
+                              priceHtml = fmt(prod.price) + ' PLN';
+                          }
+                      } catch (e) {
+                          console.error('priceHtml error:', e);
+                      }
+                  }
+                  return (
+                      '<br><span class="h3-prodcode" data-ct="' +
+                      ct +
+                      '" data-height="' +
+                      (c.height != null ? c.height : '') +
+                      '"' +
+                      perProdAttr +
+                      fallbackAttr +
+                      ' data-reddn="' +
+                      (c.fromReduction ? c.targetDn || '1000' : '') +
+                      '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;">' +
+                      escapeHtml(codeDisp) +
+                      '</span><br><span class="h3-prodprice" data-ct="' +
+                      ct +
+                      '" data-height="' +
+                      (c.height != null ? c.height : '') +
+                      '"' +
+                      perProdAttr +
+                      ' style="display:block;">' +
+                      priceHtml +
+                      '</span>'
+                  );
+              })()
             : '';
         const h3Pad = colCodeId ? '0.25rem 0.5rem 0.2rem' : '0.15rem 0.5rem';
         /* Dla kolumn redukcji pokaż target DN zamiast głównego DN zakładki */
-        const colDnLabel = c.fromReduction ? 'DN' + (c.targetDn || (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) || 1000) : dnTh3(ct);
+        const colDnLabel = c.fromReduction
+            ? 'DN' +
+              (c.targetDn ||
+                  (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) ||
+                  1000)
+            : dnTh3(ct);
         h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
         h2 += `<th style="${th2Base}background:#13151f;color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
         h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#13151f;color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
@@ -2064,7 +2355,6 @@ function _excelRenderTable(dn) {
     });
     const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
 
-
     tabWells.forEach((well, idx) => {
         const wIdx = wells.indexOf(well);
         const isEven = idx % 2 === 0;
@@ -2075,50 +2365,68 @@ function _excelRenderTable(dn) {
         const dnKey = dn === 'styczne' ? 'styczne' : dn;
         // Wykryj duplikaty między-średnicowe — pokaż kolor innej zakładki
         const nameDnList = nameDnMap[nameKey] || [];
-        const otherDns = nameDnList.filter(d => d.dn !== dnKey);
+        const otherDns = nameDnList.filter((d) => d.dn !== dnKey);
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
         const baseBg = isEven ? '#0a0d16' : '#181c28';
 
         // Solidne kolory wierszy — wszystkie nieprzezroczyste
-        const rowDupSolid = {
-            1000: '#162650',
-            1200: '#0e2a1e',
-            1500: '#2a2210',
-            2000: '#241b36',
-            2500: '#301818',
-            styczne: '#2c1422'
-        }[dupColorKey] || '#162650';
-        const rowActiveDupSolid = {
-            1000: '#1e3a6b',
-            1200: '#164530',
-            1500: '#3d3018',
-            2000: '#352552',
-            2500: '#4a2020',
-            styczne: '#4a1a38'
-        }[dupColorKey] || '#1e3a6b';
-        const rowBg = isDup && isActive ? rowActiveDupSolid : isDup ? rowDupSolid : isActive ? '#1a2645' : baseBg;
+        const rowDupSolid =
+            {
+                1000: '#162650',
+                1200: '#0e2a1e',
+                1500: '#2a2210',
+                2000: '#241b36',
+                2500: '#301818',
+                styczne: '#2c1422'
+            }[dupColorKey] || '#162650';
+        const rowActiveDupSolid =
+            {
+                1000: '#1e3a6b',
+                1200: '#164530',
+                1500: '#3d3018',
+                2000: '#352552',
+                2500: '#4a2020',
+                styczne: '#4a1a38'
+            }[dupColorKey] || '#1e3a6b';
+        const rowBg =
+            isDup && isActive
+                ? rowActiveDupSolid
+                : isDup
+                  ? rowDupSolid
+                  : isActive
+                    ? '#1a2645'
+                    : baseBg;
 
         // Solidne hover kolory
-        const hoverDupSolid = {
-            1000: '#1d3460',
-            1200: '#143e2e',
-            1500: '#383018',
-            2000: '#2e2248',
-            2500: '#3e2020',
-            styczne: '#3a1a2e'
-        }[dupColorKey] || '#1d3460';
-        const hoverActiveDupSolid = {
-            1000: '#2a4a80',
-            1200: '#1d5a3e',
-            1500: '#4d3d20',
-            2000: '#452e66',
-            2500: '#602a2a',
-            styczne: '#602848'
-        }[dupColorKey] || '#2a4a80';
-        const hoverBg = isDup && isActive ? hoverActiveDupSolid : isDup ? hoverDupSolid : isActive ? '#263460' : '#141722';
+        const hoverDupSolid =
+            {
+                1000: '#1d3460',
+                1200: '#143e2e',
+                1500: '#383018',
+                2000: '#2e2248',
+                2500: '#3e2020',
+                styczne: '#3a1a2e'
+            }[dupColorKey] || '#1d3460';
+        const hoverActiveDupSolid =
+            {
+                1000: '#2a4a80',
+                1200: '#1d5a3e',
+                1500: '#4d3d20',
+                2000: '#452e66',
+                2500: '#602a2a',
+                styczne: '#602848'
+            }[dupColorKey] || '#2a4a80';
+        const hoverBg =
+            isDup && isActive
+                ? hoverActiveDupSolid
+                : isDup
+                  ? hoverDupSolid
+                  : isActive
+                    ? '#263460'
+                    : '#141722';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`
+        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`;
 
         const tdBase = `${_EXCEL_FONT}`;
 
@@ -2131,7 +2439,9 @@ function _excelRenderTable(dn) {
             <input type="checkbox" class="excel-row-select" data-widx="${wIdx}"${cbChecked} tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" />
         </td>`;
         /* AUTO/MAN mode badge + Run-Auto buttons - NIE sticky */
-        const modeTitle = isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)';
+        const modeTitle = isAuto
+            ? 'Auto (klik = przełącz na Manual)'
+            : 'Manual (klik = przełącz na Auto)';
         const runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
         html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;">
             <button type="button" id="excel-mode-btn-${wIdx}" data-widx="${wIdx}" onclick="_excelToggleWellAutoMode(${wIdx})" title="${modeTitle}" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;height:18px;">${isAuto ? 'AUTO' : 'MANUAL'}</button>
@@ -2160,7 +2470,8 @@ function _excelRenderTable(dn) {
             const hasExplicitRzWl = prz.rzednaWlaczenia != null && prz.rzednaWlaczenia !== '';
             const rzWlPlaceholder =
                 !hasExplicitRzWl && well.rzednaDna != null
-                    ? 'auto (' + well.rzednaDna.toFixed(3) + ')' : '';
+                    ? 'auto (' + well.rzednaDna.toFixed(3) + ')'
+                    : '';
             const przProducts =
                 typeof studnieProducts !== 'undefined' && typeof getMaxPipeDn === 'function'
                     ? studnieProducts.filter(
@@ -2180,9 +2491,15 @@ function _excelRenderTable(dn) {
             const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
 
             var catOpts2 = [['', '&mdash;']];
-            categories.forEach(function(c) { catOpts2.push([c, c]); });
-            var typeHtml = _excelOverlaySelectHtml(catOpts2, activeCategory,
-                'excelOnPrzejscieTypeChange(' + wIdx + ',' + i + ',this.value)', 120);
+            categories.forEach(function (c) {
+                catOpts2.push([c, c]);
+            });
+            var typeHtml = _excelOverlaySelectHtml(
+                catOpts2,
+                activeCategory,
+                'excelOnPrzejscieTypeChange(' + wIdx + ',' + i + ',this.value)',
+                120
+            );
 
             // Wybierz średnice dostępne tylko dla wybranego rodzaju
             const availDns = activeCategory
@@ -2192,12 +2509,17 @@ function _excelRenderTable(dn) {
                 : [];
 
             var dnOpts2 = [['', '&mdash;']];
-            availDns.forEach(function(p) {
-                var dnLabel2 = typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
+            availDns.forEach(function (p) {
+                var dnLabel2 =
+                    typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
                 dnOpts2.push([p.id, dnLabel2]);
             });
-            var dnHtml = _excelOverlaySelectHtml(dnOpts2, prz.productId,
-                "excelOnPrzejscieChange(" + wIdx + "," + i + ",'productId',this.value)", 110);
+            var dnHtml = _excelOverlaySelectHtml(
+                dnOpts2,
+                prz.productId,
+                'excelOnPrzejscieChange(' + wIdx + ',' + i + ",'productId',this.value)",
+                110
+            );
 
             html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${hasExplicitRzWl ? prz.rzednaWlaczenia : ''}" placeholder="${rzWlPlaceholder}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
             html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
@@ -2206,7 +2528,7 @@ function _excelRenderTable(dn) {
         }
 
         html += `<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td>`;
-                /* Właz — użyj produktów z definicji kolumny (spójne z nagłówkiem) */
+        /* Właz — użyj produktów z definicji kolumny (spójne z nagłówkiem) */
         const wlazCol = compCols.find((c) => c.componentType === 'wlaz');
         const wlazProducts = wlazCol
             ? wlazCol.products.filter(
@@ -2215,26 +2537,45 @@ function _excelRenderTable(dn) {
             : [];
         const wlazVal = _excelGetWlazFromConfig(well);
         var wlazOpts2 = [['', '—']];
-        wlazProducts.forEach(function(p) {
+        wlazProducts.forEach(function (p) {
             var hCm2 = Math.round(parseInt(p.height) || 0) / 10;
-            var lbl2 = hCm2 > 0 ? hCm2 + ' cm' : (p.name.length > 20 ? p.name.substring(0, 18) + '…' : p.name);
+            var lbl2 =
+                hCm2 > 0
+                    ? hCm2 + ' cm'
+                    : p.name.length > 20
+                      ? p.name.substring(0, 18) + '…'
+                      : p.name;
             wlazOpts2.push([p.id, lbl2]);
         });
-        html += '<td style="text-align:left;">' + _excelOverlaySelectHtml(wlazOpts2, wlazVal,
-            "excelOnWlazChange(" + wIdx + ",this.value)", 62) + '</td>';
+        html +=
+            '<td style="text-align:left;">' +
+            _excelOverlaySelectHtml(
+                wlazOpts2,
+                wlazVal,
+                'excelOnWlazChange(' + wIdx + ',this.value)',
+                62
+            ) +
+            '</td>';
 
         /* Komponenty — ilości z kodem produktu */
         compCols.forEach((col) => {
             if (col.type === 'select' || col.type === 'auto') return;
             const c = /** @type {any} */ (col);
-            const count = _excelCountProductInConfig(well, c.componentType, c.height, c.productId, c.fromReduction ? (c.targetDn || well.redukcjaTargetDN || 1000) : null);
+            const count = _excelCountProductInConfig(
+                well,
+                c.componentType,
+                c.height,
+                c.productId,
+                c.fromReduction ? c.targetDn || well.redukcjaTargetDN || 1000 : null
+            );
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
             const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
             var disabledAttr = '';
-            html += `<td style="${tdBase}text-align:center;min-width:95px;">`
-                + `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />`
-                + `</td>`;
+            html +=
+                `<td style="${tdBase}text-align:center;min-width:95px;">` +
+                `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />` +
+                `</td>`;
         });
 
         /* H dennica — auto */
@@ -2252,9 +2593,15 @@ function _excelRenderTable(dn) {
             /* DN1200 dostępne tylko dla DN>=1500 lub stycznych */
             var can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
             var redOpts = '<option value="">Brak</option>';
-            redOpts += '<option value="1000"' + (redActive && redTarget === 1000 ? ' selected' : '') + '>DN1000</option>';
+            redOpts +=
+                '<option value="1000"' +
+                (redActive && redTarget === 1000 ? ' selected' : '') +
+                '>DN1000</option>';
             if (can1200) {
-                redOpts += '<option value="1200"' + (redActive && redTarget === 1200 ? ' selected' : '') + '>DN1200</option>';
+                redOpts +=
+                    '<option value="1200"' +
+                    (redActive && redTarget === 1200 ? ' selected' : '') +
+                    '>DN1200</option>';
             }
             var redOpts2 = [['', 'Brak']];
             if (redActive) {
@@ -2264,15 +2611,31 @@ function _excelRenderTable(dn) {
                 redOpts2.push(['1000', 'DN1000']);
                 if (can1200) redOpts2.push(['1200', 'DN1200']);
             }
-            html += '<td style="text-align:center;">' + _excelOverlaySelectHtml(redOpts2, redActive ? String(redTarget) : '',
-                "excelOnReductionSelectChange(" + wIdx + ",this.value)", 105) + '</td>';
+            html +=
+                '<td style="text-align:center;">' +
+                _excelOverlaySelectHtml(
+                    redOpts2,
+                    redActive ? String(redTarget) : '',
+                    'excelOnReductionSelectChange(' + wIdx + ',this.value)',
+                    105
+                ) +
+                '</td>';
         }
 
         /* Kineta */
         var kinOpts2 = [['', '—']];
-        KINETA_OPTIONS.forEach(function(ko) { kinOpts2.push([ko[0], ko[1]]); });
-        html += '<td style="text-align:left;">' + _excelOverlaySelectHtml(kinOpts2, well.kineta || '',
-            "excelOnKinetaChange(" + wIdx + ",this.value)", 90) + '</td>';
+        KINETA_OPTIONS.forEach(function (ko) {
+            kinOpts2.push([ko[0], ko[1]]);
+        });
+        html +=
+            '<td style="text-align:left;">' +
+            _excelOverlaySelectHtml(
+                kinOpts2,
+                well.kineta || '',
+                'excelOnKinetaChange(' + wIdx + ',this.value)',
+                90
+            ) +
+            '</td>';
 
         /* Psia buda */
         html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.psiaBuda ? ' checked' : ''} onchange="excelOnPsiaBudaChange(${wIdx},this.checked)" style="accent-color:#f59e0b;cursor:pointer;" /></td>`;
@@ -2319,7 +2682,7 @@ function _excelRenderTable(dn) {
     }
 
     html += `<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td>`;
-            /* Właz */
+    /* Właz */
     html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(125)}opacity:0.3;"><option value="">—</option></select></td>`;
 
     /* Komponenty */
@@ -2354,7 +2717,7 @@ function _excelRenderTable(dn) {
     if (_excelColWidths) {
         var tbl = container.querySelector('table');
         if (tbl) {
-            Object.keys(_excelColWidths).forEach(function(key) {
+            Object.keys(_excelColWidths).forEach(function (key) {
                 var d = key.split('-', 1)[0];
                 if (d === dn) {
                     var ci = parseInt(key.split('-')[1]);
@@ -2373,7 +2736,9 @@ function _excelRenderTable(dn) {
     _excelApplyStickyColumns();
     /* Odśwież ikony Lucide w kontenerze (nie skanuj całego dokumentu) */
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
-        try { lucide.createIcons({ root: container }); } catch(e) {}
+        try {
+            lucide.createIcons({ root: container });
+        } catch (e) {}
     }
 
     // Przywróć fokus po re-renderze
@@ -2425,7 +2790,10 @@ function _excelApplyStickyColumns() {
         var colIdx = 0;
         var el = cells[i];
         var prev = el.previousElementSibling;
-        while (prev) { colIdx++; prev = prev.previousElementSibling; }
+        while (prev) {
+            colIdx++;
+            prev = prev.previousElementSibling;
+        }
         if (colIdx < 7 && offsets[colIdx] != null) {
             el.style.left = offsets[colIdx] + 'px';
             el.style.position = 'sticky';
@@ -2489,10 +2857,9 @@ function _excelInitColumnResize() {
                 const newWidth = Math.max(30, startWidth + diff);
 
                 // Które kolumny zmieniamy: wszystkie zaznaczone (jeśli ta jest zaznaczona) albo tylko tę
-                const colsToResize =
-                    _excelSelectedCols.includes(colIndex)
-                        ? _excelSelectedCols
-                        : [colIndex];
+                const colsToResize = _excelSelectedCols.includes(colIndex)
+                    ? _excelSelectedCols
+                    : [colIndex];
 
                 colsToResize.forEach((ci) => {
                     rows.forEach((row) => {
@@ -2512,10 +2879,9 @@ function _excelInitColumnResize() {
                 document.body.style.userSelect = '';
                 /* Zapisz szerokości dla trwałości po re-renderze */
                 const newWidth = Math.max(30, startWidth + lastDiff);
-                const colsToResize =
-                    _excelSelectedCols.includes(colIndex)
-                        ? _excelSelectedCols
-                        : [colIndex];
+                const colsToResize = _excelSelectedCols.includes(colIndex)
+                    ? _excelSelectedCols
+                    : [colIndex];
                 colsToResize.forEach((ci) => {
                     _excelColWidths[_excelActiveTab + '-' + ci] = newWidth;
                 });
@@ -2626,7 +2992,9 @@ function _excelToggleColClass(colIdx, add) {
 function _excelToggleCellClass(wIdx, colIdx, add) {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
-    const td = container.querySelector('tr[data-widx="' + wIdx + '"] td:nth-child(' + (colIdx + 1) + ')');
+    const td = container.querySelector(
+        'tr[data-widx="' + wIdx + '"] td:nth-child(' + (colIdx + 1) + ')'
+    );
     if (!td) return;
     if (add) td.classList.add('cell-selected');
     else td.classList.remove('cell-selected');
@@ -2646,7 +3014,9 @@ function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
             }
         }
     } else if (ctrl) {
-        var idx = _excelSelectedCells.findIndex(function(cell) { return cell.wIdx === wIdx && cell.colIdx === colIdx; });
+        var idx = _excelSelectedCells.findIndex(function (cell) {
+            return cell.wIdx === wIdx && cell.colIdx === colIdx;
+        });
         if (idx >= 0) {
             _excelSelectedCells.splice(idx, 1);
             _excelToggleCellClass(wIdx, colIdx, false);
@@ -2674,7 +3044,7 @@ function _excelOnMouseDown(e) {
 
     _excelDragState = {
         anchor: { wIdx: wIdx, colIdx: colIdx },
-        mode: (e.ctrlKey || e.metaKey) ? 'add' : 'new',
+        mode: e.ctrlKey || e.metaKey ? 'add' : 'new',
         end: { wIdx: wIdx, colIdx: colIdx },
         active: true,
         thresholdMet: false,
@@ -2687,8 +3057,16 @@ function _excelOnMouseDown(e) {
         _excelSelectCell(wIdx, colIdx, false, false);
     } else if (e.shiftKey && _excelLastClickedCell) {
         _excelDeselectAllCells();
-        for (var r = Math.min(_excelLastClickedCell.wIdx, wIdx); r <= Math.max(_excelLastClickedCell.wIdx, wIdx); r++) {
-            for (var c = Math.min(_excelLastClickedCell.colIdx, colIdx); c <= Math.max(_excelLastClickedCell.colIdx, colIdx); c++) {
+        for (
+            var r = Math.min(_excelLastClickedCell.wIdx, wIdx);
+            r <= Math.max(_excelLastClickedCell.wIdx, wIdx);
+            r++
+        ) {
+            for (
+                var c = Math.min(_excelLastClickedCell.colIdx, colIdx);
+                c <= Math.max(_excelLastClickedCell.colIdx, colIdx);
+                c++
+            ) {
                 _excelSelectCell(r, c, false, false);
             }
         }
@@ -2712,7 +3090,7 @@ function _excelOnMouseMove(e) {
     /* Live preview */
     if (_excelDragThrottle) return;
     _excelDragThrottle = true;
-    requestAnimationFrame(function() {
+    requestAnimationFrame(function () {
         _excelDragThrottle = false;
         if (!_excelDragState) return;
         _excelClearDragPreview();
@@ -2749,7 +3127,7 @@ function _excelOnMouseUp() {
     var maxC = Math.max(s.colIdx, en.colIdx);
 
     /* Real selection commmit */
-    if ((maxR - minR) > 0 || (maxC - minC) > 0) {
+    if (maxR - minR > 0 || maxC - minC > 0) {
         /* rzeczywiscie drag (nie klik) */
         if (mode === 'new') {
             _excelDeselectAllCells();
@@ -2780,10 +3158,10 @@ function _excelPositionFocusOverlay(td) {
         return;
     }
     _excelFocusOverlayEl.style.display = 'block';
-    _excelFocusOverlayEl.style.top = (r.top - 2) + 'px';
-    _excelFocusOverlayEl.style.left = (r.left - 2) + 'px';
-    _excelFocusOverlayEl.style.width = (r.width + 4) + 'px';
-    _excelFocusOverlayEl.style.height = (r.height + 4) + 'px';
+    _excelFocusOverlayEl.style.top = r.top - 2 + 'px';
+    _excelFocusOverlayEl.style.left = r.left - 2 + 'px';
+    _excelFocusOverlayEl.style.width = r.width + 4 + 'px';
+    _excelFocusOverlayEl.style.height = r.height + 4 + 'px';
 }
 
 function _excelOnFocusIn(e) {
@@ -2796,7 +3174,7 @@ function _excelOnFocusIn(e) {
     if (!td) return;
     /* Wymazujemy timer jezeli jest */
     if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
-    _excelFocusRaf = requestAnimationFrame(function() {
+    _excelFocusRaf = requestAnimationFrame(function () {
         _excelFocusRaf = null;
         _excelPositionFocusOverlay(td);
     });
@@ -2808,7 +3186,7 @@ function _excelSelWrapFocus(selWrap) {
     var td = selWrap.closest('td');
     if (!td) return;
     if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
-    _excelFocusRaf = requestAnimationFrame(function() {
+    _excelFocusRaf = requestAnimationFrame(function () {
         _excelFocusRaf = null;
         _excelPositionFocusOverlay(td);
     });
@@ -2825,8 +3203,12 @@ function _excelOnRowSelectChange(e) {
             _excelRowSelectStates[wIdx] = target.checked;
             _excelUpdateBulkButtons();
             /* sync select-all checkbox */
-            var allBoxes = document.querySelectorAll('#excel-table-container tbody tr[data-widx] input.excel-row-select');
-            var allChecked = Array.from(allBoxes).every(function(cb) { return cb.checked; });
+            var allBoxes = document.querySelectorAll(
+                '#excel-table-container tbody tr[data-widx] input.excel-row-select'
+            );
+            var allChecked = Array.from(allBoxes).every(function (cb) {
+                return cb.checked;
+            });
             var hdrAll = document.getElementById('excel-select-all');
             if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = allChecked;
         }
@@ -2837,9 +3219,12 @@ function _excelOnRowSelectChange(e) {
 function _excelOnFocusOut(e) {
     if (!_excelFocusOverlayEl) return;
     /* Delay — sprawdzamy czy focus nie przeskoczyl do innej komórki w kontenerze */
-    setTimeout(function() {
+    setTimeout(function () {
         var ae = document.activeElement;
-        var stillInContainer = ae && document.getElementById('excel-table-container') && document.getElementById('excel-table-container').contains(ae);
+        var stillInContainer =
+            ae &&
+            document.getElementById('excel-table-container') &&
+            document.getElementById('excel-table-container').contains(ae);
         if (!stillInContainer) {
             if (_excelFocusOverlayEl) _excelFocusOverlayEl.style.display = 'none';
         }
@@ -2851,7 +3236,7 @@ function _excelOnOverlayScroll() {
     if (_excelFocusOverlayEl.style.display === 'none') return;
     /* throttling: jeden requestAnimationFrame na wiele scroll events */
     if (_excelFocusRaf) return;
-    _excelFocusRaf = requestAnimationFrame(function() {
+    _excelFocusRaf = requestAnimationFrame(function () {
         _excelFocusRaf = null;
         var ae = document.activeElement;
         if (!ae) return;
@@ -2865,12 +3250,14 @@ function _excelDeselectAllCells() {
     if (_excelSelectedCells.length === 0) return;
     const copy = [..._excelSelectedCells];
     _excelSelectedCells = [];
-    copy.forEach(function(cell) { _excelToggleCellClass(cell.wIdx, cell.colIdx, false); });
+    copy.forEach(function (cell) {
+        _excelToggleCellClass(cell.wIdx, cell.colIdx, false);
+    });
 }
 
 /* ===== DRAG SELECTION ===== */
 function _excelClearDragPreview() {
-    document.querySelectorAll('#excel-table-container td.drag-preview').forEach(function(td) {
+    document.querySelectorAll('#excel-table-container td.drag-preview').forEach(function (td) {
         td.classList.remove('drag-preview');
     });
 }
@@ -2915,7 +3302,7 @@ function _excelBulkSetMode(enabled) {
         showToast((enabled ? 'Auto' : 'Manual') + ' dla ' + targets.length + ' studni', 'success');
     }
     _excelSaveUndoSnapshot();
-    targets.forEach(function(i) {
+    targets.forEach(function (i) {
         if (wells[i]) {
             wells[i].autoSelect = enabled;
             wells[i].configSource = enabled ? 'AUTO' : 'MANUAL'; /* sync z glownym panelem */
@@ -2936,7 +3323,9 @@ function _excelToggleSelectAll(checked) {
         }
     }
     var boxes = document.querySelectorAll('.excel-row-select');
-    boxes.forEach(function(cb) { cb.checked = checked; });
+    boxes.forEach(function (cb) {
+        cb.checked = checked;
+    });
     var hdrAll = document.getElementById('excel-select-all');
     if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
     _excelUpdateBulkButtons();
@@ -2963,7 +3352,9 @@ function _excelSelectRange(startW, startC, endW, endC, additive) {
         for (var c = cMin; c <= cMax; c++) {
             var row = document.querySelector('tr[data-widx="' + r + '"]');
             if (!row || !row.children[c]) continue;
-            var existing = _excelSelectedCells.find(function(cl){ return cl.wIdx===r && cl.colIdx===c; });
+            var existing = _excelSelectedCells.find(function (cl) {
+                return cl.wIdx === r && cl.colIdx === c;
+            });
             if (!existing) _excelSelectCell(r, c, false, false);
         }
     }
@@ -2993,8 +3384,11 @@ function _excelHandleCopy(e) {
     var text = '';
     if (_excelSelectedCells.length > 0) {
         var cellMap = {};
-        var minR = Infinity, maxR = -Infinity, minC = Infinity, maxC = -Infinity;
-        _excelSelectedCells.forEach(function(cell) {
+        var minR = Infinity,
+            maxR = -Infinity,
+            minC = Infinity,
+            maxC = -Infinity;
+        _excelSelectedCells.forEach(function (cell) {
             if (!cellMap[cell.wIdx]) cellMap[cell.wIdx] = {};
             cellMap[cell.wIdx][cell.colIdx] = true;
             if (cell.wIdx < minR) minR = cell.wIdx;
@@ -3011,7 +3405,15 @@ function _excelHandleCopy(e) {
                     if (row) {
                         var td = row.children[c];
                         var target = td ? td.querySelector('input, select') : null;
-                        if (target) { var _sel = /** @type {HTMLSelectElement} */ (target); val = _sel.tagName === 'SELECT' ? (_sel.options[_sel.selectedIndex] ? _sel.options[_sel.selectedIndex].text : '') : (/** @type {HTMLInputElement} */(target)).value || ''; }
+                        if (target) {
+                            var _sel = /** @type {HTMLSelectElement} */ (target);
+                            val =
+                                _sel.tagName === 'SELECT'
+                                    ? _sel.options[_sel.selectedIndex]
+                                        ? _sel.options[_sel.selectedIndex].text
+                                        : ''
+                                    : /** @type {HTMLInputElement} */ (target).value || '';
+                        }
                     }
                 }
                 line.push(val);
@@ -3019,13 +3421,26 @@ function _excelHandleCopy(e) {
             text += line.join('\t') + '\n';
         }
     } else if (_excelSelectedCols.length > 0) {
-        var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
-        rows.forEach(function(row) {
+        var cols = _excelSelectedCols.sort(function (a, b) {
+            return a - b;
+        });
+        rows.forEach(function (row) {
             var line = [];
-            cols.forEach(function(colIdx) {
+            cols.forEach(function (colIdx) {
                 var td = row.children[colIdx];
                 var target = td ? td.querySelector('input, select') : null;
-                line.push(target ? (function(t){var _s=/** @type {HTMLSelectElement} */(t);return _s.tagName==='SELECT'?(_s.options[_s.selectedIndex]?_s.options[_s.selectedIndex].text:''):(/** @type {HTMLInputElement} */(t)).value||'';})(target) : '');
+                line.push(
+                    target
+                        ? (function (t) {
+                              var _s = /** @type {HTMLSelectElement} */ (t);
+                              return _s.tagName === 'SELECT'
+                                  ? _s.options[_s.selectedIndex]
+                                      ? _s.options[_s.selectedIndex].text
+                                      : ''
+                                  : /** @type {HTMLInputElement} */ (t).value || '';
+                          })(target)
+                        : ''
+                );
             });
             text += line.join('\t') + '\n';
         });
@@ -3064,20 +3479,32 @@ function _excelHandlePaste(e) {
         lines[_pi] = lines[_pi].replace(/\r$/, '');
     }
     if (_excelSelectedCells.length > 0) {
-        var cellList = _excelSelectedCells.sort(function(a,b){return a.wIdx-b.wIdx||a.colIdx-b.colIdx;});
+        var cellList = _excelSelectedCells.sort(function (a, b) {
+            return a.wIdx - b.wIdx || a.colIdx - b.colIdx;
+        });
         var cellRows = {};
-        cellList.forEach(function(c) {
+        cellList.forEach(function (c) {
             if (!cellRows[c.wIdx]) cellRows[c.wIdx] = [];
             cellRows[c.wIdx].push(c.colIdx);
         });
-        var widxArr = Object.keys(cellRows).map(Number).sort(function(a,b){return a-b;});
+        var widxArr = Object.keys(cellRows)
+            .map(Number)
+            .sort(function (a, b) {
+                return a - b;
+            });
         var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
-        var _baseCols = widxArr.length > 0 && cellRows[_baseWIdx] ? cellRows[_baseWIdx] : [_excelGetPasteColIdx(rows[0])];
+        var _baseCols =
+            widxArr.length > 0 && cellRows[_baseWIdx]
+                ? cellRows[_baseWIdx]
+                : [_excelGetPasteColIdx(rows[0])];
         /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby */
         var availableRows = rows.length - _baseWIdx;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
-            if (lines.length === 0) { showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning'); return; }
+            if (lines.length === 0) {
+                showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning');
+                return;
+            }
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
@@ -3085,15 +3512,17 @@ function _excelHandlePaste(e) {
         var _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
         _pasteFn(lines, _baseWIdx, _firstCol, null);
     } else if (_excelSelectedCols.length > 0) {
-        var cols = _excelSelectedCols.sort(function(a,b){return a-b;});
+        var cols = _excelSelectedCols.sort(function (a, b) {
+            return a - b;
+        });
         /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
         if (lines.length > rows.length) {
             lines = lines.slice(0, rows.length);
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
-        lines.forEach(function(line, i) {
+        lines.forEach(function (line, i) {
             var parts = line.split('	');
-            cols.forEach(function(colIdx, ci) {
+            cols.forEach(function (colIdx, ci) {
                 if (ci >= parts.length) return;
                 var tdInner = rows[i] ? rows[i].children[colIdx] : null;
                 var target = tdInner ? tdInner.querySelector('input, select') : null;
@@ -3111,7 +3540,9 @@ function _excelHandlePaste(e) {
         }
         if (startWIdx < 0) {
             /* brak fokusu w konkretnym wierszu — szukaj input/select wewnatrz kontenera jako fallback */
-            var focusedInput = document.querySelector('#excel-table-container input:focus, #excel-table-container select:focus, #excel-table-container .excel-sel-wrap:focus-within');
+            var focusedInput = document.querySelector(
+                '#excel-table-container input:focus, #excel-table-container select:focus, #excel-table-container .excel-sel-wrap:focus-within'
+            );
             if (focusedInput) {
                 var _ftr = focusedInput.closest('tr[data-widx]');
                 if (_ftr) startWIdx = parseInt(_ftr.getAttribute('data-widx') || '0') || 0;
@@ -3128,7 +3559,10 @@ function _excelHandlePaste(e) {
         var availableRows = rows.length - startWIdx;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
-            if (lines.length === 0) { showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning'); return; }
+            if (lines.length === 0) {
+                showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning');
+                return;
+            }
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         /* Użyj batch/sync paste — obsłuż duże zestawy */
@@ -3141,15 +3575,17 @@ function _excelHandlePaste(e) {
 var _excelPasteCancelFlag = false;
 
 function _excelShowPasteProgress(now, total) {
-    var pct = Math.min(100, Math.round(now / total * 100));
+    var pct = Math.min(100, Math.round((now / total) * 100));
     var el = document.getElementById('excel-paste-progress');
     if (!el) {
         el = document.createElement('div');
         el.id = 'excel-paste-progress';
-        el.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:99999;background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.75rem 1rem;min-width:260px;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
-        el.innerHTML = '<div style="font-size:0.65rem;color:#94a3b8;margin-bottom:0.35rem;">Wklejanie... <span id="excel-paste-pct">0%</span></div>'
-            + '<div style="height:4px;background:#0c0e14;border-radius:2px;overflow:hidden;">'
-            + '<div id="excel-paste-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);transition:width 0.15s;"></div></div>';
+        el.style.cssText =
+            'position:fixed;bottom:1rem;right:1rem;z-index:99999;background:#1a1d27;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.75rem 1rem;min-width:260px;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+        el.innerHTML =
+            '<div style="font-size:0.65rem;color:#94a3b8;margin-bottom:0.35rem;">Wklejanie... <span id="excel-paste-pct">0%</span></div>' +
+            '<div style="height:4px;background:#0c0e14;border-radius:2px;overflow:hidden;">' +
+            '<div id="excel-paste-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);transition:width 0.15s;"></div></div>';
         document.body.appendChild(el);
     }
     var bar = document.getElementById('excel-paste-bar');
@@ -3189,7 +3625,7 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
             var line = lines[idx];
             var parts = line.split('	');
             var wIdx = startWIdx + idx;
-            parts.forEach(function(v, ci) {
+            parts.forEach(function (v, ci) {
                 var colIdx = startColIdx + ci;
                 var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
                 if (!row) return;
@@ -3214,7 +3650,7 @@ function _excelPasteSync(lines, startWIdx, startColIdx) {
     for (var si = 0; si < lines.length; si++) {
         var parts = lines[si].split('	');
         var wIdx = startWIdx + si;
-        parts.forEach(function(v, ci) {
+        parts.forEach(function (v, ci) {
             var colIdx = startColIdx + ci;
             var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
             if (!row) return;
@@ -3245,13 +3681,23 @@ function _excelMarkAsManual(wIdx) {
 function _excelSetCellValue(target, val) {
     if (target.tagName === 'SELECT') {
         var _sel = /** @type {HTMLSelectElement} */ (target);
-        var opt = Array.from(_sel.options).find(function(o) { return o.value === val || o.text === val; });
-        if (opt) { _sel.value = opt.value; _sel.dispatchEvent(new Event('change', { bubbles: true })); }
+        var opt = Array.from(_sel.options).find(function (o) {
+            return o.value === val || o.text === val;
+        });
+        if (opt) {
+            _sel.value = opt.value;
+            _sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     } else if (target.tagName === 'INPUT') {
         /* Normalizuj separator dziesietny — MS Excel z PL wysyla przecinek, input type=number wymaga kropki */
         var normalizedVal = val;
         var inputType = /** @type {HTMLInputElement} */ (target).type;
-        if (inputType === 'number' && typeof normalizedVal === 'string' && normalizedVal.indexOf(',') >= 0 && normalizedVal.indexOf('.') < 0) {
+        if (
+            inputType === 'number' &&
+            typeof normalizedVal === 'string' &&
+            normalizedVal.indexOf(',') >= 0 &&
+            normalizedVal.indexOf('.') < 0
+        ) {
             normalizedVal = normalizedVal.replace(',', '.');
         }
         /** @type {HTMLInputElement} */ (target).value = normalizedVal;
@@ -3273,14 +3719,26 @@ function _excelEnsureRowCount(neededTotal, currentRows) {
     var dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab, 10);
     _excelSaveUndoSnapshot();
     for (var i = 0; i < deficit; i++) {
-        var well = typeof createNewWell === 'function'
-            ? createNewWell(null, /** @type {any} */ (dn))
-            : {
-                id: 'well_' + Date.now() + '_' + i,
-                name: (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) + ' (#' + (wells.length + 1) + ')',
-                dn: dn, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null,
-                kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500
-            };
+        var well =
+            typeof createNewWell === 'function'
+                ? createNewWell(null, /** @type {any} */ (dn))
+                : {
+                      id: 'well_' + Date.now() + '_' + i,
+                      name:
+                          (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) +
+                          ' (#' +
+                          (wells.length + 1) +
+                          ')',
+                      dn: dn,
+                      config: [],
+                      przejscia: [],
+                      rzednaWlazu: null,
+                      rzednaDna: null,
+                      kineta: 'brak',
+                      psiaBuda: false,
+                      redukcjaDN1000: false,
+                      redukcjaMinH: 2500
+                  };
         wells.push(well);
         _excelAutoSetWlaz(well);
     }
@@ -3359,7 +3817,9 @@ function excelCreateFromEmpty() {
         _excelDebouncedRefresh();
         var newWIdx = wells.length - 1;
         if (_excelAutoSelectEnabled && rzw !== null && rzd !== null && rzw > rzd) {
-            setTimeout(function() { _excelAutoSelectForWell(newWIdx); }, 200);
+            setTimeout(function () {
+                _excelAutoSelectForWell(newWIdx);
+            }, 200);
         }
         showToast('Dodano: ' + autoName, 'success');
     } finally {
@@ -3368,7 +3828,10 @@ function excelCreateFromEmpty() {
             const newIdx = wells.length - 1;
             const row = document.querySelector(`tr[data-widx="${newIdx}"]`);
             const rzwEl = row && row.querySelector('input[data-field="rzednaWlazu"]');
-            if (rzwEl) { rzwEl.focus(); rzwEl.select(); }
+            if (rzwEl) {
+                rzwEl.focus();
+                rzwEl.select();
+            }
         }, 100);
     }
 }
@@ -3398,7 +3861,10 @@ function _excelHandleTab(e) {
     if (target.tagName === 'SELECT') {
         var w = target.closest('.excel-sel-wrap');
         if (w) target = w;
-    } else if (target.tagName !== 'INPUT' && !(target.classList && target.classList.contains('excel-sel-wrap'))) {
+    } else if (
+        target.tagName !== 'INPUT' &&
+        !(target.classList && target.classList.contains('excel-sel-wrap'))
+    ) {
         return;
     }
 
@@ -3499,7 +3965,7 @@ function _excelHandleArrow(e) {
 
     // Znajdź wiersze data (pomiń empty-row)
     const allRows = Array.from(container.querySelectorAll('tbody tr'));
-    const dataRows = allRows.filter(r => r.hasAttribute('data-widx'));
+    const dataRows = allRows.filter((r) => r.hasAttribute('data-widx'));
     const currentRowIdx = dataRows.indexOf(tr);
     if (currentRowIdx === -1) return;
 
@@ -3507,7 +3973,11 @@ function _excelHandleArrow(e) {
     const rowEls = _excelGetNavElements(tr);
     const colIdx = rowEls.indexOf(target);
     if (colIdx === -1) {
-        if (typeof window.logger !== 'undefined') window.logger.warn('excel-nav', 'colIdx=-1 target=' + target.tagName + ' class=' + (target.className || ''));
+        if (typeof window.logger !== 'undefined')
+            window.logger.warn(
+                'excel-nav',
+                'colIdx=-1 target=' + target.tagName + ' class=' + (target.className || '')
+            );
         return;
     }
 
@@ -3534,7 +4004,11 @@ function _excelHandleArrow(e) {
             return;
         }
         var downWIdx = parseInt(nextRow.getAttribute('data-widx'));
-        if (!isNaN(downWIdx) && typeof currentWellIndex !== 'undefined' && downWIdx !== currentWellIndex) {
+        if (
+            !isNaN(downWIdx) &&
+            typeof currentWellIndex !== 'undefined' &&
+            downWIdx !== currentWellIndex
+        ) {
             excelSelectRow(downWIdx);
         }
         var nextEls = _excelGetNavElements(nextRow);
@@ -3544,7 +4018,11 @@ function _excelHandleArrow(e) {
         const prevRow = dataRows[currentRowIdx - 1];
         if (prevRow) {
             var upWIdx = parseInt(prevRow.getAttribute('data-widx'));
-            if (!isNaN(upWIdx) && typeof currentWellIndex !== 'undefined' && upWIdx !== currentWellIndex) {
+            if (
+                !isNaN(upWIdx) &&
+                typeof currentWellIndex !== 'undefined' &&
+                upWIdx !== currentWellIndex
+            ) {
                 excelSelectRow(upWIdx);
             }
             const prevEls = _excelGetNavElements(prevRow);
@@ -3634,7 +4112,7 @@ function _excelIsDisabledNav(el) {
 /** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow) */
 function _excelFocusNavEl(el, rowEls, dir) {
     if (!el) return;
-    var step = (dir === 'right' || dir === 'down') ? 1 : -1;
+    var step = dir === 'right' || dir === 'down' ? 1 : -1;
     var limit = rowEls.length + 1; /* max iteracji = rozmiar wiersza + 1 */
     var cur = el;
     while (cur && limit-- > 0) {
@@ -3643,7 +4121,7 @@ function _excelFocusNavEl(el, rowEls, dir) {
             /* Scroll-into-view bez scrollIntoView (nie uwzglednia sticky headera) */
             var container = document.getElementById('excel-table-container');
             var headerEl = document.querySelector('#excel-table-container thead');
-            var headerH = headerEl ? (/** @type {HTMLElement} */ (headerEl)).offsetHeight : 60;
+            var headerH = headerEl ? /** @type {HTMLElement} */ (headerEl).offsetHeight : 60;
             var MARGIN = 5;
             /* Reczna korekta scroll — element MUSI byc widoczny ponizej sticky headera */
             if (container) {
@@ -3653,7 +4131,7 @@ function _excelFocusNavEl(el, rowEls, dir) {
                    lub calkowicie poza viewport — przewin w dol */
                 if (elRect.top < containerRect.top + headerH + MARGIN) {
                     /* Element za wysoko / zakryty headerm — przewin w dol */
-                    var diffDown = (containerRect.top + headerH + MARGIN) - elRect.top;
+                    var diffDown = containerRect.top + headerH + MARGIN - elRect.top;
                     container.scrollTop -= diffDown;
                 } else if (elRect.top + elRect.height > containerRect.bottom) {
                     /* Element za nisko — przewin w gore (w gore kontenera) */
@@ -3665,7 +4143,10 @@ function _excelFocusNavEl(el, rowEls, dir) {
             var tr = cur.closest('tr[data-widx]');
             if (tr) {
                 var wIdx = parseInt(tr.getAttribute('data-widx'), 10);
-                if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+                if (
+                    !isNaN(wIdx) &&
+                    (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)
+                ) {
                     excelSelectRow(wIdx);
                 }
             }
@@ -3703,8 +4184,13 @@ function excelOnRzednaChange(wIdx) {
     wells[wIdx].rzednaDna = rzDna;
     _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
-    if (_excelAutoSelectEnabled && rzWlazu !== null && rzDna !== null && rzWlazu > rzDna
-        && typeof autoSelectComponents === 'function') {
+    if (
+        _excelAutoSelectEnabled &&
+        rzWlazu !== null &&
+        rzDna !== null &&
+        rzWlazu > rzDna &&
+        typeof autoSelectComponents === 'function'
+    ) {
         _excelAutoSelectForWell(wIdx);
     }
     /* Nie wywołuj _excelDebouncedRefresh — wysokość nie zmienia kodów h3,
@@ -3726,7 +4212,11 @@ function excelRemoveTransitionColumn() {
             if (!_excelWellMatchesTab(w, tab)) continue;
             if (w.przejscia && w.przejscia[lastIdx]) {
                 const p = w.przejscia[lastIdx];
-                if (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '' || p.productId !== null && p.productId !== '' || (p.kat && p.kat !== 0)) {
+                if (
+                    (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '') ||
+                    (p.productId !== null && p.productId !== '') ||
+                    (p.kat && p.kat !== 0)
+                ) {
                     hasData = true;
                     break;
                 }
@@ -3771,8 +4261,12 @@ function excelAddTransitionColumn() {
 function _excelCleanEmptyPrzejscia(well) {
     if (!well || !well.przejscia) return;
     /* Zachowaj tylko przejścia z productId LUB w trakcie wyboru (tempCategory, rzednaWlaczenia) */
-    well.przejscia = well.przejscia.filter(function(p) {
-        return (p.productId && p.productId !== '') || (p.tempCategory && p.tempCategory !== '') || (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '');
+    well.przejscia = well.przejscia.filter(function (p) {
+        return (
+            (p.productId && p.productId !== '') ||
+            (p.tempCategory && p.tempCategory !== '') ||
+            (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '')
+        );
     });
 }
 
@@ -3855,20 +4349,32 @@ function _excelMarkManual(well) {
 function _excelInsertConfigItem(well, componentType, productId, qty) {
     _excelClearResCache(well);
     /* Konus + PEHD wkładka — blokada jak w głównym konfiguratorze */
-    if (componentType === 'konus' && well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+    if (
+        componentType === 'konus' &&
+        well.wkladkaZwienczenie &&
+        well.wkladkaZwienczenie !== 'brak'
+    ) {
         showToast('Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.', 'error');
         return;
     }
-    const topTypes = ['wlaz', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
+    const topTypes = [
+        'wlaz',
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'konus',
+        'pierscien_odciazajacy'
+    ];
     const bottomTypes = ['dennica', 'kineta', 'styczna'];
     const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
     if (topTypes.includes(componentType)) {
         /* Właz: tylko wstaw, nie ruszaj reszty zakończeń */
         if (componentType === 'wlaz') {
             const wlazIdx = well.config.findIndex((item) => {
-                const p = typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === item.productId)
-                    : null;
+                const p =
+                    typeof studnieProducts !== 'undefined'
+                        ? studnieProducts.find((pr) => pr.id === item.productId)
+                        : null;
                 return p && p.componentType === 'wlaz';
             });
             const insertAt = wlazIdx >= 0 ? wlazIdx + 1 : 0;
@@ -3879,9 +4385,10 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         /* Jeśli dodajemy element odciążający: zachowaj partnera, usuń resztę */
         if (reliefTypes.includes(componentType)) {
             well.config = well.config.filter((item) => {
-                const p = typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === item.productId)
-                    : null;
+                const p =
+                    typeof studnieProducts !== 'undefined'
+                        ? studnieProducts.find((pr) => pr.id === item.productId)
+                        : null;
                 if (!p) return true;
                 if (reliefTypes.includes(p.componentType)) {
                     return p.componentType !== componentType;
@@ -3891,17 +4398,19 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         } else {
             /* Nie-odciążający (konus/plyta_din): usuń wszystkie zakończenia */
             well.config = well.config.filter((item) => {
-                const p = typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === item.productId)
-                    : null;
+                const p =
+                    typeof studnieProducts !== 'undefined'
+                        ? studnieProducts.find((pr) => pr.id === item.productId)
+                        : null;
                 return !(p && topTypes.includes(p.componentType));
             });
         }
         /* Wstaw za włazem (jeśli istnieje), żeby nie rozbić kolejności góra-dół */
         const wlazIdx = well.config.findIndex((item) => {
-            const p = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === item.productId)
-                : null;
+            const p =
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    : null;
             return p && p.componentType === 'wlaz';
         });
         const insertAt = wlazIdx >= 0 ? wlazIdx + 1 : 0;
@@ -3910,31 +4419,43 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         if (!_excelAddingReliefPair && typeof window.ensureReliefRingPair === 'function') {
             _excelAddingReliefPair = true;
             window.ensureReliefRingPair(well);
-            setTimeout(function() { _excelAddingReliefPair = false; }, 200);
+            setTimeout(function () {
+                _excelAddingReliefPair = false;
+            }, 200);
         }
     } else if (bottomTypes.includes(componentType)) {
         well.config.push({ productId, quantity: qty, autoAdded: false });
     } else {
-        const topTypesForMiddle = ['wlaz', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'konus', 'pierscien_odciazajacy'];
+        const topTypesForMiddle = [
+            'wlaz',
+            'plyta_din',
+            'plyta_najazdowa',
+            'plyta_zamykajaca',
+            'konus',
+            'pierscien_odciazajacy'
+        ];
         /* Szukaj płyty redukcyjnej — wpływa na pozycję kręgów */
         const plateIdx = well.config.findIndex((item) => {
-            const p = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === item.productId)
-                : null;
+            const p =
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    : null;
             return p && p.componentType === 'plyta_redukcyjna';
         });
         if (plateIdx >= 0) {
-            const prod = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === productId)
-                : null;
+            const prod =
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((pr) => pr.id === productId)
+                    : null;
             const isRedDn = prod && String(prod.dn) === '1000';
             if (isRedDn) {
                 /* Krąg DN1000 — wstaw NAD płytą redukcyjną, za topClosure */
                 let insertIdx = 0;
                 for (let i = 0; i < plateIdx; i++) {
-                    const p = typeof studnieProducts !== 'undefined'
-                        ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
-                        : null;
+                    const p =
+                        typeof studnieProducts !== 'undefined'
+                            ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                            : null;
                     if (!p || !topTypesForMiddle.includes(p.componentType)) {
                         insertIdx = i;
                         break;
@@ -3950,9 +4471,10 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
             /* Brak płyty redukcyjnej — wstaw za topClosure, przed bottom */
             let insertAt = well.config.length;
             for (let i = 0; i < well.config.length; i++) {
-                const p = typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
-                    : null;
+                const p =
+                    typeof studnieProducts !== 'undefined'
+                        ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                        : null;
                 if (p && bottomTypes.includes(p.componentType)) {
                     insertAt = i;
                     break;
@@ -3970,12 +4492,23 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
     if ((componentType === 'krag' || componentType === 'krag_ot') && qty > 1) {
         var _exp = [];
         for (var _i = 0; _i < well.config.length; _i++) {
-            var _pr = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find(function (x) { return x.id === well.config[_i].productId; })
-                : null;
-            if (_pr && (_pr.componentType === 'krag' || _pr.componentType === 'krag_ot') && well.config[_i].quantity > 1) {
+            var _pr =
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find(function (x) {
+                          return x.id === well.config[_i].productId;
+                      })
+                    : null;
+            if (
+                _pr &&
+                (_pr.componentType === 'krag' || _pr.componentType === 'krag_ot') &&
+                well.config[_i].quantity > 1
+            ) {
                 for (var _j = 0; _j < well.config[_i].quantity; _j++) {
-                    _exp.push({ productId: well.config[_i].productId, quantity: 1, autoAdded: false });
+                    _exp.push({
+                        productId: well.config[_i].productId,
+                        quantity: 1,
+                        autoAdded: false
+                    });
                 }
             } else {
                 _exp.push(well.config[_i]);
@@ -4005,8 +4538,12 @@ function _excelSortConfig(well) {
     };
     var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
     well.config.sort(function (a, b) {
-        var pA = sz.find(function (p) { return p.id === a.productId; });
-        var pB = sz.find(function (p) { return p.id === b.productId; });
+        var pA = sz.find(function (p) {
+            return p.id === a.productId;
+        });
+        var pB = sz.find(function (p) {
+            return p.id === b.productId;
+        });
         if (!pA || !pB) return 0;
         var oA = typeOrder[pA.componentType] || 100;
         var oB = typeOrder[pB.componentType] || 100;
@@ -4022,7 +4559,9 @@ function _excelMoveWlazToTop(well) {
     var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
     var found = null;
     for (var i = 0; i < well.config.length; i++) {
-        var p = sz.find(function (pr) { return pr.id === well.config[i].productId; });
+        var p = sz.find(function (pr) {
+            return pr.id === well.config[i].productId;
+        });
         if (p && p.componentType === 'wlaz') {
             found = i;
             break;
@@ -4080,9 +4619,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
                 typeof getAvailableProducts === 'function'
                     ? getAvailableProducts(well)
                     : studnieProducts
-            ).filter(
-                (p) => p.componentType === componentType && parseInt(p.dn) === filterDn
-            );
+            ).filter((p) => p.componentType === componentType && parseInt(p.dn) === filterDn);
             if (height !== undefined)
                 candidates = candidates.filter((p) => parseInt(p.height) === parseInt(height));
             if (typeof filterByWellParams === 'function')
@@ -4092,7 +4629,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         if (existingItems.length > 0 && !productId) {
             const firstPid = existingItems[0].productId;
             const stillAvail = candidates.some((c) => c.id === firstPid);
-            const pid = stillAvail ? firstPid : (candidates.length > 0 ? candidates[0].id : null);
+            const pid = stillAvail ? firstPid : candidates.length > 0 ? candidates[0].id : null;
             if (pid) _excelInsertConfigItem(well, componentType, pid, newQty);
         } else if (candidates.length > 0) {
             _excelInsertConfigItem(well, componentType, candidates[0].id, newQty);
@@ -4121,8 +4658,12 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             const _tmpConfig = [];
             for (const _item of well.config || []) {
                 const _p = studnieProducts.find((_pr) => _pr.id === _item.productId);
-                if (_p && _p.componentType === targetType && parseInt(_p.dn) === parseInt(well.dn)
-                    && (height === undefined || parseInt(_p.height) === parseInt(height))) {
+                if (
+                    _p &&
+                    _p.componentType === targetType &&
+                    parseInt(_p.dn) === parseInt(well.dn) &&
+                    (height === undefined || parseInt(_p.height) === parseInt(height))
+                ) {
                     totalExistingQty += _item.quantity || 1;
                 } else {
                     _tmpConfig.push(_item);
@@ -4131,11 +4672,15 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             well.config = _tmpConfig;
             const totalQty = totalExistingQty + newQty;
             if (totalQty > 0) {
-                const avail = typeof getAvailableProducts === 'function'
-                    ? getAvailableProducts(well) : studnieProducts;
-                let cand = avail.filter((p) =>
-                    p.componentType === targetType && parseInt(p.dn) === parseInt(well.dn)
-                    && (height === undefined || parseInt(p.height) === parseInt(height))
+                const avail =
+                    typeof getAvailableProducts === 'function'
+                        ? getAvailableProducts(well)
+                        : studnieProducts;
+                let cand = avail.filter(
+                    (p) =>
+                        p.componentType === targetType &&
+                        parseInt(p.dn) === parseInt(well.dn) &&
+                        (height === undefined || parseInt(p.height) === parseInt(height))
                 );
                 if (typeof filterByWellParams === 'function')
                     cand = cand.filter((p) => filterByWellParams(p, well));
@@ -4159,14 +4704,26 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     _excelDebouncedRefresh();
 
     /* Komplet odciążający: pł.odc ↔ pierśc.odc — dodaj brakującą parę z tą samą wysokością */
-    if (newQty > 0 && (componentType === 'plyta_najazdowa' || componentType === 'plyta_zamykajaca' || componentType === 'pierscien_odciazajacy')) {
+    if (
+        newQty > 0 &&
+        (componentType === 'plyta_najazdowa' ||
+            componentType === 'plyta_zamykajaca' ||
+            componentType === 'pierscien_odciazajacy')
+    ) {
         var isRing = componentType === 'pierscien_odciazajacy';
-        var partnerTypes = isRing ? ['plyta_najazdowa', 'plyta_zamykajaca'] : ['pierscien_odciazajacy'];
-        var _avail = typeof getAvailableProducts === 'function' ? getAvailableProducts(well) : (studnieProducts || []);
+        var partnerTypes = isRing
+            ? ['plyta_najazdowa', 'plyta_zamykajaca']
+            : ['pierscien_odciazajacy'];
+        var _avail =
+            typeof getAvailableProducts === 'function'
+                ? getAvailableProducts(well)
+                : studnieProducts || [];
         /* Sprawdź czy partner już istnieje (z tą samą wysokością) */
         var hasPartner = false;
         for (var ci = 0; ci < (well.config || []).length; ci++) {
-            var cp = _avail.find(function (pr) { return pr.id === well.config[ci].productId; });
+            var cp = _avail.find(function (pr) {
+                return pr.id === well.config[ci].productId;
+            });
             if (cp && partnerTypes.indexOf(cp.componentType) !== -1) {
                 if (height === undefined || parseInt(cp.height) === parseInt(height)) {
                     hasPartner = true;
@@ -4176,10 +4733,15 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         }
         if (!hasPartner) {
             var partnerCandidates = _avail.filter(function (p) {
-                return partnerTypes.indexOf(p.componentType) !== -1 && parseInt(p.dn) === parseInt(well.dn);
+                return (
+                    partnerTypes.indexOf(p.componentType) !== -1 &&
+                    parseInt(p.dn) === parseInt(well.dn)
+                );
             });
             if (height !== undefined) {
-                partnerCandidates = partnerCandidates.filter(function (p) { return parseInt(p.height) === parseInt(height); });
+                partnerCandidates = partnerCandidates.filter(function (p) {
+                    return parseInt(p.height) === parseInt(height);
+                });
             }
             if (partnerCandidates.length > 0) {
                 var partner = partnerCandidates[0];
@@ -4302,10 +4864,38 @@ function _excelRefreshDupColors() {
     });
     const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
 
-    const rowDupSolid = { 1000: '#162650', 1200: '#0e2a1e', 1500: '#2a2210', 2000: '#241b36', 2500: '#301818', styczne: '#2c1422' };
-    const rowActiveDupSolid = { 1000: '#1e3a6b', 1200: '#164530', 1500: '#3d3018', 2000: '#352552', 2500: '#4a2020', styczne: '#4a1a38' };
-    const hoverDupSolid = { 1000: '#1d3460', 1200: '#143e2e', 1500: '#383018', 2000: '#2e2248', 2500: '#3e2020', styczne: '#3a1a2e' };
-    const hoverActiveDupSolid = { 1000: '#2a4a80', 1200: '#1d5a3e', 1500: '#4d3d20', 2000: '#452e66', 2500: '#602a2a', styczne: '#602848' };
+    const rowDupSolid = {
+        1000: '#162650',
+        1200: '#0e2a1e',
+        1500: '#2a2210',
+        2000: '#241b36',
+        2500: '#301818',
+        styczne: '#2c1422'
+    };
+    const rowActiveDupSolid = {
+        1000: '#1e3a6b',
+        1200: '#164530',
+        1500: '#3d3018',
+        2000: '#352552',
+        2500: '#4a2020',
+        styczne: '#4a1a38'
+    };
+    const hoverDupSolid = {
+        1000: '#1d3460',
+        1200: '#143e2e',
+        1500: '#383018',
+        2000: '#2e2248',
+        2500: '#3e2020',
+        styczne: '#3a1a2e'
+    };
+    const hoverActiveDupSolid = {
+        1000: '#2a4a80',
+        1200: '#1d5a3e',
+        1500: '#4d3d20',
+        2000: '#452e66',
+        2500: '#602a2a',
+        styczne: '#602848'
+    };
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     tabWells.forEach((well, idx) => {
@@ -4319,13 +4909,32 @@ function _excelRefreshDupColors() {
         const isDup = dupNames.has(nameKey);
         // Wykryj duplikaty między-średnicowe
         const nameDnList = nameDnMap[nameKey] || [];
-        const otherDns = nameDnList.filter(d => d.dn !== dnKey);
+        const otherDns = nameDnList.filter((d) => d.dn !== dnKey);
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
         const baseBg = isEven ? '#0a0d16' : '#181c28';
 
-        const rowBg = isDup && isActive ? rowActiveDupSolid[dupColorKey] || '#1e3a6b' : isDup ? rowDupSolid[dupColorKey] || '#162650' : isActive ? '#1a2645' : baseBg;
-        const hoverBg = isDup && isActive ? hoverActiveDupSolid[dupColorKey] || '#2a4a80' : isDup ? hoverDupSolid[dupColorKey] || '#1d3460' : isActive ? '#263460' : '#141722';
-        const activeBg = isDup && isActive ? rowActiveDupSolid[dupColorKey] || '#1e3a6b' : isDup ? hoverDupSolid[dupColorKey] || '#1d3460' : '#1a2645';
+        const rowBg =
+            isDup && isActive
+                ? rowActiveDupSolid[dupColorKey] || '#1e3a6b'
+                : isDup
+                  ? rowDupSolid[dupColorKey] || '#162650'
+                  : isActive
+                    ? '#1a2645'
+                    : baseBg;
+        const hoverBg =
+            isDup && isActive
+                ? hoverActiveDupSolid[dupColorKey] || '#2a4a80'
+                : isDup
+                  ? hoverDupSolid[dupColorKey] || '#1d3460'
+                  : isActive
+                    ? '#263460'
+                    : '#141722';
+        const activeBg =
+            isDup && isActive
+                ? rowActiveDupSolid[dupColorKey] || '#1e3a6b'
+                : isDup
+                  ? hoverDupSolid[dupColorKey] || '#1d3460'
+                  : '#1a2645';
 
         row.setAttribute('data-base-bg', rowBg);
         row.setAttribute('data-orig-bg', rowBg);
@@ -4357,7 +4966,9 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     well[paramKey] = value;
     /* Cena malowania — aktualizuj we wszystkich studniach */
     if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
-        wells.forEach(function(w) { w[paramKey] = value; });
+        wells.forEach(function (w) {
+            w[paramKey] = value;
+        });
     }
     /* Wkładka PRECO → wymuś kineta/spocznik */
     if (paramKey === 'wkladkaOsadnikPreco' && value === 'tak') {
@@ -4369,7 +4980,10 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     _excelRenderTable(_excelActiveTab);
     /* Odśwież popup */
     var existing = document.getElementById('excel-params-popup');
-    if (existing) { existing.remove(); excelOpenWellParams(wIdx); }
+    if (existing) {
+        existing.remove();
+        excelOpenWellParams(wIdx);
+    }
 }
 
 function excelOpenWellParams(wIdx) {
@@ -4381,11 +4995,14 @@ function excelOpenWellParams(wIdx) {
 
     const overlay = document.createElement('div');
     overlay.id = 'excel-params-popup';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.style.cssText =
+        'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
 
     /* Oblicz szerokość okna dynamicznie: wszystkie kafelki ten sam rozmiar, brak zawijania */
-    const maxOptions = Math.max(...WELL_PARAM_DEFS.map(d => d.options.length));
+    const maxOptions = Math.max(...WELL_PARAM_DEFS.map((d) => d.options.length));
     const TILE_W = 90;
     const gapPx = 5.6;
     const gridW = maxOptions * TILE_W + (maxOptions - 1) * gapPx;
@@ -4398,12 +5015,22 @@ function excelOpenWellParams(wIdx) {
     if (typeof WELL_PARAM_DEFS !== 'undefined') {
         const isOsadnik = typeof isSettlingWell === 'function' && isSettlingWell(well);
         WELL_PARAM_DEFS.forEach((def) => {
-            if (def.key === 'precoFullHeight' && well.kineta !== 'preco' && well.kineta !== 'precotop') return;
+            if (
+                def.key === 'precoFullHeight' &&
+                well.kineta !== 'preco' &&
+                well.kineta !== 'precotop'
+            )
+                return;
 
             let isGreyedOut = false;
             if (def.key === 'wkladkaOsadnikPreco' && !isOsadnik) isGreyedOut = true;
-            if (def.key === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop')) isGreyedOut = true;
-            if (well.wkladkaOsadnikPreco === 'tak' && (def.key === 'kineta' || def.key === 'spocznik')) return;
+            if (def.key === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop'))
+                isGreyedOut = true;
+            if (
+                well.wkladkaOsadnikPreco === 'tak' &&
+                (def.key === 'kineta' || def.key === 'spocznik')
+            )
+                return;
 
             const currentVal = well[def.key] || '';
             bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;${isGreyedOut ? 'opacity:0.5;' : ''}">`;
@@ -4412,7 +5039,7 @@ function excelOpenWellParams(wIdx) {
             bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active?'800':'600'};border:1px solid ${active?'rgba(99,102,241,0.6)':'rgba(255,255,255,0.08)'};background:${active?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.04)'};color:${active?'#a5b4fc':'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active?'box-shadow:0 0 10px rgba(99,102,241,0.2);':''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
+                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};background:${active ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)'};color:${active ? '#a5b4fc' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(99,102,241,0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
             });
             bodyHtml += `</div></div>`;
 
@@ -4464,7 +5091,10 @@ function excelRefreshParamsPopup(wIdx) {
     _excelDebouncedRefresh();
     _excelRenderTable(_excelActiveTab);
     const existing = document.getElementById('excel-params-popup');
-    if (existing) { existing.remove(); excelOpenWellParams(wIdx); }
+    if (existing) {
+        existing.remove();
+        excelOpenWellParams(wIdx);
+    }
 }
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
@@ -4530,47 +5160,60 @@ function _excelToggleAddMenu() {
     if (!menu) return;
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     if (menu.style.display === 'block') {
-        var close = function(e) {
+        var close = function (e) {
             if (!e.target.closest('#excel-add-menu-container')) {
                 menu.style.display = 'none';
                 document.removeEventListener('click', close);
             }
         };
-        setTimeout(function() { document.addEventListener('click', close); }, 10);
+        setTimeout(function () {
+            document.addEventListener('click', close);
+        }, 10);
     }
 }
 
 /* ===== DODAWANIE RĘCZNE — DIALOG ===== */
 function excelShowAddDialog() {
-    var dns = ['1000','1200','1500','2000','2500','styczne'];
-    var dnOpts = dns.map(function(d) {
-        var label = d === 'styczne' ? 'Styczna' : 'DN' + d;
-        var sel = d === _excelActiveTab || (d === 'styczne' && _excelActiveTab === 'styczne') ? ' selected' : '';
-        return '<option value="' + d + '"' + sel + '>' + label + '</option>';
-    }).join('');
+    var dns = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+    var dnOpts = dns
+        .map(function (d) {
+            var label = d === 'styczne' ? 'Styczna' : 'DN' + d;
+            var sel =
+                d === _excelActiveTab || (d === 'styczne' && _excelActiveTab === 'styczne')
+                    ? ' selected'
+                    : '';
+            return '<option value="' + d + '"' + sel + '>' + label + '</option>';
+        })
+        .join('');
 
-    var html = '<div id="excel-add-dialog-overlay" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">'
-        + '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:380px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">'
-        + '<strong style="color:#e2e8f0;font-size:0.75rem;">Dodaj studnię</strong>'
-        + '<button onclick="document.getElementById(\'excel-add-dialog-overlay\').remove()" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>'
-        + '</div>'
-        + '<div style="display:grid;grid-template-columns:80px 1fr;gap:0.5rem 0.7rem;font-size:0.65rem;color:#94a3b8;margin-bottom:1rem;">'
-        + '<label>Nazwa</label><input id="dlg-name" type="text" placeholder="np. a1" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />'
-        + '<label>DN</label><select id="dlg-dn" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;">' + dnOpts + '</select>'
-        + '<label>Rz. włazu</label><input id="dlg-rzw" type="number" step="0.01" placeholder="np. 5.00" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />'
-        + '<label>Rz. dna</label><input id="dlg-rzd" type="number" step="0.01" placeholder="np. 0.00" value="0" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />'
-        + '</div>'
-        + '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.7rem;display:flex;gap:0.5rem;justify-content:flex-end;">'
-        + '<button onclick="document.getElementById(\'excel-add-dialog-overlay\').remove()" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>'
-        + '<button onclick="_excelCreateFromDialog()" style="padding:0.3rem 1rem;background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.3);border-radius:3px;color:#6ee7b7;font-size:0.65rem;font-weight:700;cursor:pointer;">Dodaj</button>'
-        + '</div></div></div>';
+    var html =
+        '<div id="excel-add-dialog-overlay" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">' +
+        '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:380px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">' +
+        '<strong style="color:#e2e8f0;font-size:0.75rem;">Dodaj studnię</strong>' +
+        '<button onclick="document.getElementById(\'excel-add-dialog-overlay\').remove()" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:80px 1fr;gap:0.5rem 0.7rem;font-size:0.65rem;color:#94a3b8;margin-bottom:1rem;">' +
+        '<label>Nazwa</label><input id="dlg-name" type="text" placeholder="np. a1" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />' +
+        '<label>DN</label><select id="dlg-dn" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;">' +
+        dnOpts +
+        '</select>' +
+        '<label>Rz. włazu</label><input id="dlg-rzw" type="number" step="0.01" placeholder="np. 5.00" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />' +
+        '<label>Rz. dna</label><input id="dlg-rzd" type="number" step="0.01" placeholder="np. 0.00" value="0" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />' +
+        '</div>' +
+        '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.7rem;display:flex;gap:0.5rem;justify-content:flex-end;">' +
+        '<button onclick="document.getElementById(\'excel-add-dialog-overlay\').remove()" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>' +
+        '<button onclick="_excelCreateFromDialog()" style="padding:0.3rem 1rem;background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.3);border-radius:3px;color:#6ee7b7;font-size:0.65rem;font-weight:700;cursor:pointer;">Dodaj</button>' +
+        '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    setTimeout(function() { var inp = document.getElementById('dlg-name'); if (inp) inp.focus(); }, 100);
+    setTimeout(function () {
+        var inp = document.getElementById('dlg-name');
+        if (inp) inp.focus();
+    }, 100);
     var container = document.getElementById('excel-add-dialog-overlay');
     if (container) {
-        container.addEventListener('keydown', function(e) {
+        container.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') _excelCreateFromDialog();
             if (e.key === 'Escape') container.remove();
         });
@@ -4584,23 +5227,64 @@ function _excelCreateFromDialog() {
     var rzdParsed = parseFloat(document.getElementById('dlg-rzd')?.value);
     var rzw = isNaN(rzwParsed) ? null : rzwParsed;
     var rzd = isNaN(rzdParsed) ? null : rzdParsed;
-    if (!name) { showToast('Podaj nazwę studni', 'error'); return; }
-    if (wells.some(function(w) { return w.name === name; })) { showToast('Nazwa "' + name + '" już istnieje', 'error'); return; }
-    if (rzw === null) { showToast('Podaj rządną włazu', 'error'); return; }
+    if (!name) {
+        showToast('Podaj nazwę studni', 'error');
+        return;
+    }
+    if (
+        wells.some(function (w) {
+            return w.name === name;
+        })
+    ) {
+        showToast('Nazwa "' + name + '" już istnieje', 'error');
+        return;
+    }
+    if (rzw === null) {
+        showToast('Podaj rządną włazu', 'error');
+        return;
+    }
     if (rzd === null) rzd = 0;
-    if (rzw <= rzd) { showToast('Rzędna włazu musi być > rzędnej dna', 'error'); return; }
+    if (rzw <= rzd) {
+        showToast('Rzędna włazu musi być > rzędnej dna', 'error');
+        return;
+    }
     var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn);
-    var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now(), name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: rzw, rzednaDna: rzd, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
-    well.name = name; well.rzednaWlazu = rzw; well.rzednaDna = rzd;
+    var well =
+        typeof createNewWell === 'function'
+            ? createNewWell(name, dnVal)
+            : {
+                  id: 'well_' + Date.now(),
+                  name: name,
+                  dn: dnVal,
+                  config: [],
+                  przejscia: [],
+                  rzednaWlazu: rzw,
+                  rzednaDna: rzd,
+                  kineta: 'brak',
+                  psiaBuda: false,
+                  redukcjaDN1000: false,
+                  redukcjaMinH: 2500
+              };
+    well.name = name;
+    well.rzednaWlazu = rzw;
+    well.rzednaDna = rzd;
     wells.push(well);
     _excelAutoSetWlaz(well);
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-    _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
     var overlay = document.getElementById('excel-add-dialog-overlay');
     if (overlay) overlay.remove();
     var newWIdx = wells.length - 1;
-    if (_excelAutoSelectEnabled && rzw != null && rzd != null) { setTimeout(function() { _excelAutoSelectForWell(newWIdx); }, 100); }
-    setTimeout(function() { excelSelectRow(newWIdx); }, 50);
+    if (_excelAutoSelectEnabled && rzw != null && rzd != null) {
+        setTimeout(function () {
+            _excelAutoSelectForWell(newWIdx);
+        }, 100);
+    }
+    setTimeout(function () {
+        excelSelectRow(newWIdx);
+    }, 50);
     _excelDebouncedRefresh();
     showToast('Dodano: ' + name, 'success');
 }
@@ -4608,25 +5292,32 @@ function _excelCreateFromDialog() {
 /* ===== WKLEJ LISTĘ STUDNI ===== */
 function excelShowPasteDialog() {
     if (!document.getElementById('excel-table-overlay')) return;
-    var html = '<div id="excel-paste-dialog-overlay" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">'
-        + '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:420px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">'
-        + '<strong style="color:#e2e8f0;font-size:0.75rem;">Wklej listę studni</strong>'
-        + '<button onclick="document.getElementById(\'excel-paste-dialog-overlay\').remove()" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>'
-        + '</div>'
-        + '<div style="font-size:0.6rem;color:#64748b;margin-bottom:0.5rem;">Wklej dane z arkusza (TAB, przecinek, średnik, | lub odstęp)</div>'
-        + '<textarea id="paste-textarea" style="width:100%;height:140px;padding:0.5rem;background:#0c0e14;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;font-family:Consolas,Menlo,monospace;resize:vertical;white-space:pre;tab-size:2;" placeholder="Nazwa	DN	Rz.włazu	Rz.dna&#10;a1	1000	5.00	0.00&#10;a2	1000	4.50	0.00"></textarea>'
-        + '<div id="paste-preview" style="font-size:0.6rem;color:#64748b;max-height:60px;overflow-y:auto;margin:0.3rem 0;padding:0.2rem;background:#0c0e14;border-radius:3px;"></div>'
-        + '<div style="display:flex;gap:0.5rem;justify-content:flex-end;">'
-        + '<button onclick="document.getElementById(\'excel-paste-dialog-overlay\').remove()" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>'
-        + '<button onclick="_excelImportPasteList()" style="padding:0.3rem 1rem;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3);border-radius:3px;color:#93c5fd;font-size:0.65rem;font-weight:700;cursor:pointer;">Importuj</button>'
-        + '</div></div></div>';
+    var html =
+        '<div id="excel-paste-dialog-overlay" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">' +
+        '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:420px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">' +
+        '<strong style="color:#e2e8f0;font-size:0.75rem;">Wklej listę studni</strong>' +
+        '<button onclick="document.getElementById(\'excel-paste-dialog-overlay\').remove()" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>' +
+        '</div>' +
+        '<div style="font-size:0.6rem;color:#64748b;margin-bottom:0.5rem;">Wklej dane z arkusza (TAB, przecinek, średnik, | lub odstęp)</div>' +
+        '<textarea id="paste-textarea" style="width:100%;height:140px;padding:0.5rem;background:#0c0e14;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;font-family:Consolas,Menlo,monospace;resize:vertical;white-space:pre;tab-size:2;" placeholder="Nazwa	DN	Rz.włazu	Rz.dna&#10;a1	1000	5.00	0.00&#10;a2	1000	4.50	0.00"></textarea>' +
+        '<div id="paste-preview" style="font-size:0.6rem;color:#64748b;max-height:60px;overflow-y:auto;margin:0.3rem 0;padding:0.2rem;background:#0c0e14;border-radius:3px;"></div>' +
+        '<div style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+        '<button onclick="document.getElementById(\'excel-paste-dialog-overlay\').remove()" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>' +
+        '<button onclick="_excelImportPasteList()" style="padding:0.3rem 1rem;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3);border-radius:3px;color:#93c5fd;font-size:0.65rem;font-weight:700;cursor:pointer;">Importuj</button>' +
+        '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     if (typeof lucide !== 'undefined') lucide.createIcons();
     var ta = document.getElementById('paste-textarea');
-    if (ta) { ta.addEventListener('input', _excelUpdatePastePreview); ta.focus(); }
+    if (ta) {
+        ta.addEventListener('input', _excelUpdatePastePreview);
+        ta.focus();
+    }
     var c = document.getElementById('excel-paste-dialog-overlay');
-    if (c) c.addEventListener('keydown', function(e) { if (e.key === 'Escape') c.remove(); });
+    if (c)
+        c.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') c.remove();
+        });
 }
 
 function _excelUpdatePastePreview() {
@@ -4634,13 +5325,26 @@ function _excelUpdatePastePreview() {
     var prev = document.getElementById('paste-preview');
     if (!ta || !prev) return;
     var text = ta.value.trim();
-    if (!text) { prev.textContent = ''; return; }
+    if (!text) {
+        prev.textContent = '';
+        return;
+    }
     var rows = _excelParsePasteData(text);
-    prev.innerHTML = rows.length > 0 ? 'Rozpoznano <strong>' + rows.length + '</strong> studni' : '(brak danych)';
+    prev.innerHTML =
+        rows.length > 0
+            ? 'Rozpoznano <strong>' + rows.length + '</strong> studni'
+            : '(brak danych)';
 }
 
 function _excelParsePasteData(text) {
-    var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+    var lines = text
+        .split('\n')
+        .map(function (l) {
+            return l.trim();
+        })
+        .filter(function (l) {
+            return l;
+        });
     if (lines.length === 0) return [];
     var sep = '\t';
     if (!lines[0].includes('\t')) {
@@ -4649,18 +5353,41 @@ function _excelParsePasteData(text) {
         else if (lines[0].includes(',')) sep = ',';
         else sep = null;
     }
-    var rows = [], headerKeys = null;
+    var rows = [],
+        headerKeys = null;
     for (var i = 0; i < lines.length; i++) {
-        var parts = sep ? lines[i].split(sep).map(function(p) { return p.trim(); }) : lines[i].split(/\s+/).filter(function(p) { return p; });
+        var parts = sep
+            ? lines[i].split(sep).map(function (p) {
+                  return p.trim();
+              })
+            : lines[i].split(/\s+/).filter(function (p) {
+                  return p;
+              });
         if (parts.length < 2) continue;
-        var lower = parts.map(function(p) { return p.toLowerCase(); });
-        if (lower.some(function(p) { return p === 'nazwa' || p === 'nr' || p === 'lp'; })) {
-            headerKeys = parts.map(function(p) { return _excelDetectColumn(p); });
+        var lower = parts.map(function (p) {
+            return p.toLowerCase();
+        });
+        if (
+            lower.some(function (p) {
+                return p === 'nazwa' || p === 'nr' || p === 'lp';
+            })
+        ) {
+            headerKeys = parts.map(function (p) {
+                return _excelDetectColumn(p);
+            });
             continue;
         }
         var row = {};
-        if (headerKeys) { for (var j = 0; j < Math.min(parts.length, headerKeys.length); j++) { if (headerKeys[j]) row[headerKeys[j]] = parts[j]; } }
-        else { row.name = parts[0]; row.dn = parts[1]; row.rzednaWlazu = parts[2]; row.rzednaDna = parts[3]; }
+        if (headerKeys) {
+            for (var j = 0; j < Math.min(parts.length, headerKeys.length); j++) {
+                if (headerKeys[j]) row[headerKeys[j]] = parts[j];
+            }
+        } else {
+            row.name = parts[0];
+            row.dn = parts[1];
+            row.rzednaWlazu = parts[2];
+            row.rzednaDna = parts[3];
+        }
         if (row.name) rows.push(row);
     }
     return rows;
@@ -4670,8 +5397,16 @@ function _excelDetectColumn(label) {
     var l = label.toLowerCase();
     if (l === 'nazwa' || l === 'name' || l === 'nr' || l === 'lp' || l === 'studnia') return 'name';
     if (l === 'dn' || l === 'średnica' || l === 'srednica') return 'dn';
-    if (l === 'rz.włazu' || l === 'rz wlazu' || l === 'rzędna włazu' || l === 'rz.w' || l === 'wlazu') return 'rzednaWlazu';
-    if (l === 'rz.dna' || l === 'rz dna' || l === 'rzędna dna' || l === 'rz.d' || l === 'dna') return 'rzednaDna';
+    if (
+        l === 'rz.włazu' ||
+        l === 'rz wlazu' ||
+        l === 'rzędna włazu' ||
+        l === 'rz.w' ||
+        l === 'wlazu'
+    )
+        return 'rzednaWlazu';
+    if (l === 'rz.dna' || l === 'rz dna' || l === 'rzędna dna' || l === 'rz.d' || l === 'dna')
+        return 'rzednaDna';
     return null;
 }
 
@@ -4679,20 +5414,46 @@ function _excelImportPasteList() {
     var ta = document.getElementById('paste-textarea');
     if (!ta) return;
     var text = ta.value.trim();
-    if (!text) { showToast('Wklej dane studni', 'error'); return; }
+    if (!text) {
+        showToast('Wklej dane studni', 'error');
+        return;
+    }
     var rows = _excelParsePasteData(text);
-    if (rows.length === 0) { showToast('Nie rozpoznano danych', 'error'); return; }
+    if (rows.length === 0) {
+        showToast('Nie rozpoznano danych', 'error');
+        return;
+    }
     var added = 0;
-    rows.forEach(function(row) {
+    rows.forEach(function (row) {
         var name = String(row.name || '');
         if (!name) return;
-        if (wells.some(function(w) { return w.name === name; })) return;
+        if (
+            wells.some(function (w) {
+                return w.name === name;
+            })
+        )
+            return;
         var dn = row.dn || String(_excelActiveTab);
         var dnVal = dn === 'styczne' || dn === 'styczna' ? 'styczna' : parseInt(dn, 10);
         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',','.')) : null;
-        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',','.')) : 0;
-        var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: rzw, rzednaDna: rzd, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
+        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
+        var well =
+            typeof createNewWell === 'function'
+                ? createNewWell(name, dnVal)
+                : {
+                      id: 'well_' + Date.now() + '_' + added,
+                      name: name,
+                      dn: dnVal,
+                      config: [],
+                      przejscia: [],
+                      rzednaWlazu: rzw,
+                      rzednaDna: rzd,
+                      kineta: 'brak',
+                      psiaBuda: false,
+                      redukcjaDN1000: false,
+                      redukcjaMinH: 2500
+                  };
         if (rzw !== null) well.rzednaWlazu = rzw;
         if (rzd !== null) well.rzednaDna = rzd;
         wells.push(well);
@@ -4700,23 +5461,33 @@ function _excelImportPasteList() {
         added++;
     });
     var overlay = document.getElementById('excel-paste-dialog-overlay');
-    if (added === 0) { showToast('Nie dodano żadnej studni (duplikaty?)', 'info'); return; }
+    if (added === 0) {
+        showToast('Nie dodano żadnej studni (duplikaty?)', 'info');
+        return;
+    }
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
     if (_excelAutoSelectEnabled) {
         for (var k = 0; k < added; k++) {
-            (function(idx) {
-                setTimeout(function() {
-                    var nwi = wells.length - added + idx;
-                    var w = wells[nwi];
-                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
-                        _excelAutoSelectForWell(nwi).catch(function(e) {
-                            if (console.warn) console.warn('AutoSelect pominiety dla nowej studni:', e.message || e);
-                        });
-                    }
-                }, 200 + idx * 300);
+            (function (idx) {
+                setTimeout(
+                    function () {
+                        var nwi = wells.length - added + idx;
+                        var w = wells[nwi];
+                        if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                            _excelAutoSelectForWell(nwi).catch(function (e) {
+                                if (console.warn)
+                                    console.warn(
+                                        'AutoSelect pominiety dla nowej studni:',
+                                        e.message || e
+                                    );
+                            });
+                        }
+                    },
+                    200 + idx * 300
+                );
             })(k);
         }
     }
@@ -4758,7 +5529,15 @@ function _excelPasteCreateWells(text) {
     var parsed = _excelParsePasteData(text);
     /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
     if (parsed.length === 0) {
-        var lines = text.trim().split(String.fromCharCode(10)).map(function(l) { return l.replace(String.fromCharCode(13), '').trim(); }).filter(function(l) { return l; });
+        var lines = text
+            .trim()
+            .split(String.fromCharCode(10))
+            .map(function (l) {
+                return l.replace(String.fromCharCode(13), '').trim();
+            })
+            .filter(function (l) {
+                return l;
+            });
         if (lines.length > 0) {
             var dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
@@ -4768,7 +5547,22 @@ function _excelPasteCreateWells(text) {
                 if (!name) continue;
                 var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                 if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-                var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: null, rzednaDna: null, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+                var well =
+                    typeof createNewWell === 'function'
+                        ? createNewWell(name, dnVal)
+                        : {
+                              id: 'well_' + Date.now() + '_' + added,
+                              name: name,
+                              dn: dnVal,
+                              config: [],
+                              przejscia: [],
+                              rzednaWlazu: null,
+                              rzednaDna: null,
+                              kineta: 'brak',
+                              psiaBuda: false,
+                              redukcjaDN1000: false,
+                              redukcjaMinH: 2500
+                          };
                 well.name = name; /* pozwól na duplikaty */
                 wells.push(well);
                 _excelAutoSetWlaz(well);
@@ -4776,7 +5570,9 @@ function _excelPasteCreateWells(text) {
             }
             if (added > 0) {
                 _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-                _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+                _excelRenderTabs();
+                _excelRenderTable(_excelActiveTab);
+                _excelUpdateWellCount();
                 _excelDebouncedRefresh();
                 showToast('Dodano ' + added + ' studni', 'success');
                 return;
@@ -4790,37 +5586,64 @@ function _excelPasteCreateWells(text) {
     var dn = _excelActiveTab || '1000';
     _excelSaveUndoSnapshot();
     var added = 0;
-    parsed.forEach(function(row) {
+    parsed.forEach(function (row) {
         var name = String(row.name || '').trim();
         if (!name) return;
         /* pozwól na duplikaty — nie sprawdzamy 'wells.some' */
         var dnVal = row.dn || String(dn);
         dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',','.')) : null;
-        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',','.')) : 0;
-        var well = typeof createNewWell === 'function' ? createNewWell(name, dnVal) : { id: 'well_' + Date.now() + '_' + added, name: name, dn: dnVal, config: [], przejscia: [], rzednaWlazu: rzw, rzednaDna: rzd, kineta: 'brak', psiaBuda: false, redukcjaDN1000: false, redukcjaMinH: 2500 };
+        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
+        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
+        var well =
+            typeof createNewWell === 'function'
+                ? createNewWell(name, dnVal)
+                : {
+                      id: 'well_' + Date.now() + '_' + added,
+                      name: name,
+                      dn: dnVal,
+                      config: [],
+                      przejscia: [],
+                      rzednaWlazu: rzw,
+                      rzednaDna: rzd,
+                      kineta: 'brak',
+                      psiaBuda: false,
+                      redukcjaDN1000: false,
+                      redukcjaMinH: 2500
+                  };
         if (rzw !== null) well.rzednaWlazu = rzw;
         if (rzd !== null) well.rzednaDna = rzd;
         wells.push(well);
         _excelAutoSetWlaz(well);
         added++;
     });
-    if (added === 0) { showToast('Nie dodano żadnej studni', 'info'); return; }
+    if (added === 0) {
+        showToast('Nie dodano żadnej studni', 'info');
+        return;
+    }
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-    _excelRenderTabs(); _excelRenderTable(_excelActiveTab); _excelUpdateWellCount();
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
     if (_excelAutoSelectEnabled) {
         for (var k = 0; k < added; k++) {
-            (function(idx) {
-                setTimeout(function() {
-                    var nwi = wells.length - added + idx;
-                    var w = wells[nwi];
-                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
-                        _excelAutoSelectForWell(nwi).catch(function(e) {
-                            if (console.warn) console.warn('AutoSelect pominiety dla nowej studni:', e.message || e);
-                        });
-                    }
-                }, 200 + idx * 300);
+            (function (idx) {
+                setTimeout(
+                    function () {
+                        var nwi = wells.length - added + idx;
+                        var w = wells[nwi];
+                        if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                            _excelAutoSelectForWell(nwi).catch(function (e) {
+                                if (console.warn)
+                                    console.warn(
+                                        'AutoSelect pominiety dla nowej studni:',
+                                        e.message || e
+                                    );
+                            });
+                        }
+                    },
+                    200 + idx * 300
+                );
             })(k);
         }
     }
@@ -4837,18 +5660,30 @@ function _excelHandleKeydown(e) {
     var isCtrl = e.ctrlKey || e.metaKey;
 
     /* Ctrl+Z = undo */
-    if (isCtrl && !e.shiftKey && e.key === 'z') { e.preventDefault(); _excelUndo(); return; }
+    if (isCtrl && !e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        _excelUndo();
+        return;
+    }
     /* Ctrl+Y / Ctrl+Shift+Z = redo */
-    if ((isCtrl && !e.shiftKey && e.key === 'y') || (isCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) { e.preventDefault(); _excelRedo(); return; }
+    if (
+        (isCtrl && !e.shiftKey && e.key === 'y') ||
+        (isCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))
+    ) {
+        e.preventDefault();
+        _excelRedo();
+        return;
+    }
 
     /* Delete = wyczyść zaznaczone komórki */
     if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; /* edycja w komórce */
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')
+            return; /* edycja w komórce */
         if (_excelSelectedCells.length === 0) return;
         e.preventDefault();
         _excelSaveUndoSnapshot();
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-        _excelSelectedCells.forEach(function(cell) {
+        _excelSelectedCells.forEach(function (cell) {
             var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             var inputs = row.querySelectorAll('input, select');
@@ -4872,9 +5707,9 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         var allRows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelDeselectAllCells();
-        allRows.forEach(function(row, rIdx) {
+        allRows.forEach(function (row, rIdx) {
             var tds = row.querySelectorAll('td');
-            tds.forEach(function(td, cIdx) {
+            tds.forEach(function (td, cIdx) {
                 if (cIdx < 2) return; /* pomiń Lp + Nr Studni */
                 _excelSelectedCells.push({ wIdx: rIdx, colIdx: cIdx });
                 td.classList.add('cell-selected');
@@ -4894,7 +5729,7 @@ function _excelHandleKeydown(e) {
         /* Potem wyczyść */
         _excelSaveUndoSnapshot();
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-        _excelSelectedCells.forEach(function(cell) {
+        _excelSelectedCells.forEach(function (cell) {
             var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             var inputs = row.querySelectorAll('input, select');
@@ -4919,7 +5754,7 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         _excelSaveUndoSnapshot();
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-        _excelSelectedCells.forEach(function(cell) {
+        _excelSelectedCells.forEach(function (cell) {
             if (cell.wIdx === 0) return;
             var srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
             var dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
@@ -4930,10 +5765,14 @@ function _excelHandleKeydown(e) {
             var src = tdSrc ? tdSrc.querySelector('input, select') : null;
             if (!target || !src) return;
             if (target.tagName === 'SELECT') {
-                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
+                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (
+                    src
+                ).value;
                 target.dispatchEvent(new Event('change', { bubbles: true }));
             } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (src).value;
+                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (
+                    src
+                ).value;
                 target.dispatchEvent(new Event('input', { bubbles: true }));
                 target.dispatchEvent(new Event('change', { bubbles: true }));
             }
@@ -4948,7 +5787,7 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         _excelSaveUndoSnapshot();
         var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-        _excelSelectedCells.forEach(function(cell) {
+        _excelSelectedCells.forEach(function (cell) {
             if (cell.colIdx <= 1) return;
             var row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
@@ -4958,10 +5797,14 @@ function _excelHandleKeydown(e) {
             var src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
             if (!target || !src) return;
             if (target.tagName === 'SELECT') {
-                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (src).value;
+                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (
+                    src
+                ).value;
                 target.dispatchEvent(new Event('change', { bubbles: true }));
             } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (src).value;
+                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (
+                    src
+                ).value;
                 target.dispatchEvent(new Event('input', { bubbles: true }));
                 target.dispatchEvent(new Event('change', { bubbles: true }));
             }

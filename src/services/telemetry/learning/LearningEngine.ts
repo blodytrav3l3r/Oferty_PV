@@ -84,9 +84,13 @@ export class LearningEngine {
 
             // 2) powiązane przejścia
             const allTransitions = await prisma.ai_transition_snapshots.findMany({
-                where: { configId: { in: records.map(function (r) {
-                    return r.id;
-                }) } }
+                where: {
+                    configId: {
+                        in: records.map(function (r) {
+                            return r.id;
+                        })
+                    }
+                }
             });
 
             const transitionsByConfig = new Map<string, typeof allTransitions>();
@@ -107,7 +111,8 @@ export class LearningEngine {
                 overrideReason?: string;
             }> = [];
             for (const rec of records) {
-                if (!rec.wasModified || !rec.final_user_config || !rec.original_auto_config) continue;
+                if (!rec.wasModified || !rec.final_user_config || !rec.original_auto_config)
+                    continue;
                 try {
                     const final = JSON.parse(rec.final_user_config);
                     const orig = JSON.parse(rec.original_auto_config);
@@ -136,9 +141,10 @@ export class LearningEngine {
                     const avgH =
                         ts.length > 0
                             ? ts.reduce(function (acc, t) {
-                                  const v = typeof t.heightFromBottomMm === 'number'
-                                      ? t.heightFromBottomMm
-                                      : 0;
+                                  const v =
+                                      typeof t.heightFromBottomMm === 'number'
+                                          ? t.heightFromBottomMm
+                                          : 0;
                                   return acc + v;
                               }, 0) / ts.length
                             : 0;
@@ -158,9 +164,10 @@ export class LearningEngine {
                             gaps.push(heights[i] - heights[i - 1]);
                         }
                         const maxGap = Math.max.apply(null, gaps);
-                        const avgGap = gaps.reduce(function (a, b) {
-                            return a + b;
-                        }, 0) / gaps.length;
+                        const avgGap =
+                            gaps.reduce(function (a, b) {
+                                return a + b;
+                            }, 0) / gaps.length;
                         layout =
                             maxGap > avgGap * 2.5
                                 ? 'clustered'

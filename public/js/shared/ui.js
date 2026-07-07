@@ -5,38 +5,45 @@
  */
 
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str == null ? '' : str;
-  return div.innerHTML;
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : str;
+    return div.innerHTML;
 }
 window.escapeHtml = escapeHtml;
 
 function getUserDisplayName(user) {
-  if (!user) return '';
-  return user.firstName && user.lastName
-    ? `${user.firstName} ${user.lastName}`
-    : user.username || '';
+    if (!user) return '';
+    return user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user.username || '';
 }
 
 function debounce(fn, delay) {
-  let timer;
-  return function(...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
 }
 
 function trapFocus(container) {
-  const focusable = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  container.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    }
-    if (e.key === 'Escape') closeModal();
-  });
+    const focusable = container.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    container.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
+        if (e.key === 'Escape') closeModal();
+    });
 }
 
 /**
@@ -60,8 +67,14 @@ function showToast(msg, type = 'info') {
     // Bezpieczne: wyciągnij ikony Lucide przed eskejpowaniem HTML
     const iconRegex = /<i\s+data-lucide="([^"]*)"\s*><\/i>/gi;
     const icons = [];
-    const safe = msg.replace(iconRegex, (m) => { icons.push(m); return `\x00ICON${icons.length - 1}\x00`; });
-    text.innerHTML = escapeHtml(safe).replace(/\x00ICON(\d+)\x00/g, (_, i) => icons[parseInt(i)] || '');
+    const safe = msg.replace(iconRegex, (m) => {
+        icons.push(m);
+        return `\x00ICON${icons.length - 1}\x00`;
+    });
+    text.innerHTML = escapeHtml(safe).replace(
+        /\x00ICON(\d+)\x00/g,
+        (_, i) => icons[parseInt(i)] || ''
+    );
     if (window.lucide) lucide.createIcons();
     text.style.flex = '1';
     toast.appendChild(text);
@@ -122,7 +135,9 @@ function toggleCard(contentIdOrHeader, iconId) {
             content.classList.toggle('hidden');
             if (icon) {
                 const isHidden = content.classList.contains('hidden');
-                icon.innerHTML = isHidden ? '<i data-lucide=\"chevron-down\"></i>' : '<i data-lucide=\"chevron-up\"></i>';
+                icon.innerHTML = isHidden
+                    ? '<i data-lucide=\"chevron-down\"></i>'
+                    : '<i data-lucide=\"chevron-up\"></i>';
             }
         }
     }
@@ -152,7 +167,12 @@ function showSection(name) {
 function showUserSelectionPopup(users, defaultUserId) {
     return new Promise((resolve) => {
         let resolved = false;
-        const once = (result) => { if (!resolved) { resolved = true; resolve(result); } };
+        const once = (result) => {
+            if (!resolved) {
+                resolved = true;
+                resolve(result);
+            }
+        };
 
         let html = `<div id="user-selection-title" style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:var(--warn);"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
         html += `<div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
@@ -163,7 +183,12 @@ function showUserSelectionPopup(users, defaultUserId) {
                 u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.username;
             const isDefault = u.id === defaultUserId;
             const symbol = u.symbol || '??';
-            const roleBadge = u.role === 'admin' ? '<i data-lucide="key"></i>' : u.role === 'pro' ? '⭐' : '<i data-lucide="user"></i>';
+            const roleBadge =
+                u.role === 'admin'
+                    ? '<i data-lucide="key"></i>'
+                    : u.role === 'pro'
+                      ? '⭐'
+                      : '<i data-lucide="user"></i>';
 
             html += `<button class="user-select-btn" data-user-id="${u.id}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
@@ -225,10 +250,12 @@ window.globalUsersMap = new Map();
 /**
  * Globalny fetch z timeoutem — AbortController czyści wiszące połączenia.
  */
-window.fetchWithTimeout = async function(url, options, timeoutMs) {
+window.fetchWithTimeout = async function (url, options, timeoutMs) {
     if (timeoutMs == null) timeoutMs = 10000;
     const controller = new AbortController();
-    const timer = setTimeout(function() { controller.abort(); }, timeoutMs);
+    const timer = setTimeout(function () {
+        controller.abort();
+    }, timeoutMs);
     try {
         return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
     } finally {
@@ -281,16 +308,32 @@ function appConfirm(message, opts = {}) {
 
     return new Promise((resolve) => {
         let resolved = false;
-        const once = (result) => { if (!resolved) { resolved = true; resolve(result); } };
+        const once = (result) => {
+            if (!resolved) {
+                resolved = true;
+                resolve(result);
+            }
+        };
 
         _ensureConfirmStyles();
 
-        const iconMap = { info: '<i data-lucide="info" style="width: 32px; height: 32px; color: var(--accent);"></i>', warning: '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--warn);"></i>', danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--danger);"></i>' };
-        const accentMap = { info: 'var(--accent)', warning: 'var(--warn)', danger: 'var(--danger)' };
+        const iconMap = {
+            info: '<i data-lucide="info" style="width: 32px; height: 32px; color: var(--accent);"></i>',
+            warning:
+                '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--warn);"></i>',
+            danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--danger);"></i>'
+        };
+        const accentMap = {
+            info: 'var(--accent)',
+            warning: 'var(--warn)',
+            danger: 'var(--danger)'
+        };
         const accent = accentMap[type] || accentMap.info;
 
         const safeTitle = opts.allowHtml ? title : _escapeHtml(title);
-        const safeMsg = opts.allowHtml ? message.replace(/\n/g, '<br>') : _escapeHtml(message).replace(/\n/g, '<br>');
+        const safeMsg = opts.allowHtml
+            ? message.replace(/\n/g, '<br>')
+            : _escapeHtml(message).replace(/\n/g, '<br>');
 
         const html = `
             <div class="app-confirm-modal">
@@ -321,11 +364,20 @@ function appConfirm(message, opts = {}) {
 
             okBtn.focus();
 
-            okBtn.addEventListener('click', () => { overlay.remove(); once(true); });
-            cancelBtn.addEventListener('click', () => { overlay.remove(); once(false); });
+            okBtn.addEventListener('click', () => {
+                overlay.remove();
+                once(true);
+            });
+            cancelBtn.addEventListener('click', () => {
+                overlay.remove();
+                once(false);
+            });
 
             overlay.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { overlay.remove(); once(true); }
+                if (e.key === 'Enter') {
+                    overlay.remove();
+                    once(true);
+                }
             });
         }, 50);
     });
@@ -409,7 +461,8 @@ function createSaveIndicator(parent, opts = {}) {
     const el = document.createElement('span');
     el.className = 'save-indicator';
     el.setAttribute('aria-live', 'polite');
-    el.style.cssText = 'display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
+    el.style.cssText =
+        'display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
     parent.appendChild(el);
 
     let savedTimer = null;
@@ -418,10 +471,13 @@ function createSaveIndicator(parent, opts = {}) {
         el.style.opacity = '1';
         el.style.color = color;
         const icon =
-            state === 'saving' ? "<i data-lucide=\"loader\" style=\"width:14px;height:14px;animation:saveSpin 0.8s linear infinite\"></i>" :
-            state === 'saved'  ? '<i data-lucide="check" style="width:14px;height:14px"></i>' :
-            state === 'error'  ? '<i data-lucide="alert-circle" style="width:14px;height:14px"></i>' :
-                                 '<i data-lucide="circle" style="width:14px;height:14px"></i>';
+            state === 'saving'
+                ? '<i data-lucide="loader" style="width:14px;height:14px;animation:saveSpin 0.8s linear infinite"></i>'
+                : state === 'saved'
+                  ? '<i data-lucide="check" style="width:14px;height:14px"></i>'
+                  : state === 'error'
+                    ? '<i data-lucide="alert-circle" style="width:14px;height:14px"></i>'
+                    : '<i data-lucide="circle" style="width:14px;height:14px"></i>';
         el.innerHTML = `${icon}<span>${text}</span>`;
         if (window.lucide) window.lucide.createIcons({ root: el });
     }
@@ -436,7 +492,10 @@ function createSaveIndicator(parent, opts = {}) {
 
     return {
         setSaving() {
-            if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
+            if (savedTimer) {
+                clearTimeout(savedTimer);
+                savedTimer = null;
+            }
             ensureSpinKeyframes();
             render('saving', 'Zapisuję...', 'var(--text-secondary)');
         },
@@ -449,7 +508,10 @@ function createSaveIndicator(parent, opts = {}) {
             }, savedDuration);
         },
         setError(message) {
-            if (savedTimer) { clearTimeout(savedTimer); savedTimer = null; }
+            if (savedTimer) {
+                clearTimeout(savedTimer);
+                savedTimer = null;
+            }
             render('error', message || 'Błąd zapisu', 'var(--danger)');
         },
         destroy() {
@@ -472,7 +534,7 @@ window.createSaveIndicator = createSaveIndicator;
  * @param {Function} [opts.onClose] - Called when modal is closed
  * @returns {HTMLDivElement} The overlay element
  */
-window.showModal = function(opts) {
+window.showModal = function (opts) {
     const existing = document.getElementById(opts.id);
     if (existing) existing.remove();
 
@@ -486,14 +548,14 @@ window.showModal = function(opts) {
     overlay.innerHTML = opts.html;
     document.body.appendChild(overlay);
 
-    overlay.addEventListener('click', function(e) {
+    overlay.addEventListener('click', function (e) {
         if (e.target === overlay) {
             overlay.remove();
             if (opts.onClose) opts.onClose();
         }
     });
 
-    overlay.addEventListener('keydown', function(e) {
+    overlay.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             overlay.remove();
             if (opts.onClose) opts.onClose();
@@ -503,7 +565,10 @@ window.showModal = function(opts) {
     trapFocus(overlay);
 
     const firstBtn = overlay.querySelector('button');
-    if (firstBtn) setTimeout(function() { firstBtn.focus(); }, 50);
+    if (firstBtn)
+        setTimeout(function () {
+            firstBtn.focus();
+        }, 50);
 
     if (opts.onOpen) opts.onOpen();
     return overlay;

@@ -11,13 +11,14 @@
 
 ## 2. Wersja (SSoT)
 
-| Plik | Rola |
-|---|---|
-| `VERSION` (root) | **JEDYNE źródło prawdy** (np. `1.0.0`) |
-| `package.json` → `"version"` | mirror npm |
-| `CHANGELOG.md` | historia, format Keep a Changelog (najnowsza górą) |
+| Plik                         | Rola                                               |
+| ---------------------------- | -------------------------------------------------- |
+| `VERSION` (root)             | **JEDYNE źródło prawdy** (np. `1.0.0`)             |
+| `package.json` → `"version"` | mirror npm                                         |
+| `CHANGELOG.md`               | historia, format Keep a Changelog (najnowsza górą) |
 
 **Workflow**:
+
 ```bash
 npm run version:check    # walidacja przed push (post-commit hook)
 npm run version:patch    # bump PATCH (agent version-guardian ML/AI logika do CHANGELOG)

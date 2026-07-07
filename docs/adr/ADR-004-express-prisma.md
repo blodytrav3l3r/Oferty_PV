@@ -2,11 +2,11 @@
 
 **Status:** Zaakceptowany  
 **Data:** 2026-06-20  
-**Autor:** Hermes Agent  
+**Autor:** Hermes Agent
 
 ## Kontekst
 
-Backend aplikacji potrzebuje REST API do zarządzania ofertami, produktami, klientami 
+Backend aplikacji potrzebuje REST API do zarządzania ofertami, produktami, klientami
 i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
 
 ## Decyzja
@@ -57,9 +57,9 @@ src/
 
 ## Alternatywy odrzucone
 
-| Alternatywa | Powód odrzucenia |
-|------------|------------------|
-| NestJS | Zbyt duży framework dla tak prostej aplikacji, dużo boilerplate'u (modules, decorators, DI) |
-| Fastify | Szybszy od Express, ale mniejszy ekosystem i brak kompatybilności z niektórymi middleware |
-| Koa | Mniejsza społeczność, mniej ready-made middleware |
-| Drizzle ORM | Nowy ORM, mniej stabilny niż Prisma. Brak generowanych typów dla SQLite w wersji 0.x |
+| Alternatywa | Powód odrzucenia                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| NestJS      | Zbyt duży framework dla tak prostej aplikacji, dużo boilerplate'u (modules, decorators, DI) |
+| Fastify     | Szybszy od Express, ale mniejszy ekosystem i brak kompatybilności z niektórymi middleware   |
+| Koa         | Mniejsza społeczność, mniej ready-made middleware                                           |
+| Drizzle ORM | Nowy ORM, mniej stabilny niż Prisma. Brak generowanych typów dla SQLite w wersji 0.x        |

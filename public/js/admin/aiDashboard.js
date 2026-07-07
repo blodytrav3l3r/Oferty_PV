@@ -21,10 +21,10 @@
     async function fetchJson(url, options) {
         if (!window.fetch) return null;
         try {
-            const resp = await fetch(url, Object.assign(
-                { credentials: 'same-origin' },
-                options || {}
-            ));
+            const resp = await fetch(
+                url,
+                Object.assign({ credentials: 'same-origin' }, options || {})
+            );
             if (!resp.ok) return null;
             return await resp.json();
         } catch (e) {
@@ -35,8 +35,14 @@
     function statCard(title, value, color) {
         return (
             '<div style="background:#16192a;border:1px solid rgba(100,116,139,0.2);border-radius:8px;padding:12px;text-align:center">' +
-            '<div style="font-size:1.5rem;font-weight:600;color:' + (color || '#6366f1') + '">' + value + '</div>' +
-            '<div style="font-size:0.85rem;color:#94a3b8;margin-top:4px">' + title + '</div>' +
+            '<div style="font-size:1.5rem;font-weight:600;color:' +
+            (color || '#6366f1') +
+            '">' +
+            value +
+            '</div>' +
+            '<div style="font-size:0.85rem;color:#94a3b8;margin-top:4px">' +
+            title +
+            '</div>' +
             '</div>'
         );
     }
@@ -54,7 +60,11 @@
             '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin-bottom:20px">' +
             statCard('Wzorce łącznie', stats.total, '#6366f1') +
             statCard('Aktywne', stats.active, '#10b981') +
-            statCard('Avg confidence', Math.round((stats.avgConfidence || 0) * 100) + '%', '#f59e0b') +
+            statCard(
+                'Avg confidence',
+                Math.round((stats.avgConfidence || 0) * 100) + '%',
+                '#f59e0b'
+            ) +
             statCard('Rekomendacje', stats.totalRecommendations, '#8b5cf6') +
             statCard('Zaakceptowane', stats.acceptedRecommendations, '#22c55e') +
             statCard('Odrzucone', stats.rejectedRecommendations, '#ef4444') +
@@ -63,24 +73,32 @@
             '</div>' +
             (stats.byPatternType
                 ? '<div style="background:#16192a;border-radius:8px;padding:12px;margin-bottom:20px">' +
-                    '<h3 style="margin-top:0">Rozkład wg typu</h3>' +
-                    Object.entries(stats.byPatternType)
-                        .map(function (kv) {
-                            return (
-                                '<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(100,116,139,0.15);padding:6px 0">' +
-                                '<span>' + kv[0] + '</span>' +
-                                '<strong>' + kv[1] + '</strong>' +
-                                '</div>'
-                            );
-                        })
-                        .join('') +
-                    '</div>'
+                  '<h3 style="margin-top:0">Rozkład wg typu</h3>' +
+                  Object.entries(stats.byPatternType)
+                      .map(function (kv) {
+                          return (
+                              '<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(100,116,139,0.15);padding:6px 0">' +
+                              '<span>' +
+                              kv[0] +
+                              '</span>' +
+                              '<strong>' +
+                              kv[1] +
+                              '</strong>' +
+                              '</div>'
+                          );
+                      })
+                      .join('') +
+                  '</div>'
                 : '');
         container.innerHTML = html;
     }
 
     async function renderPatterns(container, dnFilter) {
-        const url = ENDPOINTS.patterns + '?dn=' + encodeURIComponent(dnFilter || 'all_dn') + '&minConfidence=0.3';
+        const url =
+            ENDPOINTS.patterns +
+            '?dn=' +
+            encodeURIComponent(dnFilter || 'all_dn') +
+            '&minConfidence=0.3';
         const data = await fetchJson(url);
         if (!data) {
             container.innerHTML =
@@ -92,7 +110,9 @@
         if (!data.items || data.items.length === 0) {
             container.innerHTML =
                 '<div style="color:#94a3b8;text-align:center;padding:20px">' +
-                'Brak wzorców dla DN=' + (dnFilter || 'all_dn') + '. Uruchom <code>Learning cycle</code>.' +
+                'Brak wzorców dla DN=' +
+                (dnFilter || 'all_dn') +
+                '. Uruchom <code>Learning cycle</code>.' +
                 '</div>';
             return;
         }
@@ -109,11 +129,27 @@
                 .map(function (p) {
                     return (
                         '<tr style="border-bottom:1px solid rgba(100,116,139,0.15)">' +
-                        '<td style="padding:6px"><code style="background:#1e2238;padding:2px 6px;border-radius:4px;font-size:0.75rem">' + p.patternType + '</code></td>' +
-                        '<td style="padding:6px;font-family:monospace;font-size:0.72rem">' + (p.patternKey || '').slice(0, 50) + '</td>' +
-                        '<td style="padding:6px;text-align:right;color:' + (p.confidence >= 0.7 ? '#22c55e' : p.confidence >= 0.4 ? '#f59e0b' : '#94a3b8') + '">' + Math.round((p.confidence || 0) * 100) + '%</td>' +
-                        '<td style="padding:6px;text-align:right">' + (p.hitCount || 0) + '</td>' +
-                        '<td style="padding:6px;color:#94a3b8;font-size:0.75rem">' + (p.description || '').slice(0, 80) + '</td>' +
+                        '<td style="padding:6px"><code style="background:#1e2238;padding:2px 6px;border-radius:4px;font-size:0.75rem">' +
+                        p.patternType +
+                        '</code></td>' +
+                        '<td style="padding:6px;font-family:monospace;font-size:0.72rem">' +
+                        (p.patternKey || '').slice(0, 50) +
+                        '</td>' +
+                        '<td style="padding:6px;text-align:right;color:' +
+                        (p.confidence >= 0.7
+                            ? '#22c55e'
+                            : p.confidence >= 0.4
+                              ? '#f59e0b'
+                              : '#94a3b8') +
+                        '">' +
+                        Math.round((p.confidence || 0) * 100) +
+                        '%</td>' +
+                        '<td style="padding:6px;text-align:right">' +
+                        (p.hitCount || 0) +
+                        '</td>' +
+                        '<td style="padding:6px;color:#94a3b8;font-size:0.75rem">' +
+                        (p.description || '').slice(0, 80) +
+                        '</td>' +
                         '</tr>'
                     );
                 })

@@ -1,11 +1,19 @@
 # Router -- CORE skill (ALWAYS LOADED, ~600 b)
+
 # Meta-skill opisujący routing Hermes → skills.
+
 #
+
 # JEDYNE stałe rzeczy tutaj: reakcje na słowa-klucze. Szczegóły,
+
 # koszty, warunki ładowania → konsultuj:
+
 #
-#     .hermes/skills/_manifest.yaml
+
+# .hermes/skills/_manifest.yaml
+
 #
+
 # Ten plik mówi Hermesowi CO reaguje, manifest mówi DLACZEGO.
 
 ## ALREADY LOADED
@@ -24,22 +32,22 @@
 
 ## Reakcja na słowa-klucze (pierwszy match)
 
-| Fraza użytkownika | Akcja |
-|---|---|
-| `/graphify`, "knowledge graph", "graph query" | załaduj `graphify` (heavy, invoke) |
-| "audyt", "audit", "codebase review" | załaduj `codebase-audit` (heavy) |
-| "code review", "review PR", "recenzja kodu" | załaduj `requesting-code-review` (heavy) |
-| Błędy excel/paste/copy/TSV | załaduj `excel-debug` |
-| Praca w `well_configurator_backend/` | załaduj `python-debugpy` |
-| AI/telemetry/ML/dashboard komponent | załaduj `oferty-pv-ai-telemetry` |
-| Modyfikacje SPA/app.html/router/iframe | załaduj `sp-a-conventions` (95 KB - planuj ostrożnie) |
-| Plan mode (.hermes/plan-*.md istnieje) | załaduj `plan-guardian` |
-| Regresja, hard-to-repro bug | załaduj `systematic-debugging` |
-| Złożone (>3 pliki) / nowy feature | rozważ `multi-agent-coordination` + `plan` |
-| Refaktoring / cleanup po sesji | załaduj `simplify-code` |
-| Throwaway experiment | załaduj `spike` |
-| Pisanie testów / TDD | załaduj `test-driven-development` |
-| Debug wydajności Node | załaduj `node-inspect-debugger` |
+| Fraza użytkownika                             | Akcja                                                 |
+| --------------------------------------------- | ----------------------------------------------------- |
+| `/graphify`, "knowledge graph", "graph query" | załaduj `graphify` (heavy, invoke)                    |
+| "audyt", "audit", "codebase review"           | załaduj `codebase-audit` (heavy)                      |
+| "code review", "review PR", "recenzja kodu"   | załaduj `requesting-code-review` (heavy)              |
+| Błędy excel/paste/copy/TSV                    | załaduj `excel-debug`                                 |
+| Praca w `well_configurator_backend/`          | załaduj `python-debugpy`                              |
+| AI/telemetry/ML/dashboard komponent           | załaduj `oferty-pv-ai-telemetry`                      |
+| Modyfikacje SPA/app.html/router/iframe        | załaduj `sp-a-conventions` (95 KB - planuj ostrożnie) |
+| Plan mode (.hermes/plan-*.md istnieje)        | załaduj `plan-guardian`                               |
+| Regresja, hard-to-repro bug                   | załaduj `systematic-debugging`                        |
+| Złożone (>3 pliki) / nowy feature             | rozważ `multi-agent-coordination` + `plan`            |
+| Refaktoring / cleanup po sesji                | załaduj `simplify-code`                               |
+| Throwaway experiment                          | załaduj `spike`                                       |
+| Pisanie testów / TDD                          | załaduj `test-driven-development`                     |
+| Debug wydajności Node                         | załaduj `node-inspect-debugger`                       |
 
 ## Kiedy NIE ładuj niczego
 

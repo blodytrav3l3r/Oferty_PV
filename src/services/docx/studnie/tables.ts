@@ -4,15 +4,7 @@
  * Buduje tabele studni dla każdego DN z nagłówkami, wierszami danych i podsumowaniami częściowymi.
  */
 
-import {
-    Paragraph,
-    TextRun,
-    Table,
-    TableRow,
-    WidthType,
-    AlignmentType,
-    BorderStyle
-} from 'docx';
+import { Paragraph, TextRun, Table, TableRow, WidthType, AlignmentType, BorderStyle } from 'docx';
 import { DOCX_COLORS } from '../colors';
 import {
     FONT,
@@ -59,7 +51,10 @@ export function buildWellTables(wells: unknown[]): {
         if (!itemsByDN[dn]) continue;
         const dnItems = itemsByDN[dn];
         const dnLabel = dn === 'styczna' ? 'Studnie styczne' : `Studnie DN${dn}`;
-        const dnTotal = dnItems.reduce((sum, item) => sum + (Number((item as Record<string, unknown>).price ?? 0)), 0);
+        const dnTotal = dnItems.reduce(
+            (sum, item) => sum + Number((item as Record<string, unknown>).price ?? 0),
+            0
+        );
         summaries.push({ label: dnLabel, count: dnItems.length, totalPrice: dnTotal });
 
         paragraphs.push(buildDnHeaderParagraph(dnLabel));
@@ -88,7 +83,8 @@ export function groupWellsByDn(wells: unknown[]): Record<string, Record<string, 
         const cleanZwienczenie = String(well.zwienczenie ?? '\u2014')
             .replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ')
             .replace(/\s*(bez\s+stopni|z\s+drabinką|drabinka|ze\s+stopniami|-B|-D|-N)/gi, '')
-            .replace(/\s+/g, ' ').trim();
+            .replace(/\s+/g, ' ')
+            .trim();
 
         if (!itemsByDN[dn]) itemsByDN[dn] = [];
         itemsByDN[dn].push({

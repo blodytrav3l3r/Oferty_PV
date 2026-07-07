@@ -15,7 +15,7 @@ describe('offerItemSchema', () => {
         productId: 'prod-123',
         quantity: 5,
         discount: 10,
-        price: 100.50
+        price: 100.5
     };
 
     it('powinien akceptować prawidłowy element oferty', () => {
@@ -145,9 +145,7 @@ describe('offerCreateSchema', () => {
     const validOffer = {
         clientId: 'client-123',
         state: 'draft',
-        items: [
-            { productId: 'prod-1', quantity: 2, price: 100 }
-        ]
+        items: [{ productId: 'prod-1', quantity: 2, price: 100 }]
     };
 
     it('powinien akceptować prawidłową ofertę', () => {
@@ -213,9 +211,7 @@ describe('offerStudnieCreateSchema', () => {
     const validOfferStudnie = {
         clientId: 'client-123',
         state: 'draft',
-        wells: [
-            { dn: '1000', height: 1500, quantity: 1 }
-        ]
+        wells: [{ dn: '1000', height: 1500, quantity: 1 }]
     };
 
     it('powinien akceptować prawidłową ofertę studni', () => {
@@ -313,9 +309,7 @@ describe('offersStudnieBatchSchema', () => {
 
     it('powinien odrzucać nieprawidłową studnię w ofercie', () => {
         const batch = {
-            data: [
-                { clientId: 'client-1', wells: [{ dn: '', totalPrice: -100 }] }
-            ]
+            data: [{ clientId: 'client-1', wells: [{ dn: '', totalPrice: -100 }] }]
         };
         const result = offersStudnieBatchSchema.safeParse(batch);
         expect(result.success).toBe(false);
@@ -331,7 +325,7 @@ describe('Integracja schematów ofert', () => {
             clientId: 'client-abc',
             state: 'final',
             status: 'active',
-            transportCost: 150.50,
+            transportCost: 150.5,
             items: [
                 { productId: 'pipe-1', quantity: 10, price: 50, discount: 5 },
                 { productId: 'pipe-2', quantity: 5, price: 100 }
@@ -358,9 +352,7 @@ describe('Integracja schematów ofert', () => {
                         { name: 'Rura', typ: 'rura', dn: 1000, price: 500 },
                         { name: 'Dno', typ: 'dno', dn: 1000, price: 200 }
                     ],
-                    passages: [
-                        { DN: '200', typPrzejscia: 'krótka', kat: 45 }
-                    ]
+                    passages: [{ DN: '200', typPrzejscia: 'krótka', kat: 45 }]
                 }
             ],
             totalPrice: 1500,

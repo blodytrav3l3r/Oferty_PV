@@ -9,8 +9,10 @@ import type { KnowledgePattern } from './KnowledgeBase';
 import { ConfidenceCalculator } from './ConfidenceCalculator';
 
 interface CorrectionRaw {
-    originalConfig?: Array<{ componentType?: string; productId?: string; height?: number }> | unknown[];
-    finalConfig?: Array<{ componentType?: string; productId?: string; height?: number }> | unknown[];
+    originalConfig?:
+        Array<{ componentType?: string; productId?: string; height?: number }> | unknown[];
+    finalConfig?:
+        Array<{ componentType?: string; productId?: string; height?: number }> | unknown[];
     overrideReason?: string;
     dn?: string;
 }
@@ -26,7 +28,10 @@ export class PreferenceEngine {
      * Analizuje korekt i buduje preferencje SUBSTITUTION (zamiana X→Y).
      */
     buildSubstitution(corrections: CorrectionRaw[]): KnowledgePattern[] {
-        const map = new Map<string, { count: number; removed: string; added: string; dn: string }>();
+        const map = new Map<
+            string,
+            { count: number; removed: string; added: string; dn: string }
+        >();
         for (const c of corrections) {
             if (!c.originalConfig || !c.finalConfig || !c.dn) continue;
             const removedIds = this._extractIds(c.originalConfig);
@@ -137,9 +142,7 @@ export class PreferenceEngine {
         return out;
     }
 
-    private _extractIds(
-        cfg: unknown
-    ): string[] {
+    private _extractIds(cfg: unknown): string[] {
         if (!Array.isArray(cfg)) return [];
         return cfg
             .map(function (c) {

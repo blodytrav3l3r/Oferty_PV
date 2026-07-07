@@ -44,10 +44,12 @@ import { fmtCurrency, textCell } from '../helpers';
 
 // ─── Tytuł (Title) ──────────────────────────────────────────────────
 
-export function buildTitleParagraph(offerNumber: string, documentType: 'offer' | 'order' = 'offer'): Paragraph {
-    const titleText = documentType === 'order'
-        ? `ZAMÓWIENIE ${offerNumber}`
-        : `OFERTA HANDLOWA ${offerNumber}`;
+export function buildTitleParagraph(
+    offerNumber: string,
+    documentType: 'offer' | 'order' = 'offer'
+): Paragraph {
+    const titleText =
+        documentType === 'order' ? `ZAMÓWIENIE ${offerNumber}` : `OFERTA HANDLOWA ${offerNumber}`;
     return new Paragraph({
         children: [
             new TextRun({
@@ -174,7 +176,11 @@ export function buildClientInvestTable(
             children: [new Paragraph({ children: runs, spacing: { before: 80, after: 80 } })],
             width: { size: 50, type: WidthType.PERCENTAGE },
             borders: CELL_BORDERS,
-            shading: { type: ShadingType.SOLID, color: DOCX_COLORS.whiteText, fill: DOCX_COLORS.whiteText }
+            shading: {
+                type: ShadingType.SOLID,
+                color: DOCX_COLORS.whiteText,
+                fill: DOCX_COLORS.whiteText
+            }
         });
     };
 
@@ -196,16 +202,34 @@ export function buildClientInvestTable(
 
 function buildClientRuns(name: string, address: string, nip: string, contact: string): TextRun[] {
     const runs: TextRun[] = [
-        new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
+        new TextRun({
+            text: name,
+            bold: true,
+            size: SZ_INFO_BOX,
+            font: FONT,
+            color: DOCX_COLORS.titleText
+        })
     ];
     if (address) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: address,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     if (nip) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
         runs.push(
-            new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
+            new TextRun({
+                text: `NIP: ${nip}`,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
         );
     }
     if (contact) {
@@ -239,10 +263,22 @@ function buildInvestRuns(
             })
         );
         runs.push(
-            new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
+            new TextRun({
+                text: investName,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
         );
     } else {
-        runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: '\u2014',
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     if (investAddress) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
@@ -256,7 +292,12 @@ function buildInvestRuns(
             })
         );
         runs.push(
-            new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
+            new TextRun({
+                text: investAddress,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
         );
     }
     if (investContractor) {
@@ -271,7 +312,12 @@ function buildInvestRuns(
             })
         );
         runs.push(
-            new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
+            new TextRun({
+                text: investContractor,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
         );
     }
     return runs;

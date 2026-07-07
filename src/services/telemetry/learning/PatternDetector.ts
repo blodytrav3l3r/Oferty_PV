@@ -39,7 +39,9 @@ export class PatternDetector {
 
         for (const c of corrections) {
             if (!c.originalConfig || !c.finalConfig) continue;
-            const origDennice = (c.originalConfig as { componentType?: string; productId?: string }[])
+            const origDennice = (
+                c.originalConfig as { componentType?: string; productId?: string }[]
+            )
                 .filter(function (x) {
                     return (x.componentType || '').toLowerCase().includes('dennica');
                 })
@@ -168,7 +170,10 @@ export class PatternDetector {
             wasRejected: boolean;
         }>
     ): KnowledgePattern[] {
-        const buckets = new Map<string, { count: number; reductionYes: number; successes: number }>();
+        const buckets = new Map<
+            string,
+            { count: number; reductionYes: number; successes: number }
+        >();
 
         for (const r of records) {
             const heightBucket = Math.floor(r.wellHeight / 1000) * 1000;
@@ -234,11 +239,7 @@ export class PatternDetector {
         return Math.min(Math.log(hitCount) / Math.log(30), 0.95);
     }
 
-    private _confidenceWithDecay(
-        hitCount: number,
-        hits: number,
-        misses: number
-    ): number {
+    private _confidenceWithDecay(hitCount: number, hits: number, misses: number): number {
         const base = this._confidence(hitCount);
         if (base === 0) return 0;
         const total = hits + misses;

@@ -24,14 +24,10 @@ class CronService {
         this.enabled = true;
 
         // Co godzinę — analiza akceptacji użycia
-        this.schedule('analyzeUsagePreferences', 60 * 60 * 1000, () =>
-            this.runUsageAnalysis()
-        );
+        this.schedule('analyzeUsagePreferences', 60 * 60 * 1000, () => this.runUsageAnalysis());
 
         // Co 24h — pełny cykl LearningEngine
-        this.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () =>
-            this.runFullCycle()
-        );
+        this.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () => this.runFullCycle());
 
         logger.info('CronService', 'Cron zainicjalizowany (hourly + daily)');
     }
@@ -115,8 +111,7 @@ class CronService {
             const summary = await learningEngine.runFullCycle();
             logger.info(
                 'CronService',
-                '[usageAnalysis] persisted=' + summary.persistedToKb +
-                    ' new patterns'
+                '[usageAnalysis] persisted=' + summary.persistedToKb + ' new patterns'
             );
         } catch (e) {
             logger.error('CronService', `[usageAnalysis] failed: ${e}`);

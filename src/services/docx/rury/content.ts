@@ -1,11 +1,4 @@
-import {
-    Paragraph,
-    TextRun,
-    Table,
-    TableRow,
-    WidthType,
-    AlignmentType
-} from 'docx';
+import { Paragraph, TextRun, Table, TableRow, WidthType, AlignmentType } from 'docx';
 import { DOCX_COLORS } from '../colors';
 import {
     FONT,
@@ -174,9 +167,8 @@ function buildTransportSecurityTable(): Table {
     const half = 7;
     for (let i = 0; i < half; i++) {
         const left = TRANSPORT_SECURITY_DATA[i];
-        const right = i + half < TRANSPORT_SECURITY_DATA.length
-            ? TRANSPORT_SECURITY_DATA[i + half]
-            : null;
+        const right =
+            i + half < TRANSPORT_SECURITY_DATA.length ? TRANSPORT_SECURITY_DATA[i + half] : null;
 
         rows.push(
             new TableRow({

@@ -4,41 +4,75 @@ export {};
    ============================================================= */
 
 interface MockProduct {
-    id: string; name: string; componentType: string;
-    dn: number | string; height: number;
-    formaStandardowaKLB?: number; formaStandardowa?: number;
-    zapasDol?: number; zapasGora?: number;
-    zapasDolMin?: number; zapasGoraMin?: number;
+    id: string;
+    name: string;
+    componentType: string;
+    dn: number | string;
+    height: number;
+    formaStandardowaKLB?: number;
+    formaStandardowa?: number;
+    zapasDol?: number;
+    zapasGora?: number;
+    zapasDolMin?: number;
+    zapasGoraMin?: number;
     [key: string]: unknown;
 }
 
-interface Transition { productId: string; rzednaWlaczenia: number; flowType?: string; angle?: number; }
-interface Segment { type: string; start: number; end: number; }
+interface Transition {
+    productId: string;
+    rzednaWlaczenia: number;
+    flowType?: string;
+    angle?: number;
+}
+interface Segment {
+    type: string;
+    start: number;
+    end: number;
+}
 
 const SAFETY = 15;
 
 function parseFloatSafe(v: unknown, f: number): number {
     if (v === undefined || v === null || v === '') return f;
-    const p = Number(v); return isNaN(p) ? f : p;
+    const p = Number(v);
+    return isNaN(p) ? f : p;
 }
 
 /* ================= 1. Odczyt zapasów (clearance) ================= */
 
 function getClearanceFromProduct(prod: MockProduct) {
     return {
-        zDol: parseFloatSafe(prod.zapasDol, 300), zGora: parseFloatSafe(prod.zapasGora, 300),
-        zDolMin: parseFloatSafe(prod.zapasDolMin, 150), zGoraMin: parseFloatSafe(prod.zapasGoraMin, 150),
+        zDol: parseFloatSafe(prod.zapasDol, 300),
+        zGora: parseFloatSafe(prod.zapasGora, 300),
+        zDolMin: parseFloatSafe(prod.zapasDolMin, 150),
+        zGoraMin: parseFloatSafe(prod.zapasGoraMin, 150)
     };
 }
 
 describe('getClearanceFromProduct', () => {
     const PRZ: MockProduct = {
-        id: 'PRZ-160', name: 'Przejście 160', componentType: 'przejscie', dn: 160, height: 0,
-        zapasDol: 300, zapasGora: 300, zapasDolMin: 150, zapasGoraMin: 150, formaStandardowaKLB: 1,
+        id: 'PRZ-160',
+        name: 'Przejście 160',
+        componentType: 'przejscie',
+        dn: 160,
+        height: 0,
+        zapasDol: 300,
+        zapasGora: 300,
+        zapasDolMin: 150,
+        zapasGoraMin: 150,
+        formaStandardowaKLB: 1
     };
     const PRZ0: MockProduct = {
-        id: 'PRZ-0', name: 'Przejście 0', componentType: 'przejscie', dn: 160, height: 0,
-        zapasDol: 0, zapasGora: 0, zapasDolMin: 0, zapasGoraMin: 0, formaStandardowaKLB: 1,
+        id: 'PRZ-0',
+        name: 'Przejście 0',
+        componentType: 'przejscie',
+        dn: 160,
+        height: 0,
+        zapasDol: 0,
+        zapasGora: 0,
+        zapasDolMin: 0,
+        zapasGoraMin: 0,
+        formaStandardowaKLB: 1
     };
 
     it('pobiera wartości z cennika', () => {
@@ -47,7 +81,13 @@ describe('getClearanceFromProduct', () => {
     });
 
     it('domyślnie 300/150 gdy brak pól', () => {
-        const c = getClearanceFromProduct({ id: 'X', name: 'X', componentType: 'x', dn: 160, height: 0 });
+        const c = getClearanceFromProduct({
+            id: 'X',
+            name: 'X',
+            componentType: 'x',
+            dn: 160,
+            height: 0
+        });
         expect(c).toEqual({ zDol: 300, zGora: 300, zDolMin: 150, zGoraMin: 150 });
     });
 
@@ -58,7 +98,11 @@ describe('getClearanceFromProduct', () => {
 
     it('undefined/null zamienia na domyślne 300/150', () => {
         const c = getClearanceFromProduct({
-            id: 'X', name: 'X', componentType: 'x', dn: 160, height: 0,
+            id: 'X',
+            name: 'X',
+            componentType: 'x',
+            dn: 160,
+            height: 0
         } as MockProduct);
         expect(c).toEqual({ zDol: 300, zGora: 300, zDolMin: 150, zGoraMin: 150 });
     });
@@ -66,22 +110,55 @@ describe('getClearanceFromProduct', () => {
 
 /* ================= 2. Detekcja kolizji (checkConflictsLogic) ================= */
 
-function checkConflictsLogic(holes: Array<{ z: number; ruraDz: number; zdD: number; zdG: number; zdDM: number; zdGM: number }>,
-    segs: Segment[]): { valid: boolean; isMinimal: boolean; errors: string[] } {
-    let isMinimal = false, valid = true; const errors: string[] = [];
+function checkConflictsLogic(
+    holes: Array<{
+        z: number;
+        ruraDz: number;
+        zdD: number;
+        zdG: number;
+        zdDM: number;
+        zdGM: number;
+    }>,
+    segs: Segment[]
+): { valid: boolean; isMinimal: boolean; errors: string[] } {
+    let isMinimal = false,
+        valid = true;
+    const errors: string[] = [];
     for (const h of holes) {
-        const hTop = h.z + h.ruraDz, hBot = h.z;
-        const effD = h.z === 0 ? 0 : h.zdD, effDM = h.z === 0 ? 0 : h.zdDM;
-        const rT = hTop + h.zdG, rB = hBot - effD, rTM = hTop + h.zdGM, rBM = hBot - effDM;
-        let sV = true, mV = true;
+        const hTop = h.z + h.ruraDz,
+            hBot = h.z;
+        const effD = h.z === 0 ? 0 : h.zdD,
+            effDM = h.z === 0 ? 0 : h.zdDM;
+        const rT = hTop + h.zdG,
+            rB = hBot - effD,
+            rTM = hTop + h.zdGM,
+            rBM = hBot - effDM;
+        let sV = true,
+            mV = true;
         for (const s of segs) {
-            if (s.end >= (rB - SAFETY) && s.end <= (rT + SAFETY)) sV = false;
-            if (s.end >= (rBM - SAFETY) && s.end <= (rTM + SAFETY)) mV = false;
-            const fb = ['konus', 'plyta_din', 'plyta_redukcyjna', 'pierscien_odciazajacy'].includes(s.type);
-            if (fb && hTop > s.start && hBot < s.end) { sV = false; mV = false; errors.push(`Kolizja z ${s.type}`); }
-            if (s.type === 'plyta_redukcyjna' && (hBot + h.ruraDz / 2) >= s.start) { sV = false; mV = false; errors.push('Przejście powyżej płyty redukcyjnej'); }
+            if (s.end >= rB - SAFETY && s.end <= rT + SAFETY) sV = false;
+            if (s.end >= rBM - SAFETY && s.end <= rTM + SAFETY) mV = false;
+            const fb = ['konus', 'plyta_din', 'plyta_redukcyjna', 'pierscien_odciazajacy'].includes(
+                s.type
+            );
+            if (fb && hTop > s.start && hBot < s.end) {
+                sV = false;
+                mV = false;
+                errors.push(`Kolizja z ${s.type}`);
+            }
+            if (s.type === 'plyta_redukcyjna' && hBot + h.ruraDz / 2 >= s.start) {
+                sV = false;
+                mV = false;
+                errors.push('Przejście powyżej płyty redukcyjnej');
+            }
         }
-        if (!sV) { if (mV) isMinimal = true; else { valid = false; errors.push(`Kolizja Z=${h.z}`); } }
+        if (!sV) {
+            if (mV) isMinimal = true;
+            else {
+                valid = false;
+                errors.push(`Kolizja Z=${h.z}`);
+            }
+        }
     }
     return { valid, isMinimal, errors };
 }
@@ -90,70 +167,98 @@ describe('checkConflictsLogic', () => {
     const BH = { z: 0, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 };
 
     it('przejście w dennicy — minimal OK gdy joint w strefie std', () => {
-        const r = checkConflictsLogic([{ ...BH, z: 100 }], [{ type: 'dennica', start: 0, end: 500 }]);
+        const r = checkConflictsLogic(
+            [{ ...BH, z: 100 }],
+            [{ type: 'dennica', start: 0, end: 500 }]
+        );
         expect(r.valid).toBe(true);
         expect(r.isMinimal).toBe(true);
     });
 
     it('brak kolizji gdy segment wyższy niż strefa', () => {
-        const r = checkConflictsLogic([{ ...BH, z: 100 }], [{ type: 'dennica', start: 0, end: 700 }]);
+        const r = checkConflictsLogic(
+            [{ ...BH, z: 100 }],
+            [{ type: 'dennica', start: 0, end: 700 }]
+        );
         expect(r.valid).toBe(true);
         expect(r.isMinimal).toBe(false);
     });
 
     it('kolizja z płytą redukcyjną (przejście powyżej)', () => {
         const segs: Segment[] = [
-            { type: 'dennica', start: 0, end: 500 }, { type: 'krag', start: 500, end: 1500 },
-            { type: 'plyta_redukcyjna', start: 1500, end: 1650 },
+            { type: 'dennica', start: 0, end: 500 },
+            { type: 'krag', start: 500, end: 1500 },
+            { type: 'plyta_redukcyjna', start: 1500, end: 1650 }
         ];
-        const r = checkConflictsLogic([{ z: 1600, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }], segs);
+        const r = checkConflictsLogic(
+            [{ z: 1600, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
+            segs
+        );
         expect(r.valid).toBe(false);
-        expect(r.errors.some(e => e.includes('redukcyjnej'))).toBe(true);
+        expect(r.errors.some((e) => e.includes('redukcyjnej'))).toBe(true);
     });
 
     it('przejście wystaje poza dennicę — invalid', () => {
-        const r = checkConflictsLogic([{ ...BH, z: 100 }], [{ type: 'dennica', start: 0, end: 200 }]);
+        const r = checkConflictsLogic(
+            [{ ...BH, z: 100 }],
+            [{ type: 'dennica', start: 0, end: 200 }]
+        );
         expect(r.valid).toBe(false);
     });
 
     it('kolizja z konusem', () => {
         const r = checkConflictsLogic(
             [{ z: 2000, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
-            [{ type: 'dennica', start: 0, end: 500 }, { type: 'krag', start: 500, end: 2000 }, { type: 'konus', start: 2000, end: 2625 }]
+            [
+                { type: 'dennica', start: 0, end: 500 },
+                { type: 'krag', start: 500, end: 2000 },
+                { type: 'konus', start: 2000, end: 2625 }
+            ]
         );
         expect(r.valid).toBe(false);
-        expect(r.errors.some(e => e.includes('konus'))).toBe(true);
+        expect(r.errors.some((e) => e.includes('konus'))).toBe(true);
     });
 
     it('kolizja z płytą DIN', () => {
         const r = checkConflictsLogic(
             [{ z: 1800, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
-            [{ type: 'dennica', start: 0, end: 500 }, { type: 'krag', start: 500, end: 1800 }, { type: 'plyta_din', start: 1800, end: 1950 }]
+            [
+                { type: 'dennica', start: 0, end: 500 },
+                { type: 'krag', start: 500, end: 1800 },
+                { type: 'plyta_din', start: 1800, end: 1950 }
+            ]
         );
         expect(r.valid).toBe(false);
-        expect(r.errors.some(e => e.includes('plyta_din'))).toBe(true);
+        expect(r.errors.some((e) => e.includes('plyta_din'))).toBe(true);
     });
 
     it('wiele przejść — wszystkie walidowane', () => {
         const holes = [
             { z: 100, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 },
-            { z: 800, ruraDz: 200, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 },
+            { z: 800, ruraDz: 200, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }
         ];
-        const segs: Segment[] = [{ type: 'dennica', start: 0, end: 500 }, { type: 'krag', start: 500, end: 1500 }];
+        const segs: Segment[] = [
+            { type: 'dennica', start: 0, end: 500 },
+            { type: 'krag', start: 500, end: 1500 }
+        ];
         const r = checkConflictsLogic(holes, segs);
         expect(r.valid).toBe(true);
     });
 
     it('z=0 → effD=0 (rura przy dnie)', () => {
-        const r = checkConflictsLogic([{ z: 0, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
-            [{ type: 'dennica', start: 0, end: 500 }]);
+        const r = checkConflictsLogic(
+            [{ z: 0, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
+            [{ type: 'dennica', start: 0, end: 500 }]
+        );
         expect(r.valid).toBe(true);
         expect(r.isMinimal).toBe(false);
     });
 
     it('z=0 w segmencie wyższym → brak kolizji', () => {
-        const r = checkConflictsLogic([{ z: 0, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
-            [{ type: 'dennica', start: 0, end: 500 }]);
+        const r = checkConflictsLogic(
+            [{ z: 0, ruraDz: 160, zdD: 300, zdG: 300, zdDM: 150, zdGM: 150 }],
+            [{ type: 'dennica', start: 0, end: 500 }]
+        );
         expect(r.valid).toBe(true);
     });
 });
@@ -161,58 +266,113 @@ describe('checkConflictsLogic', () => {
 /* ================= 3. Wymagana wysokość ================= */
 
 function calcH(transitions: Transition[], products: MockProduct[], rzDna: number) {
-    let mxH = 0, mxHM = 0; const holes: any[] = [];
+    let mxH = 0,
+        mxHM = 0;
+    const holes: any[] = [];
     for (const p of transitions) {
-        const prod = products.find(x => x.id === p.productId);
+        const prod = products.find((x) => x.id === p.productId);
         let prDN = 160;
         if (prod?.dn && typeof prod.dn === 'string' && prod.dn.includes('/'))
             prDN = parseFloatSafe(prod.dn.split('/')[1], 160);
         else prDN = parseFloatSafe(prod?.dn, 160);
         const z = Math.round((p.rzednaWlaczenia - rzDna) * 1000);
-        const { zDol, zGora, zDolMin, zGoraMin } = prod ? getClearanceFromProduct(prod) : { zDol: 0, zGora: 0, zDolMin: 0, zGoraMin: 0 };
-        const h = { z, ruraDz: prDN, zdD: prod ? zDol : 0, zdDM: prod ? zDolMin : 0, zdG: prod ? zGora : 0, zdGM: prod ? zGoraMin : 0 };
+        const { zDol, zGora, zDolMin, zGoraMin } = prod
+            ? getClearanceFromProduct(prod)
+            : { zDol: 0, zGora: 0, zDolMin: 0, zGoraMin: 0 };
+        const h = {
+            z,
+            ruraDz: prDN,
+            zdD: prod ? zDol : 0,
+            zdDM: prod ? zDolMin : 0,
+            zdG: prod ? zGora : 0,
+            zdGM: prod ? zGoraMin : 0
+        };
         holes.push(h);
-        const r = h.z + h.ruraDz + h.zdG; if (r > mxH) mxH = r;
-        const rm = h.z + h.ruraDz + h.zdGM; if (rm > mxHM) mxHM = rm;
+        const r = h.z + h.ruraDz + h.zdG;
+        if (r > mxH) mxH = r;
+        const rm = h.z + h.ruraDz + h.zdGM;
+        if (rm > mxHM) mxHM = rm;
     }
     return { maxReqH: mxH, maxReqHMin: mxHM, holes };
 }
 
 describe('calculateRequiredHeights', () => {
     const PRZ: MockProduct = {
-        id: 'PRZ-160', name: 'Przejście 160', componentType: 'przejscie', dn: 160, height: 0,
-        zapasDol: 300, zapasGora: 300, zapasDolMin: 150, zapasGoraMin: 150, formaStandardowaKLB: 1,
+        id: 'PRZ-160',
+        name: 'Przejście 160',
+        componentType: 'przejscie',
+        dn: 160,
+        height: 0,
+        zapasDol: 300,
+        zapasGora: 300,
+        zapasDolMin: 150,
+        zapasGoraMin: 150,
+        formaStandardowaKLB: 1
     };
     const PRZ0: MockProduct = {
-        id: 'PRZ-0', name: 'Przejście 0', componentType: 'przejscie', dn: 160, height: 0,
-        zapasDol: 0, zapasGora: 0, zapasDolMin: 0, zapasGoraMin: 0, formaStandardowaKLB: 1,
+        id: 'PRZ-0',
+        name: 'Przejście 0',
+        componentType: 'przejscie',
+        dn: 160,
+        height: 0,
+        zapasDol: 0,
+        zapasGora: 0,
+        zapasDolMin: 0,
+        zapasGoraMin: 0,
+        formaStandardowaKLB: 1
     };
 
     it('oblicza maxReqH i maxReqHMin', () => {
-        const { maxReqH, maxReqHMin } = calcH([{ productId: 'PRZ-160', rzednaWlaczenia: 0.3 }], [PRZ], 0);
+        const { maxReqH, maxReqHMin } = calcH(
+            [{ productId: 'PRZ-160', rzednaWlaczenia: 0.3 }],
+            [PRZ],
+            0
+        );
         expect(maxReqH).toBe(760);
         expect(maxReqHMin).toBe(610);
     });
 
     it('wielokrotne przejścia — bierze max', () => {
         const { maxReqH, maxReqHMin } = calcH(
-            [{ productId: 'PRZ-160', rzednaWlaczenia: 0.3 }, { productId: 'PRZ-160', rzednaWlaczenia: 0.5 }], [PRZ], 0);
+            [
+                { productId: 'PRZ-160', rzednaWlaczenia: 0.3 },
+                { productId: 'PRZ-160', rzednaWlaczenia: 0.5 }
+            ],
+            [PRZ],
+            0
+        );
         expect(maxReqH).toBe(960);
         expect(maxReqHMin).toBe(810);
     });
 
     it('zapas=0 w cenniku → liczone z 0', () => {
-        const { maxReqH, maxReqHMin } = calcH([{ productId: 'PRZ-0', rzednaWlaczenia: 0.3 }], [PRZ0], 0);
+        const { maxReqH, maxReqHMin } = calcH(
+            [{ productId: 'PRZ-0', rzednaWlaczenia: 0.3 }],
+            [PRZ0],
+            0
+        );
         expect(maxReqH).toBe(460);
         expect(maxReqHMin).toBe(460);
     });
 
     it('niestandardowe DN rury (np. DN200/110)', () => {
         const PRZ_SLASH: MockProduct = {
-            id: 'PRZ-200/110', name: 'Przejście 200/110', componentType: 'przejscie', dn: '200/110', height: 0,
-            zapasDol: 200, zapasGora: 200, zapasDolMin: 100, zapasGoraMin: 100, formaStandardowaKLB: 1,
+            id: 'PRZ-200/110',
+            name: 'Przejście 200/110',
+            componentType: 'przejscie',
+            dn: '200/110',
+            height: 0,
+            zapasDol: 200,
+            zapasGora: 200,
+            zapasDolMin: 100,
+            zapasGoraMin: 100,
+            formaStandardowaKLB: 1
         };
-        const { maxReqH } = calcH([{ productId: 'PRZ-200/110', rzednaWlaczenia: 0.3 }], [PRZ_SLASH], 0);
+        const { maxReqH } = calcH(
+            [{ productId: 'PRZ-200/110', rzednaWlaczenia: 0.3 }],
+            [PRZ_SLASH],
+            0
+        );
         expect(maxReqH).toBe(610); // 300 + 110 + 200 = 610
     });
 
@@ -224,14 +384,24 @@ describe('calculateRequiredHeights', () => {
 
 /* ================= 4. Walidacja połączeń (joints) ================= */
 
-function valJoints(ringHeights: number[], transitions: Transition[], products: MockProduct[],
-    fixedBelowHeight: number, mode: 'standard' | 'minimal'): boolean {
+function valJoints(
+    ringHeights: number[],
+    transitions: Transition[],
+    products: MockProduct[],
+    fixedBelowHeight: number,
+    mode: 'standard' | 'minimal'
+): boolean {
     if (!transitions?.length || !ringHeights?.length) return true;
-    const joints: number[] = []; let y = 0;
-    for (const h of ringHeights) { y += h; joints.push(y); }
-    joints.pop(); if (joints.length === 0) return true;
+    const joints: number[] = [];
+    let y = 0;
+    for (const h of ringHeights) {
+        y += h;
+        joints.push(y);
+    }
+    joints.pop();
+    if (joints.length === 0) return true;
     for (const t of transitions) {
-        const pprod = products.find(p => p.id === t.productId);
+        const pprod = products.find((p) => p.id === t.productId);
         if (!pprod) continue;
         let dn = 160;
         if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/'))
@@ -240,40 +410,92 @@ function valJoints(ringHeights: number[], transitions: Transition[], products: M
         const rel = Math.round(t.rzednaWlaczenia * 1000) - fixedBelowHeight;
         if (rel < 0) continue;
         const { zDol, zGora, zDolMin, zGoraMin } = getClearanceFromProduct(pprod);
-        const zd = mode === 'standard' ? zDol : zDolMin, zg = mode === 'standard' ? zGora : zGoraMin;
-        const dB = rel - zd - SAFETY, dT = rel + dn + zg + SAFETY;
-        for (const j of joints) { if (j >= dB && j <= dT) return false; }
+        const zd = mode === 'standard' ? zDol : zDolMin,
+            zg = mode === 'standard' ? zGora : zGoraMin;
+        const dB = rel - zd - SAFETY,
+            dT = rel + dn + zg + SAFETY;
+        for (const j of joints) {
+            if (j >= dB && j <= dT) return false;
+        }
     }
     return true;
 }
 
 describe('validateJointsLogic', () => {
     const PRZ: MockProduct = {
-        id: 'PRZ-160', name: 'Przejście 160', componentType: 'przejscie', dn: 160, height: 0,
-        zapasDol: 300, zapasGora: 300, zapasDolMin: 150, zapasGoraMin: 150, formaStandardowaKLB: 1,
+        id: 'PRZ-160',
+        name: 'Przejście 160',
+        componentType: 'przejscie',
+        dn: 160,
+        height: 0,
+        zapasDol: 300,
+        zapasGora: 300,
+        zapasDolMin: 150,
+        zapasGoraMin: 150,
+        formaStandardowaKLB: 1
     };
     const F = 500;
 
-    it('brak jointów → OK', () => { expect(valJoints([], [], [PRZ], F, 'standard')).toBe(true); });
-    it('jeden krąg → brak jointów', () => { expect(valJoints([1000], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.5 }], [PRZ], F, 'standard')).toBe(true); });
-    it('brak przejść → OK', () => { expect(valJoints([500, 500], [], [PRZ], F, 'standard')).toBe(true); });
+    it('brak jointów → OK', () => {
+        expect(valJoints([], [], [PRZ], F, 'standard')).toBe(true);
+    });
+    it('jeden krąg → brak jointów', () => {
+        expect(
+            valJoints(
+                [1000],
+                [{ productId: 'PRZ-160', rzednaWlaczenia: 0.5 }],
+                [PRZ],
+                F,
+                'standard'
+            )
+        ).toBe(true);
+    });
+    it('brak przejść → OK', () => {
+        expect(valJoints([500, 500], [], [PRZ], F, 'standard')).toBe(true);
+    });
 
     it('joint w strefie niebezpiecznej → kolizja', () => {
-        expect(valJoints([500, 500], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }], [PRZ], F, 'standard')).toBe(false);
+        expect(
+            valJoints(
+                [500, 500],
+                [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }],
+                [PRZ],
+                F,
+                'standard'
+            )
+        ).toBe(false);
     });
 
     it('tryb minimalny → brak kolizji (joint poza strefą min)', () => {
-        expect(valJoints([500, 500], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }], [PRZ], F, 'minimal')).toBe(true);
+        expect(
+            valJoints(
+                [500, 500],
+                [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }],
+                [PRZ],
+                F,
+                'minimal'
+            )
+        ).toBe(true);
     });
 
     it('przejście w dennicy → pomijane (rel < 0)', () => {
-        expect(valJoints([500], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.3 }], [PRZ], F, 'standard')).toBe(true);
+        expect(
+            valJoints([500], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.3 }], [PRZ], F, 'standard')
+        ).toBe(true);
     });
 
     it('joint dokładnie na granicy strefy → kolizja', () => {
         // PRZ-160@580mm, fixed=500, rel=80
         // dB=80-300-15=-235, dT=80+160+300+15=555, joint=500 ∈ [-235,555] → kolizja
-        expect(valJoints([500, 500], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }], [PRZ], F, 'standard')).toBe(false);
+        expect(
+            valJoints(
+                [500, 500],
+                [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }],
+                [PRZ],
+                F,
+                'standard'
+            )
+        ).toBe(false);
     });
 
     it('joint tuż poza strefą → OK', () => {
@@ -281,16 +503,40 @@ describe('validateJointsLogic', () => {
         // dB=580-300-15=265, dT=580+160+300+15=1055
         // joint=500 ∈ [265,1055] → kolizja
         // Ale z fixed=0, pierwszy joint to 500
-        expect(valJoints([500, 500], [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }], [PRZ], 0, 'standard')).toBe(false);
+        expect(
+            valJoints(
+                [500, 500],
+                [{ productId: 'PRZ-160', rzednaWlaczenia: 0.58 }],
+                [PRZ],
+                0,
+                'standard'
+            )
+        ).toBe(false);
     });
 
     it('większe DN rury → szersza strefa niebezpieczna', () => {
         const PRZ200: MockProduct = {
-            id: 'PRZ-200', name: 'Przejście 200', componentType: 'przejscie', dn: 200, height: 0,
-            zapasDol: 300, zapasGora: 300, zapasDolMin: 150, zapasGoraMin: 150, formaStandardowaKLB: 1,
+            id: 'PRZ-200',
+            name: 'Przejście 200',
+            componentType: 'przejscie',
+            dn: 200,
+            height: 0,
+            zapasDol: 300,
+            zapasGora: 300,
+            zapasDolMin: 150,
+            zapasGoraMin: 150,
+            formaStandardowaKLB: 1
         };
         // dB=80-300-15=-235, dT=80+200+300+15=595, joint=500 ∈ [-235,595] → kolizja
-        expect(valJoints([500, 500], [{ productId: 'PRZ-200', rzednaWlaczenia: 0.58 }], [PRZ200], F, 'standard')).toBe(false);
+        expect(
+            valJoints(
+                [500, 500],
+                [{ productId: 'PRZ-200', rzednaWlaczenia: 0.58 }],
+                [PRZ200],
+                F,
+                'standard'
+            )
+        ).toBe(false);
     });
 });
 

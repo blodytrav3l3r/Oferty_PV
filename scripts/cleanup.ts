@@ -33,7 +33,9 @@ async function cleanupDatabase() {
     console.log('Baza jest gotowa do wprowadzania nowych rekordów.');
 }
 
-cleanupDatabase().catch(err => {
-    console.error('Błąd:', err);
-    process.exit(1);
-}).finally(() => process.exit());
+cleanupDatabase()
+    .catch((err) => {
+        console.error('Błąd:', err);
+        process.exit(1);
+    })
+    .finally(() => process.exit());

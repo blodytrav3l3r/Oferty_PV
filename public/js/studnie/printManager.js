@@ -198,7 +198,7 @@ function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna) {
 
     // Przejścia przypisane do dennicy
     const dennicaAngles = new Set();
-    allPrzejscia.forEach(item => {
+    allPrzejscia.forEach((item) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mm = (pel - rzDna) * 1000;
@@ -212,7 +212,7 @@ function findBlindKinetaEntries(well, dennicaElementIndex, configMap, rzDna) {
     const blindEntries = [];
     const seenAngles = new Set();
 
-    allPrzejscia.forEach(item => {
+    allPrzejscia.forEach((item) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mm = (pel - rzDna) * 1000;
@@ -271,9 +271,13 @@ function buildPrzejsciaRows(data) {
     const totalSlots = Math.max(assignedPrzejscia.length + blindEntries.length, 4);
 
     // Mapuj unikalne kąty do numerów etykiet (0=0, 90=1, 180=2, ...) dla grupowania wizualnego
-    const uniqueAngles = [...new Set(assignedPrzejscia.map(p => parseFloat(p.angle) || 0))].sort((a, b) => a - b);
+    const uniqueAngles = [...new Set(assignedPrzejscia.map((p) => parseFloat(p.angle) || 0))].sort(
+        (a, b) => a - b
+    );
     const angleToLabelNum = {};
-    uniqueAngles.forEach((a, idx) => { angleToLabelNum[a] = idx; });
+    uniqueAngles.forEach((a, idx) => {
+        angleToLabelNum[a] = idx;
+    });
 
     const rows = [];
     for (let i = 0; i < totalSlots; i++) {
@@ -307,7 +311,6 @@ function buildPrzejsciaRows(data) {
         });
     }
     return rows;
-
 }
 function formatPrzejscieRow(label, p, findProductFn, rzDna) {
     const product = findProductFn ? findProductFn(p.productId) : null;
@@ -331,8 +334,14 @@ function formatPrzejscieRow(label, p, findProductFn, rzDna) {
         label,
         rodzaj,
         srednica,
-        spadekKineta: spadekKineta && parseFloat(spadekKineta) !== 0 ? Math.round(parseFloat(spadekKineta)) + ' %' : '',
-        spadekMufa: spadekMufa && parseFloat(spadekMufa) !== 0 ? Math.round(parseFloat(spadekMufa)) + ' %' : '',
+        spadekKineta:
+            spadekKineta && parseFloat(spadekKineta) !== 0
+                ? Math.round(parseFloat(spadekKineta)) + ' %'
+                : '',
+        spadekMufa:
+            spadekMufa && parseFloat(spadekMufa) !== 0
+                ? Math.round(parseFloat(spadekMufa)) + ' %'
+                : '',
         katStopien: angle + '°',
         uwagi,
         katGon: katGon,
@@ -439,7 +448,12 @@ function generateWellSvg(data) {
             // Dla dennicy: dodaj ślepe kinety do grafiki SVG
             const isDennica = data.product && data.product.componentType === 'dennica';
             if (isDennica) {
-                blindKinetaPrzejscia = findBlindKinetaEntries(well, data.elementIndex, configMap, rzDna);
+                blindKinetaPrzejscia = findBlindKinetaEntries(
+                    well,
+                    data.elementIndex,
+                    configMap,
+                    rzDna
+                );
             }
         }
     }
@@ -456,8 +470,8 @@ function generateWellSvg(data) {
 
     // Oceniamy z jakich kątów korzystamy
     let useKatWykonania = false;
-    let angleTypeTitle = "Wg Kąt Stopień";
-    
+    let angleTypeTitle = 'Wg Kąt Stopień';
+
     // Pobranie z normalizacją do liczby (DN '1000' -> 1000)
     const dnStr = String(well.dn || '');
     const match = dnStr.match(/(\d{3,4})/);
@@ -470,30 +484,42 @@ function generateWellSvg(data) {
 
     if (isKragOt) {
         useKatWykonania = false;
-        angleTypeTitle = "Kąty: Kąt Stopień";
+        angleTypeTitle = 'Kąty: Kąt Stopień';
     } else if (numDn === 2000 || numDn === 2500) {
         useKatWykonania = false;
-        angleTypeTitle = "Kąty: Kąt Stopień";
+        angleTypeTitle = 'Kąty: Kąt Stopień';
     } else if ([1000, 1200, 1500].includes(numDn)) {
         useKatWykonania = true;
-        angleTypeTitle = "Kąty: Kąt Wykonania";
+        angleTypeTitle = 'Kąty: Kąt Wykonania';
     }
 
     // Budujemy elementy SVG do tablicy — viewBox dokleimy na końcu
     const svgParts = [];
 
     // Główny okrąg studni
-    svgParts.push(`<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`);
+    svgParts.push(
+        `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`
+    );
 
     // Krzyż pomocniczy
-    svgParts.push(`<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`);
-    svgParts.push(`<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`);
+    svgParts.push(
+        `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`
+    );
+    svgParts.push(
+        `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`
+    );
 
     // Znacznik 0 stopni na dole grafiki
-    svgParts.push(`<line x1="${center}" y1="${center + radius}" x2="${center}" y2="${center + radius + 10}" stroke="#777" stroke-width="1.5" />`);
-    svgParts.push(`<text x="${center}" y="${center + radius + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#666">0°</text>`);
+    svgParts.push(
+        `<line x1="${center}" y1="${center + radius}" x2="${center}" y2="${center + radius + 10}" stroke="#777" stroke-width="1.5" />`
+    );
+    svgParts.push(
+        `<text x="${center}" y="${center + radius + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#666">0°</text>`
+    );
 
-    const wylot = przejscia.find(p => p.flowType === FLOW_TYPES.WYLOT || parseFloat(p.angle) === 0);
+    const wylot = przejscia.find(
+        (p) => p.flowType === FLOW_TYPES.WYLOT || parseFloat(p.angle) === 0
+    );
     ensureDisplayIndices(przejscia);
 
     // Nadaj displayIndex ślepym kinetom (zachowują oryginalny displayIndex z well.przejscia)
@@ -502,11 +528,11 @@ function generateWellSvg(data) {
     }
 
     const labelsMap = new Map();
-    przejscia.forEach(p => {
+    przejscia.forEach((p) => {
         const prefix = p.flowType === FLOW_TYPES.WYLOT ? 'Wylot' : 'Wlot';
         labelsMap.set(p, `${prefix} ${p.displayIndex}`);
     });
-    blindKinetaPrzejscia.forEach(p => {
+    blindKinetaPrzejscia.forEach((p) => {
         labelsMap.set(p, `Ślepa ${p.displayIndex}`);
     });
 
@@ -517,7 +543,12 @@ function generateWellSvg(data) {
         const baseAngle = parseFloat(p.angle) || 0;
         let angleDeg = baseAngle;
         if (useKatWykonania) {
-            angleDeg = p.angleExecution !== undefined ? parseFloat(p.angleExecution) : (baseAngle === 0 || baseAngle === 360 ? 0 : 360 - baseAngle);
+            angleDeg =
+                p.angleExecution !== undefined
+                    ? parseFloat(p.angleExecution)
+                    : baseAngle === 0 || baseAngle === 360
+                      ? 0
+                      : 360 - baseAngle;
         }
 
         const rad = (angleDeg * Math.PI) / 180;
@@ -528,20 +559,24 @@ function generateWellSvg(data) {
         const isWylot = p === wylot;
         if (isBlind) {
             // Ślepa kineta — linia przerywana, szary kolor
-            svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" />`);
+            svgParts.push(
+                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" />`
+            );
         } else {
-            svgParts.push(`<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`);
+            svgParts.push(
+                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`
+            );
         }
 
         const product =
             typeof studnieProducts !== 'undefined'
                 ? studnieProducts.find((pr) => pr.id === p.productId)
                 : null;
-        const rodzaj = isBlind ? 'ŚLEPA' : (product ? product.category : '');
+        const rodzaj = isBlind ? 'ŚLEPA' : product ? product.category : '';
         const dn = product ? product.dn : '';
         const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
         const hMm = Math.round((pel - rzDna) * 1000);
-        const uwagiText = isBlind ? 'ślepa' : (hMm > 0 ? `+${hMm}mm` : '');
+        const uwagiText = isBlind ? 'ślepa' : hMm > 0 ? `+${hMm}mm` : '';
 
         const labelRadius = radius + 40;
         const lx = center - labelRadius * Math.sin(rad);
@@ -574,9 +609,13 @@ function generateWellSvg(data) {
         if (currentLine) lines.push(currentLine);
 
         labels.push({
-            origX: lx, origY: ly, lx: lx, ly: ly,
-            anchor, offsetX,
-            isRight: (lx >= center),
+            origX: lx,
+            origY: ly,
+            lx: lx,
+            ly: ly,
+            anchor,
+            offsetX,
+            isRight: lx >= center,
             lines,
             textAngle: `${angleDeg}°${uwagiText ? ' (' + uwagiText + ')' : ''}`,
             isBlind: isBlind
@@ -585,8 +624,8 @@ function generateWellSvg(data) {
 
     przejscia.forEach((p) => drawTransitionSvg(p, false));
     blindKinetaPrzejscia.forEach((p) => drawTransitionSvg(p, true));
-    const leftLabels = labels.filter(l => !l.isRight).sort((a, b) => a.ly - b.ly);
-    const rightLabels = labels.filter(l => l.isRight).sort((a, b) => a.ly - b.ly);
+    const leftLabels = labels.filter((l) => !l.isRight).sort((a, b) => a.ly - b.ly);
+    const rightLabels = labels.filter((l) => l.isRight).sort((a, b) => a.ly - b.ly);
 
     function spreadLabels(arr) {
         const requiredGapBase = 8 + lineHeight;
@@ -614,13 +653,13 @@ function generateWellSvg(data) {
 
     const estimateTextWidth = (text) => text.length * 5.5;
 
-    labels.forEach(l => {
+    labels.forEach((l) => {
         const textHeight = (l.lines.length + 1) * lineHeight;
         if (l.ly - 5 < minY) minY = l.ly - 5;
         if (l.ly + textHeight > maxY) maxY = l.ly + textHeight;
 
         // Estymacja szerokości tekstu etykiety (ok. 8px na znak dla 11pt bold)
-        const maxTextLen = Math.max(...l.lines.map(ln => ln.length), l.textAngle.length);
+        const maxTextLen = Math.max(...l.lines.map((ln) => ln.length), l.textAngle.length);
         const textW = maxTextLen * 8;
         if (l.anchor === 'end') {
             if (l.lx - textW - 10 < minX) minX = l.lx - textW - 10;
@@ -633,8 +672,10 @@ function generateWellSvg(data) {
 
         // Linia prowadząca (leader line)
         if (Math.abs(l.origY - l.ly) > 2) {
-            const lineDist = (l.ly > l.origY) ? -8 : 8;
-            svgParts.push(`<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`);
+            const lineDist = l.ly > l.origY ? -8 : 8;
+            svgParts.push(
+                `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`
+            );
         }
         const textFill = l.isBlind ? '#999' : '#000';
         const subFill = l.isBlind ? '#aaa' : '#444';
@@ -676,14 +717,14 @@ function buildSiblingCrossReferences(data) {
 
     // Elementy produkcyjne w tej samej studni (bez bieżącego)
     const siblings = zleceniaElementsList.filter(
-        el => el.well.id === well.id && el.elementIndex !== currentElementIndex
+        (el) => el.well.id === well.id && el.elementIndex !== currentElementIndex
     );
 
     if (siblings.length === 0) return '';
 
     const getPoNumber = (el) => {
         const po = (productionOrders || []).find(
-            p => p.wellId === el.well.id && p.elementIndex === el.elementIndex
+            (p) => p.wellId === el.well.id && p.elementIndex === el.elementIndex
         );
         return po?.productionOrderNumber || '—';
     };
@@ -692,21 +733,19 @@ function buildSiblingCrossReferences(data) {
 
     if (isDennica) {
         // Dennica → pokaż tylko numery zleceń kręgów
-        const kregiNumbers = siblings.map(el => getPoNumber(el));
+        const kregiNumbers = siblings.map((el) => getPoNumber(el));
         return 'Kręgi: ' + kregiNumbers.join(', ');
     }
 
     // Krąg → pokaż numer zlecenia dennicy jako "Studnia" + numery pozostałych kręgów
     const parts = [];
-    const dennice = siblings.filter(el =>
-        el.product && el.product.componentType === 'dennica'
-    );
-    const otherKregi = siblings.filter(el =>
-        el.product && el.product.componentType !== 'dennica'
+    const dennice = siblings.filter((el) => el.product && el.product.componentType === 'dennica');
+    const otherKregi = siblings.filter(
+        (el) => el.product && el.product.componentType !== 'dennica'
     );
 
-    dennice.forEach(el => parts.push('Studnia: ' + getPoNumber(el)));
-    otherKregi.forEach(el => parts.push('Krąg: ' + getPoNumber(el)));
+    dennice.forEach((el) => parts.push('Studnia: ' + getPoNumber(el)));
+    otherKregi.forEach((el) => parts.push('Krąg: ' + getPoNumber(el)));
 
     return parts.join(', ');
 }
@@ -714,23 +753,34 @@ function buildSiblingCrossReferences(data) {
 function buildZlecenieHtml(template, data) {
     const przejsciaRows = buildPrzejsciaRows(data);
 
-    let angleTypeTitle = "Kąt stopień";
+    let angleTypeTitle = 'Kąt stopień';
     const dnStr = String(data.well.dn || '');
-    const numDn = parseInt(dnStr.match(/(\d{3,4})/) ? dnStr.match(/(\d{3,4})/)[1] : "0");
+    const numDn = parseInt(dnStr.match(/(\d{3,4})/) ? dnStr.match(/(\d{3,4})/)[1] : '0');
     if (data.product && data.product.componentType === 'krag_ot') {
-        angleTypeTitle = "Kąt stopień";
+        angleTypeTitle = 'Kąt stopień';
     } else if (numDn === 2000 || numDn === 2500) {
-        angleTypeTitle = "Kąt stopień";
+        angleTypeTitle = 'Kąt stopień';
     } else if ([1000, 1200, 1500].includes(numDn)) {
-        angleTypeTitle = "Kąt wykonania";
+        angleTypeTitle = 'Kąt wykonania';
     }
 
     let finalUwagi = data.uwagi || '';
-    if (data.well && data.well.wkladkaOsadnikPreco === 'tak' && data.product && (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')) {
+    if (
+        data.well &&
+        data.well.wkladkaOsadnikPreco === 'tak' &&
+        data.product &&
+        (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')
+    ) {
         const osadnikNote = `<strong style="color:#f59e0b; font-size:1.1em; display:block; margin-top:5px;">UWAGA: OSADNIK - WKŁADKA PRECO (Dno + Ściany ${data.well.wkladkaOsadnikH || 0} mm)</strong>`;
         finalUwagi = finalUwagi ? finalUwagi + '<br>' + osadnikNote : osadnikNote;
-    } else if (data.well && (data.well.precoFullHeight === 'tak' || data.well.precoFullHeight === true) && data.product && (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')) {
-        const fullHeightNote = '<strong style="color:red; font-size:1.1em; display:block; margin-top:5px;">UWAGA: WKŁADKA PRECO NA CAŁEJ WYSOKOŚCI DENNICY!</strong>';
+    } else if (
+        data.well &&
+        (data.well.precoFullHeight === 'tak' || data.well.precoFullHeight === true) &&
+        data.product &&
+        (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')
+    ) {
+        const fullHeightNote =
+            '<strong style="color:red; font-size:1.1em; display:block; margin-top:5px;">UWAGA: WKŁADKA PRECO NA CAŁEJ WYSOKOŚCI DENNICY!</strong>';
         finalUwagi = finalUwagi ? finalUwagi + '<br>' + fullHeightNote : fullHeightNote;
     }
 

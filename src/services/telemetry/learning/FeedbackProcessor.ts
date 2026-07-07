@@ -76,12 +76,14 @@ export class FeedbackProcessor {
     fromBatch(events: Array<{ eventType: string }>): FeedbackEvent[] {
         const out: FeedbackEvent[] = [];
         for (const e of events) {
-            const fe = this.fromTelemetryEvent(e as {
-                eventType: string;
-                telemetryId?: string | null;
-                wellId?: string | null;
-                createdAt?: string | null;
-            });
+            const fe = this.fromTelemetryEvent(
+                e as {
+                    eventType: string;
+                    telemetryId?: string | null;
+                    wellId?: string | null;
+                    createdAt?: string | null;
+                }
+            );
             if (fe) out.push(fe);
         }
         return out;

@@ -4,34 +4,64 @@ export {};
    ============================================================= */
 
 interface MockProduct {
-    id: string; name: string; componentType: string;
-    dn: number | string; height: number;
-    formaStandardowaKLB?: number; formaStandardowa?: number;
+    id: string;
+    name: string;
+    componentType: string;
+    dn: number | string;
+    height: number;
+    formaStandardowaKLB?: number;
+    formaStandardowa?: number;
     [key: string]: unknown;
 }
 
-function dpRings(heights: number[], rings: MockProduct[], target: number, tolB: number, tolA: number) {
+function dpRings(
+    heights: number[],
+    rings: MockProduct[],
+    target: number,
+    tolB: number,
+    tolA: number
+) {
     if (target <= 0 || !heights?.length) return { success: true, selectedRings: [] };
-    const uniq = [...new Set(heights)].filter(h => h > 0).sort((a, b) => b - a);
+    const uniq = [...new Set(heights)].filter((h) => h > 0).sort((a, b) => b - a);
     if (uniq.length === 0) return { success: false, selectedRings: [] };
-    const minA = Math.max(0, target - tolB), maxA = target + tolA;
+    const minA = Math.max(0, target - tolB),
+        maxA = target + tolA;
     if (minA <= 0) return { success: true, selectedRings: [] };
-    const dp: Array<{ score: number; prevH: number; ah: number } | null> = new Array(maxA + 1).fill(null);
+    const dp: Array<{ score: number; prevH: number; ah: number } | null> = new Array(maxA + 1).fill(
+        null
+    );
     dp[0] = { score: 0, prevH: -1, ah: 0 };
-    for (let h = 1; h <= maxA; h++) for (const rh of uniq) {
-        if (rh > h) continue; const p = dp[h - rh]; if (!p) continue;
-        const ns = p.score + rh * rh;
-        if (!dp[h] || ns > dp[h]!.score) dp[h] = { score: ns, prevH: h - rh, ah: rh };
+    for (let h = 1; h <= maxA; h++)
+        for (const rh of uniq) {
+            if (rh > h) continue;
+            const p = dp[h - rh];
+            if (!p) continue;
+            const ns = p.score + rh * rh;
+            if (!dp[h] || ns > dp[h]!.score) dp[h] = { score: ns, prevH: h - rh, ah: rh };
+        }
+    let bestH = -1,
+        bestS = -1;
+    for (let h = Math.max(0, minA); h <= maxA; h++) {
+        if (dp[h] && dp[h]!.score > bestS) {
+            bestS = dp[h]!.score;
+            bestH = h;
+        }
     }
-    let bestH = -1, bestS = -1;
-    for (let h = Math.max(0, minA); h <= maxA; h++) { if (dp[h] && dp[h]!.score > bestS) { bestS = dp[h]!.score; bestH = h; } }
     if (bestH < 0) return { success: false, selectedRings: [] };
-    const sel: number[] = []; let cur = bestH;
-    while (cur > 0 && dp[cur]) { sel.push(dp[cur]!.ah); cur = dp[cur]!.prevH; }
-    const reg = [...rings].sort((a, b) => (a.componentType === 'krag' && b.componentType !== 'krag') ? -1 : 1);
+    const sel: number[] = [];
+    let cur = bestH;
+    while (cur > 0 && dp[cur]) {
+        sel.push(dp[cur]!.ah);
+        cur = dp[cur]!.prevH;
+    }
+    const reg = [...rings].sort((a, b) =>
+        a.componentType === 'krag' && b.componentType !== 'krag' ? -1 : 1
+    );
     const res: MockProduct[] = [];
     for (const h of sel) {
-        const r = reg.find(x => x.height === h && x.componentType === 'krag') || reg.find(x => x.height === h);
+        const r =
+            reg.find((x) => x.height === h && x.componentType === 'krag') ||
+            reg.find((x) => x.height === h);
         if (r) res.push(r);
     }
     res.sort((a, b) => (b.height || 0) - (a.height || 0));
@@ -40,15 +70,50 @@ function dpRings(heights: number[], rings: MockProduct[], target: number, tolB: 
 
 /* ========== FIXTURES ========== */
 const KREGI: MockProduct[] = [
-    { id: 'K-1000-1000', name: 'Krag 1000', componentType: 'krag', dn: 1000, height: 1000, formaStandardowaKLB: 1 },
-    { id: 'K-1000-500', name: 'Krag 500', componentType: 'krag', dn: 1000, height: 500, formaStandardowaKLB: 1 },
-    { id: 'K-1000-250', name: 'Krag 250', componentType: 'krag', dn: 1000, height: 250, formaStandardowaKLB: 1 },
+    {
+        id: 'K-1000-1000',
+        name: 'Krag 1000',
+        componentType: 'krag',
+        dn: 1000,
+        height: 1000,
+        formaStandardowaKLB: 1
+    },
+    {
+        id: 'K-1000-500',
+        name: 'Krag 500',
+        componentType: 'krag',
+        dn: 1000,
+        height: 500,
+        formaStandardowaKLB: 1
+    },
+    {
+        id: 'K-1000-250',
+        name: 'Krag 250',
+        componentType: 'krag',
+        dn: 1000,
+        height: 250,
+        formaStandardowaKLB: 1
+    }
 ];
 
 const KREGI_Z_OT: MockProduct[] = [
     ...KREGI,
-    { id: 'K-1000-500-OT', name: 'Krag OT 500', componentType: 'krag_ot', dn: 1000, height: 500, formaStandardowaKLB: 1 },
-    { id: 'K-1000-250-OT', name: 'Krag OT 250', componentType: 'krag_ot', dn: 1000, height: 250, formaStandardowaKLB: 1 },
+    {
+        id: 'K-1000-500-OT',
+        name: 'Krag OT 500',
+        componentType: 'krag_ot',
+        dn: 1000,
+        height: 500,
+        formaStandardowaKLB: 1
+    },
+    {
+        id: 'K-1000-250-OT',
+        name: 'Krag OT 250',
+        componentType: 'krag_ot',
+        dn: 1000,
+        height: 250,
+        formaStandardowaKLB: 1
+    }
 ];
 
 /* ================= 1. Podstawowe przypadki ================= */
@@ -135,7 +200,14 @@ describe('solveDpRings — różne zestawy kręgów', () => {
 
     it('tylko 250 → 1500 = 6×250', () => {
         const rings: MockProduct[] = [
-            { id: 'K-250', name: 'Krag 250', componentType: 'krag', dn: 1000, height: 250, formaStandardowaKLB: 1 },
+            {
+                id: 'K-250',
+                name: 'Krag 250',
+                componentType: 'krag',
+                dn: 1000,
+                height: 250,
+                formaStandardowaKLB: 1
+            }
         ];
         const r = dpRings([250], rings, 1500, 50, 20);
         expect(r.success).toBe(true);
@@ -146,9 +218,30 @@ describe('solveDpRings — różne zestawy kręgów', () => {
 
     it('wiele różnych wysokości', () => {
         const rings: MockProduct[] = [
-            { id: 'K-100', name: 'Krag 100', componentType: 'krag', dn: 1000, height: 100, formaStandardowaKLB: 1 },
-            { id: 'K-200', name: 'Krag 200', componentType: 'krag', dn: 1000, height: 200, formaStandardowaKLB: 1 },
-            { id: 'K-300', name: 'Krag 300', componentType: 'krag', dn: 1000, height: 300, formaStandardowaKLB: 1 },
+            {
+                id: 'K-100',
+                name: 'Krag 100',
+                componentType: 'krag',
+                dn: 1000,
+                height: 100,
+                formaStandardowaKLB: 1
+            },
+            {
+                id: 'K-200',
+                name: 'Krag 200',
+                componentType: 'krag',
+                dn: 1000,
+                height: 200,
+                formaStandardowaKLB: 1
+            },
+            {
+                id: 'K-300',
+                name: 'Krag 300',
+                componentType: 'krag',
+                dn: 1000,
+                height: 300,
+                formaStandardowaKLB: 1
+            }
         ];
         const r = dpRings([100, 200, 300], rings, 900, 50, 20);
         expect(r.success).toBe(true);
@@ -165,7 +258,7 @@ describe('solveDpRings — z kręgami OT', () => {
         const r = dpRings([250, 500, 1000], KREGI_Z_OT, 1500, 50, 20);
         expect(r.success).toBe(true);
         // Wszystkie wybrane kręgi powinny być typu 'krag' (nie 'krag_ot')
-        const allKrag = r.selectedRings.every(x => x.componentType === 'krag');
+        const allKrag = r.selectedRings.every((x) => x.componentType === 'krag');
         expect(allKrag).toBe(true);
     });
 });

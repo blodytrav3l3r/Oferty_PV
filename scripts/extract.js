@@ -28,7 +28,7 @@ function extractFunction(content, funcName) {
 }
 
 const functionsToExtract = {
-    'wellPopups': [
+    wellPopups: [
         'openZakonczeniePopup',
         'updateZakonczenieButton',
         'updateRedukcjaButton',
@@ -37,7 +37,7 @@ const functionsToExtract = {
         'showStycznaPopup',
         'handleStycznaProductChoice'
     ],
-    'wellTransitions': [
+    wellTransitions: [
         'renderInlinePrzejsciaApp',
         'renderWellPrzejscia',
         'movePrzejscie',
@@ -54,14 +54,14 @@ const functionsToExtract = {
         'setPrzejsciaVisibilityAll',
         'refreshPrzejsciaVisibilityTiles'
     ],
-    'wellConfigRules': [
+    wellConfigRules: [
         'enforceSingularTopClosures',
         'sortWellConfigByOrder',
         'filterByWellParams',
         'filterSealsByWellType',
         'getAvailableProducts'
     ],
-    'wellActions': [
+    wellActions: [
         'updateElevations',
         'syncElevationInputs',
         'updateHeightIndicator',
@@ -88,10 +88,13 @@ for (const [moduleName, funcs] of Object.entries(functionsToExtract)) {
     for (const funcName of funcs) {
         const result = extractFunction(content, funcName);
         if (result.found) {
-            moduleCode += result.text + "\n\n";
+            moduleCode += result.text + '\n\n';
             // Do not modify content directly inside the loop to avoid messing up offsets for remaining functions if we aren't careful? Wait, extracting and deleting changes string length.
             // Best to replace with padding or re-evaluate. Let's do string replacement.
-            content = content.slice(0, result.start) + "".padEnd(result.end - result.start, ' ') + content.slice(result.end);
+            content =
+                content.slice(0, result.start) +
+                ''.padEnd(result.end - result.start, ' ') +
+                content.slice(result.end);
             console.log(`Extracted ${funcName} -> ${moduleName}.js`);
         } else {
             console.log(`Could NOT find ${funcName}`);

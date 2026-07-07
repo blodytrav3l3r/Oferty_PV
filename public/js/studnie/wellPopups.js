@@ -1058,7 +1058,18 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
     }
 
     well.config = newConfig;
-    well.configSource = 'MANUAL_SWAP'; // Oznaczamy że to była podmiana, ale zachowujemy strukturę
+    well.configSource = 'MANUAL_SWAP';
+
+    if (typeof window.telemetryRecordEvent === 'function') {
+        window.telemetryRecordEvent({
+            eventType: 'reduction_swap',
+            wellId: well.id || well.name,
+            oldDn: oldTarget,
+            newDn: newTarget,
+            configSource: 'MANUAL_SWAP'
+        });
+    }
+
     return true;
 }
 

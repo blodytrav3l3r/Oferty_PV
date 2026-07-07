@@ -11,8 +11,10 @@ function handlePrintClick() {
 window.handlePrintClick = handlePrintClick;
 
 function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
-    const targetOfferId = offerId || (typeof editingOfferId !== 'undefined' ? editingOfferId : null);
-    const targetOrderId = orderId || (typeof editingRuryOrderId !== 'undefined' ? editingRuryOrderId : null);
+    const targetOfferId =
+        offerId || (typeof editingOfferId !== 'undefined' ? editingOfferId : null);
+    const targetOrderId =
+        orderId || (typeof editingRuryOrderId !== 'undefined' ? editingRuryOrderId : null);
 
     let orders = [];
     if (Array.isArray(relatedOrders) && relatedOrders.length > 0) {
@@ -23,7 +25,7 @@ function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
         }
         if (targetOrderId && orders.length === 0) {
             if (typeof ordersRury !== 'undefined') {
-                const currentOrder = ordersRury.find(o => o.id === targetOrderId);
+                const currentOrder = ordersRury.find((o) => o.id === targetOrderId);
                 if (currentOrder) orders = [currentOrder];
             }
         }
@@ -31,27 +33,35 @@ function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
 
     const config = {
         modalTitle: 'Wydruk Dokumentów',
-        offerSection: targetOfferId ? {
-            id: targetOfferId,
-            actionPdf: 'exportOfferDirectRury_action',
-            actionDocx: 'exportOfferDirectRury_action',
-            title: 'Wydruk Oferty',
-            description: 'Wybierz format eksportu oferty:'
-        } : null,
-        ordersSection: orders.length > 0 ? {
-            orders: orders,
-            actionPdf: 'exportOrderDirectRury_action',
-            actionDocx: 'exportOrderDirectRury_action',
-            title: 'Wydruk Zamówienia',
-            description: 'Wybierz zamówienie i format eksportu:'
-        } : null,
-        kartaSection: orders.length > 0 ? {
-            orders: orders,
-            actionPdf: 'exportKartaDirectRury_action',
-            actionDocx: 'exportKartaDirectRury_action',
-            title: 'Wydruk Karty Budowy',
-            description: 'Wybierz zamówienie i format Karty Budowy:'
-        } : null
+        offerSection: targetOfferId
+            ? {
+                  id: targetOfferId,
+                  actionPdf: 'exportOfferDirectRury_action',
+                  actionDocx: 'exportOfferDirectRury_action',
+                  title: 'Wydruk Oferty',
+                  description: 'Wybierz format eksportu oferty:'
+              }
+            : null,
+        ordersSection:
+            orders.length > 0
+                ? {
+                      orders: orders,
+                      actionPdf: 'exportOrderDirectRury_action',
+                      actionDocx: 'exportOrderDirectRury_action',
+                      title: 'Wydruk Zamówienia',
+                      description: 'Wybierz zamówienie i format eksportu:'
+                  }
+                : null,
+        kartaSection:
+            orders.length > 0
+                ? {
+                      orders: orders,
+                      actionPdf: 'exportKartaDirectRury_action',
+                      actionDocx: 'exportKartaDirectRury_action',
+                      title: 'Wydruk Karty Budowy',
+                      description: 'Wybierz zamówienie i format Karty Budowy:'
+                  }
+                : null
     };
 
     if (typeof window.__upmHelperShow === 'function') {
@@ -91,7 +101,12 @@ function getCurrentOfferForExport() {
         notes,
         paymentTerms,
         validity,
-        items: (typeof getActiveItemsArray === 'function' ? getActiveItemsArray() : (window.orderEditMode ? orderCurrentItems : currentOfferItems)) || []
+        items:
+            (typeof getActiveItemsArray === 'function'
+                ? getActiveItemsArray()
+                : window.orderEditMode
+                  ? orderCurrentItems
+                  : currentOfferItems) || []
     };
 }
 
@@ -201,11 +216,16 @@ async function exportOrderDirectRury_action(orderId, format) {
         showToast(`Generowanie Zamówienia (${format.toUpperCase()})...`, 'info');
         const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
         const res = await fetch(`/api/orders-rury/${orderId}/${endpoint}`, {
-            headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+            headers:
+                typeof authHeaders === 'function'
+                    ? authHeaders()
+                    : { 'Content-Type': 'application/json' }
         });
         if (!res.ok) {
             const errText = await res.text().catch(() => res.statusText);
-            throw new Error(`Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`);
+            throw new Error(
+                `Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`
+            );
         }
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
@@ -245,7 +265,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
     const transportKm = Number(document.getElementById('transport-km')?.value || 0);
     const transportRate = Number(document.getElementById('transport-rate')?.value || 0);
 
-    const currentOrder = (typeof getCurrentRuryOrder === 'function') ? getCurrentRuryOrder() : null;
+    const currentOrder = typeof getCurrentRuryOrder === 'function' ? getCurrentRuryOrder() : null;
     const orderNumber = currentOrder?.orderNumber || orderId;
     const offerNumber = currentOrder?.offerNumber || getVal('offer-number') || '';
 
@@ -278,7 +298,9 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         });
         if (!res.ok) {
             const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
-            const details = Array.isArray(errBody.details) ? ` (${errBody.details.join('; ')})` : '';
+            const details = Array.isArray(errBody.details)
+                ? ` (${errBody.details.join('; ')})`
+                : '';
             throw new Error(`${errBody.error || 'Błąd serwera'}${details}`);
         }
         const blob = await res.blob();
@@ -296,7 +318,10 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         showToast('Eksport oferty z bieżącego stanu zakończony', 'success');
     } catch (err) {
         logger.error('offerPrintManager', 'exportRuryOrderAsOffer_action error:', err);
-        showToast('Błąd eksportu oferty z zamówienia: ' + (err instanceof Error ? err.message : err), 'error');
+        showToast(
+            'Błąd eksportu oferty z zamówienia: ' + (err instanceof Error ? err.message : err),
+            'error'
+        );
     }
 }
 

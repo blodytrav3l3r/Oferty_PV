@@ -10,24 +10,24 @@ import {
     ShadingType
 } from 'docx';
 import { DOCX_COLORS } from '../colors';
-import {
-    FONT,
-    COLOR_GRAY_HEADER,
-    COLOR_WHITE,
-    COLOR_BG_SUMMARY,
-    CELL_BORDERS
-} from '../constants';
+import { FONT, COLOR_GRAY_HEADER, COLOR_WHITE, COLOR_BG_SUMMARY, CELL_BORDERS } from '../constants';
 
-const SZ_RURY_DH = 20;   // 10pt
-const SZ_RURY_TH = 14;   // 7pt
-const SZ_RURY_TB = 16;   // 8pt
-const SZ_RURY_PID = 14;  // 7pt
+const SZ_RURY_DH = 20; // 10pt
+const SZ_RURY_TH = 14; // 7pt
+const SZ_RURY_TB = 16; // 8pt
+const SZ_RURY_PID = 14; // 7pt
 import { fmtCurrency, fmtInt, textCell } from '../helpers';
 
 const CATEGORY_ORDER = [
-    'Rury Betonowe', 'Żelbetowe KL. A (II)', 'Żelbetowe KL. S (I)',
-    'Duże Żelbetowe II', 'Rury Jajowe Betonowe', 'Rury Jajowe Żelbetowe',
-    'Akcesoria PEHD', 'Uszczelki', 'Zabezpieczenie transportu'
+    'Rury Betonowe',
+    'Żelbetowe KL. A (II)',
+    'Żelbetowe KL. S (I)',
+    'Duże Żelbetowe II',
+    'Rury Jajowe Betonowe',
+    'Rury Jajowe Żelbetowe',
+    'Akcesoria PEHD',
+    'Uszczelki',
+    'Zabezpieczenie transportu'
 ];
 
 function getDiameter(id: string): number {
@@ -95,7 +95,13 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
         paragraphs.push(
             new Paragraph({
                 children: [
-                    new TextRun({ text: cat, bold: true, size: SZ_RURY_DH, font: FONT, color: COLOR_GRAY_HEADER })
+                    new TextRun({
+                        text: cat,
+                        bold: true,
+                        size: SZ_RURY_DH,
+                        font: FONT,
+                        color: COLOR_GRAY_HEADER
+                    })
                 ],
                 spacing: { before: 120, after: 40 },
                 border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: COLOR_GRAY_HEADER } }
@@ -112,7 +118,7 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
                     textCell('Dł. [m]', { ...thStyle, width: 10 }),
                     textCell('Ilość [szt.]', { ...thStyle, width: 10 }),
                     textCell('Cena jedn.', { ...thStyle, width: 11 }),
-                    textCell('Suma netto [PLN]', { ...thStyle, width: 12 }),
+                    textCell('Suma netto [PLN]', { ...thStyle, width: 12 })
                 ]
             })
         );
@@ -123,7 +129,7 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
                 const aBB = isBosy(a);
                 const bBB = isBosy(b);
                 if (aBB !== bBB) return aBB ? -1 : 1;
-                return (Number(a.lengthM ?? 0)) - (Number(b.lengthM ?? 0));
+                return Number(a.lengthM ?? 0) - Number(b.lengthM ?? 0);
             });
 
             for (const item of itemsInDiam) {
@@ -135,39 +141,100 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
                 const lengthM = Number(item.lengthM ?? 0);
                 const meters = Number(item.meters ?? 0);
                 const hasLength = lengthM > 0;
-                const displayMeters = hasLength ? (meters > 0 ? meters : (lengthM / 1000) * quantity) : 0;
+                const displayMeters = hasLength
+                    ? meters > 0
+                        ? meters
+                        : (lengthM / 1000) * quantity
+                    : 0;
                 const pehdType = String(item.pehdType ?? '');
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
                 const itemPrice = unitPrice * (1 - discount / 100) + pehdCost + surcharge;
                 const netto = itemPrice * quantity;
-                const rowFill = (globalLp % 2 !== 0) ? undefined : DOCX_COLORS.rowAlt;
+                const rowFill = globalLp % 2 !== 0 ? undefined : DOCX_COLORS.rowAlt;
 
                 catTotal += netto;
                 grandTotal += netto;
 
                 const nameRuns: TextRun[] = [
-                    new TextRun({ text: name, size: SZ_RURY_TB, font: FONT, color: DOCX_COLORS.titleText })
+                    new TextRun({
+                        text: name,
+                        size: SZ_RURY_TB,
+                        font: FONT,
+                        color: DOCX_COLORS.titleText
+                    })
                 ];
-                if (pehdType === 'PEHD-3MM') nameRuns.push(new TextRun({ text: ' PEHD 3mm', size: SZ_RURY_TB, font: FONT, color: DOCX_COLORS.titleText }));
-                if (pehdType === 'PEHD-4MM') nameRuns.push(new TextRun({ text: ' PEHD 4mm', size: SZ_RURY_TB, font: FONT, color: DOCX_COLORS.titleText }));
+                if (pehdType === 'PEHD-3MM')
+                    nameRuns.push(
+                        new TextRun({
+                            text: ' PEHD 3mm',
+                            size: SZ_RURY_TB,
+                            font: FONT,
+                            color: DOCX_COLORS.titleText
+                        })
+                    );
+                if (pehdType === 'PEHD-4MM')
+                    nameRuns.push(
+                        new TextRun({
+                            text: ' PEHD 4mm',
+                            size: SZ_RURY_TB,
+                            font: FONT,
+                            color: DOCX_COLORS.titleText
+                        })
+                    );
 
                 rows.push(
                     new TableRow({
                         children: [
-                            textCell(String(globalLp), { size: SZ_RURY_TB, alignment: AlignmentType.CENTER, fill: rowFill }),
+                            textCell(String(globalLp), {
+                                size: SZ_RURY_TB,
+                                alignment: AlignmentType.CENTER,
+                                fill: rowFill
+                            }),
                             new TableCell({
                                 children: [
-                                    new Paragraph({ children: nameRuns, spacing: { before: 15, after: 0 } }),
-                                    new Paragraph({ children: [new TextRun({ text: productId, size: SZ_RURY_PID, font: FONT, color: DOCX_COLORS.headerText })], spacing: { before: 0, after: 15 } })
+                                    new Paragraph({
+                                        children: nameRuns,
+                                        spacing: { before: 15, after: 0 }
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: productId,
+                                                size: SZ_RURY_PID,
+                                                font: FONT,
+                                                color: DOCX_COLORS.headerText
+                                            })
+                                        ],
+                                        spacing: { before: 0, after: 15 }
+                                    })
                                 ],
-                                shading: rowFill ? { type: ShadingType.SOLID, color: rowFill, fill: rowFill } : undefined,
+                                shading: rowFill
+                                    ? { type: ShadingType.SOLID, color: rowFill, fill: rowFill }
+                                    : undefined,
                                 borders: CELL_BORDERS
                             }),
-                            textCell(hasLength ? displayMeters.toFixed(2) : '\u2014', { size: SZ_RURY_TB, alignment: AlignmentType.CENTER, fill: rowFill }),
-                            textCell(fmtInt(quantity), { size: SZ_RURY_TB, alignment: AlignmentType.CENTER, fill: rowFill }),
-                            textCell(fmtCurrency(unitPrice), { size: SZ_RURY_TB, alignment: AlignmentType.RIGHT, fill: rowFill }),
-                            textCell(fmtCurrency(netto), { bold: true, size: SZ_RURY_TB, alignment: AlignmentType.RIGHT, fill: rowFill }),
+                            textCell(hasLength ? displayMeters.toFixed(2) : '\u2014', {
+                                size: SZ_RURY_TB,
+                                alignment: AlignmentType.CENTER,
+                                fill: rowFill
+                            }),
+                            textCell(fmtInt(quantity), {
+                                size: SZ_RURY_TB,
+                                alignment: AlignmentType.CENTER,
+                                fill: rowFill
+                            }),
+                            textCell(fmtCurrency(unitPrice), {
+                                size: SZ_RURY_TB,
+                                alignment: AlignmentType.RIGHT,
+                                fill: rowFill
+                            }),
+                            textCell(fmtCurrency(netto), {
+                                bold: true,
+                                size: SZ_RURY_TB,
+                                alignment: AlignmentType.RIGHT,
+                                fill: rowFill
+                            })
                         ]
                     })
                 );

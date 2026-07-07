@@ -54,7 +54,9 @@ describe('public/templates/kartaBudowy.html — brak naglowka i stopki', () => {
     });
 
     it('wiersz "Przejścia zamówione w" uzywa domyslnego layoutu (info-label + info-value bez inline width)', () => {
-        const match = html.match(/<div class="info-row"[^>]*>[\s\S]{0,300}Przejścia zamówione w:[\s\S]{0,300}<\/div><\/div>/);
+        const match = html.match(
+            /<div class="info-row"[^>]*>[\s\S]{0,300}Przejścia zamówione w:[\s\S]{0,300}<\/div><\/div>/
+        );
         expect(match).not.toBeNull();
         expect(match![0]).toMatch(/<div class="info-label">/);
         expect(match![0]).toMatch(/<div class="info-value">/);

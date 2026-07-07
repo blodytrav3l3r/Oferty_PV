@@ -2,12 +2,12 @@
 
 **Status:** Zaakceptowany  
 **Data:** 2026-06-20  
-**Autor:** Hermes Agent  
+**Autor:** Hermes Agent
 
 ## Kontekst
 
-Frontend aplikacji WITROS Oferty wymaga interaktywnego UI (kreator studni w 5 krokach, 
-kalkulator rur, tabela konfiguracyjna, generowanie PDF/DOCX). Rozważano frameworki 
+Frontend aplikacji WITROS Oferty wymaga interaktywnego UI (kreator studni w 5 krokach,
+kalkulator rur, tabela konfiguracyjna, generowanie PDF/DOCX). Rozważano frameworki
 (React, Vue, Svelte) vs czysty Vanilla JS.
 
 ## Decyzja
@@ -33,9 +33,9 @@ kalkulator rur, tabela konfiguracyjna, generowanie PDF/DOCX). Rozważano framewo
 
 ## Alternatywy odrzucone
 
-| Alternatywa | Powód odrzucenia |
-|------------|------------------|
+| Alternatywa     | Powód odrzucenia                                                                    |
+| --------------- | ----------------------------------------------------------------------------------- |
 | React + Next.js | Zbyt duży overhead dla aplikacji z jednym użytkownikiem. Wymaga przepisania 100% UI |
-| Vue + Nuxt | Podobnie jak React — nieproporcjonalny koszt migracji |
-| Svelte | Mniejszy bundle, ale wciąż wymaga pełnej migracji |
-| HTMX | Nieobsługuje złożonych interakcji SVG (diagram studni, drag & drop) |
+| Vue + Nuxt      | Podobnie jak React — nieproporcjonalny koszt migracji                               |
+| Svelte          | Mniejszy bundle, ale wciąż wymaga pełnej migracji                                   |
+| HTMX            | Nieobsługuje złożonych interakcji SVG (diagram studni, drag & drop)                 |

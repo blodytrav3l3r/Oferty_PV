@@ -16,12 +16,12 @@ function getFormaField(warehouse) {
 
 /**
  * Oblicza wymagania wysokościowe sekcji dennej na podstawie przejść.
- * 
+ *
  * To jest WARSTWA 1 (Requirements Engine) w architekturze:
  * Requirements → Layout → Solver → Scoring
- * 
+ *
  * Nie wybiera dennicy. Tylko mówi: "potrzebuję tyle miejsca".
- * 
+ *
  * @param {Array} transitions - przejścia [{rzednaWlaczenia, productId, dn}]
  * @param {number} rzDna - rzędna dna studni
  * @returns {Object} { minBottomH, highestTop, hasNearBottomPipes, isSettling, needsOTRing, violations }
@@ -48,9 +48,10 @@ function calculateConnectionRequirements(transitions, rzDna) {
 
         const hcInvert = (pel - (rzDna || 0)) * 1000;
 
-        const pprod = typeof studnieProducts !== 'undefined'
-            ? studnieProducts.find(x => x.id === pr.productId)
-            : null;
+        const pprod =
+            typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find((x) => x.id === pr.productId)
+                : null;
 
         let dnVal = 160;
         if (pprod?.dn) {
@@ -87,11 +88,11 @@ function calculateConnectionRequirements(transitions, rzDna) {
 
 /**
  * Szacuje minimalną wysokość sekcji dennej dla danego trybu clearance.
- * 
+ *
  * WARSTWA 1 (Requirements Engine):
  * Używa calculateConnectionRequirements() do wyliczenia constraintów,
  * zwraca minimalną wysokość bottom section dla danego trybu.
- * 
+ *
  * @param {Array} transitions - przejścia
  * @param {number} rzDna - rzędna dna
  * @param {string} mode - 'standard' | 'minimal' | 'physical'
@@ -107,12 +108,8 @@ function estimateBottomSection(transitions, rzDna, mode) {
     let requiredHeight = 0;
 
     for (const p of req.pipes) {
-        const zGora = mode === 'standard' ? p.zapasGora
-                    : mode === 'minimal' ? p.zapasGoraMin
-                    : 0;
-        const zDol = mode === 'standard' ? p.zapasDol
-                   : mode === 'minimal' ? p.zapasDolMin
-                   : 0;
+        const zGora = mode === 'standard' ? p.zapasGora : mode === 'minimal' ? p.zapasGoraMin : 0;
+        const zDol = mode === 'standard' ? p.zapasDol : mode === 'minimal' ? p.zapasDolMin : 0;
 
         // Rura przy dnie: tylko top clearance ma znaczenie
         if (p.isNearBottom) {
@@ -163,7 +160,11 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
         if (dn === 'styczna') {
             return p.componentType === 'styczna' || p.category === 'Studnie styczne';
         }
-        return p.componentType === 'dennica' && parseInt(String(p.dn)) === parseInt(String(dn)) && parseFloat(p.height) > 0;
+        return (
+            p.componentType === 'dennica' &&
+            parseInt(String(p.dn)) === parseInt(String(dn)) &&
+            parseFloat(p.height) > 0
+        );
     });
 
     if (dennicy.length === 0) return null;
@@ -194,9 +195,10 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
             // Rura powyżej dennicy → trafi do kręgu OT, nie sprawdzaj
             if (hcInvert >= d.height) continue;
 
-            const pprod = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find(x => x.id === pr.productId)
-                : products.find(x => x.id === pr.productId);
+            const pprod =
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((x) => x.id === pr.productId)
+                    : products.find((x) => x.id === pr.productId);
             if (!pprod) continue;
 
             let dnVal = 160;
@@ -221,9 +223,11 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
             const SAFETY = 15; // mm (zbieżne z checkConflicts i validator.py)
 
             if (mode === 'standard') {
-                if (bottomClearance < (effZDol + SAFETY) || topClearance < (zGora + SAFETY)) return false;
+                if (bottomClearance < effZDol + SAFETY || topClearance < zGora + SAFETY)
+                    return false;
             } else if (mode === 'minimal') {
-                if (bottomClearance < (effZDolMin + SAFETY) || topClearance < (zGoraMin + SAFETY)) return false;
+                if (bottomClearance < effZDolMin + SAFETY || topClearance < zGoraMin + SAFETY)
+                    return false;
             } else if (mode === 'physical') {
                 if (topClearance < 0) return false;
             }
@@ -252,12 +256,12 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
 
 /**
  * Hybrydowy dobór dennicy — Phase 1.
- * 
+ *
  * Phase 1: Wrapper wokół starego kodu z telemetrią i pre-filtrowaniem
  * przez Requirements Engine.
- * 
+ *
  * Phase 2: Zastąpi całkowicie getLowestDennica().
- * 
+ *
  * @param {Array} products - lista wszystkich dostępnych produktów
  * @param {string|number} dn - średnica studni
  * @param {string} warehouse - 'Kluczbork' lub 'Włocławek'
@@ -276,7 +280,11 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
             if (preferredDn) return parseInt(String(p.dn)) === parseInt(String(preferredDn));
             return true;
         }
-        return p.componentType === 'dennica' && parseInt(String(p.dn)) === parseInt(String(dn)) && parseFloat(p.height) > 0;
+        return (
+            p.componentType === 'dennica' &&
+            parseInt(String(p.dn)) === parseInt(String(dn)) &&
+            parseFloat(p.height) > 0
+        );
     });
 
     if (dennicy.length === 0) return { dennica: null, reason: 'no_dennice' };
@@ -306,16 +314,16 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
             const hcInvert = (pel - (rzDna || 0)) * 1000;
             if (hcInvert >= d.height) continue;
 
-            const pprod = typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find(x => x.id === pr.productId)
-                : products.find(x => x.id === pr.productId);
+            const pprod =
+                typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find((x) => x.id === pr.productId)
+                    : products.find((x) => x.id === pr.productId);
             if (!pprod) continue;
 
             let dnVal = 160;
             if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/'))
                 dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
-            else if (pprod.dn)
-                dnVal = parseFloat(pprod.dn) || 160;
+            else if (pprod.dn) dnVal = parseFloat(pprod.dn) || 160;
 
             const zDol = parseFloat(pprod.zapasDol) || 300;
             const zGora = parseFloat(pprod.zapasGora) || 300;
@@ -329,9 +337,11 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
             const SAFETY = 15;
 
             if (mode === 'standard') {
-                if (bottomClearance < (effZDol + SAFETY) || topClearance < (zGora + SAFETY)) return false;
+                if (bottomClearance < effZDol + SAFETY || topClearance < zGora + SAFETY)
+                    return false;
             } else if (mode === 'minimal') {
-                if (bottomClearance < (effZDolMin + SAFETY) || topClearance < (zGoraMin + SAFETY)) return false;
+                if (bottomClearance < effZDolMin + SAFETY || topClearance < zGoraMin + SAFETY)
+                    return false;
             }
         }
         return true;
@@ -371,14 +381,16 @@ function getReductionPlate(products, dn, useReduction, targetDn = 1000) {
 
         // Szukamy w nazwie wzorców pasujących do docelowej średnicy (np. →DN1000, /1000, DN1000)
         const nameUpper = (p.name || '').toUpperCase();
-        return nameUpper.includes('/' + tDn) || 
-               nameUpper.includes(' DN' + tDn) || 
-               nameUpper.includes('X' + tDn) || 
-               nameUpper.includes(' NA ' + tDn) ||
-               nameUpper.includes('→DN' + tDn) ||
-               nameUpper.includes('→' + tDn) ||
-               nameUpper.includes('->DN' + tDn) ||
-               nameUpper.includes('->' + tDn);
+        return (
+            nameUpper.includes('/' + tDn) ||
+            nameUpper.includes(' DN' + tDn) ||
+            nameUpper.includes('X' + tDn) ||
+            nameUpper.includes(' NA ' + tDn) ||
+            nameUpper.includes('→DN' + tDn) ||
+            nameUpper.includes('→' + tDn) ||
+            nameUpper.includes('->DN' + tDn) ||
+            nameUpper.includes('->' + tDn)
+        );
     });
 
     return plates.length > 0 ? plates[0] : null;
@@ -418,9 +430,11 @@ function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
     }
 
     // Kandydaci
-    const konusy = blockKonus ? [] : products
-        .filter((p) => p.componentType === 'konus' && parseInt(p.dn) === dn)
-        .sort((a, b) => (parseInt(b[ff]) || 0) - (parseInt(a[ff]) || 0));
+    const konusy = blockKonus
+        ? []
+        : products
+              .filter((p) => p.componentType === 'konus' && parseInt(p.dn) === dn)
+              .sort((a, b) => (parseInt(b[ff]) || 0) - (parseInt(a[ff]) || 0));
 
     const dinPlates = products
         .filter((p) => p.componentType === 'plyta_din' && parseInt(p.dn) === dn)

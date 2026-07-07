@@ -104,9 +104,11 @@ export function normalizeDate(raw: unknown): string {
 export function dateConversionSql(column: string, alias?: string): string {
     const col = column.includes('.') ? column : `"${column}"`;
     const aliasStr = alias || column.split('.').pop()?.replace(/"/g, '') || column;
-    return `CASE WHEN ${col} GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' ` +
+    return (
+        `CASE WHEN ${col} GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' ` +
         `THEN datetime(CAST(${col} AS INTEGER)/1000, 'unixepoch') ` +
-        `ELSE ${col} END as "${aliasStr}"`;
+        `ELSE ${col} END as "${aliasStr}"`
+    );
 }
 
 /**
@@ -114,5 +116,7 @@ export function dateConversionSql(column: string, alias?: string): string {
  * Używane do sanityzacji ID przed interpolacją w raw queries WHERE.
  */
 export function isValidId(id: string): boolean {
-    return typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id);
+    return (
+        typeof id === 'string' && id.length > 0 && id.length < 100 && /^[a-zA-Z0-9_-]+$/.test(id)
+    );
 }

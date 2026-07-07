@@ -65,10 +65,12 @@ function getOfferOrderProgress(offerId, offerWells) {
 function getOrderForWellId(wellId, offerId) {
     if (!wellId || !ordersStudnie) return null;
     const nId = offerId ? normalizeId(offerId) : null;
-    return ordersStudnie.find((order) => {
-        if (nId && normalizeId(order.offerId) !== nId) return false;
-        return (order.wells || []).some((w) => w.id === wellId);
-    }) || null;
+    return (
+        ordersStudnie.find((order) => {
+            if (nId && normalizeId(order.offerId) !== nId) return false;
+            return (order.wells || []).some((w) => w.id === wellId);
+        }) || null
+    );
 }
 
 window.getOrdersForOffer = getOrdersForOffer;
@@ -79,112 +81,126 @@ window.getOrderForWellId = getOrderForWellId;
 
 async function createOrderFromOffer() {
     try {
-    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
-        if (typeof showToast === 'function') {
-            showToast('Tworzenie nowego zamówienia jest niedostępne w trybie edycji zamówienia.', 'error');
+        if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+            if (typeof showToast === 'function') {
+                showToast(
+                    'Tworzenie nowego zamówienia jest niedostępne w trybie edycji zamówienia.',
+                    'error'
+                );
+            }
+            return;
         }
-        return;
-    }
 
-    // Zbierz zaznaczone studnie PRZED zapisem (zapis odświeża DOM i kasuje stan checkboxów)
-    let selectedWells;
-    const existingCheckboxes = document.querySelectorAll('.well-order-checkbox');
-    if (existingCheckboxes.length > 0) {
-        selectedWells = collectSelectedWellsForOrder();
-    } else {
-        // Nowa (niezapisana) oferta — checkboxów nie ma, domyślnie wszystkie studnie
-        selectedWells = [...wells];
-    }
-    if (selectedWells.length === 0) {
-        showToast('Zaznacz co najmniej jedną studnię do zamówienia', 'error');
-        return;
-    }
-
-    // Zapobiegaj wyścigom w UI, jeśli użytkownik kliknął dwukrotnie lub kliknął Zamówienie podczas trwania zapisu
-    if (isSavingOffer) {
-        showToast('Trwa zapisywanie...', 'info');
-        while (isSavingOffer) {
-            await new Promise((r) => setTimeout(r, 200));
+        // Zbierz zaznaczone studnie PRZED zapisem (zapis odświeża DOM i kasuje stan checkboxów)
+        let selectedWells;
+        const existingCheckboxes = document.querySelectorAll('.well-order-checkbox');
+        if (existingCheckboxes.length > 0) {
+            selectedWells = collectSelectedWellsForOrder();
+        } else {
+            // Nowa (niezapisana) oferta — checkboxów nie ma, domyślnie wszystkie studnie
+            selectedWells = [...wells];
         }
-    } else {
-        // Automatycznie zapisz ofertę, aby upewnić się, że najnowszy stan został przesłany do SQLite i odświeżony
-        const saveResult = await saveOfferStudnie();
-        isSavingOffer = false;
-        if (saveResult === false) return; // false = blad zapisu, undefined = telemetry popup (kontynuuj)
-    }
+        if (selectedWells.length === 0) {
+            showToast('Zaznacz co najmniej jedną studnię do zamówienia', 'error');
+            return;
+        }
 
-    const number = document.getElementById('offer-number')?.value?.trim();
-    if (!number) {
-        showToast('Błąd: Brak numeru oferty', 'error');
-        return;
-    }
-    if (!editingOfferIdStudnie) {
-        showToast('Błąd krytyczny: Brak ID oferty po zapisie', 'error');
-        return;
-    }
+        // Zapobiegaj wyścigom w UI, jeśli użytkownik kliknął dwukrotnie lub kliknął Zamówienie podczas trwania zapisu
+        if (isSavingOffer) {
+            showToast('Trwa zapisywanie...', 'info');
+            while (isSavingOffer) {
+                await new Promise((r) => setTimeout(r, 200));
+            }
+        } else {
+            // Automatycznie zapisz ofertę, aby upewnić się, że najnowszy stan został przesłany do SQLite i odświeżony
+            const saveResult = await saveOfferStudnie();
+            isSavingOffer = false;
+            if (saveResult === false) return; // false = blad zapisu, undefined = telemetry popup (kontynuuj)
+        }
 
-    logger.info('orderManager', '[createOrderFromOffer] editingOfferIdStudnie =', editingOfferIdStudnie);
-    logger.info('orderManager', '[createOrderFromOffer] offersStudnie count =', offersStudnie.length);
-    const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
-    logger.info('orderManager', '[createOrderFromOffer] offer found =', !!offer);
+        const number = document.getElementById('offer-number')?.value?.trim();
+        if (!number) {
+            showToast('Błąd: Brak numeru oferty', 'error');
+            return;
+        }
+        if (!editingOfferIdStudnie) {
+            showToast('Błąd krytyczny: Brak ID oferty po zapisie', 'error');
+            return;
+        }
 
-    if (!offer) {
-        showToast(
-            'Nie znaleziono oferty (ID: ' +
-                editingOfferIdStudnie +
-                ', total: ' +
-                offersStudnie.length +
-                ')',
-            'error'
+        logger.info(
+            'orderManager',
+            '[createOrderFromOffer] editingOfferIdStudnie =',
+            editingOfferIdStudnie
         );
-        return;
-    }
+        logger.info(
+            'orderManager',
+            '[createOrderFromOffer] offersStudnie count =',
+            offersStudnie.length
+        );
+        const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
+        logger.info('orderManager', '[createOrderFromOffer] offer found =', !!offer);
 
-    // Weryfikacja — wybrane studnie nie mogą być już zamówione
-    const alreadyOrderedIds = getOrderedWellIds(offer.id);
-    const conflicting = selectedWells.filter((w) => alreadyOrderedIds.has(w.id));
-    if (conflicting.length > 0) {
-        showToast('Wybrane studnie są już częścią innego zamówienia', 'error');
-        return;
-    }
+        if (!offer) {
+            showToast(
+                'Nie znaleziono oferty (ID: ' +
+                    editingOfferIdStudnie +
+                    ', total: ' +
+                    offersStudnie.length +
+                    ')',
+                'error'
+            );
+            return;
+        }
 
-    // Ostrzeżenie: wybrane studnie zostaną zablokowane do edycji w ofercie
-    const confirmMsg =
-        selectedWells.length === wells.length
-            ? `Utworzysz zamówienie na WSZYSTKIE ${selectedWells.length} studni z oferty.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\n\nKontynuować?`
-            : `Utworzysz zamówienie na ${selectedWells.length} z ${wells.length} studni.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\nPozostałe studnie będziesz mógł domówić później.\n\nKontynuować?`;
+        // Weryfikacja — wybrane studnie nie mogą być już zamówione
+        const alreadyOrderedIds = getOrderedWellIds(offer.id);
+        const conflicting = selectedWells.filter((w) => alreadyOrderedIds.has(w.id));
+        if (conflicting.length > 0) {
+            showToast('Wybrane studnie są już częścią innego zamówienia', 'error');
+            return;
+        }
 
-    if (
-        !(await appConfirm(confirmMsg, {
-            title: 'Tworzenie zamówienia częściowego',
-            type: 'warning'
-        }))
-    )
-        return;
+        // Ostrzeżenie: wybrane studnie zostaną zablokowane do edycji w ofercie
+        const confirmMsg =
+            selectedWells.length === wells.length
+                ? `Utworzysz zamówienie na WSZYSTKIE ${selectedWells.length} studni z oferty.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\n\nKontynuować?`
+                : `Utworzysz zamówienie na ${selectedWells.length} z ${wells.length} studni.\nWybrane studnie zostaną zablokowane do edycji w ofercie.\nPozostałe studnie będziesz mógł domówić później.\n\nKontynuować?`;
 
-    // Krok 4.1 — Karta budowy zamiast popupu
-    if (!ordersStudnie) {
-        ordersStudnie = await loadOrdersStudnie();
-    }
-    const existingOrdersForOffer = getOrdersForOffer(offer.id);
-    pendingOrderCreationData = {
-        offer,
-        selectedWells,
-        kartaBudowyTemplateOrders: existingOrdersForOffer
-    };
-    initKartaBudowyStep4(offer.number);
-    
-    // Przejdź do kroku 4
-    if (typeof goToWizardStep === 'function') {
-        goToWizardStep(4);
-    } else {
-        currentWizardStep = 4;
-        if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
-    }
+        if (
+            !(await appConfirm(confirmMsg, {
+                title: 'Tworzenie zamówienia częściowego',
+                type: 'warning'
+            }))
+        )
+            return;
+
+        // Krok 4.1 — Karta budowy zamiast popupu
+        if (!ordersStudnie) {
+            ordersStudnie = await loadOrdersStudnie();
+        }
+        const existingOrdersForOffer = getOrdersForOffer(offer.id);
+        pendingOrderCreationData = {
+            offer,
+            selectedWells,
+            kartaBudowyTemplateOrders: existingOrdersForOffer
+        };
+        initKartaBudowyStep4(offer.number);
+
+        // Przejdź do kroku 4
+        if (typeof goToWizardStep === 'function') {
+            goToWizardStep(4);
+        } else {
+            currentWizardStep = 4;
+            if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
+        }
     } catch (err) {
         logger.error('orderManager', '[createOrderFromOffer] Error:', err);
         if (typeof showToast === 'function') {
-            showToast('Wystąpił błąd podczas tworzenia zamówienia: ' + (err.message || 'nieznany błąd'), 'error');
+            showToast(
+                'Wystąpił błąd podczas tworzenia zamówienia: ' + (err.message || 'nieznany błąd'),
+                'error'
+            );
         }
     }
 }
@@ -202,12 +218,21 @@ var pendingOrderCreationData = null;
 
 function _resetKartaBudowyForm() {
     const fields = [
-        'step4-email-faktura', 'step4-email-efaktura', 'step4-offer-nr-input',
-        'step4-adres-wysylki', 'step4-ilosc-dni', 'step4-ubezpieczenie',
-        'step4-osoba-kontakt', 'step4-kaskada-uwagi', 'step4-slepa-kineta-uwagi',
+        'step4-email-faktura',
+        'step4-email-efaktura',
+        'step4-offer-nr-input',
+        'step4-adres-wysylki',
+        'step4-ilosc-dni',
+        'step4-ubezpieczenie',
+        'step4-osoba-kontakt',
+        'step4-kaskada-uwagi',
+        'step4-slepa-kineta-uwagi',
         'step4-data-zamowienia'
     ];
-    fields.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    fields.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
 
     const textDefaults = {
         'step4-warunki-platnosci': 'przelew',
@@ -228,28 +253,32 @@ function _resetKartaBudowyForm() {
         'step4-przejscia-zamowione': 'Nie dotyczy',
         'step4-pozostale-wlasciwosci': ''
     };
-    Object.keys(textDefaults).forEach(id => {
+    Object.keys(textDefaults).forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = textDefaults[id];
     });
 
-    ['step4-rodzaj-stopni-inne', 'step4-uszczelka-studni-inne', 'step4-kineta-inne'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-        const wrap = document.getElementById(id + '-wrap');
-        if (wrap) wrap.style.display = 'none';
-    });
+    ['step4-rodzaj-stopni-inne', 'step4-uszczelka-studni-inne', 'step4-kineta-inne'].forEach(
+        (id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+            const wrap = document.getElementById(id + '-wrap');
+            if (wrap) wrap.style.display = 'none';
+        }
+    );
 }
 
 function _calcTransportCosts() {
-    let tCost = 0, tWeight = 0, costPerTrip = 0;
+    let tCost = 0,
+        tWeight = 0,
+        costPerTrip = 0;
 
     if (orderEditMode && orderEditMode.order) {
         const o = orderEditMode.order;
         tWeight = o.totalWeight || 0;
         if (o.wells) {
-            o.wells.forEach(w => {
-                tCost += (typeof w.transportCost === 'number' ? w.transportCost : 0);
+            o.wells.forEach((w) => {
+                tCost += typeof w.transportCost === 'number' ? w.transportCost : 0;
             });
         }
         costPerTrip = (parseFloat(o.transportKm) || 0) * (parseFloat(o.transportRate) || 0);
@@ -257,13 +286,23 @@ function _calcTransportCosts() {
         const off = pendingOrderCreationData.offer;
         const sel = pendingOrderCreationData.selectedWells;
         if (sel) {
-            sel.forEach(w => tWeight += (typeof calcWellStats === 'function' ? calcWellStats(w).weight : 0));
+            sel.forEach(
+                (w) =>
+                    (tWeight += typeof calcWellStats === 'function' ? calcWellStats(w).weight : 0)
+            );
         }
         const gWeight = off.totalWeight || 0;
         const gKm = parseFloat(off.transportKm) || 0;
         const gRate = parseFloat(off.transportRate) || 0;
         const offerMode = off.transportMode || 'full';
-        const gCost = (gKm > 0 && gRate > 0) ? (typeof calcTransportCount === 'function' ? calcTransportCount(gWeight, offerMode) : Math.ceil(gWeight / MAX_TRANSPORT_WEIGHT)) * gKm * gRate : 0;
+        const gCost =
+            gKm > 0 && gRate > 0
+                ? (typeof calcTransportCount === 'function'
+                      ? calcTransportCount(gWeight, offerMode)
+                      : Math.ceil(gWeight / MAX_TRANSPORT_WEIGHT)) *
+                  gKm *
+                  gRate
+                : 0;
         if (gWeight > 0 && tWeight > 0) {
             tCost = gCost * (tWeight / gWeight);
         }
@@ -277,7 +316,11 @@ function _displayTransportCost(tCost, costPerTrip) {
     const wyliczonyTransportInput = document.getElementById('step4-wyliczony-transport');
     if (!wyliczonyTransportInput) return;
     const t = Math.max(0, tCost);
-    const fmt = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const fmt = (v) =>
+        v
+            .toFixed(2)
+            .replace('.', ',')
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
     if (t > 0 && costPerTrip > 0) {
         const count = Math.round((t / costPerTrip) * 1000) / 1000;
@@ -299,25 +342,42 @@ function _detectWellParams() {
         pozostale: []
     };
 
-    const wellsToDetect = (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order)
-        ? orderEditMode.order.wells
-        : ((typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData)
-            ? pendingOrderCreationData.selectedWells : []);
+    const wellsToDetect =
+        typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order
+            ? orderEditMode.order.wells
+            : typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData
+              ? pendingOrderCreationData.selectedWells
+              : [];
 
     if (!wellsToDetect || wellsToDetect.length === 0) return result;
 
-    let hasNierdzewna = false, hasDrabinka = false, hasBrak = false;
-    let hasZelbet = false, hasBetonStudnia = false;
-    let hasPrecoTop = false, hasPreco = false, hasBetonKineta = false;
+    let hasNierdzewna = false,
+        hasDrabinka = false,
+        hasBrak = false;
+    let hasZelbet = false,
+        hasBetonStudnia = false;
+    let hasPrecoTop = false,
+        hasPreco = false,
+        hasBetonKineta = false;
     let spocznikHFound = null;
 
-    wellsToDetect.forEach(w => {
+    wellsToDetect.forEach((w) => {
         if (w.stopnie === 'nierdzewna') hasNierdzewna = true;
         else if (w.stopnie === 'drabinka') hasDrabinka = true;
         else if (w.stopnie === 'brak') hasBrak = true;
 
-        if (w.dennicaMaterial === 'zelbetowa' || w.nadbudowa === 'zelbetowa' || w.material === 'zelbetowa') hasZelbet = true;
-        else if (w.dennicaMaterial === 'betonowa' || w.nadbudowa === 'betonowa' || w.material === 'betonowa') hasBetonStudnia = true;
+        if (
+            w.dennicaMaterial === 'zelbetowa' ||
+            w.nadbudowa === 'zelbetowa' ||
+            w.material === 'zelbetowa'
+        )
+            hasZelbet = true;
+        else if (
+            w.dennicaMaterial === 'betonowa' ||
+            w.nadbudowa === 'betonowa' ||
+            w.material === 'betonowa'
+        )
+            hasBetonStudnia = true;
 
         if (w.kineta === 'precotop') hasPrecoTop = true;
         else if (w.kineta === 'preco') hasPreco = true;
@@ -325,10 +385,18 @@ function _detectWellParams() {
 
         if (w.spocznikH && w.spocznikH !== 'brak') spocznikHFound = w.spocznikH;
 
-        if (w.agresjaChemiczna && w.agresjaChemiczna !== 'brak' && !result.pozostale.includes(w.agresjaChemiczna)) {
+        if (
+            w.agresjaChemiczna &&
+            w.agresjaChemiczna !== 'brak' &&
+            !result.pozostale.includes(w.agresjaChemiczna)
+        ) {
             result.pozostale.push(w.agresjaChemiczna);
         }
-        if (w.agresjaMrozowa && w.agresjaMrozowa !== 'brak' && !result.pozostale.includes(w.agresjaMrozowa)) {
+        if (
+            w.agresjaMrozowa &&
+            w.agresjaMrozowa !== 'brak' &&
+            !result.pozostale.includes(w.agresjaMrozowa)
+        ) {
             result.pozostale.push(w.agresjaMrozowa);
         }
     });
@@ -350,7 +418,10 @@ function _detectWellParams() {
 }
 
 function _applyDetectedParams(detected) {
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
     setVal('step4-rodzaj-stopni', detected.stopnie);
     setVal('step4-rodzaj-studni', detected.rodzajStudni);
     setVal('step4-uszczelka-studni', 'Brak');
@@ -371,10 +442,19 @@ function _applyDetectedParams(detected) {
 }
 
 function _getExistingKartaBudowyData() {
-    if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.kartaBudowy) {
+    if (
+        typeof orderEditMode !== 'undefined' &&
+        orderEditMode &&
+        orderEditMode.order &&
+        orderEditMode.order.kartaBudowy
+    ) {
         return orderEditMode.order.kartaBudowy;
     }
-    if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData && pendingOrderCreationData.kartaBudowyTemplate) {
+    if (
+        typeof pendingOrderCreationData !== 'undefined' &&
+        pendingOrderCreationData &&
+        pendingOrderCreationData.kartaBudowyTemplate
+    ) {
         return pendingOrderCreationData.kartaBudowyTemplate;
     }
     return null;
@@ -390,14 +470,28 @@ function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
     }
 
     const mappings = [
-        'emailFaktura', 'emailEfaktura', 'adresWysylki', 'iloscDni',
-        'ubezpieczenie', 'osobaKontakt', 'wysokoscSpocznika', 'usytuowanie',
-        'kaskada', 'kaskadaUwagi', 'slepaKineta', 'slepaKinetaUwagi',
-        'redukcjaKinety', 'przejsciaTulejowe', 'przejsciaSzczelne',
-        'wlasciwosciBetonu', 'pozostaleWlasciwosci', 'przejsciaZamowione',
-        'dataZamowienia', 'uwagiOgolne'
+        'emailFaktura',
+        'emailEfaktura',
+        'adresWysylki',
+        'iloscDni',
+        'ubezpieczenie',
+        'osobaKontakt',
+        'wysokoscSpocznika',
+        'usytuowanie',
+        'kaskada',
+        'kaskadaUwagi',
+        'slepaKineta',
+        'slepaKinetaUwagi',
+        'redukcjaKinety',
+        'przejsciaTulejowe',
+        'przejsciaSzczelne',
+        'wlasciwosciBetonu',
+        'pozostaleWlasciwosci',
+        'przejsciaZamowione',
+        'dataZamowienia',
+        'uwagiOgolne'
     ];
-    mappings.forEach(field => {
+    mappings.forEach((field) => {
         const inputId = 'step4-' + field.replace(/([A-Z])/g, '-$1').toLowerCase();
         const el = document.getElementById(inputId);
         if (el && existingData[field]) el.value = existingData[field];
@@ -414,7 +508,7 @@ function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
         if (el && existingData[field]) el.value = existingData[field];
     });
 
-    ['rodzajStopni', 'uszczelkaStudni', 'kineta'].forEach(field => {
+    ['rodzajStopni', 'uszczelkaStudni', 'kineta'].forEach((field) => {
         const inputId = 'step4-' + field.replace(/([A-Z])/g, '-$1').toLowerCase();
         const el = document.getElementById(inputId);
         if (el && existingData[field]) {
@@ -443,8 +537,9 @@ function _generateDefaultUwagi() {
 
     const selectedWells = pendingOrderCreationData
         ? pendingOrderCreationData.selectedWells
-        : (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order
-            ? orderEditMode.order.wells : []);
+        : typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order
+          ? orderEditMode.order.wells
+          : [];
     if (selectedWells.length === 0 || typeof wellDiscounts === 'undefined') return;
 
     let lines = [];
@@ -452,8 +547,8 @@ function _generateDefaultUwagi() {
     let pehdDiscounts = new Set();
     let paintingLines = new Set();
 
-    const uniqueDns = [...new Set(selectedWells.map(w => w.dn))];
-    uniqueDns.forEach(dn => {
+    const uniqueDns = [...new Set(selectedWells.map((w) => w.dn))];
+    uniqueDns.forEach((dn) => {
         const discountKey = dn === 'styczna' ? 'styczne' : dn;
         const d = wellDiscounts[discountKey];
         if (d) {
@@ -475,20 +570,26 @@ function _generateDefaultUwagi() {
         }
     });
 
-    selectedWells.forEach(w => {
+    selectedWells.forEach((w) => {
         if (w.malowanieW && w.malowanieW !== 'brak') {
-            const price = parseFloat(w.malowanieWewCena || 0).toFixed(2).replace('.', ',');
+            const price = parseFloat(w.malowanieWewCena || 0)
+                .toFixed(2)
+                .replace('.', ',');
             paintingLines.add(`Malowanie wewnątrz (${w.malowanieW}): ${price} PLN/m²`);
         }
         if (w.malowanieZ && w.malowanieZ !== 'brak') {
-            const price = parseFloat(w.malowanieZewCena || 0).toFixed(2).replace('.', ',');
+            const price = parseFloat(w.malowanieZewCena || 0)
+                .toFixed(2)
+                .replace('.', ',');
             paintingLines.add(`Malowanie zewnątrz (${w.malowanieZ}): ${price} PLN/m²`);
         }
     });
 
-    precoDiscounts.forEach(pre => lines.push(`Preco: ${pre.toFixed(2).replace('.', ',')}%`));
-    pehdDiscounts.forEach(pehd => lines.push(`Wkładka PEHD: ${pehd.toFixed(2).replace('.', ',')}%`));
-    paintingLines.forEach(pl => lines.push(pl));
+    precoDiscounts.forEach((pre) => lines.push(`Preco: ${pre.toFixed(2).replace('.', ',')}%`));
+    pehdDiscounts.forEach((pehd) =>
+        lines.push(`Wkładka PEHD: ${pehd.toFixed(2).replace('.', ',')}%`)
+    );
+    paintingLines.forEach((pl) => lines.push(pl));
 
     if (lines.length > 0) {
         uwagiEl.value = lines.join('\n');
@@ -543,8 +644,13 @@ function getKartaBudowyCopyOrders() {
         return pendingOrderCreationData.kartaBudowyTemplateOrders || [];
     }
     if (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order) {
-        const offerId = orderEditMode.order.offerId || orderEditMode.order.offerStudnieId || editingOfferIdStudnie;
-        return getOrdersForOffer(offerId).filter((order) => String(order.id) !== String(orderEditMode.order.id));
+        const offerId =
+            orderEditMode.order.offerId ||
+            orderEditMode.order.offerStudnieId ||
+            editingOfferIdStudnie;
+        return getOrdersForOffer(offerId).filter(
+            (order) => String(order.id) !== String(orderEditMode.order.id)
+        );
     }
     return [];
 }
@@ -584,13 +690,18 @@ function renderKartaBudowyCopyOptions() {
         copySelect.innerHTML = '<option>Brak zamówień do kopiowania</option>';
         copySelect.disabled = true;
         if (copyButton) copyButton.disabled = true;
-        if (helpText) helpText.textContent = 'Brak wcześniejszych zamówień powiązanych z tą ofertą.';
+        if (helpText)
+            helpText.textContent = 'Brak wcześniejszych zamówień powiązanych z tą ofertą.';
         return;
     }
 
     const optionsHtml = [`<option value="">Wybierz kartę budowy do skopiowania</option>`].concat(
         orders.map((order) => {
-            const label = order.orderNumber ? order.orderNumber : order.id ? order.id.substring(0, 8) : 'Brak numeru';
+            const label = order.orderNumber
+                ? order.orderNumber
+                : order.id
+                  ? order.id.substring(0, 8)
+                  : 'Brak numeru';
             const suffix = order.kartaBudowy ? '' : ' (brak karty budowy)';
             return `<option value="${order.id}"${order.kartaBudowy ? '' : ' disabled'}>${label}${suffix}</option>`;
         })
@@ -599,7 +710,9 @@ function renderKartaBudowyCopyOptions() {
     copySelect.innerHTML = optionsHtml.join('');
     copySelect.disabled = false;
     if (copyButton) copyButton.disabled = !orders.some((order) => order.kartaBudowy);
-    if (helpText) helpText.textContent = 'Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.';
+    if (helpText)
+        helpText.textContent =
+            'Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.';
 }
 
 function copyKartaBudowyFromOrder() {
@@ -641,7 +754,10 @@ function copyKartaBudowyFromOrder() {
     }
 
     if (typeof showToast === 'function') {
-        showToast(`Skopiowano dane Karty Budowy z zamówienia ${sourceOrder.orderNumber || sourceOrder.id.substring(0, 8)}.`, 'success');
+        showToast(
+            `Skopiowano dane Karty Budowy z zamówienia ${sourceOrder.orderNumber || sourceOrder.id.substring(0, 8)}.`,
+            'success'
+        );
     }
 }
 
@@ -741,36 +857,77 @@ function collectKartaBudowyDataStep4() {
     const offerInput = document.getElementById('step4-offer-nr-input')?.value || '';
     const uwagiOgolne = (document.getElementById('step4-uwagi-ogolne')?.value || '').trim();
     const adresWysylki = (document.getElementById('step4-adres-wysylki')?.value || '').trim();
-    const warunkiPlatnosci = (document.getElementById('step4-warunki-platnosci')?.value || 'przelew').trim();
+    const warunkiPlatnosci = (
+        document.getElementById('step4-warunki-platnosci')?.value || 'przelew'
+    ).trim();
     const iloscDni = (document.getElementById('step4-ilosc-dni')?.value || '').trim();
     const ubezpieczenie = (document.getElementById('step4-ubezpieczenie')?.value || '').trim();
     const osobaKontakt = (document.getElementById('step4-osoba-kontakt')?.value || '').trim();
-    const zabezpieczenieTransportu = (document.getElementById('step4-zabezpieczenie-transportu')?.value || 'Nie dotyczy').trim();
-    const rodzajTransportu = (document.getElementById('step4-rodzaj-transportu')?.value || 'Transport P.V.').trim();
-    const rodzajStopni = (document.getElementById('step4-rodzaj-stopni')?.value || 'Nie dotyczy').trim();
-    const rodzajStopniInne = (document.getElementById('step4-rodzaj-stopni-inne')?.value || '').trim();
-    const rodzajStudni = (document.getElementById('step4-rodzaj-studni')?.value || 'Nie dotyczy').trim();
-    const uszczelkaStudni = (document.getElementById('step4-uszczelka-studni')?.value || 'Brak').trim();
-    const uszczelkaStudniInne = (document.getElementById('step4-uszczelka-studni-inne')?.value || '').trim();
+    const zabezpieczenieTransportu = (
+        document.getElementById('step4-zabezpieczenie-transportu')?.value || 'Nie dotyczy'
+    ).trim();
+    const rodzajTransportu = (
+        document.getElementById('step4-rodzaj-transportu')?.value || 'Transport P.V.'
+    ).trim();
+    const rodzajStopni = (
+        document.getElementById('step4-rodzaj-stopni')?.value || 'Nie dotyczy'
+    ).trim();
+    const rodzajStopniInne = (
+        document.getElementById('step4-rodzaj-stopni-inne')?.value || ''
+    ).trim();
+    const rodzajStudni = (
+        document.getElementById('step4-rodzaj-studni')?.value || 'Nie dotyczy'
+    ).trim();
+    const uszczelkaStudni = (
+        document.getElementById('step4-uszczelka-studni')?.value || 'Brak'
+    ).trim();
+    const uszczelkaStudniInne = (
+        document.getElementById('step4-uszczelka-studni-inne')?.value || ''
+    ).trim();
     const kineta = (document.getElementById('step4-kineta')?.value || 'Brak').trim();
     const kinetaInne = (document.getElementById('step4-kineta-inne')?.value || '').trim();
-    const wysokoscSpocznika = (document.getElementById('step4-wysokosc-spocznika')?.value || 'Nie dotyczy').trim();
-    const usytuowanie = (document.getElementById('step4-usytuowanie')?.value || 'Linia dolna').trim();
+    const wysokoscSpocznika = (
+        document.getElementById('step4-wysokosc-spocznika')?.value || 'Nie dotyczy'
+    ).trim();
+    const usytuowanie = (
+        document.getElementById('step4-usytuowanie')?.value || 'Linia dolna'
+    ).trim();
     const kaskada = (document.getElementById('step4-kaskada')?.value || 'Nie dotyczy').trim();
     const kaskadaUwagi = (document.getElementById('step4-kaskada-uwagi')?.value || '').trim();
-    const slepaKineta = (document.getElementById('step4-slepa-kineta')?.value || 'Nie dotyczy').trim();
-    const slepaKinetaUwagi = (document.getElementById('step4-slepa-kineta-uwagi')?.value || '').trim();
-    const redukcjaKinety = (document.getElementById('step4-redukcja-kinety')?.value || 'Nie dotyczy').trim();
-    const przejsciaTulejowe = (document.getElementById('step4-przejscia-tulejowe')?.value || 'Nie dotyczy').trim();
-    const przejsciaSzczelne = (document.getElementById('step4-przejscia-szczelne')?.value || 'Nie dotyczy').trim();
-    const wlasciwosciBetonu = (document.getElementById('step4-wlasciwosci-betonu')?.value || 'C40/50').trim();
-    const pozostaleWlasciwosci = (document.getElementById('step4-pozostale-wlasciwosci')?.value || '').trim();
-    const wyliczonyTransport = (document.getElementById('step4-wyliczony-transport')?.value || '').trim();
-    const przejsciaZamowione = (document.getElementById('step4-przejscia-zamowione')?.value || 'Nie dotyczy').trim();
+    const slepaKineta = (
+        document.getElementById('step4-slepa-kineta')?.value || 'Nie dotyczy'
+    ).trim();
+    const slepaKinetaUwagi = (
+        document.getElementById('step4-slepa-kineta-uwagi')?.value || ''
+    ).trim();
+    const redukcjaKinety = (
+        document.getElementById('step4-redukcja-kinety')?.value || 'Nie dotyczy'
+    ).trim();
+    const przejsciaTulejowe = (
+        document.getElementById('step4-przejscia-tulejowe')?.value || 'Nie dotyczy'
+    ).trim();
+    const przejsciaSzczelne = (
+        document.getElementById('step4-przejscia-szczelne')?.value || 'Nie dotyczy'
+    ).trim();
+    const wlasciwosciBetonu = (
+        document.getElementById('step4-wlasciwosci-betonu')?.value || 'C40/50'
+    ).trim();
+    const pozostaleWlasciwosci = (
+        document.getElementById('step4-pozostale-wlasciwosci')?.value || ''
+    ).trim();
+    const wyliczonyTransport = (
+        document.getElementById('step4-wyliczony-transport')?.value || ''
+    ).trim();
+    const przejsciaZamowione = (
+        document.getElementById('step4-przejscia-zamowione')?.value || 'Nie dotyczy'
+    ).trim();
     const dataZamowienia = (document.getElementById('step4-data-zamowienia')?.value || '').trim();
-    
-    const offerNumbers = offerInput.split(',').map(n => n.trim()).filter(n => n);
-    
+
+    const offerNumbers = offerInput
+        .split(',')
+        .map((n) => n.trim())
+        .filter((n) => n);
+
     return {
         emailFaktura,
         emailEfaktura,
@@ -812,7 +969,7 @@ function collectKartaBudowyDataStep4() {
 function handlePrzejsciaZamowioneChange(selectElement) {
     const dataInput = document.getElementById('step4-data-zamowienia');
     if (!dataInput) return;
-    
+
     if (selectElement.value === 'Tak') {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -851,8 +1008,8 @@ function buildOfferPrzejsciaTypes() {
         (p) => p.componentType === 'przejscie' && p.active !== 0 && usedProductIds.has(p.id)
     );
     // Dwa oddzielne mapy: numeryczne DN (okrągłe) i stringowe DN (jajowe)
-    const typeMap = new Map();       // cat → { dnMin, dnMax }
-    const stringDnMap = new Map();   // cat → { dnStrings: ["600/900", "1200/1800"] }
+    const typeMap = new Map(); // cat → { dnMin, dnMax }
+    const stringDnMap = new Map(); // cat → { dnStrings: ["600/900", "1200/1800"] }
 
     przejsciaProducts.forEach((p) => {
         const cat = p.category;
@@ -931,7 +1088,9 @@ function renderPrzejsciaDetailsTable(existingData) {
                 _offerPrzejscieRows = savedOffers;
             } else {
                 _offerPrzejscieRows.forEach((ot) => {
-                    const saved = existingData.find((s) => s.source === 'offer' && s.rodzaj === ot.rodzaj);
+                    const saved = existingData.find(
+                        (s) => s.source === 'offer' && s.rodzaj === ot.rodzaj
+                    );
                     if (saved) {
                         ot.dnOd = saved.dnOd ?? ot.dnOd;
                         ot.dnDo = saved.dnDo ?? ot.dnDo;
@@ -949,7 +1108,8 @@ function renderPrzejsciaDetailsTable(existingData) {
     const allRows = [..._offerPrzejscieRows, ..._customPrzejscieRows];
 
     if (allRows.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.72rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przejść szczelnych w cenniku. Dodaj niestandardowe przejście przyciskiem powyżej.</div>';
+        container.innerHTML =
+            '<div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.72rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przejść szczelnych w cenniku. Dodaj niestandardowe przejście przyciskiem powyżej.</div>';
         return;
     }
 
@@ -998,8 +1158,12 @@ function updatePrzejscieDnOptions(prefix, category) {
     const dnsStr = new Set();
     let hasStringDn = false;
     if (typeof studnieProducts !== 'undefined') {
-        studnieProducts.forEach(p => {
-            if (p.componentType === 'przejscie' && p.active !== 0 && (!category || category === 'Inne' || p.category === category)) {
+        studnieProducts.forEach((p) => {
+            if (
+                p.componentType === 'przejscie' &&
+                p.active !== 0 &&
+                (!category || category === 'Inne' || p.category === category)
+            ) {
                 if (typeof p.dn === 'string' && p.dn.includes('/')) {
                     hasStringDn = true;
                     dnsStr.add(p.dn);
@@ -1021,7 +1185,7 @@ function updatePrzejscieDnOptions(prefix, category) {
         const minStr = sortedStr[0] || '';
         const maxStr = sortedStr[sortedStr.length - 1] || minStr;
 
-        ['dnod', 'dndo'].forEach(type => {
+        ['dnod', 'dndo'].forEach((type) => {
             const select = document.getElementById(`${prefix}-${type}-select`);
             const input = document.getElementById(`${prefix}-${type}`);
             if (!select || !input) return;
@@ -1037,21 +1201,28 @@ function updatePrzejscieDnOptions(prefix, category) {
         return;
     }
 
-    const dnOptions = Array.from(dns).filter(d => !isNaN(d) && d > 0).sort((a,b)=>a-b);
-    
-    ['dnod', 'dndo'].forEach(type => {
+    const dnOptions = Array.from(dns)
+        .filter((d) => !isNaN(d) && d > 0)
+        .sort((a, b) => a - b);
+
+    ['dnod', 'dndo'].forEach((type) => {
         const select = document.getElementById(`${prefix}-${type}-select`);
         const input = document.getElementById(`${prefix}-${type}`);
         if (!select || !input) return;
-        
+
         const currVal = input.value;
-        const forceInne = (category === 'Inne');
+        const forceInne = category === 'Inne';
         const isCurrInne = forceInne || (currVal && !dnOptions.includes(parseFloat(currVal)));
-        
+
         let html = `<option value="" ${!currVal && !forceInne ? 'selected' : ''}>—</option>`;
-        html += dnOptions.map(d => `<option value="${d}" ${!forceInne && parseFloat(currVal) === d ? 'selected' : ''}>${d}</option>`).join('');
+        html += dnOptions
+            .map(
+                (d) =>
+                    `<option value="${d}" ${!forceInne && parseFloat(currVal) === d ? 'selected' : ''}>${d}</option>`
+            )
+            .join('');
         html += `<option value="Inne" ${isCurrInne ? 'selected' : ''}>Inne</option>`;
-        
+
         select.innerHTML = html;
         if (isCurrInne) {
             select.value = 'Inne';
@@ -1073,16 +1244,18 @@ function buildPrzejscieRowHTML(row, idx, source) {
     const borderLeft = source === 'custom' ? '2px solid rgba(var(--warn-rgb),0.3)' : 'none';
 
     const cats = new Set();
-    const dns = new Set();        // numeryczne DN
-    const dnsStr = new Set();     // pełne stringowe DN (jajowe: "600/900")
+    const dns = new Set(); // numeryczne DN
+    const dnsStr = new Set(); // pełne stringowe DN (jajowe: "600/900")
     if (typeof studnieProducts !== 'undefined') {
-        studnieProducts.forEach(p => {
+        studnieProducts.forEach((p) => {
             if (p.componentType === 'przejscie' && p.active !== 0) {
                 if (p.category) cats.add(p.category);
                 if (!row.rodzaj || row.rodzaj === 'Inne' || p.category === row.rodzaj) {
                     if (typeof p.dn === 'string' && p.dn.includes('/')) {
                         dnsStr.add(p.dn);
-                        dns.add(parseFloat(p.dn.split('/')[1]) || parseFloat(p.dn.split('/')[0]) || 0);
+                        dns.add(
+                            parseFloat(p.dn.split('/')[1]) || parseFloat(p.dn.split('/')[0]) || 0
+                        );
                     } else if (p.dn) {
                         dns.add(parseFloat(p.dn) || 0);
                     }
@@ -1090,48 +1263,57 @@ function buildPrzejscieRowHTML(row, idx, source) {
             }
         });
     }
-    
+
     const catOptions = Array.from(cats).sort();
-    const dnOptions = Array.from(dns).filter(d => !isNaN(d) && d > 0).sort((a,b)=>a-b);
-    
+    const dnOptions = Array.from(dns)
+        .filter((d) => !isNaN(d) && d > 0)
+        .sort((a, b) => a - b);
+
     const isRodzajInne = row.rodzaj && !catOptions.includes(row.rodzaj);
     const rowHasStringDn = typeof row.dnOd === 'string' && row.dnOd.includes('/');
     const isDnOdInne = !rowHasStringDn && row.dnOd && !dnOptions.includes(parseFloat(row.dnOd));
     const isDnDoInne = !rowHasStringDn && row.dnDo && !dnOptions.includes(parseFloat(row.dnDo));
-    
-    const warnScript = source === 'offer' ? "if(!this.dataset.warned) { appConfirm('Zmieniasz przejście przepisane z oferty!', { title: 'Ostrzeżenie', type: 'warning', okText: 'Rozumiem', cancelText: 'OK' }); this.dataset.warned = '1'; }" : "";
+
+    const warnScript =
+        source === 'offer'
+            ? "if(!this.dataset.warned) { appConfirm('Zmieniasz przejście przepisane z oferty!', { title: 'Ostrzeżenie', type: 'warning', okText: 'Rozumiem', cancelText: 'OK' }); this.dataset.warned = '1'; }"
+            : '';
 
     const rodzajCell = `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <select id="${prefix}-rodzaj-select" class="form-input" style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
                 <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
-                ${catOptions.map(c => `<option value="${c}" ${row.rodzaj === c ? 'selected' : ''}>${c}</option>`).join('')}
+                ${catOptions.map((c) => `<option value="${c}" ${row.rodzaj === c ? 'selected' : ''}>${c}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
             </select>
             <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
         </div>`;
 
-    const dnOdCell = rowHasStringDn ? `
+    const dnOdCell = rowHasStringDn
+        ? `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <input type="text" id="${prefix}-dnod" class="form-input" value="${(row.dnOd || '').toString().replace(/"/g, '&quot;')}" readonly style="width:100%; min-width:90px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; opacity:0.7; cursor:default;">
-        </div>` : `
+        </div>`
+        : `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <select id="${prefix}-dnod-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
                 <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
-                ${dnOptions.map(d => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
+                ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
             </select>
             <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnOdInne ? 'block' : 'none'};" onchange="${warnScript}">
         </div>`;
 
-    const dnDoCell = rowHasStringDn ? `
+    const dnDoCell = rowHasStringDn
+        ? `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <input type="text" id="${prefix}-dndo" class="form-input" value="${(row.dnDo || '').toString().replace(/"/g, '&quot;')}" readonly style="width:100%; min-width:90px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; opacity:0.7; cursor:default;">
-        </div>` : `
+        </div>`
+        : `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <select id="${prefix}-dndo-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
                 <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
-                ${dnOptions.map(d => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
+                ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
             </select>
             <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnDoInne ? 'block' : 'none'};" onchange="${warnScript}">
@@ -1199,7 +1381,13 @@ function addCustomPrzejscieRow() {
 async function removePrzejscieRow(source, idx) {
     _syncCustomRowsFromDOM();
     if (source === 'offer') {
-        if (!(await appConfirm('Usuwasz przejście przepisane z oferty. Czy na pewno chcesz to zrobić?', { title: 'Potwierdzenie', type: 'warning' }))) return;
+        if (
+            !(await appConfirm(
+                'Usuwasz przejście przepisane z oferty. Czy na pewno chcesz to zrobić?',
+                { title: 'Potwierdzenie', type: 'warning' }
+            ))
+        )
+            return;
         _offerPrzejscieRows.splice(idx, 1);
     } else {
         _customPrzejscieRows.splice(idx, 1);
@@ -1207,37 +1395,46 @@ async function removePrzejscieRow(source, idx) {
     renderPrzejsciaDetailsTable(null);
 }
 
-
 /**
  * Synchronizuje dane wierszy niestandardowych z DOM do pamięci,
  * aby nie stracić wpisanych wartości przy dodawaniu/usuwaniu wiersza.
  */
 function _syncCustomRowsFromDOM() {
     const rows = document.querySelectorAll('tr[data-psz-source]');
-    rows.forEach(tr => {
+    rows.forEach((tr) => {
         const source = tr.dataset.pszSource;
         const idx = parseInt(tr.dataset.pszIdx);
         const prefix = `step4-psz-${source}-${idx}`;
-        
+
         const rodzajEl = document.getElementById(`${prefix}-rodzaj`);
         const dnOdEl = document.getElementById(`${prefix}-dnod`);
         const dnDoEl = document.getElementById(`${prefix}-dndo`);
         const iloscEl = document.getElementById(`${prefix}-ilosc`);
         const uwagiEl = document.getElementById(`${prefix}-uwagi`);
         const czyEl = document.getElementById(`${prefix}-czy`);
-        
+
         if (!rodzajEl) return;
-        
+
         const data = {
             rodzaj: rodzajEl.value.trim(),
-            dnOd: dnOdEl && dnOdEl.value ? (dnOdEl.value.includes('/') ? dnOdEl.value : parseFloat(dnOdEl.value)) : '',
-            dnDo: dnDoEl && dnDoEl.value ? (dnDoEl.value.includes('/') ? dnDoEl.value : parseFloat(dnDoEl.value)) : '',
+            dnOd:
+                dnOdEl && dnOdEl.value
+                    ? dnOdEl.value.includes('/')
+                        ? dnOdEl.value
+                        : parseFloat(dnOdEl.value)
+                    : '',
+            dnDo:
+                dnDoEl && dnDoEl.value
+                    ? dnDoEl.value.includes('/')
+                        ? dnDoEl.value
+                        : parseFloat(dnDoEl.value)
+                    : '',
             ilosc: iloscEl ? parseInt(iloscEl.value) || 1 : 1,
             uwagi: uwagiEl ? uwagiEl.value.trim() : '',
             czyPrzejscie: czyEl ? czyEl.value : 'TAK',
             source: source
         };
-        
+
         if (source === 'custom') {
             _customPrzejscieRows[idx] = data;
         } else if (source === 'offer') {
@@ -1250,12 +1447,22 @@ function _syncCustomRowsFromDOM() {
 function collectPrzejsciaDetailsFromTable() {
     _syncCustomRowsFromDOM();
     const result = [];
-    _offerPrzejscieRows.forEach(r => {
+    _offerPrzejscieRows.forEach((r) => {
         if (r.rodzaj && r.rodzaj.trim() !== '') {
             result.push({
                 rodzaj: r.rodzaj.trim(),
-                dnOd: r.dnOd !== '' ? (String(r.dnOd).includes('/') ? String(r.dnOd) : parseFloat(r.dnOd)) : 0,
-                dnDo: r.dnDo !== '' ? (String(r.dnDo).includes('/') ? String(r.dnDo) : parseFloat(r.dnDo)) : 0,
+                dnOd:
+                    r.dnOd !== ''
+                        ? String(r.dnOd).includes('/')
+                            ? String(r.dnOd)
+                            : parseFloat(r.dnOd)
+                        : 0,
+                dnDo:
+                    r.dnDo !== ''
+                        ? String(r.dnDo).includes('/')
+                            ? String(r.dnDo)
+                            : parseFloat(r.dnDo)
+                        : 0,
                 ilosc: r.ilosc || 1,
                 uwagi: r.uwagi || '',
                 czyPrzejscie: r.czyPrzejscie || 'TAK',
@@ -1263,12 +1470,22 @@ function collectPrzejsciaDetailsFromTable() {
             });
         }
     });
-    _customPrzejscieRows.forEach(r => {
+    _customPrzejscieRows.forEach((r) => {
         if (r.rodzaj && r.rodzaj.trim() !== '') {
             result.push({
                 rodzaj: r.rodzaj.trim(),
-                dnOd: r.dnOd !== '' ? (String(r.dnOd).includes('/') ? String(r.dnOd) : parseFloat(r.dnOd)) : 0,
-                dnDo: r.dnDo !== '' ? (String(r.dnDo).includes('/') ? String(r.dnDo) : parseFloat(r.dnDo)) : 0,
+                dnOd:
+                    r.dnOd !== ''
+                        ? String(r.dnOd).includes('/')
+                            ? String(r.dnOd)
+                            : parseFloat(r.dnOd)
+                        : 0,
+                dnDo:
+                    r.dnDo !== ''
+                        ? String(r.dnDo).includes('/')
+                            ? String(r.dnDo)
+                            : parseFloat(r.dnDo)
+                        : 0,
                 ilosc: r.ilosc || 1,
                 uwagi: r.uwagi || '',
                 czyPrzejscie: r.czyPrzejscie || 'TAK',
@@ -1336,7 +1553,8 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     }
 
     // Przelicz sumy tylko dla wybranych studni korzystając z rabatów oferty
-    const effectiveDiscounts = (offer && offer.wellDiscounts) ? structuredClone(offer.wellDiscounts) : {};
+    const effectiveDiscounts =
+        offer && offer.wellDiscounts ? structuredClone(offer.wellDiscounts) : {};
 
     // Utwórz zamówienie z WYBRANYCH studni — wykonaj głęboką kopię, zapisz oryginalną migawkę
     const selectedWellsCopy = structuredClone(selectedWells);
@@ -1378,9 +1596,10 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         updatedAt: new Date().toISOString(),
         createdBy: currentUser ? currentUser.username : ''
     };
-    
+
     // Tymczasowo nadpisz globalne rabaty, aby calcWellStats i freezeWellPrices ich użyły
-    const originalGlobalDiscounts = typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
+    const originalGlobalDiscounts =
+        typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
     if (typeof wellDiscounts !== 'undefined') {
         window.wellDiscounts = effectiveDiscounts;
     }
@@ -1399,17 +1618,24 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     const gKm = parseFloat(offer.transportKm) || 0;
     const gRate = parseFloat(offer.transportRate) || 0;
     const offerMode = offer.transportMode || 'full';
-    const globalOfferTransport = (gKm > 0 && gRate > 0) ? (typeof calcTransportCount === 'function' ? calcTransportCount(globalOfferWeight, offerMode) : Math.ceil(globalOfferWeight / MAX_TRANSPORT_WEIGHT)) * gKm * gRate : 0;
+    const globalOfferTransport =
+        gKm > 0 && gRate > 0
+            ? (typeof calcTransportCount === 'function'
+                  ? calcTransportCount(globalOfferWeight, offerMode)
+                  : Math.ceil(globalOfferWeight / MAX_TRANSPORT_WEIGHT)) *
+              gKm *
+              gRate
+            : 0;
     if (globalOfferWeight > 0 && totalWeight > 0) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
 
     order.wellsExport = selectedWellsCopy.map((well) => {
         const stats = calcWellStats(well);
-        const wellTransportCost = totalWeight > 0
-            ? orderTransportCost * (stats.weight / totalWeight)
-            : 0;
-        const zwienczenie = typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        const wellTransportCost =
+            totalWeight > 0 ? orderTransportCost * (stats.weight / totalWeight) : 0;
+        const zwienczenie =
+            typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return {
             name: well.name,
             dn: well.dn,
@@ -1513,7 +1739,12 @@ async function saveOrderStudnie() {
     const orderMode = order.transportMode || offer.transportMode || 'full';
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
-        totalTransportCostForOffer = (typeof calcTransportCount === 'function' ? calcTransportCount(totalWeight, orderMode) : Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT)) * transportKmVal * transportRateVal;
+        totalTransportCostForOffer =
+            (typeof calcTransportCount === 'function'
+                ? calcTransportCount(totalWeight, orderMode)
+                : Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT)) *
+            transportKmVal *
+            transportRateVal;
     }
     const orderTotal = totalNetto + totalTransportCostForOffer;
     order.totalNetto = orderTotal;
@@ -1521,10 +1752,10 @@ async function saveOrderStudnie() {
 
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);
-        const wellTransportCost = totalWeight > 0
-            ? totalTransportCostForOffer * (stats.weight / totalWeight)
-            : 0;
-        const zwienczenie = typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        const wellTransportCost =
+            totalWeight > 0 ? totalTransportCostForOffer * (stats.weight / totalWeight) : 0;
+        const zwienczenie =
+            typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return {
             name: well.name,
             dn: well.dn,
@@ -1564,7 +1795,10 @@ function freezeWellPrices(wellsArr) {
         }
         const mult = 1 - discNadbudowa / 100;
 
-        const configMap = typeof buildConfigMap !== 'undefined' ? buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true) : [];
+        const configMap =
+            typeof buildConfigMap !== 'undefined'
+                ? buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true)
+                : [];
 
         (well.przejscia || []).forEach((item) => {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
@@ -1583,13 +1817,20 @@ function freezeWellPrices(wellsArr) {
 
                 if (typeof findAssignedElement === 'function') {
                     const assigned = findAssignedElement(mmFromBottom, configMap);
-                    if (assigned && assigned.entry && (assigned.entry.componentType === 'krag' || assigned.entry.componentType === 'krag_ot')) {
+                    if (
+                        assigned &&
+                        assigned.entry &&
+                        (assigned.entry.componentType === 'krag' ||
+                            assigned.entry.componentType === 'krag_ot')
+                    ) {
                         const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                         if (trDn > 0) {
-                            const drillingProducts = studnieProducts.filter(x => x.category === 'Wiercenie');
+                            const drillingProducts = studnieProducts.filter(
+                                (x) => x.category === 'Wiercenie'
+                            );
                             let bestDrill = null;
                             let bestDnDiff = Infinity;
-                            drillingProducts.forEach(drill => {
+                            drillingProducts.forEach((drill) => {
                                 let drillDn = parseInt(drill.dn);
                                 if (isNaN(drillDn)) {
                                     const match = drill.id.match(/Wiercenie-(\d+)/i);
@@ -1605,7 +1846,7 @@ function freezeWellPrices(wellsArr) {
                             if (bestDrill) {
                                 drillingBasePrice = /** @type {any} */ (bestDrill).price || 0;
                                 drillProdName = /** @type {any} */ (bestDrill).name;
-                                drillProdDn = (/** @type {any} */ (bestDrill).dn) || '';
+                                drillProdDn = /** @type {any} */ (bestDrill).dn || '';
                             }
                         }
                     }
@@ -1687,7 +1928,10 @@ async function deleteOrderStudnie(orderId) {
 
     // Odśwież listę UI globalnie
     if (window.pvSalesUI) {
-        window.pvSalesUI.loadOrdersMap().then(() => window.pvSalesUI.filterLocalOffers()).catch(e => logger.error('orderManager', e));
+        window.pvSalesUI
+            .loadOrdersMap()
+            .then(() => window.pvSalesUI.filterLocalOffers())
+            .catch((e) => logger.error('orderManager', e));
     }
 }
 
@@ -1700,15 +1944,20 @@ function getOrderChanges(order) {
     const changes = {};
 
     const originalSnapshotData = order.originalSnapshot;
-    const originalWells = Array.isArray(originalSnapshotData) ? originalSnapshotData : (originalSnapshotData.wells || []);
-    const originalDiscounts = !Array.isArray(originalSnapshotData) ? (originalSnapshotData.wellDiscounts || null) : null;
+    const originalWells = Array.isArray(originalSnapshotData)
+        ? originalSnapshotData
+        : originalSnapshotData.wells || [];
+    const originalDiscounts = !Array.isArray(originalSnapshotData)
+        ? originalSnapshotData.wellDiscounts || null
+        : null;
 
     const orig = structuredClone(originalWells);
     if (typeof migrateWellData === 'function') migrateWellData(orig);
     const curr = order.wells;
 
     // Tymczasowo zamroź ceny studni z migawki z oryginalnymi rabatami, aby uzyskać uczciwe porównanie
-    const savedDiscounts = typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : null;
+    const savedDiscounts =
+        typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : null;
     if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
         window.wellDiscounts = originalDiscounts;
     }
@@ -1748,11 +1997,11 @@ function getOrderChanges(order) {
     const origTransportKm = originalSnapshotData.transportKm;
     const origTransportRate = originalSnapshotData.transportRate;
     const origTransportMode = originalSnapshotData.transportMode;
-    const transportChanged = (origTransportKm != null || origTransportRate != null) && (
-        Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
-        Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
-        (order.transportMode || 'full') !== (origTransportMode || 'full')
-    );
+    const transportChanged =
+        (origTransportKm != null || origTransportRate != null) &&
+        (Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
+            Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
+            (order.transportMode || 'full') !== (origTransportMode || 'full'));
     if (transportChanged) {
         for (let i = 0; i < curr.length; i++) {
             if (!changes[i] || changes[i].type !== 'added') {
@@ -1784,7 +2033,11 @@ function getCurrentOfferOrder() {
 async function enterOrderEditMode(orderId) {
     try {
         logger.info('orderManager', '[enterOrderEditMode] START orderId=', orderId);
-        const res = await fetchWithTimeout(`/api/orders-studnie/${orderId}`, { headers: authHeaders() }, 15000);
+        const res = await fetchWithTimeout(
+            `/api/orders-studnie/${orderId}`,
+            { headers: authHeaders() },
+            15000
+        );
         if (!res.ok) {
             showToast('Zamówienie nie znalezione', 'error');
             return;
@@ -1796,7 +2049,8 @@ async function enterOrderEditMode(orderId) {
             return;
         }
 
-        logger.info('orderManager', 
+        logger.info(
+            'orderManager',
             '[enterOrderEditMode] order loaded, wells count:',
             order.wells ? order.wells.length : 'NO WELLS'
         );
@@ -1816,7 +2070,7 @@ async function enterOrderEditMode(orderId) {
             window.wellDiscounts = structuredClone(order.wellDiscounts);
         } else {
             // Jeśli stare zamówienie nie ma wellDiscounts, można zostawić obecne lub zresetować:
-            // window.wellDiscounts = {}; 
+            // window.wellDiscounts = {};
         }
 
         // Recalculuj totalNetto z transportem — stare zamówienia mogły mieć zapisane
@@ -1824,15 +2078,25 @@ async function enterOrderEditMode(orderId) {
         // Po tej korekcie najbliższy zapis przez saveCurrentOrder utrwali poprawną wartość.
         if (order.wells && order.wells.length > 0) {
             const offer = offersStudnie ? offersStudnie.find((o) => o.id === order.offerId) : null;
-            let _w = 0, _t = 0;
-            order.wells.forEach((w) => { const s = calcWellStats(w); _w += s.price; _t += s.weight; });
+            let _w = 0,
+                _t = 0;
+            order.wells.forEach((w) => {
+                const s = calcWellStats(w);
+                _w += s.price;
+                _t += s.weight;
+            });
             const km = parseFloat(order.transportKm || offer?.transportKm) || 0;
             const rate = parseFloat(order.transportRate || offer?.transportRate) || 0;
             const _mode = order.transportMode || offer?.transportMode || 'full';
             let tc = 0;
             if (km > 0 && rate > 0 && _t > 0) {
                 const _offerTotalWeight = offer?.totalWeight || _t;
-                const _fullOfferCost = (typeof calcTransportCount === 'function' ? calcTransportCount(_offerTotalWeight, _mode) : Math.ceil(_offerTotalWeight / MAX_TRANSPORT_WEIGHT)) * km * rate;
+                const _fullOfferCost =
+                    (typeof calcTransportCount === 'function'
+                        ? calcTransportCount(_offerTotalWeight, _mode)
+                        : Math.ceil(_offerTotalWeight / MAX_TRANSPORT_WEIGHT)) *
+                    km *
+                    rate;
                 tc = _offerTotalWeight > 0 ? _fullOfferCost * (_t / _offerTotalWeight) : 0;
             }
             order.totalNetto = _w + tc;
@@ -1864,7 +2128,10 @@ async function enterOrderEditMode(orderId) {
         currentWellIndex = 0;
 
         // Wypełnij pola klienta/oferty
-        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
         setVal('offer-number', order.number || '');
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
         setVal('client-name', order.clientName || '');
@@ -1880,7 +2147,10 @@ async function enterOrderEditMode(orderId) {
         setVal('transport-rate', order.transportRate ?? 10);
         currentTransportMode = order.transportMode || 'full';
 
-        logger.info('orderManager', '[enterOrderEditMode] fields filled, calling skipWizardToStep3...');
+        logger.info(
+            'orderManager',
+            '[enterOrderEditMode] fields filled, calling skipWizardToStep3...'
+        );
 
         // Pomiń kreatora → przejdź bezpośrednio do kroku 5 (Zamówienie = 4.2)
         wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
@@ -1890,7 +2160,7 @@ async function enterOrderEditMode(orderId) {
         if (target) target.classList.add('active');
         if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
         if (typeof updateWizardSummaryBar === 'function') updateWizardSummaryBar();
-        
+
         const layout = document.querySelector('.well-app-layout');
         if (layout) layout.classList.remove('intro-mode');
 
@@ -1969,7 +2239,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         editingOfferIdStudnie = order.offerId || null;
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
-        
+
         // Załaduj rabaty zamówienia dla poprawnego przeliczania cen w podglądzie
         if (order.wellDiscounts) {
             window.wellDiscounts = structuredClone(order.wellDiscounts);
@@ -1999,7 +2269,10 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         wellCounter = wells.length > 0 ? wells.length : 1;
         currentWellIndex = 0;
 
-        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
         setVal('offer-number', order.number || '');
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
         setVal('client-name', order.clientName || '');
@@ -2134,8 +2407,14 @@ async function saveCurrentOrder(options = {}) {
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
         const offerTotalWeight = offer?.totalWeight || totalWeight;
-        const fullOfferCost = (typeof calcTransportCount === 'function' ? calcTransportCount(offerTotalWeight, currentTransportMode) : Math.ceil(offerTotalWeight / MAX_TRANSPORT_WEIGHT)) * transportKmVal * transportRateVal;
-        totalTransportCostForOffer = offerTotalWeight > 0 ? fullOfferCost * (totalWeight / offerTotalWeight) : 0;
+        const fullOfferCost =
+            (typeof calcTransportCount === 'function'
+                ? calcTransportCount(offerTotalWeight, currentTransportMode)
+                : Math.ceil(offerTotalWeight / MAX_TRANSPORT_WEIGHT)) *
+            transportKmVal *
+            transportRateVal;
+        totalTransportCostForOffer =
+            offerTotalWeight > 0 ? fullOfferCost * (totalWeight / offerTotalWeight) : 0;
     }
     const orderTotal = totalNetto + totalTransportCostForOffer;
     order.totalNetto = orderTotal;
@@ -2143,10 +2422,10 @@ async function saveCurrentOrder(options = {}) {
 
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);
-        const wellTransportCost = totalWeight > 0
-            ? totalTransportCostForOffer * (stats.weight / totalWeight)
-            : 0;
-        const zwienczenie = typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
+        const wellTransportCost =
+            totalWeight > 0 ? totalTransportCostForOffer * (stats.weight / totalWeight) : 0;
+        const zwienczenie =
+            typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return {
             name: well.name,
             dn: well.dn,
@@ -2247,7 +2526,9 @@ function setZleceniaFilter(filter) {
 
 async function loadProductionOrders() {
     try {
-        const resp = await fetchWithTimeout('/api/orders-studnie/production', { headers: authHeaders() });
+        const resp = await fetchWithTimeout('/api/orders-studnie/production', {
+            headers: authHeaders()
+        });
         if (resp.ok) {
             const json = await resp.json();
             productionOrders = json.data || [];
@@ -2434,7 +2715,10 @@ async function closeZleceniaModal() {
             // 3. Aktualizuj snapshot, aby nie przywrócić starego stanu
             wellsSnapshotBeforeZlecenia = structuredClone(wells);
             savedNow = true;
-            showToast('<i data-lucide="check-circle-2"></i> Zapisano zlecenia produkcyjne i zamówienie', 'success');
+            showToast(
+                '<i data-lucide="check-circle-2"></i> Zapisano zlecenia produkcyjne i zamówienie',
+                'success'
+            );
         }
     }
 
@@ -2442,12 +2726,12 @@ async function closeZleceniaModal() {
     if (!savedNow && wellsSnapshotBeforeZlecenia) {
         wells.length = 0;
         wells.push(...structuredClone(wellsSnapshotBeforeZlecenia));
-        
+
         if (typeof renderWellsList === 'function') renderWellsList();
         if (typeof updateSummary === 'function') updateSummary();
         if (typeof refreshAll === 'function') refreshAll();
     }
-    
+
     wellsSnapshotBeforeZlecenia = null;
 
     const modal = document.getElementById('zlecenia-modal');
@@ -2466,7 +2750,12 @@ async function closeZleceniaModal() {
 }
 
 function buildZleceniaWellList() {
-    logger.info('orderManager', '[buildZleceniaWellList] Building list from', wells.length, 'wells');
+    logger.info(
+        'orderManager',
+        '[buildZleceniaWellList] Building list from',
+        wells.length,
+        'wells'
+    );
     zleceniaElementsList = [];
     wells.forEach((well, wIdx) => {
         if (!well.config) return;
@@ -2476,7 +2765,8 @@ function buildZleceniaWellList() {
 
             // Zabezpieczenie na wypadek brakujących produktów na różnych serwerach
             if (!p && item.productId) {
-                logger.warn('orderManager', 
+                logger.warn(
+                    'orderManager',
                     `[buildZleceniaWellList] Produkt o ID ${item.productId} nie został znaleziony w bazie! Próbuję dopasować po nazwie...`
                 );
                 // Jeśli jest zapisane w trybie zamówienia, być może mamy zapisany tymczasowy produkt?
@@ -2510,7 +2800,11 @@ function buildZleceniaWellList() {
         }
     });
 
-    logger.info('orderManager', '[buildZleceniaWellList] Done. Elements found:', zleceniaElementsList.length);
+    logger.info(
+        'orderManager',
+        '[buildZleceniaWellList] Done. Elements found:',
+        zleceniaElementsList.length
+    );
     renderZleceniaList();
 }
 
@@ -2683,8 +2977,14 @@ function renderZleceniaWellConfig() {
     const typeBadge = {
         wlaz: { bg: '#374151', label: '<i data-lucide="circle-dot"></i>' },
         plyta_din: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" class="text-xs"></i>' },
-        plyta_najazdowa: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" class="text-xs"></i>' },
-        plyta_zamykajaca: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" class="text-xs"></i>' },
+        plyta_najazdowa: {
+            bg: '#1e3a5f',
+            label: '<i data-lucide="chevron-down" class="text-xs"></i>'
+        },
+        plyta_zamykajaca: {
+            bg: '#1e3a5f',
+            label: '<i data-lucide="chevron-down" class="text-xs"></i>'
+        },
         pierscien_odciazajacy: { bg: '#1e3a5f', label: '<i data-lucide="settings"></i>' },
         konus: { bg: '#4c1d95', label: '<i data-lucide="diamond"></i>' },
         avr: { bg: '#44403c', label: '<i data-lucide="settings"></i>' },
@@ -2860,11 +3160,11 @@ function populateZleceniaForm(el) {
             break;
         }
     }
-    
-    const shouldReduce = (product.componentType === 'dennica') && (
-        (actualNextProduct && actualNextProduct.componentType === 'dennica') || 
-        (well.psiaBuda && !actualNextProduct)
-    );
+
+    const shouldReduce =
+        product.componentType === 'dennica' &&
+        ((actualNextProduct && actualNextProduct.componentType === 'dennica') ||
+            (well.psiaBuda && !actualNextProduct));
 
     if (shouldReduce) {
         const reducedH = (product.height || 0) - 100;
@@ -2943,13 +3243,15 @@ function populateZleceniaForm(el) {
 
     let baseKatStopni = '';
     let baseRodzajStopni = '';
-    const dennicaConfigIdx = well.config.findIndex(c => {
+    const dennicaConfigIdx = well.config.findIndex((c) => {
         const p = findProductFn(c.productId);
         return p && p.componentType === 'dennica';
     });
-    
+
     if (dennicaConfigIdx >= 0 && elementIndex !== dennicaConfigIdx) {
-        const dennicaPo = (productionOrders || []).find(po => po.wellId === well.id && po.elementIndex === dennicaConfigIdx);
+        const dennicaPo = (productionOrders || []).find(
+            (po) => po.wellId === well.id && po.elementIndex === dennicaConfigIdx
+        );
         if (dennicaPo) {
             if (dennicaPo.katStopni) baseKatStopni = dennicaPo.katStopni;
             if (dennicaPo.rodzajStopni) baseRodzajStopni = dennicaPo.rodzajStopni;
@@ -3070,9 +3372,12 @@ function populateZleceniaForm(el) {
 
     // 4. Wkładka PEHD
     let wklUwagi = [];
-    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') wklUwagi.push('Dennica ' + well.wkladkaDennica);
-    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') wklUwagi.push('Nadbudowa ' + well.wkladkaNadbudowa);
-    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') wklUwagi.push('Zwieńczenie ' + well.wkladkaZwienczenie);
+    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak')
+        wklUwagi.push('Dennica ' + well.wkladkaDennica);
+    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak')
+        wklUwagi.push('Nadbudowa ' + well.wkladkaNadbudowa);
+    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
+        wklUwagi.push('Zwieńczenie ' + well.wkladkaZwienczenie);
     if (wklUwagi.length > 0) autoUwagi.push('PEHD: ' + wklUwagi.join(', '));
 
     // 5. Malowanie wewnętrzne
@@ -3107,7 +3412,11 @@ function populateZleceniaForm(el) {
     if (well.psiaBuda && !actualNextProduct) {
         autoUwagi.push('UWAGA ! PSIA BUDA');
     }
-    if (product.componentType === 'dennica' && actualNextProduct && actualNextProduct.componentType === 'dennica') {
+    if (
+        product.componentType === 'dennica' &&
+        actualNextProduct &&
+        actualNextProduct.componentType === 'dennica'
+    ) {
         autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
     }
 
@@ -3145,7 +3454,7 @@ function populateZleceniaForm(el) {
                 line-height: 1.4;
             ">
                 <i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>
-                ${liveErrors.map(e => `• ${e}`).join('<br>')}
+                ${liveErrors.map((e) => `• ${e}`).join('<br>')}
             </div>
         `;
     }
@@ -3532,13 +3841,25 @@ async function selectZleceniaTile(btn, targetId, val) {
                     if (existing) existing.kineta = val;
 
                     // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
-                    const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+                    const syncValues = [
+                        'beton',
+                        'beton_gfk',
+                        'klinkier',
+                        'preco',
+                        'precotop',
+                        'unolith',
+                        'predl',
+                        'kamionka',
+                        'brak'
+                    ];
                     if (syncValues.includes(val)) {
                         const spocznikInput = document.getElementById('zl-spocznik');
                         if (spocznikInput) {
                             const group = spocznikInput.closest('.form-group-sm');
                             if (group) {
-                                const targetBtn = group.querySelector(`.param-tile[onclick*="'zl-spocznik', '${val}'"]`);
+                                const targetBtn = group.querySelector(
+                                    `.param-tile[onclick*="'zl-spocznik', '${val}'"]`
+                                );
                                 if (targetBtn && !targetBtn.classList.contains('active')) {
                                     targetBtn.click();
                                 }
@@ -3570,7 +3891,8 @@ async function selectZleceniaTile(btn, targetId, val) {
                     }
                     // 'inne' → newStopnie = null → brak zmiany indeksów
 
-                    const stopnieIndexChanged = newStopnie !== null && newStopnie !== el.well.stopnie;
+                    const stopnieIndexChanged =
+                        newStopnie !== null && newStopnie !== el.well.stopnie;
                     if (stopnieIndexChanged) {
                         el.well.stopnie = newStopnie;
                     }
@@ -3621,7 +3943,8 @@ async function selectZleceniaTile(btn, targetId, val) {
                 );
                 if (newTargetIdx === -1) {
                     newTargetIdx = zleceniaElementsList.findIndex(
-                        (e) => e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat
+                        (e) =>
+                            e.wellIndex === oldWellIdx && e.product && e.product.category === oldCat
                     );
                 }
                 if (newTargetIdx === -1) {
@@ -3716,10 +4039,13 @@ async function saveProductionOrder() {
     if (!currentOrderNumber) {
         try {
             // Użyj przypisanego użytkownika (właściciela) do numeracji, jeśli istnieje, w przeciwnym razie bieżącego użytkownika
-const targetUserId =
-                (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.userId)
-                || (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId)
-                || (currentUser ? currentUser.id : null);
+            const targetUserId =
+                (typeof orderEditMode !== 'undefined' &&
+                    orderEditMode &&
+                    orderEditMode.order &&
+                    orderEditMode.order.userId) ||
+                (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
+                (currentUser ? currentUser.id : null);
 
             if (targetUserId) {
                 const claimResp = await fetch(
@@ -3745,13 +4071,17 @@ const targetUserId =
         id: existingIdx >= 0 ? productionOrders[existingIdx].id : 'prodorder_' + Date.now(),
         productionOrderNumber: currentOrderNumber,
         userId:
-            (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.userId)
-            || (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId)
-            || (currentUser ? currentUser.id : null),
+            (typeof orderEditMode !== 'undefined' &&
+                orderEditMode &&
+                orderEditMode.order &&
+                orderEditMode.order.userId) ||
+            (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
+            (currentUser ? currentUser.id : null),
         wellId: well.id,
         wellName: well.name,
         offerId: typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '',
-        orderId: (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) || '',
+        orderId:
+            (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) || '',
         salesOrderNumber:
             typeof orderEditMode !== 'undefined' &&
             orderEditMode &&
@@ -3947,9 +4277,12 @@ async function acceptProductionOrder() {
     if (!po.productionOrderNumber) {
         try {
             const targetUserId =
-                (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.userId)
-                || (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId)
-                || (currentUser ? currentUser.id : null);
+                (typeof orderEditMode !== 'undefined' &&
+                    orderEditMode &&
+                    orderEditMode.order &&
+                    orderEditMode.order.userId) ||
+                (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
+                (currentUser ? currentUser.id : null);
 
             if (!targetUserId) {
                 showToast('Brak przypisanego użytkownika', 'error');
@@ -3988,7 +4321,10 @@ async function acceptProductionOrder() {
             populateZleceniaForm(zleceniaElementsList[zleceniaSelectedIdx]);
         }
         refreshGlobalMetrics();
-        showToast('<i data-lucide="lock"></i> Zlecenie zaakceptowane — ' + po.productionOrderNumber, 'success');
+        showToast(
+            '<i data-lucide="lock"></i> Zlecenie zaakceptowane — ' + po.productionOrderNumber,
+            'success'
+        );
     } catch (err) {
         logger.error('orderManager', 'acceptProductionOrder error:', err);
         showToast('<i data-lucide="x-circle"></i> Błąd akceptacji: ' + err.message, 'error');
@@ -4048,9 +4384,12 @@ function collectSharedFormData() {
           currentUser.username
         : '';
     const targetUserId =
-        (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order && orderEditMode.order.userId)
-        || (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId)
-        || (currentUser ? currentUser.id : null);
+        (typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            orderEditMode.order &&
+            orderEditMode.order.userId) ||
+        (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
+        (currentUser ? currentUser.id : null);
     return {
         obiekt: document.getElementById('invest-name')?.value || '',
         adres: document.getElementById('invest-address')?.value || '',
@@ -4148,9 +4487,12 @@ function buildAutoOrderData(el, sharedData) {
     if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
         autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
     let wklUwagi2 = [];
-    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak') wklUwagi2.push('Dennica ' + well.wkladkaDennica);
-    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') wklUwagi2.push('Nadbudowa ' + well.wkladkaNadbudowa);
-    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') wklUwagi2.push('Zwieńczenie ' + well.wkladkaZwienczenie);
+    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak')
+        wklUwagi2.push('Dennica ' + well.wkladkaDennica);
+    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak')
+        wklUwagi2.push('Nadbudowa ' + well.wkladkaNadbudowa);
+    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
+        wklUwagi2.push('Zwieńczenie ' + well.wkladkaZwienczenie);
     if (wklUwagi2.length > 0) autoUwagi.push('PEHD: ' + wklUwagi2.join(', '));
     if (well.malowanieW && well.malowanieW !== 'brak') {
         let malWDesc = '';
@@ -4212,7 +4554,8 @@ function buildAutoOrderData(el, sharedData) {
         wellId: well.id,
         wellName: well.name,
         offerId: typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '',
-        orderId: (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) || '',
+        orderId:
+            (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) || '',
         salesOrderNumber:
             typeof orderEditMode !== 'undefined' &&
             orderEditMode &&
@@ -4263,10 +4606,10 @@ function buildAutoOrderData(el, sharedData) {
  */
 async function claimAndSaveSingleOrder(orderData, userId) {
     if (!orderData.productionOrderNumber && userId) {
-        const claimResp = await fetch(
-            '/api/orders-studnie/claim-production-number/' + userId,
-            { method: 'POST', headers: authHeaders() }
-        );
+        const claimResp = await fetch('/api/orders-studnie/claim-production-number/' + userId, {
+            method: 'POST',
+            headers: authHeaders()
+        });
         if (claimResp.ok) {
             const claimData = await claimResp.json();
             if (claimData.number) orderData.productionOrderNumber = claimData.number;
@@ -4281,8 +4624,6 @@ async function claimAndSaveSingleOrder(orderData, userId) {
     if (!res.ok) throw new Error(resData.error || 'Server error');
     return orderData;
 }
-
-
 
 /**
  * Otwiera popup z drag & drop listą studni do ustalenia kolejności generowania.
@@ -4342,9 +4683,13 @@ function openBulkOrderSequencePopup() {
                     <div style="font-weight:700; font-size:0.8rem; color:var(--text-primary);">${g.wellName}</div>
                     <div style="font-size:0.65rem; color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
                 </div>
-                ${!disabled ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
+                ${
+                    !disabled
+                        ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
                     <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
-                </button>` : ''}
+                </button>`
+                        : ''
+                }
             </div>`;
         })
         .join('');
@@ -4411,7 +4756,10 @@ function updateBulkSeqNumbers() {
     items.forEach((item) => {
         const numEl = item.querySelector('.bulk-seq-num');
         if (!numEl) return;
-        if (item.classList.contains('bulk-seq-disabled') || item.classList.contains('bulk-seq-excluded')) {
+        if (
+            item.classList.contains('bulk-seq-disabled') ||
+            item.classList.contains('bulk-seq-excluded')
+        ) {
             numEl.value = '';
             numEl.placeholder = '—';
         } else {
@@ -4431,34 +4779,36 @@ function reorderBulkSeqList(inputEl) {
         updateBulkSeqNumbers();
         return;
     }
-    
+
     const item = inputEl.closest('.bulk-seq-item');
     if (!item) return;
-    
+
     const list = document.getElementById('bulk-seq-list');
-    const items = Array.from(list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'));
-    
+    const items = Array.from(
+        list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)')
+    );
+
     const oldIndex = items.indexOf(item);
     let newIndex = newVal - 1;
-    
+
     if (newIndex >= items.length) newIndex = items.length - 1;
     if (newIndex < 0) newIndex = 0;
-    
+
     if (oldIndex === newIndex) {
         updateBulkSeqNumbers();
         return;
     }
-    
+
     items.splice(oldIndex, 1);
     items.splice(newIndex, 0, item);
-    
+
     const excludedItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-excluded'));
     const disabledItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-disabled'));
-    
-    items.forEach(el => list.appendChild(el));
-    excludedItems.forEach(el => list.appendChild(el));
-    disabledItems.forEach(el => list.appendChild(el));
-    
+
+    items.forEach((el) => list.appendChild(el));
+    excludedItems.forEach((el) => list.appendChild(el));
+    disabledItems.forEach((el) => list.appendChild(el));
+
     updateBulkSeqNumbers();
 }
 
@@ -4468,45 +4818,47 @@ function toggleBulkSeqItem(btn) {
     if (!item) return;
 
     const isExcluded = item.classList.contains('bulk-seq-excluded');
-    
+
     if (isExcluded) {
         item.classList.remove('bulk-seq-excluded');
         item.style.opacity = '1';
         item.setAttribute('draggable', 'true');
-        
+
         const input = item.querySelector('.bulk-seq-num');
         input.removeAttribute('disabled');
         input.style.background = 'rgba(var(--accent2-rgb),0.15)';
-        
+
         btn.innerHTML = '<i data-lucide="trash-2" style="width:16px; height:16px;"></i>';
         btn.style.color = 'var(--danger-hover)';
-        btn.title = "Pomiń studnię";
+        btn.title = 'Pomiń studnię';
     } else {
         item.classList.add('bulk-seq-excluded');
         item.style.opacity = '0.4';
         item.setAttribute('draggable', 'false');
-        
+
         const input = item.querySelector('.bulk-seq-num');
         input.setAttribute('disabled', 'true');
         input.value = '';
         input.placeholder = '—';
         input.style.background = 'rgba(255,255,255,0.05)';
-        
+
         btn.innerHTML = '<i data-lucide="plus" style="width:16px; height:16px;"></i>';
         btn.style.color = 'var(--success-hover)';
-        btn.title = "Przywróć studnię";
+        btn.title = 'Przywróć studnię';
     }
-    
+
     if (window.lucide) window.lucide.createIcons();
-    
+
     const list = document.getElementById('bulk-seq-list');
-    const activeItems = Array.from(list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'));
+    const activeItems = Array.from(
+        list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)')
+    );
     const excludedItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-excluded'));
     const disabledItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-disabled'));
-    
-    activeItems.forEach(el => list.appendChild(el));
-    excludedItems.forEach(el => list.appendChild(el));
-    disabledItems.forEach(el => list.appendChild(el));
+
+    activeItems.forEach((el) => list.appendChild(el));
+    excludedItems.forEach((el) => list.appendChild(el));
+    disabledItems.forEach((el) => list.appendChild(el));
 
     updateBulkSeqNumbers();
 }
@@ -4520,7 +4872,9 @@ function closeBulkOrderPopup() {
  * Wywołane z popupu kolejności — odczytuje kolejność studni z DOM i generuje.
  */
 async function executeBulkFromPopup() {
-    const items = document.querySelectorAll('#bulk-seq-list .bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)');
+    const items = document.querySelectorAll(
+        '#bulk-seq-list .bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'
+    );
     const orderedIndexes = Array.from(items).map((el) => parseInt(el.dataset.wellIndex, 10));
 
     closeBulkOrderPopup();
@@ -4540,7 +4894,13 @@ async function executeBulkFromPopup() {
     }
 
     const msg = `Wygenerować zlecenia dla ${unsaved.length} elementów w wybranej kolejności?`;
-    if (!(await appConfirm(msg, { title: 'Generuj w kolejności', type: 'warning', okText: 'Generuj' })))
+    if (
+        !(await appConfirm(msg, {
+            title: 'Generuj w kolejności',
+            type: 'warning',
+            okText: 'Generuj'
+        }))
+    )
         return;
 
     await executeBulkGeneration(unsaved);
@@ -4646,7 +5006,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
 });
 
-window.showKartaBudowyExportChoice = function() {
+window.showKartaBudowyExportChoice = function () {
     if (!orderEditMode || !orderEditMode.orderId) {
         showToast('Brak aktywnego zamówienia', 'error');
         return;
@@ -4670,61 +5030,67 @@ window.showKartaBudowyExportChoice = function() {
     </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    if(typeof lucide !== 'undefined') lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
-window.exportKartaToPDF_action = async function(orderId) {
+window.exportKartaToPDF_action = async function (orderId) {
     const modal = document.getElementById('karta-export-modal');
     if (modal) modal.remove();
     showToast('Generowanie Karty Budowy (PDF)...', 'info');
     fetch(`/api/orders-studnie/${orderId}/export-karta-pdf`, {
-        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+        headers:
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' }
     })
-    .then((res) => {
-        if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
-        return res.blob();
-    })
-    .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `karta_budowy_${orderId.substring(0,8)}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-        showToast('Pobrano Kartę Budowy w PDF', 'success');
-    })
-    .catch((err) => {
-        logger.error('orderManager', '[Export Error]', err);
-        showToast('Błąd eksportu: ' + err.message, 'error');
-    });
+        .then((res) => {
+            if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
+            return res.blob();
+        })
+        .then((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `karta_budowy_${orderId.substring(0, 8)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showToast('Pobrano Kartę Budowy w PDF', 'success');
+        })
+        .catch((err) => {
+            logger.error('orderManager', '[Export Error]', err);
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        });
 };
 
-window.exportKartaToWord_action = async function(orderId) {
+window.exportKartaToWord_action = async function (orderId) {
     const modal = document.getElementById('karta-export-modal');
     if (modal) modal.remove();
     showToast('Generowanie Karty Budowy (DOCX)...', 'info');
     fetch(`/api/orders-studnie/${orderId}/export-karta-docx`, {
-        headers: typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' }
+        headers:
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' }
     })
-    .then((res) => {
-        if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
-        return res.blob();
-    })
-    .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `karta_budowy_${orderId.substring(0,8)}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-        showToast('Pobrano Kartę Budowy w DOCX', 'success');
-    })
-    .catch((err) => {
-        logger.error('orderManager', '[Export Error]', err);
-        showToast('Błąd eksportu: ' + err.message, 'error');
-    });
+        .then((res) => {
+            if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
+            return res.blob();
+        })
+        .then((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `karta_budowy_${orderId.substring(0, 8)}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showToast('Pobrano Kartę Budowy w DOCX', 'success');
+        })
+        .catch((err) => {
+            logger.error('orderManager', '[Export Error]', err);
+            showToast('Błąd eksportu: ' + err.message, 'error');
+        });
 };

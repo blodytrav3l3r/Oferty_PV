@@ -28,34 +28,35 @@ Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css`.
 --text-muted: #64748b;
 
 /* Akcenty */
---accent: #6366f1;       /* indigo */
---success: #10b981;      /* zielony */
---danger: #ef4444;       /* czerwony */
---warn: #f59e0b;         /* żółty */
---blue: #3b82f6;         /* niebieski */
---pink: #ec4899;         /* różowy (moduł zleceń) */
+--accent: #6366f1; /* indigo */
+--success: #10b981; /* zielony */
+--danger: #ef4444; /* czerwony */
+--warn: #f59e0b; /* żółty */
+--blue: #3b82f6; /* niebieski */
+--pink: #ec4899; /* różowy (moduł zleceń) */
 ```
 
 ### Moduły — kolory akcentów
 
-| Moduł | Klasa | `--logo-start` | `--logo-end` |
-|-------|-------|---------------|-------------|
-| Rury | `.logo-rury` | `--accent` (#6366f1) | `--accent2` (#8b5cf6) |
-| Studnie | `.logo-studnie` | `--success` (#10b981) | `--success-hover` (#34d399) |
-| Kartoteka | `.logo-kartoteka` | `--warn` (#f59e0b) | `--warn-hover` (#fbbf24) |
-| Zlecenia | `.logo-zlecenia` | `--pink` (#ec4899) | `--pink-hover` (#f472b6) |
+| Moduł     | Klasa             | `--logo-start`        | `--logo-end`                |
+| --------- | ----------------- | --------------------- | --------------------------- |
+| Rury      | `.logo-rury`      | `--accent` (#6366f1)  | `--accent2` (#8b5cf6)       |
+| Studnie   | `.logo-studnie`   | `--success` (#10b981) | `--success-hover` (#34d399) |
+| Kartoteka | `.logo-kartoteka` | `--warn` (#f59e0b)    | `--warn-hover` (#fbbf24)    |
+| Zlecenia  | `.logo-zlecenia`  | `--pink` (#ec4899)    | `--pink-hover` (#f472b6)    |
 
 ### Layout
 
 ```css
---radius: 12px;       /* główny */
---radius-sm: 8px;     /* mały */
---radius-md: 16px;    /* średni */
---radius-lg: 24px;    /* duży */
+--radius: 12px; /* główny */
+--radius-sm: 8px; /* mały */
+--radius-md: 16px; /* średni */
+--radius-lg: 24px; /* duży */
 
---transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(...);
+--transition:
+    background-color 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(...);
 
---shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
 --shadow-md: 0 4px 16px var(--shadow-color);
 --shadow-lg: 0 8px 32px var(--shadow-color);
 ```
@@ -67,45 +68,50 @@ Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css`.
 ### `.header`
 
 Sticky top bar, tło `--bg-secondary`, border-bottom, z-index 100.
+
 ```html
 <header class="header">
-  <div class="header-inner">
-    <div class="header-left">...</div>
-    <div class="header-center">...</div>
-    <div class="header-right">...</div>
-  </div>
+    <div class="header-inner">
+        <div class="header-left">...</div>
+        <div class="header-center">...</div>
+        <div class="header-right">...</div>
+    </div>
 </header>
 ```
+
 **Responsywność:** 700px → flex wrap, 480px → centrowanie.
 
 ### `.logo`
 
 Gradientowy tekst (accent→accent2) z ikoną SVG, font-weight 800.
+
 ```html
 <div class="logo">
-  <svg>...</svg>
-  <span>WITROS Oferty</span>
+    <svg>...</svg>
+    <span>WITROS Oferty</span>
 </div>
 ```
+
 Palety: `.logo-rury`, `.logo-studnie`, `.logo-kartoteka`, `.logo-zlecenia`.
 
 ### `.nav-tile`
 
 Kafelkowe przyciski nawigacji w headerze. **Kluczowy wzorzec UI.**
 
-| Stan | Wygląd |
-|------|--------|
-| Default | `border: 1px solid var(--border)`, tło `--border-glass` |
-| Hover | `translateY(-2px)`, `box-shadow` |
-| `.active` | kolor `--nav-accent` (zmienny per moduł), podkreślenie `::after` |
-| `focus-visible` | outline 2px accent |
+| Stan            | Wygląd                                                           |
+| --------------- | ---------------------------------------------------------------- |
+| Default         | `border: 1px solid var(--border)`, tło `--border-glass`          |
+| Hover           | `translateY(-2px)`, `box-shadow`                                 |
+| `.active`       | kolor `--nav-accent` (zmienny per moduł), podkreślenie `::after` |
+| `focus-visible` | outline 2px accent                                               |
 
 ```html
 <a class="nav-tile" href="/rury">
-  <span class="nav-tile-icon">${renderIcon('pipe')}</span>
-  <span class="nav-tile-text">RURY</span>
+    <span class="nav-tile-icon">${renderIcon('pipe')}</span>
+    <span class="nav-tile-text">RURY</span>
 </a>
 ```
+
 **Responsywność:** 700px → `.nav-tile-text` hidden (tylko ikony).
 
 ---
@@ -118,32 +124,33 @@ Podstawowy kontener blokowy, tło `--bg-card`, border, radius.
 
 ```html
 <div class="card">
-  <div class="card-title">
-    <span>Tytuł</span>
-    <span class="badge">3</span>
-  </div>
-  <div class="card-content">...</div>
+    <div class="card-title">
+        <span>Tytuł</span>
+        <span class="badge">3</span>
+    </div>
+    <div class="card-content">...</div>
 </div>
 
 <!-- kompakt -->
 <div class="card card-sm">
-  <div class="card-title-sm">Tytuł</div>
+    <div class="card-title-sm">Tytuł</div>
 </div>
 ```
 
-| Wariant | Padding |
-|---------|---------|
-| `.card` | `0.8rem 1rem` |
-| `.card-sm` | `0.6rem 0.8rem` |
+| Wariant         | Padding                  |
+| --------------- | ------------------------ |
+| `.card`         | `0.8rem 1rem`            |
+| `.card-sm`      | `0.6rem 0.8rem`          |
 | `.card-compact` | `0.7rem 1rem !important` |
 
 ### `.card-header-row`
 
 Flex row space-between z marginesem dolnym.
+
 ```html
 <div class="card-header-row">
-  <h3>Tytuł</h3>
-  <button class="btn btn-sm btn-primary">Akcja</button>
+    <h3>Tytuł</h3>
+    <button class="btn btn-sm btn-primary">Akcja</button>
 </div>
 ```
 
@@ -151,11 +158,11 @@ Flex row space-between z marginesem dolnym.
 
 Oznaczenia ról użytkownika — inline badge z kolorem.
 
-| Rola | Klasa | Kolor |
-|------|-------|-------|
+| Rola  | Klasa         | Kolor               |
+| ----- | ------------- | ------------------- |
 | Admin | `.role-admin` | czerwony `--danger` |
-| Pro | `.role-pro` | żółty `--warn` |
-| User | `.role-user` | zielony `--success` |
+| Pro   | `.role-pro`   | żółty `--warn`      |
+| User  | `.role-user`  | zielony `--success` |
 
 ---
 
@@ -171,14 +178,14 @@ Oznaczenia ról użytkownika — inline badge z kolorem.
 <button class="btn btn-sm">Mały</button>
 ```
 
-| Wariant | Tło | Kolor tekstu |
-|---------|-----|--------------|
-| `.btn-primary` | gradient `accent→accent2` | #fff |
-| `.btn-secondary` | `--bg-glass` | `--text-secondary` |
-| `.btn-danger` | `--danger-bg` | `--danger` |
-| `.btn-success` | `--success-bg` | `--success` |
-| `.btn-sm` | padding `0.35rem 0.7rem` | font 0.75rem |
-| `.btn:disabled` | opacity 0.5, grayscale | — |
+| Wariant          | Tło                       | Kolor tekstu       |
+| ---------------- | ------------------------- | ------------------ |
+| `.btn-primary`   | gradient `accent→accent2` | #fff               |
+| `.btn-secondary` | `--bg-glass`              | `--text-secondary` |
+| `.btn-danger`    | `--danger-bg`             | `--danger`         |
+| `.btn-success`   | `--success-bg`            | `--success`        |
+| `.btn-sm`        | padding `0.35rem 0.7rem`  | font 0.75rem       |
+| `.btn:disabled`  | opacity 0.5, grayscale    | —                  |
 
 ### `.btn-icon`
 
@@ -209,8 +216,8 @@ Akcyjne przyciski w tabelach (tło `--bg-tertiary`, hover `--danger`/`--accent`)
 
 ```html
 <div class="form-group">
-  <label class="form-label">Nazwa</label>
-  <input class="form-input" placeholder="Wpisz nazwę...">
+    <label class="form-label">Nazwa</label>
+    <input class="form-input" placeholder="Wpisz nazwę..." />
 </div>
 ```
 
@@ -220,11 +227,11 @@ Akcyjne przyciski w tabelach (tło `--bg-tertiary`, hover `--danger`/`--accent`)
 
 Wspólne style inputów.
 
-| Wariant | Zastosowanie |
-|---------|-------------|
-| `.form-input` | text, number, email, etc. |
-| `.form-select` | `<select>` z custom strzałką SVG |
-| `.form-textarea` | `<textarea>` z resize vertical |
+| Wariant          | Zastosowanie                                  |
+| ---------------- | --------------------------------------------- |
+| `.form-input`    | text, number, email, etc.                     |
+| `.form-select`   | `<select>` z custom strzałką SVG              |
+| `.form-textarea` | `<textarea>` z resize vertical                |
 | `.form-input-sm` | kompakt: padding 0.35rem 0.55rem, font 0.8rem |
 
 Focus: border-color → accent, box-shadow z glow.
@@ -233,15 +240,15 @@ Focus: border-color → accent, box-shadow z glow.
 
 ```html
 <div class="form-row form-row-2">
-  <div class="form-group">...</div>
-  <div class="form-group">...</div>
+    <div class="form-group">...</div>
+    <div class="form-group">...</div>
 </div>
 ```
 
-| Klasa | Kolumny |
-|-------|---------|
-| `.form-row-2` | 1fr 1fr |
-| `.form-row-3` | 1fr 1fr 1fr |
+| Klasa         | Kolumny         |
+| ------------- | --------------- |
+| `.form-row-2` | 1fr 1fr         |
+| `.form-row-3` | 1fr 1fr 1fr     |
 | `.form-row-4` | 1fr 1fr 1fr 1fr |
 
 ### `.edit-input`
@@ -249,7 +256,7 @@ Focus: border-color → accent, box-shadow z glow.
 Input inline-editable (tabela konfiguracyjna studni). Bez spinnerów number.
 
 ```html
-<input class="edit-input" type="number" step="0.01" value="1.5">
+<input class="edit-input" type="number" step="0.01" value="1.5" />
 ```
 
 ### `.search-box`
@@ -258,8 +265,8 @@ Input z ikoną wyszukiwania.
 
 ```html
 <div class="search-box">
-  ${renderIcon('search')}
-  <input class="form-input" placeholder="Szukaj...">
+    ${renderIcon('search')}
+    <input class="form-input" placeholder="Szukaj..." />
 </div>
 ```
 
@@ -275,14 +282,18 @@ Overflow-x auto wrapper dla tabel.
 
 ```html
 <div class="table-wrap">
-  <table>
-    <thead>
-      <tr><th>Kolumna</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Wartość</td></tr>
-    </tbody>
-  </table>
+    <table>
+        <thead>
+            <tr>
+                <th>Kolumna</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Wartość</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 ```
 
@@ -297,14 +308,14 @@ Rozwijane wiersze w tabeli ofert.
 
 ```html
 <tr class="well-row-header" onclick="toggleWell(this)">
-  <td>Nazwa studni</td>
+    <td>Nazwa studni</td>
 </tr>
 <tr class="well-details-row hidden">
-  <td colspan="5">
-    <div class="well-details-container">
-      <div class="well-details-grid">...</div>
-    </div>
-  </td>
+    <td colspan="5">
+        <div class="well-details-container">
+            <div class="well-details-grid">...</div>
+        </div>
+    </td>
 </tr>
 ```
 
@@ -333,14 +344,12 @@ Klikana komórka w tabeli.
 Badge statusu oferty z SVG ikoną.
 
 ```html
-<span class="status-badge status-draft">
-  ${renderIcon('file-text')} Szkic
-</span>
+<span class="status-badge status-draft"> ${renderIcon('file-text')} Szkic </span>
 ```
 
-| Wariant | Kolor |
-|---------|-------|
-| `.status-draft` | `--warn` |
+| Wariant            | Kolor       |
+| ------------------ | ----------- |
+| `.status-draft`    | `--warn`    |
 | `.status-accepted` | `--success` |
 
 ### `.cat-header`
@@ -349,8 +358,8 @@ Nagłówek kategorii w katalogu produktów.
 
 ```html
 <div class="cat-header">
-  ${renderIcon('folder')} Kategoria
-  <span class="cat-count">(5)</span>
+    ${renderIcon('folder')} Kategoria
+    <span class="cat-count">(5)</span>
 </div>
 ```
 
@@ -359,10 +368,12 @@ Nagłówek kategorii w katalogu produktów.
 ## 8. Modal / Overlay (JS-driven)
 
 Brak dedykowanej klasy CSS `.modal` w plikach CSS — modal budowany inline w JS z:
+
 - `const overlay = document.createElement('div')` z `position: fixed; z-index: 1000;`
 - `const modal = overlay.querySelector('.modal-content')` lub inline HTML
 
 **Wzorzec z kodu JS:**
+
 ```javascript
 const overlay = Object.assign(document.createElement('div'), {
     style: `position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;
@@ -372,6 +383,7 @@ const modal = document.createElement('div');
 modal.style = `background:var(--bg-card);padding:1.5rem;border-radius:var(--radius-md);
                max-width:500px;width:90%;max-height:80vh;overflow-y:auto;`;
 ```
+
 **Sugestia refaktora:** dodać klasę `.modal-overlay` / `.modal-content` do CSS.
 
 ---
@@ -384,9 +396,9 @@ Podstawowy kafelek w kreatorze studni.
 
 ```html
 <div class="tile ${selected ? 'selected' : ''}" onclick="selectTile(this)">
-  <div class="tile-icon">${icon}</div>
-  <div class="tile-label">Nazwa</div>
-  <div class="tile-price">${price} zł</div>
+    <div class="tile-icon">${icon}</div>
+    <div class="tile-label">Nazwa</div>
+    <div class="tile-price">${price} zł</div>
 </div>
 ```
 
@@ -408,9 +420,9 @@ Zakładki katalogu produktów.
 
 ```html
 <div class="catalog-tabs">
-  <button class="catalog-tab active">Wszystkie</button>
-  <button class="catalog-tab">Kategoria A</button>
-  <button class="catalog-tab">Kategoria B</button>
+    <button class="catalog-tab active">Wszystkie</button>
+    <button class="catalog-tab">Kategoria A</button>
+    <button class="catalog-tab">Kategoria B</button>
 </div>
 ```
 
@@ -440,10 +452,10 @@ Wiersz produktu z hoverem.
 
 ```html
 <div class="catalog-item-row ${is1m ? 'catalog-item-1m' : ''}">
-  <span class="catalog-item-row-name">Nazwa</span>
-  <span class="catalog-item-row-meta">info</span>
-  <span class="catalog-item-row-price">100 zł</span>
-  <button class="catalog-item-add">+</button>
+    <span class="catalog-item-row-name">Nazwa</span>
+    <span class="catalog-item-row-meta">info</span>
+    <span class="catalog-item-row-price">100 zł</span>
+    <button class="catalog-item-add">+</button>
 </div>
 ```
 
@@ -461,16 +473,16 @@ Karta oferty w dashboardzie.
 
 ```html
 <div class="offer-card ${selected ? 'selected' : ''}">
-  <div class="offer-card-content">
-    <div class="offer-icon-wrapper">${icon}</div>
-    <div class="offer-title-section">
-      <div class="offer-title">OF-2024/001</div>
-      <div class="offer-client">Klient</div>
+    <div class="offer-card-content">
+        <div class="offer-icon-wrapper">${icon}</div>
+        <div class="offer-title-section">
+            <div class="offer-title">OF-2024/001</div>
+            <div class="offer-client">Klient</div>
+        </div>
+        <div class="offer-price-section">
+            <div class="offer-price">15 000 zł</div>
+        </div>
     </div>
-    <div class="offer-price-section">
-      <div class="offer-price">15 000 zł</div>
-    </div>
-  </div>
 </div>
 ```
 
@@ -490,11 +502,11 @@ Status oferty (`.has-order` / `.no-order`).
 grid-template-columns: 350px 1fr 350px;
 ```
 
-| Breakpoint | Zmiana |
-|------------|--------|
-| 1400px | 300px → 1fr → 300px |
-| 1200px | 1fr → 240px (diagram hidden) |
-| 900px | 1fr (wszystko w kolumnie) |
+| Breakpoint | Zmiana                       |
+| ---------- | ---------------------------- |
+| 1400px     | 300px → 1fr → 300px          |
+| 1200px     | 1fr → 240px (diagram hidden) |
+| 900px      | 1fr (wszystko w kolumnie)    |
 
 ### `.well-app-layout.intro-mode`
 
@@ -522,10 +534,10 @@ Karta logowania.
 
 ```html
 <div class="login-box card">
-  <h3>Logowanie</h3>
-  <input type="text" placeholder="Użytkownik">
-  <input type="password" placeholder="Hasło">
-  <button class="login-btn">Zaloguj</button>
+    <h3>Logowanie</h3>
+    <input type="text" placeholder="Użytkownik" />
+    <input type="password" placeholder="Hasło" />
+    <button class="login-btn">Zaloguj</button>
 </div>
 ```
 
@@ -563,49 +575,49 @@ Oznaczenie osoby odpowiedzialnej / autora oferty.
 
 ### Tekst
 
-| Klasa | Właściwość |
-|-------|-----------|
-| `.text-accent` | color: `--accent` |
-| `.text-success` | color: `--success` |
-| `.text-danger` | color: `--danger` |
-| `.text-warn` | color: `--warn` |
-| `.text-right` | text-align: right |
-| `.text-center` | text-align: center |
-| `.text-nowrap` | white-space: nowrap |
+| Klasa            | Właściwość            |
+| ---------------- | --------------------- |
+| `.text-accent`   | color: `--accent`     |
+| `.text-success`  | color: `--success`    |
+| `.text-danger`   | color: `--danger`     |
+| `.text-warn`     | color: `--warn`       |
+| `.text-right`    | text-align: right     |
+| `.text-center`   | text-align: center    |
+| `.text-nowrap`   | white-space: nowrap   |
 | `.fs-075-nowrap` | font 0.75rem + nowrap |
 | `.fs-065-nowrap` | font 0.65rem + nowrap |
 
 ### Tło
 
-| Klasa | Właściwość |
-|-------|-----------|
-| `.bg-accent` | background: `--accent` |
-| `.bg-success` | background: `--success` |
-| `.bg-danger` | background: `--danger` |
-| `.bg-warn` | background: `--warn` |
-| `.bg-glass` | background: `--bg-glass` |
+| Klasa            | Właściwość                 |
+| ---------------- | -------------------------- |
+| `.bg-accent`     | background: `--accent`     |
+| `.bg-success`    | background: `--success`    |
+| `.bg-danger`     | background: `--danger`     |
+| `.bg-warn`       | background: `--warn`       |
+| `.bg-glass`      | background: `--bg-glass`   |
 | `.bg-success-bg` | background: `--success-bg` |
-| `.bg-danger-bg` | background: `--danger-bg` |
+| `.bg-danger-bg`  | background: `--danger-bg`  |
 
 ### Border
 
-| Klasa | Właściwość |
-|-------|-----------|
-| `.border-accent` | border-color: `--accent` |
+| Klasa             | Właściwość                |
+| ----------------- | ------------------------- |
+| `.border-accent`  | border-color: `--accent`  |
 | `.border-success` | border-color: `--success` |
-| `.border-danger` | border-color: `--danger` |
-| `.border-warn` | border-color: `--warn` |
+| `.border-danger`  | border-color: `--danger`  |
+| `.border-warn`    | border-color: `--warn`    |
 
 ### Gap / Margin / Padding
 
-| Klasa | Wartość |
-|-------|---------|
-| `.gap-1` | gap: 0.25rem |
-| `.gap-2` | gap: 0.5rem |
-| `.gap-3` | gap: 0.75rem |
-| `.gap-4` | gap: 1rem |
-| `.mb-0` | margin-bottom: 0 |
-| `.mb-1` | margin-bottom: 1rem |
+| Klasa    | Wartość             |
+| -------- | ------------------- |
+| `.gap-1` | gap: 0.25rem        |
+| `.gap-2` | gap: 0.5rem         |
+| `.gap-3` | gap: 0.75rem        |
+| `.gap-4` | gap: 1rem           |
+| `.mb-0`  | margin-bottom: 0    |
+| `.mb-1`  | margin-bottom: 1rem |
 
 ---
 
@@ -614,11 +626,24 @@ Oznaczenie osoby odpowiedzialnej / autora oferty.
 Custom scrollbar dla całej aplikacji:
 
 ```css
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #3730a3; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
-html { scrollbar-width: thin; scrollbar-color: #3730a3 #0f172a; }
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+    background: #3730a3;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #4f46e5;
+}
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #3730a3 #0f172a;
+}
 ```
 
 **Firefox:** używa `scrollbar-width: thin` z tymi samymi kolorami.
@@ -635,11 +660,11 @@ Zawiera style dla modalnego podglądu PDF/DOCX przed wydrukiem (ukrycie nagłów
 
 ## 19. Animacje
 
-| Animacja | Właściwość |
-|----------|-----------|
-| `fadeIn` | opacity 0→1, translateY 8px→0 (0.35s ease) |
+| Animacja    | Właściwość                                     |
+| ----------- | ---------------------------------------------- |
+| `fadeIn`    | opacity 0→1, translateY 8px→0 (0.35s ease)     |
 | `slideDown` | opacity 0→1, translateY -5px→0 (0.2s ease-out) |
-| `bgShift` | powolna rotacja tła (loop) |
+| `bgShift`   | powolna rotacja tła (loop)                     |
 
 Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`.
 
@@ -647,15 +672,15 @@ Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`
 
 ## 20. Responsywność — mapowanie
 
-| Breakpoint | Gdzie | Zmiana |
-|------------|-------|--------|
-| 1400px | well-app-layout | 350→300px sidebar |
-| 1200px | well-app-layout | ukryj diagram, 2 kolumny |
-| 900px | well-app-layout | 1 kolumna |
-| 768px | form-row-* | (grid zachowany, ale mniejsze paddingi) |
-| 700px | header | flex wrap, nav-tile-text hidden |
-| 480px | header | centrowanie, logo span hidden |
+| Breakpoint | Gdzie           | Zmiana                                  |
+| ---------- | --------------- | --------------------------------------- |
+| 1400px     | well-app-layout | 350→300px sidebar                       |
+| 1200px     | well-app-layout | ukryj diagram, 2 kolumny                |
+| 900px      | well-app-layout | 1 kolumna                               |
+| 768px      | form-row-*      | (grid zachowany, ale mniejsze paddingi) |
+| 700px      | header          | flex wrap, nav-tile-text hidden         |
+| 480px      | header          | centrowanie, logo span hidden           |
 
 ---
 
-*Ostatnia aktualizacja: 2026-06-20*
+_Ostatnia aktualizacja: 2026-06-20_

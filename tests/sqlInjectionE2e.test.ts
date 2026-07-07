@@ -88,17 +88,17 @@ describe('SQL Injection - scenariusze ataku', () => {
         (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
 
         const maliciousPayload = {
-            data: [{
-                id: "test'; DROP TABLE audit_logs; --",
-                clientId: 'c1',
-                status: 'draft',
-                createdAt: Date.now()
-            }]
+            data: [
+                {
+                    id: "test'; DROP TABLE audit_logs; --",
+                    clientId: 'c1',
+                    status: 'draft',
+                    createdAt: Date.now()
+                }
+            ]
         };
 
-        const res = await request(app)
-            .post('/api/offers/studnie')
-            .send(maliciousPayload);
+        const res = await request(app).post('/api/offers/studnie').send(maliciousPayload);
 
         // Upsert powinien zostać wywołany z ID jako parametrem (nie w SQL)
         expect(prisma.offers_studnie_rel.upsert).toHaveBeenCalled();

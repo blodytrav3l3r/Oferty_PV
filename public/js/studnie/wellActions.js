@@ -23,7 +23,8 @@ function updateElevations() {
     const wlazVal = wlazInput.value !== '' ? parseCalcExpression(wlazInput.value) : null;
     const dnaVal = dnaInput.value !== '' ? parseCalcExpression(dnaInput.value) : 0;
 
-    if (wlazVal !== null && wlazInput.value.trim().startsWith('=')) wlazInput.value = String(wlazVal);
+    if (wlazVal !== null && wlazInput.value.trim().startsWith('='))
+        wlazInput.value = String(wlazVal);
     if (dnaVal !== null && dnaInput.value.trim().startsWith('=')) dnaInput.value = String(dnaVal);
 
     well.rzednaWlazu = wlazVal;
@@ -168,21 +169,27 @@ function updateWellNumer() {
     updateSummary();
 }
 
-window.autoUpdateWellName = function(well, index) {
+window.autoUpdateWellName = function (well, index) {
     if (!well) return;
-    
-    let baseName = well.numer || ('Studnia ' + (well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn) + ' (#' + (index + 1) + ')');
-    
+
+    let baseName =
+        well.numer ||
+        'Studnia ' +
+            (well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn) +
+            ' (#' +
+            (index + 1) +
+            ')';
+
     // Usuń istniejący przyrostek, aby nie dodawać go wielokrotnie
     baseName = baseName.replace(/ (PRE|UTH)$/, '');
-    
+
     let suffix = '';
     if (well.kineta === 'preco' || well.kineta === 'precotop') {
         suffix = ' PRE';
     } else if (well.kineta === 'unolith') {
         suffix = ' UTH';
     }
-    
+
     well.name = baseName + suffix;
 };
 
@@ -442,7 +449,7 @@ function addWellComponent(productId) {
         well.autoLocked = true;
         updateAutoLockUI();
         showToast('Włączono tryb ręczny.', 'info');
-    if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
+        if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     }
     well.configSource = 'MANUAL';
 
@@ -457,11 +464,18 @@ function addWellComponent(productId) {
     const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
 
     if (topClosureTypes.includes(product.componentType)) {
-        if (product.componentType === 'konus' && well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+        if (
+            product.componentType === 'konus' &&
+            well.wkladkaZwienczenie &&
+            well.wkladkaZwienczenie !== 'brak'
+        ) {
             if (typeof window.showKonusPehdResolverModal === 'function') {
                 window.showKonusPehdResolverModal(currentWellIndex);
             } else {
-                showToast('Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.', 'error');
+                showToast(
+                    'Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.',
+                    'error'
+                );
             }
             return;
         }
@@ -586,10 +600,20 @@ function addWellComponent(productId) {
     };
 
     addSingle(product);
-    
+
     // Po dodaniu upewnij się, że mamy parę jeśli to element odciążający
     if (typeof window.ensureReliefRingPair === 'function') {
         window.ensureReliefRingPair(well);
+    }
+
+    if (typeof window.telemetryRecordEvent === 'function') {
+        window.telemetryRecordEvent({
+            eventType: 'component_add',
+            wellId: well.id || well.name,
+            componentId: productId,
+            componentName: product.name,
+            configSource: 'MANUAL'
+        });
     }
 
     sortWellConfigByOrder();
@@ -641,8 +665,8 @@ function removeWellComponent(index) {
             // 1. Obsługa usuwania kompletu odciążającego
             const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
             if (reliefTypes.includes(p.componentType)) {
-                well.config = well.config.filter(item => {
-                    const prod = studnieProducts.find(pr => pr.id === item.productId);
+                well.config = well.config.filter((item) => {
+                    const prod = studnieProducts.find((pr) => pr.id === item.productId);
                     return !prod || !reliefTypes.includes(prod.componentType);
                 });
                 showToast('Usunięto komplet odciążający', 'info');
@@ -657,6 +681,21 @@ function removeWellComponent(index) {
                 showToast('Usunięto redukcję ze studni.', 'info');
             }
         }
+    }
+
+    if (typeof window.telemetryRecordEvent === 'function') {
+        const removedProd = removedItem
+            ? studnieProducts.find(function (p) {
+                  return p.id === removedItem.productId;
+              })
+            : null;
+        window.telemetryRecordEvent({
+            eventType: 'component_remove',
+            wellId: well.id || well.name,
+            componentId: removedItem ? removedItem.productId : undefined,
+            componentName: removedProd ? removedProd.name : undefined,
+            configSource: 'MANUAL'
+        });
     }
 
     recalcGaskets(well);
@@ -692,6 +731,16 @@ function updateWellQuantity(index, value) {
     if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     // Nie pozwalamy na zmianę ilości na > 1 dla elementów betonowych, ale zachowujemy funkcję do usuwania
     well.config[index].quantity = 1;
+
+    if (typeof window.telemetryRecordEvent === 'function') {
+        window.telemetryRecordEvent({
+            eventType: 'component_qty_change',
+            wellId: well.id || well.name,
+            componentId: well.config[index] ? well.config[index].productId : undefined,
+            configSource: 'MANUAL'
+        });
+    }
+
     renderWellConfig();
     renderWellDiagram();
     updateSummary();
@@ -790,12 +839,22 @@ function renderTiles() {
         }
 
         // Niestandardowe sortowanie dla dennicy: sortuj wg wysokości od najniższej do najwyższej
-        if (group.types.includes('dennica') || group.types.includes('krag') || group.types.includes('krag_ot')) {
+        if (
+            group.types.includes('dennica') ||
+            group.types.includes('krag') ||
+            group.types.includes('krag_ot')
+        ) {
             items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
         }
 
         // Sortowanie wg kolejności zadeklarowanej w group.types
-        if (group.types.length > 1 && !group.types.includes('dennica') && !group.types.includes('krag') && !group.types.includes('krag_ot') && !group.types.includes('styczna')) {
+        if (
+            group.types.length > 1 &&
+            !group.types.includes('dennica') &&
+            !group.types.includes('krag') &&
+            !group.types.includes('krag_ot') &&
+            !group.types.includes('styczna')
+        ) {
             items.sort((a, b) => {
                 const idxA = group.types.indexOf(a.componentType);
                 const idxB = group.types.indexOf(b.componentType);
@@ -824,10 +883,18 @@ function renderTiles() {
 
             // Oblicz cenę z dopłatą
             let displayPrice = p.price || 0;
-            if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag_ot' || p.componentType === 'dennica') && p.doplataDrabNierdzewna) {
+            if (
+                well.stopnie === 'nierdzewna' &&
+                (p.componentType === 'krag_ot' || p.componentType === 'dennica') &&
+                p.doplataDrabNierdzewna
+            ) {
                 displayPrice += parseFloat(p.doplataDrabNierdzewna);
             }
-            if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica' && p.doplataZelbet) {
+            if (
+                (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
+                p.componentType === 'dennica' &&
+                p.doplataZelbet
+            ) {
                 displayPrice += parseFloat(p.doplataZelbet);
             }
 
@@ -862,14 +929,15 @@ function renderTiles() {
             if (p.componentType === 'plyta_redukcyjna' && well.redukcjaDN1000) {
                 const tDn = well.redukcjaTargetDN || 1000;
                 const nameUpper = (p.name || '').toUpperCase();
-                const matchesTarget = nameUpper.includes('/' + tDn) || 
-                                     nameUpper.includes(' DN' + tDn) || 
-                                     nameUpper.includes('X' + tDn) || 
-                                     nameUpper.includes(' NA ' + tDn) ||
-                                     nameUpper.includes('→DN' + tDn) ||
-                                     nameUpper.includes('→' + tDn) ||
-                                     nameUpper.includes('->DN' + tDn) ||
-                                     nameUpper.includes('->' + tDn);
+                const matchesTarget =
+                    nameUpper.includes('/' + tDn) ||
+                    nameUpper.includes(' DN' + tDn) ||
+                    nameUpper.includes('X' + tDn) ||
+                    nameUpper.includes(' NA ' + tDn) ||
+                    nameUpper.includes('→DN' + tDn) ||
+                    nameUpper.includes('→' + tDn) ||
+                    nameUpper.includes('->DN' + tDn) ||
+                    nameUpper.includes('->' + tDn);
                 if (!matchesTarget) return false;
             }
 
@@ -915,38 +983,42 @@ function renderTiles() {
 
     if ([1200, 1500, 2000, 2500].includes(parseInt(dn)) && hasReduction) {
         const tDn = well.redukcjaTargetDN || 1000;
-        
+
         // Funkcja pomocnicza do sprawdzania czy płyta pasuje do docelowej średnicy
         const matchesTargetDn = (name, target) => {
             const n = (name || '').toUpperCase();
-            return n.includes('/' + target) || 
-                   n.includes(' DN' + target) || 
-                   n.includes('X' + target) || 
-                   n.includes(' NA ' + target) ||
-                   n.includes('→DN' + target) ||
-                   n.includes('→' + target) ||
-                   n.includes('->DN' + target) ||
-                   n.includes('->' + target) ||
-                   n.includes('DO ' + target);
+            return (
+                n.includes('/' + target) ||
+                n.includes(' DN' + target) ||
+                n.includes('X' + target) ||
+                n.includes(' NA ' + target) ||
+                n.includes('→DN' + target) ||
+                n.includes('→' + target) ||
+                n.includes('->DN' + target) ||
+                n.includes('->' + target) ||
+                n.includes('DO ' + target)
+            );
         };
 
-        const redProducts = availProducts.filter((p) => {
-            // 1. Płyta redukcyjna: musi być dla średnicy studni (dn) i pasować do tDn
-            if (p.componentType === 'plyta_redukcyjna') {
-                if (parseInt(p.dn) !== parseInt(dn)) return false;
-                return matchesTargetDn(p.name, tDn);
-            }
-            // 2. Inne elementy: muszą być bezpośrednio dla tDn
-            if (parseInt(p.dn) === tDn) {
-                return p.componentType !== 'dennica' && p.componentType !== 'styczna';
-            }
-            return false;
-        }).filter(p => filterByWellParams(p, well));
+        const redProducts = availProducts
+            .filter((p) => {
+                // 1. Płyta redukcyjna: musi być dla średnicy studni (dn) i pasować do tDn
+                if (p.componentType === 'plyta_redukcyjna') {
+                    if (parseInt(p.dn) !== parseInt(dn)) return false;
+                    return matchesTargetDn(p.name, tDn);
+                }
+                // 2. Inne elementy: muszą być bezpośrednio dla tDn
+                if (parseInt(p.dn) === tDn) {
+                    return p.componentType !== 'dennica' && p.componentType !== 'styczna';
+                }
+                return false;
+            })
+            .filter((p) => filterByWellParams(p, well));
 
         if (redProducts.length > 0) {
             html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
             html += `<h3 class="color-warn" style="margin-bottom:1rem; font-size:1.1rem;">Redukcja (DN${tDn})</h3>`;
-            
+
             groups.forEach((g) => {
                 // Płyty redukcyjne pomijamy — są dostępne w głównej liście kafelków
                 // (wellActions.js:723 + filtr redukcjaDN1000), nie chcemy duplikatu w sekcji Redukcja
@@ -958,12 +1030,22 @@ function renderTiles() {
                 }
 
                 // Dodano sortowanie dla sekcji redukcji, analogicznie do głównej sekcji
-                if (g.types.includes('dennica') || g.types.includes('krag') || g.types.includes('krag_ot')) {
+                if (
+                    g.types.includes('dennica') ||
+                    g.types.includes('krag') ||
+                    g.types.includes('krag_ot')
+                ) {
                     items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
                 }
 
                 // Sortowanie wg kolejności zadeklarowanej w group.types
-                if (g.types.length > 1 && !g.types.includes('dennica') && !g.types.includes('krag') && !g.types.includes('krag_ot') && !g.types.includes('styczna')) {
+                if (
+                    g.types.length > 1 &&
+                    !g.types.includes('dennica') &&
+                    !g.types.includes('krag') &&
+                    !g.types.includes('krag_ot') &&
+                    !g.types.includes('styczna')
+                ) {
                     items.sort((a, b) => {
                         const idxA = g.types.indexOf(a.componentType);
                         const idxB = g.types.indexOf(b.componentType);
@@ -975,11 +1057,13 @@ function renderTiles() {
                     html += `<div class="tiles-section">
                         <div class="tiles-section-title">${g.title}</div>
                         <div class="tiles-grid">`;
-                    
+
                     items.forEach((p) => {
                         const isLocked = isWellLocked();
-                        const lockedStyle = isLocked ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : '';
-                        
+                        const lockedStyle = isLocked
+                            ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
+                            : '';
+
                         let displayPrice = p.price || 0;
                         if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
                             displayPrice += parseFloat(p.doplataDrabNierdzewna);
@@ -1003,24 +1087,30 @@ function renderTiles() {
     container.innerHTML = html;
 }
 
-window.toggleLinerDisabled = function(index, type) {
+window.toggleLinerDisabled = function (index, type) {
     const well = getCurrentWell();
     if (!well || !well.config || !well.config[index]) return;
-    
+
     const item = well.config[index];
     const p = studnieProducts.find((pr) => pr.id === item.productId);
-    
+
     if (type === 'pehd') {
         item.disablePehd = !item.disablePehd;
-        showToast(`Wkładka PEHD na "${p ? p.name : 'Elemencie'}" została ${item.disablePehd ? 'wyłączona' : 'włączona'}.`, item.disablePehd ? 'warning' : 'success');
+        showToast(
+            `Wkładka PEHD na "${p ? p.name : 'Elemencie'}" została ${item.disablePehd ? 'wyłączona' : 'włączona'}.`,
+            item.disablePehd ? 'warning' : 'success'
+        );
     } else if (type === 'preco') {
         item.disablePreco = !item.disablePreco;
-        showToast(`Wkładka PRECO na "${p ? p.name : 'Elemencie'}" została ${item.disablePreco ? 'wyłączona' : 'włączona'}.`, item.disablePreco ? 'warning' : 'success');
+        showToast(
+            `Wkładka PRECO na "${p ? p.name : 'Elemencie'}" została ${item.disablePreco ? 'wyłączona' : 'włączona'}.`,
+            item.disablePreco ? 'warning' : 'success'
+        );
     }
-    
+
     well.autoLocked = true; // Zabezpieczenie elementu przed nadpisaniem auto-doboru
     if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
-    
+
     refreshAll();
 };
 
@@ -1074,12 +1164,16 @@ function renderWellConfig() {
     let html = '';
     well.config.forEach((item, index) => {
         // Rozwiąż poprawny wariant produktu wg parametrów studni (auto-korekta productId)
-        const p = typeof resolveEffectiveProduct === 'function'
-            ? resolveEffectiveProduct(well, item.productId, item)
-            : studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof resolveEffectiveProduct === 'function'
+                ? resolveEffectiveProduct(well, item.productId, item)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
-        const itemPrice = (item.frozenPrice != null && window.isPreviewMode ? item.frozenPrice : getItemAssessedPrice(well, p, true, item));
+        const itemPrice =
+            item.frozenPrice != null && window.isPreviewMode
+                ? item.frozenPrice
+                : getItemAssessedPrice(well, p, true, item);
         let totalPrice = itemPrice * item.quantity;
 
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -1091,7 +1185,10 @@ function renderWellConfig() {
                 const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                 if (kinetaProd) {
                     // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
-                    const rawKinetaPrice = (kinetaItem.frozenPrice != null && window.isPreviewMode ? kinetaItem.frozenPrice : getItemAssessedPrice(well, kinetaProd, true, kinetaItem));
+                    const rawKinetaPrice =
+                        kinetaItem.frozenPrice != null && window.isPreviewMode
+                            ? kinetaItem.frozenPrice
+                            : getItemAssessedPrice(well, kinetaProd, true, kinetaItem);
                     totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
                 }
             }
@@ -1138,23 +1235,43 @@ function renderWellConfig() {
                     <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                     ${(() => {
                         let badgesHtml = '';
-                        
+
                         // PRECO Logic
-                        const precoAlloc = typeof calculatePrecoAllocationForItem === 'function' ? calculatePrecoAllocationForItem(well, index) : null;
-                        if (precoAlloc && precoAlloc.hasPreco && (precoAlloc.isBottomMostDennica || precoAlloc.fraction > 0)) {
-                            const fracPerc = precoAlloc.fraction > 0 && precoAlloc.fraction < 1 ? Math.round(precoAlloc.fraction*100) : 0;
+                        const precoAlloc =
+                            typeof calculatePrecoAllocationForItem === 'function'
+                                ? calculatePrecoAllocationForItem(well, index)
+                                : null;
+                        if (
+                            precoAlloc &&
+                            precoAlloc.hasPreco &&
+                            (precoAlloc.isBottomMostDennica || precoAlloc.fraction > 0)
+                        ) {
+                            const fracPerc =
+                                precoAlloc.fraction > 0 && precoAlloc.fraction < 1
+                                    ? Math.round(precoAlloc.fraction * 100)
+                                    : 0;
                             let percDesc = '';
                             if (well.wkladkaOsadnikPreco === 'tak') {
-                                percDesc = precoAlloc.isBottomMostDennica ? `Dno + ${fracPerc ? fracPerc + '% ścian' : 'Ściany'}` : `${fracPerc ? fracPerc + '% ścian' : 'Ściany'}`;
+                                percDesc = precoAlloc.isBottomMostDennica
+                                    ? `Dno + ${fracPerc ? fracPerc + '% ścian' : 'Ściany'}`
+                                    : `${fracPerc ? fracPerc + '% ścian' : 'Ściany'}`;
                             } else {
-                                percDesc = precoAlloc.isBottomMostDennica ? `Baza${fracPerc ? ' + ' + fracPerc + '% uzup.' : ''}` : `${fracPerc ? fracPerc + '% uzup.' : 'Uzup.'}`;
+                                percDesc = precoAlloc.isBottomMostDennica
+                                    ? `Baza${fracPerc ? ' + ' + fracPerc + '% uzup.' : ''}`
+                                    : `${fracPerc ? fracPerc + '% uzup.' : 'Uzup.'}`;
                             }
                             const isPrecoDisabled = item.disablePreco;
                             const precoColor = isPrecoDisabled ? 'var(--text-muted)' : '#f43f5e';
-                            const precoBg = isPrecoDisabled ? 'rgba(255,255,255,0.05)' : 'rgba(244,63,94,0.1)';
-                            const precoBorder = isPrecoDisabled ? 'rgba(255,255,255,0.2)' : 'rgba(244,63,94,0.4)';
-                            const precoText = isPrecoDisabled ? `<del>PRECO (${percDesc})</del>` : `PRECO (${percDesc})`;
-                            
+                            const precoBg = isPrecoDisabled
+                                ? 'rgba(255,255,255,0.05)'
+                                : 'rgba(244,63,94,0.1)';
+                            const precoBorder = isPrecoDisabled
+                                ? 'rgba(255,255,255,0.2)'
+                                : 'rgba(244,63,94,0.4)';
+                            const precoText = isPrecoDisabled
+                                ? `<del>PRECO (${percDesc})</del>`
+                                : `PRECO (${percDesc})`;
+
                             badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'preco')" style="cursor:pointer; font-size:0.55rem; color:${precoColor}; font-weight:800; margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius:4px; background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
                         }
 
@@ -1162,31 +1279,64 @@ function renderWellConfig() {
                         let pehdType = null;
                         if (['dennica', 'styczna'].includes(p.componentType)) {
                             pehdType = well.wkladkaDennica;
-                        } else if (['plyta', 'plyta_redukcyjna', 'plyta_nastudzienna', 'stozek', 'zwienczenie', 'konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType)) {
+                        } else if (
+                            [
+                                'plyta',
+                                'plyta_redukcyjna',
+                                'plyta_nastudzienna',
+                                'stozek',
+                                'zwienczenie',
+                                'konus',
+                                'plyta_din',
+                                'plyta_najazdowa',
+                                'plyta_zamykajaca',
+                                'pierscien_odciazajacy'
+                            ].includes(p.componentType)
+                        ) {
                             pehdType = well.wkladkaZwienczenie;
                         } else if (['krag', 'krag_ot', 'rura'].includes(p.componentType)) {
                             pehdType = well.wkladkaNadbudowa;
                         }
-                        
+
                         if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
                             const isPehdDisabled = item.disablePehd;
                             const pehdColor = isPehdDisabled ? 'var(--text-muted)' : '#0ea5e9';
-                            const pehdBg = isPehdDisabled ? 'rgba(255,255,255,0.05)' : 'rgba(14,165,233,0.1)';
-                            const pehdBorder = isPehdDisabled ? 'rgba(255,255,255,0.2)' : 'rgba(14,165,233,0.4)';
+                            const pehdBg = isPehdDisabled
+                                ? 'rgba(255,255,255,0.05)'
+                                : 'rgba(14,165,233,0.1)';
+                            const pehdBorder = isPehdDisabled
+                                ? 'rgba(255,255,255,0.2)'
+                                : 'rgba(14,165,233,0.4)';
                             const pehdText = isPehdDisabled ? `<del>PEHD</del>` : `PEHD`;
-                            
+
                             badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'pehd')" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
                         }
 
                         // Żelbet i Drabinka Nierdzewna
-                        if (well.nadbudowa === 'zelbetowa' && (p.componentType === 'krag' || p.componentType === 'krag_ot')) {
-                            badgesHtml += ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                        if (
+                            well.nadbudowa === 'zelbetowa' &&
+                            (p.componentType === 'krag' || p.componentType === 'krag_ot')
+                        ) {
+                            badgesHtml +=
+                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
                         }
-                        if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica') {
-                            badgesHtml += ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                        if (
+                            (well.dennicaMaterial === 'zelbetowa' ||
+                                well.material === 'zelbetowa') &&
+                            p.componentType === 'dennica'
+                        ) {
+                            badgesHtml +=
+                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
                         }
-                        if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag' || p.componentType === 'krag_ot' || p.componentType === 'konus' || p.componentType === 'dennica')) {
-                            badgesHtml += ' <span class="color-accent" style="font-size:0.55rem; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+                        if (
+                            well.stopnie === 'nierdzewna' &&
+                            (p.componentType === 'krag' ||
+                                p.componentType === 'krag_ot' ||
+                                p.componentType === 'konus' ||
+                                p.componentType === 'dennica')
+                        ) {
+                            badgesHtml +=
+                                ' <span class="color-accent" style="font-size:0.55rem; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
                         }
 
                         return badgesHtml;
@@ -1216,13 +1366,23 @@ function renderWellConfig() {
     });
 
     // Widoczne rozbicie PRECO — pod elementami konfiguracji
-    if ((well.kineta === 'preco' || well.kineta === 'precotop' || well.wkladkaOsadnikPreco === 'tak') && typeof calcPrecoPricing === 'function') {
+    if (
+        (well.kineta === 'preco' ||
+            well.kineta === 'precotop' ||
+            well.wkladkaOsadnikPreco === 'tak') &&
+        typeof calcPrecoPricing === 'function'
+    ) {
         const precoCalc = calcPrecoPricing(well);
         if (precoCalc.suma > 0 || precoCalc.error) {
-            const kinetaLabel = well.wkladkaOsadnikPreco === 'tak' ? 'osadnika' : (well.kineta === 'precotop' ? 'PrecoTop' : 'Preco');
+            const kinetaLabel =
+                well.wkladkaOsadnikPreco === 'tak'
+                    ? 'osadnika'
+                    : well.kineta === 'precotop'
+                      ? 'PrecoTop'
+                      : 'Preco';
             const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
             const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
-            
+
             if (precoCalc.error) {
                 // Blok z błędem PRECO
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:10px; color:#ef4444; font-weight:700; font-size:0.85rem; line-height:1.4;">`;
@@ -1239,9 +1399,15 @@ function renderWellConfig() {
                 html += `<span style="font-weight:800; font-size:1rem; color:var(--success);">${fmtInt(precoFinal)} PLN</span>`;
                 html += `</div>`;
                 html += `<div style="display:grid; grid-template-columns:1fr auto; gap:0.15rem 0.8rem; font-size:0.75rem; color:var(--text-secondary);">`;
-                
-                const etykietyBaza = precoCalc.bazowaEtykiety && precoCalc.bazowaEtykiety.length > 0 ? ` [${precoCalc.bazowaEtykiety.join(' / ')}]` : '';
-                const bazowaLabel = precoCalc.bazowaDN && precoCalc.bazowaDN.length > 0 ? ` (DN ${precoCalc.bazowaDN.join(' / DN ')})${etykietyBaza}` : '';
+
+                const etykietyBaza =
+                    precoCalc.bazowaEtykiety && precoCalc.bazowaEtykiety.length > 0
+                        ? ` [${precoCalc.bazowaEtykiety.join(' / ')}]`
+                        : '';
+                const bazowaLabel =
+                    precoCalc.bazowaDN && precoCalc.bazowaDN.length > 0
+                        ? ` (DN ${precoCalc.bazowaDN.join(' / DN ')})${etykietyBaza}`
+                        : '';
                 html += `<span>Kineta bazowa${bazowaLabel}</span><span class="text-right-600">${fmtInt(precoCalc.bazowa)} PLN</span>`;
 
                 if (precoCalc.redukcja > 0) {
@@ -1249,39 +1415,63 @@ function renderWellConfig() {
                     html += `<span>&nbsp;&nbsp;&nbsp;↳ Redukcja kinety${redDesc}</span><span style="text-align:right; font-weight:600; color:var(--text-muted);">${fmtInt(precoCalc.redukcja)} PLN</span>`;
                 }
 
-                if (precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0 && precoCalc.bazowaIds) {
-                    const uniesieniaBazy = precoCalc.uniesieniaSzczegoly.filter(u => precoCalc.bazowaIds.includes(u._id));
-                    uniesieniaBazy.forEach(u => {
+                if (
+                    precoCalc.uniesieniaSzczegoly &&
+                    precoCalc.uniesieniaSzczegoly.length > 0 &&
+                    precoCalc.bazowaIds
+                ) {
+                    const uniesieniaBazy = precoCalc.uniesieniaSzczegoly.filter((u) =>
+                        precoCalc.bazowaIds.includes(u._id)
+                    );
+                    uniesieniaBazy.forEach((u) => {
                         html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${u.label}]</span><span style="text-align:right; font-weight:600; color:var(--text-muted);">${fmtInt(u.cena)} PLN</span>`;
                         u._wyrenderowane = true;
                     });
                 }
 
-                if (precoCalc.spadkiSzczegoly && precoCalc.spadkiSzczegoly.length > 0 && precoCalc.bazowaIds) {
-                    const spadkiBazy = precoCalc.spadkiSzczegoly.filter(s => precoCalc.bazowaIds.includes(s._id));
-                    spadkiBazy.forEach(s => {
+                if (
+                    precoCalc.spadkiSzczegoly &&
+                    precoCalc.spadkiSzczegoly.length > 0 &&
+                    precoCalc.bazowaIds
+                ) {
+                    const spadkiBazy = precoCalc.spadkiSzczegoly.filter((s) =>
+                        precoCalc.bazowaIds.includes(s._id)
+                    );
+                    spadkiBazy.forEach((s) => {
                         html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %) [${s.label}]</span><span style="text-align:right; font-weight:600; color:var(--text-muted);">${fmtInt(s.cena)} PLN</span>`;
                         s._wyrenderowane = true;
                     });
                 }
 
-                precoCalc.dodWloty.forEach(d => {
-                    const typLabel = d.typ === 'kaskada' ? 'kaskada' : d.typ === 'sciana' ? 'ślepa kineta' : 'dopływ';
-                    const flowTypeName = d.label && d.label.startsWith(FLOW_TYPES.WYLOT) ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
+                precoCalc.dodWloty.forEach((d) => {
+                    const typLabel =
+                        d.typ === 'kaskada'
+                            ? 'kaskada'
+                            : d.typ === 'sciana'
+                              ? 'ślepa kineta'
+                              : 'dopływ';
+                    const flowTypeName =
+                        d.label && d.label.startsWith(FLOW_TYPES.WYLOT)
+                            ? FLOW_TYPES.WYLOT
+                            : FLOW_TYPES.WLOT;
                     const fLabel = d.label ? ` [${d.label}]` : '';
                     html += `<span>Dod. ${flowTypeName} DN${d.dn} (${typLabel})${fLabel}</span><span class="text-right-600">${fmtInt(d.cena)} PLN</span>`;
-                    
+
                     if (precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0) {
-                        const uniesieniaDlaWlotu = precoCalc.uniesieniaSzczegoly.filter(u => u._id === d._id);
-                        uniesieniaDlaWlotu.forEach(u => {
+                        const uniesieniaDlaWlotu = precoCalc.uniesieniaSzczegoly.filter(
+                            (u) => u._id === d._id
+                        );
+                        uniesieniaDlaWlotu.forEach((u) => {
                             html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm)</span><span style="text-align:right; font-weight:600; color:var(--text-muted);">${fmtInt(u.cena)} PLN</span>`;
                             u._wyrenderowane = true;
                         });
                     }
 
                     if (precoCalc.spadkiSzczegoly && precoCalc.spadkiSzczegoly.length > 0) {
-                        const spadkiDlaWlotu = precoCalc.spadkiSzczegoly.filter(s => s._id === d._id);
-                        spadkiDlaWlotu.forEach(s => {
+                        const spadkiDlaWlotu = precoCalc.spadkiSzczegoly.filter(
+                            (s) => s._id === d._id
+                        );
+                        spadkiDlaWlotu.forEach((s) => {
                             html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %)</span><span style="text-align:right; font-weight:600; color:var(--text-muted);">${fmtInt(s.cena)} PLN</span>`;
                             s._wyrenderowane = true;
                         });
@@ -1289,13 +1479,16 @@ function renderWellConfig() {
                 });
 
                 if (precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0) {
-                    precoCalc.uniesieniaSzczegoly.forEach(u => {
+                    precoCalc.uniesieniaSzczegoly.forEach((u) => {
                         if (!u._wyrenderowane) {
                             const uLabel = u.label ? ` [${u.label}]` : '';
                             html += `<span>Uniesienie kinety (${u.mm} mm)${uLabel}</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
                         }
                     });
-                } else if (precoCalc.uniesienie > 0 && (!precoCalc.uniesieniaSzczegoly || precoCalc.uniesieniaSzczegoly.length === 0)) {
+                } else if (
+                    precoCalc.uniesienie > 0 &&
+                    (!precoCalc.uniesieniaSzczegoly || precoCalc.uniesieniaSzczegoly.length === 0)
+                ) {
                     html += `<span>Uniesienie kinety</span><span class="text-right-600">${fmtInt(precoCalc.uniesienie)} PLN</span>`;
                 }
 
@@ -1303,7 +1496,7 @@ function renderWellConfig() {
                     html += `<span>Skrzynki włazowe (${precoCalc.skrzynki.ilosc} szt.)</span><span class="text-right-600">${fmtInt(precoCalc.skrzynki.suma)} PLN</span>`;
                 }
                 if (precoCalc.spadkiSzczegoly && precoCalc.spadkiSzczegoly.length > 0) {
-                    precoCalc.spadkiSzczegoly.forEach(s => {
+                    precoCalc.spadkiSzczegoly.forEach((s) => {
                         if (!s._wyrenderowane) {
                             const sLabel = s.label ? ` [${s.label}]` : '';
                             html += `<span>Spadek ${s.typ} (${s.procent} %)${sLabel}</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
@@ -1500,11 +1693,11 @@ async function togglePsiaBuda() {
 /* ===== ZNAJDŹ ZAKOŃCZENIE TEGO SAMEGO TYPU DLA INNEJ ŚREDNICY ===== */
 function findClosureForDn(productId, targetDn) {
     if (!productId) return null;
-    const prod = studnieProducts.find(p => p.id === productId);
+    const prod = studnieProducts.find((p) => p.id === productId);
     if (!prod || !prod.componentType) return null;
-    const match = studnieProducts.find(p =>
-        p.componentType === prod.componentType &&
-        (parseInt(p.dn) === targetDn || p.dn === null)
+    const match = studnieProducts.find(
+        (p) =>
+            p.componentType === prod.componentType && (parseInt(p.dn) === targetDn || p.dn === null)
     );
     return match ? match.id : null;
 }
@@ -1535,11 +1728,13 @@ async function toggleStyczna1200() {
     if (well.redukcjaDN1000) {
         well.redukcjaTargetDN = newDn;
         well.redukcjaZakonczenieByDn = well.redukcjaZakonczenieByDn || {};
-        if (well.redukcjaZakonczenie) well.redukcjaZakonczenieByDn[oldDn] = well.redukcjaZakonczenie;
+        if (well.redukcjaZakonczenie)
+            well.redukcjaZakonczenieByDn[oldDn] = well.redukcjaZakonczenie;
         well.redukcjaZakonczenie = well.redukcjaZakonczenieByDn[newDn] || null;
         if (!well.redukcjaZakonczenie && well.redukcjaZakonczenieByDn[oldDn]) {
             well.redukcjaZakonczenie = findClosureForDn(well.redukcjaZakonczenieByDn[oldDn], newDn);
-            if (well.redukcjaZakonczenie) well.redukcjaZakonczenieByDn[newDn] = well.redukcjaZakonczenie;
+            if (well.redukcjaZakonczenie)
+                well.redukcjaZakonczenieByDn[newDn] = well.redukcjaZakonczenie;
         }
         if (typeof updateRedukcjaZakButton === 'function') updateRedukcjaZakButton();
     }
@@ -1601,8 +1796,12 @@ async function selectRedukcjaZakonczenie(productId) {
 
     if (productId) {
         const p = studnieProducts.find((pr) => pr.id === productId);
-        const isRelief = p && (['plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(p.componentType));
-        
+        const isRelief =
+            p &&
+            ['plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(
+                p.componentType
+            );
+
         if (isRelief) {
             showToast(`Zakończenie redukcji: Dodano komplet odciążający (${p.name})`, 'success');
         } else {
@@ -1867,11 +2066,11 @@ window.handleCfgDrop = function (e) {
             } finally {
                 window.currentDraggedPlaceholderId = null;
                 // Usuwamy wszelkie pozostałe placeholdery dla bezpieczeństwa
-                well.config = well.config.filter(c => !c.isPlaceholder);
+                well.config = well.config.filter((c) => !c.isPlaceholder);
             }
         } else if (well && draggedCfgIndex !== null) {
             // Zostało puszczone na puste pole SVG, resetujemy flagi i zapisujemy
-            well.config = well.config.filter(c => !c.isPlaceholder);
+            well.config = well.config.filter((c) => !c.isPlaceholder);
             well.config.forEach((c) => (c.isPlaceholder = false));
             well.autoLocked = true;
             updateAutoLockUI();
@@ -1976,23 +2175,32 @@ function enforceSingularTopClosures(well, productId) {
     ];
 
     if (topClosureTypes.includes(product.componentType)) {
-        if (product.componentType === 'konus' && well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
+        if (
+            product.componentType === 'konus' &&
+            well.wkladkaZwienczenie &&
+            well.wkladkaZwienczenie !== 'brak'
+        ) {
             if (typeof window.showKonusPehdResolverModal === 'function') {
                 window.showKonusPehdResolverModal(currentWellIndex);
             } else {
-                showToast('Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.', 'error');
+                showToast(
+                    'Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.',
+                    'error'
+                );
             }
             // Usun placeholder poniewaz go blokujemy
-            well.config = well.config.filter(item => !(item.isPlaceholder && item.productId === productId));
+            well.config = well.config.filter(
+                (item) => !(item.isPlaceholder && item.productId === productId)
+            );
             return;
         }
 
         const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
-        
+
         // Usuwamy inne zakończenia górne (ale NIE usuwamy obecnego placeholder-a jeśli to on jest sprawdzany)
         well.config = well.config.filter((item) => {
             if (item.isPlaceholder) return true; // Zostawiamy placeholder w spokoju
-            
+
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return true;
 
@@ -2033,19 +2241,19 @@ function sortWellConfigByOrder() {
     }
 
     const typeOrder = {
-        'wlaz': 0,
-        'avr': 1,
-        'plyta_din': 2,
-        'plyta_najazdowa': 2,
-        'plyta_zamykajaca': 2,
-        'konus': 2,
-        'pierscien_odciazajacy': 3,
-        'plyta_redukcyjna': 4,
-        'krag': 5,
-        'krag_ot': 5,
-        'dennica': 6,
-        'kineta': 7,
-        'uszczelka': 8
+        wlaz: 0,
+        avr: 1,
+        plyta_din: 2,
+        plyta_najazdowa: 2,
+        plyta_zamykajaca: 2,
+        konus: 2,
+        pierscien_odciazajacy: 3,
+        plyta_redukcyjna: 4,
+        krag: 5,
+        krag_ot: 5,
+        dennica: 6,
+        kineta: 7,
+        uszczelka: 8
     };
 
     well.config.sort((a, b) => {
@@ -2058,12 +2266,18 @@ function sortWellConfigByOrder() {
 
         // Reguła redukcji: kręgi nad redukcją (nad płytą redukcyjną = order 4)
         // Kręgi o DN = redukcjaTargetDN (np. DN1200) powinny być nad płytą
-        const targetDn = well.redukcjaDN1000 ? (well.redukcjaTargetDN || 1000) : null;
+        const targetDn = well.redukcjaDN1000 ? well.redukcjaTargetDN || 1000 : null;
         if (targetDn) {
-            if ((pA.componentType === 'krag' || pA.componentType === 'krag_ot') && parseInt(pA.dn) === parseInt(targetDn)) {
+            if (
+                (pA.componentType === 'krag' || pA.componentType === 'krag_ot') &&
+                parseInt(pA.dn) === parseInt(targetDn)
+            ) {
                 orderA = 3.5;
             }
-            if ((pB.componentType === 'krag' || pB.componentType === 'krag_ot') && parseInt(pB.dn) === parseInt(targetDn)) {
+            if (
+                (pB.componentType === 'krag' || pB.componentType === 'krag_ot') &&
+                parseInt(pB.dn) === parseInt(targetDn)
+            ) {
                 orderB = 3.5;
             }
         }

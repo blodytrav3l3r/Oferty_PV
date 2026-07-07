@@ -298,22 +298,22 @@ function renderStudniePriceList() {
 }
 
 /* ===== PRZELICZANIE PEHD ===== */
-window.recalculatePEHD = async function() {
+window.recalculatePEHD = async function () {
     const input = document.getElementById('pehd-price-input');
     const price = parseFloat(input?.value);
     if (isNaN(price) || price <= 0) {
         showToast('Podaj prawidłową cenę za m²', 'error');
         return;
     }
-    
+
     let count = 0;
-    studnieProducts.forEach(p => {
+    studnieProducts.forEach((p) => {
         if (p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.area > 0) {
             p.doplataPEHD = Math.round(p.area * price);
             count++;
         }
     });
-    
+
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();
@@ -822,7 +822,8 @@ async function addStudnieProduct() {
         if (n.includes('REDUKCYJNA')) newProduct.componentType = 'plyta_redukcyjna';
         else if (n.includes('DENNICA')) newProduct.componentType = 'dennica';
         else if (n.includes('KONUS') || n.includes('STOŻEK')) newProduct.componentType = 'konus';
-        else if (n.includes('PŁYTA DIN') || n.includes('NAKR')) newProduct.componentType = 'plyta_din';
+        else if (n.includes('PŁYTA DIN') || n.includes('NAKR'))
+            newProduct.componentType = 'plyta_din';
         else if (n.includes('NAJAZDOWA')) newProduct.componentType = 'plyta_najazdowa';
         else if (n.includes('ZAMYKAJĄCA')) newProduct.componentType = 'plyta_zamykajaca';
         else if (n.includes('ODCIĄŻAJĄCY')) newProduct.componentType = 'pierscien_odciazajacy';
@@ -1033,14 +1034,14 @@ function exportStudnieToExcel() {
             const precoKinetyRows = [];
             const precoZakresyRows = [];
             const precoDodatkiRows = [];
-            
-            Object.keys(precoPricing).forEach(dn => {
+
+            Object.keys(precoPricing).forEach((dn) => {
                 const data = precoPricing[dn];
                 if (!data) return;
-                
+
                 // Kinety
                 if (data.kinety) {
-                    data.kinety.forEach(k => {
+                    data.kinety.forEach((k) => {
                         precoKinetyRows.push({
                             'DN Studni': Number(dn),
                             'DN Rury': k.dn,
@@ -1049,18 +1050,18 @@ function exportStudnieToExcel() {
                         });
                     });
                 }
-                
+
                 // Zakresy
-                ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'].forEach(typ => {
+                ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'].forEach((typ) => {
                     if (data[typ]) {
-                        data[typ].forEach(row => {
+                        data[typ].forEach((row) => {
                             if (row.grupy) {
-                                Object.keys(row.grupy).forEach(g => {
+                                Object.keys(row.grupy).forEach((g) => {
                                     precoZakresyRows.push({
-                                        'Typ': typ,
+                                        Typ: typ,
                                         'DN Studni': Number(dn),
-                                        'Min': row.min,
-                                        'Max': row.max,
+                                        Min: row.min,
+                                        Max: row.max,
                                         'Grupa DN': g,
                                         'Cena (PLN)': row.grupy[g]
                                     });
@@ -1069,7 +1070,7 @@ function exportStudnieToExcel() {
                         });
                     }
                 });
-                
+
                 // Dodatki
                 precoDodatkiRows.push({
                     'DN Studni': Number(dn),
@@ -1078,20 +1079,27 @@ function exportStudnieToExcel() {
                     'Cena pełna wys MB': data.cenaPelnaWysMB || 0
                 });
             });
-            
+
             if (precoKinetyRows.length > 0) {
                 const ws = XLSX.utils.json_to_sheet(precoKinetyRows);
-                ws['!cols'] = [{wch:12}, {wch:12}, {wch:18}, {wch:18}];
+                ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 18 }];
                 XLSX.utils.book_append_sheet(wb, ws, 'PRECO_Kinety');
             }
             if (precoZakresyRows.length > 0) {
                 const ws = XLSX.utils.json_to_sheet(precoZakresyRows);
-                ws['!cols'] = [{wch:15}, {wch:12}, {wch:8}, {wch:8}, {wch:12}, {wch:15}];
+                ws['!cols'] = [
+                    { wch: 15 },
+                    { wch: 12 },
+                    { wch: 8 },
+                    { wch: 8 },
+                    { wch: 12 },
+                    { wch: 15 }
+                ];
                 XLSX.utils.book_append_sheet(wb, ws, 'PRECO_Zakresy');
             }
             if (precoDodatkiRows.length > 0) {
                 const ws = XLSX.utils.json_to_sheet(precoDodatkiRows);
-                ws['!cols'] = [{wch:12}, {wch:18}, {wch:18}, {wch:18}];
+                ws['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
                 XLSX.utils.book_append_sheet(wb, ws, 'PRECO_Dodatki');
             }
         }
@@ -1131,7 +1139,7 @@ function importStudnieFromExcel(event) {
                 if (sheetJson && sheetJson.length > 0) {
                     if (sheetName.startsWith('PRECO_')) {
                         // Budowanie cennika PRECO
-                        sheetJson.forEach(row => {
+                        sheetJson.forEach((row) => {
                             const dn = row['DN Studni'];
                             if (dn) {
                                 if (!precoDataMap[dn]) {
@@ -1146,7 +1154,7 @@ function importStudnieFromExcel(event) {
                                         cenaDnoOsadnika: 0
                                     };
                                 }
-                                
+
                                 if (sheetName === 'PRECO_Kinety') {
                                     precoDataMap[dn].kinety.push({
                                         dn: row['DN Rury'] || 0,
@@ -1156,7 +1164,8 @@ function importStudnieFromExcel(event) {
                                 } else if (sheetName === 'PRECO_Dodatki') {
                                     precoDataMap[dn].skrzynkaWlazowa = row['Skrzynka włazowa'] || 0;
                                     precoDataMap[dn].cenaPelnaWysMB = row['Cena pełna wys MB'] || 0;
-                                    precoDataMap[dn].cenaDnoOsadnika = row['Cena dna osadnika'] || 0;
+                                    precoDataMap[dn].cenaDnoOsadnika =
+                                        row['Cena dna osadnika'] || 0;
                                 } else if (sheetName === 'PRECO_Zakresy') {
                                     const typ = row['Typ'];
                                     if (typ && precoDataMap[dn][typ]) {
@@ -1164,9 +1173,11 @@ function importStudnieFromExcel(event) {
                                         const max = row['Max'] || 0;
                                         const g = row['Grupa DN'];
                                         const cena = row['Cena (PLN)'] || 0;
-                                        
+
                                         let table = precoDataMap[dn][typ];
-                                        let existingRow = table.find(r => r.min === min && r.max === max);
+                                        let existingRow = table.find(
+                                            (r) => r.min === min && r.max === max
+                                        );
                                         if (!existingRow) {
                                             existingRow = { min, max, grupy: {} };
                                             table.push(existingRow);
@@ -1238,14 +1249,16 @@ function importStudnieFromExcel(event) {
                     product.name = String(product.name || '').trim();
 
                     if (!product.id || !product.name) {
-                        logger.warn('pricelistManager', 
+                        logger.warn(
+                            'pricelistManager',
                             `[Import Studnie] Row ${index + 2} skipped: missing ID or Name`
                         );
                         return null;
                     }
 
                     if (seenIds.has(product.id)) {
-                        logger.warn('pricelistManager', 
+                        logger.warn(
+                            'pricelistManager',
                             `[Import Studnie] Row ${index + 2} skipped: duplicate ID ${product.id}`
                         );
                         return null;
@@ -1327,12 +1340,12 @@ function importStudnieFromExcel(event) {
                 _studniePricelistDirty = true;
                 updateStudnieSaveBtn();
             }
-            
+
             if (hasPrecoData) {
                 precoPricing = precoDataMap;
                 savePrecoPricing(precoPricing);
             }
-            
+
             renderStudniePriceList();
             renderTiles();
             showToast(`Pomyślnie zaimportowano cennik z Excela`, 'success');
@@ -1460,9 +1473,18 @@ async function fixIncompleteProducts() {
     let changed = false;
     studnieProducts.forEach((p) => {
         // Napraw magazyny
-        if (p.magazynKLB === undefined) { p.magazynKLB = 1; changed = true; }
-        if (p.magazynWL === undefined) { p.magazynWL = 1; changed = true; }
-        if (p.active === undefined) { p.active = 1; changed = true; }
+        if (p.magazynKLB === undefined) {
+            p.magazynKLB = 1;
+            changed = true;
+        }
+        if (p.magazynWL === undefined) {
+            p.magazynWL = 1;
+            changed = true;
+        }
+        if (p.active === undefined) {
+            p.active = 1;
+            changed = true;
+        }
 
         // Napraw typ i DN (jeśli typ to domyślny 'krag' lub brak typu/dn)
         const n = (p.name || '').toUpperCase();
@@ -1501,7 +1523,10 @@ async function fixIncompleteProducts() {
 
     if (changed) {
         await saveStudnieProducts(studnieProducts);
-        logger.info('pricelistManager', 'Zastosowano automatyczne poprawki metadanych do produktów studni');
+        logger.info(
+            'pricelistManager',
+            'Zastosowano automatyczne poprawki metadanych do produktów studni'
+        );
     }
 }
 
@@ -1520,7 +1545,8 @@ function renderPrecoPriceList() {
     if (!container) return;
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
-        container.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
+        container.innerHTML =
+            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
         return;
     }
 
@@ -1536,7 +1562,7 @@ function renderPrecoPriceList() {
         </button>
     </div>`;
 
-    dns.forEach(dn => {
+    dns.forEach((dn) => {
         const data = precoPricing[dn];
         if (!data) return;
 
@@ -1574,7 +1600,12 @@ function renderPrecoPriceList() {
         html += `</tbody></table>`;
 
         // Spadek kineta
-        html += renderPrecoRangeTable('Spadek w kinecie (%)', data.spadekKineta, dn, 'spadekKineta');
+        html += renderPrecoRangeTable(
+            'Spadek w kinecie (%)',
+            data.spadekKineta,
+            dn,
+            'spadekKineta'
+        );
         // Spadek mufa
         html += renderPrecoRangeTable('Spadek w mufie (%)', data.spadekMufa, dn, 'spadekMufa');
         // Uniesienie
@@ -1621,7 +1652,8 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
     if (table && table.length > 0) {
         grupyKeys = Object.keys(table[0].grupy);
     } else {
-        if (fieldBase === 'spadekKineta' || fieldBase === 'spadekMufa') grupyKeys = ['150-200', '250-300', '400-600'];
+        if (fieldBase === 'spadekKineta' || fieldBase === 'spadekMufa')
+            grupyKeys = ['150-200', '250-300', '400-600'];
         else grupyKeys = ['150-300', '400-600'];
     }
 
@@ -1629,10 +1661,10 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
     html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">${title}</div>`;
     html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoRangeRow(${dn}, '${fieldBase}')" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
     html += `</div>`;
-    
+
     html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>`;
     html += `<th style="width:25%; padding-left:0.5rem;">Zakres min-max</th>`;
-    grupyKeys.forEach(g => {
+    grupyKeys.forEach((g) => {
         html += `<th style="padding:0.2rem 0.5rem;">
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
                 <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
@@ -1658,7 +1690,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
                     <input type="number" class="edit-input" style="width:70px; text-align:center; padding:0.2rem;" value="${row.max}" data-preco-field="${fieldBase}.${ri}.max" data-preco-dn="${dn}">
                 </div>
             </td>`;
-            grupyKeys.forEach(g => {
+            grupyKeys.forEach((g) => {
                 html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${g}" data-preco-dn="${dn}"></td>`;
             });
             html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;
@@ -1692,18 +1724,19 @@ function addPrecoRangeRow(dn, fieldBase) {
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn]) return;
     if (!precoPricing[dn][fieldBase]) precoPricing[dn][fieldBase] = [];
-    
+
     const table = precoPricing[dn][fieldBase];
     let grupyKeys = [];
     if (table.length > 0) {
         grupyKeys = Object.keys(table[0].grupy);
     } else {
-        if (fieldBase === 'spadekKineta' || fieldBase === 'spadekMufa') grupyKeys = ['150-200', '250-300', '400-600'];
+        if (fieldBase === 'spadekKineta' || fieldBase === 'spadekMufa')
+            grupyKeys = ['150-200', '250-300', '400-600'];
         else grupyKeys = ['150-300', '400-600'];
     }
-    
+
     const newRow = { min: 0, max: 0, grupy: {} };
-    grupyKeys.forEach(g => newRow.grupy[g] = 0);
+    grupyKeys.forEach((g) => (newRow.grupy[g] = 0));
     table.push(newRow);
     renderPrecoPriceList();
 }
@@ -1720,8 +1753,8 @@ function updatePrecoGrupaKey(dn, fieldBase, oldKey, newKey) {
     if (!newKey || oldKey === newKey) return;
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
-    
-    precoPricing[dn][fieldBase].forEach(row => {
+
+    precoPricing[dn][fieldBase].forEach((row) => {
         if (row.grupy && row.grupy[oldKey] !== undefined) {
             row.grupy[newKey] = row.grupy[oldKey];
             delete row.grupy[oldKey];
@@ -1735,8 +1768,8 @@ function addPrecoGrupaCol(dn, fieldBase) {
     if (!newDn) return;
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
-    
-    precoPricing[dn][fieldBase].forEach(row => {
+
+    precoPricing[dn][fieldBase].forEach((row) => {
         if (!row.grupy) row.grupy = {};
         row.grupy[newDn] = 0;
     });
@@ -1747,8 +1780,8 @@ function removePrecoGrupaCol(dn, fieldBase, g) {
     if (!confirm(`Usunąć grupę DN ${g}?`)) return;
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
-    
-    precoPricing[dn][fieldBase].forEach(row => {
+
+    precoPricing[dn][fieldBase].forEach((row) => {
         if (row.grupy && row.grupy[g] !== undefined) {
             delete row.grupy[g];
         }
@@ -1762,7 +1795,7 @@ function togglePrecoAccordion(headerEl, dn) {
     if (!body) return;
     const isOpen = body.style.display !== 'none';
     body.style.display = isOpen ? 'none' : 'block';
-    
+
     window.openPrecoAccordions = window.openPrecoAccordions || new Set();
     if (dn) {
         if (isOpen) window.openPrecoAccordions.delete(dn);

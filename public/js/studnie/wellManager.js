@@ -477,7 +477,7 @@ function syncKineta(well) {
     });
 
     if (hasDennica && well.spocznikH && well.spocznikH !== 'brak') {
-        const SPOCZNIK_MAP = { '12': '1/2', '23': '2/3', '34': '3/4', '11': '1/1' };
+        const SPOCZNIK_MAP = { 12: '1/2', 23: '2/3', 34: '3/4', 11: '1/1' };
         const kinetaProd = studnieProducts.find(
             (p) =>
                 p.componentType === 'kineta' &&
@@ -1526,7 +1526,11 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
         const activeDiscounts = getWellActiveDiscounts(well);
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
-        if (p.componentType === 'dennica' || p.componentType === 'kineta' || p.componentType === 'styczna') {
+        if (
+            p.componentType === 'dennica' ||
+            p.componentType === 'kineta' ||
+            p.componentType === 'styczna'
+        ) {
             discountPct = disc.dennica || 0;
         } else {
             discountPct = disc.nadbudowa || 0;
@@ -1537,11 +1541,15 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     if (p.componentType === 'kineta') {
         let dennicaHeight = 0;
         const dennicaItem = well.config.find(function (c) {
-            var pr = studnieProducts.find(function (x) { return x.id === c.productId; });
+            var pr = studnieProducts.find(function (x) {
+                return x.id === c.productId;
+            });
             return pr && pr.componentType === 'dennica';
         });
         if (dennicaItem) {
-            var pPr = studnieProducts.find(function (x) { return x.id === dennicaItem.productId; });
+            var pPr = studnieProducts.find(function (x) {
+                return x.id === dennicaItem.productId;
+            });
             dennicaHeight = pPr ? pPr.height || 0 : 0;
         }
 
@@ -1564,22 +1572,47 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         base = kinetaBase * mult;
 
         if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
-            if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
+            if (
+                well.malowanieW === 'kineta' ||
+                well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale'
+            ) {
                 var kinetaArea = calcKinetaPaintingArea(well);
                 malowanieW = kinetaArea * well.malowanieWewCena;
             }
-        } else if (well.malowanieW && well.malowanieW !== 'brak' && !well.malowanieWewCena && p.malowanieWewnetrzne) {
-            if (well.malowanieW === 'kineta' || well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') {
+        } else if (
+            well.malowanieW &&
+            well.malowanieW !== 'brak' &&
+            !well.malowanieWewCena &&
+            p.malowanieWewnetrzne
+        ) {
+            if (
+                well.malowanieW === 'kineta' ||
+                well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale'
+            ) {
                 malowanieW = parseFloat(p.malowanieWewnetrzne);
             }
         }
         if (well.malowanieZ === 'zewnatrz' && well.malowanieZewCena) {
             malowanieZ = (p.areaExt || 0) * well.malowanieZewCena;
-        } else if (well.malowanieZ === 'zewnatrz' && p.malowanieZewnetrzne && !well.malowanieZewCena) {
+        } else if (
+            well.malowanieZ === 'zewnatrz' &&
+            p.malowanieZewnetrzne &&
+            !well.malowanieZewCena
+        ) {
             malowanieZ = parseFloat(p.malowanieZewnetrzne);
         }
 
-        return { base: base, pehd: 0, malowanieW: malowanieW, malowanieZ: malowanieZ, zelbet: 0, nierdzewna: 0, total: base + malowanieW + malowanieZ };
+        return {
+            base: base,
+            pehd: 0,
+            malowanieW: malowanieW,
+            malowanieZ: malowanieZ,
+            zelbet: 0,
+            nierdzewna: 0,
+            total: base + malowanieW + malowanieZ
+        };
     }
 
     base = base * mult;
@@ -1587,7 +1620,20 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     var pehdType = null;
     if (['dennica', 'styczna'].indexOf(p.componentType) !== -1) {
         pehdType = well.wkladkaDennica;
-    } else if (['plyta', 'plyta_redukcyjna', 'plyta_nastudzienna', 'stozek', 'zwienczenie', 'konus', 'plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].indexOf(p.componentType) !== -1) {
+    } else if (
+        [
+            'plyta',
+            'plyta_redukcyjna',
+            'plyta_nastudzienna',
+            'stozek',
+            'zwienczenie',
+            'konus',
+            'plyta_din',
+            'plyta_najazdowa',
+            'plyta_zamykajaca',
+            'pierscien_odciazajacy'
+        ].indexOf(p.componentType) !== -1
+    ) {
         pehdType = well.wkladkaZwienczenie;
     } else if (['krag', 'krag_ot', 'rura'].indexOf(p.componentType) !== -1) {
         pehdType = well.wkladkaNadbudowa;
@@ -1610,7 +1656,11 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
             }
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
-        if (well.malowanieW === 'cale' && p.componentType !== 'dennica' && p.componentType !== 'styczna') {
+        if (
+            well.malowanieW === 'cale' &&
+            p.componentType !== 'dennica' &&
+            p.componentType !== 'styczna'
+        ) {
             malowanieW = parseFloat(p.malowanieWewnetrzne);
         }
     }
@@ -1621,15 +1671,31 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         malowanieZ = parseFloat(p.malowanieZewnetrzne);
     }
 
-    if ((well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') && p.componentType === 'dennica' && p.doplataZelbet) {
+    if (
+        (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
+        p.componentType === 'dennica' &&
+        p.doplataZelbet
+    ) {
         zelbet = parseFloat(p.doplataZelbet);
     }
 
-    if (well.stopnie === 'nierdzewna' && (p.componentType === 'krag_ot' || p.componentType === 'dennica') && p.doplataDrabNierdzewna) {
+    if (
+        well.stopnie === 'nierdzewna' &&
+        (p.componentType === 'krag_ot' || p.componentType === 'dennica') &&
+        p.doplataDrabNierdzewna
+    ) {
         nierdzewna = parseFloat(p.doplataDrabNierdzewna);
     }
 
-    return { base: base, pehd: pehd, malowanieW: malowanieW, malowanieZ: malowanieZ, zelbet: zelbet, nierdzewna: nierdzewna, total: base + pehd + malowanieW + malowanieZ + zelbet + nierdzewna };
+    return {
+        base: base,
+        pehd: pehd,
+        malowanieW: malowanieW,
+        malowanieZ: malowanieZ,
+        zelbet: zelbet,
+        nierdzewna: nierdzewna,
+        total: base + pehd + malowanieW + malowanieZ + zelbet + nierdzewna
+    };
 }
 
 function calcWellStats(well) {

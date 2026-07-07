@@ -13,11 +13,7 @@ const router = express.Router();
  */
 router.post('/search', requireAuth, validateData(marketplaceSearchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
-    const {
-        query,
-        limit = 50,
-        skip = 0
-    } = req.body;
+    const { query, limit = 50, skip = 0 } = req.body;
 
     try {
         const roleFilter = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
@@ -87,27 +83,37 @@ router.post('/search', requireAuth, validateData(marketplaceSearchSchema), async
 /**
  * MODERACJA: Akcje administratora
  */
-router.post('/moderate/:offerId', requireAuth, requireAdmin, validateData(marketplaceModerateSchema), async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Tylko administratorzy mogą moderować oferty' });
+router.post(
+    '/moderate/:offerId',
+    requireAuth,
+    requireAdmin,
+    validateData(marketplaceModerateSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        if (authReq.user?.role !== 'admin') {
+            return res.status(403).json({ error: 'Tylko administratorzy mogą moderować oferty' });
+        }
+
+        const { action, reason: _reason } = req.body;
+        const docId = req.params.offerId;
+
+        try {
+            const actionMap: Record<string, string> = {
+                approve: 'final',
+                reject: 'blocked',
+                hide: 'blocked'
+            };
+            const newState = actionMap[action] || 'draft';
+            await prisma.offers_rel.update({
+                where: { id: docId },
+                data: { state: newState }
+            });
+
+            res.json({ ok: true, status: newState });
+        } catch (_err) {
+            res.status(500).json({ error: 'Moderacja nie powiodła się' });
+        }
     }
-
-    const { action, reason: _reason } = req.body;
-    const docId = req.params.offerId;
-
-    try {
-        const actionMap: Record<string, string> = { approve: 'final', reject: 'blocked', hide: 'blocked' };
-        const newState = actionMap[action] || 'draft';
-        await prisma.offers_rel.update({
-            where: { id: docId },
-            data: { state: newState }
-        });
-
-        res.json({ ok: true, status: newState });
-    } catch (_err) {
-        res.status(500).json({ error: 'Moderacja nie powiodła się' });
-    }
-});
+);
 
 export default router;

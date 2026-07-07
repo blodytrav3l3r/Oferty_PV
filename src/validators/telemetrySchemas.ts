@@ -61,15 +61,21 @@ export const telemetryConfigSchema = z.object({
     rzDna: z
         .union([z.number(), z.string()])
         .optional()
-        .transform((v) => (v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v)),
+        .transform((v) =>
+            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
+        ),
     rzWlazu: z
         .union([z.number(), z.string()])
         .optional()
-        .transform((v) => (v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v)),
+        .transform((v) =>
+            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
+        ),
     wellHeight: z
         .union([z.number(), z.string()])
         .optional()
-        .transform((v) => (v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v)),
+        .transform((v) =>
+            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
+        ),
     wellType: z.string().optional(),
     terminationType: z.string().optional(),
     reductionType: z.string().optional(),
@@ -78,7 +84,9 @@ export const telemetryConfigSchema = z.object({
     dennicaHeight: z
         .union([z.number(), z.string()])
         .optional()
-        .transform((v) => (v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v)),
+        .transform((v) =>
+            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
+        ),
     ringCount: z.number().int().optional(),
     ringHeights: z.array(z.number()).optional(),
 
@@ -116,10 +124,7 @@ export const telemetryConfigSchema = z.object({
     // Features/labels/predictions
     featureSnapshot: z.record(z.string(), z.unknown()).optional(),
     labelSnapshot: z.record(z.string(), z.unknown()).optional(),
-    predictionSnapshot: z
-        .record(z.string(), z.unknown())
-        .nullable()
-        .optional(),
+    predictionSnapshot: z.record(z.string(), z.unknown()).nullable().optional(),
 
     // Przejścia szczelne
     transitions: z.array(transitionSchema).optional(),
@@ -130,7 +135,10 @@ export const telemetryConfigSchema = z.object({
     overrideReason: z.string().optional()
 });
 
-export type TelemetryConfigInput = Omit<z.infer<typeof telemetryConfigSchema>, 'predictionSnapshot' | 'rzDna' | 'rzWlazu' | 'wellHeight' | 'dennicaHeight'> & {
+export type TelemetryConfigInput = Omit<
+    z.infer<typeof telemetryConfigSchema>,
+    'predictionSnapshot' | 'rzDna' | 'rzWlazu' | 'wellHeight' | 'dennicaHeight'
+> & {
     predictionSnapshot?: Record<string, unknown> | null;
     rzDna?: number;
     rzWlazu?: number;

@@ -12,7 +12,10 @@ class StorageService {
 
     async init() {
         this.initialized = true;
-        logger.info('StorageService', '[StorageService] Ujednolicony magazyn zainicjowany (tryb REST).');
+        logger.info(
+            'StorageService',
+            '[StorageService] Ujednolicony magazyn zainicjowany (tryb REST).'
+        );
     }
 
     /**
@@ -72,13 +75,20 @@ class StorageService {
             const data = await resp.json();
             if (!resp.ok) throw new Error(data.error || 'Błąd zapisu oferty');
 
-            logger.info('StorageService', `[StorageService] Oferta ${offerData.id} została zapisana pomyślnie.`);
+            logger.info(
+                'StorageService',
+                `[StorageService] Oferta ${offerData.id} została zapisana pomyślnie.`
+            );
 
             // Pobierz ponownie, aby uzyskać pola wygenerowane po stronie serwera, jeśli to konieczne,
             // lub po prostu zwróć zaktualizowane dane.
             return offerData;
         } catch (error) {
-            logger.error('StorageService', '[StorageService] Błąd podczas zapisywania oferty:', error);
+            logger.error(
+                'StorageService',
+                '[StorageService] Błąd podczas zapisywania oferty:',
+                error
+            );
             throw error;
         }
     }
@@ -113,9 +123,17 @@ class StorageService {
             }
 
             // Sortuj według createdAt malejąco
-            return results.sort((a, b) => new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime());
+            return results.sort(
+                (a, b) =>
+                    new Date(String(b.createdAt)).getTime() -
+                    new Date(String(a.createdAt)).getTime()
+            );
         } catch (error) {
-            logger.error('StorageService', '[StorageService] Błąd podczas pobierania ofert:', error);
+            logger.error(
+                'StorageService',
+                '[StorageService] Błąd podczas pobierania ofert:',
+                error
+            );
             throw error;
         }
     }
@@ -142,21 +160,30 @@ class StorageService {
             for (let i = 0; i < endpoints.length; i++) {
                 const url = endpoints[i];
                 const res = await fetch(url, { method: 'DELETE', headers });
-                
+
                 if (res.ok) {
                     const type = url.includes('/studnie/') ? 'studni' : 'rur';
-                    logger.info('StorageService', `[StorageService] Oferta ${id} została usunięta z ${type}.`);
+                    logger.info(
+                        'StorageService',
+                        `[StorageService] Oferta ${id} została usunięta z ${type}.`
+                    );
                     return true;
                 }
 
                 // Jeśli to ostatnia próba i nadal nie ok, rzuć błąd
                 if (i === endpoints.length - 1) {
                     const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || 'Nie udało się usunąć oferty z żadnego endpointu');
+                    throw new Error(
+                        errData.error || 'Nie udało się usunąć oferty z żadnego endpointu'
+                    );
                 }
             }
         } catch (error) {
-            logger.error('StorageService', `[StorageService] Błąd podczas usuwania oferty ${id}:`, error);
+            logger.error(
+                'StorageService',
+                `[StorageService] Błąd podczas usuwania oferty ${id}:`,
+                error
+            );
             throw error;
         }
     }
@@ -174,8 +201,14 @@ class StorageService {
 
         // Ustal kolejność prób na podstawie prefiksu ID
         const endpoints = isStudnie
-            ? [`/api/offers-rury/studnie/${encodeURIComponent(stringId)}`, `/api/offers-rury/${encodeURIComponent(stringId)}`]
-            : [`/api/offers-rury/${encodeURIComponent(stringId)}`, `/api/offers-rury/studnie/${encodeURIComponent(stringId)}`];
+            ? [
+                  `/api/offers-rury/studnie/${encodeURIComponent(stringId)}`,
+                  `/api/offers-rury/${encodeURIComponent(stringId)}`
+              ]
+            : [
+                  `/api/offers-rury/${encodeURIComponent(stringId)}`,
+                  `/api/offers-rury/studnie/${encodeURIComponent(stringId)}`
+              ];
 
         for (const url of endpoints) {
             try {
@@ -184,11 +217,14 @@ class StorageService {
                     const json = await res.json();
                     return this.normalizeOffer(json.data);
                 }
-            } catch (_e) { /* endpoint niedostępny — próbuj dalej */ }
+            } catch (_e) {
+                /* endpoint niedostępny — próbuj dalej */
+            }
         }
 
         // Fallback: pobierz wszystkie (kompatybilność wsteczna)
-        logger.warn('StorageService', 
+        logger.warn(
+            'StorageService',
             '[StorageService] Dedykowane endpointy GET /:id niedostępne. Fallback do pełnego pobierania.'
         );
         const allOffers = await this.getOffers();

@@ -23,50 +23,39 @@ const recommend = new RecommendationEngine();
  * GET /api/telemetry/ai/learning/status
  * Status silnika uczącego.
  */
-router.get(
-    '/ai/learning/status',
-    requireAuth,
-    READ_LIMITER,
-    async (req, res) => {
-        const authReq = req as AuthenticatedRequest;
-        if (authReq.user?.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
-        }
-        try {
-            return res.json(learningEngine.getStatus());
-        } catch (e) {
-            return res.status(500).json({ error: 'Błąd' });
-        }
+router.get('/ai/learning/status', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    if (authReq.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień' });
     }
-);
+    try {
+        return res.json(learningEngine.getStatus());
+    } catch (e) {
+        return res.status(500).json({ error: 'Błąd' });
+    }
+});
 
 /**
  * POST /api/telemetry/ai/learning/run
  * Wymusza pełny cykl uczenia (analiza historyczna).
  */
-router.post(
-    '/ai/learning/run',
-    requireAuth,
-    READ_LIMITER,
-    async (req, res) => {
-        const authReq = req as AuthenticatedRequest;
-        if (authReq.user?.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
-        }
-        try {
-            const summary =
-                await learningEngine.runFullCycle();
-            logger.info(
-                'LearningEngine',
-                `[manual run] patterns=${summary.patternsDetected}, persisted=${summary.persistedToKb}, ms=${summary.durationMs}`
-            );
-            return res.json(summary);
-        } catch (e) {
-            const message = e instanceof Error ? e.message : String(e);
-            return res.status(500).json({ error: message });
-        }
+router.post('/ai/learning/run', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    if (authReq.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień' });
     }
-);
+    try {
+        const summary = await learningEngine.runFullCycle();
+        logger.info(
+            'LearningEngine',
+            `[manual run] patterns=${summary.patternsDetected}, persisted=${summary.persistedToKb}, ms=${summary.durationMs}`
+        );
+        return res.json(summary);
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        return res.status(500).json({ error: message });
+    }
+});
 
 /* ===== KNOWLEDGE BASE ===== */
 
@@ -74,49 +63,37 @@ router.post(
  * GET /api/telemetry/ai/knowledge/patterns
  * Lista wzorców w bazie wiedzy per DN.
  */
-router.get(
-    '/ai/knowledge/patterns',
-    requireAuth,
-    READ_LIMITER,
-    async (req, res) => {
-        const authReq = req as AuthenticatedRequest;
-        if (authReq.user?.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
-        }
-        const dn = (req.query.dn as string) || 'all_dn';
-        const minConfidence = parseFloat(
-            (req.query.minConfidence as string) || '0.3'
-        );
-        try {
-            const patterns = await kb.getPatternsForDn(dn, minConfidence);
-            return res.json({ dn, minConfidence, items: patterns, total: patterns.length });
-        } catch (e) {
-            return res.status(500).json({ error: 'Błąd' });
-        }
+router.get('/ai/knowledge/patterns', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    if (authReq.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień' });
     }
-);
+    const dn = (req.query.dn as string) || 'all_dn';
+    const minConfidence = parseFloat((req.query.minConfidence as string) || '0.3');
+    try {
+        const patterns = await kb.getPatternsForDn(dn, minConfidence);
+        return res.json({ dn, minConfidence, items: patterns, total: patterns.length });
+    } catch (e) {
+        return res.status(500).json({ error: 'Błąd' });
+    }
+});
 
 /**
  * GET /api/telemetry/ai/knowledge/stats
  * Statystyki bazy wiedzy do dashboardu.
  */
-router.get(
-    '/ai/knowledge/stats',
-    requireAuth,
-    READ_LIMITER,
-    async (req, res) => {
-        const authReq = req as AuthenticatedRequest;
-        if (authReq.user?.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
-        }
-        try {
-            const stats = await kb.getStats();
-            return res.json(stats);
-        } catch (e) {
-            return res.status(500).json({ error: 'Błąd' });
-        }
+router.get('/ai/knowledge/stats', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    if (authReq.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień' });
     }
-);
+    try {
+        const stats = await kb.getStats();
+        return res.json(stats);
+    } catch (e) {
+        return res.status(500).json({ error: 'Błąd' });
+    }
+});
 
 /* ===== RECOMMENDATIONS ===== */
 
@@ -124,56 +101,39 @@ router.get(
  * GET /api/telemetry/ai/recommendations/:telemetryId
  * Zwraca rekomendacje AI dla danego rekordu telemetry.
  */
-router.get(
-    '/ai/recommendations/:telemetryId',
-    requireAuth,
-    READ_LIMITER,
-    async (req, res) => {
-        const authReq = req as AuthenticatedRequest;
-        if (authReq.user?.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
-        }
-        try {
-            const dn = req.query.dn as string | undefined;
-            const recs = await recommend.recommendForTelemetry(
-                req.params.telemetryId,
-                dn
-            );
-            return res.json({ items: recs, total: recs.length });
-        } catch (e) {
-            return res.status(500).json({ error: 'Błąd' });
-        }
+router.get('/ai/recommendations/:telemetryId', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    if (authReq.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień' });
     }
-);
+    try {
+        const dn = req.query.dn as string | undefined;
+        const recs = await recommend.recommendForTelemetry(req.params.telemetryId, dn);
+        return res.json({ items: recs, total: recs.length });
+    } catch (e) {
+        return res.status(500).json({ error: 'Błąd' });
+    }
+});
 
 /**
  * POST /api/telemetry/ai/recommendations/decide
  * Decyzja akceptacji/odrzucenia rekomendacji.
  */
-router.post(
-    '/ai/recommendations/decide',
-    requireAuth,
-    READ_LIMITER,
-    async (req, res) => {
-        const authReq = req as AuthenticatedRequest;
-        if (authReq.user?.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
-        }
-        try {
-            const { id, accepted } = req.body;
-            if (!id || typeof accepted !== 'boolean') {
-                return res.status(400).json({ error: 'Brak id lub accepted' });
-            }
-            await recommend.applyDecision(
-                id,
-                accepted,
-                authReq.user?.id || 'unknown'
-            );
-            return res.json({ success: true });
-        } catch (e) {
-            return res.status(500).json({ error: 'Błąd' });
-        }
+router.post('/ai/recommendations/decide', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    if (authReq.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień' });
     }
-);
+    try {
+        const { id, accepted } = req.body;
+        if (!id || typeof accepted !== 'boolean') {
+            return res.status(400).json({ error: 'Brak id lub accepted' });
+        }
+        await recommend.applyDecision(id, accepted, authReq.user?.id || 'unknown');
+        return res.json({ success: true });
+    } catch (e) {
+        return res.status(500).json({ error: 'Błąd' });
+    }
+});
 
 export default router;

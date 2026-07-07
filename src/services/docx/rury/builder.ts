@@ -24,10 +24,13 @@ export function buildRuryDocument(
     documentType: 'offer' | 'order' = 'offer'
 ): Document {
     const isOrder = documentType === 'order';
-    const offerNumber = isOrder && offerData.orderNumber
-        ? String(offerData.orderNumber)
-        : String(offer.offer_number ?? 'N/A');
-    const offerDate = fmtDate(String(offerData.date ?? offer.createdAt ?? new Date().toISOString()));
+    const offerNumber =
+        isOrder && offerData.orderNumber
+            ? String(offerData.orderNumber)
+            : String(offer.offer_number ?? 'N/A');
+    const offerDate = fmtDate(
+        String(offerData.date ?? offer.createdAt ?? new Date().toISOString())
+    );
     const validity = String(offerData.validity ?? '30 dni');
 
     const clientName = String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany');

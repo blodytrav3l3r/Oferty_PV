@@ -115,8 +115,9 @@ Przy imporcie oferty o numerze który już istnieje w systemie:
 ## Audyt
 
 Wszystkie akcje logowane do `audit_logs`:
-| Akcja | `action` | Opis |
-|-------|----------|------|
+
+| Akcja       | `action`          | Opis                                     |
+| ----------- | ----------------- | ---------------------------------------- |
 | Import XLSX | `import.external` | Utworzenie/zaktualizowanie oferty z XLSX |
-| Eksport 1:1 | `export.transfer` | Pobranie JSON 1:1 |
-| Import 1:1 | `import.transfer` | Import JSON 1:1 (z innego urządzenia) |
+| Eksport 1:1 | `export.transfer` | Pobranie JSON 1:1                        |
+| Import 1:1  | `import.transfer` | Import JSON 1:1 (z innego urządzenia)    |

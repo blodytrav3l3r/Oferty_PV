@@ -31,10 +31,12 @@ import {
 } from '../constants';
 import { fmtCurrency, textCell } from '../helpers';
 
-export function buildTitleParagraph(offerNumber: string, documentType: 'offer' | 'order' = 'offer'): Paragraph {
-    const titleText = documentType === 'order'
-        ? `ZAMÓWIENIE ${offerNumber}`
-        : `OFERTA HANDLOWA ${offerNumber}`;
+export function buildTitleParagraph(
+    offerNumber: string,
+    documentType: 'offer' | 'order' = 'offer'
+): Paragraph {
+    const titleText =
+        documentType === 'order' ? `ZAMÓWIENIE ${offerNumber}` : `OFERTA HANDLOWA ${offerNumber}`;
     return new Paragraph({
         children: [
             new TextRun({
@@ -58,21 +60,34 @@ export function buildDateParagraphs(
     const paragraphs: Paragraph[] = [
         new Paragraph({
             children: [
-                new TextRun({ text: 'Data przygotowania oferty: ', bold: true, size: SZ_BODY, font: FONT, color: DOCX_COLORS.labelText }),
+                new TextRun({
+                    text: 'Data przygotowania oferty: ',
+                    bold: true,
+                    size: SZ_BODY,
+                    font: FONT,
+                    color: DOCX_COLORS.labelText
+                }),
                 new TextRun({ text: offerDate, size: SZ_BODY, font: FONT })
             ],
             alignment: AlignmentType.RIGHT,
             spacing: { after: documentType === 'order' ? 60 : 0 },
-            border: documentType === 'order'
-                ? { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_GRAY_HEADER } }
-                : undefined
+            border:
+                documentType === 'order'
+                    ? { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR_GRAY_HEADER } }
+                    : undefined
         })
     ];
     if (documentType === 'offer') {
         paragraphs.push(
             new Paragraph({
                 children: [
-                    new TextRun({ text: 'Data ważności oferty: ', bold: true, size: SZ_BODY, font: FONT, color: DOCX_COLORS.labelText }),
+                    new TextRun({
+                        text: 'Data ważności oferty: ',
+                        bold: true,
+                        size: SZ_BODY,
+                        font: FONT,
+                        color: DOCX_COLORS.labelText
+                    }),
                     new TextRun({ text: validity, size: SZ_BODY, font: FONT })
                 ],
                 alignment: AlignmentType.RIGHT,
@@ -125,7 +140,11 @@ export function buildClientInvestTable(
             children: [new Paragraph({ children: runs, spacing: { before: 80, after: 80 } })],
             width: { size: 50, type: WidthType.PERCENTAGE },
             borders: CELL_BORDERS,
-            shading: { type: ShadingType.SOLID, color: DOCX_COLORS.infoBg, fill: DOCX_COLORS.infoBg }
+            shading: {
+                type: ShadingType.SOLID,
+                color: DOCX_COLORS.infoBg,
+                fill: DOCX_COLORS.infoBg
+            }
         });
     };
 
@@ -147,40 +166,123 @@ export function buildClientInvestTable(
 
 function buildClientRuns(name: string, address: string, nip: string, contact: string): TextRun[] {
     const runs: TextRun[] = [
-        new TextRun({ text: name, bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText })
+        new TextRun({
+            text: name,
+            bold: true,
+            size: SZ_INFO_BOX,
+            font: FONT,
+            color: DOCX_COLORS.titleText
+        })
     ];
     if (address) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: address, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: address,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     if (nip) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: `NIP: ${nip}`, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: `NIP: ${nip}`,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     if (contact) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: `Kontakt: ${contact}`, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: `Kontakt: ${contact}`,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     return runs;
 }
 
-function buildInvestRuns(investName: string, investAddress: string, investContractor: string): TextRun[] {
+function buildInvestRuns(
+    investName: string,
+    investAddress: string,
+    investContractor: string
+): TextRun[] {
     const runs: TextRun[] = [];
     if (investName) {
-        runs.push(new TextRun({ text: 'Budowa: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
-        runs.push(new TextRun({ text: investName, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: 'Budowa: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
+        runs.push(
+            new TextRun({
+                text: investName,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     } else {
-        runs.push(new TextRun({ text: '\u2014', size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: '\u2014',
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     if (investAddress) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: 'Adres: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
-        runs.push(new TextRun({ text: investAddress, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: 'Adres: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
+        runs.push(
+            new TextRun({
+                text: investAddress,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     if (investContractor) {
         runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-        runs.push(new TextRun({ text: 'Wykonawca: ', bold: true, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
-        runs.push(new TextRun({ text: investContractor, size: SZ_INFO_BOX, font: FONT, color: DOCX_COLORS.titleText }));
+        runs.push(
+            new TextRun({
+                text: 'Wykonawca: ',
+                bold: true,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
+        runs.push(
+            new TextRun({
+                text: investContractor,
+                size: SZ_INFO_BOX,
+                font: FONT,
+                color: DOCX_COLORS.titleText
+            })
+        );
     }
     return runs;
 }
@@ -244,17 +346,33 @@ export function buildContactSection(
 
     const buildUserCell = (title: string, u: UserContactInfo): TableCell => {
         const runs: TextRun[] = [
-            new TextRun({ text: `${title}:`, bold: true, size: SZ_TABLE_BODY, font: FONT, color: COLOR_GRAY_HEADER }),
+            new TextRun({
+                text: `${title}:`,
+                bold: true,
+                size: SZ_TABLE_BODY,
+                font: FONT,
+                color: COLOR_GRAY_HEADER
+            }),
             new TextRun({ break: 1 } as TextRunWithBreak),
             new TextRun({ text: u.name, bold: true, size: SZ_TABLE_BODY, font: FONT })
         ];
         if (u.email) {
             runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-            runs.push(new TextRun({ text: `Email: ${u.email}`, size: SZ_TABLE_BODY, font: FONT, color: DOCX_COLORS.linkUnderline, underline: { type: 'single', color: DOCX_COLORS.linkUnderline } }));
+            runs.push(
+                new TextRun({
+                    text: `Email: ${u.email}`,
+                    size: SZ_TABLE_BODY,
+                    font: FONT,
+                    color: DOCX_COLORS.linkUnderline,
+                    underline: { type: 'single', color: DOCX_COLORS.linkUnderline }
+                })
+            );
         }
         if (u.phone) {
             runs.push(new TextRun({ break: 1 } as TextRunWithBreak));
-            runs.push(new TextRun({ text: `Telefon: ${u.phone}`, size: SZ_TABLE_BODY, font: FONT }));
+            runs.push(
+                new TextRun({ text: `Telefon: ${u.phone}`, size: SZ_TABLE_BODY, font: FONT })
+            );
         }
         return new TableCell({
             children: [new Paragraph({ children: runs, spacing: { before: 40, after: 40 } })],

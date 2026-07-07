@@ -35,10 +35,7 @@ export class RecommendationEngine {
     /**
      * Zwraca rekomendacje dla podanego rekordu telemetry.
      */
-    async recommendForTelemetry(
-        telemetryId: string,
-        dn?: string
-    ): Promise<TopRecommendation[]> {
+    async recommendForTelemetry(telemetryId: string, dn?: string): Promise<TopRecommendation[]> {
         const patterns = dn
             ? await this.kb.getPatternsForDn(dn)
             : await this.kb.getPatternsForDn('all_dn');

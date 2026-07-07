@@ -7,7 +7,8 @@ const path = require('path');
 const fs = require('fs');
 
 const BASE_URL = 'http://localhost:3000';
-const CHROME_PATH = 'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium-1223\\chrome-win64\\chrome.exe';
+const CHROME_PATH =
+    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium-1223\\chrome-win64\\chrome.exe';
 const OUTPUT_DIR = path.join(__dirname, '..', 'screenshots');
 const LABEL = process.argv[2] || 'shot';
 
@@ -16,14 +17,14 @@ async function login(page) {
     try {
         await page.goto(BASE_URL + '/index.html', { waitUntil: 'networkidle2', timeout: 15000 });
     } catch (e) {}
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
     try {
         await page.waitForSelector('#login-username', { timeout: 5000 });
         await page.type('#login-username', 'admin');
         await page.type('#login-password', 'admin123');
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, 200));
         await page.click('.login-btn');
-        await new Promise(r => setTimeout(r, 2500));
+        await new Promise((r) => setTimeout(r, 2500));
         console.log(`  logged in, URL: ${page.url()}`);
     } catch (e) {
         console.log(`  login failed: ${e.message.substring(0, 100)}`);
@@ -33,16 +34,22 @@ async function login(page) {
 async function go(page, hash) {
     console.log(`\n=== ${hash} ===`);
     try {
-        await page.goto(BASE_URL + '/app.html' + hash, { waitUntil: 'networkidle2', timeout: 20000 });
+        await page.goto(BASE_URL + '/app.html' + hash, {
+            waitUntil: 'networkidle2',
+            timeout: 20000
+        });
     } catch (e) {
         try {
-            await page.goto(BASE_URL + '/app.html' + hash, { waitUntil: 'domcontentloaded', timeout: 10000 });
+            await page.goto(BASE_URL + '/app.html' + hash, {
+                waitUntil: 'domcontentloaded',
+                timeout: 10000
+            });
         } catch (e2) {
             console.log(`  goto failed: ${e2.message.substring(0, 100)}`);
             return false;
         }
     }
-    await new Promise(r => setTimeout(r, 2200)); // Wait for iframe SPA load
+    await new Promise((r) => setTimeout(r, 2200)); // Wait for iframe SPA load
     return true;
 }
 
@@ -62,7 +69,15 @@ async function shotFrame(frame, name) {
 
 async function shotIframe(page, name) {
     // Find the visible iframe and screenshot its content
-    const frame = page.frames().find(f => f !== page.mainFrame() && f.url().includes('studnie') || f.url().includes('rury') || f.url().includes('kartoteka') || f.url().includes('zlecenia'));
+    const frame = page
+        .frames()
+        .find(
+            (f) =>
+                (f !== page.mainFrame() && f.url().includes('studnie')) ||
+                f.url().includes('rury') ||
+                f.url().includes('kartoteka') ||
+                f.url().includes('zlecenia')
+        );
     if (frame) {
         await shotFrame(frame, name);
     } else {
@@ -74,7 +89,7 @@ async function clickInIframe(page, selector, label) {
     // Try main frame first, then iframes
     let handle = await page.$(selector);
     if (!handle) {
-        const frames = page.frames().filter(f => f !== page.mainFrame());
+        const frames = page.frames().filter((f) => f !== page.mainFrame());
         for (const f of frames) {
             try {
                 handle = await f.$(selector);
@@ -85,7 +100,7 @@ async function clickInIframe(page, selector, label) {
     if (handle) {
         try {
             await handle.click();
-            await new Promise(r => setTimeout(r, 1500));
+            await new Promise((r) => setTimeout(r, 1500));
             console.log(`  clicked: ${label}`);
             return true;
         } catch (e) {
@@ -93,7 +108,7 @@ async function clickInIframe(page, selector, label) {
         }
     }
     // Fallback: call wizardNext() in iframe window
-    const frames = page.frames().filter(f => f !== page.mainFrame());
+    const frames = page.frames().filter((f) => f !== page.mainFrame());
     for (const f of frames) {
         try {
             const result = await f.evaluate(() => {
@@ -104,7 +119,7 @@ async function clickInIframe(page, selector, label) {
                 return 'no-function';
             });
             if (result === 'called') {
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise((r) => setTimeout(r, 1500));
                 console.log(`  invoked via JS in frame (${f.url().split('/').pop()}): ${label}`);
                 return true;
             }
@@ -134,7 +149,9 @@ async function shotIframeView(page, viewName) {
                     }
                 });
                 const stat = fs.statSync(outPath);
-                console.log(`  saved: ${viewName}.png (${(stat.size / 1024).toFixed(1)} KB) - iframe clip`);
+                console.log(
+                    `  saved: ${viewName}.png (${(stat.size / 1024).toFixed(1)} KB) - iframe clip`
+                );
             } else {
                 console.log(`  iframe has no box for ${viewName}`);
             }
@@ -159,18 +176,18 @@ async function main() {
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu',
-            '--window-size=1440,900',
+            '--window-size=1440,900'
         ],
-        defaultViewport: { width: 1440, height: 900 },
+        defaultViewport: { width: 1440, height: 900 }
     });
 
     const page = await browser.newPage();
-    page.on('console', msg => {
+    page.on('console', (msg) => {
         if (msg.type() === 'error' && !msg.text().includes('Failed to load resource')) {
             console.log(`[console.${msg.type()}] ${msg.text().substring(0, 200)}`);
         }
     });
-    page.on('pageerror', err => {
+    page.on('pageerror', (err) => {
         console.log(`[pageerror] ${err.message.substring(0, 200)}`);
     });
 
@@ -183,31 +200,47 @@ async function main() {
     }
 
     // Click "Dalej" to go to step 2 (parametry studni) — this is where the double-class bug was
-    await clickInIframe(page, 'button.wizard-btn-next, button#studnie-nav-next', 'wizard-next-from-step1');
+    await clickInIframe(
+        page,
+        'button.wizard-btn-next, button#studnie-nav-next',
+        'wizard-next-from-step1'
+    );
     await shotIframeView(page, 'studnie-step2-parametry');
 
     // Click "Dalej" again to step 3 (oferta)
-    await clickInIframe(page, 'button.wizard-btn-next, button#studnie-nav-next', 'wizard-next-to-step3');
+    await clickInIframe(
+        page,
+        'button.wizard-btn-next, button#studnie-nav-next',
+        'wizard-next-to-step3'
+    );
     await shotIframeView(page, 'studnie-step3-oferta');
 
     // Step 4: Karta Budowy
-    await clickInIframe(page, 'button.wizard-btn-next, button#studnie-nav-next', 'wizard-next-to-step4');
+    await clickInIframe(
+        page,
+        'button.wizard-btn-next, button#studnie-nav-next',
+        'wizard-next-to-step4'
+    );
     await shotIframeView(page, 'studnie-step4-karta-budowy');
 
     // Step 5: Zamówienie
-    await clickInIframe(page, 'button.wizard-btn-next, button#studnie-nav-next', 'wizard-next-to-step5');
+    await clickInIframe(
+        page,
+        'button.wizard-btn-next, button#studnie-nav-next',
+        'wizard-next-to-step5'
+    );
     await shotIframeView(page, 'studnie-step5-zamowienie');
 
     // Cennik (pricelist) — where the 25 th width bug was
     if (await go(page, '#/studnie')) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 800));
         // Try switching to cennik section
         await page.evaluate(() => {
             if (window.SpaRouter && window.SpaRouter.showSection) {
                 window.SpaRouter.showSection('pricelist');
             }
         });
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 1500));
         await shotIframeView(page, 'studnie-cennik');
     }
 
@@ -218,52 +251,52 @@ async function main() {
 
     // Click through rury wizard
     await clickInIframe(page, 'button.wizard-btn-next, button[id*="next"]', 'rury-wizard-next');
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
     await shotIframeView(page, 'rury-step2-produkty');
 
     await clickInIframe(page, 'button.wizard-btn-next, button[id*="next"]', 'rury-wizard-next2');
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
     await shotIframeView(page, 'rury-step3-oferta');
 
     await clickInIframe(page, 'button.wizard-btn-next, button[id*="next"]', 'rury-wizard-next3');
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
     await shotIframeView(page, 'rury-step4-karta-budowy');
 
     await clickInIframe(page, 'button.wizard-btn-next, button[id*="next"]', 'rury-wizard-next4');
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
     await shotIframeView(page, 'rury-step5-zamowienie');
 
     // Rury cennik
     if (await go(page, '#/rury')) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 800));
         await page.evaluate(() => {
             if (window.SpaRouter && window.SpaRouter.showSection) {
                 window.SpaRouter.showSection('pricelist');
             }
         });
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 1500));
         await shotIframeView(page, 'rury-cennik');
     }
 
     // Rury oferta section
     if (await go(page, '#/rury')) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 800));
         await page.evaluate(() => {
             if (window.SpaRouter && window.SpaRouter.showSection) {
                 window.SpaRouter.showSection('offer');
             }
         });
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 1500));
         await shotIframeView(page, 'rury-oferta');
     }
 
     // ===== KARTOTEKA + ZLECENIA =====
     if (await go(page, '#/kartoteka')) {
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 1500));
         await shot(page, 'app-kartoteka');
     }
     if (await go(page, '#/zlecenia')) {
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 1500));
         await shot(page, 'app-zlecenia');
     }
 
@@ -271,7 +304,7 @@ async function main() {
     console.log('\nDONE');
 }
 
-main().catch(err => {
+main().catch((err) => {
     console.error('FATAL:', err);
     process.exit(1);
 });

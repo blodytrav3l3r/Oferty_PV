@@ -1,10 +1,10 @@
 // Mock progress logic for unit testing
 function getOfferOrderProgress(offerId: string, offerWells: any[], ordersStudnie: any[]) {
     const normalizeId = (id: string) => (id && id.includes(':') ? id.split(':').pop() : id);
-    
+
     const nId = normalizeId(offerId);
     const relatedOrders = ordersStudnie.filter((o: any) => normalizeId(o.offerId) === nId);
-    
+
     const orderedIds = new Set();
     relatedOrders.forEach((order) => {
         (order.wells || []).forEach((w: any) => {
@@ -24,7 +24,7 @@ describe('Offer Progress Calculation Logic', () => {
         { id: 'w1', name: 'Well 1' },
         { id: 'w2', name: 'Well 2' },
         { id: 'w3', name: 'Well 3' },
-        { id: 'w4', name: 'Well 4' },
+        { id: 'w4', name: 'Well 4' }
     ];
 
     it('should show 0% progress when no orders exist', () => {
@@ -34,9 +34,7 @@ describe('Offer Progress Calculation Logic', () => {
     });
 
     it('should calculate 50% partial progress', () => {
-        const orders = [
-            { id: 'o1', offerId: '123', wells: [{ id: 'w1' }, { id: 'w2' }] }
-        ];
+        const orders = [{ id: 'o1', offerId: '123', wells: [{ id: 'w1' }, { id: 'w2' }] }];
         const progress = getOfferOrderProgress(offerIdRaw, wells, orders);
         expect(progress.ordered).toBe(2);
         expect(progress.percent).toBe(50);

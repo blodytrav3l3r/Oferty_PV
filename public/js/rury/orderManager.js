@@ -18,10 +18,12 @@ function isItemInAnyOrder(uid) {
     if (typeof ordersRury === 'undefined' || !ordersRury) return false;
     const offerId = window.editingOfferId;
     if (!offerId) return false;
-    return ordersRury.some((o) =>
-        o && o.offerId === offerId &&
-        Array.isArray(o.items) &&
-        o.items.some((it) => it && it.uid === uid)
+    return ordersRury.some(
+        (o) =>
+            o &&
+            o.offerId === offerId &&
+            Array.isArray(o.items) &&
+            o.items.some((it) => it && it.uid === uid)
     );
 }
 window.isItemInAnyOrder = isItemInAnyOrder;
@@ -95,9 +97,8 @@ async function createOrderFromOffer() {
     const existingOrdersForOffer = getOrdersForOffer(offer.id);
 
     // Zbierz zaznaczone pozycje
-    const selectedItems = typeof collectSelectedItemsForOrder === 'function'
-        ? collectSelectedItemsForOrder()
-        : [];
+    const selectedItems =
+        typeof collectSelectedItemsForOrder === 'function' ? collectSelectedItemsForOrder() : [];
     if (selectedItems.length === 0) {
         showToast('Zaznacz co najmniej jeden produkt do zamówienia', 'warning');
         return;
@@ -199,14 +200,20 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     const zabezpSelect = document.getElementById('step4-zabezpieczenie-transportu');
     if (zabezpSelect) {
         const activeItems = getActiveItemsArray();
-        const hasZt = activeItems && activeItems.some(
-            item => item.autoAdded && item.productId && item.productId.startsWith('ZT-') && item.quantity > 0
-        );
+        const hasZt =
+            activeItems &&
+            activeItems.some(
+                (item) =>
+                    item.autoAdded &&
+                    item.productId &&
+                    item.productId.startsWith('ZT-') &&
+                    item.quantity > 0
+            );
         zabezpSelect.value = hasZt ? 'Podkłady jednorazowe' : 'Podkłady zwrotne';
     }
 
     // Reaguj na zmiany km/stawki w czasie rzeczywistym
-    ['transport-km', 'transport-rate'].forEach(id => {
+    ['transport-km', 'transport-rate'].forEach((id) => {
         const el = document.getElementById(id);
         if (el && !el.dataset.kartaListenerAttached) {
             el.dataset.kartaListenerAttached = '1';
@@ -222,21 +229,29 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     // W trybie zamówienia: nadpisz auto-generated section (tylko elementy z zamówienia)
     // W trybie oferty: dopisz jeśli brak (nie kasuj ręcznych wpisów)
     const uwagiField = document.getElementById('step4-uwagi-ogolne');
-    const activeItemsForUwagi = (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData && pendingOrderCreationData.selectedItems)
-        ? pendingOrderCreationData.selectedItems
-        : getActiveItemsArray();
+    const activeItemsForUwagi =
+        typeof pendingOrderCreationData !== 'undefined' &&
+        pendingOrderCreationData &&
+        pendingOrderCreationData.selectedItems
+            ? pendingOrderCreationData.selectedItems
+            : getActiveItemsArray();
     if (uwagiField && activeItemsForUwagi && activeItemsForUwagi.length > 0) {
         const discountLines = activeItemsForUwagi
-            .filter(item => !item.autoAdded)
-            .map(item => {
+            .filter((item) => !item.autoAdded)
+            .map((item) => {
                 const name = item.name || 'Nieznany produkt';
-                const suffix = item.commercialVersion && item.commercialVersion.trim()
-                    ? ` ${item.commercialVersion.trim()}`
-                    : '';
+                const suffix =
+                    item.commercialVersion && item.commercialVersion.trim()
+                        ? ` ${item.commercialVersion.trim()}`
+                        : '';
                 const pehdText = item.pehdType
                     ? ` + wkładka ${item.pehdType === 'PEHD-3MM' ? 'PEHD 3mm' : 'PEHD 4mm'}`
                     : '';
-                const fmtPLN = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                const fmtPLN = (v) =>
+                    v
+                        .toFixed(2)
+                        .replace('.', ',')
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
                 const discountStr = (item.discount || 0).toFixed(2).replace('.', ',');
                 const qty = item.quantity || 0;
                 const priceAfterDiscount = item.unitPrice * (1 - (item.discount || 0) / 100);
@@ -244,22 +259,38 @@ function initKartaBudowyStep4(primaryOfferNumber) {
             });
 
         const ztLines = activeItemsForUwagi
-            .filter(item => item.autoAdded && item.productId.startsWith('ZT-') && item.quantity > 0)
-            .map(item => {
-                const fmtPLN = (v) => v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            .filter(
+                (item) => item.autoAdded && item.productId.startsWith('ZT-') && item.quantity > 0
+            )
+            .map((item) => {
+                const fmtPLN = (v) =>
+                    v
+                        .toFixed(2)
+                        .replace('.', ',')
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
                 const total = (item.unitPrice || 0) * item.quantity;
                 return `${item.name}: ${item.quantity} szt. × ${fmtPLN(item.unitPrice || 0)} PLN = ${fmtPLN(total)} PLN`;
             });
 
-        const autoLines = ztLines.length > 0
-            ? [...discountLines, '', '--- Zabezpieczenie transportu ---', ...ztLines]
-            : discountLines;
+        const autoLines =
+            ztLines.length > 0
+                ? [...discountLines, '', '--- Zabezpieczenie transportu ---', ...ztLines]
+                : discountLines;
 
         if (autoLines.length > 0) {
-            const isOrder = !!(window.orderEditMode && typeof editingRuryOrderId !== 'undefined' && editingRuryOrderId)
-                || !!(typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData && pendingOrderCreationData.selectedItems);
+            const isOrder =
+                !!(
+                    window.orderEditMode &&
+                    typeof editingRuryOrderId !== 'undefined' &&
+                    editingRuryOrderId
+                ) ||
+                !!(
+                    typeof pendingOrderCreationData !== 'undefined' &&
+                    pendingOrderCreationData &&
+                    pendingOrderCreationData.selectedItems
+                );
             const currentVal = uwagiField.value;
-            const existingLines = currentVal ? currentVal.split('\n').map(l => l.trimEnd()) : [];
+            const existingLines = currentVal ? currentVal.split('\n').map((l) => l.trimEnd()) : [];
             const alreadyHas = autoLines.every((line, i) => {
                 const idx = existingLines.length - autoLines.length + i;
                 return idx >= 0 && existingLines[idx] === line;
@@ -276,10 +307,13 @@ function initKartaBudowyStep4(primaryOfferNumber) {
                         break;
                     }
                 }
-                const manualLines = existingLines.slice(0, cutIdx).filter(l => l.trim() !== '' || cutIdx === existingLines.length);
-                uwagiField.value = manualLines.length > 0
-                    ? manualLines.join('\n') + '\n' + autoLines.join('\n')
-                    : autoLines.join('\n');
+                const manualLines = existingLines
+                    .slice(0, cutIdx)
+                    .filter((l) => l.trim() !== '' || cutIdx === existingLines.length);
+                uwagiField.value =
+                    manualLines.length > 0
+                        ? manualLines.join('\n') + '\n' + autoLines.join('\n')
+                        : autoLines.join('\n');
             } else if (!alreadyHas) {
                 // W trybie oferty: dopisz jeśli brak
                 uwagiField.value = currentVal
@@ -311,7 +345,11 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     if (copySelect) copySelect.value = '';
 
     // Ukryj pola "Inne" na starcie
-    ['step4-uszczelka-studni-inne-wrap', 'step4-rodzaj-stopni-inne-wrap', 'step4-kineta-inne-wrap'].forEach((id) => {
+    [
+        'step4-uszczelka-studni-inne-wrap',
+        'step4-rodzaj-stopni-inne-wrap',
+        'step4-kineta-inne-wrap'
+    ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -376,9 +414,11 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
     }
 
     try {
-        const snapshotItems = structuredClone(pendingOrderCreationData.selectedItems || getActiveItemsArray() || []);
+        const snapshotItems = structuredClone(
+            pendingOrderCreationData.selectedItems || getActiveItemsArray() || []
+        );
 
-        const orderedUids = new Set(snapshotItems.map(it => it.uid).filter(Boolean));
+        const orderedUids = new Set(snapshotItems.map((it) => it.uid).filter(Boolean));
 
         const orderData = {
             id: orderId,
@@ -386,9 +426,13 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             offerNumber: offerNumber,
             orderNumber: orderNumber,
             userId: assignedUserId,
-            userName: (typeof editingOfferAssignedUserName !== 'undefined' && editingOfferAssignedUserName) ||
-                      (typeof currentUser !== 'undefined' && currentUser && (currentUser.username || '')) ||
-                      '',
+            userName:
+                (typeof editingOfferAssignedUserName !== 'undefined' &&
+                    editingOfferAssignedUserName) ||
+                (typeof currentUser !== 'undefined' &&
+                    currentUser &&
+                    (currentUser.username || '')) ||
+                '',
             originalSnapshot: {
                 items: snapshotItems,
                 transportKm,
@@ -467,12 +511,19 @@ function updateRuryOrderSummary(orderData) {
 
     let changes = { items: {}, transportChanged: false };
     if (isOrderMode && orderData && typeof getRuryOrderChanges === 'function') {
-        changes = getRuryOrderChanges({ ...orderData, items: orderCurrentItems || orderData.items, transportKm: Number(document.getElementById('transport-km')?.value || 0), transportRate: Number(document.getElementById('transport-rate')?.value || 0), transportMode: currentRuryTransportMode || 'full' });
+        changes = getRuryOrderChanges({
+            ...orderData,
+            items: orderCurrentItems || orderData.items,
+            transportKm: Number(document.getElementById('transport-km')?.value || 0),
+            transportRate: Number(document.getElementById('transport-rate')?.value || 0),
+            transportMode: currentRuryTransportMode || 'full'
+        });
     }
 
-    const snapItems = (orderData && orderData.originalSnapshot && orderData.originalSnapshot.items) || [];
+    const snapItems =
+        (orderData && orderData.originalSnapshot && orderData.originalSnapshot.items) || [];
 
-    dst.querySelectorAll('tr:not(.offer-cat-header):not(.offer-diam-header)').forEach(row => {
+    dst.querySelectorAll('tr:not(.offer-cat-header):not(.offer-diam-header)').forEach((row) => {
         const firstCell = row.querySelector('td');
         if (!firstCell) return;
         const checkbox = firstCell.querySelector('.item-order-checkbox');
@@ -486,9 +537,9 @@ function updateRuryOrderSummary(orderData) {
         firstCell.setAttribute('data-status', ordered ? 'ordered' : 'available');
 
         if (isOrderMode) {
-            const snapIdx = snapItems.findIndex(it => it.uid === uid);
-            const curIdx = (orderCurrentItems || []).findIndex(it => it.uid === uid);
-            const change = (curIdx >= 0) ? changes.items[curIdx] : null;
+            const snapIdx = snapItems.findIndex((it) => it.uid === uid);
+            const curIdx = (orderCurrentItems || []).findIndex((it) => it.uid === uid);
+            const change = curIdx >= 0 ? changes.items[curIdx] : null;
             if (change) {
                 row.style.borderLeft = '3px solid #ef4444';
                 row.style.background = 'rgba(239,68,68,0.05)';
@@ -499,7 +550,10 @@ function updateRuryOrderSummary(orderData) {
                     badge = '[NOWE]';
                 }
                 const badgeSpan = document.createElement('span');
-                badgeSpan.style.cssText = 'font-size:0.6rem;color:' + (change.type === 'added' ? '#10b981' : '#ef4444') + ';font-weight:700;margin-left:0.3rem;white-space:nowrap;';
+                badgeSpan.style.cssText =
+                    'font-size:0.6rem;color:' +
+                    (change.type === 'added' ? '#10b981' : '#ef4444') +
+                    ';font-weight:700;margin-left:0.3rem;white-space:nowrap;';
                 badgeSpan.textContent = badge;
                 const nameCell = row.querySelectorAll('td')[1];
                 if (nameCell) nameCell.appendChild(badgeSpan);
@@ -507,7 +561,7 @@ function updateRuryOrderSummary(orderData) {
         }
     });
 
-    dst.querySelectorAll('.offer-cat-header td, .offer-diam-header td').forEach(td => {
+    dst.querySelectorAll('.offer-cat-header td, .offer-diam-header td').forEach((td) => {
         td.setAttribute('colspan', String(colCount));
     });
 
@@ -522,18 +576,21 @@ function copyTransportBreakdown() {
     dst.innerHTML = src.innerHTML
         .replace(/id="transport-breakdown-content"/g, 'id="order-transport-breakdown-content"')
         .replace(/id="transport-toggle-icon"/g, 'id="order-transport-toggle-icon"')
-        .replace(/onclick="toggleTransportBreakdown\(\)"/g, 'onclick="toggleOrderTransportBreakdown()"');
-    if (window.lucide) lucide.createIcons({root: dst});
+        .replace(
+            /onclick="toggleTransportBreakdown\(\)"/g,
+            'onclick="toggleOrderTransportBreakdown()"'
+        );
+    if (window.lucide) lucide.createIcons({ root: dst });
 }
 
 window.updateRuryOrderSummary = updateRuryOrderSummary;
 
 function getCurrentRuryOrder() {
     if (window.orderEditMode && editingRuryOrderId) {
-        return (ordersRury || []).find(o => o.id === editingRuryOrderId) || null;
+        return (ordersRury || []).find((o) => o.id === editingRuryOrderId) || null;
     }
     if (editingOfferId) {
-        return (ordersRury || []).find(o => o.offerId === editingOfferId) || null;
+        return (ordersRury || []).find((o) => o.offerId === editingOfferId) || null;
     }
     return null;
 }
@@ -558,11 +615,10 @@ function getRuryOrderChanges(order) {
     const origKm = snap.transportKm;
     const origRate = snap.transportRate;
     const origMode = snap.transportMode || 'full';
-    result.transportChanged = (
+    result.transportChanged =
         Math.abs((curKm || 0) - (origKm || 0)) > 0.01 ||
         Math.abs((curRate || 0) - (origRate || 0)) > 0.01 ||
-        curMode !== origMode
-    );
+        curMode !== origMode;
 
     let origTransportDist = {};
     if (typeof calculateTransportDistribution === 'function' && snapItems.length > 0) {
@@ -572,9 +628,10 @@ function getRuryOrderChanges(order) {
         origTransportDist = calculateTransportDistribution(snapItems, origCostPerTrip);
         currentRuryTransportMode = savedMode;
     }
-    const curTransportDist = (typeof calculateTransportDistribution === 'function' && curItems.length > 0)
-        ? calculateTransportDistribution(curItems)
-        : {};
+    const curTransportDist =
+        typeof calculateTransportDistribution === 'function' && curItems.length > 0
+            ? calculateTransportDistribution(curItems)
+            : {};
 
     for (let i = 0; i < maxLen; i++) {
         if (i >= snapItems.length) {
@@ -588,9 +645,15 @@ function getRuryOrderChanges(order) {
         const si = snapItems[i];
         const ci = curItems[i];
 
-        const origBase = (si.unitPrice || 0) * (1 - (si.discount || 0) / 100) + (si.pehdCostPerUnit || 0) + (si.surcharge || 0);
+        const origBase =
+            (si.unitPrice || 0) * (1 - (si.discount || 0) / 100) +
+            (si.pehdCostPerUnit || 0) +
+            (si.surcharge || 0);
         const origUnitTotal = origBase + (origTransportDist[si.productId] || 0);
-        const curBase = (ci.unitPrice || 0) * (1 - (ci.discount || 0) / 100) + (ci.pehdCostPerUnit || 0) + (ci.surcharge || 0);
+        const curBase =
+            (ci.unitPrice || 0) * (1 - (ci.discount || 0) / 100) +
+            (ci.pehdCostPerUnit || 0) +
+            (ci.surcharge || 0);
         const curUnitTotal = curBase + (curTransportDist[ci.productId] || 0);
 
         const priceDiff = Math.abs(curUnitTotal - origUnitTotal);
@@ -627,7 +690,7 @@ async function saveRuryOrder() {
         return;
     }
 
-    const orderIndex = (ordersRury || []).findIndex(o => o.id === editingRuryOrderId);
+    const orderIndex = (ordersRury || []).findIndex((o) => o.id === editingRuryOrderId);
     if (orderIndex === -1) {
         showToast('Nie znaleziono zamówienia w pamięci', 'error');
         return;
@@ -677,10 +740,10 @@ window.isOrderMode = isOrderMode;
 
 async function enterRuryOrderEditMode(orderId) {
     try {
-        let orderData = (ordersRury || []).find(o => o.id === orderId);
+        let orderData = (ordersRury || []).find((o) => o.id === orderId);
         if (!orderData) {
             if (!ordersRury || ordersRury.length === 0) await loadOrdersRury();
-            orderData = (ordersRury || []).find(o => o.id === orderId);
+            orderData = (ordersRury || []).find((o) => o.id === orderId);
         }
         if (!orderData) {
             showToast('Nie znaleziono zamówienia', 'error');
@@ -762,24 +825,42 @@ function renderOrderModeBanner(orderData) {
     const banner = document.createElement('div');
     banner.id = 'order-mode-banner';
 
-    const changes = getRuryOrderChanges({ ...orderData, items: orderCurrentItems || orderData.items, transportKm: Number(document.getElementById('transport-km')?.value || 0), transportRate: Number(document.getElementById('transport-rate')?.value || 0), transportMode: currentRuryTransportMode || 'full' });
-    const changeCount = Object.keys(changes.items).filter(k => changes.items[k].type === 'modified').length;
+    const changes = getRuryOrderChanges({
+        ...orderData,
+        items: orderCurrentItems || orderData.items,
+        transportKm: Number(document.getElementById('transport-km')?.value || 0),
+        transportRate: Number(document.getElementById('transport-rate')?.value || 0),
+        transportMode: currentRuryTransportMode || 'full'
+    });
+    const changeCount = Object.keys(changes.items).filter(
+        (k) => changes.items[k].type === 'modified'
+    ).length;
     const hasChanges = changeCount > 0 || changes.transportChanged;
     const borderColor = hasChanges ? 'rgba(var(--danger-rgb),0.3)' : 'rgba(var(--success-rgb),0.3)';
     const bgColor = hasChanges ? 'rgba(var(--danger-rgb),0.08)' : 'rgba(var(--success-rgb),0.08)';
     const textColor = hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)';
     banner.style.cssText = `border-radius:10px;padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;border-width:2px;border-style:solid;border-color:${borderColor};background:${bgColor};`;
-    banner.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;">'
-        + '<span style="font-size:1.3rem;"><i data-lucide="package"></i></span>'
-        + '<div>'
-        + '<span style="font-size:0.82rem;font-weight:800;color:' + textColor + ';">TRYB ZAMÓWIENIA — ' + escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') + '</span>'
-        + '<div style="font-size:0.65rem;color:var(--text-muted);">'
-        + (hasChanges
-            ? '<i data-lucide="alert-triangle"></i> ' + changeCount + ' poz. zmienionych' + (changes.transportChanged ? ' + zmiana transportu' : '') + ' od oryginału'
-            : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału')
-        + ' &bull; Utworzono: ' + new Date(orderData.createdAt).toLocaleString('pl-PL')
-        + '</div></div>'
-        + '</div>';
+    banner.innerHTML =
+        '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+        '<span style="font-size:1.3rem;"><i data-lucide="package"></i></span>' +
+        '<div>' +
+        '<span style="font-size:0.82rem;font-weight:800;color:' +
+        textColor +
+        ';">TRYB ZAMÓWIENIA — ' +
+        escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') +
+        '</span>' +
+        '<div style="font-size:0.65rem;color:var(--text-muted);">' +
+        (hasChanges
+            ? '<i data-lucide="alert-triangle"></i> ' +
+              changeCount +
+              ' poz. zmienionych' +
+              (changes.transportChanged ? ' + zmiana transportu' : '') +
+              ' od oryginału'
+            : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału') +
+        ' &bull; Utworzono: ' +
+        new Date(orderData.createdAt).toLocaleString('pl-PL') +
+        '</div></div>' +
+        '</div>';
     const indicator = document.querySelector('.wizard-indicator');
     if (indicator && indicator.parentNode) {
         indicator.parentNode.insertBefore(banner, indicator);
@@ -798,15 +879,19 @@ function renderStep2OrderBanner(orderData) {
     const banner = document.createElement('div');
     banner.id = 'step2-order-banner';
     banner.classList.add('badge-ok');
-    banner.style.cssText = 'border-radius:8px;padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;';
-    banner.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">'
-        + '<span style="font-size:1.3rem;">📦</span>'
-        + '<span class="color-success fw-7">Dodajesz produkty do istniejącego zamówienia</span>'
-        + '<span class="text-muted">|</span>'
-        + '<span style="color:var(--text-muted);font-size:0.85rem;">Zamówienie: <strong style="color:var(--text);">' + escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '—') + '</strong></span>'
-        + '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text);">Dalej</strong> aby przejść do podsumowania.</span>'
-        + '</div>'
-        + '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>';
+    banner.style.cssText =
+        'border-radius:8px;padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;';
+    banner.innerHTML =
+        '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
+        '<span style="font-size:1.3rem;">📦</span>' +
+        '<span class="color-success fw-7">Dodajesz produkty do istniejącego zamówienia</span>' +
+        '<span class="text-muted">|</span>' +
+        '<span style="color:var(--text-muted);font-size:0.85rem;">Zamówienie: <strong style="color:var(--text);">' +
+        escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '—') +
+        '</strong></span>' +
+        '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text);">Dalej</strong> aby przejść do podsumowania.</span>' +
+        '</div>' +
+        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>';
     const step2 = document.getElementById('wizard-step-2');
     if (step2 && step2.firstChild) {
         step2.insertBefore(banner, step2.firstChild);
@@ -945,7 +1030,8 @@ function renderPrzejsciaDetailsTable(existingData) {
     ];
 
     if (allRows.length === 0) {
-        container.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Brak przejść. Kliknij "Dodaj niestandardowe" aby dodać.</div>';
+        container.innerHTML =
+            '<div style="font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Brak przejść. Kliknij "Dodaj niestandardowe" aby dodać.</div>';
         return;
     }
 
@@ -967,9 +1053,10 @@ function renderPrzejsciaDetailsTable(existingData) {
         const isCustom = row.source === 'custom';
         html += `<tr>
             <td>
-                ${isCustom
-                    ? `<input type="text" class="form-input" value="${row.rodzaj || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
-                    : `<span class="fw-600">${row.rodzaj || '—'}</span>`
+                ${
+                    isCustom
+                        ? `<input type="text" class="form-input" value="${row.rodzaj || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
+                        : `<span class="fw-600">${row.rodzaj || '—'}</span>`
                 }
             </td>
             <td><input type="text" class="form-input" value="${row.dnOd || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
@@ -983,9 +1070,10 @@ function renderPrzejsciaDetailsTable(existingData) {
                 </select>
             </td>
             <td>
-                ${isCustom
-                    ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size:0.65rem;padding:0.15rem 0.4rem;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>`
-                    : '<span style="color:var(--text-muted);font-size:0.65rem;">z oferty</span>'
+                ${
+                    isCustom
+                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size:0.65rem;padding:0.15rem 0.4rem;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>`
+                        : '<span style="color:var(--text-muted);font-size:0.65rem;">z oferty</span>'
                 }
             </td>
         </tr>`;
@@ -1034,11 +1122,15 @@ function _syncCustomRow(input) {
 }
 
 function _syncCustomRowsFromDOM() {
-    document.querySelectorAll('#step4-przejscia-details-table input, #step4-przejscia-details-table select').forEach((input) => {
-        if (input.dataset.field && input.dataset.source && input.dataset.idx !== undefined) {
-            _syncCustomRow(input);
-        }
-    });
+    document
+        .querySelectorAll(
+            '#step4-przejscia-details-table input, #step4-przejscia-details-table select'
+        )
+        .forEach((input) => {
+            if (input.dataset.field && input.dataset.source && input.dataset.idx !== undefined) {
+                _syncCustomRow(input);
+            }
+        });
 }
 
 function collectPrzejsciaDetailsFromTable() {
@@ -1061,9 +1153,10 @@ window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;
 function syncOrderTableIfNeeded() {
     if (typeof currentWizardStep === 'undefined' || currentWizardStep !== 5) return;
     if (typeof updateRuryOrderSummary !== 'function') return;
-    const order = (window.orderEditMode && typeof getCurrentRuryOrder === 'function')
-        ? getCurrentRuryOrder()
-        : null;
+    const order =
+        window.orderEditMode && typeof getCurrentRuryOrder === 'function'
+            ? getCurrentRuryOrder()
+            : null;
     updateRuryOrderSummary(order);
 }
 window.syncOrderTableIfNeeded = syncOrderTableIfNeeded;

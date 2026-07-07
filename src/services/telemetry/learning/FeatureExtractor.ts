@@ -146,9 +146,10 @@ export class FeatureExtractor {
                 for (let i = 1; i < heights.length; i++) {
                     gaps.push(heights[i] - heights[i - 1]);
                 }
-                const avgGap = gaps.reduce(function (a, b) {
-                    return a + b;
-                }, 0) / gaps.length;
+                const avgGap =
+                    gaps.reduce(function (a, b) {
+                        return a + b;
+                    }, 0) / gaps.length;
                 const maxGap = Math.max.apply(null, gaps);
                 spacing =
                     maxGap > avgGap * 2.5
@@ -253,11 +254,13 @@ export class FeatureExtractor {
     /**
      * Agregacja cech dla wszystkich rekordów (używa batch).
      */
-    extractBatch(records: Array<{
-        record: TelemetryRecordLike;
-        transitions?: TransitionSnapshotInput[];
-        components?: ComponentInput[];
-    }>): FeatureVector[] {
+    extractBatch(
+        records: Array<{
+            record: TelemetryRecordLike;
+            transitions?: TransitionSnapshotInput[];
+            components?: ComponentInput[];
+        }>
+    ): FeatureVector[] {
         const self = this;
         return records.map(function (r) {
             return self.extract(r.record, r.transitions, r.components);

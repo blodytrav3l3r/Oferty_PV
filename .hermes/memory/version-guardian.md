@@ -29,8 +29,8 @@ npm run version:set 2.1.5   # konkretna wersja
 
 ## Reguły SemVer (przypomnienie)
 
-| Próg | Kiedy |
-|---|---|
+| Próg  | Kiedy                                            |
+| ----- | ------------------------------------------------ |
 | PATCH | bugfix, drobna poprawka, refactor bez nowego API |
-| MINOR | nowa funkcjonalność wstecz kompatybilna |
-| MAJOR | łamanie kompatybilności, redesign, reset bazy |
+| MINOR | nowa funkcjonalność wstecz kompatybilna          |
+| MAJOR | łamanie kompatybilności, redesign, reset bazy    |

@@ -5,7 +5,8 @@
 /* ===== BLOKADA OFERTY - BANER ===== */
 const OFFER_LOCKED_MSG =
     '<i data-lucide="lock" aria-hidden="true"></i> Ta studnia jest zablokowana — jest częścią zamówienia. Edytuj ją przez zamówienie.';
-const WELL_LOCKED_MSG = '<i data-lucide="lock" aria-hidden="true"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
+const WELL_LOCKED_MSG =
+    '<i data-lucide="lock" aria-hidden="true"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 
 function renderOfferLockBanner() {
     // Jeśli jesteśmy w trybie zamówienia, baner blokady z oferty nie powinien się wyświetlać
@@ -27,7 +28,8 @@ function renderOfferLockBanner() {
     // Oblicz stan zamówień częściowych
     const well = getCurrentWell();
     const wellLocked = well && typeof isWellOrdered === 'function' && isWellOrdered(well);
-    const hasAnyOrders = editingOfferIdStudnie &&
+    const hasAnyOrders =
+        editingOfferIdStudnie &&
         typeof getOrdersForOffer === 'function' &&
         getOrdersForOffer(editingOfferIdStudnie).length > 0;
 
@@ -37,18 +39,16 @@ function renderOfferLockBanner() {
     }
 
     // Pokaż info o zamówieniach częściowych
-    const orders = typeof getOrdersForOffer === 'function'
-        ? getOrdersForOffer(editingOfferIdStudnie)
-        : [];
-    const progress = typeof getOfferOrderProgress === 'function'
-        ? getOfferOrderProgress(editingOfferIdStudnie, wells)
-        : { ordered: 0, total: wells.length, percent: 0 };
+    const orders =
+        typeof getOrdersForOffer === 'function' ? getOrdersForOffer(editingOfferIdStudnie) : [];
+    const progress =
+        typeof getOfferOrderProgress === 'function'
+            ? getOfferOrderProgress(editingOfferIdStudnie, wells)
+            : { ordered: 0, total: wells.length, percent: 0 };
 
     if (wellLocked) {
         // Znajdź zamówienie, do którego należy bieżąca studnia
-        const wellOrder = orders.find((ord) =>
-            (ord.wells || []).some((w) => w.id === well.id)
-        );
+        const wellOrder = orders.find((ord) => (ord.wells || []).some((w) => w.id === well.id));
 
         lockBanner.style.cssText = `
             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
@@ -72,11 +72,12 @@ function renderOfferLockBanner() {
                 </div>
             </div>
             <div style="display:flex; gap:0.4rem; align-items:center;">
-                ${wellOrder
-                    ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
+                ${
+                    wellOrder
+                        ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="package"></i> Edytuj zamówienie
                     </button>`
-                    : ''
+                        : ''
                 }
             </div>
         `;
@@ -120,9 +121,13 @@ function setupParamTiles() {
 
                 // Domyślne "Nie" dla wkładki na całą wysokość przy wyborze PRECO
                 if (paramName === 'kineta' && (val === 'preco' || val === 'precotop')) {
-                    const precoHeightGroup = wizardRoot.querySelector('.param-group[data-param="precoFullHeight"]');
+                    const precoHeightGroup = wizardRoot.querySelector(
+                        '.param-group[data-param="precoFullHeight"]'
+                    );
                     if (precoHeightGroup && !precoHeightGroup.querySelector('.param-tile.active')) {
-                        const nieBtn = precoHeightGroup.querySelector('.param-tile[data-val="nie"]');
+                        const nieBtn = precoHeightGroup.querySelector(
+                            '.param-tile[data-val="nie"]'
+                        );
                         if (nieBtn) {
                             nieBtn.click();
                         }
@@ -131,11 +136,25 @@ function setupParamTiles() {
 
                 // Automatyczne dopasowanie spocznika do kinety (jeśli ma ten sam materiał)
                 if (paramName === 'kineta') {
-                    const spocznikGroup = wizardRoot.querySelector('.param-group[data-param="spocznik"]');
+                    const spocznikGroup = wizardRoot.querySelector(
+                        '.param-group[data-param="spocznik"]'
+                    );
                     if (spocznikGroup) {
-                        const syncValues = ['beton', 'beton_gfk', 'klinkier', 'preco', 'precotop', 'unolith', 'predl', 'kamionka', 'brak'];
+                        const syncValues = [
+                            'beton',
+                            'beton_gfk',
+                            'klinkier',
+                            'preco',
+                            'precotop',
+                            'unolith',
+                            'predl',
+                            'kamionka',
+                            'brak'
+                        ];
                         if (syncValues.includes(val)) {
-                            const targetBtn = spocznikGroup.querySelector(`.param-tile[data-val="${val}"]`);
+                            const targetBtn = spocznikGroup.querySelector(
+                                `.param-tile[data-val="${val}"]`
+                            );
                             if (targetBtn && !targetBtn.classList.contains('active')) {
                                 targetBtn.click();
                             }
@@ -144,9 +163,13 @@ function setupParamTiles() {
 
                     // PRECO / PrecoTop → wymuszenie spocznikH = '1/1'
                     if (val === 'preco' || val === 'precotop') {
-                        const spocznikHGroup = wizardRoot.querySelector('.param-group[data-param="spocznikH"]');
+                        const spocznikHGroup = wizardRoot.querySelector(
+                            '.param-group[data-param="spocznikH"]'
+                        );
                         if (spocznikHGroup) {
-                            const hBtn = spocznikHGroup.querySelector('.param-tile[data-val="1/1"]');
+                            const hBtn = spocznikHGroup.querySelector(
+                                '.param-tile[data-val="1/1"]'
+                            );
                             if (hBtn && !hBtn.classList.contains('active')) {
                                 hBtn.click();
                             }
@@ -190,12 +213,15 @@ function updateParamTilesUI() {
     // Pokaz/ukryj grupe parametrow precoFullHeight na podstawie kinety
     const precoGroupWizard = document.getElementById('preco-full-height-wizard-group');
     if (precoGroupWizard) {
-        precoGroupWizard.style.display = (kinetaVal === 'preco' || kinetaVal === 'precotop') ? 'flex' : 'none';
+        precoGroupWizard.style.display =
+            kinetaVal === 'preco' || kinetaVal === 'precotop' ? 'flex' : 'none';
     }
-    document.querySelectorAll('.param-group[data-param="precoFullHeight"]').forEach(el => {
+    document.querySelectorAll('.param-group[data-param="precoFullHeight"]').forEach((el) => {
         const wrapper = el.closest('.wizard-param-group') || el.parentElement;
-        if (wrapper && !wrapper.id) { // Not the wizard one, it's the individual well one
-             wrapper.style.display = (kinetaVal === 'preco' || kinetaVal === 'precotop') ? 'block' : 'none';
+        if (wrapper && !wrapper.id) {
+            // Not the wizard one, it's the individual well one
+            wrapper.style.display =
+                kinetaVal === 'preco' || kinetaVal === 'precotop' ? 'block' : 'none';
         }
     });
 
@@ -601,7 +627,9 @@ function renderDiscountPanel() {
         grandDiscounted += totalAfter;
 
         const dnLabel = dn === 'styczna' ? 'Studnia Styczna' : `DN${dn}`;
-        const hasPrecoInGroup = groupWells.some(w => w.kineta === 'preco' || w.kineta === 'precotop');
+        const hasPrecoInGroup = groupWells.some(
+            (w) => w.kineta === 'preco' || w.kineta === 'precotop'
+        );
 
         html += `<div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(255,255,255,0.05);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
@@ -627,7 +655,9 @@ function renderDiscountPanel() {
                 onchange="updateDiscount('${discountDn}','nadbudowa',this.value)">
               <span class="ui-text-mute">%</span>
             </div>
-            ${hasPrecoInGroup ? `<span class="ui-text-mute" style="text-align:left; color:#ef4444;">Wkładka PRECO</span>
+            ${
+                hasPrecoInGroup
+                    ? `<span class="ui-text-mute" style="text-align:left; color:#ef4444;">Wkładka PRECO</span>
             <div style="display:flex; align-items:center; gap:0.2rem;">
               <input type="number" min="0" max="100" step="0.5" value="${disc.preco || 0}"
                 id="disc-${discountDn}-preco"
@@ -635,7 +665,9 @@ function renderDiscountPanel() {
                 onclick="this.select()"
                 onchange="updateDiscount('${discountDn}','preco',this.value)">
               <span class="ui-text-mute" style="color:#ef4444;">%</span>
-            </div>` : ''}
+            </div>`
+                    : ''
+            }
           </div>
           <div style="display:flex; justify-content:space-between; margin-top:0.4rem; padding-top:0.35rem; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="font-size:0.78rem; color:var(--text-muted); text-align:left;">Po rabacie:</span>
@@ -645,12 +677,22 @@ function renderDiscountPanel() {
     });
 
     // Sekcja wkładki PEHD (globalna dla wszystkich studni)
-    const anyPehd = wells.some(w => (w.wkladkaDennica && w.wkladkaDennica !== 'brak') || (w.wkladkaNadbudowa && w.wkladkaNadbudowa !== 'brak') || (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak'));
+    const anyPehd = wells.some(
+        (w) =>
+            (w.wkladkaDennica && w.wkladkaDennica !== 'brak') ||
+            (w.wkladkaNadbudowa && w.wkladkaNadbudowa !== 'brak') ||
+            (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak')
+    );
     if (anyPehd) {
-        const pehdDiscountValue = (wells[0] && wells[0].pehdDiscount) ? wells[0].pehdDiscount : 0;
+        const pehdDiscountValue = wells[0] && wells[0].pehdDiscount ? wells[0].pehdDiscount : 0;
         let currentPehdPrice = 0;
         for (const p of studnieProducts) {
-            if (p.area > 0 && p.doplataPEHD > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta') {
+            if (
+                p.area > 0 &&
+                p.doplataPEHD > 0 &&
+                p.componentType !== 'przejscie' &&
+                p.componentType !== 'kineta'
+            ) {
                 currentPehdPrice = Math.round(p.doplataPEHD / p.area);
                 break;
             }
@@ -682,8 +724,8 @@ function renderDiscountPanel() {
     }
 
     // Sekcja kosztów malowania (globalna dla wszystkich studni)
-    const anyMalowanieW = wells.some(w => w.malowanieW && w.malowanieW !== 'brak');
-    const anyMalowanieZ = wells.some(w => w.malowanieZ && w.malowanieZ !== 'brak');
+    const anyMalowanieW = wells.some((w) => w.malowanieW && w.malowanieW !== 'brak');
+    const anyMalowanieZ = wells.some((w) => w.malowanieZ && w.malowanieZ !== 'brak');
 
     if (anyMalowanieW || anyMalowanieZ) {
         const refWell = wells[0] || {};
@@ -761,7 +803,6 @@ function switchSidebarTab(tabName) {
     }
 }
 
-
 function switchBuilderTab(tab) {
     const btabConcrete = document.getElementById('btab-concrete');
     const btabTransitions = document.getElementById('btab-transitions');
@@ -771,7 +812,8 @@ function switchBuilderTab(tab) {
     if (btabConcrete) btabConcrete.classList.toggle('active', tab === 'concrete');
     if (btabTransitions) btabTransitions.classList.toggle('active', tab === 'transitions');
     if (bcontentConcrete) bcontentConcrete.style.display = tab === 'concrete' ? 'block' : 'none';
-    if (bcontentTransitions) bcontentTransitions.style.display = tab === 'transitions' ? 'block' : 'none';
+    if (bcontentTransitions)
+        bcontentTransitions.style.display = tab === 'transitions' ? 'block' : 'none';
 
     if (tab === 'transitions') {
         if (typeof renderInlinePrzejsciaApp === 'function') renderInlinePrzejsciaApp();
@@ -780,7 +822,9 @@ function switchBuilderTab(tab) {
         const przejsciaIcon = document.getElementById('przejscia-app-icon');
         if (przejsciaContainer && przejsciaContainer.style.display === 'none') {
             przejsciaContainer.style.display = 'block';
-            if (przejsciaIcon) przejsciaIcon.innerHTML = '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
+            if (przejsciaIcon)
+                przejsciaIcon.innerHTML =
+                    '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
             if (window.lucide) window.lucide.createIcons({ root: przejsciaIcon });
         }
     }
@@ -885,7 +929,7 @@ window.renderWellsList = function renderWellsList() {
                       ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
                       : w.configStatus === 'WARNING'
                         ? '<span title="' +
-                          (w.configErrors || []).map(e => escapeHtml(e)).join('; ') +
+                          (w.configErrors || []).map((e) => escapeHtml(e)).join('; ') +
                           '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
                         : w.configStatus === 'OK'
                           ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'
@@ -907,15 +951,16 @@ window.renderWellsList = function renderWellsList() {
             let errorsHtml = '';
             if (w.configErrors && w.configErrors.length > 0) {
                 const color = w.configStatus === 'ERROR' ? '#ef4444' : '#f59e0b';
-                errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.map(e => escapeHtml(e)).join('<br>')}</div>`;
+                errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.map((e) => escapeHtml(e)).join('<br>')}</div>`;
             }
 
             let wellLockBadge = '';
             if (isWellLocked(i)) {
                 // Sprawdź, czy blokada pochodzi z zamówienia (pokaż numer zamówienia)
-                const wellOrder = typeof getOrderForWellId === 'function'
-                    ? getOrderForWellId(w.id, editingOfferIdStudnie)
-                    : null;
+                const wellOrder =
+                    typeof getOrderForWellId === 'function'
+                        ? getOrderForWellId(w.id, editingOfferIdStudnie)
+                        : null;
                 if (wellOrder && wellOrder.orderNumber) {
                     wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
                         onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
@@ -923,7 +968,8 @@ window.renderWellsList = function renderWellsList() {
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
                     </span>`;
                 } else {
-                    wellLockBadge = '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
+                    wellLockBadge =
+                        '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
                 }
             }
 
@@ -946,12 +992,15 @@ window.renderWellsList = function renderWellsList() {
             const errorNameStyle = hasErrors
                 ? 'color:#ef4444 !important; font-weight:700 !important;'
                 : '';
-            
-            const hasBadges = wellLockBadge || sourceBadge || statusBadge || changeBadge || doplataBadge;
-            const badgesHtml = hasBadges ? `
+
+            const hasBadges =
+                wellLockBadge || sourceBadge || statusBadge || changeBadge || doplataBadge;
+            const badgesHtml = hasBadges
+                ? `
               <div style="display:flex; align-items:center; gap:0.15rem; flex-wrap:wrap; margin-bottom:0.3rem; margin-top:-0.1rem;">
                  ${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}${doplataBadge}
-              </div>` : '';
+              </div>`
+                : '';
 
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
@@ -992,7 +1041,7 @@ window.renderWellsList = function renderWellsList() {
     if (counter) counter.textContent = `(${wells.length})`;
 
     renderDiscountPanel();
-}
+};
 
 /* ===== PODSUMOWANIE ===== */
 window.updateSummary = function updateSummary() {
@@ -1118,4 +1167,4 @@ window.updateSummary = function updateSummary() {
         renderWellsList();
         window._renderingWellsList = false;
     }
-}
+};

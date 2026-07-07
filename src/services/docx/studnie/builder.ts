@@ -37,11 +37,14 @@ export function buildStudnieDocument(
     documentType: 'offer' | 'order' = 'offer'
 ): Document {
     const isOrder = documentType === 'order';
-    const rawNumber = isOrder && offerData.orderNumber
-        ? String(offerData.orderNumber)
-        : String(offer.offer_number ?? 'N/A');
+    const rawNumber =
+        isOrder && offerData.orderNumber
+            ? String(offerData.orderNumber)
+            : String(offer.offer_number ?? 'N/A');
     const offerNumber = rawNumber;
-    const offerDate = fmtDate(String(offerData.date ?? offer.createdAt ?? new Date().toISOString()));
+    const offerDate = fmtDate(
+        String(offerData.date ?? offer.createdAt ?? new Date().toISOString())
+    );
     const validity = String(offerData.validity ?? '30 dni');
 
     const clientName = String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany');
@@ -52,8 +55,9 @@ export function buildStudnieDocument(
     const investAddress = String(offerData.investAddress ?? '');
     const investContractor = String(offerData.investContractor ?? '');
     const notes = String(offerData.notes ?? '');
-    const paymentTerms =
-        String(offerData.paymentTerms ?? 'Do uzgodnienia lub według indywidualnych warunków handlowych.');
+    const paymentTerms = String(
+        offerData.paymentTerms ?? 'Do uzgodnienia lub według indywidualnych warunków handlowych.'
+    );
 
     const children: (Paragraph | Table)[] = [];
 

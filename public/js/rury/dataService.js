@@ -8,7 +8,9 @@
  * @returns {Promise<Array>} Tablica produktów
  */
 async function loadProducts() {
-    var result = /** @type {any} */ (await api.getWithRetry('/api/products', { silent: true }, 3, 1000));
+    var result = /** @type {any} */ (
+        await api.getWithRetry('/api/products', { silent: true }, 3, 1000)
+    );
     if (!result || !Array.isArray(result.data)) {
         logger.error('dataService', 'Błąd loadProducts: brak danych po 3 próbach');
         return [];

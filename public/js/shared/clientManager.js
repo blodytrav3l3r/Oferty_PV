@@ -78,20 +78,22 @@ function saveClientToDb() {
         appConfirm('Klient o takiej nazwie już istnieje. Zaktualizować dane?', {
             title: 'Aktualizacja klienta',
             type: 'warning'
-        }).then((ok) => {
-            if (ok) {
-                clientsDb[existingIdx] = {
-                    ...clientsDb[existingIdx],
-                    name,
-                    nip,
-                    address,
-                    contact,
-                    updatedAt: new Date().toISOString()
-                };
-                saveClientsDbData(clientsDb);
-                showToast('Zaktualizowano dane klienta', 'success');
-            }
-        }).catch(e => logger.error('clientManager', e));
+        })
+            .then((ok) => {
+                if (ok) {
+                    clientsDb[existingIdx] = {
+                        ...clientsDb[existingIdx],
+                        name,
+                        nip,
+                        address,
+                        contact,
+                        updatedAt: new Date().toISOString()
+                    };
+                    saveClientsDbData(clientsDb);
+                    showToast('Zaktualizowano dane klienta', 'success');
+                }
+            })
+            .catch((e) => logger.error('clientManager', e));
     } else {
         clientsDb.push({
             id: Date.now().toString(),
@@ -158,7 +160,10 @@ function renderClientsDbList(query) {
     }
 
     if (filtered.length === 0) {
-        container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Brak wyników dla „' + escapeHtml(q) + '"</div>';
+        container.innerHTML =
+            '<div style="text-align:center; color:var(--text-muted); padding:2rem; font-size:0.85rem;">Brak wyników dla „' +
+            escapeHtml(q) +
+            '"</div>';
         return;
     }
 
@@ -179,9 +184,14 @@ function renderClientsDbList(query) {
 
     filtered.forEach((c) => {
         const tr = document.createElement('tr');
-        tr.style.cssText = 'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
-        tr.onmouseenter = () => { tr.style.background = 'rgba(var(--accent-rgb),0.06)'; };
-        tr.onmouseleave = () => { tr.style.background = 'transparent'; };
+        tr.style.cssText =
+            'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
+        tr.onmouseenter = () => {
+            tr.style.background = 'rgba(var(--accent-rgb),0.06)';
+        };
+        tr.onmouseleave = () => {
+            tr.style.background = 'transparent';
+        };
 
         if (editingClientId === c.id) {
             tr.style.background = 'rgba(var(--accent-rgb),0.05)';
@@ -200,7 +210,8 @@ function renderClientsDbList(query) {
                 tr.appendChild(td);
             });
             const actionTd = document.createElement('td');
-            actionTd.style.cssText = 'padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;';
+            actionTd.style.cssText =
+                'padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;';
             actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--accent); font-size:1rem;"><i data-lucide="save" aria-hidden="true"></i></button>
                 <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
@@ -211,22 +222,26 @@ function renderClientsDbList(query) {
             tr.appendChild(nameTd);
 
             const nipTd = document.createElement('td');
-            nipTd.style.cssText = 'padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);';
+            nipTd.style.cssText =
+                'padding:0.6rem 0.8rem; font-family:monospace; font-size:0.8rem; color:var(--text-secondary);';
             nipTd.textContent = c.nip || '—';
             tr.appendChild(nipTd);
 
             const addrTd = document.createElement('td');
-            addrTd.style.cssText = 'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
+            addrTd.style.cssText =
+                'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
             addrTd.textContent = c.address || '—';
             tr.appendChild(addrTd);
 
             const contactTd = document.createElement('td');
-            contactTd.style.cssText = 'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
+            contactTd.style.cssText =
+                'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
             contactTd.textContent = c.contact || '—';
             tr.appendChild(contactTd);
 
             const actionTd = document.createElement('td');
-            actionTd.style.cssText = 'padding:0.6rem 0.8rem; text-align:center; white-space:nowrap;';
+            actionTd.style.cssText =
+                'padding:0.6rem 0.8rem; text-align:center; white-space:nowrap;';
             actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeHtml(c.id)}')" title="Edytuj" aria-label="Edytuj" style="color:var(--text-secondary); font-size:0.85rem; opacity:0.8;"><i data-lucide="pencil" aria-hidden="true"></i></button>
                 <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeHtml(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy" style="color:var(--danger); font-size:0.85rem; opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);

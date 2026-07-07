@@ -13,7 +13,7 @@ window.StudnieExternalExportTemplate = {
             if (offer.type !== 'studnia_oferta') continue;
             const data = offer.data || offer;
             const wells = data.wellsExport || data.wells || [];
-            if (wells.length && !wells[0].config?.some(c => c._xp !== undefined)) {
+            if (wells.length && !wells[0].config?.some((c) => c._xp !== undefined)) {
                 needsCatalog = true;
                 break;
             }
@@ -31,8 +31,7 @@ window.StudnieExternalExportTemplate = {
             }
         }
 
-        const productMap = needsCatalog
-            ? new Map(studnieProducts.map(p => [p.id, p])) : null;
+        const productMap = needsCatalog ? new Map(studnieProducts.map((p) => [p.id, p])) : null;
 
         const rows = [];
         for (const offer of offers) {
@@ -42,9 +41,9 @@ window.StudnieExternalExportTemplate = {
 
             // wellsExport (nowe oferty) lub wells (stare oferty / fallback)
             const wellsExport = data.wellsExport || [];
-            const hasEnriched = wellsExport.length > 0 &&
-                wellsExport[0].config?.some(c => c._xp !== undefined);
-            const wells = hasEnriched ? wellsExport : (data.wells || []);
+            const hasEnriched =
+                wellsExport.length > 0 && wellsExport[0].config?.some((c) => c._xp !== undefined);
+            const wells = hasEnriched ? wellsExport : data.wells || [];
 
             const offerDiscounts = data.wellDiscounts || {};
             let lp = 1;
@@ -53,7 +52,7 @@ window.StudnieExternalExportTemplate = {
                 const config = well.config || well.components || [];
                 if (!config.length) continue;
 
-                const magCode = (well.magazyn === 'Włocławek') ? 'WL' : 'M0';
+                const magCode = well.magazyn === 'Włocławek' ? 'WL' : 'M0';
 
                 const rzednaWlazu = well.rzednaWlazu || 0;
                 const rzednaDna = well.rzednaDna || 0;
@@ -62,8 +61,11 @@ window.StudnieExternalExportTemplate = {
                 const srednica = well.dn != null ? 'X' + well.dn : '';
 
                 // Zakonczenie: juz obliczone w wellsExport (zwienczenie) lub licz na zyczenie
-                const zakonczenie = well.zwienczenie ||
-                    (typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '');
+                const zakonczenie =
+                    well.zwienczenie ||
+                    (typeof getWellZwienczenieName === 'function'
+                        ? getWellZwienczenieName(well)
+                        : '');
 
                 for (const comp of config) {
                     const productId = comp.productId || comp.indeks || '';
@@ -80,9 +82,12 @@ window.StudnieExternalExportTemplate = {
                         const p = productMap ? productMap.get(productId) : null;
                         if (p && p.componentType === 'kineta') continue;
                         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-                        const isDennicaType = p && ['dennica', 'kineta', 'styczna'].includes(p.componentType);
+                        const isDennicaType =
+                            p && ['dennica', 'kineta', 'styczna'].includes(p.componentType);
                         const disc = offerDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
-                        const discountPct = Number(isDennicaType ? (disc.dennica || 0) : (disc.nadbudowa || 0));
+                        const discountPct = Number(
+                            isDennicaType ? disc.dennica || 0 : disc.nadbudowa || 0
+                        );
                         cenaJednostkowa = (p ? p.price : 0) * (1 - discountPct / 100);
                     }
 

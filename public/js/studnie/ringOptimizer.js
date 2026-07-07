@@ -4,8 +4,6 @@
    Port z Logika/cp_optimizer.py (CP-SAT → Dynamic Programming)
    ============================ */
 
-
-
 /**
  * Sprawdza czy łączenia kręgów (joint positions) nie kolidują z przejściami rur.
  * Port z: cp_optimizer.py → _classify_transitions_for_ring / constraint logic
@@ -36,7 +34,7 @@ function validateRingJoints(selectedRings, transitions, availableProducts, fixed
     const SAFETY_MARGIN = 15; // mm — spójne z validator.py:85
 
     for (const t of transitions) {
-        const pprod = availableProducts.find(p => p.id === (t.productId || t.id));
+        const pprod = availableProducts.find((p) => p.id === (t.productId || t.id));
         if (!pprod) continue;
 
         let dn = 160;
@@ -151,22 +149,34 @@ function optimizeRingsForDistance(
     // Walidacja kolizji łączeń z przejściami (transition-aware)
     if (transitions && transitions.length > 0 && availableProducts) {
         const isValid = validateRingJoints(
-            dpResult.selectedRings, transitions, availableProducts,
-            fixedBelowHeight, mode
+            dpResult.selectedRings,
+            transitions,
+            availableProducts,
+            fixedBelowHeight,
+            mode
         );
 
         if (!isValid) {
             // Próbuj alternatywne rozwiązania DP z lekko zmienionym targetem
             const alternativeResult = findAlternativeDPSolution(
-                heights, minAllowed, maxAllowed, availableRings,
-                transitions, availableProducts, fixedBelowHeight, mode
+                heights,
+                minAllowed,
+                maxAllowed,
+                availableRings,
+                transitions,
+                availableProducts,
+                fixedBelowHeight,
+                mode
             );
             if (alternativeResult) {
                 return alternativeResult;
             }
             // Fallback: zwróć oryginalne rozwiązanie (bez walidacji)
             // — solver wyżej (checkConflicts) i tak to sprawdzi
-            logger.warn('ringOptimizer', '[ringOptimizer] Żadne rozwiązanie DP nie przeszło walidacji przejść — fallback do najlepszego DP');
+            logger.warn(
+                'ringOptimizer',
+                '[ringOptimizer] Żadne rozwiązanie DP nie przeszło walidacji przejść — fallback do najlepszego DP'
+            );
         }
     }
 
@@ -181,8 +191,14 @@ function optimizeRingsForDistance(
  * @returns {{ success: boolean, selectedRings: Array }|null}
  */
 function findAlternativeDPSolution(
-    heights, minAllowed, maxAllowed, availableRings,
-    transitions, availableProducts, fixedBelowHeight, mode
+    heights,
+    minAllowed,
+    maxAllowed,
+    availableRings,
+    transitions,
+    availableProducts,
+    fixedBelowHeight,
+    mode
 ) {
     const cap = maxAllowed;
 
@@ -225,12 +241,18 @@ function findAlternativeDPSolution(
         const selectedRings = mapHeightsToProducts(selectedHeights, availableRings);
 
         const isValid = validateRingJoints(
-            selectedRings, transitions, availableProducts,
-            fixedBelowHeight, mode
+            selectedRings,
+            transitions,
+            availableProducts,
+            fixedBelowHeight,
+            mode
         );
 
         if (isValid) {
-            logger.info('ringOptimizer', '[ringOptimizer] Znaleziono alternatywne rozwiązanie DP bez kolizji przejść');
+            logger.info(
+                'ringOptimizer',
+                '[ringOptimizer] Znaleziono alternatywne rozwiązanie DP bez kolizji przejść'
+            );
             return { success: true, selectedRings };
         }
     }

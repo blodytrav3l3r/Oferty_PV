@@ -67,7 +67,10 @@ export async function buildRuryOfferContextFromOfferId(offerId: string): Promise
         where: { offerId }
     });
 
-    const enhancedItems = (Array.isArray(offerData.items) ? offerData.items : items) as Record<string, unknown>[];
+    const enhancedItems = (Array.isArray(offerData.items) ? offerData.items : items) as Record<
+        string,
+        unknown
+    >[];
 
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
@@ -144,14 +147,13 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         clientName: String(client?.name ?? orderData.clientName ?? 'Klient niezidentyfikowany'),
         clientNip: String(client?.nip ?? orderData.clientNip ?? ''),
         clientAddress: String(client?.address ?? orderData.clientAddress ?? ''),
-        clientPhone:
-            String(
-                orderData.clientContact ??
+        clientPhone: String(
+            orderData.clientContact ??
                 client?.contact ??
                 client?.phone ??
                 orderData.clientPhone ??
                 ''
-            ),
+        ),
         investName: String(orderData.investName ?? orderData.budowa ?? ''),
         investAddress: String(orderData.investAddress ?? ''),
         investContractor: String(orderData.investContractor ?? ''),
@@ -313,12 +315,13 @@ export async function buildStudnieOfferContextFromOfferId(
         clientName: String(client?.name ?? offerData.clientName ?? 'Klient niezidentyfikowany'),
         clientNip: String(client?.nip ?? offerData.clientNip ?? ''),
         clientAddress: String(client?.address ?? offerData.clientAddress ?? ''),
-        clientPhone:
-            String(offerData.clientContact ??
-            client?.contact ??
-            client?.phone ??
-            offerData.clientPhone ??
-            ''),
+        clientPhone: String(
+            offerData.clientContact ??
+                client?.contact ??
+                client?.phone ??
+                offerData.clientPhone ??
+                ''
+        ),
         investName: String(offerData.investName ?? offerData.budowa ?? ''),
         investAddress: String(offerData.investAddress ?? ''),
         items: items as StudnieOfferData['items'],
@@ -415,14 +418,13 @@ export async function buildStudnieOrderContextFromOrderId(
         clientName: String(client?.name ?? orderData.clientName ?? 'Klient niezidentyfikowany'),
         clientNip: String(client?.nip ?? orderData.clientNip ?? ''),
         clientAddress: String(client?.address ?? orderData.clientAddress ?? ''),
-        clientPhone:
-            String(
-                orderData.clientContact ??
+        clientPhone: String(
+            orderData.clientContact ??
                 client?.contact ??
                 client?.phone ??
                 orderData.clientPhone ??
                 ''
-            ),
+        ),
         investName: String(orderData.investName ?? orderData.budowa ?? ''),
         investAddress: String(orderData.investAddress ?? ''),
         items: items as StudnieOfferData['items'],
@@ -526,8 +528,11 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
         // Format YYYY-MM-DD z <input type="date"> traktuj jako local date (nie UTC),
         // żeby uniknąć przesunięcia dnia w strefach czasowych != UTC.
         const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
-        try { return new Date(normalized).toLocaleDateString('pl-PL'); }
-        catch { return dateStr; }
+        try {
+            return new Date(normalized).toLocaleDateString('pl-PL');
+        } catch {
+            return dateStr;
+        }
     };
 
     const formatCurrency = (val: number) => {
@@ -558,11 +563,15 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     try {
         const buf = fs.readFileSync(naglowekPath);
         naglowekBase64 = `data:image/png;base64,${buf.toString('base64')}`;
-    } catch (e) { logger.warn('PdfAssets', 'Brak letterhead-header.png', e); }
+    } catch (e) {
+        logger.warn('PdfAssets', 'Brak letterhead-header.png', e);
+    }
     try {
         const buf = fs.readFileSync(stopkaPath);
         stopkaBase64 = `data:image/png;base64,${buf.toString('base64')}`;
-    } catch (e) { logger.warn('PdfAssets', 'Brak letterhead-footer.png', e); }
+    } catch (e) {
+        logger.warn('PdfAssets', 'Brak letterhead-footer.png', e);
+    }
 
     // Dane klienta
     const daneKlienta = `
@@ -581,9 +590,15 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
 
     // Grupowanie pozycji po kategorii i średnicy
     const CATEGORY_ORDER = [
-        'Rury Betonowe', 'Żelbetowe KL. A (II)', 'Żelbetowe KL. S (I)',
-        'Duże Żelbetowe II', 'Rury Jajowe Betonowe', 'Rury Jajowe Żelbetowe',
-        'Akcesoria PEHD', 'Uszczelki', 'Zabezpieczenie transportu'
+        'Rury Betonowe',
+        'Żelbetowe KL. A (II)',
+        'Żelbetowe KL. S (I)',
+        'Duże Żelbetowe II',
+        'Rury Jajowe Betonowe',
+        'Rury Jajowe Żelbetowe',
+        'Akcesoria PEHD',
+        'Uszczelki',
+        'Zabezpieczenie transportu'
     ];
 
     const getProductCategory = (item: Record<string, unknown>): string => {
@@ -657,7 +672,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
                 const aBB = isBosy(a);
                 const bBB = isBosy(b);
                 if (aBB !== bBB) return aBB ? -1 : 1;
-                return (Number(a.lengthM ?? 0)) - (Number(b.lengthM ?? 0));
+                return Number(a.lengthM ?? 0) - Number(b.lengthM ?? 0);
             });
 
             for (const item of itemsInDiam) {
@@ -669,7 +684,11 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
                 const lengthM = Number(item.lengthM ?? 0);
                 const meters = Number(item.meters ?? 0);
                 const hasLength = lengthM > 0;
-                const displayMeters = hasLength ? (meters > 0 ? meters : (lengthM / 1000) * quantity) : 0;
+                const displayMeters = hasLength
+                    ? meters > 0
+                        ? meters
+                        : (lengthM / 1000) * quantity
+                    : 0;
                 const pehdType = String(item.pehdType ?? '');
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
@@ -728,7 +747,10 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     const warunkiStatyczne = buildRuryStaticTermsHTML();
 
     // Dane kontaktowe
-    const daneKontaktowe = buildContactSectionHTML(data.authorUser || null, data.guardianUser || null);
+    const daneKontaktowe = buildContactSectionHTML(
+        data.authorUser || null,
+        data.guardianUser || null
+    );
 
     // Zastąp placeholdery
     let html = template;
@@ -820,7 +842,9 @@ export async function lookupOfferUsers(
     offerUserId?: string | null
 ): Promise<{ authorUser: UserContactInfo | null; guardianUser: UserContactInfo | null }> {
     const formatUserName = (u: Record<string, unknown>): string =>
-        u.firstName && u.lastName ? `${String(u.firstName)} ${String(u.lastName)}` : String(u.username);
+        u.firstName && u.lastName
+            ? `${String(u.firstName)} ${String(u.lastName)}`
+            : String(u.username);
 
     let guardianUser: UserContactInfo | null = null;
     let authorUser: UserContactInfo | null = null;
@@ -842,7 +866,8 @@ export async function lookupOfferUsers(
     }
 
     // Autor oferty: createdByUserId
-    const authorId = typeof offerData.createdByUserId === 'string' ? offerData.createdByUserId : undefined;
+    const authorId =
+        typeof offerData.createdByUserId === 'string' ? offerData.createdByUserId : undefined;
     if (authorId && authorId !== guardianId) {
         try {
             const u = await prisma.users.findUnique({ where: { id: authorId } });
@@ -1038,7 +1063,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         if (itemsByDN[dn]) {
             const label = dn === 'styczna' ? 'Studnie styczne' : `Studnie DN${dn}`;
             const total = itemsByDN[dn].reduce(
-                (sum, it) => sum + (Number((it as Record<string, unknown>).price ?? 0)),
+                (sum, it) => sum + Number((it as Record<string, unknown>).price ?? 0),
                 0
             );
             summariesForTotal.push({ label, count: itemsByDN[dn].length, totalPrice: total });
@@ -1165,8 +1190,14 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'kartaBudowy.html');
     let html = fs.readFileSync(templatePath, 'utf-8');
 
-    const nrZamowienia = String(orderData.orderNumber || orderData.id || String(order.id).substring(0, 8));
-    const nrOferty = String(orderData.offerNumber || orderData.number || (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—'));
+    const nrZamowienia = String(
+        orderData.orderNumber || orderData.id || String(order.id).substring(0, 8)
+    );
+    const nrOferty = String(
+        orderData.offerNumber ||
+            orderData.number ||
+            (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—')
+    );
 
     html = html.replace(/\{\{NR_ZAMOWIENIA\}\}/g, nrZamowienia);
     html = html.replace(/\{\{OFFER_NUMBERS\}\}/g, nrOferty);
@@ -1175,45 +1206,70 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
     html = html.replace(/\{\{ADRES_WYSYLKI\}\}/g, escapeHtml(kb.adresWysylki ?? '—'));
     html = html.replace(/\{\{EMAIL_FAKTURA\}\}/g, escapeHtml(kb.emailFaktura ?? '—'));
     html = html.replace(/\{\{EMAIL_EFAKTURA\}\}/g, escapeHtml(kb.emailEfaktura ?? '—'));
-    
+
     html = html.replace(/\{\{WARUNKI_PLATNOSCI\}\}/g, escapeHtml(kb.warunkiPlatnosci ?? '—'));
     html = html.replace(/\{\{ILOSC_DNI\}\}/g, escapeHtml(kb.iloscDni ?? '—'));
     html = html.replace(/\{\{RODZAJ_TRANSPORTU\}\}/g, escapeHtml(kb.rodzajTransportu ?? '—'));
     html = html.replace(/\{\{WYLICZONY_TRANSPORT\}\}/g, escapeHtml(kb.wyliczonyTransport ?? '—'));
-    html = html.replace(/\{\{ZABEZPIECZENIE_TRANSPORTU\}\}/g, escapeHtml(kb.zabezpieczenieTransportu ?? '—'));
+    html = html.replace(
+        /\{\{ZABEZPIECZENIE_TRANSPORTU\}\}/g,
+        escapeHtml(kb.zabezpieczenieTransportu ?? '—')
+    );
     html = html.replace(/\{\{UBEZPIECZENIE\}\}/g, escapeHtml(kb.ubezpieczenie ?? '—'));
-    
+
     html = html.replace(/\{\{RODZAJ_STUDNI\}\}/g, escapeHtml(kb.rodzajStudni ?? '—'));
     html = html.replace(/\{\{WLASCIWOSCI_BETONU\}\}/g, escapeHtml(kb.wlasciwosciBetonu ?? '—'));
-    html = html.replace(/\{\{POZOSTALE_WLASCIWOSCI\}\}/g, escapeHtml(kb.pozostaleWlasciwosci ?? '—'));
+    html = html.replace(
+        /\{\{POZOSTALE_WLASCIWOSCI\}\}/g,
+        escapeHtml(kb.pozostaleWlasciwosci ?? '—')
+    );
     html = html.replace(/\{\{RODZAJ_STOPNI\}\}/g, escapeHtml(kb.rodzajStopni ?? '—'));
-    html = html.replace(/\{\{RODZAJ_STOPNI_INNE\}\}/g, kb.rodzajStopniInne ? `(${escapeHtml(kb.rodzajStopniInne)})` : '');
+    html = html.replace(
+        /\{\{RODZAJ_STOPNI_INNE\}\}/g,
+        kb.rodzajStopniInne ? `(${escapeHtml(kb.rodzajStopniInne)})` : ''
+    );
     html = html.replace(/\{\{USZCZELKA_STUDNI\}\}/g, escapeHtml(kb.uszczelkaStudni ?? '—'));
-    html = html.replace(/\{\{USZCZELKA_INNE\}\}/g, kb.uszczelkaStudniInne ? `(${escapeHtml(kb.uszczelkaStudniInne)})` : '');
-    
+    html = html.replace(
+        /\{\{USZCZELKA_INNE\}\}/g,
+        kb.uszczelkaStudniInne ? `(${escapeHtml(kb.uszczelkaStudniInne)})` : ''
+    );
+
     html = html.replace(/\{\{KINETA\}\}/g, escapeHtml(kb.kineta ?? '—'));
-    html = html.replace(/\{\{KINETA_INNE\}\}/g, kb.kinetaInne ? `(${escapeHtml(kb.kinetaInne)})` : '');
+    html = html.replace(
+        /\{\{KINETA_INNE\}\}/g,
+        kb.kinetaInne ? `(${escapeHtml(kb.kinetaInne)})` : ''
+    );
     html = html.replace(/\{\{REDUKCJA_KINETY\}\}/g, escapeHtml(kb.redukcjaKinety ?? '—'));
     html = html.replace(/\{\{USYTUOWANIE\}\}/g, escapeHtml(kb.usytuowanie ?? '—'));
     html = html.replace(/\{\{WYSOKOSC_SPOCZNIKA\}\}/g, escapeHtml(kb.wysokoscSpocznika ?? '—'));
     html = html.replace(/\{\{SLEPA_KINETA\}\}/g, escapeHtml(kb.slepaKineta ?? '—'));
-    html = html.replace(/\{\{SLEPA_KINETA_UWAGI\}\}/g, kb.slepaKinetaUwagi ? `(${escapeHtml(kb.slepaKinetaUwagi)})` : '');
+    html = html.replace(
+        /\{\{SLEPA_KINETA_UWAGI\}\}/g,
+        kb.slepaKinetaUwagi ? `(${escapeHtml(kb.slepaKinetaUwagi)})` : ''
+    );
     html = html.replace(/\{\{KASKADA\}\}/g, escapeHtml(kb.kaskada ?? '—'));
-    html = html.replace(/\{\{KASKADA_UWAGI\}\}/g, kb.kaskadaUwagi ? `(${escapeHtml(kb.kaskadaUwagi)})` : '');
-    
+    html = html.replace(
+        /\{\{KASKADA_UWAGI\}\}/g,
+        kb.kaskadaUwagi ? `(${escapeHtml(kb.kaskadaUwagi)})` : ''
+    );
+
     html = html.replace(/\{\{PRZEJSCIA_SZCZELNE\}\}/g, escapeHtml(kb.przejsciaSzczelne ?? '—'));
     html = html.replace(/\{\{PRZEJSCIA_TULEJOWE\}\}/g, escapeHtml(kb.przejsciaTulejowe ?? '—'));
     html = html.replace(/\{\{PRZEJSCIA_ZAMOWIONE\}\}/g, escapeHtml(kb.przejsciaZamowione ?? '—'));
-    
-    html = html.replace(/\{\{UWAGI_OGOLNE\}\}/g, escapeHtml(kb.uwagiOgolne ?? '—').replace(/\n/g, '<br>'));
+
+    html = html.replace(
+        /\{\{UWAGI_OGOLNE\}\}/g,
+        escapeHtml(kb.uwagiOgolne ?? '—').replace(/\n/g, '<br>')
+    );
 
     // Tabela przejść
     let tabelaPrzejsciaHTML = '';
     const pd = kb.przejsciaDetails;
     if (Array.isArray(pd) && pd.length > 0) {
-        let trs = pd.map((p, idx) => {
-            const pp = p as Record<string, unknown>;
-            return `<tr>
+        let trs = pd
+            .map((p, idx) => {
+                const pp = p as Record<string, unknown>;
+                return `<tr>
                 <td>${idx + 1}</td>
                 <td>${escapeHtml(pp.rodzaj ?? '—')}</td>
                 <td>${escapeHtml(pp.dnOd ?? '—')}</td>
@@ -1221,8 +1277,9 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
                 <td>${escapeHtml(pp.uwagi ?? '—')}</td>
                 <td>${escapeHtml(pp.czyPrzejscie ?? '—')}</td>
             </tr>`;
-        }).join('');
-        
+            })
+            .join('');
+
         tabelaPrzejsciaHTML = `
         <div class="section-header">Szczegóły przejść</div>
         <table class="przejscia-table">
@@ -1242,100 +1299,146 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
     html = html.replace(/\{\{TABELA_PRZEJSCIA\}\}/g, tabelaPrzejsciaHTML);
 
     // ── Products catalog ──────────────────────────────────────
-    const allProducts = new Map<string, { componentType: string; category: string; dn: number | string; height: number }>();
+    const allProducts = new Map<
+        string,
+        { componentType: string; category: string; dn: number | string; height: number }
+    >();
     try {
-      const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
-      const raw = fs.readFileSync(jsonPath, 'utf-8');
-      const products: any[] = JSON.parse(raw);
-      for (const p of products) {
-        allProducts.set(p.id, { componentType: p.componentType || '', category: p.category || '', dn: p.dn || 0, height: p.height || 0 });
-      }
+        const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
+        const raw = fs.readFileSync(jsonPath, 'utf-8');
+        const products: any[] = JSON.parse(raw);
+        for (const p of products) {
+            allProducts.set(p.id, {
+                componentType: p.componentType || '',
+                category: p.category || '',
+                dn: p.dn || 0,
+                height: p.height || 0
+            });
+        }
     } catch (e) {
-      logger.warn('PdfKartaBudowy', 'Nie udało się załadować produktów', e);
+        logger.warn('PdfKartaBudowy', 'Nie udało się załadować produktów', e);
     }
 
-    function _findPrzejscieByIdPrefix(products: Map<string, { componentType: string; category: string; dn: number | string; height: number }>, productId: string): { componentType: string; category: string; dn: number | string; height: number } | undefined {
-      for (const [id, p] of products) {
-        if (id.startsWith(productId) && p.componentType === 'przejscie') return p;
-      }
-      return undefined;
+    function _findPrzejscieByIdPrefix(
+        products: Map<
+            string,
+            { componentType: string; category: string; dn: number | string; height: number }
+        >,
+        productId: string
+    ):
+        | { componentType: string; category: string; dn: number | string; height: number }
+        | undefined {
+        for (const [id, p] of products) {
+            if (id.startsWith(productId) && p.componentType === 'przejscie') return p;
+        }
+        return undefined;
     }
 
     const wsz = (Array.isArray(orderData.wells) ? orderData.wells : []) as any[];
 
     // ── Rzeczywista ilość przejść w zamówieniu ────────────────
-    interface TransSummary { cat: string; dn: number | string; cntD: number; cntOT: number; cntTotal: number; }
+    interface TransSummary {
+        cat: string;
+        dn: number | string;
+        cntD: number;
+        cntOT: number;
+        cntTotal: number;
+    }
     const tCounts = new Map<string, TransSummary>();
 
     for (const w of wsz) {
-      const segments: { start: number; end: number; isDennica: boolean; isOT: boolean }[] = [];
-      const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
-      const relevant = cfg.filter((item: any) => {
-        const prod = allProducts.get(item.productId);
-        return prod && (prod.componentType === 'dennica' || prod.componentType === 'krag' || prod.componentType === 'krag_ot');
-      });
-      let y = 0;
-      for (const item of [...relevant].reverse()) {
-        const prod = allProducts.get(item.productId);
-        if (!prod || !prod.height) continue;
-        const h = prod.height * (item.quantity || 1);
-        segments.push({ start: y, end: y + h, isDennica: prod.componentType === 'dennica', isOT: prod.componentType === 'krag_ot' });
-        y += h;
-      }
-
-      const rzdDna = parseFloat(w.rzednaDna);
-      if (isNaN(rzdDna)) continue;
-
-      const pjs = (Array.isArray(w.przejscia) ? w.przejscia : []) as any[];
-      for (const pj of pjs) {
-        let prod = allProducts.get(pj.productId);
-        if (!prod || prod.componentType !== 'przejscie') {
-          prod = _findPrzejscieByIdPrefix(allProducts, pj.productId);
-          if (!prod) continue;
-        }
-        const rzdPj = parseFloat(pj.rzednaWlaczenia);
-        if (isNaN(rzdPj)) continue;
-        const mmFromBottom = (rzdPj - rzdDna) * 1000;
-
-        let inD = false, inOT = false;
-        for (const seg of segments) {
-          if (mmFromBottom >= seg.start && mmFromBottom < seg.end) {
-            if (seg.isDennica) inD = true;
-            else if (seg.isOT) inOT = true;
-            break;
-          }
+        const segments: { start: number; end: number; isDennica: boolean; isOT: boolean }[] = [];
+        const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
+        const relevant = cfg.filter((item: any) => {
+            const prod = allProducts.get(item.productId);
+            return (
+                prod &&
+                (prod.componentType === 'dennica' ||
+                    prod.componentType === 'krag' ||
+                    prod.componentType === 'krag_ot')
+            );
+        });
+        let y = 0;
+        for (const item of [...relevant].reverse()) {
+            const prod = allProducts.get(item.productId);
+            if (!prod || !prod.height) continue;
+            const h = prod.height * (item.quantity || 1);
+            segments.push({
+                start: y,
+                end: y + h,
+                isDennica: prod.componentType === 'dennica',
+                isOT: prod.componentType === 'krag_ot'
+            });
+            y += h;
         }
 
-        const cat = prod.category || 'Nieznany';
-        const dn = prod.dn || 0;
-        const key = `${cat}_${dn}`;
-        let ex = tCounts.get(key);
-        if (!ex) { ex = { cat, dn, cntD: 0, cntOT: 0, cntTotal: 0 }; tCounts.set(key, ex); }
-        ex.cntTotal++;
-        if (inD) ex.cntD++;
-        if (inOT) ex.cntOT++;
-      }
+        const rzdDna = parseFloat(w.rzednaDna);
+        if (isNaN(rzdDna)) continue;
+
+        const pjs = (Array.isArray(w.przejscia) ? w.przejscia : []) as any[];
+        for (const pj of pjs) {
+            let prod = allProducts.get(pj.productId);
+            if (!prod || prod.componentType !== 'przejscie') {
+                prod = _findPrzejscieByIdPrefix(allProducts, pj.productId);
+                if (!prod) continue;
+            }
+            const rzdPj = parseFloat(pj.rzednaWlaczenia);
+            if (isNaN(rzdPj)) continue;
+            const mmFromBottom = (rzdPj - rzdDna) * 1000;
+
+            let inD = false,
+                inOT = false;
+            for (const seg of segments) {
+                if (mmFromBottom >= seg.start && mmFromBottom < seg.end) {
+                    if (seg.isDennica) inD = true;
+                    else if (seg.isOT) inOT = true;
+                    break;
+                }
+            }
+
+            const cat = prod.category || 'Nieznany';
+            const dn = prod.dn || 0;
+            const key = `${cat}_${dn}`;
+            let ex = tCounts.get(key);
+            if (!ex) {
+                ex = { cat, dn, cntD: 0, cntOT: 0, cntTotal: 0 };
+                tCounts.set(key, ex);
+            }
+            ex.cntTotal++;
+            if (inD) ex.cntD++;
+            if (inOT) ex.cntOT++;
+        }
     }
 
     let realTransHTML = '';
     if (tCounts.size > 0) {
-      const sorted = [...tCounts.values()].sort((a, b) => {
-        if (a.cat !== b.cat) return a.cat.localeCompare(b.cat);
-        const dnA = typeof a.dn === 'string' ? parseFloat(a.dn.split('/')[0]) || 0 : a.dn;
-        const dnB = typeof b.dn === 'string' ? parseFloat(b.dn.split('/')[0]) || 0 : b.dn;
-        return dnA - dnB;
-      });
-      let gD = 0, gOT = 0, gTotal = 0;
-      for (const r of sorted) { gD += r.cntD; gOT += r.cntOT; gTotal += r.cntTotal; }
-      const rows = sorted.map((row, idx) => `<tr>
+        const sorted = [...tCounts.values()].sort((a, b) => {
+            if (a.cat !== b.cat) return a.cat.localeCompare(b.cat);
+            const dnA = typeof a.dn === 'string' ? parseFloat(a.dn.split('/')[0]) || 0 : a.dn;
+            const dnB = typeof b.dn === 'string' ? parseFloat(b.dn.split('/')[0]) || 0 : b.dn;
+            return dnA - dnB;
+        });
+        let gD = 0,
+            gOT = 0,
+            gTotal = 0;
+        for (const r of sorted) {
+            gD += r.cntD;
+            gOT += r.cntOT;
+            gTotal += r.cntTotal;
+        }
+        const rows = sorted
+            .map(
+                (row, idx) => `<tr>
         <td>${idx + 1}</td>
         <td style="text-align:left;">${row.cat}</td>
         <td>DN${row.dn}</td>
         <td>${row.cntD}</td>
         <td>${row.cntOT}</td>
         <td>${row.cntTotal}</td>
-      </tr>`).join('');
-      realTransHTML = `
+      </tr>`
+            )
+            .join('');
+        realTransHTML = `
         <div class="page-break"></div>
         <div class="section-header">Rzeczywista ilość przejść w zamówieniu</div>
         <table class="przejscia-table">
@@ -1365,53 +1468,78 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
 
     // ── Ilość elementów w zamówieniu ──────────────────────────
     const TYPE_LABELS: Record<string, string> = {
-      dennica: 'Dennica', krag: 'Krąg', krag_ot: 'Krąg wiercony',
-      konus: 'Konus', plyta_din: 'Płyta DIN', plyta_redukcyjna: 'Płyta redukcyjna',
-      avr: 'AVR', styczna: 'Studnia styczna',
-      uszczelka: 'Uszczelka',
-      pierscien_odciazajacy: 'Pierścień odciążający',
-      plyta_zamykajaca: 'Płyta zamykająca', plyta_najazdowa: 'Płyta najazdowa',
+        dennica: 'Dennica',
+        krag: 'Krąg',
+        krag_ot: 'Krąg wiercony',
+        konus: 'Konus',
+        plyta_din: 'Płyta DIN',
+        plyta_redukcyjna: 'Płyta redukcyjna',
+        avr: 'AVR',
+        styczna: 'Studnia styczna',
+        uszczelka: 'Uszczelka',
+        pierscien_odciazajacy: 'Pierścień odciążający',
+        plyta_zamykajaca: 'Płyta zamykająca',
+        plyta_najazdowa: 'Płyta najazdowa'
     };
-    const TYPE_ORDER = ['dennica', 'krag', 'krag_ot', 'konus', 'plyta_din', 'plyta_redukcyjna',
-      'avr', 'styczna', 'uszczelka', 'pierscien_odciazajacy',
-      'plyta_zamykajaca', 'plyta_najazdowa'];
+    const TYPE_ORDER = [
+        'dennica',
+        'krag',
+        'krag_ot',
+        'konus',
+        'plyta_din',
+        'plyta_redukcyjna',
+        'avr',
+        'styczna',
+        'uszczelka',
+        'pierscien_odciazajacy',
+        'plyta_zamykajaca',
+        'plyta_najazdowa'
+    ];
 
     const elemMap = new Map<string, { pid: string; type: string; desc: string; qty: number }>();
     for (const w of wsz) {
-      const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
-      for (const item of cfg) {
-        const prod = allProducts.get(item.productId);
-        const ct = prod?.componentType || '';
-        if (ct === 'wlaz' || ct === 'kineta') continue;
-        const key = item.productId;
-        const ex = elemMap.get(key);
-        if (ex) { ex.qty += (item.quantity || 1); continue; }
-        const label = TYPE_LABELS[ct] || ct || '—';
-        const dnStr = prod?.dn ? `DN${prod.dn}` : '';
-        const hStr = prod?.height ? `H=${prod.height}mm` : '';
-        const desc = [dnStr, hStr].filter(Boolean).join(', ') || item.frozenName || item.productId;
-        elemMap.set(key, { pid: item.productId, type: label, desc, qty: item.quantity || 1 });
-      }
+        const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
+        for (const item of cfg) {
+            const prod = allProducts.get(item.productId);
+            const ct = prod?.componentType || '';
+            if (ct === 'wlaz' || ct === 'kineta') continue;
+            const key = item.productId;
+            const ex = elemMap.get(key);
+            if (ex) {
+                ex.qty += item.quantity || 1;
+                continue;
+            }
+            const label = TYPE_LABELS[ct] || ct || '—';
+            const dnStr = prod?.dn ? `DN${prod.dn}` : '';
+            const hStr = prod?.height ? `H=${prod.height}mm` : '';
+            const desc =
+                [dnStr, hStr].filter(Boolean).join(', ') || item.frozenName || item.productId;
+            elemMap.set(key, { pid: item.productId, type: label, desc, qty: item.quantity || 1 });
+        }
     }
 
     let elemHTML = '';
     if (elemMap.size > 0) {
-      const sorted = [...elemMap.values()].sort((a, b) => {
-        const aCt = allProducts.get(a.pid)?.componentType || '';
-        const bCt = allProducts.get(b.pid)?.componentType || '';
-        const r = TYPE_ORDER.indexOf(aCt) - TYPE_ORDER.indexOf(bCt);
-        return r !== 0 ? r : a.pid.localeCompare(b.pid);
-      });
-      let totalQty = 0;
-      for (const r of sorted) totalQty += r.qty;
-      const rows = sorted.map((row, idx) => `<tr>
+        const sorted = [...elemMap.values()].sort((a, b) => {
+            const aCt = allProducts.get(a.pid)?.componentType || '';
+            const bCt = allProducts.get(b.pid)?.componentType || '';
+            const r = TYPE_ORDER.indexOf(aCt) - TYPE_ORDER.indexOf(bCt);
+            return r !== 0 ? r : a.pid.localeCompare(b.pid);
+        });
+        let totalQty = 0;
+        for (const r of sorted) totalQty += r.qty;
+        const rows = sorted
+            .map(
+                (row, idx) => `<tr>
         <td>${idx + 1}</td>
         <td style="text-align:left;">${row.pid}</td>
         <td style="text-align:left;">${row.type}</td>
         <td style="text-align:left;">${row.desc}</td>
         <td>${row.qty}</td>
-      </tr>`).join('');
-      elemHTML = `
+      </tr>`
+            )
+            .join('');
+        elemHTML = `
         <div class="section-header">Ilość elementów w zamówieniu</div>
         <table class="przejscia-table">
           <thead>
@@ -1464,8 +1592,14 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'kartaBudowy.html');
     let html = fs.readFileSync(templatePath, 'utf-8');
 
-    const nrZamowienia = String(orderData.orderNumber || orderData.id || String(order.id).substring(0, 8));
-    const nrOferty = String(orderData.offerNumber || orderData.number || (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—'));
+    const nrZamowienia = String(
+        orderData.orderNumber || orderData.id || String(order.id).substring(0, 8)
+    );
+    const nrOferty = String(
+        orderData.offerNumber ||
+            orderData.number ||
+            (Array.isArray(kb.offerNumbers) ? kb.offerNumbers.join(', ') : '—')
+    );
 
     html = html.replace(/\{\{NR_ZAMOWIENIA\}\}/g, nrZamowienia);
     html = html.replace(/\{\{OFFER_NUMBERS\}\}/g, nrOferty);
@@ -1474,44 +1608,69 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
     html = html.replace(/\{\{ADRES_WYSYLKI\}\}/g, escapeHtml(kb.adresWysylki ?? '—'));
     html = html.replace(/\{\{EMAIL_FAKTURA\}\}/g, escapeHtml(kb.emailFaktura ?? '—'));
     html = html.replace(/\{\{EMAIL_EFAKTURA\}\}/g, escapeHtml(kb.emailEfaktura ?? '—'));
-    
+
     html = html.replace(/\{\{WARUNKI_PLATNOSCI\}\}/g, escapeHtml(kb.warunkiPlatnosci ?? '—'));
     html = html.replace(/\{\{ILOSC_DNI\}\}/g, escapeHtml(kb.iloscDni ?? '—'));
     html = html.replace(/\{\{RODZAJ_TRANSPORTU\}\}/g, escapeHtml(kb.rodzajTransportu ?? '—'));
     html = html.replace(/\{\{WYLICZONY_TRANSPORT\}\}/g, escapeHtml(kb.wyliczonyTransport ?? '—'));
-    html = html.replace(/\{\{ZABEZPIECZENIE_TRANSPORTU\}\}/g, escapeHtml(kb.zabezpieczenieTransportu ?? '—'));
+    html = html.replace(
+        /\{\{ZABEZPIECZENIE_TRANSPORTU\}\}/g,
+        escapeHtml(kb.zabezpieczenieTransportu ?? '—')
+    );
     html = html.replace(/\{\{UBEZPIECZENIE\}\}/g, escapeHtml(kb.ubezpieczenie ?? '—'));
-    
+
     html = html.replace(/\{\{RODZAJ_STUDNI\}\}/g, escapeHtml(kb.rodzajStudni ?? '—'));
     html = html.replace(/\{\{WLASCIWOSCI_BETONU\}\}/g, escapeHtml(kb.wlasciwosciBetonu ?? '—'));
-    html = html.replace(/\{\{POZOSTALE_WLASCIWOSCI\}\}/g, escapeHtml(kb.pozostaleWlasciwosci ?? '—'));
+    html = html.replace(
+        /\{\{POZOSTALE_WLASCIWOSCI\}\}/g,
+        escapeHtml(kb.pozostaleWlasciwosci ?? '—')
+    );
     html = html.replace(/\{\{RODZAJ_STOPNI\}\}/g, escapeHtml(kb.rodzajStopni ?? '—'));
-    html = html.replace(/\{\{RODZAJ_STOPNI_INNE\}\}/g, kb.rodzajStopniInne ? `(${escapeHtml(kb.rodzajStopniInne)})` : '');
+    html = html.replace(
+        /\{\{RODZAJ_STOPNI_INNE\}\}/g,
+        kb.rodzajStopniInne ? `(${escapeHtml(kb.rodzajStopniInne)})` : ''
+    );
     html = html.replace(/\{\{USZCZELKA_STUDNI\}\}/g, escapeHtml(kb.uszczelkaStudni ?? '—'));
-    html = html.replace(/\{\{USZCZELKA_INNE\}\}/g, kb.uszczelkaStudniInne ? `(${escapeHtml(kb.uszczelkaStudniInne)})` : '');
-    
+    html = html.replace(
+        /\{\{USZCZELKA_INNE\}\}/g,
+        kb.uszczelkaStudniInne ? `(${escapeHtml(kb.uszczelkaStudniInne)})` : ''
+    );
+
     html = html.replace(/\{\{KINETA\}\}/g, escapeHtml(kb.kineta ?? '—'));
-    html = html.replace(/\{\{KINETA_INNE\}\}/g, kb.kinetaInne ? `(${escapeHtml(kb.kinetaInne)})` : '');
+    html = html.replace(
+        /\{\{KINETA_INNE\}\}/g,
+        kb.kinetaInne ? `(${escapeHtml(kb.kinetaInne)})` : ''
+    );
     html = html.replace(/\{\{REDUKCJA_KINETY\}\}/g, escapeHtml(kb.redukcjaKinety ?? '—'));
     html = html.replace(/\{\{USYTUOWANIE\}\}/g, escapeHtml(kb.usytuowanie ?? '—'));
     html = html.replace(/\{\{WYSOKOSC_SPOCZNIKA\}\}/g, escapeHtml(kb.wysokoscSpocznika ?? '—'));
     html = html.replace(/\{\{SLEPA_KINETA\}\}/g, escapeHtml(kb.slepaKineta ?? '—'));
-    html = html.replace(/\{\{SLEPA_KINETA_UWAGI\}\}/g, kb.slepaKinetaUwagi ? `(${escapeHtml(kb.slepaKinetaUwagi)})` : '');
+    html = html.replace(
+        /\{\{SLEPA_KINETA_UWAGI\}\}/g,
+        kb.slepaKinetaUwagi ? `(${escapeHtml(kb.slepaKinetaUwagi)})` : ''
+    );
     html = html.replace(/\{\{KASKADA\}\}/g, escapeHtml(kb.kaskada ?? '—'));
-    html = html.replace(/\{\{KASKADA_UWAGI\}\}/g, kb.kaskadaUwagi ? `(${escapeHtml(kb.kaskadaUwagi)})` : '');
-    
+    html = html.replace(
+        /\{\{KASKADA_UWAGI\}\}/g,
+        kb.kaskadaUwagi ? `(${escapeHtml(kb.kaskadaUwagi)})` : ''
+    );
+
     html = html.replace(/\{\{PRZEJSCIA_SZCZELNE\}\}/g, escapeHtml(kb.przejsciaSzczelne ?? '—'));
     html = html.replace(/\{\{PRZEJSCIA_TULEJOWE\}\}/g, escapeHtml(kb.przejsciaTulejowe ?? '—'));
     html = html.replace(/\{\{PRZEJSCIA_ZAMOWIONE\}\}/g, escapeHtml(kb.przejsciaZamowione ?? '—'));
-    
-    html = html.replace(/\{\{UWAGI_OGOLNE\}\}/g, escapeHtml(kb.uwagiOgolne ?? '—').replace(/\n/g, '<br>'));
+
+    html = html.replace(
+        /\{\{UWAGI_OGOLNE\}\}/g,
+        escapeHtml(kb.uwagiOgolne ?? '—').replace(/\n/g, '<br>')
+    );
 
     // Tabela przejść
     let tabelaPrzejsciaHTML = '';
     const pd = kb.przejsciaDetails;
     if (Array.isArray(pd) && pd.length > 0) {
-        let trs = pd.map((p: any, idx: number) => {
-            return `<tr>
+        let trs = pd
+            .map((p: any, idx: number) => {
+                return `<tr>
                 <td>${idx + 1}</td>
                 <td>${escapeHtml(p.rodzaj ?? '—')}</td>
                 <td>${escapeHtml(p.dnOd ?? '—')}</td>
@@ -1519,8 +1678,9 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
                 <td>${escapeHtml(p.uwagi ?? '—')}</td>
                 <td>${escapeHtml(p.czyPrzejscie ?? '—')}</td>
             </tr>`;
-        }).join('');
-        
+            })
+            .join('');
+
         tabelaPrzejsciaHTML = `
         <div class="section-header">Szczegóły przejść</div>
         <table class="przejscia-table">
