@@ -31,6 +31,15 @@ import { z } from 'zod';
  * Schemat dla PATCH /api/products/:id (rury)
  * Wszystkie pola opcjonalne — tylko te, które są dozwolone do aktualizacji.
  */
+/**
+ * Schemat dla PATCH /api/products/:id (rury)
+ * Wszystkie pola opcjonalne — tylko te, które są dozwolone do aktualizacji.
+ *
+ * ZMIANA BEZPIECZENSTWA (Faza 3): zamieniono `.passthrough()` na `.strict()`.
+ * Dodatkowe pola nieznane schematowi są teraz ODRZUCANE przez Zod (400),
+ * zamiast przepuszczane do req.body. Handler `productsV2.ts:140` ma dodatkowy
+ * filtr ALLOWED_FIELDS, który i tak ogranicza zapis do bazy.
+ */
 export const productPatchSchema = z
     .object({
         name: z.string().optional(),
@@ -40,11 +49,18 @@ export const productPatchSchema = z
         weight: z.number().nullable().optional(),
         area: z.number().nullable().optional()
     })
-    .passthrough();
+    .strict();
 
 /**
  * Schemat dla PATCH /api/products-studnie/:id (studnie)
  * Wszystkie pola opcjonalne — pokrywa wszystkie dozwolone pola w productsStudnieV2.
+ */
+/**
+ * Schemat dla PATCH /api/products-studnie/:id (studnie)
+ * Wszystkie pola opcjonalne — pokrywa wszystkie dozwolone pola w productsStudnieV2.
+ *
+ * ZMIANA BEZPIECZENSTWA (Faza 3): zamieniono `.passthrough()` na `.strict()`.
+ * Dodatkowe pola są teraz ODRZUCANE przez Zod. Handler ma ALLOWED_FIELDS filtr.
  */
 export const productStudniePatchSchema = z
     .object({
@@ -83,7 +99,7 @@ export const productStudniePatchSchema = z
         malowanieWewnetrzne: z.number().nullable().optional(),
         malowanieZewnetrzne: z.number().nullable().optional()
     })
-    .passthrough();
+    .strict();
 
 /**
  * Schemat dla PUT /api/preco-pricing — pełny zapis (data: obiekt lub tablica)
