@@ -118,11 +118,9 @@ router.post(
                 } else {
                     const resolved = resolveWriteUserId(authReq.user, o.userId);
                     if (!resolved.allowed) {
-                        return res
-                            .status(403)
-                            .json({
-                                error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
-                            });
+                        return res.status(403).json({
+                            error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
+                        });
                     }
                     effectiveUserId = resolved.effectiveUserId;
                 }

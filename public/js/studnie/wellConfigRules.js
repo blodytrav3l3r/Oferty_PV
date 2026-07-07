@@ -654,7 +654,15 @@ function scoreLayout(opts = /** @type {Object} */ ({})) {
     else if (opts.isOutOfBounds) reason = 'outOfBounds';
     else if (opts.diff !== 0) reason = 'diff';
 
-    return { score, breakdown, reason };
+    // AI Dual-Ranking — jeśli dostępny AI score, dodaj do wyniku
+    var aiScore = opts._aiScore;
+    var dualScore = score;
+    if (aiScore !== undefined && aiScore >= 0) {
+        // Final = 0.6 × Technical + 0.4 × AI × 100
+        dualScore = 0.6 * score + 0.4 * aiScore * 100;
+    }
+
+    return { score, dualScore, breakdown, reason, _aiScore: aiScore };
 }
 
 // Eksportuj do window
@@ -665,3 +673,17 @@ window.filterSealsByWellType = filterSealsByWellType;
 window.buildConfigSegmentMap = buildConfigSegmentMap;
 window.buildCandidateLayouts = buildCandidateLayouts;
 window.scoreLayout = scoreLayout;
+
+/**
+ * Oblicza końcowy dual-ranking score z technical i AI score.
+ * @param {number} technicalScore - score z scoreLayout()
+ * @param {number} [aiScore] - AI score [0-1] lub undefined
+ * @returns {number} końcowy score
+ */
+function computeFinalScore(technicalScore, aiScore) {
+    if (aiScore !== undefined && aiScore >= 0) {
+        return 0.6 * technicalScore + 0.4 * aiScore * 100;
+    }
+    return technicalScore;
+}
+window.computeFinalScore = computeFinalScore;

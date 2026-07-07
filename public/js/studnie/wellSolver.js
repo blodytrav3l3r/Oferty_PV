@@ -1227,10 +1227,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     otCount
                 });
                 let score = scoreResult.score;
+                let dualScore = scoreResult.dualScore !== undefined ? scoreResult.dualScore : score;
                 score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                if (score < bestScore) {
-                    bestScore = score;
+                if (dualScore < bestScore) {
+                    bestScore = dualScore;
                     let runErrors = [...conf.errors];
                     if (isOutOfBounds)
                         runErrors.push(
@@ -1436,10 +1437,12 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         otCount: redOtCount
                     });
                     let score = scoreResult.score;
+                    let dualScore =
+                        scoreResult.dualScore !== undefined ? scoreResult.dualScore : score;
                     score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                    if (score < bestScore) {
-                        bestScore = score;
+                    if (dualScore < bestScore) {
+                        bestScore = dualScore;
                         let runErrors = [...conf.errors];
                         if (isOutOfBounds)
                             runErrors.push(

@@ -626,6 +626,11 @@ function addWellComponent(productId) {
     updateHeightIndicator(); // Odśwież błędy
     if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 
+    // ML Reward: modyfikacja konfiguracji
+    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellModified) {
+        window.mlRewardHooks.onWellModified();
+    }
+
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
         if (well.rzednaWlazu > rzDna) {
@@ -708,6 +713,11 @@ function removeWellComponent(index) {
     if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
     /* Patch v=3.71 - sync Excel UI (AUTO/MAN mode button + Run button) */
     if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
+
+    // ML Reward: modyfikacja konfiguracji (usunięcie)
+    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellModified) {
+        window.mlRewardHooks.onWellModified();
+    }
 }
 
 function updateWellQuantity(index, value) {

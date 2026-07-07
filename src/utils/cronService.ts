@@ -8,6 +8,15 @@
 import { logger } from './logger';
 import { learningEngine } from '../services/telemetry/learning';
 
+// ML Training Pipeline — dynamiczny import (unikamy circular deps)
+function loadTrainingPipeline() {
+    return import('../services/ml/TrainingPipeline').then((m) => m.trainingPipeline);
+}
+
+function loadSelfEvaluation() {
+    return import('../services/ml/SelfEvaluation').then((m) => m.selfEvaluation);
+}
+
 class CronService {
     private intervals: Map<string, NodeJS.Timeout> = new Map();
     private enabled: boolean = false;
@@ -29,7 +38,13 @@ class CronService {
         // Co 24h — pełny cykl LearningEngine
         this.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () => this.runFullCycle());
 
-        logger.info('CronService', 'Cron zainicjalizowany (hourly + daily)');
+        // Co 15 minut — ML Training Pipeline
+        this.schedule('mlTrainingPipeline', 15 * 60 * 1000, () => this.runMlTraining());
+
+        // Co 24h — ML SelfEvaluation (A/B + auto-rollback)
+        this.schedule('mlSelfEvaluation', 24 * 60 * 60 * 1000, () => this.runMlSelfEvaluation());
+
+        logger.info('CronService', 'Cron zainicjalizowany (hourly + daily + ml)');
     }
 
     /**
@@ -115,6 +130,37 @@ class CronService {
             );
         } catch (e) {
             logger.error('CronService', `[usageAnalysis] failed: ${e}`);
+        }
+    }
+
+    async runMlTraining(): Promise<void> {
+        try {
+            const pipeline = await loadTrainingPipeline();
+            const result = await pipeline.run();
+            if (result.trained) {
+                logger.info(
+                    'CronService',
+                    `[mlTraining] nowy model ${result.version} AUC=${result.metrics?.rocAuc}`
+                );
+            } else {
+                logger.info('CronService', `[mlTraining] pomijam: ${result.reason}`);
+            }
+        } catch (e) {
+            logger.error('CronService', `[mlTraining] failed: ${e}`);
+        }
+    }
+
+    async runMlSelfEvaluation(): Promise<void> {
+        try {
+            const evaluation = await loadSelfEvaluation();
+            const result = await evaluation.runDaily();
+            if (result.rolledBack) {
+                logger.warn('CronService', '[mlSelfEvaluation] rollback wykonany');
+            } else {
+                logger.info('CronService', '[mlSelfEvaluation] OK');
+            }
+        } catch (e) {
+            logger.error('CronService', `[mlSelfEvaluation] failed: ${e}`);
         }
     }
 

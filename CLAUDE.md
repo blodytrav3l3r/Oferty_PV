@@ -181,6 +181,40 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 
 ---
 
+## ML System (AI Pipeline dla studni)
+
+System ML jest równoległy do istniejącego LearningEngine (pattern-based). NIE modyfikuje solvera JS.
+
+### Architektura
+
+| Komponent | Plik | Opis |
+|---|---|---|
+| Feature Extractor | `src/services/ml/FeatureExtractor.ts` | Ekstrakcja cech z telemetry do AiFeature (Prisma) |
+| Acceptance Model | `src/services/ml/AcceptanceModel.ts` | Logistic Regression w TS (sigmoid, gradient descent) |
+| Model Registry | `src/services/ml/ModelRegistry.ts` | CRUD dla AiModel + auto-rollback gdy AUC < 0.65 |
+| Training Pipeline | `src/services/ml/TrainingPipeline.ts` | Cron co 15min: extract → normalize → train → validate → deploy |
+| Reward Calculator | `src/services/ml/RewardCalculator.ts` | Reward signals per decyzja użytkownika |
+| Self Evaluation | `src/services/ml/SelfEvaluation.ts` | Daily cron A/B testing + auto-rollback |
+| Prediction API | `src/routes/telemetryAiMl.ts` | POST /api/telemetry/ai/predict (cache 15min), /reward, /ml-status, /train, /rollback |
+| Dual-Ranking | `public/js/studnie/mlDualRanking.js` | Final = 0.6 × Technical + 0.4 × AI × 100; 5% exploration |
+| Reward Hooks | `public/js/studnie/mlRewardHooks.js` | Hooki do wellActions (addWell, removeWell, ACCEPT, REJECT) |
+| ML Dashboard | `public/js/studnie/mlDashboard.js` | 2 zakładki: "Learning Engine" (OR-Tools) + "AI Pipeline" (nowe ML) |
+
+### Hierarchia modeli (fallback)
+GLOBAL → Warehouse → WellType → DN → Client → Project (min 30 przykładów per poziom)
+
+### Forgetting
+Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.65.
+
+### Tabele Prisma (dodane w migracji 20260707000000)
+- `AiFeature` — wektory cech per konfiguracja
+- `AiModel` — wytrenowane modele (wagi, bias, metryki, normalizacja)
+- `AiEvaluation` — metryki dzienne A/B
+- `aiRewardLog` — logi nagród/kar per decyzja
+- `users.totalReward` — kolumna sumarycznych nagród
+
+---
+
 ## Workflow
 
 ### Przed zmianami

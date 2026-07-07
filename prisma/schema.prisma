@@ -455,6 +455,100 @@ model ProductsStudnie {
   category_rel CategoriesStudnie @relation(fields: [category], references: [name])
 }
 
+// =============================================================================
+// FAZA 1: Feature Store — wektory cech per konfiguracja (do treningu ML)
+// =============================================================================
+
+model AiFeature {
+  id                      String   @id
+  telemetryId             String?  // FK logiczny -> ai_telemetry_logs.id
+  dn                      Int
+  heightMm                Int
+  warehouse               String   // KLB | WL
+  wellType                String   // standard | psia_buda | styczna | styczna_1200
+  hasReduction            Boolean  @default(false)
+  hasPsiaBuda             Boolean  @default(false)
+  hasStyczna              Boolean  @default(false)
+  ringCount               Int      @default(0)
+  bottomType              String
+  topType                 String
+  connectionCount         Int      @default(0)
+  transitionsAboveDennica Int      @default(0)
+  totalPrice              Float    @default(0)
+  totalWeight             Float    @default(0)
+  ringVariety             Float    @default(0) // Shannon entropy kregow [0-1]
+  season                  String   // winter | spring | summer | autumn
+  label                   String   // ACCEPTED | REJECTED | MODIFIED
+  reward                  Float    @default(0) // -1.0 to +1.0
+  decisionMs              Int?     // czas od wyswietlenia do decyzji
+  createdAt               String
+
+  @@index([dn, warehouse, wellType], map: "idx_aifeatures_key")
+  @@index([label], map: "idx_aifeatures_label")
+  @@index([createdAt], map: "idx_aifeatures_created")
+}
+
+// =============================================================================
+// FAZA 2: Model Registry — wagi wytrenowanego modelu ML
+// =============================================================================
+
+model AiModel {
+  id         String   @id
+  version    String   @unique    // np. v1.2.0-20260707
+  weights    String                // JSON: wagi modelu (float[])
+  bias       Float
+  metrics    String                // JSON: { accuracy, precision, recall, f1, roc_auc, trainSize, valSize }
+  features   String                // JSON: nazwy cech (kolejnosc)
+  featureMins String               // JSON: min wartości do normalizacji
+  featureMaxs String               // JSON: max wartości do normalizacji
+  trainingRows Int                 // ile rekordów uzyto do treningu
+  active     Boolean  @default(false)
+  notes      String?
+  createdAt  String
+
+  @@index([active], map: "idx_aimodel_active")
+  @@index([createdAt], map: "idx_aimodel_created")
+}
+
+// =============================================================================
+// FAZA 7: Daily Evaluation Metrics — metryki dzienne do A/B testow
+// =============================================================================
+
+model AiEvaluation {
+  id              String   @id
+  modelVersion    String
+  acceptance      Float    @default(0) // acceptance rate
+  decisionMsAvg   Float    @default(0)
+  rewardsAvg      Float    @default(0)
+  totalDecisions  Int      @default(0)
+  triggeredAt     String
+
+  @@index([modelVersion], map: "idx_aieval_model")
+  @@index([triggeredAt], map: "idx_aieval_triggered")
+}
+
+// =============================================================================
+// FAZA 6: Reward Log — logi nagród i kar za decyzje użytkownika
+// =============================================================================
+
+model aiRewardLog {
+  id            String   @id
+  userId        String
+  wellId        String
+  dn            Int
+  action        String   // ACCEPT | REJECT | MODIFY | ADJUST | SWAP
+  reward        Float
+  scoreBefore   Float?
+  scoreAfter    Float?
+  wasAiRanked   Boolean  @default(false)
+  configSnapshot String?
+  createdAt     String
+
+  @@index([userId], map: "idx_reward_user")
+  @@index([action], map: "idx_reward_action")
+  @@index([createdAt], map: "idx_reward_created")
+}
+
 // Użytkownicy systemu
 model users {
   id                         String   @id
@@ -470,4 +564,5 @@ model users {
   createdAt                  String?
   orderStartNumber           Int?     @default(1)
   productionOrderStartNumber Int?     @default(1)
+  totalReward                Float?   @default(0)
 }

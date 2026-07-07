@@ -481,8 +481,9 @@ window.showUniversalPrintModal = /** @type {function(...[*]=): void} */ (
             ) {
                 finalOrderId = /** @type {any} */ (orderEditMode).orderId;
                 finalOfferId =
-                    /** @type {any} */ ((orderEditMode).order &&
-                        /** @type {any} */ (orderEditMode).order.offerId) ||
+                    /** @type {any} */ (
+                        orderEditMode.order && /** @type {any} */ (orderEditMode).order.offerId
+                    ) ||
                     /** @type {any} */ (orderEditMode).offerId ||
                     (typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '');
             } else if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
