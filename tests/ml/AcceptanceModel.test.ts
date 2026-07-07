@@ -107,7 +107,11 @@ describe('AcceptanceModel', () => {
     describe('predictBatch', () => {
         it('zwraca tablicę wyników', () => {
             const model = new AcceptanceModel(2);
-            const results = model.predictBatch([[0, 0], [1, 1], [0, 1]]);
+            const results = model.predictBatch([
+                [0, 0],
+                [1, 1],
+                [0, 1]
+            ]);
             expect(results).toHaveLength(3);
             results.forEach((r: number) => {
                 expect(r).toBeGreaterThanOrEqual(0);

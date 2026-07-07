@@ -3,7 +3,7 @@ REM ===========================================================
 REM  prod.bat — Production server start (final)
 REM ===========================================================
 
-setlocal
+setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
 echo ===========================================================

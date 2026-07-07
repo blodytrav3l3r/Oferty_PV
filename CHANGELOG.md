@@ -6,16 +6,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ## [1.5.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.4.0...v1.5.0) (2026-07-07)
 
-
 ### Features
 
-* **ml:** implementacja AI pipeline dla konfiguratora studni ([5fb0ff3](https://github.com/blodytrav3l3r/Oferty_PV/commit/5fb0ff30c9e62a53a09a833586c3ce41f1a1f28a))
-* **telemetry:** konsolidacja telemetrii AI — usunięcie popupu, przekierowanie na Express, aktywacja zdarzeń ([b1156fc](https://github.com/blodytrav3l3r/Oferty_PV/commit/b1156fcbc4d2f1a7b714667cd29c878d68e3e125))
-
+- **ml:** implementacja AI pipeline dla konfiguratora studni ([5fb0ff3](https://github.com/blodytrav3l3r/Oferty_PV/commit/5fb0ff30c9e62a53a09a833586c3ce41f1a1f28a))
+- **telemetry:** konsolidacja telemetrii AI — usunięcie popupu, przekierowanie na Express, aktywacja zdarzeń ([b1156fc](https://github.com/blodytrav3l3r/Oferty_PV/commit/b1156fcbc4d2f1a7b714667cd29c878d68e3e125))
 
 ### Bug Fixes
 
-* **audit): chunkowany cleanup logów + indeks createdAt; fix(ui:** PvImportExportToolbar TS error ([1dd0c12](https://github.com/blodytrav3l3r/Oferty_PV/commit/1dd0c12d50eae39e7bf040ddba675a3286c2fa7e))
+- **audit): chunkowany cleanup logów + indeks createdAt; fix(ui:** PvImportExportToolbar TS error ([1dd0c12](https://github.com/blodytrav3l3r/Oferty_PV/commit/1dd0c12d50eae39e7bf040ddba675a3286c2fa7e))
 
 ## [1.4.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.3.0...v1.4.0) (2026-07-06)
 

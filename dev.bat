@@ -7,7 +7,7 @@ REM  odporne na MSYS bash escape'y.
 REM ===========================================================
 
 REM Wylacz delayed expansion zeby uniknac problemow z cyframi
-setlocal
+setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
 echo ===========================================================

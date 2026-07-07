@@ -19,7 +19,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-for /F "tokens=2" %%v in ('node --version') do echo [OK] Node.js %%v
+for /F "tokens=*" %%v in ('node --version') do echo [OK] Node.js %%v
 
 REM 2. npm
 where npm >nul 2>nul

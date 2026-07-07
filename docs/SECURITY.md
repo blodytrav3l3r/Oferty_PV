@@ -245,4 +245,4 @@ if (process.env.SENTRY_DSN) {
 
 ---
 
-_Ostatnia aktualizacja: 2026-06-30_
+_Ostatnia aktualizacja: 2026-07-07_

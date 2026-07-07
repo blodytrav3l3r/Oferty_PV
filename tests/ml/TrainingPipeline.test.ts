@@ -62,7 +62,11 @@ describe('FeatureExtractor', () => {
             modificationCount: 0,
             totalPrice: 2500,
             totalWeight: 5000,
-            allComponentIds: JSON.stringify([{ productId: 'KDB-1500-1000' }, { productId: 'KDB-1500-1000' }, { productId: 'DDD-1500-500' }]),
+            allComponentIds: JSON.stringify([
+                { productId: 'KDB-1500-1000' },
+                { productId: 'KDB-1500-1000' },
+                { productId: 'DDD-1500-500' }
+            ]),
             appliedReductions: null,
             appliedKonus: JSON.stringify([{ productId: 'KNS-1500-500' }]),
             appliedSeals: JSON.stringify([{ productId: 'USZ-1500' }]),
@@ -166,7 +170,15 @@ describe('ModelRegistry', () => {
         const model = new AcceptanceModel(2);
         const version = await modelRegistry.saveModel(
             model,
-            { accuracy: 0.95, precision: 0.94, recall: 0.93, f1: 0.93, rocAuc: 0.92, trainSize: 100, valSize: 25 },
+            {
+                accuracy: 0.95,
+                precision: 0.94,
+                recall: 0.93,
+                f1: 0.93,
+                rocAuc: 0.92,
+                trainSize: 100,
+                valSize: 25
+            },
             ['dn', 'heightMm'],
             [0, 0],
             [2000, 5000]
