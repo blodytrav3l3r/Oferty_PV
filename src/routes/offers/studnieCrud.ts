@@ -7,6 +7,7 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
+import { resolveWriteUserId, canReadDoc, canWriteDoc } from '../../utils/ownership';
 import { offersStudnieBatchSchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
@@ -103,7 +104,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
         });
         if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
 
-        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+        if (!canReadDoc(authReq.user, offer.userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
         }
 
@@ -210,7 +211,18 @@ router.post(
                 })();
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
-                const userId = o.userId || authReq.user?.id || '';
+
+                const resolved = resolveWriteUserId(authReq.user, o.userId);
+                if (!resolved.allowed) {
+                    res.status(403).json({
+                        error: 'Brak uprawnień do tworzenia oferty dla wskazanego użytkownika',
+                        offendingOfferId: docId,
+                        requestedUserId: o.userId || null
+                    });
+                    return;
+                }
+                const userId = resolved.effectiveUserId;
+
                 const dataStr = JSON.stringify(o);
                 const historyStr = JSON.stringify(newHistory);
 
@@ -279,17 +291,28 @@ router.put(
                     return new Date().toISOString();
                 })();
 
+                const resolved = resolveWriteUserId(authReq.user, o.userId);
+                if (!resolved.allowed) {
+                    res.status(403).json({
+                        error: 'Brak uprawnień do aktualizacji oferty dla wskazanego użytkownika',
+                        offendingOfferId: docId,
+                        requestedUserId: o.userId || null
+                    });
+                    return;
+                }
+                const effectiveUserId = resolved.effectiveUserId;
+
                 await prisma.offers_studnie_rel.upsert({
                     where: { id: docId },
                     create: {
                         id: docId,
-                        userId: authReq.user?.id,
+                        userId: effectiveUserId,
                         state: state,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     },
                     update: {
-                        userId: authReq.user?.id,
+                        userId: effectiveUserId,
                         state: state,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
@@ -320,7 +343,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
             return res.status(404).json({ error: 'Oferta studni nie istnieje' });
         }
 
-        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+        if (!canWriteDoc(authReq.user, offer.userId)) {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
         }
 
