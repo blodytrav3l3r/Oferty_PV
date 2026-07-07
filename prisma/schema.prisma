@@ -261,6 +261,9 @@ model offer_items_rel {
   quantity  Float?
   discount  Float?
   price     Float?
+
+  @@index([offerId], map: "idx_offer_items_rel_offerId")
+  @@index([productId], map: "idx_offer_items_rel_productId")
 }
 
 model offer_studnie_items_rel {
@@ -271,6 +274,9 @@ model offer_studnie_items_rel {
   discount       Float?
   price          Float?
   dodatkowe_info String?
+
+  @@index([offerId], map: "idx_offer_studnie_items_rel_offerId")
+  @@index([productId], map: "idx_offer_studnie_items_rel_productId")
 }
 
 // Główne dokumenty ofert (typ rury/ogólne)
@@ -285,6 +291,10 @@ model offers_rel {
   data          String?
   updatedAt     String?
   history       String?  @default("[]")
+
+  @@index([userId], map: "idx_offers_rel_userId")
+  @@index([clientId], map: "idx_offers_rel_clientId")
+  @@index([state], map: "idx_offers_rel_state")
 }
 
 // Główne dokumenty ofert (typ studnie)
@@ -299,6 +309,10 @@ model offers_studnie_rel {
   data          String?
   updatedAt     String?
   history       String?  @default("[]")
+
+  @@index([userId], map: "idx_offers_studnie_rel_userId")
+  @@index([clientId], map: "idx_offers_studnie_rel_clientId")
+  @@index([state], map: "idx_offers_studnie_rel_state")
 }
 
 // Liczniki numeracji ofert
@@ -327,6 +341,9 @@ model orders_studnie_rel {
   createdAt      String?
   status         String?
   data           String?
+
+  @@index([offerStudnieId], map: "idx_orders_studnie_rel_offerId")
+  @@index([userId], map: "idx_orders_studnie_rel_userId")
 }
 
 // Zamówienia na rury
@@ -337,6 +354,9 @@ model orders_rury_rel {
   createdAt String?
   status    String?
   data      String?
+
+  @@index([offerId], map: "idx_orders_rury_rel_offerId")
+  @@index([userId], map: "idx_orders_rury_rel_userId")
 }
 
 model production_order_counters {
