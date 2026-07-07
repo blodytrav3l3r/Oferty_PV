@@ -280,18 +280,29 @@ router.put(
                 })();
                 const dataStr = JSON.stringify(o);
 
+                const resolved = resolveWriteUserId(authReq.user, o.userId);
+                if (!resolved.allowed) {
+                    res.status(403).json({
+                        error: 'Brak uprawnień do aktualizacji oferty rur dla wskazanego użytkownika',
+                        offendingOfferId: docId,
+                        requestedUserId: o.userId || null
+                    });
+                    return;
+                }
+                const effectiveUserId = resolved.effectiveUserId;
+
                 await prisma.offers_rel.upsert({
                     where: { id: docId },
                     create: {
                         id: docId,
-                        userId: authReq.user?.id,
+                        userId: effectiveUserId,
                         state: state,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
                     },
                     update: {
-                        userId: authReq.user?.id,
+                        userId: effectiveUserId,
                         state: state,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
