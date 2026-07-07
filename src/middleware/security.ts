@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 
 /**
  * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
@@ -42,5 +43,68 @@ export function charsetMiddleware(_req: Request, res: Response, next: NextFuncti
         }
         return originalSend(body);
     };
+    next();
+}
+
+/**
+ * Generuje token CSRF (double submit cookie pattern).
+ * Powinien być wywolywany przy udanym logowaniu, aby ustawic cookie z tokenem.
+ * Klient frontendu musi czytac cookie (JS readable - nie httpOnly) i odsylac
+ * token w naglowku X-CSRF-Token dla kazdego mutujacego requestu (POST/PUT/PATCH/DELETE).
+ */
+export function generateCsrfToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Ustawia cookie CSRF w odpowiedzi. Cookie jest JS-readable (nie httpOnly),
+ * aby frontend mógł odczytać token i odesłać go w nagłówku X-CSRF-Token.
+ */
+export function setCsrfCookie(res: Response, token: string): void {
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('csrfToken', token, {
+        httpOnly: false, // JS-readable - frontend potrzebuje odczytać token
+        secure: isProduction,
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000 // 24h
+    });
+}
+
+/**
+ * Middleware CSRF - waliduje token dla mutujacych metod (POST/PUT/PATCH/DELETE).
+ *
+ * Strategia "double submit cookie":
+ * - Cookie csrfToken (JS-readable) jest ustawiane przy logowaniu
+ * - Frontend wklada ten sam token w naglowek X-CSRF-Token
+ * - Server porównuje oba -- atakujacy z zewnatrz nie odczyta cookie (SameSite strict)
+ *
+ * Bezpieczne metody (GET/HEAD/OPTIONS) pomijamy -- sa idempotentne.
+ */
+export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
+    const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+    if (SAFE_METHODS.includes(req.method)) {
+        next();
+        return;
+    }
+
+    const cookieToken = req.cookies?.csrfToken;
+    const headerToken = req.headers['x-csrf-token'];
+
+    // Brak cookie lub naglowka
+    if (!cookieToken || !headerToken) {
+        res.status(403).json({ error: 'CSRF token missing' });
+        return;
+    }
+
+    // Porownanie odporne na timing attack
+    const cookieBuf = Buffer.from(String(cookieToken));
+    const headerBuf = Buffer.from(Array.isArray(headerToken) ? headerToken[0] : String(headerToken));
+
+    if (cookieBuf.length !== headerBuf.length || !crypto.timingSafeEqual(cookieBuf, headerBuf)) {
+        res.status(403).json({ error: 'CSRF token mismatch' });
+        return;
+    }
+
     next();
 }
