@@ -27,13 +27,11 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
             var data = await res.json();
             if (data && data.status === 'ok') {
-                window.isBackendOnline = true;
                 setState(STATES.online);
             } else {
                 throw new Error('Invalid response');
             }
         } catch (e) {
-            window.isBackendOnline = false;
             setState(STATES.offline);
         }
     }
@@ -52,7 +50,6 @@
         }
     }
 
-    window.isBackendOnline = false;
     window.checkBackendStatus = checkBackendStatus;
     window.startBackendPolling = startBackendPolling;
     window.stopBackendPolling = stopBackendPolling;
