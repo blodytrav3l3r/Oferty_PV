@@ -2,13 +2,9 @@
 /**
  * mlRewardHooks.js — Reward signals za decyzje użytkownika.
  *
- * Hookuje się w wellActions.js: addWellComponent, removeWellComponent,
- * oraz w zdarzenia akceptacji/odrzucenia studni.
+ * Hookuje się w wellActions.js: addWellComponent, removeWellComponent.
  *
- * Reward: +1.0 ACCEPT (AI), +0.5 ACCEPT (manual)
- *         -1.0 REJECT
- *         -0.3 MODIFY (>=2 modyfikacje)
- *         -0.2 SWAP
+ * Reward: +0.3 MODIFY (>=2 modyfikacje)
  *         +0.2 MODIFY (<2 modyfikacje)
  */
 
@@ -91,35 +87,6 @@
     }
 
     /**
-     * Hook: studnia zaakceptowana przez użytkownika
-     * @param {Object} [opts]
-     * @param {number} [opts.scoreBefore]
-     * @param {number} [opts.scoreAfter]
-     * @param {boolean} [opts.wasAiRanked]
-     */
-    function onWellAccepted(opts) {
-        sendReward({
-            action: 'ACCEPT',
-            scoreBefore: opts && opts.scoreBefore,
-            scoreAfter: opts && opts.scoreAfter,
-            wasAiRanked: opts && opts.wasAiRanked
-        });
-    }
-
-    /**
-     * Hook: studnia odrzucona
-     * @param {Object} [opts]
-     */
-    function onWellRejected(opts) {
-        sendReward({
-            action: 'REJECT',
-            scoreBefore: opts && opts.scoreBefore,
-            scoreAfter: opts && opts.scoreAfter,
-            wasAiRanked: opts && opts.wasAiRanked
-        });
-    }
-
-    /**
      * Hook: modyfikacja konfiguracji
      * @param {number} [modCount]
      */
@@ -130,22 +97,9 @@
         });
     }
 
-    /**
-     * Hook: zamiana komponentu
-     */
-    function onWellSwap() {
-        sendReward({
-            action: 'SWAP',
-            wasAiRanked: false
-        });
-    }
-
     // Eksport do window
     window.mlRewardHooks = {
-        onWellAccepted: onWellAccepted,
-        onWellRejected: onWellRejected,
         onWellModified: onWellModified,
-        onWellSwap: onWellSwap,
         sendReward: sendReward
     };
 })();

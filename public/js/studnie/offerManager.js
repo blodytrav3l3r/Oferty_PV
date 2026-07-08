@@ -2964,18 +2964,6 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
 
 const dragOverCount = 0; // dla wizualizacji drag & drop
 
-// eslint-disable-next-line prefer-const
-let isBackendOnline = false;
-
-// Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
-window.addEventListener('pv-sync-status-changed', () => {
-    // Jeśli widżet zapisu ofert jest widoczny, odświeżamy go
-    const container = document.getElementById('saved-offers-list');
-    if (container && container.offsetParent !== null) {
-        renderSavedOffersStudnie();
-    }
-});
-
 /* ===== HISTORIA OFERTY STUDNIE (audyt SQLite) ===== */
 
 function renderAuditLogEntry(log) {
