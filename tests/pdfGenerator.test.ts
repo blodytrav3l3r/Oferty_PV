@@ -14,15 +14,20 @@ jest.mock('path', () => ({
 }));
 
 // Mock puppeteer
-jest.mock('puppeteer', () => ({
-    launch: jest.fn().mockResolvedValue({
+jest.mock('puppeteer', () => {
+    const mockBrowserInstance = {
         newPage: jest.fn().mockResolvedValue({
             setContent: jest.fn(),
-            pdf: jest.fn().mockResolvedValue(Buffer.from('mock-pdf'))
+            pdf: jest.fn().mockResolvedValue(Buffer.from('mock-pdf')),
+            close: jest.fn()
         }),
-        close: jest.fn()
-    })
-}));
+        close: jest.fn(),
+        on: jest.fn() // puppeteer Browser extends EventEmitter
+    };
+    return {
+        launch: jest.fn().mockResolvedValue(mockBrowserInstance)
+    };
+});
 
 // Mock logger
 jest.mock('../src/utils/logger', () => ({

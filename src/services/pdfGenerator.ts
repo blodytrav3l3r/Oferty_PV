@@ -1,9 +1,10 @@
-import puppeteer from 'puppeteer';
+import { getSharedBrowser, closeSharedBrowser } from './pdfBrowser';
 import prisma from '../prismaClient';
 import fs from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger';
 import { DOCX_COLORS } from './docx/colors';
+import { textFileCache, binaryFileCache } from '../utils/fileCache';
 
 const MAX_TRANSPORT_WEIGHT = 24000;
 
@@ -553,7 +554,9 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
 
     // Załaduj szablon
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaRury.html');
-    const template = fs.readFileSync(templatePath, 'utf-8');
+    const template = textFileCache.get(templatePath, () =>
+        fs.readFileSync(templatePath, 'utf-8')
+    );
 
     // Załaduj obrazy
     const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
@@ -561,13 +564,15 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     let naglowekBase64 = '';
     let stopkaBase64 = '';
     try {
-        const buf = fs.readFileSync(naglowekPath);
+        const buf = binaryFileCache.get(naglowekPath, () =>
+            fs.readFileSync(naglowekPath) as Buffer
+        );
         naglowekBase64 = `data:image/png;base64,${buf.toString('base64')}`;
     } catch (e) {
         logger.warn('PdfAssets', 'Brak letterhead-header.png', e);
     }
     try {
-        const buf = fs.readFileSync(stopkaPath);
+        const buf = binaryFileCache.get(stopkaPath, () => fs.readFileSync(stopkaPath));
         stopkaBase64 = `data:image/png;base64,${buf.toString('base64')}`;
     } catch (e) {
         logger.warn('PdfAssets', 'Brak letterhead-footer.png', e);
@@ -1141,13 +1146,11 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
 }
 
 async function generatePDF(html: string): Promise<Buffer> {
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    const browser = await getSharedBrowser();
 
+    let page;
     try {
-        const page = await browser.newPage();
+        page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' as any });
 
         const pdfBuffer = await page.pdf({
@@ -1163,7 +1166,19 @@ async function generatePDF(html: string): Promise<Buffer> {
 
         return Buffer.from(pdfBuffer);
     } finally {
-        await browser.close();
+        // Zamykamy tylko stronę (oszczędność pamięci per request).
+        // Przeglądarka jako singleton jest współdzielona między requestami.
+        if (page) {
+            try {
+                await page.close();
+            } catch (_e) {
+                // Ignoruj - page mógł być już zamknięty (np. gdy browser się rozsypał)
+            }
+        }
+        // Gdyby przeglądarka padła (np. OOM), usuwamy cache
+        if (!browser.connected) {
+            await closeSharedBrowser();
+        }
     }
 }
 
