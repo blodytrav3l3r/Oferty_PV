@@ -6,10 +6,13 @@
 
 import { csrfProtection, generateCsrfToken, setCsrfCookie } from '../src/middleware/security';
 
-function makeReq(method: string, opts: {
-    cookies?: Record<string, string>;
-    headerToken?: string;
-}): { method: string; cookies?: Record<string, string>; headers: Record<string, string> } {
+function makeReq(
+    method: string,
+    opts: {
+        cookies?: Record<string, string>;
+        headerToken?: string;
+    }
+): { method: string; cookies?: Record<string, string>; headers: Record<string, string> } {
     return {
         method,
         cookies: opts.cookies,

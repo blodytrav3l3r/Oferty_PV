@@ -554,9 +554,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
 
     // Załaduj szablon
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaRury.html');
-    const template = textFileCache.get(templatePath, () =>
-        fs.readFileSync(templatePath, 'utf-8')
-    );
+    const template = textFileCache.get(templatePath, () => fs.readFileSync(templatePath, 'utf-8'));
 
     // Załaduj obrazy
     const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
@@ -564,8 +562,9 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     let naglowekBase64 = '';
     let stopkaBase64 = '';
     try {
-        const buf = binaryFileCache.get(naglowekPath, () =>
-            fs.readFileSync(naglowekPath) as Buffer
+        const buf = binaryFileCache.get(
+            naglowekPath,
+            () => fs.readFileSync(naglowekPath) as Buffer
         );
         naglowekBase64 = `data:image/png;base64,${buf.toString('base64')}`;
     } catch (e) {

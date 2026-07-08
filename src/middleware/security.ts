@@ -99,7 +99,9 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
 
     // Porownanie odporne na timing attack
     const cookieBuf = Buffer.from(String(cookieToken));
-    const headerBuf = Buffer.from(Array.isArray(headerToken) ? headerToken[0] : String(headerToken));
+    const headerBuf = Buffer.from(
+        Array.isArray(headerToken) ? headerToken[0] : String(headerToken)
+    );
 
     if (cookieBuf.length !== headerBuf.length || !crypto.timingSafeEqual(cookieBuf, headerBuf)) {
         res.status(403).json({ error: 'CSRF token mismatch' });

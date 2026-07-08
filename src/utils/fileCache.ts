@@ -60,4 +60,3 @@ export const textFileCache = new SimpleCache<string>(10 * 60 * 1000);
  * Cache dla plikow binarnych (obrazy PNG/JPG).
  */
 export const binaryFileCache = new SimpleCache<Buffer>(10 * 60 * 1000);
-

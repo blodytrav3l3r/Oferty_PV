@@ -38,8 +38,6 @@ const regularUser: User = {
     subUsers: []
 };
 
-
-
 // ─── FAZA 2: Privilege Escalation w studnieCrud.ts ────────────────
 
 describe('Bowtie Faza 2: Privilege escalation - studnieCrud.ts POST /studnie', () => {
