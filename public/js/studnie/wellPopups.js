@@ -220,7 +220,7 @@ function updateRedukcjaButton() {
     const targetDn = well.redukcjaTargetDN || 1000;
 
     if (well.redukcjaDN1000) {
-        btn.innerHTML = `<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja DN${targetDn} <span class="text-xs"><i data-lucide="check"></i></span>`;
+        btn.innerHTML = `<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja DN${escapeHtml(String(targetDn))} <span class="text-xs"><i data-lucide="check"></i></span>`;
         btn.style.borderColor = 'rgba(109,40,217,0.5)';
         btn.style.color = '#a78bfa';
         btn.style.background = 'rgba(109,40,217,0.15)';

@@ -57,6 +57,8 @@
         "encoding:check": "node scripts/encoding-integrity.js check",
         "encoding:fix": "node scripts/encoding-integrity.js fix",
         "encoding:staged": "node scripts/encoding-integrity.js staged",
+        "security:xss:check": "node scripts/check-no-unescaped-innerhtml.mjs",
+        "security:xss:strict": "node scripts/check-no-unescaped-innerhtml.mjs --strict",
         "prepare": "husky"
     },
     "engines": {
