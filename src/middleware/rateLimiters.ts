@@ -61,3 +61,14 @@ export const PRECO_PRICING_LIMITER = createRateLimiter({
     maxHits: 20,
     message: 'Zbyt wiele operacji na cennikach. Odczekaj minutę.'
 });
+
+/**
+ * Rate limiter dla korekt AI (override telemetry).
+ * Endpoint wrażliwy — ma wpływ na model uczenia.
+ * 10 req/min/IP + 100 req/hour/IP.
+ */
+export const AI_OVERRIDE_LIMITER = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 10,
+    message: 'Zbyt wiele korekt AI. Odczekaj minutę.'
+});

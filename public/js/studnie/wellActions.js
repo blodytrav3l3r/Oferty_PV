@@ -444,6 +444,9 @@ function addWellComponent(productId) {
         return;
     }
 
+    // Snapshot przed zmianą (dla raportu korekty)
+    const _beforeConfig = well.config ? JSON.parse(JSON.stringify(well.config)) : [];
+
     // Włączenie trybu ręcznego jeśli dodano jakikolwiek element z palety
     if (!well.autoLocked) {
         well.autoLocked = true;
@@ -648,6 +651,24 @@ function addWellComponent(productId) {
     } else {
         showToast(`Dodano: ${product.name}`, 'success');
     }
+
+    // Raport korekty do ML
+    queueMicrotask(function () {
+        try {
+            if (typeof window.reportCorrection === 'function') {
+                window.reportCorrection({
+                    originalConfig: _beforeConfig,
+                    finalConfig: well.config || [],
+                    overrideReason: 'user_added_component',
+                    wellParams: window.getWellParamsForReport
+                        ? window.getWellParamsForReport(well)
+                        : { dn: well.dn }
+                });
+            }
+        } catch (e) {
+            /* ignore */
+        }
+    });
 }
 
 function removeWellComponent(index) {
@@ -662,6 +683,7 @@ function removeWellComponent(index) {
     const well = getCurrentWell();
     well.configSource = 'MANUAL';
 
+    const _beforeRemove = well.config ? JSON.parse(JSON.stringify(well.config)) : [];
     const removedItem = well.config.splice(index, 1)[0];
 
     if (removedItem) {
@@ -718,6 +740,24 @@ function removeWellComponent(index) {
     if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellModified) {
         window.mlRewardHooks.onWellModified();
     }
+
+    // Raport korekty do ML
+    queueMicrotask(function () {
+        try {
+            if (typeof window.reportCorrection === 'function') {
+                window.reportCorrection({
+                    originalConfig: _beforeRemove,
+                    finalConfig: well.config || [],
+                    overrideReason: 'user_removed_component',
+                    wellParams: window.getWellParamsForReport
+                        ? window.getWellParamsForReport(well)
+                        : { dn: well.dn }
+                });
+            }
+        } catch (e) {
+            /* ignore */
+        }
+    });
 }
 
 function updateWellQuantity(index, value) {
@@ -1865,6 +1905,7 @@ function doSelectDN(dn) {
     }
 
     if (well.dn !== dn) {
+        const _beforeDn = well.config ? JSON.parse(JSON.stringify(well.config)) : [];
         well.dn = dn;
         // Aktualizuj nazwę, jeśli używa formatu domyślnego
         if (
@@ -1896,6 +1937,24 @@ function doSelectDN(dn) {
         well.config = [];
         autoSelectComponents(true);
         refreshAll();
+
+        // Raport korekty do ML
+        queueMicrotask(function () {
+            try {
+                if (typeof window.reportCorrection === 'function') {
+                    window.reportCorrection({
+                        originalConfig: _beforeDn,
+                        finalConfig: well.config || [],
+                        overrideReason: 'user_changed_dn',
+                        wellParams: window.getWellParamsForReport
+                            ? window.getWellParamsForReport(well)
+                            : { dn: well.dn }
+                    });
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        });
     }
 
     updateDNButtons();

@@ -10,7 +10,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
-import { WRITE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
+import { WRITE_LIMITER, AI_OVERRIDE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import { telemetryService } from '../services/telemetry';
 import {
@@ -23,10 +23,14 @@ import {
     telemetryConfigSchema,
     telemetryEventSchema,
     telemetryEventsBulkSchema,
+    telemetryOverrideProxySchema,
     telemetryVersionSchema
 } from '../validators/telemetrySchemas';
 
 const router = express.Router();
+
+/** Obsługiwane wersje schematu telemetrycznego */
+const SUPPORTED_SCHEMA_VERSIONS = [1];
 
 /**
  * POST /api/telemetry/ai/config
@@ -248,6 +252,68 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
         const message = e instanceof Error ? e.message : String(e);
         logger.error('Telemetry', `Błąd acceptance-full: ${message}`);
         return res.status(500).json({ error: 'Nie udało się zapisać acceptance' });
+    }
+});
+
+/**
+ * POST /api/telemetry/ai/override
+ * Proxy: forward korekty użytkownika do Python AI Backend (uczenie się z korekt).
+ *
+ * Waliduje payload → forward do Python → zwraca wynik.
+ * Python backend ma własną autoryzację API Key; ten endpoint jest rate-limited
+ * (AI_OVERRIDE_LIMITER) aby zapobiec nadużyciom.
+ */
+router.post('/ai/override', AI_OVERRIDE_LIMITER, async (req, res) => {
+    const parse = telemetryOverrideProxySchema.safeParse(req.body);
+    if (!parse.success) {
+        logger.warn('Telemetry', `Błąd walidacji override proxy: ${parse.error.message}`);
+        return res.status(400).json({
+            error: 'Nieprawidłowy payload korekty',
+            details: parse.error.issues
+        });
+    }
+
+    if (!SUPPORTED_SCHEMA_VERSIONS.includes(parse.data.schema_version)) {
+        logger.warn('Telemetry', `Nieobsługiwana wersja schematu: ${parse.data.schema_version}`);
+        return res.status(400).json({
+            error: `Nieobsługiwana wersja schematu: ${parse.data.schema_version}`,
+            supportedVersions: SUPPORTED_SCHEMA_VERSIONS
+        });
+    }
+
+    const pythonUrl = process.env.PYTHON_BACKEND_URL || 'http://localhost:8000';
+    const apiKey = process.env.PYTHON_API_KEY || '';
+
+    try {
+        const response = await fetch(`${pythonUrl}/api/v1/telemetry/override`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(apiKey ? { 'X-API-Key': apiKey } : {})
+            },
+            body: JSON.stringify(parse.data)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            logger.error('Telemetry', `Python backend błąd (${response.status})`);
+            return res.status(502).json({
+                error: 'Python backend zwrócił błąd',
+                status: response.status,
+                detail: errorText
+            });
+        }
+
+        const result = await response.json();
+        return res.json(result);
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.warn('Telemetry', `Python backend nieosiągalny: ${message}`);
+        return res.status(503).json({
+            error: 'Python backend wyłączony',
+            warning: 'Korekta nie przekazana do systemu uczącego. Solver JS działa bez zmian.',
+            detail: message
+        });
     }
 });
 

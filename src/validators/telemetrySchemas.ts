@@ -209,3 +209,29 @@ export const telemetryAcceptanceSchema = z.object({
 });
 
 export type TelemetryAcceptanceInput = z.infer<typeof telemetryAcceptanceSchema>;
+
+// =============================================================================
+// Override proxy → Python backend (uczenie się z korekt użytkownika)
+// =============================================================================
+
+export const telemetryOverrideProxySchema = z.object({
+    schema_version: z.number().int().positive(),
+    correction_id: z.string().uuid().optional(),
+    originalConfig: z.array(wellComponentSchema).min(1),
+    finalConfig: z.array(wellComponentSchema).min(1),
+    overrideReason: z.string().optional(),
+    source: z
+        .object({
+            client: z.string().optional(),
+            version: z.string().optional()
+        })
+        .optional(),
+    wellParams: z.object({
+        dn: z.union([z.string(), z.number()]),
+        target_height_mm: z.number().optional(),
+        transition_count: z.number().int().optional(),
+        height_bucket: z.enum(['shallow', 'medium', 'deep']).optional()
+    })
+});
+
+export type TelemetryOverrideProxyInput = z.infer<typeof telemetryOverrideProxySchema>;

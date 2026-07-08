@@ -753,10 +753,29 @@ function removePrzejscieFromWell(index) {
     const well = getCurrentWell();
     if (!well) return;
     if (well.przejscia) {
+        const _beforeDelTrans = well.config ? JSON.parse(JSON.stringify(well.config)) : [];
         well.przejscia.splice(index, 1);
         refreshAll();
         autoSelectComponents(true);
         window.refreshZleceniaModalIfActive();
+
+        // Raport korekty do ML
+        queueMicrotask(function () {
+            try {
+                if (typeof window.reportCorrection === 'function') {
+                    window.reportCorrection({
+                        originalConfig: _beforeDelTrans,
+                        finalConfig: well.config || [],
+                        overrideReason: 'user_removed_transition',
+                        wellParams: window.getWellParamsForReport
+                            ? window.getWellParamsForReport(well)
+                            : { dn: well.dn }
+                    });
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        });
     }
 }
 
@@ -1102,6 +1121,8 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     }
     if (!well.przejscia) well.przejscia = [];
 
+    const _beforeTrans = well.config ? JSON.parse(JSON.stringify(well.config)) : [];
+
     const isFirst = well.przejscia ? well.przejscia.length === 0 : true;
     const flowType = isFirst && angle === 0 ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
 
@@ -1128,6 +1149,24 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     showToast('Dodano przejście szczelne', 'success');
     renderInlinePrzejsciaApp(containerId);
     window.refreshZleceniaModalIfActive();
+
+    // Raport korekty do ML
+    queueMicrotask(function () {
+        try {
+            if (typeof window.reportCorrection === 'function') {
+                window.reportCorrection({
+                    originalConfig: _beforeTrans,
+                    finalConfig: well.config || [],
+                    overrideReason: 'user_added_transition',
+                    wellParams: window.getWellParamsForReport
+                        ? window.getWellParamsForReport(well)
+                        : { dn: well.dn }
+                });
+            }
+        } catch (e) {
+            /* ignore */
+        }
+    });
 };
 
 window.openFlowTypePopup = function (index) {

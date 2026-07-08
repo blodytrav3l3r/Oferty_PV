@@ -966,6 +966,8 @@ async function selectRedukcjaChoice(targetDn) {
     const well = getCurrentWell();
     if (!well) return;
 
+    const _beforeRedukcja = well.config ? JSON.parse(JSON.stringify(well.config)) : [];
+
     const oldTarget = well.redukcjaTargetDN || 1000;
     const wasActive = well.redukcjaDN1000;
     const newTarget = targetDn;
@@ -1011,6 +1013,24 @@ async function selectRedukcjaChoice(targetDn) {
         targetDn ? `Redukcja na DN${targetDn} — WŁĄCZONA` : 'Redukcja — WYŁĄCZONA',
         targetDn ? 'success' : 'info'
     );
+
+    // Raport korekty do ML
+    queueMicrotask(function () {
+        try {
+            if (typeof window.reportCorrection === 'function') {
+                window.reportCorrection({
+                    originalConfig: _beforeRedukcja,
+                    finalConfig: well.config || [],
+                    overrideReason: targetDn ? 'user_changed_reduction' : 'user_removed_reduction',
+                    wellParams: window.getWellParamsForReport
+                        ? window.getWellParamsForReport(well)
+                        : { dn: well.dn }
+                });
+            }
+        } catch (e) {
+            /* ignore */
+        }
+    });
 }
 
 /**
@@ -1837,6 +1857,17 @@ window.tmApplyChanges = async function () {
         return;
     }
 
+    // Snapshot wszystkich studni przed zmianą (dla raportu korekty)
+    window._tmBeforeSnapshots = {};
+    if (typeof window !== 'undefined' && window.wells) {
+        for (var _wi = 0; _wi < window.wells.length; _wi++) {
+            var _w = window.wells[_wi];
+            if (_w && _w.config) {
+                window._tmBeforeSnapshots[_wi] = JSON.parse(JSON.stringify(_w.config));
+            }
+        }
+    }
+
     let replacedCount = 0;
     const skippedDetails = [];
     const skippedLocked = new Set();
@@ -1914,6 +1945,32 @@ window.tmApplyChanges = async function () {
     if (skippedDetails.length > 0) {
         showSkippedPopup(skippedDetails, targetCat);
     }
+
+    // Raport korekty dla każdej zmodyfikowanej studni
+    queueMicrotask(function () {
+        try {
+            if (typeof window.reportCorrection === 'function') {
+                modifiedWellsIndices.forEach(function (wellIdx) {
+                    var w = wells[wellIdx];
+                    if (!w) return;
+                    window.reportCorrection({
+                        originalConfig:
+                            window._tmBeforeSnapshots && window._tmBeforeSnapshots[wellIdx]
+                                ? window._tmBeforeSnapshots[wellIdx]
+                                : [],
+                        finalConfig: w.config || [],
+                        overrideReason: 'user_bulk_transition_change',
+                        wellParams: window.getWellParamsForReport
+                            ? window.getWellParamsForReport(w)
+                            : { dn: w.dn }
+                    });
+                });
+            }
+        } catch (e) {
+            /* ignore */
+        }
+    });
+    window._tmBeforeSnapshots = undefined;
 
     const msg = `Zakończono. Zamieniono ${replacedCount} przejść w ${modifiedWellsIndices.size} studniach.`;
     showToast(msg, 'success');
