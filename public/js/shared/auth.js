@@ -51,3 +51,54 @@ async function appLogout() {
     document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.location.href = 'index.html';
 }
+
+/**
+ * Aktualizuje status kropki połączenia w headerze.
+ * Sprawdza czy serwer jest osiągalny przez /health.
+ */
+function updateConnectionDot() {
+    const dot = document.getElementById('connection-dot');
+    if (!dot) return;
+    dot.className = 'connection-dot is-checking';
+    dot.title = 'Sprawdzanie połączenia...';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    fetch('/health', { signal: controller.signal, credentials: 'include' })
+        .then(function (res) {
+            clearTimeout(timeoutId);
+            if (res.ok || res.status === 401) {
+                dot.className = 'connection-dot is-online';
+                dot.title = 'Połączenie z serwerem OK';
+            } else {
+                dot.className = 'connection-dot is-offline';
+                dot.title = 'Serwer zwrócił błąd';
+            }
+        })
+        .catch(function () {
+            clearTimeout(timeoutId);
+            dot.className = 'connection-dot is-offline';
+            dot.title = 'Brak połączenia z serwerem';
+        });
+}
+
+if (typeof window !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            updateConnectionDot();
+            setInterval(updateConnectionDot, 30000);
+        });
+    } else {
+        updateConnectionDot();
+        setInterval(updateConnectionDot, 30000);
+    }
+    window.addEventListener('online', updateConnectionDot);
+    window.addEventListener('offline', function () {
+        var dot = document.getElementById('connection-dot');
+        if (dot) {
+            dot.className = 'connection-dot is-offline';
+            dot.title = 'Brak połączenia sieciowego';
+        }
+    });
+}
