@@ -5,13 +5,14 @@ import { generateOfferRuryPDF, generateOfferStudniePDF } from '../../services/pd
 import { generateOfferRuryDOCX, generateOfferStudnieDOCX } from '../../services/docx';
 import { logger } from '../../utils/logger';
 import { canReadDoc } from '../../utils/ownership';
+import { EXPORT_LIMITER } from '../../middleware/rateLimiters';
 
 const router = express.Router();
 
 /* ===== PUNKTY KOŃCOWE EKSPORTU (EXPORT) ===== */
 
 // GET /api/offers-rury/:id/export-pdf
-router.get('/:id/export-pdf', requireAuth, async (req, res) => {
+router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -37,7 +38,7 @@ router.get('/:id/export-pdf', requireAuth, async (req, res) => {
 });
 
 // GET /api/offers-studnie/:id/export-pdf
-router.get('/studnie/:id/export-pdf', requireAuth, async (req, res) => {
+router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -63,7 +64,7 @@ router.get('/studnie/:id/export-pdf', requireAuth, async (req, res) => {
 });
 
 // GET /api/offers-rury/:id/export-docx
-router.get('/:id/export-docx', requireAuth, async (req, res) => {
+router.get('/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -92,7 +93,7 @@ router.get('/:id/export-docx', requireAuth, async (req, res) => {
 });
 
 // GET /api/offers-studnie/:id/export-docx
-router.get('/studnie/:id/export-docx', requireAuth, async (req, res) => {
+router.get('/studnie/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;

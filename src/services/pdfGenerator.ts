@@ -666,9 +666,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
           <tbody>`;
 
         for (const diamKey of sortedDiams) {
-            const itemsInDiam = diamGroups[diamKey];
-            // Sortuj: bosy pierwsze, potem według długości
-            itemsInDiam.sort((a, b) => {
+            const itemsInDiam = [...diamGroups[diamKey]].sort((a, b) => {
                 const aBB = isBosy(a);
                 const bBB = isBosy(b);
                 if (aBB !== bBB) return aBB ? -1 : 1;

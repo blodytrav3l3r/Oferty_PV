@@ -1,5 +1,5 @@
 import express from 'express';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
@@ -87,44 +87,51 @@ router.get('/', requireAuth, async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT / — bulk save (usuń wszystko + utwórz)
 // ──────────────────────────────────────────
-router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), async (req, res) => {
-    try {
-        const arr: Record<string, unknown>[] = req.body.data;
+router.put(
+    '/',
+    requireAuth,
+    requireAdmin,
+    writeLimiter,
+    validateData(pricelistDataSchema),
+    async (req, res) => {
+        try {
+            const arr: Record<string, unknown>[] = req.body.data;
 
-        await prisma.$transaction(async (tx) => {
-            const cats = [...new Set(arr.map((p) => String(p.category)).filter(Boolean))];
-            for (let i = 0; i < cats.length; i++) {
-                await tx.categoriesRury.upsert({
-                    where: { name: cats[i] },
-                    update: {},
-                    create: { name: cats[i], order: i }
-                });
-            }
+            await prisma.$transaction(async (tx) => {
+                const cats = [...new Set(arr.map((p) => String(p.category)).filter(Boolean))];
+                for (let i = 0; i < cats.length; i++) {
+                    await tx.categoriesRury.upsert({
+                        where: { name: cats[i] },
+                        update: {},
+                        create: { name: cats[i], order: i }
+                    });
+                }
 
-            await tx.productsRury.deleteMany();
+                await tx.productsRury.deleteMany();
 
-            for (const item of arr) {
-                await tx.productsRury.create({
-                    data: {
-                        id: String(item.id),
-                        name: String(item.name ?? ''),
-                        category: String(item.category ?? ''),
-                        price: Number(item.price ?? 0),
-                        transport: item.transport != null ? Number(item.transport) : null,
-                        weight: item.weight != null ? Number(item.weight) : null,
-                        area: item.area != null ? Number(item.area) : null
-                    }
-                });
-            }
-        });
+                for (const item of arr) {
+                    await tx.productsRury.create({
+                        data: {
+                            id: String(item.id),
+                            name: String(item.name ?? ''),
+                            category: String(item.category ?? ''),
+                            price: Number(item.price ?? 0),
+                            transport: item.transport != null ? Number(item.transport) : null,
+                            weight: item.weight != null ? Number(item.weight) : null,
+                            area: item.area != null ? Number(item.area) : null
+                        }
+                    });
+                }
+            });
 
-        res.json({ ok: true, count: arr.length });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('ProductsV2', 'PUT error', message);
-        res.status(500).json({ error: message });
+            res.json({ ok: true, count: arr.length });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            logger.error('ProductsV2', 'PUT error', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // ──────────────────────────────────────────
 // PATCH /:id — edytuj jeden produkt
@@ -132,6 +139,7 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
 router.patch(
     '/:id',
     requireAuth,
+    requireAdmin,
     writeLimiter,
     validateData(productPatchSchema),
     async (req, res) => {
@@ -161,7 +169,7 @@ router.patch(
 // ──────────────────────────────────────────
 // DELETE /:id — usuń jeden produkt
 // ──────────────────────────────────────────
-router.delete('/:id', requireAuth, writeLimiter, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
     try {
         const { id } = req.params;
         await prisma.productsRury.delete({ where: { id } });

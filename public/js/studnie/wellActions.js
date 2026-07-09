@@ -31,7 +31,7 @@ function updateElevations() {
     well.rzednaDna = dnaVal;
 
     updateHeightIndicator();
-    renderWellsList();
+    _debouncedRefreshWells();
 
     if (elevationDebounceTimer) clearTimeout(elevationDebounceTimer);
     elevationDebounceTimer = setTimeout(() => {
@@ -165,7 +165,7 @@ function updateWellNumer() {
     } else {
         well.name = well.numer || 'Studnia DN' + well.dn + ' (#' + (currentWellIndex + 1) + ')';
     }
-    renderWellsList();
+    _debouncedRefreshWells();
     updateSummary();
 }
 
@@ -248,9 +248,7 @@ function updateDoplata() {
         domEl.classList.remove('color-success', 'color-danger', 'fw-7');
     }
 
-    renderWellsList();
-    updateSummary();
-    renderOfferSummary();
+    _debouncedRefreshFull();
 }
 
 function dragWellComponent(ev, productId) {
@@ -2266,7 +2264,7 @@ function sortWellConfigByOrder() {
         uszczelka: 8
     };
 
-    well.config.sort((a, b) => {
+    well.config = [...well.config].sort((a, b) => {
         const pA = studnieProducts.find((p) => p.id === a.productId);
         const pB = studnieProducts.find((p) => p.id === b.productId);
         if (!pA || !pB) return 0;
@@ -2316,6 +2314,22 @@ function _moveWlazToTop(well) {
         well.config.unshift(item);
     }
 }
+
+// Debounce dla ciężkich operacji renderowania
+const _debouncedRefreshWells = window.debounce
+    ? window.debounce(() => renderWellsList(), 250)
+    : () => renderWellsList();
+const _debouncedRefreshFull = window.debounce
+    ? window.debounce(() => {
+          renderWellsList();
+          updateSummary();
+          renderOfferSummary();
+      }, 250)
+    : () => {
+          renderWellsList();
+          updateSummary();
+          renderOfferSummary();
+      };
 
 // Eksport do window dla innych modułów
 window.enforceSingularTopClosures = enforceSingularTopClosures;

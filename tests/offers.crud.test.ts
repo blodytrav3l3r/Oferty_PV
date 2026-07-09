@@ -34,13 +34,15 @@ jest.mock('../src/prismaClient', () => ({
             findMany: jest.fn(),
             findUnique: jest.fn(),
             upsert: jest.fn(),
-            delete: jest.fn()
+            delete: jest.fn(),
+            count: jest.fn()
         },
         offers_studnie_rel: {
             findMany: jest.fn(),
             findUnique: jest.fn(),
             upsert: jest.fn(),
-            delete: jest.fn()
+            delete: jest.fn(),
+            count: jest.fn()
         },
         offer_items_rel: {
             findMany: jest.fn(),
@@ -50,6 +52,14 @@ jest.mock('../src/prismaClient', () => ({
         $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn(),
         $executeRaw: jest.fn()
+    },
+    Prisma: {
+        raw: (s: string): string => s,
+        empty: '',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sql: (strings: any, ...values: any[]): string => String.raw({ raw: strings }, ...values),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        join: (values: any[]): string => values.join(', ')
     }
 }));
 
@@ -95,19 +105,34 @@ describe('Offers CRUD Routes', () => {
     let app: express.Application;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        jest.resetAllMocks();
         app = createApp();
     });
 
     describe('GET /api/offers', () => {
         it('powinien pobrać listy ofert rury i je przemapować', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([mockOfferRury]);
+            (prisma.offers_rel.count as jest.Mock).mockResolvedValue(1);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
 
             const res = await request(app).get('/api/offers');
             expect(res.statusCode).toBe(200);
             expect(res.body.data[0].id).toBe('o-1');
             expect(res.body.data[0].price).toBe(100);
+        });
+
+        it('T5.7: powinien zwrócić paginację z domyślnymi wartościami', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app).get('/api/offers');
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toHaveProperty('data');
+            expect(res.body).toHaveProperty('totalCount');
+            expect(res.body.totalCount).toBe(0);
+            expect(res.body.skip).toBe(0);
+            expect(res.body.limit).toBe(50);
         });
 
         it('powinien zwrócić pusty array jeśli błąd (lub obsłużyć HTTP 500)', async () => {
@@ -214,6 +239,7 @@ describe('Offers CRUD Routes', () => {
         });
 
         it('powinien zaktualizować grupowo oferty rur (PUT /)', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
@@ -225,6 +251,42 @@ describe('Offers CRUD Routes', () => {
         });
 
         it('powinien zaktualizować grupowo oferty studni (PUT /studnie)', async () => {
+            (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 's-1', status: 'draft' }] });
+            expect(res.statusCode).toBe(200);
+        });
+
+        it('T5.1: powinien zwrócić 403 przy próbie edycji cudzej oferty rury (batch)', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+                { id: 'o-1', userId: 'other-user' }
+            ]);
+            const res = await request(app)
+                .put('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'o-1', status: 'draft', items: [] }] });
+            expect(res.statusCode).toBe(403);
+        });
+
+        it('T5.5: powinien zwrócić 403 gdy jedna z ofert w batchu jest cudza', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { id: 's-1', userId: 'other-user' }
+            ]);
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 's-1', status: 'draft' }] });
+            expect(res.statusCode).toBe(403);
+            expect(res.body.error).toContain('Forbidden');
+        });
+
+        it('T5.5: powinien przepuścić batch gdy wszystkie oferty należą do użytkownika', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { id: 's-1', userId: 'user-id' }
+            ]);
             (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
             const res = await request(app)
                 .put('/api/offers/studnie')

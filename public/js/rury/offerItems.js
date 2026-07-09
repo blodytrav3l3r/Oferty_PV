@@ -13,7 +13,7 @@ function setupOfferForm() {
     const dropdown = document.getElementById('product-dropdown');
 
     if (searchInput) {
-        searchInput.addEventListener('input', () => {
+        const doSearch = () => {
             const val = searchInput.value.toLowerCase().trim();
             if (val.length < 2) {
                 dropdown.classList.remove('show');
@@ -42,13 +42,23 @@ function setupOfferForm() {
                 )
                 .join('');
             dropdown.classList.add('show');
-        });
+        };
+        const debouncedSearch =
+            typeof window.debounce === 'function' ? window.debounce(doSearch, 200) : doSearch;
+        searchInput.addEventListener('input', debouncedSearch);
 
         searchInput.addEventListener('blur', () =>
             setTimeout(() => dropdown.classList.remove('show'), 200)
         );
     }
-    document.getElementById('pricelist-search')?.addEventListener('input', renderPriceList);
+    const plSearch = document.getElementById('pricelist-search');
+    if (plSearch) {
+        const debouncedRender =
+            typeof window.debounce === 'function'
+                ? window.debounce(renderPriceList, 200)
+                : renderPriceList;
+        plSearch.addEventListener('input', debouncedRender);
+    }
 
     // Ustaw dzisiejszą datę i automatycznie wygeneruj numer oferty
     const setVal = (id, val) => {

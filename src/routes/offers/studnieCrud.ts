@@ -7,7 +7,8 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
-import { offersStudnieBatchSchema } from '../../validators/offerSchemas';
+import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -17,12 +18,21 @@ const writeOffersLimiter = WRITE_LIMITER;
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
+        const pq = paginationQuerySchema.parse(req.query);
         const whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
 
         logger.debug('Offers', 'GET /studnie', {
             userId: authReq.user?.id,
             role: authReq.user?.role
         });
+
+        const validSortMap: Record<string, string> = {
+            createdAt: '"createdAt"',
+            updatedAt: '"updatedAt"',
+            offer_number: '"offer_number"'
+        };
+        const sortCol = validSortMap[pq.sort || 'createdAt'] || '"createdAt"';
+        const sortDir = pq.order === 'asc' ? 'ASC' : 'DESC';
 
         const offers = await prisma.$queryRaw<
             Array<{
@@ -42,7 +52,13 @@ router.get('/studnie', requireAuth, async (req, res) => {
             CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "updatedAt" END as "updatedAt"
-         FROM offers_studnie_rel ${whereCondition}`;
+         FROM offers_studnie_rel ${whereCondition}
+         ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
+         LIMIT ${pq.limit} OFFSET ${pq.skip}`;
+
+        const countResult = await prisma.$queryRaw<Array<{ cnt: number }>>`
+            SELECT COUNT(*) as cnt FROM offers_studnie_rel ${whereCondition}`;
+        const totalCount = Number(countResult[0]?.cnt ?? 0);
 
         const mapped = offers.map((offer) => {
             let parsedData: Record<string, unknown> = {};
@@ -85,7 +101,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
             count: mapped.length,
             ids: mapped.map((o) => o.id)
         });
-        res.json({ data: mapped });
+        res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd GET /studnie', message);
@@ -210,7 +226,12 @@ router.post(
                 })();
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
-                const userId = o.userId || authReq.user?.id || '';
+                const resolved = resolveWriteUserId(authReq.user, o.userId);
+                if (!resolved.allowed) {
+                    results.push({ id: docId, ok: false, error: 'Forbidden' });
+                    continue;
+                }
+                const effectiveUserId = resolved.effectiveUserId;
                 const dataStr = JSON.stringify(o);
                 const historyStr = JSON.stringify(newHistory);
 
@@ -218,7 +239,7 @@ router.post(
                     where: { id: docId },
                     create: {
                         id: docId,
-                        userId: userId,
+                        userId: effectiveUserId,
                         offer_number: offerNumber,
                         state: state,
                         createdAt: created,
@@ -227,7 +248,7 @@ router.post(
                         history: historyStr
                     },
                     update: {
-                        userId: userId,
+                        userId: effectiveUserId,
                         offer_number: offerNumber,
                         state: state,
                         updatedAt: updated,
@@ -259,10 +280,29 @@ router.put(
     async (req, res) => {
         const authReq = req as AuthenticatedRequest;
         try {
-            const incoming = req.body.data || [];
+            const incoming: Array<Record<string, unknown>> = req.body.data || [];
+
+            const incomingIds: string[] = incoming
+                .map((o) => (typeof o.id === 'string' ? o.id : ''))
+                .filter(Boolean);
+            const existingDocs: Array<{ id: string; userId: string | null }> =
+                incomingIds.length > 0
+                    ? (await prisma.offers_studnie_rel.findMany({
+                          where: { id: { in: incomingIds } },
+                          select: { id: true, userId: true }
+                      })) || []
+                    : [];
+            const forbidden = existingDocs.some(
+                (d) => d.userId && !canWriteDoc(authReq.user, d.userId)
+            );
+            if (forbidden) {
+                return res.status(403).json({
+                    error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
+                });
+            }
 
             for (const o of incoming) {
-                let docId = o.id;
+                let docId = typeof o.id === 'string' ? o.id : '';
                 if (!docId) {
                     docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
                 }

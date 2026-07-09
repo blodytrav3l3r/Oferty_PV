@@ -620,7 +620,7 @@ function renderWellHeaderRow(
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${well.name}</td>
+        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
@@ -1517,7 +1517,7 @@ function updateOfferSummaryUI(totals) {
 
     if (totals.totalTransportCost > 0) {
         if (transCostEl)
-            transCostEl.innerHTML = `<i data-lucide="truck" class="icon-md"></i> ${fmt(totals.totalTransportCost)} PLN`;
+            transCostEl.innerHTML = `<i data-lucide="truck" class="icon-md"></i> ${escapeHtml(fmt(totals.totalTransportCost))} PLN`;
 
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
@@ -1984,7 +1984,7 @@ async function saveOfferStudnie() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
             }
         } catch (e) {
             logger.error('offerManager', 'Błąd wyboru opiekuna:', e);
@@ -3468,14 +3468,14 @@ function updateOfferDiscountsPopupPrices() {
 
         const el = document.getElementById(`offer-dn-price-${dn}`);
         if (el) {
-            el.innerHTML = `${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN`;
+            el.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(sumNettoDN)) : escapeHtml(sumNettoDN)} PLN`;
         }
         totalOverallNetto += sumNettoDN;
     });
 
     const sumEl = document.getElementById('offer-total-popup-price');
     if (sumEl) {
-        sumEl.innerHTML = `${typeof fmt === 'function' ? fmt(totalOverallNetto) : totalOverallNetto} PLN`;
+        sumEl.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(totalOverallNetto)) : escapeHtml(totalOverallNetto)} PLN`;
     }
 }
 
@@ -3803,7 +3803,7 @@ window.updateModalTransportDetails = function () {
             typeof formatTransportCount === 'function'
                 ? formatTransportCount(totalTransports, currentTransportMode)
                 : totalTransports;
-        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? fmtInt(globalWeight) : globalWeight} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${countLabel}</strong></span>`;
+        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? escapeHtml(fmtInt(globalWeight)) : escapeHtml(globalWeight)} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${escapeHtml(countLabel)}</strong></span>`;
     }
     const totalValEl = document.getElementById('transport-modal-total-val');
     if (totalValEl) {

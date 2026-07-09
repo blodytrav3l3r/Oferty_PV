@@ -9,7 +9,7 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { OfferMapped } from '../../types/models';
-import { offersBatchSchema } from '../../validators/offerSchemas';
+import { offersBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -19,10 +19,18 @@ const writeOffersLimiter = WRITE_LIMITER;
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
+        const pq = paginationQuerySchema.parse(req.query);
         const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
-        const offers = await prisma.offers_rel.findMany({
-            where: roleClause
-        });
+        const orderBy = pq.sort ? { [pq.sort]: pq.order } : { createdAt: 'desc' as const };
+        const [offers, totalCount] = await Promise.all([
+            prisma.offers_rel.findMany({
+                where: roleClause,
+                skip: pq.skip,
+                take: pq.limit,
+                orderBy
+            }),
+            prisma.offers_rel.count({ where: roleClause })
+        ]);
 
         const offerIds = offers.map((o) => o.id);
         const allItemsRaw = await prisma.offer_items_rel.findMany({
@@ -80,7 +88,7 @@ router.get('/', requireAuth, async (req, res) => {
             });
         }
 
-        res.json({ data: mapped });
+        res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         res.status(500).json({ error: message });
@@ -260,6 +268,26 @@ router.put(
             }
 
             const incoming = req.body.data || [];
+
+            const incomingIds: string[] = incoming
+                .map((o: any) => (typeof o.id === 'string' ? o.id : ''))
+                .filter(Boolean);
+            if (incomingIds.length > 0) {
+                const existingDocs =
+                    (await prisma.offers_rel.findMany({
+                        where: { id: { in: incomingIds } },
+                        select: { id: true, userId: true }
+                    })) || [];
+                const forbidden = existingDocs.some(
+                    (d: { id: string; userId: string | null }) =>
+                        d.userId && !canWriteDoc(authReq.user, d.userId)
+                );
+                if (forbidden) {
+                    return res.status(403).json({
+                        error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
+                    });
+                }
+            }
 
             for (const o of incoming) {
                 let docId = o.id;

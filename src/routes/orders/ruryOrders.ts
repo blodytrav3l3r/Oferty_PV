@@ -524,6 +524,13 @@ router.patch(
 
             const newStatus = req.body.status || o.status;
             const newUserId = req.body.userId || o.userId;
+
+            if (req.body.userId && req.body.userId !== o.userId && authReq.user?.role !== 'admin') {
+                return res
+                    .status(403)
+                    .json({ error: 'Tylko administrator może zmienić opiekuna zamówienia' });
+            }
+
             const dataStr = JSON.stringify(updatedData);
 
             await prisma.orders_rury_rel.update({

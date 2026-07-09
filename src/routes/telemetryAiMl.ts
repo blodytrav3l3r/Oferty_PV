@@ -5,7 +5,8 @@ import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
 import { logger } from '../utils/logger';
 import { WRITE_LIMITER } from '../middleware/rateLimiters';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { logAudit } from '../services/auditService';
 import { z } from 'zod';
 import prisma from '../prismaClient';
 
@@ -217,9 +218,13 @@ router.get('/telemetry/ai/models', requireAuth, async (_req: Request, res: Respo
     }
 });
 
-router.post('/telemetry/ai/train', requireAuth, async (_req: Request, res: Response) => {
+router.post('/telemetry/ai/train', requireAuth, requireAdmin, async (req, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const result = await trainingPipeline.run(true);
+        await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
+            trained: result?.trained ?? false
+        });
         res.json(result);
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -227,9 +232,14 @@ router.post('/telemetry/ai/train', requireAuth, async (_req: Request, res: Respo
     }
 });
 
-router.post('/telemetry/ai/rollback', requireAuth, async (_req: Request, res: Response) => {
+router.post('/telemetry/ai/rollback', requireAuth, requireAdmin, async (req, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const previous = await modelRegistry.rollbackToPrevious();
+        await logAudit('ai_model', 'rollback', authReq.user?.id || '', 'trigger', {
+            rolledBack: !!previous,
+            modelId: previous?.id || null
+        });
         res.json({ rolledBack: !!previous, model: previous });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

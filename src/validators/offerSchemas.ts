@@ -642,3 +642,16 @@ export const marketplaceModerateSchema = z.object({
 
 export type MarketplaceSearchInput = z.infer<typeof marketplaceSearchSchema>;
 export type MarketplaceModerateInput = z.infer<typeof marketplaceModerateSchema>;
+
+// =============================================================================
+// PAGINACJA
+// =============================================================================
+
+export const paginationQuerySchema = z.object({
+    skip: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    sort: z.enum(['createdAt', 'updatedAt', 'offer_number']).optional(),
+    order: z.enum(['asc', 'desc']).default('desc')
+});
+
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>;

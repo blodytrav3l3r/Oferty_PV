@@ -30,6 +30,7 @@ function debounce(fn, delay) {
         timer = setTimeout(() => fn.apply(this, args), delay);
     };
 }
+window.debounce = debounce;
 
 function trapFocus(container) {
     const focusable = container.querySelectorAll(

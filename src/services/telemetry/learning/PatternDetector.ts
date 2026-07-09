@@ -190,8 +190,9 @@ export class PatternDetector {
         const patterns: KnowledgePattern[] = [];
         for (const [key, val] of buckets) {
             if (val.count < 3) continue;
-            const dn = key.split('|')[1];
-            const using = key.includes('with');
+            const parts = key.split('|');
+            const dn = parts[0];
+            const using = parts[1] === 'with';
             patterns.push({
                 patternType: 'reduction_choice',
                 patternKey: key,

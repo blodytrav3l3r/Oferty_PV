@@ -40,25 +40,29 @@ export class RewardCalculator {
                 break;
         }
 
-        await prisma.aiRewardLog.create({
-            data: {
-                id: crypto.randomUUID(),
-                userId: event.userId,
-                wellId: event.wellId || 'unknown',
-                dn: event.dn ?? 0,
-                action: event.action,
-                reward,
-                scoreBefore: event.scoreBefore ?? null,
-                scoreAfter: event.scoreAfter ?? null,
-                wasAiRanked: event.wasAiRanked ?? false,
-                configSnapshot: event.configSnapshot ? JSON.stringify(event.configSnapshot) : null,
-                createdAt: new Date().toISOString()
-            }
-        });
+        await prisma.$transaction(async (tx) => {
+            await tx.aiRewardLog.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    userId: event.userId,
+                    wellId: event.wellId || 'unknown',
+                    dn: event.dn ?? 0,
+                    action: event.action,
+                    reward,
+                    scoreBefore: event.scoreBefore ?? null,
+                    scoreAfter: event.scoreAfter ?? null,
+                    wasAiRanked: event.wasAiRanked ?? false,
+                    configSnapshot: event.configSnapshot
+                        ? JSON.stringify(event.configSnapshot)
+                        : null,
+                    createdAt: new Date().toISOString()
+                }
+            });
 
-        await prisma.users.update({
-            where: { id: event.userId },
-            data: { totalReward: { increment: reward } }
+            await tx.users.updateMany({
+                where: { id: event.userId },
+                data: { totalReward: { increment: reward } }
+            });
         });
 
         logger.info(
@@ -68,9 +72,15 @@ export class RewardCalculator {
     }
 
     async getAggregateReward(userId: string): Promise<{ total: number; count: number }> {
-        const logs = await prisma.aiRewardLog.findMany({ where: { userId } });
-        const total = logs.reduce((sum, l) => sum + l.reward, 0);
-        return { total, count: logs.length };
+        const result = await prisma.aiRewardLog.aggregate({
+            where: { userId },
+            _sum: { reward: true },
+            _count: { reward: true }
+        });
+        return {
+            total: result._sum.reward ?? 0,
+            count: result._count.reward ?? 0
+        };
     }
 }
 

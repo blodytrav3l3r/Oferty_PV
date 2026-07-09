@@ -1,5 +1,5 @@
 import express from 'express';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
@@ -333,98 +333,111 @@ router.get('/', requireAuth, async (_req, res) => {
 // ──────────────────────────────────────────
 // PUT / — bulk save (usuń wszystko + utwórz)
 // ──────────────────────────────────────────
-router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), async (req, res) => {
-    try {
-        const arr: Record<string, unknown>[] = req.body.data;
+router.put(
+    '/',
+    requireAuth,
+    requireAdmin,
+    writeLimiter,
+    validateData(pricelistDataSchema),
+    async (req, res) => {
+        try {
+            const arr: Record<string, unknown>[] = req.body.data;
 
-        await prisma.$transaction(async (tx) => {
-            const uniqueKeys = new Map<string, { name: string; componentType: string | null }>();
-            for (const item of arr) {
-                const name = String(item.category ?? '');
-                if (!name) continue;
-                const compType = item.componentType != null ? String(item.componentType) : null;
-                uniqueKeys.set(name, { name, componentType: compType });
-            }
-            let orderIdx = 0;
-            for (const entry of uniqueKeys.values()) {
-                await tx.categoriesStudnie.upsert({
-                    where: { name: entry.name },
-                    update: { componentType: entry.componentType },
-                    create: {
-                        name: entry.name,
-                        componentType: entry.componentType,
-                        order: orderIdx
-                    }
-                });
-                orderIdx++;
-            }
+            await prisma.$transaction(async (tx) => {
+                const uniqueKeys = new Map<
+                    string,
+                    { name: string; componentType: string | null }
+                >();
+                for (const item of arr) {
+                    const name = String(item.category ?? '');
+                    if (!name) continue;
+                    const compType = item.componentType != null ? String(item.componentType) : null;
+                    uniqueKeys.set(name, { name, componentType: compType });
+                }
+                let orderIdx = 0;
+                for (const entry of uniqueKeys.values()) {
+                    await tx.categoriesStudnie.upsert({
+                        where: { name: entry.name },
+                        update: { componentType: entry.componentType },
+                        create: {
+                            name: entry.name,
+                            componentType: entry.componentType,
+                            order: orderIdx
+                        }
+                    });
+                    orderIdx++;
+                }
 
-            await tx.productsStudnie.deleteMany();
+                await tx.productsStudnie.deleteMany();
 
-            for (const item of arr) {
-                await tx.productsStudnie.create({
-                    data: {
-                        id: String(item.id),
-                        name: String(item.name ?? ''),
-                        category: String(item.category ?? ''),
-                        componentType: String(item.componentType ?? ''),
-                        dn: item.dn != null ? String(item.dn) : null,
-                        height: item.height != null ? Number(item.height) : null,
-                        weight: item.weight != null ? Number(item.weight) : null,
-                        price: Number(item.price ?? 0),
-                        area: item.area != null ? Number(item.area) : null,
-                        areaExt: item.areaExt != null ? Number(item.areaExt) : null,
-                        transport: item.transport != null ? Number(item.transport) : null,
-                        magazynWL: item.magazynWL != null ? Boolean(item.magazynWL) : false,
-                        magazynKLB: item.magazynKLB != null ? Boolean(item.magazynKLB) : false,
-                        formaStandardowa:
-                            item.formaStandardowa != null ? Boolean(item.formaStandardowa) : false,
-                        formaStandardowaKLB:
-                            item.formaStandardowaKLB != null
-                                ? Boolean(item.formaStandardowaKLB)
-                                : false,
-                        active: item.active != null ? Boolean(item.active) : false,
-                        zapasDol: item.zapasDol != null ? Number(item.zapasDol) : null,
-                        zapasGora: item.zapasGora != null ? Number(item.zapasGora) : null,
-                        zapasDolMin: item.zapasDolMin != null ? Number(item.zapasDolMin) : null,
-                        zapasGoraMin: item.zapasGoraMin != null ? Number(item.zapasGoraMin) : null,
-                        spocznikH: item.spocznikH != null ? String(item.spocznikH) : null,
-                        hMin1: item.hMin1 != null ? Number(item.hMin1) : null,
-                        hMax1: item.hMax1 != null ? Number(item.hMax1) : null,
-                        cena1: item.cena1 != null ? Number(item.cena1) : null,
-                        hMin2: item.hMin2 != null ? Number(item.hMin2) : null,
-                        hMax2: item.hMax2 != null ? Number(item.hMax2) : null,
-                        cena2: item.cena2 != null ? Number(item.cena2) : null,
-                        hMin3: item.hMin3 != null ? Number(item.hMin3) : null,
-                        hMax3: item.hMax3 != null ? Number(item.hMax3) : null,
-                        cena3: item.cena3 != null ? Number(item.cena3) : null,
-                        doplataPEHD: item.doplataPEHD != null ? Number(item.doplataPEHD) : null,
-                        doplataZelbet:
-                            item.doplataZelbet != null ? Number(item.doplataZelbet) : null,
-                        doplataDrabNierdzewna:
-                            item.doplataDrabNierdzewna != null
-                                ? Number(item.doplataDrabNierdzewna)
-                                : null,
-                        malowanieWewnetrzne:
-                            item.malowanieWewnetrzne != null
-                                ? Number(item.malowanieWewnetrzne)
-                                : null,
-                        malowanieZewnetrzne:
-                            item.malowanieZewnetrzne != null
-                                ? Number(item.malowanieZewnetrzne)
-                                : null
-                    }
-                });
-            }
-        });
+                for (const item of arr) {
+                    await tx.productsStudnie.create({
+                        data: {
+                            id: String(item.id),
+                            name: String(item.name ?? ''),
+                            category: String(item.category ?? ''),
+                            componentType: String(item.componentType ?? ''),
+                            dn: item.dn != null ? String(item.dn) : null,
+                            height: item.height != null ? Number(item.height) : null,
+                            weight: item.weight != null ? Number(item.weight) : null,
+                            price: Number(item.price ?? 0),
+                            area: item.area != null ? Number(item.area) : null,
+                            areaExt: item.areaExt != null ? Number(item.areaExt) : null,
+                            transport: item.transport != null ? Number(item.transport) : null,
+                            magazynWL: item.magazynWL != null ? Boolean(item.magazynWL) : false,
+                            magazynKLB: item.magazynKLB != null ? Boolean(item.magazynKLB) : false,
+                            formaStandardowa:
+                                item.formaStandardowa != null
+                                    ? Boolean(item.formaStandardowa)
+                                    : false,
+                            formaStandardowaKLB:
+                                item.formaStandardowaKLB != null
+                                    ? Boolean(item.formaStandardowaKLB)
+                                    : false,
+                            active: item.active != null ? Boolean(item.active) : false,
+                            zapasDol: item.zapasDol != null ? Number(item.zapasDol) : null,
+                            zapasGora: item.zapasGora != null ? Number(item.zapasGora) : null,
+                            zapasDolMin: item.zapasDolMin != null ? Number(item.zapasDolMin) : null,
+                            zapasGoraMin:
+                                item.zapasGoraMin != null ? Number(item.zapasGoraMin) : null,
+                            spocznikH: item.spocznikH != null ? String(item.spocznikH) : null,
+                            hMin1: item.hMin1 != null ? Number(item.hMin1) : null,
+                            hMax1: item.hMax1 != null ? Number(item.hMax1) : null,
+                            cena1: item.cena1 != null ? Number(item.cena1) : null,
+                            hMin2: item.hMin2 != null ? Number(item.hMin2) : null,
+                            hMax2: item.hMax2 != null ? Number(item.hMax2) : null,
+                            cena2: item.cena2 != null ? Number(item.cena2) : null,
+                            hMin3: item.hMin3 != null ? Number(item.hMin3) : null,
+                            hMax3: item.hMax3 != null ? Number(item.hMax3) : null,
+                            cena3: item.cena3 != null ? Number(item.cena3) : null,
+                            doplataPEHD: item.doplataPEHD != null ? Number(item.doplataPEHD) : null,
+                            doplataZelbet:
+                                item.doplataZelbet != null ? Number(item.doplataZelbet) : null,
+                            doplataDrabNierdzewna:
+                                item.doplataDrabNierdzewna != null
+                                    ? Number(item.doplataDrabNierdzewna)
+                                    : null,
+                            malowanieWewnetrzne:
+                                item.malowanieWewnetrzne != null
+                                    ? Number(item.malowanieWewnetrzne)
+                                    : null,
+                            malowanieZewnetrzne:
+                                item.malowanieZewnetrzne != null
+                                    ? Number(item.malowanieZewnetrzne)
+                                    : null
+                        }
+                    });
+                }
+            });
 
-        res.json({ ok: true, count: arr.length });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('ProductsStudnieV2', 'PUT error', message);
-        res.status(500).json({ error: message });
+            res.json({ ok: true, count: arr.length });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            logger.error('ProductsStudnieV2', 'PUT error', message);
+            res.status(500).json({ error: message });
+        }
     }
-});
+);
 
 // ──────────────────────────────────────────
 // PATCH /:id — edytuj jeden produkt
@@ -432,6 +445,7 @@ router.put('/', requireAuth, writeLimiter, validateData(pricelistDataSchema), as
 router.patch(
     '/:id',
     requireAuth,
+    requireAdmin,
     writeLimiter,
     validateData(productStudniePatchSchema),
     async (req, res) => {
@@ -461,7 +475,7 @@ router.patch(
 // ──────────────────────────────────────────
 // DELETE /:id — usuń jeden produkt
 // ──────────────────────────────────────────
-router.delete('/:id', requireAuth, writeLimiter, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
     try {
         const { id } = req.params;
         await prisma.productsStudnie.delete({ where: { id } });

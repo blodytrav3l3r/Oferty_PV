@@ -132,7 +132,7 @@ async function saveOffer() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
                 if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
@@ -331,13 +331,13 @@ function renderSavedOffers() {
     <div class="offer-list-item"${_hasOrder ? ' style="border-left:3px solid var(--success-hover);"' : ''}>
       <div class="offer-info" style="min-width:0;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
-          <h3 style="margin-bottom:0.2rem; word-break:break-all;">${o.number}</h3>
+          <h3 style="margin-bottom:0.2rem; word-break:break-all;">${escapeHtml(o.number)}</h3>
           <div style="font-weight:700; color:var(--text-primary); font-size: 0.9rem; white-space:nowrap;">
             <i data-lucide="banknote"></i> ${fmt(o.totalBrutto)} PLN
           </div>
         </div>
         <div class="meta" style="margin-top:0.3rem;">
-          <span><i data-lucide="calendar"></i> <strong>${o.date}</strong></span>
+          <span><i data-lucide="calendar"></i> <strong>${escapeHtml(o.date)}</strong></span>
           <span><i data-lucide="package"></i> <strong>${o.items.length}</strong> poz.</span>
           ${
               isAdmin && o.userName
@@ -356,7 +356,7 @@ function renderSavedOffers() {
                         ) {
                             displayUN = currentUser.displayName || currentUser.username || rawUN;
                         }
-                        return `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> <strong>${displayUN}</strong></span>`;
+                        return `<span style="color:var(--accent-hover)"><i data-lucide="user"></i> <strong>${escapeHtml(displayUN)}</strong></span>`;
                     })()
                   : ''
           }
@@ -365,9 +365,9 @@ function renderSavedOffers() {
             o.clientName || o.investName || o.clientContact
                 ? `
         <div class="offer-client-badges">
-          ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight:500">${o.clientName}</span></div>` : ''}
-          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight:500">${o.investName}</span></div>` : ''}
-          ${o.clientContact ? `<div class="badge-contact"><i data-lucide="phone"></i> <strong>Kontakt:</strong> <span style="font-weight:500">${o.clientContact}</span></div>` : ''}
+          ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight:500">${escapeHtml(o.clientName)}</span></div>` : ''}
+          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight:500">${escapeHtml(o.investName)}</span></div>` : ''}
+          ${o.clientContact ? `<div class="badge-contact"><i data-lucide="phone"></i> <strong>Kontakt:</strong> <span style="font-weight:500">${escapeHtml(o.clientContact)}</span></div>` : ''}
         </div>`
                 : ''
         }
@@ -381,7 +381,7 @@ function renderSavedOffers() {
                         ord.offerNumber ||
                         (ord.id ? ord.id.substring(0, 8) : '—');
                     return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
-                    <i data-lucide="package" class="icon-xxs"></i> Zamówienie ${label}
+                    <i data-lucide="package" class="icon-xxs"></i> Zamówienie ${escapeHtml(label)}
                 </span>`;
                 })
                 .join('')}
@@ -402,7 +402,7 @@ function renderSavedOffers() {
                       .map(
                           (ord) => `
             <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
-                <i data-lucide="package"></i> Zam. ${ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8)}
+                <i data-lucide="package"></i> Zam. ${escapeHtml(ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8))}
             </button>
             <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'pdf')" style="background:rgba(var(--danger-rgb),0.15); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
@@ -514,7 +514,7 @@ async function loadOffer(id) {
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
     if (titleEl)
-        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${normalized.number || id}</span>`;
+        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">${escapeHtml(normalized.number || id)}</span>`;
     if (window.lucide) lucide.createIcons();
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
@@ -524,7 +524,7 @@ async function loadOffer(id) {
                 ? 'inline-block'
                 : 'none';
         if (editingOfferAssignedUserName) {
-            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
         } else {
             btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
         }
@@ -644,8 +644,8 @@ function showOfferHistory(id) {
         <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; border-bottom:1px dashed var(--border-glass); padding-bottom:0.4rem;">
           <strong class="text-primary">${new Date(h.updatedAt).toLocaleString()}</strong>
           <div style="text-align:right;">
-            <div style="font-size:0.75rem; color:var(--text-muted);">Zapisana przez: <strong style="color:var(--text-secondary);">${h.lastEditedBy || h.userName || '—'}</strong></div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">Nadpisana przez: <strong style="color:var(--accent);">${nextState.lastEditedBy || nextState.userName || '—'}</strong></div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Zapisana przez: <strong style="color:var(--text-secondary);">${escapeHtml(h.lastEditedBy || h.userName || '—')}</strong></div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Nadpisana przez: <strong style="color:var(--accent);">${escapeHtml(nextState.lastEditedBy || nextState.userName || '—')}</strong></div>
           </div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -674,7 +674,7 @@ function showOfferHistory(id) {
         html: `
     <div class="modal" style="max-width:800px; width:95%; border-radius:12px; max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 id="offer-history-title" style="font-weight:700;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia zmian oferty: ${offer.number}</h3>
+        <h3 id="offer-history-title" style="font-weight:700;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia zmian oferty: ${escapeHtml(offer.number)}</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="padding:1rem 0; overflow-y:auto; flex:1;">

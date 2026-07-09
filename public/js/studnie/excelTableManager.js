@@ -3421,7 +3421,7 @@ function _excelHandleCopy(e) {
             text += line.join('\t') + '\n';
         }
     } else if (_excelSelectedCols.length > 0) {
-        var cols = _excelSelectedCols.sort(function (a, b) {
+        var cols = [..._excelSelectedCols].sort(function (a, b) {
             return a - b;
         });
         rows.forEach(function (row) {
@@ -3479,7 +3479,7 @@ function _excelHandlePaste(e) {
         lines[_pi] = lines[_pi].replace(/\r$/, '');
     }
     if (_excelSelectedCells.length > 0) {
-        var cellList = _excelSelectedCells.sort(function (a, b) {
+        var cellList = [..._excelSelectedCells].sort(function (a, b) {
             return a.wIdx - b.wIdx || a.colIdx - b.colIdx;
         });
         var cellRows = {};
@@ -3512,7 +3512,7 @@ function _excelHandlePaste(e) {
         var _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
         _pasteFn(lines, _baseWIdx, _firstCol, null);
     } else if (_excelSelectedCols.length > 0) {
-        var cols = _excelSelectedCols.sort(function (a, b) {
+        var cols = [..._excelSelectedCols].sort(function (a, b) {
             return a - b;
         });
         /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
@@ -4537,7 +4537,7 @@ function _excelSortConfig(well) {
         uszczelka: 8
     };
     var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
-    well.config.sort(function (a, b) {
+    well.config = [...well.config].sort(function (a, b) {
         var pA = sz.find(function (p) {
             return p.id === a.productId;
         });
@@ -5478,8 +5478,8 @@ function _excelImportPasteList() {
                         var w = wells[nwi];
                         if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
                             _excelAutoSelectForWell(nwi).catch(function (e) {
-                                if (console.warn)
-                                    console.warn(
+                                if (window.logger)
+                                    window.logger.warn(
                                         'AutoSelect pominiety dla nowej studni:',
                                         e.message || e
                                     );
@@ -5634,8 +5634,8 @@ function _excelPasteCreateWells(text) {
                         var w = wells[nwi];
                         if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
                             _excelAutoSelectForWell(nwi).catch(function (e) {
-                                if (console.warn)
-                                    console.warn(
+                                if (window.logger)
+                                    window.logger.warn(
                                         'AutoSelect pominiety dla nowej studni:',
                                         e.message || e
                                     );

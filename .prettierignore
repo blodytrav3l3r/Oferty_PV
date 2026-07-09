@@ -6,3 +6,4 @@ dist
 package-lock.json
 *.htm
 *.html.bak
+*.xlsx

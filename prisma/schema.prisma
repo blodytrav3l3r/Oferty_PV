@@ -261,6 +261,8 @@ model offer_items_rel {
   quantity  Float?
   discount  Float?
   price     Float?
+
+  @@index([offerId], map: "idx_offitems_offer")
 }
 
 model offer_studnie_items_rel {
@@ -271,6 +273,8 @@ model offer_studnie_items_rel {
   discount       Float?
   price          Float?
   dodatkowe_info String?
+
+  @@index([offerId], map: "idx_offstitems_offer")
 }
 
 // Główne dokumenty ofert (typ rury/ogólne)
@@ -285,6 +289,10 @@ model offers_rel {
   data          String?
   updatedAt     String?
   history       String?  @default("[]")
+
+  @@index([userId], map: "idx_offers_user")
+  @@index([createdAt], map: "idx_offers_created")
+  @@index([state], map: "idx_offers_state")
 }
 
 // Główne dokumenty ofert (typ studnie)
@@ -299,6 +307,10 @@ model offers_studnie_rel {
   data          String?
   updatedAt     String?
   history       String?  @default("[]")
+
+  @@index([userId], map: "idx_offersstud_user")
+  @@index([createdAt], map: "idx_offersstud_created")
+  @@index([state], map: "idx_offersstud_state")
 }
 
 // Liczniki numeracji ofert
@@ -327,6 +339,9 @@ model orders_studnie_rel {
   createdAt      String?
   status         String?
   data           String?
+
+  @@index([userId], map: "idx_ordstud_user")
+  @@index([offerStudnieId], map: "idx_ordstud_offer")
 }
 
 // Zamówienia na rury
@@ -337,6 +352,9 @@ model orders_rury_rel {
   createdAt String?
   status    String?
   data      String?
+
+  @@index([userId], map: "idx_ordrury_user")
+  @@index([offerId], map: "idx_ordrury_offer")
 }
 
 model production_order_counters {
@@ -565,4 +583,6 @@ model users {
   orderStartNumber           Int?     @default(1)
   productionOrderStartNumber Int?     @default(1)
   totalReward                Float?   @default(0)
+
+  @@index([role], map: "idx_users_role")
 }
