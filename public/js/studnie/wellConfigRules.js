@@ -572,7 +572,8 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
  * @param {number} [opts.dn] - średnica studni (redukcja)
  * @param {number} [opts.otCount] - liczba kręgów wierconych
  * @param {boolean} [opts.isKonus] - czy zakończenie to konus
- * @returns {{ score: number, breakdown: Array<{factor:string,value:number}>, reason: string }}
+ * @param {number} [opts._aiScore] - wynik AI do dual-rankingu
+ * @returns {{ score: number, breakdown: Array<{factor:string,value:number}>, reason: string, dualScore?: number, _aiScore?: number }}
  */
 function scoreLayout(opts = /** @type {Object} */ ({})) {
     let score = 0;

@@ -102,6 +102,7 @@
      * @param {number} [opts.scoreBefore]
      * @param {number} [opts.scoreAfter]
      * @param {boolean} [opts.wasAiRanked]
+     * @param {string} [opts.eventType]
      */
     function onWellAccepted(opts) {
         sendReward({
