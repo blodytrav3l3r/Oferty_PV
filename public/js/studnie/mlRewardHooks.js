@@ -29,6 +29,7 @@
      * @param {number} [params.scoreAfter]
      * @param {boolean} [params.wasAiRanked]
      * @param {string} [params.eventType] - OFFER_SAVED | ORDER_CONFIRMED
+     * @param {Object} [params.aiRankSnapshot] - ostatnia decyzja AI_RANK_DECISION
      */
     function sendReward(params) {
         if (_rewardInFlight) return;
@@ -41,6 +42,11 @@
         var snap = getConfigSnapshot(well);
         if (params.eventType) {
             snap.eventType = params.eventType;
+        }
+
+        // Dołącz snapshot ostatniej decyzji AI rankingu
+        if (params.aiRankSnapshot) {
+            snap.aiRankSnapshot = params.aiRankSnapshot;
         }
 
         var payload = {
@@ -103,6 +109,7 @@
      * @param {number} [opts.scoreAfter]
      * @param {boolean} [opts.wasAiRanked]
      * @param {string} [opts.eventType]
+     * @param {Object} [opts.aiRankSnapshot]
      */
     function onWellAccepted(opts) {
         sendReward({
@@ -110,20 +117,26 @@
             scoreBefore: opts && opts.scoreBefore,
             scoreAfter: opts && opts.scoreAfter,
             wasAiRanked: opts && opts.wasAiRanked,
-            eventType: opts && opts.eventType
+            eventType: opts && opts.eventType,
+            aiRankSnapshot: opts && opts.aiRankSnapshot
         });
     }
 
     /**
      * Hook: studnia odrzucona
      * @param {Object} [opts]
+     * @param {number} [opts.scoreBefore]
+     * @param {number} [opts.scoreAfter]
+     * @param {boolean} [opts.wasAiRanked]
+     * @param {Object} [opts.aiRankSnapshot]
      */
     function onWellRejected(opts) {
         sendReward({
             action: 'REJECT',
             scoreBefore: opts && opts.scoreBefore,
             scoreAfter: opts && opts.scoreAfter,
-            wasAiRanked: opts && opts.wasAiRanked
+            wasAiRanked: opts && opts.wasAiRanked,
+            aiRankSnapshot: opts && opts.aiRankSnapshot
         });
     }
 

@@ -12,11 +12,29 @@ import prisma from '../prismaClient';
 
 const router = Router();
 
+const FEATURE_COUNT = 16;
+
 const predictSchema = z.object({
-    features: z.array(z.number()).min(1).max(100),
+    features: z.array(z.number()).length(FEATURE_COUNT),
+    wellType: z.string().optional(),
+    warehouse: z.string().optional(),
+    dn: z.number().optional(),
+    featureVersion: z.string().optional()
+});
+
+/* ===== BATCH PREDICT ===== */
+
+const batchCandidateSchema = z.object({
+    id: z.number(),
+    features: z.array(z.number()).length(FEATURE_COUNT),
     wellType: z.string().optional(),
     warehouse: z.string().optional(),
     dn: z.number().optional()
+});
+
+const batchPredictSchema = z.object({
+    candidates: z.array(batchCandidateSchema).min(1).max(10),
+    featureVersion: z.string().optional()
 });
 
 const rewardSchema = z.object({
@@ -41,6 +59,44 @@ function cacheKey(features: number[], wellType?: string, warehouse?: string, dn?
     return `${features.join(',')}|${wellType || ''}|${warehouse || ''}|${dn || ''}`;
 }
 
+async function runPrediction(
+    features: number[],
+    featureVersion?: string
+): Promise<{ score: number; version: string; featureVersion: string } | { error: string }> {
+    const activeModel = await modelRegistry.getActiveModel();
+    if (!activeModel) {
+        return { error: 'No active model' };
+    }
+
+    const expectedDim = activeModel.featureMins.length;
+    if (features.length !== expectedDim) {
+        return {
+            error: 'FEATURE_COUNT_MISMATCH',
+            expectedFeatureCount: expectedDim,
+            receivedFeatureCount: features.length
+        } as any;
+    }
+
+    const { AcceptanceModel } = await import('../services/ml/AcceptanceModel');
+    const model = new AcceptanceModel(
+        activeModel.weights.length,
+        activeModel.weights,
+        activeModel.bias
+    );
+
+    const normalizedFeatures = features.map((v, i) => {
+        const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
+        return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
+    });
+
+    const score = model.predict(normalizedFeatures);
+    return {
+        score: parseFloat(score.toFixed(4)),
+        version: activeModel.version,
+        featureVersion: featureVersion || 'unknown'
+    };
+}
+
 router.post(
     '/telemetry/ai/predict',
     requireAuth,
@@ -53,7 +109,7 @@ router.post(
                 return;
             }
 
-            const { features, wellType, warehouse, dn } = parsed.data;
+            const { features, wellType, warehouse, dn, featureVersion } = parsed.data;
             const key = cacheKey(features, wellType, warehouse, dn);
             const cached = predictionCache.get(key);
             if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -61,10 +117,62 @@ router.post(
                 return;
             }
 
+            const result = await runPrediction(features, featureVersion);
+            if ('error' in result) {
+                if (result.error === 'No active model') {
+                    res.status(503).json({ error: 'No active model', scores: [] });
+                } else {
+                    res.status(400).json(result);
+                }
+                return;
+            }
+
+            const scoreResult = [result];
+            predictionCache.set(key, { result: scoreResult, timestamp: Date.now() });
+
+            res.json({ scores: scoreResult, cached: false });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            logger.error('AiPredictRoute', `Blad predykcji: ${msg}`);
+            res.status(500).json({ error: 'Prediction failed' });
+        }
+    }
+);
+
+/* ===== BATCH PREDICT (dla rankCandidates) ===== */
+
+router.post(
+    '/telemetry/ai/predict/batch',
+    requireAuth,
+    WRITE_LIMITER,
+    async (req: Request, res: Response) => {
+        try {
+            const parsed = batchPredictSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
+                return;
+            }
+
+            const { candidates, featureVersion } = parsed.data;
+
             const activeModel = await modelRegistry.getActiveModel();
             if (!activeModel) {
                 res.status(503).json({ error: 'No active model', scores: [] });
                 return;
+            }
+
+            const expectedDim = activeModel.featureMins.length;
+            for (const c of candidates) {
+                if (c.features.length !== expectedDim) {
+                    res.status(400).json({
+                        error: 'FEATURE_COUNT_MISMATCH',
+                        candidateId: c.id,
+                        expectedFeatureCount: expectedDim,
+                        receivedFeatureCount: c.features.length,
+                        expectedFeatureVersion: activeModel.version
+                    });
+                    return;
+                }
             }
 
             const { AcceptanceModel } = await import('../services/ml/AcceptanceModel');
@@ -74,24 +182,25 @@ router.post(
                 activeModel.bias
             );
 
-            const featureDim = activeModel.featureMins.length;
-            const paddedFeatures = features.slice(0, featureDim);
-            while (paddedFeatures.length < featureDim) paddedFeatures.push(0);
-
-            const normalizedFeatures = paddedFeatures.map((v, i) => {
-                const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
-                return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
+            const scores = candidates.map((c) => {
+                const normalizedFeatures = c.features.map((v, i) => {
+                    const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
+                    return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
+                });
+                const score = model.predict(normalizedFeatures);
+                return {
+                    id: c.id,
+                    score: parseFloat(score.toFixed(4)),
+                    version: activeModel.version,
+                    featureVersion: featureVersion || 'unknown'
+                };
             });
 
-            const score = model.predict(normalizedFeatures);
-            const result = [{ score: parseFloat(score.toFixed(4)), version: activeModel.version }];
-            predictionCache.set(key, { result, timestamp: Date.now() });
-
-            res.json({ scores: result, cached: false });
+            res.json({ scores });
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
-            logger.error('AiPredictRoute', `Blad predykcji: ${msg}`);
-            res.status(500).json({ error: 'Prediction failed' });
+            logger.error('AiPredictBatchRoute', `Blad predykcji batch: ${msg}`);
+            res.status(500).json({ error: 'Batch prediction failed' });
         }
     }
 );
@@ -132,6 +241,48 @@ router.post(
     }
 );
 
+/* ===== FEATURE FLAG: AI influence level ===== */
+
+router.get('/telemetry/ai/settings', requireAuth, async (_req: Request, res: Response) => {
+    try {
+        const setting = await prisma.settings.findUnique({
+            where: { key: 'wells_ai_influence' }
+        });
+        res.json({
+            key: 'wells_ai_influence',
+            value: setting?.value || '0',
+            description: 'Poziom wplywu AI na dobor elementow studni (0-100, 0=shadow)'
+        });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(500).json({ error: msg });
+    }
+});
+
+router.post('/telemetry/ai/settings', requireAuth, requireAdmin, async (req, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { value } = req.body;
+        const pct = parseInt(value, 10);
+        if (isNaN(pct) || pct < 0 || pct > 100) {
+            res.status(400).json({ error: 'Wartosc musi byc liczba 0-100' });
+            return;
+        }
+        await prisma.settings.upsert({
+            where: { key: 'wells_ai_influence' },
+            update: { value: String(pct) },
+            create: { key: 'wells_ai_influence', value: String(pct) }
+        });
+        await logAudit('settings', 'update', authReq.user?.id || '', 'wells_ai_influence', {
+            newValue: pct
+        });
+        res.json({ key: 'wells_ai_influence', value: String(pct) });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(500).json({ error: msg });
+    }
+});
+
 router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Response) => {
     try {
         const activeModel = await modelRegistry.getActiveModel();
@@ -139,15 +290,20 @@ router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Re
         const featureCount = await featureExtractor.getFeatureCount();
         const pipelineStatus = trainingPipeline.getStatus();
         const rewardLogs = await prisma.aiRewardLog.count();
+        const aiInfluence = await prisma.settings.findUnique({
+            where: { key: 'wells_ai_influence' }
+        });
 
         res.json({
             mlOnline: !!activeModel,
             modelVersion: activeModel?.version || null,
+            modelFeatureCount: activeModel?.featureMins.length || FEATURE_COUNT,
             modelCount,
             featureCount,
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
-            cacheSize: predictionCache.size
+            cacheSize: predictionCache.size,
+            aiInfluencePct: parseInt(aiInfluence?.value || '0', 10)
         });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

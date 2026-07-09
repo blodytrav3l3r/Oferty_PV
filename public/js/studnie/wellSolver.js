@@ -896,9 +896,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     // KROK 7: Solver — szuka najlepszej kombinacji
+    // Zwraca tablicę kandydatów posortowaną rosnąco (niższy score = lepszy)
     function solve(tolBelow, tolAbove, maxAvr, skipHolesValid) {
-        let best = null;
-        let bestScore = Infinity;
+        let candidates = [];
 
         for (const topCfg of topConfigs) {
             for (const dennicaItem of dennicy) {
@@ -947,17 +947,16 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     otCount
                 });
                 let score = scoreResult.score;
-                let dualScore = scoreResult.dualScore !== undefined ? scoreResult.dualScore : score;
                 score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                if (dualScore < bestScore) {
-                    bestScore = dualScore;
-                    let runErrors = [...conf.errors];
-                    if (isOutOfBounds)
-                        runErrors.push(
-                            `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
-                        );
-                    best = {
+                let runErrors = [...conf.errors];
+                if (isOutOfBounds)
+                    runErrors.push(
+                        `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
+                    );
+
+                candidates.push({
+                    solution: {
                         topItems: [...topCfg.items],
                         kregItems: otKItems.map((ki) => ({
                             productId: ki.productId,
@@ -972,8 +971,9 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         isMinimal: conf.isMinimal || denIsMin,
                         _scoreBreakdown: scoreResult.breakdown,
                         _scoreReason: scoreResult.reason
-                    };
-                }
+                    },
+                    technicalScore: score
+                });
             }
         }
 
@@ -1157,31 +1157,26 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         otCount: redOtCount
                     });
                     let score = scoreResult.score;
-                    let dualScore =
-                        scoreResult.dualScore !== undefined ? scoreResult.dualScore : score;
                     score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                    if (dualScore < bestScore) {
-                        bestScore = dualScore;
-                        let runErrors = [...conf.errors];
-                        if (isOutOfBounds)
-                            runErrors.push(
-                                `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
-                            );
-                        // Phase 3: Użyj OT-embedded ring items zamiast oryginalnych
-                        const otStack = [...redOtItems].map((ki) => ({
-                            productId: ki.productId,
-                            quantity: ki.quantity
-                        }));
-                        // Rozdziel na top/bottom (płyta redukcyjna jest markerem)
-                        const plateIdx = otStack.findIndex(
-                            (ki) => ki.productId === reductionPlate.id
+                    let runErrors = [...conf.errors];
+                    if (isOutOfBounds)
+                        runErrors.push(
+                            `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
                         );
-                        const otTop = plateIdx >= 0 ? otStack.slice(0, plateIdx).reverse() : [];
-                        const otBottom = plateIdx >= 0 ? otStack.slice(plateIdx + 1).reverse() : [];
-                        const otPlate = plateIdx >= 0 ? [otStack[plateIdx]] : [];
+                    // Phase 3: Użyj OT-embedded ring items zamiast oryginalnych
+                    const otStack = [...redOtItems].map((ki) => ({
+                        productId: ki.productId,
+                        quantity: ki.quantity
+                    }));
+                    // Rozdziel na top/bottom (płyta redukcyjna jest markerem)
+                    const plateIdx = otStack.findIndex((ki) => ki.productId === reductionPlate.id);
+                    const otTop = plateIdx >= 0 ? otStack.slice(0, plateIdx).reverse() : [];
+                    const otBottom = plateIdx >= 0 ? otStack.slice(plateIdx + 1).reverse() : [];
+                    const otPlate = plateIdx >= 0 ? [otStack[plateIdx]] : [];
 
-                        best = {
+                    candidates.push({
+                        solution: {
                             reductionUsed: true,
                             topItems: [...topRedItems],
                             kregItems: [...otTop, ...otPlate, ...otBottom],
@@ -1195,15 +1190,21 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                             isMinimal: conf.isMinimal || dennicaItem.height < maxReqH,
                             _scoreBreakdown: scoreResult.breakdown,
                             _scoreReason: scoreResult.reason
-                        };
-                    }
+                        },
+                        technicalScore: score
+                    });
                 }
                 dynamicMinBottom += 250;
                 lift++;
             }
         }
 
-        return best;
+        // Sortuj kandydatów rosnąco (niższy technicalScore = lepszy)
+        candidates.sort(function (a, b) {
+            return a.technicalScore - b.technicalScore;
+        });
+
+        return candidates;
     }
 
     const STAGES = [
@@ -1214,21 +1215,24 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         { tolBelow: 260, tolAbove: 1000, maxAvr: 260, skip: false, name: 'Ekstremalny (+1000mm)' }
     ];
 
-    let solution = null;
+    let candidates = null;
     let fallback = false;
     let fallbackReason = '';
 
     for (const stage of STAGES) {
-        solution = solve(stage.tolBelow, stage.tolAbove, stage.maxAvr, stage.skip);
-        if (solution) {
+        candidates = solve(stage.tolBelow, stage.tolAbove, stage.maxAvr, stage.skip);
+        if (candidates && candidates.length > 0) {
+            const techWinner = candidates[0].solution;
             logger.info(
                 'wellSolver',
                 '[AutoSelect] Rozwiązanie znalezione w stage:',
                 stage.name,
                 'items:',
-                solution.kregItems?.length,
+                techWinner.kregItems?.length,
                 'dennica:',
-                solution.dennica?.productId
+                techWinner.dennica?.productId,
+                'candidates:',
+                candidates.length
             );
             if (stage.name !== 'Standard') {
                 fallback = true;
@@ -1241,10 +1245,57 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         }
     }
 
-    if (!solution) {
+    if (!candidates || candidates.length === 0) {
         return {
             error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 26cm).`
         };
+    }
+
+    // Technical winner (przed AI rankingiem)
+    const solution = candidates[0].solution;
+
+    // === AI DUAL-RANKING (shadow mode) ===
+    // W shadow mode: AI rankuje, ale technical winner zostaje
+    // AI_RANK_DECISION jest logowane do telemetrii
+    if (
+        candidates.length >= 3 &&
+        typeof window.rankCandidates === 'function' &&
+        typeof window.selectWithExploration === 'function' &&
+        typeof window.recordAiRankDecision === 'function'
+    ) {
+        (async function () {
+            try {
+                const rankResult = await window.rankCandidates({
+                    candidates: candidates.map(function (c, idx) {
+                        return { id: idx, solution: c.solution, technicalScore: c.technicalScore };
+                    }),
+                    well: well
+                });
+
+                if (rankResult.ranked && rankResult.ranked.length > 0) {
+                    const explored = window.selectWithExploration(rankResult.ranked);
+                    const aiWinner = explored.solution;
+
+                    window.recordAiRankDecision({
+                        well: well,
+                        ranked: rankResult.ranked,
+                        technicalWinner: solution,
+                        aiWinner: aiWinner,
+                        explorationTriggered: explored.explorationTriggered,
+                        exploredFrom: explored.exploredFrom,
+                        aiInfluencePct: rankResult.aiInfluencePct,
+                        modelVersion: rankResult.modelVersion,
+                        rankingVersion: rankResult.rankingVersion,
+                        featureVersion: rankResult.featureVersion
+                    });
+                }
+            } catch (e) {
+                // Shadow mode — pasywnie ignoruj błędy
+                if (typeof logger !== 'undefined' && logger.warn) {
+                    logger.warn('wellSolver', '[AiRank] Shadow ranking failed:', e);
+                }
+            }
+        })();
     }
 
     const wlazItems = solution.topItems.filter((item) => {
