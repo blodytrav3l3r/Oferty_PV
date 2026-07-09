@@ -1,6 +1,6 @@
 # Bezpieczeństwo — WITROS Oferty PV
 
-**Wersja:** 1.0.0
+**Wersja:** 1.5.0
 
 ---
 

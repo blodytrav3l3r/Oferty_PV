@@ -9,7 +9,7 @@ rm -rf public/js/import-export/
 rm -rf public/js/sales/pvImportExportToolbar.js
 ```
 
-### 2. Cofnij zmiany w `src/app.ts`
+### 2. Cofnij zmiany w `server.ts`
 
 Usuń 2 linie:
 
@@ -74,7 +74,7 @@ rm -rf prisma/migrations/20260705000000_feature_import_export/
 ## Usunięcie przez git (jeśli zmiany nie byly commitowane)
 
 ```bash
-git checkout -- src/app.ts public/kartoteka.html public/js/sales/pvSalesUi.js
+git checkout -- server.ts public/kartoteka.html public/js/sales/pvSalesUi.js
 rm -rf public/js/import-export/ public/js/sales/pvImportExportToolbar.js src/routes/featureFlags.ts docs/import-export/
 ```
 

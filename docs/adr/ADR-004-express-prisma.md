@@ -34,25 +34,56 @@ i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
 ```
 src/
 ├── routes/
-│   ├── offers/
+│   ├── auth.ts               # logowanie, rejestracja, wylogowanie
+│   ├── users.ts              # zarządzanie użytkownikami
+│   ├── clients.ts            # CRUD klientów
+│   ├── productsV2.ts         # CRUD produktów (rury)
+│   ├── productsStudnieV2.ts  # CRUD produktów (studnie)
+│   ├── settings.ts           # ustawienia systemowe
+│   ├── audit.ts              # logi audytowe
+│   ├── telemetry.ts          # telemetria AI
+│   ├── telemetryAi.ts        # endpointy AI (predykcje, rekomendacje)
+│   ├── telemetryAiMl.ts      # pipeline ML (trenowanie, ewaluacja)
+│   ├── telemetryAiDashboard.ts # dashboard telemetrii
+│   ├── featureFlags.ts       # flagi funkcjonalne
+│   ├── pvMarketplace.ts      # PV Marketplace
+│   ├── precoPricingV2.ts     # cenniki Preco
+│   ├── offers/               # oferty (rury i studnie)
 │   │   ├── index.ts          # barrel export
-│   │   └── offerRouter.ts    # HTTP handlers
-│   ├── products/
-│   ├── clients/
-│   └── index.ts              # agregacja wszystkich routerów
+│   │   ├── crud.ts           # CRUD (dispatcher)
+│   │   ├── ruryCrud.ts       # HTTP handlers (rury)
+│   │   ├── studnieCrud.ts    # HTTP handlers (studnie)
+│   │   └── exports.ts        # eksport PDF/DOCX
+│   └── orders/               # zamówienia
+│       ├── index.ts          # barrel export
+│       ├── ruryOrders.ts     # zamówienia rur
+│       ├── studnieOrders.ts  # zamówienia studni
+│       ├── numbering.ts      # numeracja zamówień
+│       └── production.ts     # zamówienia produkcyjne
 ├── services/
-│   ├── pricelistService.ts
-│   ├── auditService.ts
-│   └── docx/                 # generatory DOCX
+│   ├── auditService.ts       # logowanie zmian w bazie
+│   ├── pricelistService.ts   # zarządzanie cennikami
+│   ├── pdfGenerator.ts       # generowanie PDF (Puppeteer)
+│   ├── docx/                 # generatory DOCX (rury, studnie)
+│   ├── telemetry/            # telemetria AI + learning engine
+│   └── ml/                   # pipeline ML (konfigurator studni)
 ├── middleware/
-│   ├── auth.ts               # requireAuth, requireAdmin, buildRoleWhereClause
-│   └── rateLimiter.ts
+│   ├── auth.ts               # requireAuth, requireAdmin
+│   ├── security.ts           # nagłówki bezpieczeństwa, HTTPS redirect
+│   ├── rateLimiter.ts        # rate limiting (starszy)
+│   ├── rateLimiters.ts       # rate limiting (nowy)
+│   ├── errorHandler.ts       # globalna obsługa błędów
+│   └── requestLogger.ts      # logowanie żądań HTTP
 ├── validators/
-│   └── *.ts                  # schematy Zod
+│   ├── authSchema.ts         # schematy auth
+│   ├── offerSchemas.ts       # schematy ofert
+│   └── telemetrySchemas.ts   # schematy telemetrii
 ├── utils/
-│   ├── logger.ts
-│   └── format.ts
-└── prismaClient.ts           # singleton
+│   ├── logger.ts             # logger
+│   ├── cronService.ts        # serwis cron
+│   ├── ownership.ts          # filtrowanie własności
+│   └── roleFilter.ts         # filtrowanie po roli
+└── prismaClient.ts           # singleton Prisma Client
 ```
 
 ## Alternatywy odrzucone

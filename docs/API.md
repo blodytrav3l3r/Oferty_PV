@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.0.0  
+**Wersja:** 1.5.0  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera)
 
 ---
@@ -31,7 +31,7 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.0.0",
+    "version": "1.5.0",
     "name": "WITROS Oferty",
     "node": "v24.14.1"
 }
@@ -275,6 +275,45 @@ Wymaga autoryzacji.
 | ------ | ---------------- | -------------------------------------- |
 | POST   | `/api/telemetry` | Zapisanie zdarzenia telemetrycznego AI |
 | GET    | `/api/telemetry` | Pobranie logów telemetrii              |
+
+## AI / Predykcje (`/api/telemetry-ai`)
+
+Wymaga autoryzacji.
+
+| Metoda | Ścieżka                       | Opis                              |
+| ------ | ----------------------------- | --------------------------------- |
+| GET    | `/api/telemetry-ai/recommend` | Rekomendacje konfiguracji studni  |
+| GET    | `/api/telemetry-ai/ranking`   | Ranking rekomendacji              |
+| POST   | `/api/telemetry-ai/feedback`  | Przekazanie feedbacku użytkownika |
+
+## ML Pipeline (`/api/telemetry-ai-ml`)
+
+Wymaga autoryzacji (administrator).
+
+| Metoda | Ścieżka                         | Opis                                  |
+| ------ | ------------------------------- | ------------------------------------- |
+| POST   | `/api/telemetry-ai-ml/train`    | Ręczne uruchomienie trenowania modelu |
+| GET    | `/api/telemetry-ai-ml/status`   | Status modeli ML                      |
+| GET    | `/api/telemetry-ai-ml/evaluate` | Ewaluacja modelu                      |
+
+## Dashboard telemetrii (`/api/telemetry-ai-dashboard`)
+
+Wymaga autoryzacji (administrator).
+
+| Metoda | Ścieżka                                | Opis                  |
+| ------ | -------------------------------------- | --------------------- |
+| GET    | `/api/telemetry-ai-dashboard/stats`    | Statystyki telemetrii |
+| GET    | `/api/telemetry-ai-dashboard/patterns` | Wykryte wzorce        |
+| GET    | `/api/telemetry-ai-dashboard/accuracy` | Dokładność predykcji  |
+
+## Feature Flags (`/api/feature-flags`)
+
+Wymaga autoryzacji (administrator).
+
+| Metoda | Ścieżka                   | Opis                      |
+| ------ | ------------------------- | ------------------------- |
+| GET    | `/api/feature-flags`      | Lista flag funkcjonalnych |
+| PUT    | `/api/feature-flags/:key` | Aktualizacja flagi        |
 
 ---
 

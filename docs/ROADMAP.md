@@ -9,12 +9,12 @@
 
 ### 1. Wersjonowanie i wydania
 
-| Zadanie                                              | Status       | Priorytet |
-| ---------------------------------------------------- | ------------ | --------- |
-| Utworzenie pliku VERSION jako jedynego źródła wersji | ⏳ Planowane | Wysoki    |
-| Konfiguracja standard-version / semantic-release     | ⏳ Planowane | Wysoki    |
-| Dodanie tagów git dla wydań                          | ⏳ Planowane | Wysoki    |
-| Automatyzacja changeloga (conventional-changelog)    | ⏳ Planowane | Średni    |
+| Zadanie                                              | Status     | Priorytet |
+| ---------------------------------------------------- | ---------- | --------- |
+| Utworzenie pliku VERSION jako jedynego źródła wersji | ✔ Zrobione | Wysoki    |
+| Konfiguracja standard-version / semantic-release     | ✔ Zrobione | Wysoki    |
+| Dodanie tagów git dla wydań                          | ✔ Zrobione | Wysoki    |
+| Automatyzacja changeloga (conventional-changelog)    | ✔ Zrobione | Średni    |
 
 ### 2. CI/CD — rozbudowa
 
@@ -24,6 +24,7 @@
 | Testy w pipeline (obecnie działa)            | ✔ Działa     | —         |
 | CodeQL (obecnie działa)                      | ✔ Działa     | —         |
 | Dodanie automatycznego tagowania wersji w CI | ⏳ Planowane | Średni    |
+| Dodanie automatycznego tagowania wersji w CI | ✔ Zrobione   | Średni    |
 | Slack/Discord notifications o buildzie       | ⏳ Planowane | Niski     |
 
 ### 3. Testy — zwiększenie pokrycia
@@ -67,9 +68,9 @@
     - Widok z wykresami: liczba ofert, wartość, statusy
     - Filtrowanie po dacie
 
-4. **Poprawa backupu**
-    - Dodanie skryptu restore-db.js
-    - Wersjonowanie bazy przez PRAGMA user_version
+4. **Poprawa backupu** ✅
+    - ✅ Dodanie skryptu restore-db.js
+    - ✅ Wersjonowanie bazy przez PRAGMA user_version
 
 ### Q4 2026
 

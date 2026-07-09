@@ -1,83 +1,78 @@
 # Proces wydawniczy (Release Process)
 
+Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
+
 ## Krok po kroku
 
-### 1. Przygotowanie wydania
+### 1. Przygotowanie
 
 ```bash
-git checkout develop
+git checkout main
 git pull
 # Upewnij się, że wszystkie zmiany są zakomitowane
 ```
 
-### 2. Branch release
+### 2. Uruchomienie release
 
 ```bash
-git checkout -b release/2.1.0
+npm run release:patch  # Małe poprawki (bug fixy)
+npm run release:minor  # Nowe funkcje (zgodne wstecz)
+npm run release:major  # Zmiany przełamujące kompatybilność
+npm run release        # Automatyczny dobór na podstawie commitów
 ```
 
-### 3. Podbicie wersji
-
-```bash
-npm run release:patch  # lub :minor / :major
-```
-
-To wykona:
+To wykonuje:
 
 - Podbicie wersji w `VERSION` i `package.json`
 - Aktualizację `CHANGELOG.md`
-- Commita `chore(release): 2.0.1`
-- Tag `v2.1.0`
+- Commita `chore(release): X.Y.Z`
+- Tag `vX.Y.Z`
 
-### 4. Weryfikacja
+### 3. Weryfikacja
 
 ```bash
 npm run validate  # lint + typecheck + test
 ```
 
-### 5. Merge do main
+### 4. Push z tagami
 
 ```bash
-git checkout main
-git merge --no-ff release/2.1.0
-git push origin main --tags
+git push --follow-tags
 ```
 
-### 6. GitHub Release
-
-Push taga (`v2.1.0`) automatycznie uruchamia workflow `.github/workflows/release.yml`, który:
+Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, który:
 
 - Uruchamia testy
 - Generuje GitHub Release z opisem z CHANGELOG
 
-### 7. Merge z powrotem do develop
+## Zasady
+
+- **Nigdy nie taguj ani nie zmieniaj wersji ręcznie** — wszystko obsługuje `standard-version`
+- `VERSION` i `package.json` muszą być zgodne (automatycznie po release)
+- Po zmianie wersji restart backendu
+- Release dopiero gdy zmiany są gotowe do produkcji
+
+## Release — podgląd (dry run)
 
 ```bash
-git checkout develop
-git merge --no-ff release/2.1.0
-git push origin develop
+npm run release:dry
 ```
 
-### 8. Usunięcie brancha release
+Pokazuje zmiany w changelogu bez zapisywania.
+
+## Sprawdzenie spójności wersji
 
 ```bash
-git branch -d release/2.1.0
-git push origin --delete release/2.1.0
+npm run version:check
 ```
 
 ## Hotfix
 
-W sytuacji awaryjnej:
+W sytuacji awaryjnej (na `main`):
 
 ```bash
 git checkout main
-git checkout -b hotfix/2.0.1
 # Naprawa błędu
 npm run release:patch
-git checkout main
-git merge --no-ff hotfix/2.0.1
-git push origin main --tags
-git checkout develop
-git merge --no-ff hotfix/2.0.1
-git push origin develop
+git push --follow-tags
 ```

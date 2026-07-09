@@ -338,17 +338,13 @@ cp data/backups/backup_2026-06-30_1234567890.sqlite data/app_database.sqlite
 # Uruchom serwer
 ```
 
-> **TODO:** Dedykowany skrypt `scripts/restore-db.js`.
+Skrypt `scripts/restore-db.js` automatyzuje przywracanie bazy z backupu (z weryfikacją wersji PRAGMA).
 
 ---
 
 ## 6. Wersjonowanie bazy
 
-Obecnie baza nie używa `PRAGMA user_version` do wersjonowania schematu. Zalecane jest dodanie:
-
-```sql
-PRAGMA user_version = 100; -- wersja 1.0.0
-```
+Baza używa `PRAGMA user_version` do wersjonowania schematu (zaimplementowane w `scripts/restore-db.js`).
 
 ---
 

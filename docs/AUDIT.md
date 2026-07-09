@@ -1,7 +1,7 @@
 # Raport audytu projektu — WITROS Oferty PV
 
-**Wersja projektu:** 1.0.0  
-**Data audytu:** 2026-06-30  
+**Wersja projektu:** 1.5.0  
+**Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 
 ---
@@ -21,7 +21,7 @@
 | `prisma/` — schema + migracje      | ✔      | Schema 272 linie, migracje w podkatalogu                                                           |
 | `data/` — baza SQLite + seed       | ✔      | app_database.sqlite + pliki seed JSON                                                              |
 | `scripts/` — skrypty narzędziowe   | ✔      | Backup, restore, migracja, deploy                                                                  |
-| `docs/` — dokumentacja             | ⚠      | Istniejące pliki CHANGELOG.md, PLAN_OPTYMALIZACJI.md itp., ale brak README.md w głównym katalogu   |
+| `docs/` — dokumentacja             | ✔      | CHANGELOG.md, AGENTS.md, ARCHITECTURE.md, README.md itp.                                           |
 | `coverage/` — raport pokrycia      | ✔      | Generowany przez Jest                                                                              |
 | `.github/workflows/` — CI/CD       | ✔      | CI, CodeQL, Dependabot                                                                             |
 
@@ -60,9 +60,9 @@
 | Migracje            | ✔      | prisma/migrations/ istnieje                        |
 | Seed danych         | ✔      | prisma/seed.ts + pliki JSON (rury, studnie, preco) |
 | Backup              | ✔      | scripts/backup.ts — VACUUM INTO, max 30 kopii      |
-| Restore             | ⚠      | Brak dedykowanego skryptu restore w scripts/       |
+| Restore             | ✔      | scripts/restore-db.js — dedykowany skrypt restore  |
 | WAL-safe backup     | ✔      | Używa VACUUM INTO dla spójnych snapshotów          |
-| PRAGMA user_version | ⚠      | Nie użyte do wersjonowania schematu                |
+| PRAGMA user_version | ✔      | Używane — zaimplementowane w restore-db.js         |
 
 ## 5. CI/CD
 
@@ -119,28 +119,28 @@
 
 ## 9. Dokumentacja
 
-| Element               | Status | Uwagi                                    |
-| --------------------- | ------ | ---------------------------------------- |
-| README.md             | ❌     | Brak w głównym katalogu (tylko w docs/)  |
-| CHANGELOG.md          | ✔      | W docs/                                  |
-| AGENTS.md             | ✔      | Dla AI agentów                           |
-| CLAUDE.md             | ✔      | Dla Claude Code                          |
-| Swagger API docs      | ✔      | Interaktywna dokumentacja na `/api/docs` |
-| Instrukcja serwera    | ✔      | docs/INSTRUKCJA_SERWER.md                |
-| PLAN_OPTYMALIZACJI.md | ✔      | W docs/                                  |
-| COMPONENTS.md         | ✔      | W docs/                                  |
+| Element               | Status | Uwagi                                       |
+| --------------------- | ------ | ------------------------------------------- |
+| README.md             | ✔      | README.md w głównym katalogu projektu       |
+| CHANGELOG.md          | ✔      | W docs/                                     |
+| AGENTS.md             | ✔      | Dla AI agentów                              |
+| CLAUDE.md             | ✔      | Dla Claude Code                             |
+| Swagger API docs      | ✔      | Interaktywna dokumentacja na `/api/docs`    |
+| Instrukcja serwera    | ✔      | docs/INSTRUKCJA_SERWER.md                   |
+| PLAN_OPTYMALIZACJI.md | ❌     | Plan został zrealizowany, dokument usunięty |
+| COMPONENTS.md         | ✔      | W docs/                                     |
 
 ## 10. Git workflow
 
 | Element              | Status | Uwagi                                                    |
 | -------------------- | ------ | -------------------------------------------------------- |
-| Branch: main         | ✔      | Produkcja                                                |
+| Branch: main         | ✔      | Jedyna gałąź — brak develop/release/hotfix               |
 | Conventional Commits | ✔      | commitlint skonfigurowany (feat, fix, chore, docs, itp.) |
 | .gitignore           | ✔      | 117 linii, dokładny                                      |
 | .gitattributes       | ✔      | 163 linie                                                |
 | Husky (pre-commit)   | ✔      | commitlint                                               |
-| Tagi wersji          | ⚠      | Brak tagów git — wersja 1.0.0 w package.json             |
-| VERSION file         | ❌     | Brak — wersja tylko w package.json                       |
+| Tagi wersji          | ✔      | Tagi v1.1.0..v1.5.0 + checkpoint-*                       |
+| VERSION file         | ✔      | VERSION w katalogu głównym — jedyne źródło wersji        |
 
 ---
 
@@ -151,20 +151,20 @@
 | Struktura kodu | **9/10**   |
 | Architektura   | **9/10**   |
 | API            | **9/10**   |
-| Baza danych    | **8/10**   |
+| Baza danych    | **9/10**   |
 | CI/CD          | **9/10**   |
 | Testy          | **7/10**   |
 | Bezpieczeństwo | **9/10**   |
 | Zależności     | **9/10**   |
-| Dokumentacja   | **5/10**   |
-| Git workflow   | **7/10**   |
-| **OGÓLNIE**    | **81/100** |
+| Dokumentacja   | **8/10**   |
+| Git workflow   | **9/10**   |
+| **OGÓLNIE**    | **87/100** |
 
-### Kluczowe zalecenia
+### Kluczowe zalecenia (zrealizowane)
 
-1. **Utworzyć README.md** w głównym katalogu projektu
-2. **Dodać skrypt restore bazy** (scripts/restore-db.js)
-3. **Rozszerzyć testy E2E** i dodać testy frontendu
-4. **Dodać plik VERSION** jako jedyne źródło wersji
-5. **Dodać tagi git** dla wydań
-6. **Sprawdzić `npm audit`** pod kątem podatności
+1. ✅ **README.md** — utworzony w głównym katalogu projektu
+2. ✅ **Skrypt restore bazy** — scripts/restore-db.js istnieje
+3. ⏳ **Rozszerzyć testy E2E** i dodać testy frontendu — nadal do zrobienia
+4. ✅ **Plik VERSION** — utworzony jako jedyne źródło wersji
+5. ✅ **Tagi git** — dodane dla wydań (v1.1.0..v1.5.0)
+6. ⚠ **Sprawdzić `npm audit`** — wykonywać okresowo

@@ -99,7 +99,9 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 1. **Middleware** (`src/middleware/`)
     - `auth.ts` — autoryzacja (session token, HttpOnly cookie, rola admin/user)
     - `security.ts` — nagłówki bezpieczeństwa, HTTPS redirect
-    - `rateLimiter.ts` — limitowanie żądań per IP (in-memory)
+    - `rateLimiter.ts` / `rateLimiters.ts` — limitowanie żądań per IP (in-memory)
+    - `errorHandler.ts` — globalna obsługa błędów
+    - `requestLogger.ts` — logowanie żądań HTTP
 
 2. **Routes** (`src/routes/`)
     - `auth.ts` — logowanie, rejestracja, wylogowanie, zmiana hasła
@@ -112,15 +114,33 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
     - `audit.ts` — logi audytowe
     - `settings.ts` — ustawienia systemowe
     - `telemetry.ts` — telemetria AI
+    - `telemetryAi.ts` — endpointy AI (predykcje, rekomendacje)
+    - `telemetryAiMl.ts` — pipeline ML (trenowanie, ewaluacja)
+    - `telemetryAiDashboard.ts` — dashboard telemetrii
+    - `featureFlags.ts` — zarządzanie flagami funkcjonalnymi
+    - `pvMarketplace.ts` — integracja PV Marketplace
+    - `precoPricingV2.ts` — cenniki Preco
 
 3. **Services** (`src/services/`)
     - `auditService.ts` — logowanie zmian w bazie
     - `pricelistService.ts` — zarządzanie cennikami
-    - Serwisy PDF/DOCX
+    - `pdfGenerator.ts` — generowanie PDF (Puppeteer)
+    - `docx/` — generowanie dokumentów DOCX (rury i studnie)
+        - `rury/` — builder, content, sections, tables, kartaBudowy
+        - `studnie/` — builder, content, sections, tables, kartaBudowy
+        - `helpers.ts`, `headerFooter.ts`, `constants.ts`, `colors.ts`, `index.ts`
+    - `telemetry/` — telemetria AI i learning engine
+        - `telemetryService.ts`, `telemetryTypes.ts`
+        - `learning/` — silnik uczący: LearningEngine, KnowledgeBase, RecommendationEngine, RankingEngine, PreferenceEngine, PatternDetector, FeedbackProcessor, ConfidenceCalculator
+    - `ml/` — pipeline ML dla konfiguratora studni
+        - `TrainingPipeline.ts`, `FeatureExtractor.ts`, `AcceptanceModel.ts`
+        - `ModelRegistry.ts`, `SelfEvaluation.ts`, `RewardCalculator.ts`
+        - `parseFeatureSnapshot.ts`, `trainingConfig.ts`, `index.ts`
 
 4. **Validators** (`src/validators/`)
     - `authSchema.ts` — schematy dla auth (login, register, changePassword)
     - `offerSchemas.ts` — schematy dla ofert i klientów
+    - `telemetrySchemas.ts` — schematy dla telemetrii AI
 
 ### Konfiguracja
 
@@ -283,18 +303,30 @@ Oferty_PV/
 │   └── seed_preco.json              # Seed cenników Preco
 │
 ├── scripts/                         # Skrypty narzędziowe
-│   ├── backup.ts                    # Backup bazy
+│   ├── backup.ts                    # Backup bazy (VACUUM INTO)
+│   ├── backup-db.js                 # Backup bazy (alternatywny)
+│   ├── restore-db.js                # Restore bazy z backupu
 │   ├── checkDb.ts                   # Sprawdzenie bazy
+│   ├── check-db.js                  # Sprawdzenie bazy (JS)
 │   ├── cleanup.ts                   # Czyszczenie
 │   ├── createDocxTemplate.ts        # Szablon DOCX
 │   ├── downloadFonts.js             # Pobieranie fontów
 │   ├── extract.js                   # Ekstrakcja danych
 │   ├── migrateEmojis.js             # Migracja emoji
 │   ├── migrate-to-tables.ts         # Migracja do tabel
-│   ├── migrate-preco-from-tables.cjs # Migracja Preco
 │   ├── screenshot.js                # Zrzut ekranu
 │   ├── docker-entrypoint.sh         # Entrypoint Docker
-│   └── install-backup-cron.ps1      # Cron backup (Windows)
+│   ├── install-backup-cron.ps1      # Cron backup (Windows)
+│   ├── auto-bump.mjs                # Auto-bump wersji
+│   ├── bump-version.mjs             # Podbicie wersji
+│   ├── check-version.mjs            # Sprawdzenie wersji
+│   ├── normalize-seed-studnie.mjs   # Normalizacja seed studni
+│   ├── skill-cli.mjs                # CLI dla skilli
+│   ├── version-updater.mjs          # Aktualizator wersji
+│   ├── wait-and-start.mjs           # Opóźniony start
+│   ├── fix-css-encoding.js          # Naprawa kodowania CSS
+│   ├── encoding-integrity.js        # Spójność kodowania
+│   └── excel-validator.py           # Walidacja Excel
 │
 ├── tests/                           # Testy (32 pliki)
 │   ├── auth.test.ts
@@ -310,7 +342,8 @@ Oferty_PV/
 │
 ├── .github/workflows/               # CI/CD
 │   ├── ci.yml                       # Główny pipeline
-│   └── codeql.yml                   # CodeQL Security
+│   ├── codeql.yml                   # CodeQL Security
+│   └── release.yml                  # Release automation
 │
 ├── Dockerfile                       # Obraz Docker
 ├── docker-compose.yml               # Docker Compose
@@ -342,4 +375,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-06-30_
+_Ostatnia aktualizacja: 2026-07-09_
