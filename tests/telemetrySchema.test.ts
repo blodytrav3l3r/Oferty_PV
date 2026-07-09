@@ -72,7 +72,7 @@ describe('telemetryConfigSchema', () => {
     });
 
     it('wymaga popRawnego typu solvera (tylko 4 wartosci)', () => {
-        ['AUTO_JS', 'AUTO_PYTHON', 'MANUAL', 'AI_SUGGEST'].forEach(function (s) {
+        ['AUTO_JS', 'MANUAL', 'AI_SUGGEST'].forEach(function (s) {
             expect(telemetryConfigSchema.safeParse({ solverSource: s }).success).toBe(true);
         });
         expect(telemetryConfigSchema.safeParse({ solverSource: 'HACK' }).success).toBe(false);

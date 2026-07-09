@@ -1,214 +1,427 @@
-/**
- * AI Dashboard (admin) — wizualizacja bazy wiedzy, rekomendacji i statystyk.
- *
- * Łączy się z /api/telemetry/learning/* oraz /api/telemetry/recommendations/*
- * i przedstawia wyniki w formie kart statystycznych + listy wzorców.
- *
- * Bez żadnego wpływu na solver JS — to viewer.
- */
-
 (function () {
     'use strict';
 
-    const ENDPOINTS = {
-        stats: '/api/telemetry/knowledge/stats',
-        patterns: '/api/telemetry/knowledge/patterns',
-        recommendations: '/api/telemetry/recommendations/',
-        runCycle: '/api/telemetry/learning/run',
-        status: '/api/telemetry/learning/status'
+    /* ===== ENDPOINTY (poprawione — dodano /ai/) ===== */
+    var ENDPOINTS = {
+        stats: '/api/telemetry/ai/knowledge/stats',
+        patterns: '/api/telemetry/ai/knowledge/patterns',
+        recommendations: '/api/telemetry/ai/recommendations/',
+        runCycle: '/api/telemetry/ai/learning/run',
+        status: '/api/telemetry/ai/learning/status',
+        mlStatus: '/api/telemetry/ai/ml-status',
+        models: '/api/telemetry/ai/models',
+        train: '/api/telemetry/ai/train',
+        rollback: '/api/telemetry/ai/rollback'
     };
 
-    async function fetchJson(url, options) {
+    function fetchJson(url, options) {
         if (!window.fetch) return null;
         try {
-            const resp = await fetch(
-                url,
-                Object.assign({ credentials: 'same-origin' }, options || {})
-            );
-            if (!resp.ok) return null;
-            return await resp.json();
+            var resp = fetch(url, Object.assign({ credentials: 'same-origin' }, options || {}));
+            return resp
+                .then(function (r) {
+                    if (!r.ok) return null;
+                    return r.json();
+                })
+                .catch(function () {
+                    return null;
+                });
         } catch (e) {
             return null;
         }
     }
 
+    /* ===== HELPER: karta statystyczna ===== */
     function statCard(title, value, color) {
         return (
-            '<div style="background:#16192a;border:1px solid rgba(100,116,139,0.2);border-radius:8px;padding:12px;text-align:center">' +
+            '<div class="ai-stat-card" style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;text-align:center">' +
             '<div style="font-size:1.5rem;font-weight:600;color:' +
-            (color || '#6366f1') +
+            (color || 'var(--accent)') +
             '">' +
             value +
             '</div>' +
-            '<div style="font-size:0.85rem;color:#94a3b8;margin-top:4px">' +
+            '<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:4px">' +
             title +
             '</div>' +
             '</div>'
         );
     }
 
-    async function renderStats(container) {
-        const stats = await fetchJson(ENDPOINTS.stats);
-        if (!stats) {
-            container.innerHTML =
-                '<div style="background:#2d1616;border:1px solid #ef4444;border-radius:8px;padding:12px;color:#fca5a5">' +
-                'Brak dostępu do statystyk (wymagana rola admin)' +
-                '</div>';
-            return;
-        }
-        const html =
-            '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin-bottom:20px">' +
-            statCard('Wzorce łącznie', stats.total, '#6366f1') +
-            statCard('Aktywne', stats.active, '#10b981') +
-            statCard(
-                'Avg confidence',
-                Math.round((stats.avgConfidence || 0) * 100) + '%',
-                '#f59e0b'
-            ) +
-            statCard('Rekomendacje', stats.totalRecommendations, '#8b5cf6') +
-            statCard('Zaakceptowane', stats.acceptedRecommendations, '#22c55e') +
-            statCard('Odrzucone', stats.rejectedRecommendations, '#ef4444') +
-            statCard('Nowe (7 dni)', stats.recentDetected, '#06b6d4') +
-            statCard('Archiwalne', stats.archived, '#64748b') +
-            '</div>' +
-            (stats.byPatternType
-                ? '<div style="background:#16192a;border-radius:8px;padding:12px;margin-bottom:20px">' +
-                  '<h3 style="margin-top:0">Rozkład wg typu</h3>' +
-                  Object.entries(stats.byPatternType)
-                      .map(function (kv) {
-                          return (
-                              '<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(100,116,139,0.15);padding:6px 0">' +
-                              '<span>' +
-                              kv[0] +
-                              '</span>' +
-                              '<strong>' +
-                              kv[1] +
-                              '</strong>' +
-                              '</div>'
-                          );
-                      })
-                      .join('') +
-                  '</div>'
-                : '');
-        container.innerHTML = html;
+    function statusBadge(ok) {
+        return ok
+            ? '<span style="color:var(--success-hover);font-weight:700">✓ Online</span>'
+            : '<span style="color:var(--danger-hover);font-weight:700">✗ Offline</span>';
     }
 
-    async function renderPatterns(container, dnFilter) {
-        const url =
+    /* ===== LEARNING ENGINE STATS ===== */
+    function renderStats(container) {
+        var p = fetchJson(ENDPOINTS.stats);
+        if (!p) {
+            container.innerHTML =
+                '<div style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-md);padding:12px;color:var(--danger-hover)">Brak dostępu do statystyk (wymagana rola admin)</div>';
+            return;
+        }
+        p.then(function (stats) {
+            if (!stats) {
+                container.innerHTML =
+                    '<div style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-md);padding:12px;color:var(--danger-hover)">Brak dostępu do statystyk (wymagana rola admin)</div>';
+                return;
+            }
+            var html =
+                '<div class="ai-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:16px">' +
+                statCard('Wzorce łacznie', stats.total, 'var(--accent)') +
+                statCard('Aktywne', stats.active, 'var(--success)') +
+                statCard(
+                    'Åšrednie confidence',
+                    Math.round((stats.avgConfidence || 0) * 100) + '%',
+                    'var(--warn)'
+                ) +
+                statCard('Rekomendacje', stats.totalRecommendations, 'var(--accent2)') +
+                statCard('Zaakceptowane', stats.acceptedRecommendations, 'var(--success-hover)') +
+                statCard('Odrzucone', stats.rejectedRecommendations, 'var(--danger-hover)') +
+                statCard('Nowe (7 dni)', stats.recentDetected, 'var(--cyan)') +
+                statCard('Archiwalne', stats.archived, 'var(--text-muted)') +
+                '</div>' +
+                (stats.byPatternType
+                    ? '<div style="background:var(--bg-card);border-radius:var(--radius-md);padding:12px;margin-bottom:16px;border:1px solid var(--border-glass)">' +
+                      '<h4 style="margin:0 0 8px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="pie-chart" style="width:14px;height:14px;color:var(--accent)"></i> Rozk\u0142ad wg typu</h4>' +
+                      Object.keys(stats.byPatternType)
+                          .map(function (k) {
+                              return (
+                                  '<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-glass);padding:5px 0;font-size:0.8rem">' +
+                                  '<span style="color:var(--text-secondary)">' +
+                                  k +
+                                  '</span>' +
+                                  '<strong style="color:var(--text-primary)">' +
+                                  stats.byPatternType[k] +
+                                  '</strong></div>'
+                              );
+                          })
+                          .join('') +
+                      '</div>'
+                    : '') +
+                '<div style="font-size:0.72rem;color:var(--text-muted);text-align:right">Ostatnia aktualizacja: ' +
+                new Date().toLocaleString('pl-PL') +
+                '</div>';
+            container.innerHTML = html;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: container });
+            }
+        });
+    }
+
+    /* ===== PATTERNS LIST ===== */
+    function renderPatterns(container, dnFilter) {
+        var url =
             ENDPOINTS.patterns +
             '?dn=' +
             encodeURIComponent(dnFilter || 'all_dn') +
             '&minConfidence=0.3';
-        const data = await fetchJson(url);
-        if (!data) {
+        var p = fetchJson(url);
+        if (!p) {
             container.innerHTML =
-                '<div style="color:#94a3b8;text-align:center;padding:20px">' +
-                'Brak wzorców (lub brak dostępu)' +
-                '</div>';
+                '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców (lub brak dostępu)</div>';
             return;
         }
-        if (!data.items || data.items.length === 0) {
-            container.innerHTML =
-                '<div style="color:#94a3b8;text-align:center;padding:20px">' +
-                'Brak wzorców dla DN=' +
-                (dnFilter || 'all_dn') +
-                '. Uruchom <code>Learning cycle</code>.' +
-                '</div>';
-            return;
-        }
-        const html =
-            '<table style="width:100%;border-collapse:collapse;color:#e2e8f0;font-size:0.85rem">' +
-            '<thead><tr style="background:#1e2238;color:#94a3b8">' +
-            '<th style="padding:6px;text-align:left">Typ</th>' +
-            '<th style="padding:6px;text-align:left">Pattern</th>' +
-            '<th style="padding:6px;text-align:right">Confidence</th>' +
-            '<th style="padding:6px;text-align:right">Hits</th>' +
-            '<th style="padding:6px;text-align:left">Opis</th>' +
-            '</tr></thead><tbody>' +
-            data.items
+        p.then(function (data) {
+            if (!data) {
+                container.innerHTML =
+                    '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców (lub brak dostępu)</div>';
+                return;
+            }
+            if (!data.items || data.items.length === 0) {
+                container.innerHTML =
+                    '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców dla DN=' +
+                    (dnFilter || 'all_dn') +
+                    '. Uruchom <strong>Learning Cycle</strong>.</div>';
+                return;
+            }
+            var rows = data.items
                 .map(function (p) {
+                    var confColor =
+                        p.confidence >= 0.7
+                            ? 'var(--success-hover)'
+                            : p.confidence >= 0.4
+                              ? 'var(--warn)'
+                              : 'var(--text-muted)';
                     return (
-                        '<tr style="border-bottom:1px solid rgba(100,116,139,0.15)">' +
-                        '<td style="padding:6px"><code style="background:#1e2238;padding:2px 6px;border-radius:4px;font-size:0.75rem">' +
-                        p.patternType +
+                        '<tr style="border-bottom:1px solid var(--border-glass)">' +
+                        '<td style="padding:6px"><code style="background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-size:0.72rem;color:var(--accent-text)">' +
+                        (p.patternType || '') +
                         '</code></td>' +
-                        '<td style="padding:6px;font-family:monospace;font-size:0.72rem">' +
-                        (p.patternKey || '').slice(0, 50) +
+                        '<td style="padding:6px;font-family:monospace;font-size:0.7rem;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+                        (p.patternKey || '').slice(0, 60) +
                         '</td>' +
                         '<td style="padding:6px;text-align:right;color:' +
-                        (p.confidence >= 0.7
-                            ? '#22c55e'
-                            : p.confidence >= 0.4
-                              ? '#f59e0b'
-                              : '#94a3b8') +
-                        '">' +
+                        confColor +
+                        ';font-weight:700">' +
                         Math.round((p.confidence || 0) * 100) +
                         '%</td>' +
-                        '<td style="padding:6px;text-align:right">' +
+                        '<td style="padding:6px;text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
                         (p.hitCount || 0) +
                         '</td>' +
-                        '<td style="padding:6px;color:#94a3b8;font-size:0.75rem">' +
+                        '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
                         (p.description || '').slice(0, 80) +
                         '</td>' +
                         '</tr>'
                     );
                 })
-                .join('') +
-            '</tbody></table>';
-        container.innerHTML = html;
+                .join('');
+            container.innerHTML =
+                '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
+                '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.82rem">' +
+                '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px">' +
+                '<th style="padding:6px;text-align:left;font-weight:700">Typ</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700">Pattern</th>' +
+                '<th style="padding:6px;text-align:right;font-weight:700">Confidence</th>' +
+                '<th style="padding:6px;text-align:right;font-weight:700">Hits</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700">Opis</th>' +
+                '</tr></thead><tbody>' +
+                rows +
+                '</tbody></table></div>';
+        });
     }
 
-    /**
-     * Punkt wejścia: renderuje dashboard wewnątrz `#ai-dashboard-container`.
-     */
-    window.aiDashboardRender = async function (containerId) {
-        const container = document.getElementById(containerId);
+    /* ===== ML STATUS ===== */
+    function renderMlStatus(container) {
+        var pStatus = fetchJson(ENDPOINTS.mlStatus);
+        var pModels = fetchJson(ENDPOINTS.models);
+        if (!pStatus) {
+            container.innerHTML =
+                '<div style="color:var(--text-muted);text-align:center;padding:16px">Brak dostępu do ML status</div>';
+            return;
+        }
+        Promise.all([pStatus, pModels]).then(function (results) {
+            var status = results[0];
+            var modelsData = results[1];
+            if (!status) {
+                container.innerHTML =
+                    '<div style="color:var(--text-muted);text-align:center;padding:16px">ML pipeline nieaktywny lub brak dostępu</div>';
+                return;
+            }
+
+            var html =
+                '<h4 style="margin:0 0 12px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="activity" style="width:14px;height:14px;color:var(--accent2)"></i> ML Pipeline</h4>' +
+                '<div class="ai-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:16px">' +
+                statCard(
+                    'Status',
+                    statusBadge(status.mlOnline),
+                    status.mlOnline ? 'var(--success)' : 'var(--danger)'
+                ) +
+                statCard('Wersja modelu', status.modelVersion || '—', 'var(--accent2)') +
+                statCard('Liczba modeli', status.modelCount || 0, 'var(--accent-hover)') +
+                statCard(
+                    'Trening trwa',
+                    status.trainingRunning ? 'Tak' : 'Nie',
+                    status.trainingRunning ? 'var(--warn)' : 'var(--success)'
+                ) +
+                statCard('Nagrody (reward)', status.totalRewards || 0, 'var(--cyan)') +
+                statCard('Cache predykcji', status.cacheSize || 0, 'var(--text-muted)') +
+                '</div>';
+
+            /* Przyciski akcji */
+            html +=
+                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' +
+                '<button id="ai-ml-train-btn" class="btn-hero btn-accent" style="padding:0.4rem 1rem"><i data-lucide="play"></i> Uruchom trening ML</button>' +
+                '<button id="ai-ml-rollback-btn" class="btn-hero" style="padding:0.4rem 1rem;color:var(--warn);border-color:var(--warn-border)"><i data-lucide="undo-2"></i> Rollback modelu</button>' +
+                '</div>';
+
+            /* Tabela modeli */
+            var modelRows = '';
+            if (modelsData && modelsData.models && modelsData.models.length > 0) {
+                modelRows = modelsData.models
+                    .map(function (m) {
+                        return (
+                            '<tr style="border-bottom:1px solid var(--border-glass)">' +
+                            '<td style="padding:5px;font-family:monospace;font-size:0.75rem;color:var(--accent-text)">' +
+                            (m.version || '—') +
+                            '</td>' +
+                            '<td style="padding:5px;text-align:right;font-feature-settings:\'tnum\'">' +
+                            (m.auc != null ? m.auc.toFixed(4) : '—') +
+                            '</td>' +
+                            '<td style="padding:5px;text-align:right;font-feature-settings:\'tnum\'">' +
+                            (m.featureCount || 0) +
+                            '</td>' +
+                            '<td style="padding:5px;text-align:right;font-feature-settings:\'tnum\'">' +
+                            (m.trainingSamples || 0) +
+                            '</td>' +
+                            '<td style="padding:5px;color:var(--text-muted);font-size:0.72rem">' +
+                            (m.active
+                                ? '<span style="color:var(--success-hover);font-weight:700">active</span>'
+                                : (m.createdAt || '').slice(0, 10)) +
+                            '</td>' +
+                            '</tr>'
+                        );
+                    })
+                    .join('');
+            }
+
+            if (modelRows) {
+                html +=
+                    '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
+                    '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.8rem">' +
+                    '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.4px">' +
+                    '<th style="padding:5px;text-align:left;font-weight:700">Wersja</th>' +
+                    '<th style="padding:5px;text-align:right;font-weight:700">AUC</th>' +
+                    '<th style="padding:5px;text-align:right;font-weight:700">Cechy</th>' +
+                    '<th style="padding:5px;text-align:right;font-weight:700">Próbki</th>' +
+                    '<th style="padding:5px;text-align:left;font-weight:700">Status</th>' +
+                    '</tr></thead><tbody>' +
+                    modelRows +
+                    '</tbody></table></div>';
+            } else {
+                html +=
+                    '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:12px;border:1px dashed var(--border-glass);border-radius:var(--radius-sm)">Brak wytrenowanych modeli. Uruchom trening ML.</div>';
+            }
+
+            container.innerHTML = html;
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: container });
+            }
+
+            /* Eventy przycisków */
+            var trainBtn = document.getElementById('ai-ml-train-btn');
+            var rollbackBtn = document.getElementById('ai-ml-rollback-btn');
+            var mlContainer = container;
+
+            if (trainBtn) {
+                trainBtn.addEventListener('click', function () {
+                    trainBtn.disabled = true;
+                    trainBtn.innerHTML =
+                        '<i data-lucide="loader" class="lucide-spin"></i> Trenowanie...';
+                    var p = fetchJson(ENDPOINTS.train, { method: 'POST' });
+                    if (p) {
+                        p.then(function (result) {
+                            trainBtn.disabled = false;
+                            trainBtn.innerHTML = '<i data-lucide="play"></i> Uruchom trening ML';
+                            if (result) {
+                                window.alert(
+                                    'Trening ML zako\u0144czony:\n' +
+                                        'Wytrenowany: ' +
+                                        (result.trained ? 'Tak' : 'Nie') +
+                                        (result.reason ? '\nPowód: ' + result.reason : '')
+                                );
+                                renderMlStatus(mlContainer);
+                            }
+                        });
+                    } else {
+                        trainBtn.disabled = false;
+                        trainBtn.innerHTML = '<i data-lucide="play"></i> Uruchom trening ML';
+                    }
+                });
+            }
+
+            if (rollbackBtn) {
+                rollbackBtn.addEventListener('click', function () {
+                    if (
+                        !window.confirm(
+                            'Rollback do poprzedniego modelu? Obecny model zostanie zdezaktywowany.'
+                        )
+                    )
+                        return;
+                    rollbackBtn.disabled = true;
+                    rollbackBtn.textContent = 'Rollback...';
+                    var p = fetchJson(ENDPOINTS.rollback, { method: 'POST' });
+                    if (p) {
+                        p.then(function (result) {
+                            rollbackBtn.disabled = false;
+                            rollbackBtn.innerHTML = '<i data-lucide="undo-2"></i> Rollback modelu';
+                            if (result && result.rolledBack) {
+                                window.alert(
+                                    'Rollback wykonany. Poprzedni model: ' +
+                                        (result.model ? result.model.version : '—')
+                                );
+                                renderMlStatus(mlContainer);
+                            } else {
+                                window.alert('Brak poprzedniego modelu do rollbacku.');
+                            }
+                        });
+                    } else {
+                        rollbackBtn.disabled = false;
+                        rollbackBtn.innerHTML = '<i data-lucide="undo-2"></i> Rollback modelu';
+                    }
+                });
+            }
+        });
+    }
+
+    /* ===== ENTRY POINT ===== */
+    window.aiDashboardRender = function (containerId) {
+        var container = document.getElementById(containerId);
         if (!container) return;
+
         container.innerHTML =
             '<div style="display:grid;grid-template-columns:1fr;gap:20px">' +
+            /* Sekcja: Learning Engine */
+            '<div id="ai-learning-section">' +
+            '<h4 style="margin:0 0 10px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="brain" style="width:14px;height:14px;color:var(--accent)"></i> Learning Engine (baza wiedzy)</h4>' +
             '<div id="ai-stats"></div>' +
-            '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">' +
-            '<input type="text" id="ai-dn-filter" placeholder="DN filter (np. 1200)" style="background:#1e2238;border:1px solid rgba(100,116,139,0.3);color:#e2e8f0;padding:6px 12px;border-radius:4px;font-size:0.85rem">' +
-            '<button id="ai-filter-btn" style="background:#6366f1;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:0.85rem">Filtruj</button>' +
-            '<button id="ai-run-cycle" style="background:#10b981;color:#0f172a;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:0.85rem">Uruchom Learning Cycle</button>' +
+            '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">' +
+            '<input type="text" id="ai-dn-filter" placeholder="DN (np. 1200)" style="background:var(--bg-input);border:1px solid var(--border-glass);color:var(--text-primary);padding:6px 12px;border-radius:var(--radius-sm);font-size:0.82rem;width:110px">' +
+            '<button id="ai-filter-btn" class="btn-hero" style="padding:0.35rem 0.8rem;font-size:0.78rem"><i data-lucide="filter"></i> Filtruj</button>' +
+            '<button id="ai-run-cycle" class="btn-hero btn-accent" style="padding:0.35rem 0.8rem;font-size:0.78rem"><i data-lucide="refresh-cw"></i> Uruchom Learning Cycle</button>' +
             '</div>' +
             '<div id="ai-patterns"></div>' +
+            '</div>' +
+            /* Separator */
+            '<hr style="border:none;border-top:1px solid var(--border-glass);margin:4px 0">' +
+            /* Sekcja: ML Pipeline */
+            '<div id="ai-ml-section">' +
+            '<div id="ai-ml-status"></div>' +
+            '</div>' +
             '</div>';
 
-        await renderStats(document.getElementById('ai-stats'));
-        await renderPatterns(document.getElementById('ai-patterns'));
+        renderStats(document.getElementById('ai-stats'));
+        renderMlStatus(document.getElementById('ai-ml-status'));
+        renderPatterns(document.getElementById('ai-patterns'));
 
-        const filterBtn = document.getElementById('ai-filter-btn');
-        const runBtn = document.getElementById('ai-run-cycle');
-        const dnInput = document.getElementById('ai-dn-filter');
+        var filterBtn = document.getElementById('ai-filter-btn');
+        var runBtn = document.getElementById('ai-run-cycle');
+        var dnInput = document.getElementById('ai-dn-filter');
+        var patternsContainer = document.getElementById('ai-patterns');
+        var statsContainer = document.getElementById('ai-stats');
 
         if (filterBtn && dnInput) {
             filterBtn.addEventListener('click', function () {
-                void renderPatterns(document.getElementById('ai-patterns'), dnInput.value || '');
+                renderPatterns(patternsContainer, dnInput.value || '');
             });
         }
 
         if (runBtn) {
-            runBtn.addEventListener('click', async function () {
+            runBtn.addEventListener('click', function () {
                 runBtn.disabled = true;
-                runBtn.textContent = 'Uruchamianie...';
-                const result = await fetchJson(ENDPOINTS.runCycle, { method: 'POST' });
-                runBtn.disabled = false;
-                runBtn.textContent = 'Uruchom Learning Cycle';
-                if (result) {
-                    window.alert(
-                        'Learning cycle zakończony:\n' +
-                            'Przetworzone: ' +
-                            result.processed +
-                            '\nWykrytych wzorców: ' +
-                            result.patternsDetected +
-                            '\nZapisanych do KB: ' +
-                            result.persistedToKb
-                    );
-                    await renderStats(document.getElementById('ai-stats'));
-                    await renderPatterns(document.getElementById('ai-patterns'));
+                runBtn.innerHTML =
+                    '<i data-lucide="loader" class="lucide-spin"></i> Uruchamianie...';
+                var p = fetchJson(ENDPOINTS.runCycle, { method: 'POST' });
+                if (p) {
+                    p.then(function (result) {
+                        runBtn.disabled = false;
+                        runBtn.innerHTML =
+                            '<i data-lucide="refresh-cw"></i> Uruchom Learning Cycle';
+                        if (result) {
+                            window.alert(
+                                'Learning cycle zako\u0144czony:\n' +
+                                    'Przetworzone: ' +
+                                    result.processed +
+                                    '\nWykrytych wzorców: ' +
+                                    result.patternsDetected +
+                                    '\nZapisanych do KB: ' +
+                                    result.persistedToKb
+                            );
+                            renderStats(statsContainer);
+                            renderPatterns(patternsContainer, dnInput ? dnInput.value : '');
+                        }
+                    });
+                } else {
+                    runBtn.disabled = false;
+                    runBtn.innerHTML = '<i data-lucide="refresh-cw"></i> Uruchom Learning Cycle';
                 }
             });
+        }
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons({ root: container });
         }
     };
 })();

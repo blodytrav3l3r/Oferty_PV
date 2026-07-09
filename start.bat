@@ -1,10 +1,9 @@
 @echo off
 REM ===========================================================
-REM  start.bat — Jedno wejście: cały system (Node + opc. Python)
+REM  start.bat — Jedno wejście: cały system
 REM  Uruchamia:
 REM    - Backend Express (Prisma + SQLite)
 REM    - Frontend Vite (dev server)
-REM    - [opcjonalnie] Python AI Backend (OR-Tools/ML)
 REM ===========================================================
 
 setlocal enabledelayedexpansion
@@ -74,39 +73,13 @@ if defined PORT_PID (
         timeout /t 2 /nobreak >nul 2>&1
     )
 )
-
-REM ---- 7. Python AI Backend (opcjonalnie) ----
-echo.
-echo [INFO] Python AI Backend (OR-Tools/ML) jest opcjonalny.
-echo        Potrzebny tylko do optymalizacji konfiguracji studni.
-echo        Wymaga: Python 3.11/3.12 + venv w well_configurator_backend/
-echo.
-set /p "START_PYTHON=Uruchomic Python backend? (T/N, domyslnie N): "
-if /i "!START_PYTHON!"=="T" (
-    if exist "well_configurator_backend\start.bat" (
-        if exist "well_configurator_backend\venv" (
-            echo [INFO] Uruchamiam Python backend w nowym oknie...
-            start "Python AI Backend" cmd /c "cd /d well_configurator_backend && call start.bat"
-            echo [OK] Python backend uruchomiony na porcie 8000
-        ) else (
-            echo [BLAD] Brak venv w well_configurator_backend\
-            echo        Uruchom well_configurator_backend\install.bat
-        )
-    ) else (
-        echo [BLAD] Brak well_configurator_backend\start.bat
-    )
-) else (
-    echo [INFO] Python backend pominiety. Uzywasz solvera JS.
-)
-
-REM ---- 8. Start ----
+REM ---- 7. Start ----
 echo.
 echo ===========================================================
 echo   Uruchamiam aplikacje (Ctrl+C aby zatrzymac)
 echo ===========================================================
 echo   Frontend: http://localhost:5173
 echo   Backend:  http://localhost:3000/health
-echo   Python:   http://localhost:8000/api/v1/health
 echo.
 call npm run dev
 

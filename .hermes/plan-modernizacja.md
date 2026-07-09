@@ -223,7 +223,7 @@ Lista zmian, plików, ryzyk, zgodność licencyjna, ocena 0–100%, rekomendacje
 2. ✅ **SQLite 48 MB** — zostaje w repo, OK (poniżej limitu 100 MB)
 3. ⚠ **commitlint scope-enum** — rozszerzone (powyżej)
 4. ⚠ **SQLite backup w `data/backups/`** — backup 8 MB idzie na GitHub. Można dodać do .gitignore jeśli przeszkadza.
-5. ⚠ **well_configurator_backend** — nie w repo, nie w CI. Osobna decyzja biznesowa.
+5. ✅ **well_configurator_backend** — usunięty z projektu. Logika Konus+ przeniesiona do JS solvera.
 
 ---
 

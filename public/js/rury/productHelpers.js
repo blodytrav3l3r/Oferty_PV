@@ -103,7 +103,7 @@ function getSortedRuryItems(items) {
             return da - db;
         });
         diamKeys.forEach((dk) => {
-            grouped[cat][dk].sort((a, b) => {
+            const sorted = [...grouped[cat][dk]].sort((a, b) => {
                 const aBB =
                     a.item.name.toLowerCase().includes('bosy') || a.item.productId.endsWith('-B00');
                 const bBB =
@@ -111,7 +111,7 @@ function getSortedRuryItems(items) {
                 if (aBB !== bBB) return aBB ? -1 : 1;
                 return (a.item.lengthM || 0) - (b.item.lengthM || 0);
             });
-            flat.push({ cat, dk, entries: grouped[cat][dk] });
+            flat.push({ cat, dk, entries: sorted });
         });
     });
 

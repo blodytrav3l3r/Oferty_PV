@@ -72,7 +72,7 @@ Własna implementacja Logistic Regression w TypeScript:
 - **iframe-based SPA** — `public/app.html` ładuje moduły jako iframe'y przez hash router
 - Moduły: `studnie` (konfigurator studni), `rury` (oferty rur), `kartoteka` (archiwum), `zlecenia` (zamówienia produkcyjne)
 - Routing: `window.location.hash` (#/rury, #/studnie, #/kartoteka)
-- Osobny Python backend: `well_configurator_backend/` (FastAPI + OR-Tools)
+- ~~Python backend usunięty~~ — logika Konus+ przeniesiona do JS solvera
 
 ## Design System — Liquid Glass
 
@@ -80,18 +80,6 @@ Własna implementacja Logistic Regression w TypeScript:
 - Efekty glassmorphism: `backdrop-filter: blur()`, `rgba` tła
 - Kolory semantyczne: success=green, danger=red, warn=amber
 - Moduły mają własne akcenty: rury=indigo, studnie=green, kartoteka=amber, zlecenia=pink
-
-## Python AI Backend
-
-`well_configurator_backend/` — osobny serwis Python (port 8000):
-
-```bash
-cd well_configurator_backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python run.py
-```
 
 ## Baza danych
 

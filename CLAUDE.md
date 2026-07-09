@@ -9,7 +9,6 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 - **Backend**: TypeScript + Express + Prisma + SQLite; `server.ts`, `src/`, `scripts/`, `tests/`
 - **Frontend**: Vanilla JS (bez frameworka), Vite dev server (`build:frontend`); moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
-- **Python**: `well_configurator_backend/` — osobny serwis (OR-Tools solver), NIE dotykaj z Node.js
 - **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
 
 ## Architektura (ADR)
@@ -198,7 +197,7 @@ System ML jest równoległy do istniejącego LearningEngine (pattern-based). NIE
 | Prediction API    | `src/routes/telemetryAiMl.ts`         | POST /api/telemetry/ai/predict (cache 15min), /reward, /ml-status, /train, /rollback |
 | Dual-Ranking      | `public/js/studnie/mlDualRanking.js`  | Final = 0.6 × Technical + 0.4 × AI × 100; 5% exploration                             |
 | Reward Hooks      | `public/js/studnie/mlRewardHooks.js`  | Hooki do wellActions (addWell, removeWell, ACCEPT, REJECT)                           |
-| ML Dashboard      | `public/js/studnie/mlDashboard.js`    | 2 zakładki: "Learning Engine" (OR-Tools) + "AI Pipeline" (nowe ML)                   |
+| ML Dashboard      | _usunięty_                            | Zastąpiony przez AI Pipeline dashboard                                               |
 
 ### Hierarchia modeli (fallback)
 

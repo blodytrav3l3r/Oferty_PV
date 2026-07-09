@@ -1684,6 +1684,15 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         _sendAcceptanceTelemetry(selectedWellsCopy, 'ORDER_CONFIRM');
     }
 
+    // Reward hook — potwierdzenie zamówienia = najsilniejszy sygnał akceptacji
+    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
+        selectedWellsCopy.forEach(function (w) {
+            if (w.config && w.config.length > 0) {
+                window.mlRewardHooks.onWellAccepted({ eventType: 'ORDER_CONFIRMED' });
+            }
+        });
+    }
+
     // Ustaw krok na 4.2 (Zamówienie) przed przekierowaniem
     currentWizardStep = 5;
     if (typeof updateWizardIndicator === 'function') updateWizardIndicator();
@@ -3133,7 +3142,16 @@ function renderZleceniaSvgPreview(well) {
 
     if (info) {
         const stats = calcWellStats(well);
-        info.innerHTML = `<strong>${well.name}</strong> — DN${well.dn} — H: ${fmtInt(stats.height)}mm — ${fmtInt(stats.weight)}kg`;
+        info.innerHTML =
+            '<strong>' +
+            escapeHtml(well.name) +
+            '</strong> — DN' +
+            escapeHtml(String(well.dn ?? '')) +
+            ' — H: ' +
+            fmtInt(stats.height) +
+            'mm — ' +
+            fmtInt(stats.weight) +
+            'kg';
     }
 }
 

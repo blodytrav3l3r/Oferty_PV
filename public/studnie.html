@@ -112,32 +112,7 @@
                                 margin-right: 0.5rem;
                             "
                         ></span>
-                        <div
-                            id="backend-status-indicator"
-                            title="Łączenie z serwerem obliczeniowym..."
-                            style="
-                                cursor: help;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                padding: 0.35rem;
-                                border: 1px solid var(--border-glass);
-                                border-radius: 6px;
-                                background: var(--bg-glass);
-                            "
-                        >
-                            <span
-                                style="
-                                    display: inline-block;
-                                    width: 10px;
-                                    height: 10px;
-                                    border-radius: 50%;
-                                    background: #fdba74;
-                                    box-shadow: 0 0 8px #fdba74;
-                                    transition: all 0.3s;
-                                "
-                            ></span>
-                        </div>
+
                         <button
                             onclick="appLogout()"
                             style="
@@ -5167,7 +5142,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
 
         <div id="toast-container" class="toast-container"></div>
         <!-- Pasywny moduł telemetry AI (NIE zmienia solvera) -->
-        <script src="/js/studnie/telemetryBridge.js"></script>
+        <script src="/js/studnie/telemetryBridge.js?v=3.0"></script>
         <!-- Rejestracja wersji solvera/reguł (raz na sesję) -->
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -5195,7 +5170,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/studnie/precoCalcCore.js?v=3.1"></script>
         <script src="js/studnie/wellManager.js?v=3.0"></script>
         <script src="js/studnie/wellConfigRules.js?v=3.0"></script>
-        <script src="js/studnie/wellSolver.js?v=3.0"></script>
+        <script src="js/studnie/wellSolver.js?v=3.1"></script>
         <script src="js/studnie/wellTransitions.js?v=3.1"></script>
         <script src="js/studnie/wellPopups.js?v=3.0"></script>
         <script src="js/studnie/wellActions.js?v=3.0"></script>
@@ -5204,12 +5179,11 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/studnie/ruleEngine.js?v=3.0"></script>
         <script src="js/studnie/ringOptimizer.js?v=3.0"></script>
         <script src="js/studnie/wellDiagram.js?v=3.0"></script>
-        <script src="js/studnie/offerManager.js?v=3.2"></script>
-        <script src="js/studnie/mlDashboard.js?v=3.1"></script>
+        <script src="js/studnie/offerManager.js?v=3.3"></script>
         <script src="js/studnie/mlDualRanking.js?v=1.0"></script>
-        <script src="js/studnie/mlRewardHooks.js?v=1.0"></script>
+        <script src="js/studnie/mlRewardHooks.js?v=1.1"></script>
         <script src="js/studnie/excelTableManager.js?v=3.80"></script>
-        <script src="js/studnie/orderManager.js?v=3.0"></script>
+        <script src="js/studnie/orderManager.js?v=3.1"></script>
         <script src="js/studnie/printManager.js?v=3.0"></script>
         <script src="js/shared/printModal.js?v=3.0"></script>
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>

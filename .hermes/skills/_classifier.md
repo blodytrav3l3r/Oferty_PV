@@ -73,10 +73,7 @@ intents:
   preferred_skills: [plan, plan-guardian]
   condition: ".hermes/plan-*.md exists"
 
-- intent: "python (well_configurator_backend/)"
-  required_capabilities: [python-debugger]
-  preferred_skills: [python-debugpy]
-  condition: "path_matches: well_configurator_backend/**"
+# intent "python (well_configurator_backend/)" — usunięty (backend skasowany)
 
 - intent: "node.js debug (--inspect)"
   required_capabilities: [node-debugger]
@@ -131,5 +128,5 @@ prefer_invoke_only_for_heavy: true
 # ════════════════════ TRIGGER → INTENT ════════════════════
 
 triggers:
-phrases: - "/graphify": "knowledge graph / graph query" - "knowledge graph": "knowledge graph / graph query" - "graph query": "knowledge graph / graph query" - "audyt": "audyt bazy / cleanup repo / dead code" - "audit": "audyt bazy / cleanup repo / dead code" - "code review": "code review przed commitem" - "review przed commitem": "code review przed commitem" - "recenzja kodu": "code review przed commitem" - "debug excelu": "rozwiąż bug w excelu" - "paste nie działa": "rozwiąż bug w excelu" - "wklejanie": "rozwiąż bug w excelu" - "_excelHandlePaste": "rozwiąż bug w excelu" - "_excelRenderTable": "rozwiąż bug w excelu" - "regre": "root cause debugging regression" - "well_configurator_backend": "python (well_configurator_backend/)" - "python error": "python (well_configurator_backend/)" - "AI dashboard": "AI/telemetry/ML/dashboard" - "ml-api": "AI/telemetry/ML/dashboard" - "telemetr": "AI/telemetry/ML/dashboard"
+phrases: - "/graphify": "knowledge graph / graph query" - "knowledge graph": "knowledge graph / graph query" - "graph query": "knowledge graph / graph query" - "audyt": "audyt bazy / cleanup repo / dead code" - "audit": "audyt bazy / cleanup repo / dead code" - "code review": "code review przed commitem" - "review przed commitem": "code review przed commitem" - "recenzja kodu": "code review przed commitem" - "debug excelu": "rozwiąż bug w excelu" - "paste nie działa": "rozwiąż bug w excelu" - "wklejanie": "rozwiąż bug w excelu" - "_excelHandlePaste": "rozwiąż bug w excelu" - "_excelRenderTable": "rozwiąż bug w excelu" - "regre": "root cause debugging regression" - "AI dashboard": "AI/telemetry/ML/dashboard" - "ml-api": "AI/telemetry/ML/dashboard" - "telemetr": "AI/telemetry/ML/dashboard"
 default_intent: "general_help" # load only core

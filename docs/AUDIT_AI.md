@@ -343,7 +343,7 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 | ---------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------- |
 | Brak auto-acceptance hook w `saveOffer`  | JS telemetry bridge jest gotowy, ale `offerManager.js` jeszcze nie wywołuje | Sprint 2: dodać `acceptance-full` call   |
 | Brak UI dashboard                        | Tylko backend endpoints                                                     | Sprint 2: panel admina w `public/admin/` |
-| Brak feedback ML z Pythona               | `well_configurator_backend` nie wpięty                                      | Planowane (priorytet 3)                  |
+| ~~Brak feedback ML z Pythona~~           | `well_configurator_backend` usunięty                                        | Python backend usunięty z projektu       |
 | `ai_telemetry_logs` może rosnąć          | 60 kolumn, JSON-y                                                           | Dodać pruning cron w przyszłości         |
 | Crystallised knowledge base pattern keys | Pół-arbitrary                                                               | Heurystyki stabilizują w czasie          |
 
@@ -367,7 +367,7 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 
 ### Długoterminowo
 
-7. Integracja z `well_configurator_backend` Python ML
+7. ~~Integracja z `well_configurator_backend` Python ML~~ — backend usunięty
 8. Federated learning jeśli multi-tenant
 9. Re-trening co tydzień z feedback po `create_order`
 

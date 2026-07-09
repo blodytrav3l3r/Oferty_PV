@@ -3,6 +3,7 @@ import { logger } from '../../utils/logger';
 import { AcceptanceModel } from './AcceptanceModel';
 import { modelRegistry, type ModelMetrics } from './ModelRegistry';
 import { featureExtractor } from './FeatureExtractor';
+import { ML_CONFIG } from './trainingConfig';
 
 const FEATURE_NAMES = [
     'dn',
@@ -85,6 +86,23 @@ function computeRocAuc(scores: number[], labels: number[]): number {
 
 export class TrainingPipeline {
     private running = false;
+    private mutex: Promise<void> | null = null;
+    private lastFeatureCount: number = 0;
+
+    private async acquire(): Promise<() => void> {
+        let release: () => void;
+        const prev = this.mutex;
+        this.mutex = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        const timer = setTimeout(() => {
+            logger.error('TrainingPipeline', 'Mutex timeout 5min — wymuszam zwolnienie');
+            release!();
+        }, 300_000);
+        await prev;
+        clearTimeout(timer);
+        return release!;
+    }
 
     async run(
         force = false
@@ -92,6 +110,7 @@ export class TrainingPipeline {
         if (this.running && !force) {
             return { trained: false, reason: 'already_running' };
         }
+        const release = await this.acquire();
         this.running = true;
         try {
             await featureExtractor.extractAndStore();
@@ -101,10 +120,23 @@ export class TrainingPipeline {
                 take: 2000
             });
 
-            if (features.length < 100) {
-                logger.info('TrainingPipeline', `Za malo danych: ${features.length} < 100`);
+            if (features.length < ML_CONFIG.minFeatureCountForTraining) {
+                logger.info(
+                    'TrainingPipeline',
+                    `Za malo danych: ${features.length} < ${ML_CONFIG.minFeatureCountForTraining}`
+                );
                 return { trained: false, reason: `insufficient_data:${features.length}` };
             }
+
+            const newCount = features.length - this.lastFeatureCount;
+            if (!force && newCount < ML_CONFIG.minNewRecordsForTraining) {
+                logger.info(
+                    'TrainingPipeline',
+                    `Za malo nowych danych: ${newCount} < ${ML_CONFIG.minNewRecordsForTraining}`
+                );
+                return { trained: false, reason: `insufficient_new_data:${newCount}` };
+            }
+            this.lastFeatureCount = features.length;
 
             const examples = features.map((f) => {
                 const raw: Record<string, unknown> = {
@@ -224,6 +256,7 @@ export class TrainingPipeline {
             return { trained: false, reason: `error:${msg}` };
         } finally {
             this.running = false;
+            release();
         }
     }
 

@@ -8,7 +8,6 @@ const IGNORE_DIRS = new Set([
     '.git',
     'venv',
     'dist',
-    'well_configurator_backend',
     'data',
     'generated',
     'graphify-out',

@@ -98,7 +98,7 @@ export const telemetryConfigSchema = z.object({
     allComponentIds: z.array(z.string()).optional(),
 
     // Solver metadata
-    solverSource: z.enum(['AUTO_JS', 'AUTO_PYTHON', 'MANUAL', 'AI_SUGGEST']),
+    solverSource: z.enum(['AUTO_JS', 'MANUAL', 'AI_SUGGEST']),
     solverVersion: z.string().optional(),
     rulesVersion: z.string().optional(),
     computationMs: z.number().int().optional(),

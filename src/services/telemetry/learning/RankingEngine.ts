@@ -5,7 +5,7 @@
  * Pasywny: wynik to tylko rekomendacja, nie modyfikacja solvera.
  */
 
-import type { FeatureVector } from './FeatureExtractor';
+import type { FeatureVector } from './types';
 import type { KnowledgePattern } from './KnowledgeBase';
 
 export interface RankedRecommendation {
@@ -23,10 +23,7 @@ export class RankingEngine {
         patterns: KnowledgePattern[],
         topN: number = 5
     ): RankedRecommendation[] {
-        const self = this;
-        const scored = patterns.map(function (p) {
-            return self._score(features, p);
-        });
+        const scored = patterns.map((p) => this._score(features, p));
 
         scored.sort(function (a, b) {
             return b.score - a.score;

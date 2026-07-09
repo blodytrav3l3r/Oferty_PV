@@ -38,7 +38,7 @@
 | "audyt", "audit", "codebase review"           | załaduj `codebase-audit` (heavy)                      |
 | "code review", "review PR", "recenzja kodu"   | załaduj `requesting-code-review` (heavy)              |
 | Błędy excel/paste/copy/TSV                    | załaduj `excel-debug`                                 |
-| Praca w `well_configurator_backend/`          | załaduj `python-debugpy`                              |
+| ~~Praca w `well_configurator_backend/`~~      | backend usunięty                                      |
 | AI/telemetry/ML/dashboard komponent           | załaduj `oferty-pv-ai-telemetry`                      |
 | Modyfikacje SPA/app.html/router/iframe        | załaduj `sp-a-conventions` (95 KB - planuj ostrożnie) |
 | Plan mode (.hermes/plan-*.md istnieje)        | załaduj `plan-guardian`                               |

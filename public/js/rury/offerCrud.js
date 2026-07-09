@@ -317,7 +317,7 @@ function renderSavedOffers() {
     const isPro = currentUser && currentUser.role === 'pro';
     const subUsers = (currentUser && currentUser.subUsers) || [];
 
-    const renderedList = offers
+    const renderedList = [...offers]
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .map((o) => {
             const isOwner = currentUser && o.userId === currentUser.id;

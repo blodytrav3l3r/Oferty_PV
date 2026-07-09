@@ -154,6 +154,59 @@ router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Re
     }
 });
 
+router.get('/telemetry/ai/health', requireAuth, async (_req: Request, res: Response) => {
+    try {
+        const telemetryCount = await prisma.ai_telemetry_logs.count();
+        const featureCount = await featureExtractor.getFeatureCount();
+        const activeModel = await modelRegistry.getActiveModel();
+        const modelCount = await modelRegistry.getModelCount();
+        const pipelineStatus = trainingPipeline.getStatus();
+        const rewardLogs = await prisma.aiRewardLog.count();
+
+        const lastModel = await prisma.aiModel.findFirst({
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const withSnapshot = await prisma.ai_telemetry_logs.count({
+            where: { NOT: { featureSnapshot: '{}' } }
+        });
+        const withSolverSource = await prisma.ai_telemetry_logs.count({
+            where: { NOT: { solverSource: null } }
+        });
+        const withWellType = await prisma.ai_telemetry_logs.count({
+            where: { NOT: { wellType: null } }
+        });
+        const withManualOverride = await prisma.ai_telemetry_logs.count({
+            where: { manualOverrideFlag: true }
+        });
+
+        res.json({
+            mlOnline: !!activeModel,
+            telemetryCount,
+            featureCount,
+            modelCount,
+            modelVersion: activeModel?.version || null,
+            modelAccuracy: activeModel?.metrics?.accuracy ?? null,
+            lastTrainingAt: lastModel?.createdAt || null,
+            trainingRunning: pipelineStatus.running,
+            totalRewards: rewardLogs,
+            dataQuality: {
+                totalLogs: telemetryCount,
+                withFeatureSnapshotPct:
+                    telemetryCount > 0 ? Math.round((withSnapshot / telemetryCount) * 100) : 0,
+                withSolverSourcePct:
+                    telemetryCount > 0 ? Math.round((withSolverSource / telemetryCount) * 100) : 0,
+                withWellTypePct:
+                    telemetryCount > 0 ? Math.round((withWellType / telemetryCount) * 100) : 0,
+                manualOverrideCount: withManualOverride
+            }
+        });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(500).json({ error: msg });
+    }
+});
+
 router.get('/telemetry/ai/models', requireAuth, async (_req: Request, res: Response) => {
     try {
         const models = await modelRegistry.listModels(50);

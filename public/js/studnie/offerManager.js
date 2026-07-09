@@ -76,24 +76,7 @@ function renderOfferSummary() {
         }
         if (window.lucide) window.lucide.createIcons({ root: saveBtn });
     }
-
-    // Widoczność przycisku AI Dashboard (tylko admin/pro)
-    updateAIDashboardVisibility();
 }
-/**
- * Odświeża widoczność przycisku AI Dashboard na podstawie roli użytkownika.
- * Wywoływana z renderOfferSummary oraz przy starcie strony.
- */
-function updateAIDashboardVisibility() {
-    const aiDashboardBtn = document.getElementById('nav-ai-dashboard');
-    if (!aiDashboardBtn) return;
-    const showAi = currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro');
-    aiDashboardBtn.style.display = showAi ? 'flex' : 'none';
-    if (showAi && window.lucide) {
-        window.lucide.createIcons({ root: aiDashboardBtn.parentElement });
-    }
-}
-
 function generateOfferNotes(onlyIfEmpty = false) {
     const offerNotesField = document.getElementById('offer-tab-notes');
     if (!offerNotesField) return;
@@ -1813,7 +1796,9 @@ async function changeOfferUser() {
 
                 const btnChangeUser = document.getElementById('btn-change-offer-user');
                 if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${editingOfferAssignedUserName}`;
+                    btnChangeUser.innerHTML =
+                        '<i data-lucide="user"></i> Opiekun: ' +
+                        escapeHtml(editingOfferAssignedUserName);
 
                 if (editingOfferIdStudnie) {
                     saveOfferStudnie();
@@ -1907,7 +1892,8 @@ async function changeOfferUserFromListStudnie(offerId) {
                     editingOfferAssignedUserName = offer.userName;
                     const btnChangeUser = document.getElementById('btn-change-offer-user');
                     if (btnChangeUser)
-                        btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${offer.userName}`;
+                        btnChangeUser.innerHTML =
+                            '<i data-lucide="user"></i> Opiekun: ' + escapeHtml(offer.userName);
                 }
             }
         }
@@ -2222,6 +2208,15 @@ async function saveOfferStudnie() {
 
         // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI)
         _sendAcceptanceTelemetry(wells, 'OFFER_SAVE');
+
+        // Reward hook — zapis oferty = średni sygnał akceptacji
+        if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
+            wells.forEach(function (w) {
+                if (w.config && w.config.length > 0) {
+                    window.mlRewardHooks.onWellAccepted({ eventType: 'OFFER_SAVED' });
+                }
+            });
+        }
 
         return true;
     } catch (err) {
@@ -2963,9 +2958,6 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
 };
 
 const dragOverCount = 0; // dla wizualizacji drag & drop
-
-// eslint-disable-next-line prefer-const
-let isBackendOnline = false;
 
 // Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
 window.addEventListener('pv-sync-status-changed', () => {

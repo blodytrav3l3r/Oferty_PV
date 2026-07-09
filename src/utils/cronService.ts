@@ -118,15 +118,17 @@ class CronService {
 
     /**
      * Analiza ustawień użytkowania (co godzinę).
-     * W trywialny sposób wywołuje pełny cykl ale z mniejszym limitem.
+     * Lekka sonda — sprawdza liczbę rekordów telemetry bez pełnego pipeline.
      */
     async runUsageAnalysis(): Promise<void> {
         try {
             logger.info('CronService', '[usageAnalysis] start');
-            const summary = await learningEngine.runFullCycle();
+            const { default: prisma } = await import('../prismaClient');
+            const telemetryCount = await prisma.ai_telemetry_logs.count();
+            const patternCount = await prisma.ai_knowledge_base.count();
             logger.info(
                 'CronService',
-                '[usageAnalysis] persisted=' + summary.persistedToKb + ' new patterns'
+                `[usageAnalysis] telemetry=${telemetryCount}, patterns=${patternCount}`
             );
         } catch (e) {
             logger.error('CronService', `[usageAnalysis] failed: ${e}`);

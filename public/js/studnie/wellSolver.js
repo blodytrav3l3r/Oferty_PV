@@ -3,11 +3,9 @@
  * wellSolver.js — Rdzeń algorytmiczny doboru elementów studni
  *
  * Zawiera wyłącznie logikę solvera:
- * - selectRingVariants()      — wybór wariantów kręgów
  * - applyDrilledRings()       — zamiana kręgów na wiercone (OT)
- * - fetchConfigFromBackend()  — integracja z backendem OR-Tools
- * - autoSelectComponents()    — główny punkt wejścia auto-doboru
- * - runJsAutoSelection()      — lokalny solver fallback (JS)
+ * - autoSelectComponents()    — główny punkt wejścia auto-doboru (JS solver)
+ * - runJsAutoSelection()      — lokalny solver (JS)
  * - recalculateWellErrors()   — walidacja luzów przejść
  *
  * Zależności globalne: studnieProducts, wells, currentWellIndex,
@@ -184,136 +182,6 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     return result;
 }
 
-/* ===== ZAPYTANIE DO BACKENDU (AI-FIRST) ===== */
-async function fetchConfigFromBackend(well, requiredMm, availProducts) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    try {
-        const effDn = well.dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : well.dn;
-        const payload = {
-            dn: effDn,
-            target_height_mm: requiredMm,
-            use_reduction: well.redukcjaDN1000 || false,
-            target_dn: well.redukcjaDN1000 ? well.redukcjaTargetDN || 1000 : null,
-            redukcja_min_h_mm: well.redukcjaMinH || 0,
-            warehouse: well.magazyn === 'Włocławek' ? 'WL' : 'KLB',
-            psia_buda: well.psiaBuda || false,
-            transitions: (well.przejscia || []).map((p, idx) => {
-                let prDN = 160;
-                let prod = availProducts.find((x) => x.id === p.productId);
-                if (prod && typeof prod.dn === 'string' && prod.dn.includes('/'))
-                    prDN = parseFloat(prod.dn.split('/')[1]) || 160;
-                else if (prod && prod.dn != null) prDN = parseFloat(prod.dn) || 160;
-                let bottomEdge = Math.round(
-                    (parseFloat(p.rzednaWlaczenia) - (well.rzednaDna || 0)) * 1000
-                );
-                return {
-                    id: p.productId || `T${idx + 1}`,
-                    height_from_bottom_mm: isNaN(bottomEdge) ? 0 : bottomEdge
-                };
-            }),
-            forced_top_closure_id: well.redukcjaDN1000
-                ? well.redukcjaZakonczenie || null
-                : well.zakonczenie || null,
-            wkladkaZwienczenie: well.wkladkaZwienczenie || 'brak',
-            available_products: (() => {
-                // Dołącz wszystkie konusy dla danej DN (pomija filtr stopni)
-                const availIds = new Set(availProducts.map((p) => p.id));
-                const extraKonus = studnieProducts.filter(
-                    (p) =>
-                        p.componentType === 'konus' &&
-                        parseInt(p.dn) === parseInt(effDn) &&
-                        !availIds.has(p.id)
-                );
-                const allProducts =
-                    extraKonus.length > 0 ? [...availProducts, ...extraKonus] : availProducts;
-                return allProducts.map((p) => ({
-                    id: p.id || '',
-                    name: p.name || '',
-                    componentType: p.componentType || '',
-                    dn:
-                        typeof p.dn === 'string' && p.dn.includes('/')
-                            ? parseFloat(p.dn.split('/')[0]) || p.dn
-                            : parseFloat(p.dn) || null,
-                    height: parseFloat(p.height) || 0,
-                    formaStandardowaKLB: parseInt(p.formaStandardowaKLB) || 0,
-                    formaStandardowaWL:
-                        parseInt(p.formaStandardowa) || parseInt(p.formaStandardowaWL) || 0,
-                    zapasDol: parseFloat(p.zapasDol) || 0,
-                    zapasGora: parseFloat(p.zapasGora) || 0,
-                    zapasDolMin: parseFloat(p.zapasDolMin) || 0,
-                    zapasGoraMin: parseFloat(p.zapasGoraMin) || 0
-                }));
-            })()
-        };
-        const apiUrl = `http://${window.location.hostname}:8000/api/v1/configure`;
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        if (!response.ok) return null;
-        const data = await response.json();
-        return data.length > 0 ? data[0] : null;
-    } catch (err) {
-        logger.warn('wellSolver', 'Backend ML nie odpowiada — używam solvera JS:', err);
-        return null;
-    } finally {
-        clearTimeout(timeoutId);
-    }
-}
-
-function buildConfigFromBackendResult(backendResult) {
-    const newConfig = [];
-    const reversedItems = [...backendResult.items].reverse();
-    for (const bItem of reversedItems) {
-        let product = studnieProducts.find((p) => p.id === bItem.product_id);
-        if (!product) {
-            if (bItem.product_id.endsWith('_OT')) {
-                const baseId = bItem.product_id.replace('_OT', '');
-                product = studnieProducts.find((p) => p.id === baseId);
-            }
-            if (!product) {
-                product = {
-                    id: bItem.product_id,
-                    name: bItem.name || 'Produkt z AI',
-                    componentType: bItem.component_type || 'krag',
-                    height: 0,
-                    weight: 0,
-                    area: 0
-                };
-                studnieProducts.push(product);
-            } else {
-                const dynamicProd = structuredClone(product);
-                dynamicProd.id = bItem.product_id;
-                dynamicProd.name = bItem.name;
-                dynamicProd.componentType = bItem.component_type || product.componentType;
-                studnieProducts.push(dynamicProd);
-                product = dynamicProd;
-            }
-        }
-        const qty = bItem.quantity || 1;
-        for (let i = 0; i < qty; i++) {
-            newConfig.push({ productId: bItem.product_id, quantity: 1 });
-        }
-    }
-    return newConfig;
-}
-
-function findDennicaInConfig(config) {
-    // Konfiguracja jest top-to-bottom: wlaz, avr, top closure, kregi, dennica
-    // Szukamy ostatniego elementu z componentType === 'dennica' lub 'styczna'
-    for (let i = config.length - 1; i >= 0; i--) {
-        const p = studnieProducts.find((pr) => pr.id === config[i].productId);
-        if (p && (p.componentType === 'dennica' || p.componentType === 'styczna')) {
-            return p;
-        }
-    }
-    return null;
-}
-
 /* ===== GŁÓWNY PUNKT WEJŚCIA AUTO-DOBORU ===== */
 let isAutoSelectRunning = false;
 window.__autoSelectCallCount = 0;
@@ -376,120 +244,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 
         const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
-        // === KROK 1: Backend AI (OR-Tools, 10s timeout) ===
-        logger.info('wellSolver', '[AutoSelect] Wywołanie backendu OR-Tools...');
-        const backendResult = await fetchConfigFromBackend(well, requiredMm, availProducts);
-
-        if (backendResult && backendResult.is_valid && backendResult.items.length > 0) {
-            const newConfig = buildConfigFromBackendResult(backendResult);
-
-            // === WERYFIKACJA DENNICY ===
-            const dnProducts = availProducts.filter((p) => filterByWellParams(p, well));
-            const correctDennica = getLowestDennicaHybrid(
-                dnProducts,
-                dn,
-                well.magazyn || 'Kluczbork',
-                well.przejscia,
-                well.rzednaDna,
-                well.stycznaDn
-            ).dennica;
-            const configDennica = findDennicaInConfig(newConfig);
-            const dennicaWrong =
-                correctDennica && configDennica && configDennica.id !== correctDennica.id;
-            if (dennicaWrong) {
-                logger.warn(
-                    'wellSolver',
-                    `[AutoSelect] AI wybrało złą dennicę ${configDennica.id} (h=${configDennica.height}). Wymagana: ${correctDennica.id} (h=${correctDennica.height}). Fallback do JS.`
-                );
-            }
-
-            // Walidacja redukcji
-            const redukcjaOk =
-                !well.redukcjaDN1000 ||
-                (() => {
-                    const targetDn = well.redukcjaTargetDN || 1000;
-                    return !newConfig.some((item) => {
-                        const p = studnieProducts.find((pr) => pr.id === item.productId);
-                        if (
-                            p &&
-                            (p.componentType === 'konus' ||
-                                p.componentType === 'plyta_din' ||
-                                p.componentType === 'krag' ||
-                                p.componentType === 'krag_ot')
-                        ) {
-                            if (
-                                parseInt(p.dn) !== targetDn &&
-                                parseInt(p.dn) !== parseInt(well.dn)
-                            ) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
-                })();
-
-            // Sprawdź czy backend uwzględnił wymuszone zakończenie
-            const forcedClosureId = well.redukcjaDN1000
-                ? well.redukcjaZakonczenie
-                : well.zakonczenie;
-            const forcedClosureOk =
-                !forcedClosureId || newConfig.some((item) => item.productId === forcedClosureId);
-            if (!forcedClosureOk) {
-                logger.warn(
-                    'wellSolver',
-                    '[AutoSelect] Backend pominął wymuszone zakończenie. Fallback do JS.'
-                );
-            }
-
-            // Sprawdź czy istnieje jakiekolwiek zakończenie górne w configu
-            const topClosureTypes = [
-                'konus',
-                'plyta_din',
-                'plyta_najazdowa',
-                'plyta_zamykajaca',
-                'pierscien_odciazajacy'
-            ];
-            const hasTopClosure = newConfig.some((item) => {
-                const prod = studnieProducts.find((p) => p.id === item.productId);
-                return prod && topClosureTypes.includes(prod.componentType);
-            });
-            if (!hasTopClosure) {
-                logger.warn(
-                    'wellSolver',
-                    '[AutoSelect] Backend nie zawiera zakończenia górnego. Fallback do JS.'
-                );
-            }
-
-            // Sprawdź czy backend wybrał konus gdy dostępny (bez PEHD)
-            const isPEHD = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
-            const konusAvailable =
-                !isPEHD &&
-                studnieProducts.some(
-                    (p) => p.componentType === 'konus' && parseInt(p.dn) === parseInt(effectiveDn)
-                );
-            const hasKonus = newConfig.some((item) => {
-                const prod = studnieProducts.find((p) => p.id === item.productId);
-                return prod && prod.componentType === 'konus';
-            });
-            const konusOk = !konusAvailable || hasKonus || !!forcedClosureId;
-            if (!konusOk) {
-                logger.warn(
-                    'wellSolver',
-                    '[AutoSelect] Backend pominął konus mimo dostępności. Fallback do JS.'
-                );
-            }
-
-            if (!dennicaWrong && redukcjaOk && forcedClosureOk && hasTopClosure && konusOk) {
-                applyBackendConfig(well, newConfig, backendResult, autoTriggered);
-                return;
-            }
-        }
-
-        // === KROK 2: Fallback do JS solvera ===
-        logger.warn(
-            'wellSolver',
-            '[AutoSelect] Backend niedostępny lub odrzucił. Fallback do JS solvera.'
-        );
+        // === KROK 1: JS Solver ===
         const jsMsStart =
             window.performance && window.performance.now ? window.performance.now() : Date.now();
         const jsResult = runJsAutoSelection(well, requiredMm, availProducts);
@@ -537,6 +292,22 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         }
         well.configErrors = errors;
         well.configSource = 'AUTO_JS';
+
+        // Wzbogacenie AI score — tylko do telemetrii, nie zmienia wyboru
+        if (typeof window.mlEnrichLayout === 'function') {
+            window
+                .mlEnrichLayout(well.config, well)
+                .then(function (enriched) {
+                    if (enriched && enriched._aiScore !== undefined) {
+                        well._aiScore = enriched._aiScore;
+                        well._mlOnline = enriched._mlOnline;
+                        well._modelVersion = enriched._modelVersion;
+                    }
+                })
+                .catch(function () {
+                    // pasywnie — ignoruj
+                });
+        }
 
         try {
             sortWellConfigByOrder();
@@ -596,7 +367,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         if (well.configStatus === 'ERROR') statusIcon = '<i data-lucide="alert-circle"></i>';
         if (!autoTriggered) {
             showToast(
-                `${statusIcon} Auto-dobór (JS): ${fmtInt(jsResult.totalHeight)} mm (${diffStr}) | ${jsResult.topLabel}${redLabel}${fallbackLabel}`,
+                `${statusIcon} Auto-dobór: ${fmtInt(jsResult.totalHeight)} mm (${diffStr}) | ${jsResult.topLabel}${redLabel}${fallbackLabel}`,
                 well.configStatus === 'OK' ? 'success' : 'warning'
             );
         }
@@ -606,58 +377,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     }
 };
 
-function applyBackendConfig(well, newConfig, backendResult, autoTriggered) {
-    well.config = newConfig;
-
-    // Upewnij się, że studnia ma właz
-    const hasWlaz = newConfig.some(
-        (item) => studnieProducts.find((p) => p.id === item.productId)?.componentType === 'wlaz'
-    );
-    if (!hasWlaz) {
-        const defaultWlaz = studnieProducts.find((p) => p.id === 'WLAZ-150');
-        if (defaultWlaz) well.config.unshift({ productId: defaultWlaz.id, quantity: 1 });
-    }
-
-    if (backendResult.errors && backendResult.errors.length > 0) {
-        backendResult.errors.forEach((e) => showToast(e, 'error'));
-        well.configStatus = 'WARNING';
-    } else {
-        well.configStatus = 'OK';
-        if (!autoTriggered)
-            showToast('Zoptymalizowano matematycznie (serwer OR-Tools) pomyślnie!', 'success');
-    }
-
-    well.configSource = 'AUTO_AI';
-
-    if (backendResult.has_minimal_clearance) {
-        showToast('Zastosowano minimalne zapasy przejść rur.', 'warning');
-    }
-
-    sortWellConfigByOrder();
-    if (typeof recalcGaskets === 'function') recalcGaskets(well);
-    if (typeof syncKineta === 'function') syncKineta(well);
-    renderWellConfig();
-    renderWellDiagram();
-    updateSummary();
-
-    // Rozwiazywanie PEHD
-    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
-        const forcedZak = well.redukcjaDN1000 ? well.redukcjaZakonczenie : well.zakonczenie;
-        if (!forcedZak) {
-            const hasDinPlate = newConfig.some((item) => {
-                const p = studnieProducts.find((pr) => pr.id === item.productId);
-                return p && p.componentType === 'plyta_din';
-            });
-            if (hasDinPlate && typeof window.showKonusPehdResolverModal === 'function') {
-                setTimeout(() => window.showKonusPehdResolverModal(currentWellIndex), 100);
-            }
-        }
-    }
-
-    if (typeof refreshAll === 'function') refreshAll();
-}
-
-/* ===== LOKALNY SOLVER JS (FALLBACK) ===== */
+/* ===== LOKALNY SOLVER JS ===== */
 function runJsAutoSelection(well, requiredMm, availProducts) {
     const dn = well.dn;
     const targetDn = well.redukcjaTargetDN || 1000;
@@ -1552,7 +1272,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         const itemKonus = newConfig[i];
         const prodKonus = studnieProducts.find((p) => p.id === itemKonus.productId);
 
-        if (prodKonus && prodKonus.componentType === 'konus' && !prodKonus.name.includes('+')) {
+        if (prodKonus && prodKonus.componentType === 'konus' && (prodKonus.height || 0) <= 650) {
             let nextKragIdx = -1;
             for (let j = i + 1; j < newConfig.length; j++) {
                 const pj = studnieProducts.find((p) => p.id === newConfig[j].productId);
@@ -1576,7 +1296,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                         (p) =>
                             p.componentType === 'konus' &&
                             p.dn === prodKonus.dn &&
-                            p.name.includes('Konus+')
+                            (p.height || 0) > 800
                     );
                     if (konusPlus) {
                         itemKonus.productId = konusPlus.id;

@@ -23,7 +23,6 @@ import {
     telemetryVersionSchema
 } from '../src/validators/telemetrySchemas';
 import { telemetryService } from '../src/services/telemetry/telemetryService';
-import { FeatureExtractor } from '../src/services/telemetry/learning/FeatureExtractor';
 import { ConfidenceCalculator } from '../src/services/telemetry/learning/ConfidenceCalculator';
 import { KnowledgeBase } from '../src/services/telemetry/learning/KnowledgeBase';
 import { PatternDetector } from '../src/services/telemetry/learning/PatternDetector';
@@ -52,7 +51,7 @@ describe('telemetryRoutes E2E - schema walidacja', () => {
     });
 
     it('akceptuje wszystkie 4 warianty solverSource', () => {
-        ['AUTO_JS', 'AUTO_PYTHON', 'MANUAL', 'AI_SUGGEST'].forEach((s) => {
+        ['AUTO_JS', 'MANUAL', 'AI_SUGGEST'].forEach((s) => {
             expect(telemetryConfigSchema.safeParse({ solverSource: s }).success).toBe(true);
         });
     });
@@ -157,69 +156,6 @@ describe('telemetryService wewnętrzne', () => {
     it('recordEvent ma poprawne API', () => {
         expect(typeof telemetryService.recordEvent).toBe('function');
         expect((telemetryService.recordEvent as any).length).toBeGreaterThanOrEqual(1);
-    });
-});
-
-/* ===== FeatureExtractor ===== */
-
-describe('FeatureExtractor - wyciąganie cech', () => {
-    let fe: FeatureExtractor;
-    beforeEach(() => {
-        fe = new FeatureExtractor();
-    });
-
-    it('wyciąga cechy geometryczne', () => {
-        const out = fe.extract(
-            {
-                id: 't1',
-                dn: '1200',
-                dennicaType: 'standard',
-                dennicaHeight: 500,
-                ringCount: 4
-            },
-            [],
-            []
-        );
-        const dnFeature = out.features.find((f) => f.name === 'dn');
-        const dennicaFeature = out.features.find((f) => f.name === 'dennicaType');
-        expect(dnFeature?.value).toBe('1200');
-        expect(dennicaFeature?.value).toBe('standard');
-    });
-
-    it('wyciąga cechy przejść szczelnych', () => {
-        const out = fe.extract(
-            { id: 't1', dn: '1200' },
-            [
-                { transitionNo: 1, dn: '160', heightFromBottomMm: 250 },
-                { transitionNo: 2, dn: '160', heightFromBottomMm: 800 }
-            ],
-            []
-        );
-        const count = out.features.find((f) => f.name === 'transitionCount');
-        const layout = out.features.find((f) => f.name === 'transitionLayout');
-        expect(count?.value).toBe(2);
-        expect(layout?.value).toBeDefined();
-    });
-
-    it('klasyfikuje clustered/evenly_spaced layout', () => {
-        const out = fe.extract(
-            { id: 't1', dn: '1200' },
-            [
-                { transitionNo: 1, dn: '160', heightFromBottomMm: 100 },
-                { transitionNo: 2, dn: '160', heightFromBottomMm: 105 },
-                { transitionNo: 3, dn: '160', heightFromBottomMm: 110 },
-                { transitionNo: 4, dn: '160', heightFromBottomMm: 5000 }
-            ],
-            []
-        );
-        const layout = out.features.find((f) => f.name === 'transitionLayout')?.value;
-        expect(['clustered', 'evenly_spaced', 'mixed']).toContain(layout);
-    });
-
-    it('hash tworzy deterministyczny identyfikator', () => {
-        const out1 = fe.extract({ id: 't1', dn: '1200' }, [], []);
-        const out2 = fe.extract({ id: 't2', dn: '1200' }, [], []);
-        expect(fe.hash(out1)).toBe(fe.hash(out2));
     });
 });
 
@@ -546,6 +482,10 @@ describe('LearningEngine - pipeline', () => {
         le = new LearningEngine();
     });
 
+    afterEach(async () => {
+        await prisma.ai_telemetry_logs.deleteMany({ where: { override_reason: 'test' } });
+    });
+
     it('runFullCycle bez danych → processed=0', async () => {
         const summary = await le.runFullCycle();
         expect(summary.processed).toBeGreaterThanOrEqual(0);
@@ -592,7 +532,6 @@ describe('LearningEngine - pipeline', () => {
         expect(c.kb).toBeDefined();
         expect(c.patterns).toBeDefined();
         expect(c.prefs).toBeDefined();
-        expect(c.fe).toBeDefined();
         expect(c.ranker).toBeDefined();
         expect(c.recommend).toBeDefined();
         expect(c.feedback).toBeDefined();

@@ -59,7 +59,7 @@ RAPORT_MODERNIZACJI.md
 | Ryzyko                       | Opis                                           | Zalecenie                          |
 | ---------------------------- | ---------------------------------------------- | ---------------------------------- |
 | SQLite 48 MB w repo          | Duży plik binarny w historii Gita              | ✅ zaakceptowane                   |
-| well_configurator_backend    | Python backend nie w repo, nie w CI            | Osobna decyzja biznesowa           |
+| well_configurator_backend    | Python backend usunięty z projektu             | Logika Konus+ w JS solverze        |
 | PRAGMA user_version w app.ts | Użycie $executeRawUnsafe (fixed string, safe)  | ✅ whitelist w teście sqlInjection |
 | Testy pre-existing           | 7 suite'ów wymagało naprawy                    | ✅ naprawione                      |
 | MPL-2.0 (2 pakiety)          | Wymaga opensourczenia modyfikacji danego pliku | Niskie ryzyko — nie modyfikujemy   |

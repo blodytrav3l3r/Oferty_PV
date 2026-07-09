@@ -7,7 +7,7 @@
  */
 
 /** Źródło konfiguracji */
-export type SolverSource = 'AUTO_JS' | 'AUTO_PYTHON' | 'MANUAL' | 'AI_SUGGEST';
+export type SolverSource = 'AUTO_JS' | 'MANUAL' | 'AI_SUGGEST';
 
 /** Status wersji konfiguracji */
 export type ReviewStatus = 'active' | 'archived' | 'shadowed';

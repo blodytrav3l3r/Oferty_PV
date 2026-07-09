@@ -11,6 +11,11 @@ function escapeHtml(str) {
 }
 window.escapeHtml = escapeHtml;
 
+function setText(el, value) {
+    if (el) el.textContent = String(value ?? '');
+}
+window.setText = setText;
+
 function getUserDisplayName(user) {
     if (!user) return '';
     return user.firstName && user.lastName

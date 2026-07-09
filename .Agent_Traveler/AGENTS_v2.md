@@ -27,7 +27,6 @@ Aplikacja jest zbudowana z podziałem na backend i frontend (SPA oparte na ifram
 - **Backend**: TypeScript + Express + Prisma + SQLite (`server.ts`, katalogi `src/`, `scripts/`, `tests/`).
 - **Frontend**: Czysty Vanilla JS (bez frameworków SPA), Vite jako dev server (`build:frontend`). Kod modułów znajduje się w `public/js/rury/` oraz `public/js/studnie/`.
 - **SPA (Single Page Application)**: Plik `app.html` jest jedynym punktem wejścia (entry point). Moduły (`studnie.html`, `rury.html`) są ładowane jako iframe wewnątrz `app.html`.
-- **Python**: `well_configurator_backend/` to niezależny serwis (silnik solvera OR-Tools). **NIE** modyfikuj ani nie dotykaj go z poziomu kodu Node.js/TypeScript.
 - **Kompilacja/Build**: TypeScript kompiluje wyłącznie katalogi `src/**`, `server.ts`, `scripts/**` oraz `tests/**`. Pliki w katalogu `public/` są wykluczone z kompilacji `tsc` oraz sprawdzania `eslint`.
 
 ### Decyzje Architektoniczne (ADR)

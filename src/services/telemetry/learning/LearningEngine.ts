@@ -14,7 +14,6 @@
 import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
 
-import { FeatureExtractor } from './FeatureExtractor';
 import { PatternDetector } from './PatternDetector';
 import { PreferenceEngine } from './PreferenceEngine';
 import { RankingEngine } from './RankingEngine';
@@ -37,8 +36,8 @@ export class LearningEngine {
     private prefs: PreferenceEngine;
     private feedback: FeedbackProcessor;
     private recommend: RecommendationEngine;
-    private fe: FeatureExtractor;
     private ranker: RankingEngine;
+    private _running: boolean = false;
     private lastRunAt: string | null = null;
     private initialized: boolean = false;
 
@@ -48,7 +47,6 @@ export class LearningEngine {
         this.prefs = new PreferenceEngine();
         this.feedback = new FeedbackProcessor();
         this.recommend = new RecommendationEngine();
-        this.fe = new FeatureExtractor();
         this.ranker = new RankingEngine();
     }
 
@@ -61,6 +59,11 @@ export class LearningEngine {
      * 5) zapisze wszystko do Knowledge Base
      */
     async runFullCycle(): Promise<LearningRunSummary> {
+        if (this._running) {
+            logger.warn('LearningEngine', 'Pipeline juz dziala — pomijam');
+            return { processed: 0, patternsDetected: 0, persistedToKb: 0, durationMs: 0 };
+        }
+        this._running = true;
         const startedAt = Date.now();
         let processed = 0;
         let persisted = 0;
@@ -122,7 +125,7 @@ export class LearningEngine {
                         finalConfig: final,
                         overrideReason: rec.override_reason || ''
                     });
-                } catch (e) {
+                } catch (_e) {
                     /* skip */
                 }
             }
@@ -236,6 +239,8 @@ export class LearningEngine {
                 durationMs: Date.now() - startedAt,
                 error: message
             };
+        } finally {
+            this._running = false;
         }
     }
 
@@ -262,7 +267,6 @@ export class LearningEngine {
             prefs: this.prefs,
             feedback: this.feedback,
             recommend: this.recommend,
-            fe: this.fe,
             ranker: this.ranker
         };
     }

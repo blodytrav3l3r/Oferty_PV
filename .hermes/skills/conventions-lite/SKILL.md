@@ -54,12 +54,7 @@ npm run version:patch    # bump PATCH (agent version-guardian ML/AI logika do CH
 - Title wielomianowo: "przeniesienie wersji do toolbara"
 - Body: wyjaśnienie co/dlaczego po polsku
 
-## 6. Python (`well_configurator_backend/`)
-
-- Osobny serwis, wymaga Pythona 3.11 + venv (`venv/`, gitignored)
-- OR-Tools solver, learning engine, ML API (port 8000 — aktualnie martwy)
-- NIE dotykaj z poziomu Node.js backend
-- Bugi w dobrze zdefiniowanych dziedzinach: skill `python-debugpy` (profile `pv`)
+## 6. ~~Python (`well_configurator_backend/`)~~ — usunięty
 
 ## 7. Cache & deploy
 

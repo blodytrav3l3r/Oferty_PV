@@ -52,7 +52,7 @@ model ai_telemetry_logs {
   allComponentIds      String? // JSON array
 
   // ─── Solver metadata ───
-  solverSource         String? // 'AUTO_JS' | 'AUTO_PYTHON' | 'MANUAL'
+  solverSource         String? // 'AUTO_JS' | 'MANUAL'
   solverVersion        String?
   rulesVersion         String?
   aiVersion            String?
@@ -122,7 +122,7 @@ model ai_config_history {
   configVersion   Int
   parentId        String?
   configJson      String?
-  source          String?  // 'AUTO_JS' | 'AUTO_PYTHON' | 'MANUAL' | 'AI_SUGGEST'
+  source          String?  // 'AUTO_JS' | 'MANUAL' | 'AI_SUGGEST'
   triggeredBy     String?  // userId
   diffFromParent  String?  // JSON: lista zmian elementów
   isCurrent       Boolean @default(true)

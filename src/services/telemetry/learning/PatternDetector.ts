@@ -224,7 +224,7 @@ export class PatternDetector {
             try {
                 await this.knowledge.upsertPattern(p);
                 count++;
-            } catch (e) {
+            } catch (_e) {
                 // ignorujemy
             }
         }

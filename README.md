@@ -321,7 +321,7 @@ Oferty_PV/
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...
 ├── scripts/                   # Skrypty narzędziowe (backup, migracja)
-├── well_configurator_backend/ # Python AI Backend (osobny serwis)
+├── # well_configurator_backend/ — usunięty
 ├── graphify-out/              # Graf wiedzy o kodzie
 ├── .github/                   # CODE_OF_CONDUCT, CI/CD
 ├── *.bat                      # Skrypty startowe Windows

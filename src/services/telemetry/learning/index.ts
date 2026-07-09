@@ -3,7 +3,6 @@
  * Każdy moduł ma jedną odpowiedzialność.
  */
 
-export { FeatureExtractor } from './FeatureExtractor';
 export { PatternDetector } from './PatternDetector';
 export { KnowledgeBase } from './KnowledgeBase';
 export { PreferenceEngine } from './PreferenceEngine';
@@ -12,8 +11,6 @@ export { RecommendationEngine } from './RecommendationEngine';
 export { FeedbackProcessor } from './FeedbackProcessor';
 export { ConfidenceCalculator } from './ConfidenceCalculator';
 export { LearningEngine, learningEngine } from './LearningEngine';
-
-export type { ExtractedFeature, FeatureVector } from './FeatureExtractor';
 
 export type { PatternType, KnowledgePattern, RecommendationRecord } from './KnowledgeBase';
 

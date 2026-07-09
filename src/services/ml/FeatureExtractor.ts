@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
+import { parseFeatureSnapshot } from './parseFeatureSnapshot';
 
 export interface FeatureVector {
     dn: number;
@@ -45,6 +46,7 @@ export interface TelemetryRecordWithDetails {
     userId?: string | null;
     solverSource?: string | null;
     rankingScore?: number | null;
+    featureSnapshot?: string | null;
 }
 
 function shannonEntropy(items: string[]): number {
@@ -104,51 +106,52 @@ export class FeatureExtractor {
             take: 500
         });
 
-        let stored = 0;
-        for (const record of telemetryRecords) {
-            try {
-                const existing = await prisma.aiFeature.findFirst({
-                    where: { telemetryId: record.id }
-                });
-                if (existing) continue;
+        const existingIds = await prisma.aiFeature.findMany({
+            select: { telemetryId: true }
+        });
+        const existingSet = new Set(existingIds.map((r) => r.telemetryId).filter(Boolean));
 
-                const fv = this.extract(record);
-                await prisma.aiFeature.create({
-                    data: {
-                        id: crypto.randomUUID(),
-                        telemetryId: record.id,
-                        dn: fv.dn,
-                        heightMm: fv.heightMm,
-                        warehouse: fv.warehouse,
-                        wellType: fv.wellType,
-                        hasReduction: fv.hasReduction,
-                        hasPsiaBuda: fv.hasPsiaBuda,
-                        hasStyczna: fv.hasStyczna,
-                        ringCount: fv.ringCount,
-                        bottomType: fv.bottomType,
-                        topType: fv.topType,
-                        connectionCount: fv.connectionCount,
-                        transitionsAboveDennica: fv.transitionsAboveDennica,
-                        totalPrice: fv.totalPrice,
-                        totalWeight: fv.totalWeight,
-                        ringVariety: fv.ringVariety,
-                        season: fv.season,
-                        label: fv.label,
-                        reward: fv.reward,
-                        decisionMs: fv.decisionMs > 0 ? fv.decisionMs : null,
-                        createdAt: record.createdAt || new Date().toISOString()
-                    }
-                });
-                stored++;
-            } catch (e) {
-                logger.error('FeatureExtractor', `Blad ekstrakcji dla ${record.id}: ${e}`);
-            }
+        const newRecords = telemetryRecords.filter((r) => !existingSet.has(r.id));
+
+        if (newRecords.length === 0) {
+            logger.info('FeatureExtractor', 'Brak nowych rekordow do ekstrakcji');
+            return 0;
         }
+
+        const data = newRecords.map((record) => {
+            const fv = this.extract(record);
+            return {
+                id: crypto.randomUUID(),
+                telemetryId: record.id,
+                dn: fv.dn,
+                heightMm: fv.heightMm,
+                warehouse: fv.warehouse,
+                wellType: fv.wellType,
+                hasReduction: fv.hasReduction,
+                hasPsiaBuda: fv.hasPsiaBuda,
+                hasStyczna: fv.hasStyczna,
+                ringCount: fv.ringCount,
+                bottomType: fv.bottomType,
+                topType: fv.topType,
+                connectionCount: fv.connectionCount,
+                transitionsAboveDennica: fv.transitionsAboveDennica,
+                totalPrice: fv.totalPrice,
+                totalWeight: fv.totalWeight,
+                ringVariety: fv.ringVariety,
+                season: fv.season,
+                label: fv.label,
+                reward: fv.reward,
+                decisionMs: fv.decisionMs > 0 ? fv.decisionMs : null,
+                createdAt: record.createdAt || new Date().toISOString()
+            };
+        });
+
+        await prisma.aiFeature.createMany({ data });
         logger.info(
             'FeatureExtractor',
-            `Wyodrebniono ${stored} feature vectors z ${telemetryRecords.length} rekordow`
+            `Wyodrebniono ${data.length} feature vectors z ${telemetryRecords.length} rekordow`
         );
-        return stored;
+        return data.length;
     }
 
     extract(record: TelemetryRecordWithDetails): FeatureVector {
@@ -179,8 +182,9 @@ export class FeatureExtractor {
         const hasPsiaBuda = wellType === 'psia_buda';
         const hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
 
-        const totalPrice = record.totalPrice || 0;
-        const totalWeight = record.totalWeight || 0;
+        const snapshot = parseFeatureSnapshot(record.featureSnapshot);
+        const totalPrice = snapshot.totalPrice || record.totalPrice || 0;
+        const totalWeight = snapshot.totalWeight || record.totalWeight || 0;
 
         const ringVarietyValue = shannonEntropy(allDistinct);
 

@@ -218,16 +218,32 @@ class TelemetryService {
         events: TelemetryEventInput[],
         userId?: string
     ): Promise<{ success: boolean; created: number }> {
-        let created = 0;
-        for (const ev of events) {
-            try {
-                await this.recordEvent(ev, userId);
-                created++;
-            } catch (e) {
-                logger.warn('Telemetry', `Pominięto event ${ev.eventType}: ${e}`);
-            }
+        if (events.length === 0) return { success: true, created: 0 };
+
+        const now = new Date().toISOString();
+        const data = events.map((ev) => ({
+            id: crypto.randomUUID(),
+            telemetryId: ev.telemetryId || null,
+            eventType: ev.eventType,
+            userId: userId || null,
+            wellId: ev.wellId || null,
+            componentId: ev.componentId || null,
+            previousValue: ev.previousValue || null,
+            newValue: ev.newValue || null,
+            changeReason: ev.changeReason || null,
+            msSinceConfig: ev.msSinceConfig ?? null,
+            orderInSession: ev.orderInSession ?? null,
+            sequenceNo: ev.sequenceNo ?? 0,
+            createdAt: now
+        }));
+
+        try {
+            await prisma.ai_telemetry_events.createMany({ data });
+            return { success: true, created: data.length };
+        } catch (e) {
+            logger.error('Telemetry', `Błąd batch insertu eventów: ${e}`);
+            return { success: false, created: 0 };
         }
-        return { success: true, created };
     }
 
     /**

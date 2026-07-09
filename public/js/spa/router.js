@@ -125,18 +125,6 @@ const SpaRouter = (() => {
             .join('');
     }
 
-    function toggleBackendIndicator(module) {
-        const el = document.getElementById('backend-status-indicator');
-        if (!el) return;
-        if (module === 'studnie') {
-            el.style.display = 'flex';
-            if (typeof window.startBackendPolling === 'function') window.startBackendPolling();
-        } else {
-            el.style.display = 'none';
-            if (typeof window.stopBackendPolling === 'function') window.stopBackendPolling();
-        }
-    }
-
     function getTransitionLayer() {
         const main = document.getElementById('spa-main');
         if (!main) return null;
@@ -301,7 +289,6 @@ const SpaRouter = (() => {
 
         // Aktualizuj nagłówek
         updateAppNav(module);
-        toggleBackendIndicator(module);
 
         // Klasa body dla scope CSS modułów
         document.body.classList.toggle('module-studnie', module === 'studnie');
@@ -431,10 +418,6 @@ const SpaRouter = (() => {
             }
 
             window.currentUser = authData.user;
-
-            if (typeof updateAIDashboardVisibility === 'function') {
-                updateAIDashboardVisibility();
-            }
         } catch (e) {
             window.location.href = 'index.html';
             return;
@@ -505,43 +488,11 @@ const SpaRouter = (() => {
 
     document.addEventListener('DOMContentLoaded', init);
 
-    function openAIDashboard() {
-        const module = currentModule || 'studnie';
-        const iframe = iframes[module];
-        if (
-            iframe &&
-            iframe.contentWindow &&
-            typeof iframe.contentWindow.showMLDashboard === 'function'
-        ) {
-            iframe.contentWindow.showMLDashboard();
-            return;
-        }
-        if (typeof window.showMLDashboard === 'function') {
-            window.showMLDashboard();
-            return;
-        }
-        logger.warn('router', '[SpaRouter] showMLDashboard nie jest dostępne w module:', module);
-    }
-
-    function updateAIDashboardVisibility() {
-        const btn = document.getElementById('nav-ai-dashboard');
-        if (!btn) return;
-        const user = window.currentUser;
-        const show = user && (user.role === 'admin' || user.role === 'pro');
-        btn.style.display = show ? 'inline-flex' : 'none';
-        if (show && window.lucide) {
-            window.lucide.createIcons({ root: btn });
-        }
-    }
-    window.updateAIDashboardVisibility = updateAIDashboardVisibility;
-
     const api = {
         showSection,
         navigate,
         openOfferInModule,
-        refreshModule,
-        openAIDashboard,
-        updateAIDashboardVisibility
+        refreshModule
     };
     window.SpaRouter = api;
     return api;

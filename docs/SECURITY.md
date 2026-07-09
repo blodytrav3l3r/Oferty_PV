@@ -75,7 +75,7 @@ app.use(
                 scriptSrc: ["'self'", "'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
-                connectSrc: ["'self'", 'http://localhost:5000', 'http://localhost:8000'],
+                connectSrc: ["'self'", 'http://localhost:5000'],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"]
             }
@@ -173,7 +173,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
 - CSP (Content Security Policy) kontroluje dozwolone źródła:
     - Skrypty: `'self'` + `'unsafe-inline'` (dla Vanilla JS event handlerów)
     - Style: `'self'` + `'unsafe-inline'`
-    - Połączenia: localhost na portach 5000, 8000 (dla narzędzi deweloperskich)
+    - Połączenia: localhost na porcie 5000 (dla narzędzi deweloperskich)
 
 ---
 

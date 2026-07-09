@@ -85,55 +85,7 @@
                                 margin-right: 0.5rem;
                             "
                         ></span>
-                        <div
-                            id="backend-status-indicator"
-                            title="Łączenie z serwerem obliczeniowym..."
-                            style="
-                                cursor: help;
-                                display: none;
-                                align-items: center;
-                                justify-content: center;
-                                padding: 0.35rem;
-                                border: 1px solid var(--border-glass);
-                                border-radius: 6px;
-                                background: var(--bg-glass);
-                            "
-                        >
-                            <span class="dot checking"></span>
-                        </div>
-                        <button
-                            id="nav-ai-dashboard"
-                            onclick="SpaRouter.openAIDashboard()"
-                            title="Dashboard AI — statystyki systemu uczenia"
-                            style="
-                                display: none;
-                                padding: 0.35rem 0.8rem;
-                                border: 1px solid rgba(6, 182, 212, 0.4);
-                                border-radius: 6px;
-                                background: rgba(6, 182, 212, 0.12);
-                                color: #67e8f9;
-                                font:
-                                    500 0.75rem 'Inter',
-                                    sans-serif;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                                align-items: center;
-                                gap: 0.35rem;
-                            "
-                            onmouseenter="
-                                this.style.background = 'rgba(6, 182, 212, 0.25)';
-                                this.style.borderColor = 'rgba(6, 182, 212, 0.7)';
-                                this.style.color = '#a5f3fc';
-                            "
-                            onmouseleave="
-                                this.style.background = 'rgba(6, 182, 212, 0.12)';
-                                this.style.borderColor = 'rgba(6, 182, 212, 0.4)';
-                                this.style.color = '#67e8f9';
-                            "
-                        >
-                            <i data-lucide="brain" style="width: 14px; height: 14px"></i>
-                            <span>AI Dashboard</span>
-                        </button>
+
                         <span
                             id="app-version-toolbar"
                             style="
@@ -187,6 +139,5 @@
         <script src="js/spa/router.js?v=3.3"></script>
         <script src="js/shared/iconsSlim.js?v=3.1"></script>
         <script src="js/versionDisplay.js?v=3.2"></script>
-        <script src="js/studnie/backendStatus.js?v=3.2"></script>
     </body>
 </html>

@@ -62,11 +62,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnChangeUser.style.display = 'inline-block';
     }
 
-    // Pokaż przycisk AI Dashboard dla admin/pro
-    if (typeof updateAIDashboardVisibility === 'function') {
-        updateAIDashboardVisibility();
-    }
-
     // URL params
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');

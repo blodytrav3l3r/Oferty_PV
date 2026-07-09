@@ -1969,11 +1969,6 @@ select.form-input option {
     border-color: rgba(99, 102, 241, 0.6);
     color: var(--accent-text);
 }
-/* Przycisk AI Dashboard w górnym pasku nawigacji — widoczny tylko admin/pro przez JS */
-#nav-ai-dashboard {
-    display: none;
-}
-
 /* ── Karty w dolnym pasku podsumowania (wzór rury) ── */
 #offer-summary-footer-fixed .summary-card {
     background: var(--bg-glass);

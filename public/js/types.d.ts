@@ -134,6 +134,7 @@ declare var auth: AuthModule;
 declare function showToast(msg: string, type?: 'success' | 'error' | 'info'): void;
 declare function appConfirm(msg: string): Promise<boolean>;
 declare function escapeHtml(str: string): string;
+declare function setText(el: HTMLElement | null, value: string | number | null | undefined): void;
 declare function authHeaders(): Record<string, string>;
 declare var orderEditMode: any;
 
@@ -155,9 +156,7 @@ interface Window {
 
     /* ui.js */
     globalUsersMap: Map<string, unknown>;
-    checkBackendStatus(): Promise<void>;
-    startBackendPolling(): void;
-    stopBackendPolling(): void;
+
     showModal(options: {
         title?: string;
         content?: string;

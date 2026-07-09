@@ -253,6 +253,19 @@
     white-space: nowrap;
     border-radius: 4px;
     font-weight: 600;
+    transition: all 0.2s ease;
+}
+.rury-table .pehd-btn-active {
+    background: var(--warn);
+    color: #1a1a1a;
+    border: none;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(var(--warn-rgb), 0.5);
+}
+.rury-table .pehd-btn-inactive {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
 }
 
 .rury-table .length-editor {

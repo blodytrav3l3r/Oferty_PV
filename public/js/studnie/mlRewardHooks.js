@@ -28,6 +28,7 @@
      * @param {number} [params.scoreBefore]
      * @param {number} [params.scoreAfter]
      * @param {boolean} [params.wasAiRanked]
+     * @param {string} [params.eventType] - OFFER_SAVED | ORDER_CONFIRMED
      */
     function sendReward(params) {
         if (_rewardInFlight) return;
@@ -37,6 +38,11 @@
 
         _rewardInFlight = true;
 
+        var snap = getConfigSnapshot(well);
+        if (params.eventType) {
+            snap.eventType = params.eventType;
+        }
+
         var payload = {
             action: params.action,
             wellId: well.id || 'unknown',
@@ -44,7 +50,7 @@
             scoreBefore: params.scoreBefore,
             scoreAfter: params.scoreAfter,
             wasAiRanked: params.wasAiRanked,
-            configSnapshot: getConfigSnapshot(well)
+            configSnapshot: snap
         };
 
         try {
@@ -102,7 +108,8 @@
             action: 'ACCEPT',
             scoreBefore: opts && opts.scoreBefore,
             scoreAfter: opts && opts.scoreAfter,
-            wasAiRanked: opts && opts.wasAiRanked
+            wasAiRanked: opts && opts.wasAiRanked,
+            eventType: opts && opts.eventType
         });
     }
 

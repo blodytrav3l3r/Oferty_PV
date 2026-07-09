@@ -641,19 +641,10 @@ function renderOfferItems() {
             } else if (is1m) {
                 rowClass = 'row-1m';
             }
-            const activePehdStyle =
-                'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--warn); color:#1a1a1a; border:none; box-shadow:0 0 12px rgba(var(--warn-rgb),0.5); font-weight:700; border-radius:4px; min-width:88px; text-align:center;';
-            const inactivePehdStyle =
-                'font-size:0.72rem; padding: 0.3rem 0.6rem; margin-top:2px; background:var(--bg-hover); color:var(--text-muted); border:1px solid var(--border); border-radius:4px; transition:all 0.2s ease; min-width:88px; text-align:center; font-weight:600;';
-
             const active3mm =
-                item.pehdType === 'PEHD-3MM'
-                    ? `style="${activePehdStyle}"`
-                    : `style="${inactivePehdStyle}"`;
+                item.pehdType === 'PEHD-3MM' ? 'pehd-btn-active' : 'pehd-btn-inactive';
             const active4mm =
-                item.pehdType === 'PEHD-4MM'
-                    ? `style="${activePehdStyle}"`
-                    : `style="${inactivePehdStyle}"`;
+                item.pehdType === 'PEHD-4MM' ? 'pehd-btn-active' : 'pehd-btn-inactive';
 
             const isOrdered = isItemInAnyOrder(item.uid);
             const isLocked = isItemLocked(item);
@@ -722,8 +713,8 @@ function renderOfferItems() {
                   getPipeInnerArea(item.productId) > 0 && !item.autoAdded
                       ? `
                 <div class="pehd-btn-stack">
-                  <button class="btn btn-sm btn-secondary pehd-btn" ${active3mm} onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
-                  <button class="btn btn-sm btn-secondary pehd-btn" ${active4mm} onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
                 </div>
               `
                       : ''

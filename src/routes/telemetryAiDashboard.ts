@@ -30,7 +30,7 @@ router.get('/ai/learning/status', requireAuth, READ_LIMITER, async (req, res) =>
     }
     try {
         return res.json(learningEngine.getStatus());
-    } catch (e) {
+    } catch (_e) {
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -73,7 +73,7 @@ router.get('/ai/knowledge/patterns', requireAuth, READ_LIMITER, async (req, res)
     try {
         const patterns = await kb.getPatternsForDn(dn, minConfidence);
         return res.json({ dn, minConfidence, items: patterns, total: patterns.length });
-    } catch (e) {
+    } catch (_e) {
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -90,7 +90,7 @@ router.get('/ai/knowledge/stats', requireAuth, READ_LIMITER, async (req, res) =>
     try {
         const stats = await kb.getStats();
         return res.json(stats);
-    } catch (e) {
+    } catch (_e) {
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -110,7 +110,7 @@ router.get('/ai/recommendations/:telemetryId', requireAuth, READ_LIMITER, async 
         const dn = req.query.dn as string | undefined;
         const recs = await recommend.recommendForTelemetry(req.params.telemetryId, dn);
         return res.json({ items: recs, total: recs.length });
-    } catch (e) {
+    } catch (_e) {
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -131,7 +131,7 @@ router.post('/ai/recommendations/decide', requireAuth, READ_LIMITER, async (req,
         }
         await recommend.applyDecision(id, accepted, authReq.user?.id || 'unknown');
         return res.json({ success: true });
-    } catch (e) {
+    } catch (_e) {
         return res.status(500).json({ error: 'Błąd' });
     }
 });

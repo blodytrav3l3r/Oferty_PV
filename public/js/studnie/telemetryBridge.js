@@ -82,7 +82,7 @@
      * @param {Object} options
      * @param {Object} options.well - studnia (well object)
      * @param {Array} options.configItems - wybrane elementy studni (config)
-     * @param {string} options.solverSource - 'AUTO_JS' | 'AUTO_PYTHON' | 'MANUAL'
+     * @param {string} options.solverSource - 'AUTO_JS' | 'MANUAL'
      * @param {number} options.computationMs - czas obliczeń w ms
      * @param {number} options.iterationCount - liczba iteracji solvera
      * @param {number} options.checkedVariants - liczba sprawdzonych wariantów
@@ -152,6 +152,20 @@
                 };
             });
 
+            // Oblicz totalPrice i totalWeight z configu
+            var totalPrice = 0;
+            var totalWeight = 0;
+            for (var idx = 0; idx < configItems.length; idx++) {
+                var ci = configItems[idx];
+                var prod = studnieProducts.find(function (p) {
+                    return p.id === ci.productId;
+                });
+                if (prod) {
+                    totalPrice += (parseFloat(prod.price) || 0) * (ci.quantity || 1);
+                    totalWeight += (parseFloat(prod.weight) || 0) * (ci.quantity || 1);
+                }
+            }
+
             const payload = {
                 // Kontekst
                 wellId: well.id || undefined,
@@ -214,6 +228,8 @@
                     transitionCount: (well.przejscia || []).length,
                     warehouse: well.magazyn || 'unknown',
                     ringCount: configItems.length,
+                    totalPrice: totalPrice,
+                    totalWeight: totalWeight,
                     targetHeightMm:
                         well.rzednaWlazu && well.rzednaDna !== undefined
                             ? Math.round(

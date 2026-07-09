@@ -65,6 +65,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             ? getCurrentRuryOrder()
             : null;
     const showPriceComparison = !!(orderData && orderData.originalSnapshot);
+    const extraCols = showPriceComparison ? 2 : 0;
+    const COLSPAN_CAT = 7 + extraCols;
     const snapshotByUid = showPriceComparison
         ? new Map(
               (orderData.originalSnapshot.items || [])
@@ -271,7 +273,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             const catDiffColor =
                 catDiff > 0 ? '#f87171' : catDiff < 0 ? '#34d399' : 'var(--text-muted)';
             html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                <td colspan="9" style="padding:0.6rem 0.5rem;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
+                <td colspan="${COLSPAN_CAT}" style="padding:0.6rem 0.5rem;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
                 <td class="text-right" style="font-size:0.85rem;color:var(--success);font-weight:700;white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumCurrent)} PLN</td>
                 <td class="text-right" style="font-size:0.8rem;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumOffer)} PLN</td>
                 <td class="text-right" style="font-size:0.8rem;color:${catDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${catDiffSign}${fmt(catDiff)} PLN</td>
@@ -283,7 +285,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const totalDiffColor =
             totalDiff > 0 ? '#f87171' : totalDiff < 0 ? '#34d399' : 'var(--text-muted)';
         html += `<tr style="border-top:2px solid var(--border-glass);">
-            <td colspan="9" style="font-weight:700;font-size:0.9rem;color:var(--text-primary);padding:1rem 0.5rem;white-space:nowrap;">RAZEM (${items.length} pozycji)</td>
+            <td colspan="${COLSPAN_CAT}" style="font-weight:700;font-size:0.9rem;color:var(--text-primary);padding:1rem 0.5rem;white-space:nowrap;">RAZEM (${items.length} pozycji)</td>
             <td class="text-right" style="font-weight:800;font-size:1rem;color:var(--success);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalNetto)} PLN</td>
             <td class="text-right" style="font-weight:700;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalOffer)} PLN</td>
             <td class="text-right" style="font-weight:700;font-size:0.85rem;color:${totalDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${totalDiffSign}${fmt(totalDiff)} PLN</td>

@@ -10,7 +10,7 @@
 
 import type { PatternType } from './KnowledgeBase';
 import { KnowledgeBase } from './KnowledgeBase';
-import type { FeatureVector } from './FeatureExtractor';
+import type { FeatureVector } from './types';
 import { RankingEngine } from './RankingEngine';
 
 export interface TopRecommendation {

@@ -164,6 +164,16 @@ function showLoggedIn(user) {
         document.getElementById('admin-panel').classList.remove('hidden');
         loadUsers();
         loadYearLetter();
+        if (typeof window.mlHealthRender === 'function') {
+            setTimeout(function () {
+                window.mlHealthRender('ml-health-container');
+            }, 50);
+        }
+        if (typeof window.aiDashboardRender === 'function') {
+            setTimeout(function () {
+                window.aiDashboardRender('ai-dashboard-container');
+            }, 150);
+        }
     } else {
         document.getElementById('admin-panel').classList.add('hidden');
     }
