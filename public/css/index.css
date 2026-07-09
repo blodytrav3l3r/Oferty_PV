@@ -1455,7 +1455,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* ── Warning tag ── */
+/* ── Znacznik ostrzeżenia ── */
 .ai-warning-tag {
     display: inline-flex;
     align-items: center;
@@ -1841,7 +1841,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     align-items: center;
 }
 
-/* ═══ Header (overlay dla index-page) ═══ */
+/* ═══ Nagłówek (overlay dla index-page) ═══ */
 body.index-page .header {
     display: none;
 }
@@ -1850,7 +1850,7 @@ body.index-page .header.visible {
     display: block;
 }
 
-/* ── Header info row ── */
+/* ── Wiersz info w nagłówku ── */
 .dash-user-info {
     display: flex;
     align-items: center;

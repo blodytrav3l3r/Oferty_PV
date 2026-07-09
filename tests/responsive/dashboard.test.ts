@@ -17,10 +17,10 @@ describe('Dashboard — responsywność', () => {
         expect(mqMatch).not.toBeNull();
     });
 
-    test('640px zmienia .form-grid na 1fr 1fr', () => {
+    test('768px zmienia .uf-grid na repeat(2, 1fr)', () => {
         const css = fs.readFileSync('public/css/index.css', 'utf-8');
         const mqMatch = css.match(
-            /@media\s*\(max-width:\s*640px\)[\s\S]*?\.form-grid[\s\S]*?grid-template-columns\s*:\s*1fr\s+1fr/
+            /@media\s*\(max-width:\s*768px\)[\s\S]*?\.uf-grid[\s\S]*?grid-template-columns\s*:\s*repeat\(2,\s*1fr\)/
         );
         expect(mqMatch).not.toBeNull();
     });
