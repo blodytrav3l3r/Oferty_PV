@@ -68,11 +68,11 @@
                 return;
             }
             var html =
-                '<div class="ai-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:16px">' +
+                '<div class="ai-stats-grid">' +
                 statCard('Wzorce łacznie', stats.total, 'var(--accent)') +
                 statCard('Aktywne', stats.active, 'var(--success)') +
                 statCard(
-                    'Åšrednie confidence',
+                    'Średnie confidence',
                     Math.round((stats.avgConfidence || 0) * 100) + '%',
                     'var(--warn)'
                 ) +
@@ -187,8 +187,7 @@
         var pStatus = fetchJson(ENDPOINTS.mlStatus);
         var pModels = fetchJson(ENDPOINTS.models);
         if (!pStatus) {
-            container.innerHTML =
-                '<div style="color:var(--text-muted);text-align:center;padding:16px">Brak dostępu do ML status</div>';
+            container.innerHTML = '<div class="ai-ml-unavailable">Brak dostępu do ML status</div>';
             return;
         }
         Promise.all([pStatus, pModels]).then(function (results) {
@@ -196,17 +195,18 @@
             var modelsData = results[1];
             if (!status) {
                 container.innerHTML =
-                    '<div style="color:var(--text-muted);text-align:center;padding:16px">ML pipeline nieaktywny lub brak dostępu</div>';
+                    '<div class="ai-ml-unavailable">ML pipeline nieaktywny lub brak dostępu</div>';
                 return;
             }
 
+            var online = status.mlOnline;
             var html =
-                '<h4 style="margin:0 0 12px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="activity" style="width:14px;height:14px;color:var(--accent2)"></i> ML Pipeline</h4>' +
-                '<div class="ai-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:16px">' +
+                '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
+                '<div class="ai-ml-stats-grid">' +
                 statCard(
                     'Status',
-                    statusBadge(status.mlOnline),
-                    status.mlOnline ? 'var(--success)' : 'var(--danger)'
+                    statusBadge(online),
+                    online ? 'var(--success)' : 'var(--danger)'
                 ) +
                 statCard('Wersja modelu', status.modelVersion || '—', 'var(--accent2)') +
                 statCard('Liczba modeli', status.modelCount || 0, 'var(--accent-hover)') +
@@ -221,9 +221,9 @@
 
             /* Przyciski akcji */
             html +=
-                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' +
-                '<button id="ai-ml-train-btn" class="btn-hero btn-accent" style="padding:0.4rem 1rem"><i data-lucide="play"></i> Uruchom trening ML</button>' +
-                '<button id="ai-ml-rollback-btn" class="btn-hero" style="padding:0.4rem 1rem;color:var(--warn);border-color:var(--warn-border)"><i data-lucide="undo-2"></i> Rollback modelu</button>' +
+                '<div class="ai-ml-actions">' +
+                '<button id="ai-ml-train-btn" class="ai-ml-train-btn"><i data-lucide="play"></i> Uruchom trening ML</button>' +
+                '<button id="ai-ml-rollback-btn" class="ai-ml-rollback-btn"><i data-lucide="undo-2"></i> Rollback modelu</button>' +
                 '</div>';
 
             /* Tabela modeli */
@@ -231,24 +231,25 @@
             if (modelsData && modelsData.models && modelsData.models.length > 0) {
                 modelRows = modelsData.models
                     .map(function (m) {
+                        var statusHtml = m.active
+                            ? '<span class="ai-model-active">active</span>'
+                            : (m.createdAt || '').slice(0, 10);
                         return (
-                            '<tr style="border-bottom:1px solid var(--border-glass)">' +
-                            '<td style="padding:5px;font-family:monospace;font-size:0.75rem;color:var(--accent-text)">' +
+                            '<tr>' +
+                            '<td>' +
                             (m.version || '—') +
                             '</td>' +
-                            '<td style="padding:5px;text-align:right;font-feature-settings:\'tnum\'">' +
+                            '<td>' +
                             (m.auc != null ? m.auc.toFixed(4) : '—') +
                             '</td>' +
-                            '<td style="padding:5px;text-align:right;font-feature-settings:\'tnum\'">' +
+                            '<td>' +
                             (m.featureCount || 0) +
                             '</td>' +
-                            '<td style="padding:5px;text-align:right;font-feature-settings:\'tnum\'">' +
+                            '<td>' +
                             (m.trainingSamples || 0) +
                             '</td>' +
-                            '<td style="padding:5px;color:var(--text-muted);font-size:0.72rem">' +
-                            (m.active
-                                ? '<span style="color:var(--success-hover);font-weight:700">active</span>'
-                                : (m.createdAt || '').slice(0, 10)) +
+                            '<td>' +
+                            statusHtml +
                             '</td>' +
                             '</tr>'
                         );
@@ -258,20 +259,20 @@
 
             if (modelRows) {
                 html +=
-                    '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
-                    '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.8rem">' +
-                    '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.4px">' +
-                    '<th style="padding:5px;text-align:left;font-weight:700">Wersja</th>' +
-                    '<th style="padding:5px;text-align:right;font-weight:700">AUC</th>' +
-                    '<th style="padding:5px;text-align:right;font-weight:700">Cechy</th>' +
-                    '<th style="padding:5px;text-align:right;font-weight:700">Próbki</th>' +
-                    '<th style="padding:5px;text-align:left;font-weight:700">Status</th>' +
+                    '<div class="ai-model-table-wrap">' +
+                    '<table class="ai-model-table">' +
+                    '<thead><tr>' +
+                    '<th>Wersja</th>' +
+                    '<th>AUC</th>' +
+                    '<th>Cechy</th>' +
+                    '<th>Próbki</th>' +
+                    '<th>Status</th>' +
                     '</tr></thead><tbody>' +
                     modelRows +
                     '</tbody></table></div>';
             } else {
                 html +=
-                    '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:12px;border:1px dashed var(--border-glass);border-radius:var(--radius-sm)">Brak wytrenowanych modeli. Uruchom trening ML.</div>';
+                    '<div class="ai-model-empty">Brak wytrenowanych modeli. Uruchom trening ML.</div>';
             }
 
             container.innerHTML = html;

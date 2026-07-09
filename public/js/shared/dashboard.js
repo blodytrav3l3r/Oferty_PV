@@ -18,7 +18,7 @@ function toggleSubUsersList() {
             listObj.innerHTML = regularUsers
                 .map(
                     (u) => `
-                        <label style="display:flex; align-items:center; gap:0.3rem; background:var(--bg-lighter); padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; border:1px solid var(--border-glass);">
+                        <label class="sub-user-checkbox">
                             <input type="checkbox" value="${escapeHtml(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
                             ${u.firstName && u.lastName ? escapeHtml(u.firstName + ' ' + u.lastName) : escapeHtml(u.username)}
                         </label>
@@ -70,12 +70,11 @@ async function loadRecycledNumbers(user) {
             container.innerHTML = data.recycled
                 .map(
                     (num) =>
-                        `<span class="token-badge" style="background:rgba(var(--success-rgb),0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb),0.3); padding:0.25rem 0.6rem; font-family:monospace; font-size:0.95rem;">${escapeHtml(u.symbol || '?')}/.../${String(num).padStart(5, '0')}/${yearShort}</span>`
+                        `<span class="recycled-badge">${escapeHtml(u.symbol || '?')}/.../${String(num).padStart(5, '0')}/${yearShort}</span>`
                 )
                 .join('');
         } else {
-            container.innerHTML =
-                '<span style="color:var(--text-muted); font-size:0.85rem;">Brak odzyskanych numerów.</span>';
+            container.innerHTML = '<span class="recycled-empty">Brak odzyskanych numerów.</span>';
         }
     } catch (e) {
         logger.error('dashboard', 'Failed to load recycled numbers', e);
@@ -248,12 +247,12 @@ async function loadUsers() {
             <div class="user-name">${escapeHtml((u.firstName || '') + ' ' + (u.lastName || ''))}</div>
             <div class="user-email">${escapeHtml(u.email || 'brak email')}</div>
         </td>
-        <td><span class="token-badge" style="color:var(--warn);">${escapeHtml(u.symbol || '??')}</span></td>
-        <td style="font-family:monospace; color:var(--primary-hover); font-size:0.78rem;">${escapeHtml(u.username)}</td>
-        <td style="font-size:0.75rem; color:var(--text-secondary);">${escapeHtml(u.phone || '—')}</td>
+        <td><span class="token-badge text-warn">${escapeHtml(u.symbol || '??')}</span></td>
+        <td class="cell-mono">${escapeHtml(u.username)}</td>
+        <td class="cell-phone">${escapeHtml(u.phone || '—')}</td>
         <td><span class="badge-role ${escapeHtml(u.role)}">${escapeHtml(u.role.toUpperCase())}</span></td>
-        <td style="color:var(--blue-hover); font-weight:800;">${escapeHtml(String(u.orderStartNumber || 1))}</td>
-        <td style="color:var(--primary-hover); font-weight:800;">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
+        <td class="cell-num">${escapeHtml(String(u.orderStartNumber || 1))}</td>
+        <td class="cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td>
           <div class="admin-actions-cell">
             <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeHtml(u.id)}')"><i data-lucide="pencil"></i></button>
@@ -338,6 +337,8 @@ function startEditUser(id) {
         modeLabel.innerHTML =
             '<i data-lucide="pencil"></i> EDYCJA: ' + escapeHtml(u.firstName || u.username);
     }
+    const formHeading = document.getElementById('form-heading');
+    if (formHeading) formHeading.textContent = 'Edycja użytkownika';
     const addBtn = document.getElementById('add-user-btn');
     if (addBtn) addBtn.innerHTML = '<i data-lucide="save"></i> Zapisz';
     const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -356,6 +357,8 @@ function cancelEditUser() {
     };
     const modeLabel = document.getElementById('form-mode-label');
     if (modeLabel) modeLabel.classList.add('hidden');
+    const formHeading = document.getElementById('form-heading');
+    if (formHeading) formHeading.textContent = 'Nowy użytkownik';
     setVal('new-user-firstname', '');
     setVal('new-user-lastname', '');
     setVal('new-user-symbol', '');

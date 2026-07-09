@@ -52,25 +52,25 @@
     }
 
     function qualityBar(pct, label) {
-        var color = pct >= 95 ? '#22c55e' : pct >= 80 ? '#eab308' : '#ef4444';
+        var color = pct >= 95 ? 'var(--success)' : pct >= 80 ? 'var(--warn)' : 'var(--danger)';
         return (
-            '<div style="margin-bottom:6px">' +
-            '<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-secondary);margin-bottom:2px">' +
-            '<span>' +
+            '<div class="ai-dq-bar">' +
+            '<div class="ai-dq-bar-header">' +
+            '<span class="ai-dq-bar-label">' +
             label +
             '</span>' +
-            '<span style="font-weight:600;color:' +
+            '<span class="ai-dq-bar-value" style="color:' +
             color +
             '">' +
             pct +
             '%</span>' +
             '</div>' +
-            '<div style="background:var(--border-glass);border-radius:4px;height:6px;overflow:hidden">' +
-            '<div style="background:' +
+            '<div class="ai-dq-bar-track">' +
+            '<div class="ai-dq-bar-fill" style="background:' +
             color +
             ';width:' +
             pct +
-            '%;height:100%;border-radius:4px;transition:width 0.3s"></div>' +
+            '%"></div>' +
             '</div>' +
             '</div>'
         );
@@ -107,7 +107,7 @@
                 '</span>' +
                 '</div>' +
                 /* Siatka 2x3 */
-                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">' +
+                '<div class="ai-health-grid">' +
                 healthCard('Telemetria', d.telemetryCount, d.telemetryCount > 0) +
                 healthCard(
                     'FeatureExtractor',
@@ -131,23 +131,23 @@
                 healthCard('Nagrody', d.totalRewards, true) +
                 '</div>' +
                 /* Jakosc danych */
-                '<div style="border-top:1px solid var(--border-glass);padding-top:10px;margin-bottom:6px">' +
-                '<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.03em">Jakosc danych</div>' +
-                '<div style="max-width:400px">' +
-                qualityBar(d.dataQuality.withFeatureSnapshotPct, 'Z featureSnapshot') +
-                qualityBar(d.dataQuality.withSolverSourcePct, 'Z solverSource') +
-                qualityBar(d.dataQuality.withWellTypePct, 'Z wellType') +
+                '<div class="ai-dq-section">' +
+                '<div class="ai-dq-title"><i data-lucide="gauge"></i> Jakosc danych</div>' +
+                '<div class="ai-dq-bars">' +
+                qualityBar(d.dataQuality.withFeatureSnapshotPct, 'FeatureSnapshot') +
+                qualityBar(d.dataQuality.withSolverSourcePct, 'SolverSource') +
+                qualityBar(d.dataQuality.withWellTypePct, 'WellType') +
                 '</div>' +
                 '</div>' +
                 /* Ostrzezenia */
-                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">' +
+                '<div class="ai-dq-warnings">' +
                 (d.dataQuality.manualOverrideCount > 0
-                    ? '<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;color:#eab308;background:rgba(234,179,8,0.1);padding:3px 8px;border-radius:var(--radius-sm)"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> Ręczne nadpisania: ' +
+                    ? '<span class="ai-warning-tag warn"><i data-lucide="alert-triangle"></i> Ręczne nadpisania: ' +
                       d.dataQuality.manualOverrideCount +
                       '</span>'
                     : '') +
                 (d.telemetryCount > 0 && d.dataQuality.withFeatureSnapshotPct < 95
-                    ? '<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;color:#ef4444;background:rgba(239,68,68,0.1);padding:3px 8px;border-radius:var(--radius-sm)"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> Niska jakosc featureSnapshot</span>'
+                    ? '<span class="ai-warning-tag danger"><i data-lucide="alert-triangle"></i> Niska jakosc featureSnapshot</span>'
                     : '') +
                 '</div>';
 
