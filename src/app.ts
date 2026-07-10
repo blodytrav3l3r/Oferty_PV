@@ -273,9 +273,7 @@ export async function initApp(): Promise<void> {
 
     // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
     try {
-        await prisma.$executeRawUnsafe(
-            'CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)'
-        );
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;
     } catch {
         // ignoruj — indeks istnieje lub baza nie ma uprawnień
     }
