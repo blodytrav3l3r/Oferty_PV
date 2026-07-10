@@ -902,7 +902,7 @@ async function saveStudniePriceList() {
  * Pobiera świeże dane z serwera i przebudowuje: tabelę cennika, kafelki, tabelę Excel.
  */
 async function refreshStudnieData() {
-    const result = await api.get('/api/products-studnie', { silent: true });
+    const result = /** @type {any} */ (await api.get('/api/products-studnie', { silent: true }));
     if (result && Array.isArray(result.data)) {
         studnieProducts = result.data;
         renderStudniePriceList();
