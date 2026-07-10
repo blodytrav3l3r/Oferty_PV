@@ -31,7 +31,7 @@ body.studnie-page > .main {
     max-width: none !important;
     margin: 0 !important;
     /* nadpisuje style.css padding:0.8rem 1.5rem 2rem; bottom padding dla fixed nav + summary footer */
-    padding: 0.8rem 0 0 0 !important;
+    padding: 0 !important;
 }
 
 /* header full-width w widoku Studnie */
@@ -58,8 +58,8 @@ body > .main > .section.active {
     gap: 0;
     flex: 1;
     min-height: 0;
-    margin: -0.8rem 0 0 0;
-    padding-bottom: 70px;
+    margin: 0;
+    padding-bottom: 60px;
     width: 100%;
     max-width: none;
     background: var(--bg-primary);
