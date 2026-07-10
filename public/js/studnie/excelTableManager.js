@@ -1412,7 +1412,7 @@ function _excelCellInp(w) {
 }
 
 /* ===== OVERLAY SELECT ===== */
-function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
+function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
     var label = '';
     for (var i = 0; i < opts.length; i++) {
         if (opts[i][0] === curVal) {
@@ -1431,16 +1431,26 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width) {
             opts[i][1] +
             '</option>';
     }
-    var escOnCh = onChange.replace(/"/g, '&quot;');
+    var extraClass = disabled ? ' disabled' : '';
+    var wrapperEvents = disabled
+        ? ''
+        : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
+    var selectEvents = disabled
+        ? ' disabled'
+        : ' tabindex="-1" onchange="' +
+          (onChange || '').replace(/"/g, '&quot;') +
+          ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text"';
     return (
-        '<div class="excel-sel-wrap" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' +
+        '<div class="excel-sel-wrap' +
+        extraClass +
+        '" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' +
         (width ? 'width:' + width + 'px;' : '') +
         '"' +
-        " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\">" +
-        '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;" tabindex="-1"' +
-        ' onchange="' +
-        escOnCh +
-        ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text">' +
+        wrapperEvents +
+        '>' +
+        '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;"' +
+        selectEvents +
+        '>' +
         optHtml +
         '</select>' +
         '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
@@ -1618,6 +1628,7 @@ function openExcelTableModal() {
             #excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02); }
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
+            #excel-table-container .excel-sel-wrap.disabled { opacity:.35;pointer-events:none; }
             #excel-table-container thead { position:sticky;top:0;z-index:50;background:#161923;isolation:isolate; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
@@ -2643,9 +2654,9 @@ function _excelRenderTable(dn) {
         /* Akcje: Param, Duplikuj, Usuń */
         html += `<td style="${tdBase}text-align:center;white-space:nowrap;">`;
         html += '<div style="display:flex;gap:2px;justify-content:center;">';
-        html += `<button onclick="excelOpenWellParams(${wIdx})" title="Parametry" style="background:#13151f;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(129,140,248,0.1)'" onmouseleave="this.style.background='#13151f'">⋯</button>`;
-        html += `<button onclick="excelDuplicateWell(${wIdx})" title="Duplikuj" style="background:#13151f;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(96,165,250,0.1)'" onmouseleave="this.style.background='#13151f'">⧉</button>`;
-        html += `<button onclick="excelDeleteWell(${wIdx})" title="Usuń" style="background:#13151f;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='#13151f'">✕</button>`;
+        html += `<button onclick="excelOpenWellParams(${wIdx})" title="Parametry" style="background:#13151f;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background='rgba(129,140,248,0.1)'" onmouseleave="this.style.background='#13151f'"><i data-lucide="sliders" style="width:14px;height:14px;" aria-hidden="true"></i></button>`;
+        html += `<button onclick="excelDuplicateWell(${wIdx})" title="Duplikuj" style="background:#13151f;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background='rgba(96,165,250,0.1)'" onmouseleave="this.style.background='#13151f'"><i data-lucide="copy" style="width:14px;height:14px;" aria-hidden="true"></i></button>`;
+        html += `<button onclick="excelDeleteWell(${wIdx})" title="Usuń" style="background:#13151f;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='#13151f'"><i data-lucide="trash-2" style="width:14px;height:14px;" aria-hidden="true"></i></button>`;
         html += '</div></td>';
 
         html += '</tr>';
@@ -2657,6 +2668,16 @@ function _excelRenderTable(dn) {
 
     const tdBase = `${_EXCEL_FONT}`;
     const tdEmpty = `${tdBase}color:#334155;`;
+
+    /* Checkbox — disabled dla pustego wiersza */
+    html += `<td style="${tdEmpty}background:${emptyRowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:28px;">
+        <input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(99,102,241,0.7);opacity:0.3;" />
+    </td>`;
+    /* A/M — disabled dla pustego wiersza */
+    html += `<td style="${tdEmpty}background:${emptyRowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;">
+        <button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button>
+        <button type="button" disabled style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);height:18px;line-height:1;opacity:0.3;">\u25b6</button>
+    </td>`;
 
     /* Lp. */
     html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};text-align:center;color:#334155;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">—</td>`;
@@ -2677,13 +2698,13 @@ function _excelRenderTable(dn) {
     for (let i = 0; i < maxTr; i++) {
         html += `<td style="${tdEmpty}text-align:right;"><input type="number" step="0.01" placeholder="—" disabled style="${_excelCellInp(72)}opacity:0.3;" /></td>`;
         html += `<td style="${tdEmpty}text-align:center;"><input type="number" step="1" placeholder="—" disabled style="${_excelCellInp(50)}opacity:0.3;" /></td>`;
-        html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(120)}opacity:0.3;"><option value="">—</option></select></td>`;
-        html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(110)}opacity:0.3;"><option value="">—</option></select></td>`;
+        html += `<td style="${tdEmpty}text-align:left;">${_excelOverlaySelectHtml([['', '—']], '', null, 120, true)}</td>`;
+        html += `<td style="${tdEmpty}text-align:left;">${_excelOverlaySelectHtml([['', '—']], '', null, 110, true)}</td>`;
     }
 
     html += `<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td>`;
     /* Właz */
-    html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(125)}opacity:0.3;"><option value="">—</option></select></td>`;
+    html += `<td style="${tdEmpty}text-align:left;">${_excelOverlaySelectHtml([['', '—']], '', null, 125, true)}</td>`;
 
     /* Komponenty */
     compCols.forEach((col) => {
@@ -2697,17 +2718,17 @@ function _excelRenderTable(dn) {
 
     /* Redukcja — pusty wiersz, disabled select */
     if (hasReduction) {
-        html += `<td style="${tdEmpty}text-align:center;"><select disabled style="${_excelCellInp(105)}opacity:0.3;cursor:default;"><option value="">—</option></select></td>`;
+        html += `<td style="${tdEmpty}text-align:center;">${_excelOverlaySelectHtml([['', '—']], '', null, 105, true)}</td>`;
     }
 
     /* Kineta */
-    html += `<td style="${tdEmpty}text-align:left;"><select disabled style="${_excelCellInp(90)}opacity:0.3;"><option value="">—</option></select></td>`;
+    html += `<td style="${tdEmpty}text-align:left;">${_excelOverlaySelectHtml([['', '—']], '', null, 90, true)}</td>`;
 
     /* P.Buda */
     html += `<td style="${tdEmpty}text-align:center;"><input type="checkbox" disabled style="opacity:0.3;" /></td>`;
 
     /* Akcje */
-    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;font-size:0.6rem;" data-cell="empty-actions">nowa</td>`;
+    html += `<td style="${tdEmpty}text-align:center;color:#1e293b;font-size:0.6rem;" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:#334155;" aria-hidden="true"></i></td>`;
 
     html += '</tr>';
 

@@ -14,6 +14,7 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 ### Bug Fixes
 
 - **audit): chunkowany cleanup logów + indeks createdAt; fix(ui:** PvImportExportToolbar TS error ([1dd0c12](https://github.com/blodytrav3l3r/Oferty_PV/commit/1dd0c12d50eae39e7bf040ddba675a3286c2fa7e))
+- **studnie:** wyrównanie kolumn w pustym wierszu tabeli Excel — 5 gołych `<select disabled>` zastąpiono `_excelOverlaySelectHtml` z `disabled` ([#16](https://github.com/blodytrav3l3r/Oferty_PV/issues/16))
 
 ## [1.4.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.3.0...v1.4.0) (2026-07-06)
 

@@ -1704,6 +1704,7 @@ function normalizeOfferData(doc) {
             'visiblePrzejsciaTypes',
             'date',
             'history',
+            'wizard',
             'userName',
             'lastEditedBy',
             'createdByUserId',
@@ -2184,7 +2185,12 @@ async function saveOfferStudnie() {
             ? currentUser.firstName && currentUser.lastName
                 ? `${currentUser.firstName} ${currentUser.lastName}`
                 : currentUser.username
-            : ''
+            : '',
+        wizard: {
+            globalParams: getWizardGlobalParams(),
+            currentStep: typeof currentWizardStep !== 'undefined' ? currentWizardStep : 3,
+            version: 1
+        }
     };
 
     try {
@@ -2592,93 +2598,64 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     refreshAll();
 
-    // Wypelnij pola DOM kroku 2 z pierwszej studni, aby byly zgodne z zaladowanymi danymi
-    if (wells.length > 0) {
-        const firstWell = wells[0];
-        [
-            'nadbudowa',
-            'dennicaMaterial',
-            'wkladka',
-            'malowanieW',
-            'malowanieZ',
-            'klasaNosnosci_korpus',
-            'klasaNosnosci_zwienczenie'
-        ].forEach((param) => {
-            if (firstWell[param]) {
-                const group = document.querySelector(`.param-group[data-param="${param}"]`);
-                if (group) {
-                    group
-                        .querySelectorAll('.param-tile')
-                        .forEach((b) => b.classList.remove('active'));
-                    const targetTile = group.querySelector(
-                        `.param-tile[data-val="${firstWell[param]}"]`
-                    );
-                    if (targetTile) targetTile.classList.add('active');
-                }
+    // Przywróć stan kroku 2 (Ogólne parametry studni) z zapisanego stanu kreatora
+    var wizardState = normalized.wizard;
+    var wizardGlobalParams = wizardState && wizardState.globalParams;
+    if (wizardGlobalParams) {
+        // Nowa oferta z zapisanym stanem — pełna restauracja kafelków
+        document.querySelectorAll('#wizard-step-2 .param-group').forEach(function (group) {
+            var paramName = group.getAttribute('data-param');
+            if (!paramName || !wizardGlobalParams.hasOwnProperty(paramName)) return;
+            var val = wizardGlobalParams[paramName];
+            if (!val) return;
+            group.querySelectorAll('.param-tile').forEach(function (b) {
+                b.classList.remove('active');
+            });
+            var targetTile = group.querySelector('.param-tile[data-val="' + val + '"]');
+            if (targetTile) targetTile.classList.add('active');
+            if (typeof wizardConfirmedParams !== 'undefined') {
+                wizardConfirmedParams.add(paramName);
             }
         });
-
-        // Obsługa wkładki sub-opcji przy wczytywaniu
-        const wklVal = [
-            firstWell.wkladkaDennica,
-            firstWell.wkladkaNadbudowa,
-            firstWell.wkladkaZwienczenie
-        ].find((v) => v && v !== 'brak');
-        if (wklVal) {
-            const group = document.querySelector('.param-group[data-param="wkladka"]');
-            if (group) {
-                group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
-                const targetTile = group.querySelector(`.param-tile[data-val="${wklVal}"]`);
-                if (targetTile) targetTile.classList.add('active');
-            }
-            if (document.getElementById('wkladka-sub-options'))
-                document.getElementById('wkladka-sub-options').style.display = 'block';
-            if (document.getElementById('pehd-dennica'))
-                document.getElementById('pehd-dennica').checked =
-                    firstWell.wkladkaDennica === wklVal;
-            if (document.getElementById('pehd-nadbudowa'))
-                document.getElementById('pehd-nadbudowa').checked =
-                    firstWell.wkladkaNadbudowa === wklVal;
-            if (document.getElementById('pehd-zwienczenie'))
-                document.getElementById('pehd-zwienczenie').checked =
-                    firstWell.wkladkaZwienczenie === wklVal;
+        // Obsługa wkładki PEHD (sub-opcje)
+        var wkladkaV = wizardGlobalParams.wkladka;
+        var subOpts = document.getElementById('wkladka-sub-options');
+        if (wkladkaV && wkladkaV !== 'brak') {
+            if (subOpts) subOpts.style.display = 'block';
+            var cbDennica = document.getElementById('pehd-dennica');
+            var cbNadbudowa = document.getElementById('pehd-nadbudowa');
+            var cbZwienczenie = document.getElementById('pehd-zwienczenie');
+            if (cbDennica) cbDennica.checked = wizardGlobalParams.wkladkaDennica === wkladkaV;
+            if (cbNadbudowa) cbNadbudowa.checked = wizardGlobalParams.wkladkaNadbudowa === wkladkaV;
+            if (cbZwienczenie)
+                cbZwienczenie.checked = wizardGlobalParams.wkladkaZwienczenie === wkladkaV;
         } else {
-            const group = document.querySelector('.param-group[data-param="wkladka"]');
-            if (group) {
-                group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
-                const targetTile = group.querySelector('.param-tile[data-val="brak"]');
-                if (targetTile) targetTile.classList.add('active');
-            }
-            if (document.getElementById('wkladka-sub-options'))
-                document.getElementById('wkladka-sub-options').style.display = 'none';
+            if (subOpts) subOpts.style.display = 'none';
         }
-
+        // Pola tekstowe (powloka, ceny malowania)
         if (document.getElementById('powloka-name-w'))
-            document.getElementById('powloka-name-w').value = firstWell.powlokaNameW || '';
+            document.getElementById('powloka-name-w').value = wizardGlobalParams.powlokaNameW || '';
         if (document.getElementById('malowanie-wew-cena'))
-            document.getElementById('malowanie-wew-cena').value = firstWell.malowanieWewCena || '';
+            document.getElementById('malowanie-wew-cena').value =
+                wizardGlobalParams.malowanieWewCena || '';
         if (document.getElementById('powloka-name-z'))
-            document.getElementById('powloka-name-z').value = firstWell.powlokaNameZ || '';
+            document.getElementById('powloka-name-z').value = wizardGlobalParams.powlokaNameZ || '';
         if (document.getElementById('malowanie-zew-cena'))
-            document.getElementById('malowanie-zew-cena').value = firstWell.malowanieZewCena || '';
+            document.getElementById('malowanie-zew-cena').value =
+                wizardGlobalParams.malowanieZewCena || '';
+    } else {
+        // Oferta legacy (bez zapisanego stanu kreatora)
+        // Nie przywracamy kafelków z danych studni — byłyby niespójne.
+        // wizardConfirmedParams zostanie wypełniony poniżej przez skipWizardToStep3.
+        var legacyBanner = document.getElementById('wizard-legacy-banner');
+        if (legacyBanner) {
+            legacyBanner.style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: legacyBanner });
+        }
+    }
 
-        if (typeof wizardConfirmedParams !== 'undefined') {
-            [
-                'nadbudowa',
-                'dennicaMaterial',
-                'wkladka',
-                'malowanieW',
-                'malowanieZ',
-                'klasaNosnosci_korpus',
-                'klasaNosnosci_zwienczenie'
-            ].forEach((param) => {
-                if (firstWell[param] || (param === 'wkladka' && wklVal))
-                    wizardConfirmedParams.add(param);
-            });
-        }
-        if (typeof validateWizardStep2 === 'function') {
-            validateWizardStep2();
-        }
+    if (typeof validateWizardStep2 === 'function') {
+        validateWizardStep2();
     }
 
     // Pomiń kreatora dla wczytanych ofert — przejdź bezpośrednio do widoku oferty (chyba że zablokowano)
