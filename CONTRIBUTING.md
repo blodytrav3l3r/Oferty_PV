@@ -38,8 +38,11 @@ Proces release:
 
 1. `npm run release` automatycznie dobiera typ wersji na podstawie commitów
 2. Aktualizuje `VERSION`, `package.json`, `CHANGELOG.md`
-3. Tworzy tag git
-4. Po pushu tagów GitHub automatycznie tworzy Release
+3. `scripts/auto-cache-bust.mjs` automatycznie aktualizuje `?v=` we wszystkich HTML do nowej wersji
+4. Tworzy tag git
+5. Po pushu tagów GitHub automatycznie tworzy Release
+
+**Uwaga:** Nie zmieniaj ręcznie parametrów `?v=` w HTML — są synchronizowane z `VERSION` podczas release.
 
 ## Dependabot
 

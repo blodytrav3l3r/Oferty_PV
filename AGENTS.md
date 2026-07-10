@@ -95,8 +95,14 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
         npm run release:major    # Wymuszenie wersji major
         npm run release:dry      # Podgląd zmian w changelogu bez ich zapisywania
         ```
-    3. Wyślij tag na repozytorium zdalne: `git push --follow-tags`.
+    3. Release automatycznie wykonuje:
+        - Podbicie `VERSION` i `package.json` (przez `standard-version`)
+        - **Cache-bust assetów** — skrypt `scripts/auto-cache-bust.mjs` (przez hook `postbump`) podmienia wszystkie `?v=` w HTML na nową wersję
+        - Generowanie `CHANGELOG.md`
+        - Commit `chore(release): X.Y.Z` + tag `vX.Y.Z`
+    4. Wyślij tag na repozytorium zdalne: `git push --follow-tags`.
 - **Nigdy nie taguj gita ręcznie!** Wszystko obsługuje `npm run release`. Po zmianie wersji zrestartuj backend (`npx ts-node-dev ./server.ts`).
+- **Nie zmieniaj ręcznie parametrów `?v=` w HTML** — cache-bust jest synchronizowany z `VERSION` tylko podczas release.
 
 ### Punkty Wejścia i SPA (Single Page Application)
 
@@ -111,7 +117,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 - Klasyczne zmienne globalne: wszystkie globalne helpery na frontendzie rejestruj jawnie na obiekcie `window` (np. na końcu pliku: `window.myHelper = myHelper;`).
 - Po każdym dynamicznym wstrzyknięciu kodu HTML zawierającego ikony Lucide (atrybuty `data-lucide`) wywołaj funkcję inicjalizującą: `lucide.createIcons({root: container})`.
 - Zapobieganie XSS: Przy interpolacji ciągów znaków do `innerHTML` zawsze używaj funkcji `escapeHtml(str)`.
-- Cache-busting: Dołączając pliki CSS/JS na frontendzie, dodawaj wersję jako parametr zapytania, np. `<link rel="stylesheet" href="style.css?v=N">` (zwiększaj `N` przy modyfikacji pliku).
+- Cache-busting: Wszystkie parametry `?v=` w plikach HTML są automatycznie synchronizowane z `VERSION` podczas release (hook `postbump` w `scripts/auto-cache-bust.mjs`). **Nie edytuj ręcznie** parametrów `?v=` w HTML.
 
 ---
 
