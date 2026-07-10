@@ -889,12 +889,27 @@ async function saveStudniePriceList() {
         }
         _studniePricelistDirty = false;
         updateStudnieSaveBtn();
-        renderStudniePriceList();
-        renderTiles();
+        await refreshStudnieData();
         showToast('Zapisano cennik studni', 'success');
     } catch (err) {
         logger.error('pricelistManager', 'saveStudniePriceList: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');
+    }
+}
+
+/**
+ * Centralne odświeżenie wszystkich widoków konfiguratora po zmianie cennika.
+ * Pobiera świeże dane z serwera i przebudowuje: tabelę cennika, kafelki, tabelę Excel.
+ */
+async function refreshStudnieData() {
+    const result = await api.get('/api/products-studnie', { silent: true });
+    if (result && Array.isArray(result.data)) {
+        studnieProducts = result.data;
+        renderStudniePriceList();
+        renderTiles();
+        if (typeof window.refreshExcelFromConfig === 'function') {
+            window.refreshExcelFromConfig();
+        }
     }
 }
 
