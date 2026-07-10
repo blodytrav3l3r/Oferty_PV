@@ -13,7 +13,7 @@
  *   1 = at least one column misaligned or error
  */
 
-const BASE = 'http://localhost:5174';
+const BASE = 'http://localhost:5173';
 
 /* ── Playwright resolution ── */
 function resolvePlaywright() {
