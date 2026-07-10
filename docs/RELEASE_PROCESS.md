@@ -51,6 +51,7 @@ Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, któ
 - `VERSION` i `package.json` muszą być zgodne (automatycznie po release)
 - Po zmianie wersji restart backendu
 - Release dopiero gdy zmiany są gotowe do produkcji
+- **Cache-bust assetów** (`?v=` w HTML) jest automatycznie synchronizowany z `VERSION` podczas release (hook `postbump`). Nie zmieniamy ręcznie parametrów `?v=` w plikach HTML.
 
 ## Release — podgląd (dry run)
 
