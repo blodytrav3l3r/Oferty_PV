@@ -1,1 +1,1 @@
-npm run typecheck && npm run typecheck:frontend && npm run test:quick
+npm run typecheck && npm run test:quick

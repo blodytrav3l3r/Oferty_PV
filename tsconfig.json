@@ -22,6 +22,6 @@
         "ignoreDeprecations": "6.0",
         "types": ["jest", "node", "supertest"]
     },
-    "include": ["src/**/*.ts", "server.ts", "scripts/**/*.ts", "tests/**/*.ts"],
+    "include": ["src/**/*.ts", "server.ts", "scripts/**/*.ts", "tests/**/*.ts", "prisma.config.ts"],
     "exclude": ["node_modules", "dist", "public", "data", "*.sqlite", "scripts/archive"]
 }

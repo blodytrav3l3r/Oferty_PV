@@ -50,7 +50,7 @@ export async function runStartupChecks(): Promise<StartupReport> {
     startupLogger.value('NODE_ENV', env.NODE_ENV);
     startupLogger.value('Port', env.PORT);
     startupLogger.valueLast('Host', env.HOST);
-    const cspMode = (process.env.CSP_MODE || 'permissive').toLowerCase();
+    const cspMode = (process.env.CSP_MODE || 'report-only').toLowerCase();
     startupLogger.valueLast('CSP', `mode=${cspMode}`);
     startupLogger.info('');
     startupLogger.info('Admin:');

@@ -34,7 +34,7 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
  * Nie modyfikuje istniejącego CSP — testuje przyszłą politykę bez blokowania.
  */
 export function cspReportOnly(_req: Request, res: Response, next: NextFunction): void {
-    const mode = (process.env.CSP_MODE || 'permissive').toLowerCase();
+    const mode = (process.env.CSP_MODE || 'report-only').toLowerCase();
     if (mode !== 'report-only' && mode !== 'enforce') {
         next();
         return;

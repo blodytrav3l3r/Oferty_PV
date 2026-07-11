@@ -15,7 +15,7 @@
         "test:watch": "jest --watch",
         "test:quick": "jest --no-coverage",
         "test:alignment": "node tests/playwright/excelEmptyRowAlignment.cjs",
-        "validate": "npm run typecheck && npm run lint && npm run lint:frontend && npm run test:quick && npm run audit:xss && npm run audit:csp:check && npm run audit:csp:no-inline",
+        "validate": "npm run typecheck && npm run lint && npm run lint:frontend && npm run test:quick && npm run audit:xss && npm run audit:csp:check && npm run audit:csp:no-inline && npm run audit:csp:contracts",
         "lint": "eslint src/**/*.{js,ts}",
         "lint:fix": "eslint src/**/*.{js,ts} --fix",
         "lint:frontend": "eslint public/js --ext .js",
@@ -27,6 +27,8 @@
         "audit:csp": "node scripts/generate-csp-inventory.mjs",
         "audit:csp:check": "node scripts/generate-csp-inventory.mjs --check",
         "audit:csp:no-inline": "node scripts/check-inline-handlers.mjs",
+        "audit:csp:contracts": "node scripts/generate-csp-contracts.mjs --check",
+        "generate:csp-contracts": "node scripts/generate-csp-contracts.mjs",
         "audit:csp:test-gate": "node scripts/test-csp-gate.mjs",
         "backup": "ts-node scripts/backup.ts",
         "backup:install-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-backup-cron.ps1",
@@ -124,9 +126,7 @@
         "vite": "^8.0.14",
         "wait-on": "^9.0.10"
     },
-    "prisma": {
-        "seed": "ts-node prisma/seed.ts"
-    },
+
     "lint-staged": {
         "*.{js,ts,mjs}": [
             "eslint --fix",

@@ -109,7 +109,7 @@ app.get('/api/docs.json', (_req, res) => {
 });
 
 /* ===== BEZPIECZEŃSTWO ===== */
-const cspMode = (process.env.CSP_MODE || 'permissive').toLowerCase();
+const cspMode = (process.env.CSP_MODE || 'report-only').toLowerCase();
 const allowUnsafeInline = cspMode !== 'enforce';
 app.use(
     helmet({

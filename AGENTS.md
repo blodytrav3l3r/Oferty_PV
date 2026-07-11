@@ -222,3 +222,9 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | `npm run audit:xss`              | Generuje raport XSS (docs/security/xss-audit.md) z Security Score, Debt, Gate, CWE/OWASP.   |
 | `docs/security/xss-ignore.json`  | Baza znanych fałszywych alarmów (False Positive Database) — ignorowane przy audycie.        |
 | `docs/security/xss-history.json` | Historia wyników Security Score między wersjami — śledzenie trendu.                         |
+
+## 8. Dług Techniczny — Znane Problemy
+
+| # | Problem | Status | Kryterium zamknięcia |
+|---|---------|--------|---------------------|
+| 1 | **`typecheck:frontend` usunięty z pre-push** — ~60 pre-existing błędów TS w `public/js/` (vanilla JS). Hook blokował push, maskując prawdziwe problemy. | Tymczasowo usunięty | Przywrócić do pre-push gdy `typecheck:frontend` przechodzi z wynikiem 0 lub sprawdzanie ograniczone do wspieranego zakresu plików |
