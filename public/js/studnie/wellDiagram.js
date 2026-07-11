@@ -585,18 +585,11 @@ function drawAllComponents(visible, canvas) {
             : '';
 
         // Otwieramy grupę SVG z event handlerami (drag & drop, hover)
+        // Handlers are attached via JS event delegation in attachSvgEvents()
         if (comp._cfgIdx !== undefined) {
             svgOut +=
                 `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
-                `data-cfg-idx="${comp._cfgIdx}" draggable="true" ` +
-                `ondragstart="window.handleCfgDragStart(event)" ` +
-                `ondragend="window.handleCfgDragEnd(event)" ` +
-                `onmousedown="window.svgPointerDown(event, ${comp._cfgIdx})" ` +
-                `onmouseenter="window.svgPointerEnter(event, ${comp._cfgIdx})" ` +
-                `onmouseleave="window.svgPointerLeave(event, ${comp._cfgIdx})" ` +
-                `onmouseup="window.svgPointerUp(event, ${comp._cfgIdx})" ` +
-                `ontouchstart="window.svgTouchStart(event, ${comp._cfgIdx})" ` +
-                `ontouchend="window.svgTouchEnd(event)">`;
+                `data-cfg-idx="${comp._cfgIdx}" draggable="true">`;
         }
 
         svgOut += drawComponentShape(comp, x, y, w, h, cx, pxMm, c);
@@ -700,7 +693,7 @@ function drawTransitionShape(idx, px, prY, radiusW, radiusH, isRect, isEgg, isBa
     const sColor = isBack ? SVG_COLORS.transitionBackStroke : SVG_COLORS.transitionStroke;
     const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
 
-    const gOpen = `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})">`;
+    const gOpen = `<g class="svg-prz-${idx}" style="transition:all 0.2s;" data-prz-idx="${idx}">`;
     const gClose = '</g>';
 
     if (isRect) {
@@ -973,6 +966,51 @@ function drawPrecoInsertLine(well, canvas) {
     return svg;
 }
 
+/**
+ * Attaches SVG event listeners after render.
+ * Uses JS delegation on the SVG element for CSP compliance.
+ * Called after every svg.innerHTML = ... in renderWellDiagram.
+ */
+function attachSvgEvents(svg) {
+    svg.querySelectorAll('[data-cfg-idx]').forEach(function (g) {
+        var idx = parseInt(g.dataset.cfgIdx, 10);
+        g.addEventListener('dragstart', function (e) {
+            if (window.handleCfgDragStart) window.handleCfgDragStart(e);
+        });
+        g.addEventListener('dragend', function (e) {
+            if (window.handleCfgDragEnd) window.handleCfgDragEnd(e);
+        });
+        g.addEventListener('mousedown', function (e) {
+            if (window.svgPointerDown) window.svgPointerDown(e, idx);
+        });
+        g.addEventListener('mouseenter', function (e) {
+            if (window.svgPointerEnter) window.svgPointerEnter(e, idx);
+        });
+        g.addEventListener('mouseleave', function (e) {
+            if (window.svgPointerLeave) window.svgPointerLeave(e, idx);
+        });
+        g.addEventListener('mouseup', function (e) {
+            if (window.svgPointerUp) window.svgPointerUp(e, idx);
+        });
+        g.addEventListener('touchstart', function (e) {
+            if (window.svgTouchStart) window.svgTouchStart(e, idx);
+        });
+        g.addEventListener('touchend', function (e) {
+            if (window.svgTouchEnd) window.svgTouchEnd(e);
+        });
+    });
+
+    svg.querySelectorAll('[data-prz-idx]').forEach(function (g) {
+        var idx = parseInt(g.dataset.przIdx, 10);
+        g.addEventListener('mouseenter', function (e) {
+            if (window.svgPrzPointerEnter) window.svgPrzPointerEnter(e, idx);
+        });
+        g.addEventListener('mouseleave', function (e) {
+            if (window.svgPrzPointerLeave) window.svgPrzPointerLeave(e, idx);
+        });
+    });
+}
+
 /* ===== GŁÓWNA FUNKCJA RENDEROWANIA SCHEMATU ===== */
 
 function renderWellDiagram(targetSvg, targetWell) {
@@ -993,6 +1031,7 @@ function renderWellDiagram(targetSvg, targetWell) {
         svg.innerHTML = `
       <text x="150" y="240" text-anchor="middle" fill="${SVG_COLORS.dnLabel}" font-size="13" font-family="Inter,sans-serif">Dodaj elementy</text>
       <text x="150" y="260" text-anchor="middle" fill="${SVG_COLORS.emptyState}" font-size="11" font-family="Inter,sans-serif">aby zobaczyć podgląd</text>`;
+        attachSvgEvents(svg);
         return;
     }
 
@@ -1002,6 +1041,7 @@ function renderWellDiagram(targetSvg, targetWell) {
     if (visible.length === 0) {
         svg.setAttribute('viewBox', '0 0 300 500');
         svg.innerHTML = `<text x="150" y="240" text-anchor="middle" fill="${SVG_COLORS.dnLabel}" font-size="12">Brak elementów z wysokością</text>`;
+        attachSvgEvents(svg);
         return;
     }
 
@@ -1031,4 +1071,5 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     svg.innerHTML =
         componentsSvg + transitionsSvg + precoLineSvg + segmentDimSvg + totalHeightSvg + dnLabelSvg;
+    attachSvgEvents(svg);
 }

@@ -2,40 +2,37 @@
 /**
  * Shared Auth Module — wspólna logika autoryzacji.
  *
- * WAŻNE: Token przechowywany jest w localStorage (JavaScript-accessible).
- * Cookie httpOnly jest ustawiane przez serwer ale NIE jest czytalne przez JS.
- * Sesja po stronie serwera weryfikowana jest przez cookie + X-Auth-Token header.
+ * Token sesji przechowywany jest w httpOnly cookie (niedostępny dla JS).
+ * Wszystkie fetch() wysyłają cookie automatycznie (same-origin + sameSite: 'lax').
  */
 
 /**
- * Pobiera token autoryzacji z localStorage.
- * @returns {string|null}
+ * @deprecated Token nie jest już przechowywany w localStorage.
+ * Autoryzacja odbywa się przez httpOnly cookie.
+ * @returns {null}
  */
 function getAuthToken() {
-    return localStorage.getItem('authToken') || null;
+    return null;
 }
 
 /**
- * Ustawia token autoryzacji w localStorage.
- * @param {string} token
+ * @deprecated Nie używać — token jest ustawiany przez serwer jako httpOnly cookie.
  */
-function setAuthToken(token) {
-    localStorage.setItem('authToken', token);
+function setAuthToken(_token) {
+    // Token jest zarządzany przez serwer (httpOnly cookie)
 }
 
 /**
- * Zwraca nagłówki autoryzacji do fetch().
+ * Zwraca nagłówki do fetch().
+ * Token autoryzacji jest wysyłany automatycznie przez httpOnly cookie.
  * @returns {object}
  */
 function authHeaders() {
-    const token = getAuthToken();
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['X-Auth-Token'] = token;
-    return headers;
+    return { 'Content-Type': 'application/json' };
 }
 
 /**
- * Wylogowuje użytkownika — kasuje sesje i localStorage, przeładowuje stronę.
+ * Wylogowuje użytkownika — kasuje sesję na serwerze, przeładowuje stronę.
  */
 async function appLogout() {
     try {
@@ -47,7 +44,6 @@ async function appLogout() {
     } catch (e) {
         logger.error('auth', 'Logout request failed:', e);
     }
-    localStorage.removeItem('authToken');
     document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.location.href = 'index.html';
 }

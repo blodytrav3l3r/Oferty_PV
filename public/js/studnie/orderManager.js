@@ -1274,19 +1274,16 @@ function buildPrzejscieRowHTML(row, idx, source) {
     const isDnOdInne = !rowHasStringDn && row.dnOd && !dnOptions.includes(parseFloat(row.dnOd));
     const isDnDoInne = !rowHasStringDn && row.dnDo && !dnOptions.includes(parseFloat(row.dnDo));
 
-    const warnScript =
-        source === 'offer'
-            ? "if(!this.dataset.warned) { appConfirm('Zmieniasz przejście przepisane z oferty!', { title: 'Ostrzeżenie', type: 'warning', okText: 'Rozumiem', cancelText: 'OK' }); this.dataset.warned = '1'; }"
-            : '';
+    const pszWarnAttr = source === 'offer' ? ' data-psz-warn="1"' : '';
 
     const rodzajCell = `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <select id="${prefix}-rodzaj-select" class="form-input" style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
+            <select id="${prefix}-rodzaj-select" class="form-input" style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" data-action="pszRodzajCatChange"${pszWarnAttr}>
                 <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
                 ${catOptions.map((c) => `<option value="${c}" ${row.rodzaj === c ? 'selected' : ''}>${c}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" data-action="pszRodzajCustomChange"${pszWarnAttr}>
         </div>`;
 
     const dnOdCell = rowHasStringDn
@@ -1296,12 +1293,12 @@ function buildPrzejscieRowHTML(row, idx, source) {
         </div>`
         : `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <select id="${prefix}-dnod-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
+            <select id="${prefix}-dnod-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" data-action="pszDnSelectChange" data-psz-field="dnod"${pszWarnAttr}>
                 <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnOdInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnOdInne ? 'block' : 'none'};" data-action="pszDnInputChange" data-psz-field="dnod"${pszWarnAttr}>
         </div>`;
 
     const dnDoCell = rowHasStringDn
@@ -1311,12 +1308,12 @@ function buildPrzejscieRowHTML(row, idx, source) {
         </div>`
         : `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <select id="${prefix}-dndo-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
+            <select id="${prefix}-dndo-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" data-action="pszDnSelectChange" data-psz-field="dndo"${pszWarnAttr}>
                 <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnDoInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); font-weight:700; display:${isDnDoInne ? 'block' : 'none'};" data-action="pszDnInputChange" data-psz-field="dndo"${pszWarnAttr}>
         </div>`;
 
     return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); background:${rowBg}; border-left:${borderLeft};" data-psz-source="${source}" data-psz-idx="${idx}">
@@ -1324,16 +1321,16 @@ function buildPrzejscieRowHTML(row, idx, source) {
         <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">${dnOdCell}</td>
         <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">${dnDoCell}</td>
         <td style="padding:0.4rem 0.5rem; vertical-align:top;">
-            <input type="text" id="${prefix}-uwagi" class="form-input" value="${(row.uwagi || '').toString().replace(/"/g, '&quot;')}" placeholder="Uwagi..." style="width:100%; font-size:0.75rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript}">
+            <input type="text" id="${prefix}-uwagi" class="form-input" value="${(row.uwagi || '').toString().replace(/"/g, '&quot;')}" placeholder="Uwagi..." style="width:100%; font-size:0.75rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" data-action="pszUwagiChange"${pszWarnAttr}>
         </td>
         <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">
-            <select id="${prefix}-czy" class="form-input" style="width:80px; font-size:0.75rem; padding:0.3rem; text-align:center; font-weight:700; border-radius:4px; ${row.czyPrzejscie === 'TAK' ? 'color:var(--success-hover); background:rgba(var(--success-rgb),0.1); border:1px solid rgba(var(--success-rgb),0.3);' : 'color:var(--danger-hover); background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">
+            <select id="${prefix}-czy" class="form-input" style="width:80px; font-size:0.75rem; padding:0.3rem; text-align:center; font-weight:700; border-radius:4px; ${row.czyPrzejscie === 'TAK' ? 'color:var(--success-hover); background:rgba(var(--success-rgb),0.1); border:1px solid rgba(var(--success-rgb),0.3);' : 'color:var(--danger-hover); background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3);'}" data-action="pszCzyChange"${pszWarnAttr}>
                 <option value="TAK"${row.czyPrzejscie === 'TAK' ? ' selected' : ''}>TAK</option>
                 <option value="NIE"${row.czyPrzejscie === 'NIE' ? ' selected' : ''}>NIE</option>
             </select>
         </td>
         <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
-            <button type="button" class="btn-icon-danger btn-icon-sm" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+            <button type="button" class="btn-icon-danger btn-icon-sm" data-action="pszDeleteRow" title="Usuń"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
         </td>
     </tr>`;
 }
@@ -2205,7 +2202,7 @@ window.applyPreviewLockUI = function () {
         banner.innerHTML = `
             <div style="position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(15, 23, 42, 0.95); border:2px solid var(--warn-hover); color:var(--warn-hover); padding:0.8rem 2.5rem; border-radius:40px; z-index:99999; box-shadow:0 20px 40px rgba(0,0,0,0.6); font-weight:800; display:flex; align-items:center; gap:1.5rem; backdrop-filter:blur(10px);">
                 <span style="font-size:1.2rem;"><i data-lucide="eye"></i>️ HISTORIA — TYLKO DO ODCZYTU</span>
-                <button onclick="window.exitPreviewMode()" class="btn btn-sm" style="background:var(--warn-hover); color:#000; border:none; padding:0.4rem 1rem; border-radius:20px; font-weight:700;">ZAMKNIJ PODGLĄD</button>
+                <button data-action="exitPreviewMode" class="btn btn-sm" style="background:var(--warn-hover); color:#000; border:none; padding:0.4rem 1rem; border-radius:20px; font-weight:700;">ZAMKNIJ PODGLĄD</button>
             </div>
         `;
         document.body.appendChild(banner);
@@ -2915,12 +2912,12 @@ function renderZleceniaList() {
                     ? savedProdOrder.productionOrderNumber
                     : '';
 
-            html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" onclick="selectZleceniaElement(${i})" style="margin-bottom:0.3rem;">
+            html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" data-action="selectZleceniaElement" data-zl-idx="${i}" style="margin-bottom:0.3rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${el.product.name}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
                         ${prodOrderNum ? `<div style="font-size:0.6rem; font-weight:800; color:var(--accent-hover); background:rgba(var(--accent-hover-rgb),0.1); padding:0.1rem 0.4rem; border-radius:4px; border:1px solid rgba(var(--accent-hover-rgb),0.2);">${prodOrderNum}</div>` : ''}
-                        ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" onclick="event.stopPropagation(); deleteProductionOrder('${savedOrder.id}')" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>` : ''}
+                        ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" data-action="deleteProductionOrderFromList" data-po-id="${savedOrder.id}" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>` : ''}
                     </div>
                 </div>
                 ${isAccepted ? '<div style="font-size:0.55rem; color:var(--success-hover); margin-top:0.2rem; font-weight:700;">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:var(--warn-hover); margin-top:0.2rem; font-weight:700;">Wersja robocza</div>' : ''}
@@ -3017,14 +3014,14 @@ function renderZleceniaWellConfig() {
             zleceniaElementsList[zleceniaSelectedIdx] &&
             zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
 
-        html += `<div data-zl-idx="${index}" class="config-tile" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)" 
+        html += `<div data-zl-idx="${index}" class="config-tile" draggable="${!isLocked}" data-action="zlCfgDrag" 
                       style="background:rgba(30,41,59,0.7); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(255,255,255,0.05)'}; border-left:4px solid ${badge.bg}; border-radius:6px; padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(var(--accent-rgb),0.2); border-color:var(--accent-hover);' : ''}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
                 <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(0,0,0,0.2); padding:0.1rem; border-radius:3px;">
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="text-xs"></i></button>
+                  <button data-action="moveZleceniaComponent" data-zl-idx="${index}" data-direction="-1" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="text-xs"></i></button>
                   <span style="font-size:0.55rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="text-xs"></i></button>
+                  <button data-action="moveZleceniaComponent" data-zl-idx="${index}" data-direction="1" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="text-xs"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
                   <div style="font-weight:700; color:var(--text-primary); font-size:0.68rem; line-height:1.1;">${p.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
@@ -3501,7 +3498,7 @@ function populateZleceniaForm(el) {
     ${errorsHtml}
     <!-- Dane zlecenia -->
     <div class="card card-compact" style="margin-bottom:0.5rem;">
-        <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
+        <div class="card-title-sm" data-action="toggleDaneZlecenia" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
             <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight:800;">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
             <span class="zl-toggle" class="text-xs">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
@@ -3541,12 +3538,12 @@ function populateZleceniaForm(el) {
     <div id="zl-dane-elementu-grid" style="display:grid; grid-template-columns:${daneElementuVisible ? '230px' : '36px'} 1fr; gap:0.5rem; margin-bottom:0.5rem; transition:grid-template-columns 0.25s ease;">
         <div class="card card-compact" style="overflow:hidden; min-width:0; transition:all 0.25s ease; position:relative;">
             <!-- Nagłówek widoczny gdy ROZWINIĘTY -->
-            <div id="zl-dane-elementu-header-full" class="card-title-sm" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
+            <div id="zl-dane-elementu-header-full" class="card-title-sm" data-action="toggleDaneElementu" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
                 <span><i data-lucide="hard-hat"></i> Dane elementu</span>
                 <span class="text-xs"><i data-lucide="chevron-left"></i></span>
             </div>
             <!-- Nagłówek widoczny gdy ZWINIĘTY (pionowy tekst) -->
-            <div id="zl-dane-elementu-header-collapsed" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
+            <div id="zl-dane-elementu-header-collapsed" data-action="toggleDaneElementu" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
                 <span class="text-xs"><i data-lucide="chevron-right"></i></span>
                 <span style="writing-mode:vertical-lr; text-orientation:mixed; font-size:0.7rem; font-weight:700; color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase;">Dane elementu</span>
             </div>
@@ -3588,7 +3585,7 @@ function populateZleceniaForm(el) {
                         ${rodzajStudniOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" data-action="selectZleceniaTile" data-target-id="zl-rodzaj-studni" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3602,7 +3599,7 @@ function populateZleceniaForm(el) {
             <div class="card card-compact" style="padding:0.5rem 0.6rem;">
                 <div class="card-title-sm"
                     style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;"
-                    onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
+                    data-action="toggleCard" data-target-id="zl-inline-przejscia-app-container" data-icon-id="zl-przejscia-app-icon">
                     <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
                     <span id="zl-przejscia-app-icon" class="text-xs"><i data-lucide="chevron-up"></i></span>
                 </div>
@@ -3643,7 +3640,7 @@ function populateZleceniaForm(el) {
                         ${redKinetyOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-red-kinety', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-red-kinety" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3663,7 +3660,7 @@ function populateZleceniaForm(el) {
                         ${stopnieOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === stopnieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-rodzaj-stopni', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === stopnieVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-rodzaj-stopni" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3680,13 +3677,13 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Ustalanie kąta stopni / Wykonanie</label>
                     <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem; align-items:center;" class="zl-param-group">
-                        <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" onclick="this.select()" oninput="onZleceniaKatChange()" style="width:70px;">
+                        <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" data-action="selectAndKatChange" style="width:70px;">
                         <span style="font-size:1.2rem; color:var(--text-muted); margin: 0 4px;">→</span>
                         <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:var(--accent-hover); font-weight:700; margin-right:5px; pointer-events:none;">
                         ${katOptions
                             .map(
                                 (v) =>
-                                    `<button type="button" class="param-tile ui-badge" onclick="document.getElementById('zl-kat-stopni').value='${v}'; onZleceniaKatChange();">${v}°</button>`
+                                    `<button type="button" class="param-tile ui-badge" data-action="setKatStopni" data-value="${v}">${v}°</button>`
                             )
                             .join('')}
                     </div>
@@ -3701,7 +3698,7 @@ function populateZleceniaForm(el) {
                         ${spocznikOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === spocznikHVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik-h', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === spocznikHVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-spocznik-h" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3714,7 +3711,7 @@ function populateZleceniaForm(el) {
                         ${usytOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === usytuowanieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-usytuowanie', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === usytuowanieVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-usytuowanie" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3727,7 +3724,7 @@ function populateZleceniaForm(el) {
                         ${kinetaOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === kinetaVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-kineta', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === kinetaVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-kineta" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3740,7 +3737,7 @@ function populateZleceniaForm(el) {
                         ${spocznikMatOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === spocznikMatVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === spocznikMatVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-spocznik" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3753,7 +3750,7 @@ function populateZleceniaForm(el) {
                         ${klasaBetonuOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === klasaBetonuVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-klasa-betonu', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === klasaBetonuVal ? 'active' : ''}" data-action="selectZleceniaTile" data-target-id="zl-klasa-betonu" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -3876,7 +3873,7 @@ async function selectZleceniaTile(btn, targetId, val) {
                             const group = spocznikInput.closest('.form-group-sm');
                             if (group) {
                                 const targetBtn = group.querySelector(
-                                    `.param-tile[onclick*="'zl-spocznik', '${val}'"]`
+                                    `.param-tile[data-action="selectZleceniaTile"][data-target-id="zl-spocznik"][data-value="${val}"]`
                                 );
                                 if (targetBtn && !targetBtn.classList.contains('active')) {
                                     targetBtn.click();
@@ -4689,9 +4686,7 @@ function openBulkOrderSequencePopup() {
                     border-radius:8px; cursor:${disabled ? 'default' : 'grab'};
                     opacity:${disabled ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;">
                 <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled ? 'disabled' : ''} value=""
-                    onfocus="this.dataset.old = this.value; this.value = '';"
-                    onblur="reorderBulkSeqList(this)"
-                    onkeydown="if(event.key === 'Enter') this.blur();"
+                    data-action="bulkSeqInput"
                     style="width:72px; height:28px; text-align:center; padding:0;
                     background:${disabled ? 'rgba(255,255,255,0.05)' : 'rgba(var(--accent2-rgb),0.15)'}; 
                     border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb),0.4)'}; border-radius:6px;
@@ -4703,7 +4698,7 @@ function openBulkOrderSequencePopup() {
                 </div>
                 ${
                     !disabled
-                        ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
+                        ? `<button data-action="toggleBulkSeqItem" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
                     <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
                 </button>`
                         : ''
@@ -4726,12 +4721,12 @@ function openBulkOrderSequencePopup() {
                     <div style="font-size:1rem; font-weight:800; color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
                     <div style="font-size:0.7rem; color:var(--text-muted);">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
                 </div>
-                <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
+                <button data-action="closeBulkOrderPopup" class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
-            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb),0.2); border:1px solid rgba(var(--accent2-rgb),0.4); color:var(--accent2-hover); font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
+            <button data-action="executeBulkFromPopup" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb),0.2); border:1px solid rgba(var(--accent2-rgb),0.4); color:var(--accent2-hover); font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
             </button>
         </div>
@@ -5036,14 +5031,14 @@ window.showKartaBudowyExportChoice = function () {
             <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Wydruk Karty Budowy</h3>
             <p style="font-size: 0.8rem; color: var(--border); margin-bottom: 1.5rem;">Wybierz format eksportu karty budowy zamówienia</p>
             <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
-                <button onclick="exportKartaToPDF_action('${orderId}')" style="flex: 1; background: rgba(var(--danger-rgb),0.2); color: #fca5a5; border: 2px solid rgba(var(--danger-rgb),0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb),0.4)'" onmouseleave="this.style.background='rgba(var(--danger-rgb),0.2)'">
+                <button data-action="exportKartaToPDF" data-order-id="${orderId}" style="flex: 1; background: rgba(var(--danger-rgb),0.2); color: #fca5a5; border: 2px solid rgba(var(--danger-rgb),0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;">
                     <span style="font-size: 2rem;"><i data-lucide="file-text"></i></span> PDF
                 </button>
-                <button onclick="exportKartaToWord_action('${orderId}')" style="flex: 1; background: rgba(var(--blue-rgb),0.2); color: #93c5fd; border: 2px solid rgba(var(--blue-rgb),0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb),0.4)'" onmouseleave="this.style.background='rgba(var(--blue-rgb),0.2)'">
+                <button data-action="exportKartaToWord" data-order-id="${orderId}" style="flex: 1; background: rgba(var(--blue-rgb),0.2); color: #93c5fd; border: 2px solid rgba(var(--blue-rgb),0.6); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;">
                     <span style="font-size: 2rem;"><i data-lucide="edit"></i></span> Word
                 </button>
             </div>
-            <button style="padding: 0.5rem 1rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); cursor: pointer;" onclick="document.getElementById('karta-export-modal').remove()">Anuluj</button>
+            <button data-action="closeKartaExportModal" style="padding: 0.5rem 1rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); cursor: pointer;">Anuluj</button>
         </div>
     </div>
     `;
@@ -5112,3 +5107,235 @@ window.exportKartaToWord_action = async function (orderId) {
             showToast('Błąd eksportu: ' + err.message, 'error');
         });
 };
+
+/* ===== POMOCNICY CSP DLA PRZEJŚĆ SZCZELNYCH ===== */
+
+function _pszPrefix(target) {
+    var row = target.closest('[data-psz-source]');
+    if (!row) return null;
+    return 'step4-psz-' + row.dataset.pszSource + '-' + row.dataset.pszIdx;
+}
+
+function _warnIfPszOffer(target) {
+    if (target.dataset.pszWarn && !target.dataset.pszWarned) {
+        target.dataset.pszWarned = '1';
+        if (typeof appConfirm === 'function') {
+            appConfirm('Zmieniasz przejście przepisane z oferty!', {
+                title: 'Ostrzeżenie',
+                type: 'warning',
+                okText: 'Rozumiem',
+                cancelText: 'OK'
+            });
+        }
+    }
+}
+
+function _onPszRodzajCatChange(params, target) {
+    _warnIfPszOffer(target);
+    var prefix = _pszPrefix(target);
+    if (!prefix) return;
+    var input = document.getElementById(prefix + '-rodzaj');
+    if (!input) return;
+    var isInne = target.value === 'Inne';
+    input.style.display = isInne ? 'block' : 'none';
+    if (!isInne) input.value = target.value;
+    updatePrzejscieDnOptions(prefix, target.value);
+}
+
+function _onPszRodzajCustomChange(params, target) {
+    _warnIfPszOffer(target);
+}
+
+function _onPszDnSelectChange(params, target) {
+    _warnIfPszOffer(target);
+    var prefix = _pszPrefix(target);
+    if (!prefix) return;
+    var field = target.dataset.pszField;
+    if (!field) return;
+    var input = document.getElementById(prefix + '-' + field);
+    if (!input) return;
+    var isInne = target.value === 'Inne';
+    input.style.display = isInne ? 'block' : 'none';
+    if (!isInne) input.value = target.value;
+}
+
+function _onPszDnInputChange(params, target) {
+    _warnIfPszOffer(target);
+}
+
+function _onPszUwagiChange(params, target) {
+    _warnIfPszOffer(target);
+}
+
+function _onPszCzyChange(params, target) {
+    _warnIfPszOffer(target);
+    updatePrzejscieSelectStyle(target);
+}
+
+function _onPszDeleteRow(params, target) {
+    var row = target.closest('[data-psz-source]');
+    if (!row) return;
+    removePrzejscieRow(row.dataset.pszSource, parseInt(row.dataset.pszIdx));
+}
+
+function _onToggleDaneZlecenia(params, target) {
+    var content = target.nextElementSibling;
+    if (!content) return;
+    var isHidden = content.style.display === 'none';
+    content.style.display = isHidden ? 'grid' : 'none';
+    var toggle = target.querySelector('.zl-toggle');
+    if (toggle) {
+        toggle.innerHTML = isHidden
+            ? '<i data-lucide="chevron-up"></i>'
+            : '<i data-lucide="chevron-down"></i>';
+    }
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function _onSelectAndKatChange(target) {
+    target.select();
+    onZleceniaKatChange();
+}
+
+function _onSetKatStopni(params, target) {
+    var input = document.getElementById('zl-kat-stopni');
+    if (input) {
+        input.value = params.value;
+        onZleceniaKatChange();
+    }
+}
+
+function _onSelectZleceniaElement(params, target) {
+    selectZleceniaElement(parseInt(params.zlIdx));
+}
+
+function _onDeleteProductionOrderFromList(params, target) {
+    deleteProductionOrder(params.poId);
+}
+
+function _onMoveZleceniaComponent(params, target) {
+    moveZleceniaComponent(parseInt(params.zlIdx), parseInt(params.direction));
+}
+
+function _onBulkSeqInput(target) {
+    if (target.dataset.old === undefined) {
+        target.dataset.old = target.value;
+        target.value = '';
+    } else if (target.value !== '') {
+        reorderBulkSeqList(target);
+    }
+}
+
+/* CSP Actions registrations */
+if (typeof registerCspAction === 'function') {
+    registerCspAction('deleteOrderStudnie', {
+        handler: function ({ orderId }) {
+            deleteOrderStudnie(orderId);
+        },
+        params: ['orderId']
+    });
+
+    registerCspAction('onZleceniaKatChange', onZleceniaKatChange);
+
+    registerCspAction('exitPreviewMode', window.exitPreviewMode);
+
+    registerCspAction('toggleDaneElementu', window.toggleDaneElementu);
+
+    registerCspAction('selectZleceniaElement', {
+        handler: _onSelectZleceniaElement,
+        params: ['zlIdx']
+    });
+
+    registerCspAction('deleteProductionOrderFromList', {
+        handler: _onDeleteProductionOrderFromList,
+        params: ['poId']
+    });
+
+    registerCspAction('moveZleceniaComponent', {
+        handler: _onMoveZleceniaComponent,
+        params: ['zlIdx', 'direction']
+    });
+
+    registerCspAction('toggleDaneZlecenia', _onToggleDaneZlecenia);
+
+    registerCspAction('toggleCard', function (params, target) {
+        if (typeof window.toggleCard === 'function') {
+            window.toggleCard(params.targetId, params.iconId);
+        }
+    });
+
+    registerCspAction('selectZleceniaTile', {
+        handler: function (params, target) {
+            selectZleceniaTile(target, params.targetId, params.value);
+        },
+        params: ['targetId', 'value']
+    });
+
+    registerCspAction('selectAndKatChange', _onSelectAndKatChange);
+
+    registerCspAction('setKatStopni', {
+        handler: _onSetKatStopni,
+        params: ['value']
+    });
+
+    registerCspAction('closeBulkOrderPopup', closeBulkOrderPopup);
+
+    registerCspAction('executeBulkFromPopup', executeBulkFromPopup);
+
+    registerCspAction('toggleBulkSeqItem', function (target) {
+        toggleBulkSeqItem(target);
+    });
+
+    registerCspAction('bulkSeqInput', _onBulkSeqInput);
+
+    registerCspAction('exportKartaToPDF', {
+        handler: function ({ orderId }) {
+            window.exportKartaToPDF_action(orderId);
+        },
+        params: ['orderId']
+    });
+
+    registerCspAction('exportKartaToWord', {
+        handler: function ({ orderId }) {
+            window.exportKartaToWord_action(orderId);
+        },
+        params: ['orderId']
+    });
+
+    registerCspAction('closeKartaExportModal', function () {
+        var modal = document.getElementById('karta-export-modal');
+        if (modal) modal.remove();
+    });
+
+    /* Przejscia szczelne handlers */
+    registerCspAction('pszRodzajCatChange', _onPszRodzajCatChange);
+    registerCspAction('pszRodzajCustomChange', _onPszRodzajCustomChange);
+    registerCspAction('pszDnSelectChange', _onPszDnSelectChange);
+    registerCspAction('pszDnInputChange', _onPszDnInputChange);
+    registerCspAction('pszUwagiChange', _onPszUwagiChange);
+    registerCspAction('pszCzyChange', _onPszCzyChange);
+    registerCspAction('pszDeleteRow', _onPszDeleteRow);
+    registerCspAction('zlCfgDrag', {
+        handler: function (p, t, e) {
+            if (e.type === 'dragstart') {
+                handleZlCfgDragStart(e);
+                return;
+            }
+            if (e.type === 'dragover') {
+                e.preventDefault();
+                handleZlCfgDragOver(e);
+                return;
+            }
+            if (e.type === 'drop') {
+                e.preventDefault();
+                handleZlCfgDrop(e);
+                return;
+            }
+            if (e.type === 'dragend') {
+                handleZlCfgDragEnd(e);
+                return;
+            }
+        },
+        params: []
+    });
+}

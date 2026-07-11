@@ -105,7 +105,7 @@ function updateHeightIndicator() {
         if (liveErrors.length > 0) {
             errContainer.innerHTML =
                 '<i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>' +
-                liveErrors.map((e) => `• ${e}`).join('<br>');
+                liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>');
             errContainer.style.display = 'block';
             if (window.lucide) {
                 window.lucide.createIcons();
@@ -906,7 +906,7 @@ function renderTiles() {
                 displayPrice += parseFloat(p.doplataZelbet);
             }
 
-            html += `<div class="tile ${activeClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
+            html += `<div class="tile ${activeClass}" data-type="${p.componentType}" style="${lockedStyle}" data-action="add-well-component" data-product-id="${p.id}" draggable="${!isLocked}">
         <div class="tile-name">${p.name}</div>
         <div class="tile-meta">
           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -967,7 +967,7 @@ function renderTiles() {
                         ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
                         : '';
 
-                    html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
+                    html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" data-action="add-well-component" data-product-id="${p.id}" draggable="${!isLocked}">
                         <div class="tile-name">${p.name}</div>
                         <div class="tile-meta">
                           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -1077,7 +1077,7 @@ function renderTiles() {
                             displayPrice += parseFloat(p.doplataDrabNierdzewna);
                         }
 
-                        html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${p.id}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${p.id}')`}" ondragend="dragEndWellComponent(event)">
+                        html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" data-action="add-well-component" data-product-id="${p.id}" draggable="${!isLocked}">
                             <div class="tile-name">${p.name}</div>
                             <div class="tile-meta">
                               <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -1226,15 +1226,14 @@ function renderWellConfig() {
             ? 'opacity:0.7; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); pointer-events: none;'
             : '';
 
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
-                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(255,255,255,0.3)'; this.style.boxShadow='0 0 12px rgba(99,102,241,0.4)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(255,255,255,0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" data-action="cfg-tile" data-is-placeholder="${isPlaceholder ? 'true' : 'false'}" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
                 <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(0,0,0,0.25); padding:2px 4px; border-radius:4px; min-width:24px;">
-                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
+                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} data-action="move-well-up" data-cfg-idx="${index}" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
                   <span style="font-size:0.65rem; line-height:1; color:var(--text-primary); font-weight:800; margin:2px 0;">${index + 1}</span>
-                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;" aria-hidden="true"></i></button>
+                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} data-action="move-well-down" data-cfg-idx="${index}" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;" aria-hidden="true"></i></button>
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
@@ -1280,7 +1279,7 @@ function renderWellConfig() {
                                 ? `<del>PRECO (${percDesc})</del>`
                                 : `PRECO (${percDesc})`;
 
-                            badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'preco')" style="cursor:pointer; font-size:0.55rem; color:${precoColor}; font-weight:800; margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius:4px; background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
+                            badgesHtml += `<span data-action="toggle-liner-preco" data-cfg-idx="${index}" style="cursor:pointer; font-size:0.55rem; color:${precoColor}; font-weight:800; margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius:4px; background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
                         }
 
                         // PEHD Logic
@@ -1317,7 +1316,7 @@ function renderWellConfig() {
                                 : 'rgba(14,165,233,0.4)';
                             const pehdText = isPehdDisabled ? `<del>PEHD</del>` : `PEHD`;
 
-                            badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'pehd')" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
+                            badgesHtml += `<span data-action="toggle-liner-pehd" data-cfg-idx="${index}" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
                         }
 
                         // Żelbet i Drabinka Nierdzewna
@@ -1365,7 +1364,7 @@ function renderWellConfig() {
                 <span style="font-size:1.0rem; font-weight:800; color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
               </div>
               <div style="width:26px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:6px; cursor:pointer; color:#ef4444; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'; this.style.borderColor='rgba(239,68,68,0.4)';" onmouseleave="this.style.background='rgba(239,68,68,0.06)'; this.style.borderColor='rgba(239,68,68,0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
+                <button data-action="remove-well-component" data-cfg-idx="${index}" title="Usuń" style="width:26px; height:26px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:6px; cursor:pointer; color:#ef4444; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
               </div>
             </div>
 
@@ -2334,3 +2333,125 @@ const _debouncedRefreshFull = window.debounce
 // Eksport do window dla innych modułów
 window.enforceSingularTopClosures = enforceSingularTopClosures;
 window.sortWellConfigByOrder = sortWellConfigByOrder;
+
+/* CSP Actions registrations */
+if (typeof registerCspAction === 'function') {
+    registerCspAction('selectZakonczenie', {
+        handler: function ({ productId }) {
+            selectZakonczenie(productId);
+        },
+        params: ['productId']
+    });
+    registerCspAction('selectRedukcjaZakonczenie', {
+        handler: function ({ productId }) {
+            selectRedukcjaZakonczenie(productId);
+        },
+        params: ['productId']
+    });
+    registerCspAction('move-well-up', {
+        handler: function ({ cfgIdx }) {
+            moveWellComponent(parseInt(cfgIdx), -1);
+        },
+        params: ['cfgIdx']
+    });
+    registerCspAction('move-well-down', {
+        handler: function ({ cfgIdx }) {
+            moveWellComponent(parseInt(cfgIdx), 1);
+        },
+        params: ['cfgIdx']
+    });
+    registerCspAction('toggle-liner-preco', {
+        handler: function ({ cfgIdx }) {
+            window.toggleLinerDisabled(parseInt(cfgIdx), 'preco');
+        },
+        params: ['cfgIdx']
+    });
+    registerCspAction('toggle-liner-pehd', {
+        handler: function ({ cfgIdx }) {
+            window.toggleLinerDisabled(parseInt(cfgIdx), 'pehd');
+        },
+        params: ['cfgIdx']
+    });
+    registerCspAction('remove-well-component', {
+        handler: function ({ cfgIdx }) {
+            removeWellComponent(parseInt(cfgIdx));
+        },
+        params: ['cfgIdx']
+    });
+    registerCspAction('add-well-component', {
+        handler: function ({ productId }) {
+            addWellComponent(productId);
+        },
+        params: ['productId']
+    });
+}
+
+/* Custom event delegation for drag & hover on config tiles and tiles */
+(function () {
+    var cfgTileSel = '[data-action="cfg-tile"]';
+    var wellTileSel = '[data-action="add-well-component"]';
+    var rmBtnSel = '[data-action="remove-well-component"]';
+
+    ['dragstart', 'dragover', 'drop', 'dragend'].forEach(function (evType) {
+        document.addEventListener(evType, function (e) {
+            var tile = e.target.closest(cfgTileSel);
+            if (!tile) return;
+            if (evType === 'dragstart') window.handleCfgDragStart(e);
+            else if (evType === 'dragover') window.handleCfgDragOver(e);
+            else if (evType === 'drop') window.handleCfgDrop(e);
+            else if (evType === 'dragend') window.handleCfgDragEnd(e);
+        });
+    });
+
+    document.addEventListener('dragstart', function (e) {
+        var tile = e.target.closest(wellTileSel);
+        if (!tile) return;
+        window.dragWellComponent(e, tile.getAttribute('data-product-id'));
+    });
+
+    document.addEventListener('dragend', function (e) {
+        var tile = e.target.closest(wellTileSel);
+        if (!tile) return;
+        window.dragEndWellComponent(e);
+    });
+
+    function handleTileHover(e, entering) {
+        var tile = e.target.closest(cfgTileSel);
+        if (!tile) return;
+        var related = e.relatedTarget;
+        if (related && tile.contains(related)) return;
+        var idx = parseInt(tile.getAttribute('data-cfg-idx'));
+        var isPl = tile.getAttribute('data-is-placeholder') === 'true';
+        if (isPl) return;
+        if (entering) {
+            tile.style.filter = 'brightness(1.5)';
+            tile.style.borderColor = 'rgba(255,255,255,0.3)';
+            tile.style.boxShadow = '0 0 12px rgba(99,102,241,0.4)';
+            if (typeof window.highlightSvg === 'function') window.highlightSvg('cfg', idx);
+        } else {
+            tile.style.filter = 'brightness(1)';
+            tile.style.borderColor = 'rgba(255,255,255,0.05)';
+            tile.style.boxShadow = 'none';
+            if (typeof window.unhighlightSvg === 'function') window.unhighlightSvg('cfg', idx);
+        }
+    }
+
+    function handleBtnHover(e, entering) {
+        var btn = e.target.closest(rmBtnSel);
+        if (!btn) return;
+        var related = e.relatedTarget;
+        if (related && btn.contains(related)) return;
+        btn.style.background = entering ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.06)';
+        btn.style.borderColor = entering ? 'rgba(239,68,68,0.4)' : 'rgba(239,68,68,0.2)';
+    }
+
+    document.addEventListener('mouseover', function (e) {
+        handleTileHover(e, true);
+        handleBtnHover(e, true);
+    });
+
+    document.addEventListener('mouseout', function (e) {
+        handleTileHover(e, false);
+        handleBtnHover(e, false);
+    });
+})();

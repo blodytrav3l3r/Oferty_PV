@@ -35,7 +35,7 @@ function setupOfferForm() {
             dropdown.innerHTML = matches
                 .map(
                     (p) =>
-                        `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
+                        `<div class="product-dropdown-item" data-action="addOfferItem" data-product-id="${p.id}">
         <span>${escapeHtml(p.name)}</span>
         <span class="price">${fmt(p.price)} PLN</span>
       </div>`
@@ -108,7 +108,7 @@ function renderCatalogTabs() {
     container.innerHTML = CATEGORIES.filter((cat) => !hiddenCategories.includes(cat))
         .map((cat) => {
             const count = products.filter((p) => p.category === cat).length;
-            return `<button class="catalog-tab${cat === activeCatalogCategory ? ' active' : ''}" onclick="selectCatalogCategory('${cat}')">${cat} <span style="opacity:.6">(${count})</span></button>`;
+            return `<button class="catalog-tab${cat === activeCatalogCategory ? ' active' : ''}" data-action="selectCatalogCategory" data-category="${cat}">${cat} <span style="opacity:.6">(${count})</span></button>`;
         })
         .join('');
 }
@@ -151,14 +151,14 @@ function renderCatalogProducts() {
         grouped[diamKey].forEach((p) => {
             const is1m = isOneMetrePipe(p.id);
             html += `
-      <div class="catalog-item-row${is1m ? ' catalog-item-1m' : ''}" onclick="addOfferItem('${p.id}')">
+      <div class="catalog-item-row${is1m ? ' catalog-item-1m' : ''}" data-action="addOfferItem" data-product-id="${p.id}">
         <div class="catalog-item-row-name">${escapeHtml(p.name)}</div>
         <div class="catalog-item-row-meta">
           <span class="catalog-item-row-id">${escapeHtml(p.id)}</span>
           ${p.weight ? `<span class="catalog-item-row-weight">${fmtInt(p.weight)} kg</span>` : ''}
         </div>
         <div class="catalog-item-row-price">${fmt(p.price)} PLN</div>
-        <button class="catalog-item-add" onclick="event.stopPropagation();addOfferItem('${p.id}')">+ Dodaj</button>
+        <button class="catalog-item-add">+ Dodaj</button>
       </div>`;
         });
     });
@@ -227,7 +227,7 @@ function showPipeLengthModal(productId, editIndex = null) {
     <div class="modal" style="max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
         <h3 id="pipe-length-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text);"><i data-lucide="ruler" aria-hidden="true"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="font-size:0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
         Wybrany produkt:<br><strong style="color:var(--text); font-size: 1.05rem;">${escapeHtml(product.name)}</strong>
@@ -235,10 +235,10 @@ function showPipeLengthModal(productId, editIndex = null) {
       <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
         <label class="form-label" style="font-size:1.15rem; font-weight:600; margin-bottom:1rem; color: var(--text);">Wprowadź długość rury (m)</label>
         <div style="display:flex; justify-content:center; align-items:center; gap:1rem">
-          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
+          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" data-action="pipeLengthStepDown">-</button>
           <input class="form-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}" 
             style="font-size:2.5rem; padding:1rem; width:140px; text-align:center; font-weight:800; border: 2px solid var(--accent); border-radius: 12px; color: var(--accent); background: transparent;">
-          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
+          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" data-action="pipeLengthStepUp">+</button>
         </div>
         <div style="margin-top:1rem; font-size:0.9rem; color:var(--text-muted); display: flex; justify-content: center; gap: 1rem;">
           <span style="background: var(--bg-hover); padding: 0.25rem 0.5rem; border-radius: 4px;">Min: <strong>1.0m</strong></span>
@@ -246,8 +246,8 @@ function showPipeLengthModal(productId, editIndex = null) {
         </div>
       </div>
       <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-        <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-        <button class="btn btn-primary" onclick="confirmPipeLength('${productId}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+        <button class="btn btn-secondary" data-action="closeModal" style="padding: 0.75rem 1.5rem;">Anuluj</button>
+        <button class="btn btn-primary" data-action="confirmPipeLength" data-product-id="${productId}"${editIndex !== null ? ` data-edit-index="${editIndex}"` : ''} style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--primary-alpha);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
     </div>`
     });
@@ -488,6 +488,26 @@ function syncTransportSecurity(forceRemove) {
                 autoAdded: true
             });
         }
+
+        /* CSP Actions — B3 */
+        if (typeof registerCspAction === 'function') {
+            registerCspAction('updateOrderSelectionCount', updateOrderSelectionCount);
+            registerCspAction('updateItemMeters', function (t) {
+                updateItemMeters(parseInt(t.dataset.itemIndex, 10), t.value);
+            });
+            registerCspAction('updateItemQuantity', function (t) {
+                updateItem(parseInt(t.dataset.itemIndex, 10), 'quantity', t.value);
+            });
+            registerCspAction('updateItemDiscount', function (t) {
+                updateItem(parseInt(t.dataset.itemIndex, 10), 'discount', t.value);
+            });
+            registerCspAction('updateItemSurcharge', function (t) {
+                updateItem(parseInt(t.dataset.itemIndex, 10), 'surcharge', t.value);
+            });
+            registerCspAction('updateItemText', function (t) {
+                updateItemText(parseInt(t.dataset.itemIndex, 10), 'commercialVersion', t.value);
+            });
+        }
     });
 }
 
@@ -665,7 +685,7 @@ function renderOfferItems() {
                 cat === 'Duże Żelbetowe II';
             const lengthEditor =
                 isEditableLength && hasLength && !isLocked
-                    ? `<div class="length-editor" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
+                    ? `<div class="length-editor" data-action="showPipeLengthModal" data-product-id="${item.productId}" data-item-index="${i}" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
                             <i data-lucide="ruler" style="width:11px;height:11px"></i>
                             <span>Dł:</span>
                             <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>
@@ -689,11 +709,11 @@ function renderOfferItems() {
 
             let checkboxCell = '';
             if (isOrdered) {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Element dodany do zamówienia — nie można odznaczyć"></td>`;
+                checkboxCell = `<td class="text-center"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Element dodany do zamówienia — nie można odznaczyć"></td>`;
             } else if (isAuto) {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
+                checkboxCell = `<td class="text-center"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} data-action="updateOrderSelectionCount" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
             } else {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
+                checkboxCell = `<td class="text-center"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} data-action="pipeCheckboxChange" style="cursor:pointer;width:16px;height:16px"></td>`;
             }
             const orderedRowStyle = isOrdered
                 ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);'
@@ -707,29 +727,29 @@ function renderOfferItems() {
           <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
           <td style="text-align:right"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onclick="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
+                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onclick="this.select()" data-action="updateItemMeters" data-item-index="${i}" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onclick="this.select()" data-action="updateItemQuantity" data-item-index="${i}"${lockAttr}> szt.</span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" data-action="updateItemDiscount" data-item-index="${i}"${lockAttr}>%</span></td>
           <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(unitTotal)}</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" data-action="updateItemSurcharge" data-item-index="${i}"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight:600"><span class="text-center-block">${fmt(netto)}</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" data-action="updateItemText" data-item-index="${i}" placeholder="Notatki"${lockAttr}></span></td>
           <td style="text-align:right;white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
               ${
                   getPipeInnerArea(item.productId) > 0 && !item.autoAdded
                       ? `
                 <div class="pehd-btn-stack">
-                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
-                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" data-action="addPehdToPipe" data-index="${i}" data-pehd-type="PEHD-3MM" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" data-action="addPehdToPipe" data-index="${i}" data-pehd-type="PEHD-4MM" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
                 </div>
               `
                       : ''
               }
-              <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="removeOfferItem(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
+              <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="removeOfferItem" data-index="${i}"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
           </td>
         </tr>`;
@@ -1043,3 +1063,59 @@ function showSectionRury(id) {
 
 window.showSectionRury = showSectionRury;
 window.showSection = showSectionRury;
+
+/* CSP Actions registrations */
+if (typeof registerCspAction === 'function') {
+    registerCspAction('addOfferItem', {
+        handler: function ({ productId }) {
+            addOfferItem(productId);
+        },
+        params: ['productId']
+    });
+    registerCspAction('selectCatalogCategory', {
+        handler: function ({ category }) {
+            selectCatalogCategory(category);
+        },
+        params: ['category']
+    });
+    registerCspAction('removeOfferItem', {
+        handler: function ({ index }) {
+            removeOfferItem(parseInt(index, 10));
+        },
+        params: ['index']
+    });
+    registerCspAction('pipeLengthStepDown', function () {
+        var input = document.getElementById('pipe-custom-length');
+        if (input) input.stepDown();
+    });
+    registerCspAction('pipeLengthStepUp', function () {
+        var input = document.getElementById('pipe-custom-length');
+        if (input) input.stepUp();
+    });
+    registerCspAction('confirmPipeLength', {
+        handler: function ({ productId, editIndex }) {
+            confirmPipeLength(productId, editIndex !== undefined ? parseInt(editIndex, 10) : null);
+        },
+        params: ['productId', 'editIndex']
+    });
+    registerCspAction('showPipeLengthModal', {
+        handler: function ({ productId, itemIndex }) {
+            showPipeLengthModal(productId, parseInt(itemIndex, 10));
+        },
+        params: ['productId', 'itemIndex']
+    });
+    registerCspAction('pipeCheckboxChange', function (target) {
+        if (typeof window.updateOrderSelectionCount === 'function') {
+            window.updateOrderSelectionCount();
+        }
+        if (typeof window.onPipeCheckboxChange === 'function') {
+            window.onPipeCheckboxChange(target);
+        }
+    });
+    registerCspAction('addPehdToPipe', {
+        handler: function ({ index, pehdType }) {
+            addPehdToPipe(parseInt(index, 10), pehdType);
+        },
+        params: ['index', 'pehdType']
+    });
+}

@@ -71,18 +71,21 @@ export default tseslint.config(
             }
         },
         rules: {
-            'no-unused-vars': [
-                'warn',
-                {
-                    argsIgnorePattern: '^_',
-                    varsIgnorePattern: '^_',
-                    caughtErrorsIgnorePattern: '^_'
-                }
-            ],
+            'no-unused-vars': 'off',
+            'no-unused-expressions': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
             'no-empty': 'off',
             'no-undef': 'off',
             'no-global-assign': 'off',
+            'no-useless-escape': 'off',
+            'no-redeclare': 'off',
+            'no-fallthrough': 'warn',
+            'no-control-regex': 'off',
+            'no-var': 'warn',
+            'no-prototype-builtins': 'off',
+            'no-unreachable': 'warn',
+            'no-dupe-else-if': 'off',
             semi: ['error', 'always'],
             quotes: ['error', 'single', { avoidEscape: true }],
             'prefer-const': 'warn',

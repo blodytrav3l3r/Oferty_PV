@@ -102,3 +102,57 @@ body.module-studnie .header {
 body.module-studnie .header-inner {
     padding: 0.3rem 0;
 }
+
+/* CSP-safe: header elements (was inline style) */
+.header-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+}
+.header-username {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.header-role-badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-right: 0.5rem;
+}
+.app-version-toolbar {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    padding: 0.35rem 0.5rem;
+    opacity: 0.65;
+    font-feature-settings: 'tnum';
+}
+.logout-btn {
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    background: var(--bg-glass);
+    color: var(--text-muted);
+    font: 500 0.75rem 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.logout-btn:hover {
+    color: #f87171;
+    border-color: #3a1a1a;
+}
+
+/* CSP-safe: screen-reader only (was inline style) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}

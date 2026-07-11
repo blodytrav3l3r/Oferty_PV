@@ -61,15 +61,15 @@ function renderPriceList() {
 
         items.forEach((p) => {
             html += `<tr data-id="${p.id}">
-        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${p.id}')">${p.id}</code></td>
-        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${p.id}')">${p.name}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'price','${p.id}')">${fmt(p.price)}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'area','${p.id}')">${p.area != null ? fmt(p.area) : '—'}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${p.id}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'weight','${p.id}')">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
+        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" data-action="editField" data-field="id" data-id="${p.id}">${p.id}</code></td>
+        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" data-action="editField" data-field="name" data-id="${p.id}">${p.name}</span></td>
+        <td class="text-right"><span class="editable" data-action="editField" data-field="price" data-id="${p.id}">${fmt(p.price)}</span></td>
+        <td class="text-right"><span class="editable" data-action="editField" data-field="area" data-id="${p.id}">${p.area != null ? fmt(p.area) : '—'}</span></td>
+        <td class="text-right"><span class="editable" data-action="editField" data-field="transport" data-id="${p.id}">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
+        <td class="text-right"><span class="editable" data-action="editField" data-field="weight" data-id="${p.id}">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyProduct('${p.id}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteProduct('${p.id}')"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyProduct" data-product-id="${p.id}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteProduct" data-product-id="${p.id}"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });
@@ -238,7 +238,7 @@ function showAddProductModal() {
         titleId: 'add-product-title',
         html: `
     <div class="modal">
-      <div class="modal-header"><h3 id="add-product-title"><i data-lucide="plus" aria-hidden="true"></i> Dodaj nowy produkt</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      <div class="modal-header"><h3 id="add-product-title"><i data-lucide="plus" aria-hidden="true"></i> Dodaj nowy produkt</h3><button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="np. RTB-0-10-25-K00"></div>
@@ -250,8 +250,8 @@ function showAddProductModal() {
         <div class="form-group"><label class="form-label">Waga (kg)</label><input class="form-input" id="np-weight" type="number"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="addProduct()">Dodaj produkt</button>
+        <button class="btn btn-secondary" data-action="closeModal">Anuluj</button>
+        <button class="btn btn-primary" data-action="addProduct">Dodaj produkt</button>
       </div>
     </div>`
     });
@@ -443,3 +443,25 @@ function importRuryFromExcel(event) {
 }
 
 window.savePriceList = savePriceList;
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('addProduct', addProduct);
+    registerCspAction('editField', {
+        handler: function ({ id, field }, target) {
+            editCell(target, field, id);
+        },
+        params: ['id', 'field']
+    });
+    registerCspAction('copyProduct', {
+        handler: function ({ productId }) {
+            copyProduct(productId);
+        },
+        params: ['productId']
+    });
+    registerCspAction('deleteProduct', {
+        handler: function ({ productId }) {
+            deleteProduct(productId);
+        },
+        params: ['productId']
+    });
+}

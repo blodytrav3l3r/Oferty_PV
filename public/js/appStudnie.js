@@ -12,11 +12,6 @@ window.__STUDNIE_APP_ORCHESTRATOR__ = true;
  */
 document.addEventListener('DOMContentLoaded', async () => {
     // Sprawdzenie autoryzacji
-    const token = getAuthToken();
-    if (!token) {
-        window.location.href = 'index.html';
-        return;
-    }
     try {
         const authRes = await fetchWithTimeout('/api/auth/me', { headers: authHeaders() });
         const authData = await authRes.json();
@@ -160,6 +155,281 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         }
+    }
+
+    // CSP actions registration (data-action dispatcher)
+    if (typeof registerCspAction === 'function') {
+        registerCspAction('logout', appLogout);
+        registerCspAction('show-section', {
+            handler: function (p) {
+                showSection(p.section);
+            },
+            params: ['section']
+        });
+        registerCspAction('wizard-nav', {
+            handler: function (p) {
+                wizardNavStep(Number(p.step));
+            },
+            params: ['step']
+        });
+        registerCspAction('wizard-next', wizardNext);
+        registerCspAction('wizard-prev', wizardPrev);
+        registerCspAction('goto-wizard-step', {
+            handler: function (p) {
+                goToWizardStep(Number(p.step));
+            },
+            params: ['step']
+        });
+        registerCspAction('select-dn', {
+            handler: function (p) {
+                selectDN(p.dn === 'styczna' ? 'styczna' : Number(p.dn));
+            },
+            params: ['dn']
+        });
+        registerCspAction('input-select', function (t) {
+            t.select();
+        });
+        registerCspAction('toggle-auto-lock', toggleAutoLock);
+        registerCspAction('toggle-redukcja', toggleRedukcja);
+        registerCspAction('toggle-psia-buda', togglePsiaBuda);
+        registerCspAction('toggle-styczna-1200', toggleStyczna1200);
+        registerCspAction('toggle-card', {
+            handler: function (p) {
+                window.toggleCard(p.contentId, p.iconId);
+            },
+            params: ['contentId', 'iconId']
+        });
+        registerCspAction('switch-builder-tab', {
+            handler: function (p) {
+                switchBuilderTab(p.tab);
+            },
+            params: ['tab']
+        });
+        registerCspAction('cennik-tab', {
+            handler: function (p) {
+                selectCennikTab(p.tab);
+            },
+            params: ['tab']
+        });
+        registerCspAction('auto-select-components', function () {
+            autoSelectComponents();
+        });
+        registerCspAction('clear-well-config', function () {
+            clearWellConfig();
+        });
+        registerCspAction('copy-karta-budowy', function () {
+            copyKartaBudowyFromOrder();
+        });
+        registerCspAction('remove-well', function () {
+            removeWell(currentWellIndex);
+        });
+        registerCspAction('add-custom-przejscie', function () {
+            addCustomPrzejscieRow();
+        });
+        registerCspAction('show-add-studnie-product-modal', function () {
+            showAddStudnieProductModal();
+        });
+        registerCspAction('save-studnie-price-list', function () {
+            saveStudniePriceList();
+        });
+        registerCspAction('export-studnie-excel', function () {
+            exportStudnieToExcel();
+        });
+        registerCspAction('import-studnie-excel', function () {
+            document.getElementById('import-studnie-excel').click();
+        });
+        registerCspAction('apply-global-params', function () {
+            applyGlobalParamsToAllWells();
+        });
+        registerCspAction('save-offer-studnie', function () {
+            saveOfferStudnie();
+        });
+        registerCspAction('save-current-order', function () {
+            saveCurrentOrder();
+        });
+        registerCspAction('handle-print-click', function () {
+            handlePrintClick();
+        });
+        registerCspAction('create-order-from-offer', function () {
+            createOrderFromOffer();
+        });
+        registerCspAction('open-zlecenia-produkcyjne', function () {
+            openZleceniaProdukcyjne();
+        });
+        registerCspAction('add-new-well', {
+            handler: function (p) {
+                var v = p.dn === 'styczna' ? 'styczna' : Number(p.dn);
+                addNewWell(v);
+            },
+            params: ['dn']
+        });
+        registerCspAction('switch-sidebar-tab', {
+            handler: function (p) {
+                switchSidebarTab(p.tab);
+            },
+            params: ['tab']
+        });
+        registerCspAction('generate-offer-notes', function () {
+            generateOfferNotes();
+        });
+        registerCspAction('open-transport-popup', function () {
+            openTransportPopup();
+        });
+        registerCspAction('open-offer-discounts-popup', function () {
+            openOfferDiscountsPopup();
+        });
+        registerCspAction('show-offer-export-choice', function () {
+            showOfferExportChoice();
+        });
+        registerCspAction('reset-studnie-price-list', function () {
+            resetStudniePriceList();
+        });
+        registerCspAction('close-offer-discounts-popup', function () {
+            closeOfferDiscountsPopup();
+        });
+        registerCspAction('handle-offer-discounts-cancel', function () {
+            handleOfferDiscountsCancel();
+        });
+        registerCspAction('handle-offer-discounts-save', function () {
+            handleOfferDiscountsSave();
+        });
+        registerCspAction('handle-offer-transport-cancel', function () {
+            handleOfferTransportCancel();
+        });
+        registerCspAction('handle-offer-transport-save', function () {
+            handleOfferTransportSave();
+        });
+        registerCspAction('toggle-transport-mode', function () {
+            toggleTransportMode();
+        });
+        registerCspAction('open-bulk-order-sequence-popup', function () {
+            openBulkOrderSequencePopup();
+        });
+        registerCspAction('accept-production-order', function () {
+            acceptProductionOrder();
+        });
+        registerCspAction('revoke-production-order', function () {
+            revokeProductionOrder();
+        });
+        registerCspAction('delete-selected-production-order', function () {
+            deleteSelectedProductionOrder();
+        });
+        registerCspAction('save-production-order', function () {
+            saveProductionOrder();
+        });
+        registerCspAction('print-zlecenie', function () {
+            printZlecenie();
+        });
+        registerCspAction('print-etykieta', function () {
+            printEtykieta();
+        });
+        registerCspAction('close-zlecenia-modal', function () {
+            closeZleceniaModal();
+        });
+        registerCspAction('set-zlecenia-filter', {
+            handler: function (p) {
+                setZleceniaFilter(p.filter);
+            },
+            params: ['filter']
+        });
+        registerCspAction('open-excel-table-modal', function () {
+            openExcelTableModal();
+        });
+        registerCspAction('open-global-recalc-modal', function () {
+            window.openGlobalRecalcModal();
+        });
+        registerCspAction('open-transition-manager-modal', function () {
+            openTransitionManagerModal();
+        });
+        registerCspAction('sanitize-numeric', function (t) {
+            t.value = t.value.replace(/[^0-9]/g, '');
+        });
+        registerCspAction('validate-wizard-step2', function () {
+            validateWizardStep2();
+        });
+        registerCspAction('update-param-input', function (t) {
+            var param = t.dataset.param;
+            if (param) updateParamInput(param, t.value);
+            validateWizardStep2();
+        });
+        registerCspAction('handle-przejscia-zamowione-change', function (t) {
+            handlePrzejsciaZamowioneChange(t);
+        });
+        registerCspAction('import-studnie-from-excel', function (t) {
+            var ev = new Event('change');
+            Object.defineProperty(ev, 'target', { value: t });
+            importStudnieFromExcel(ev);
+        });
+        registerCspAction('render-wells-list', function () {
+            renderWellsList();
+        });
+        registerCspAction('toggle-inne-display', function (t) {
+            var id = t.dataset.targetId;
+            var el = document.getElementById(id);
+            if (el) el.style.display = t.value === 'Inne' ? 'block' : 'none';
+        });
+        registerCspAction('sync-transport-from-modal', function () {
+            if (typeof syncTransportFromModal === 'function') syncTransportFromModal();
+        });
+        registerCspAction('filter-zlecenia-list', function () {
+            filterZleceniaList();
+        });
+        registerCspAction('redukcja-min-change', function (t) {
+            onRedukcjaMinChange(t.value);
+        });
+    }
+
+    // Direct event listeners for well input fields (CSP-safe, no inline handlers)
+    var _el;
+    _el = document.getElementById('input-well-numer');
+    if (_el) _el.addEventListener('input', updateWellNumer);
+
+    _el = document.getElementById('input-rzedna-wlazu');
+    if (_el) {
+        _el.addEventListener('focusout', function () {
+            resolveFieldValue(this);
+            updateElevations();
+        });
+        _el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') this.blur();
+        });
+    }
+
+    _el = document.getElementById('input-rzedna-dna');
+    if (_el) {
+        _el.addEventListener('focusout', function () {
+            resolveFieldValue(this);
+            updateElevations();
+        });
+        _el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') this.blur();
+        });
+    }
+
+    _el = document.getElementById('input-doplata');
+    if (_el) {
+        _el.addEventListener('focusout', function () {
+            resolveFieldValue(this);
+            updateDoplata();
+        });
+        _el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') this.blur();
+        });
+    }
+
+    // svg-trash drag-feedback hover (mouseenter/mouseleave not dispatched by cspActions)
+    _el = document.getElementById('svg-trash');
+    if (_el) {
+        _el.addEventListener('mouseenter', function () {
+            if (window.svgDragStartIndex >= 0) {
+                this.style.background = 'rgba(239,68,68,0.3)';
+                this.style.borderColor = '#ef4444';
+            }
+        });
+        _el.addEventListener('mouseleave', function () {
+            this.style.background = 'rgba(239,68,68,0.1)';
+            this.style.borderColor = 'rgba(239,68,68,0.4)';
+        });
     }
 });
 

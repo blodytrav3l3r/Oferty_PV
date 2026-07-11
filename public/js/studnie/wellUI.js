@@ -74,7 +74,7 @@ function renderOfferLockBanner() {
             <div style="display:flex; gap:0.4rem; align-items:center;">
                 ${
                     wellOrder
-                        ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
+                        ? `<button class="btn btn-sm" data-action="navigateToOrderWell" data-order-id="${wellOrder.id}" style="height:48px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#34d399; font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="package"></i> Edytuj zamówienie
                     </button>`
                         : ''
@@ -493,7 +493,7 @@ function renderWellParams() {
         html += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.35rem; flex:1;">`;
         def.options.forEach(([val, lbl]) => {
             const isActive = val === currentVal;
-            html += `<button onclick="updateWellParam('${def.key}','${val}')" style="
+            html += `<button data-action="updateWellParamQuick" data-field="${def.key}" data-val="${val}" style="
                 height: 34px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:${isActive ? '800' : '600'};
                 border:1px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
                 background:${isActive ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)'};
@@ -501,9 +501,7 @@ function renderWellParams() {
                 transition:all 0.15s ease;
                 display:flex; align-items:center; justify-content:center;
                 ${isActive ? 'box-shadow:0 0 10px rgba(99,102,241,0.2);' : ''}
-            " onmouseenter="if(!${isActive}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}"
-               onmouseleave="if(!${isActive}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}"
-            >${lbl}</button>`;
+            ">${lbl}</button>`;
         });
         html += `</div></div>`;
 
@@ -511,22 +509,22 @@ function renderWellParams() {
         if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. wew.</span>`;
-            html += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" data-action="updateWellParam" data-field="powlokaNameW" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. wew.</span>`;
-            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-action="updateWellParam" data-field="malowanieWewCena" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
         }
 
         if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. zew.</span>`;
-            html += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" data-action="updateWellParam" data-field="powlokaNameZ" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. zew.</span>`;
-            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-action="updateWellParam" data-field="malowanieZewCena" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `</div>`;
         }
 
@@ -534,7 +532,7 @@ function renderWellParams() {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
             html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Wys. wkładki osadnik</span>`;
             html += `<div style="display:flex; align-items:center; gap:0.5rem;">`;
-            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onclick="this.select()" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" data-action="updateWellParam" data-field="wkladkaOsadnikH" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
             html += `<span style="font-size:0.8rem; color:var(--text-muted);">mm</span>`;
             html += `</div></div>`;
         }
@@ -542,7 +540,7 @@ function renderWellParams() {
 
     html += `</div>`;
     html += `<div style="display:flex; gap:0.4rem; margin-top:1rem; justify-content:flex-end;">`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne (Krok 2)</button>`;
+    html += `<button class="btn btn-secondary btn-sm" data-action="resetWellParamsToDefaults" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne (Krok 2)</button>`;
     html += `</div>`;
 
     container.innerHTML = html;
@@ -642,8 +640,7 @@ function renderDiscountPanel() {
               <input type="number" min="0" max="100" step="0.5" value="${disc.dennica || 0}"
                 id="disc-${discountDn}-dennica"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:5px; color:#fff;"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','dennica',this.value)">
+                data-action="updateDiscount" data-dn="${discountDn}" data-component="dennica">
               <span class="ui-text-mute">%</span>
             </div>
             <span class="ui-text-mute" class="text-left">Nadbudowa</span>
@@ -651,8 +648,7 @@ function renderDiscountPanel() {
               <input type="number" min="0" max="100" step="0.5" value="${disc.nadbudowa || 0}"
                 id="disc-${discountDn}-nadbudowa"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:5px; color:#fff;"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','nadbudowa',this.value)">
+                data-action="updateDiscount" data-dn="${discountDn}" data-component="nadbudowa">
               <span class="ui-text-mute">%</span>
             </div>
             ${
@@ -662,8 +658,7 @@ function renderDiscountPanel() {
               <input type="number" min="0" max="100" step="0.5" value="${disc.preco || 0}"
                 id="disc-${discountDn}-preco"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:5px; color:#ef4444;"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','preco',this.value)">
+                data-action="updateDiscount" data-dn="${discountDn}" data-component="preco">
               <span class="ui-text-mute" style="color:#ef4444;">%</span>
             </div>`
                     : ''
@@ -715,8 +710,7 @@ function renderDiscountPanel() {
               <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                 id="disc-global-pehd"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(14,165,233,0.1); border:1px solid rgba(14,165,233,0.3); border-radius:5px; color:#38bdf8;"
-                onclick="this.select()"
-                onchange="updateGlobalPehdDiscount(this.value)">
+                data-action="updateGlobalPehdDiscount">
               <span class="ui-text-mute" style="color:#38bdf8;">%</span>
             </div>
           </div>
@@ -745,8 +739,7 @@ function renderDiscountPanel() {
               <input type="number" min="0" step="0.01" value="${malWCena}"
                 id="disc-mal-wew-cena"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:5px; color:#c084fc;"
-                onclick="this.select()"
-                onchange="updateGlobalPaintingCost('malowanieWewCena', this.value)">
+                data-action="updateGlobalPaintingCost" data-field="malowanieWewCena">
               <span class="ui-text-mute" style="color:#c084fc;">zł</span>
             </div>`;
         }
@@ -757,8 +750,7 @@ function renderDiscountPanel() {
               <input type="number" min="0" step="0.01" value="${malZCena}"
                 id="disc-mal-zew-cena"
                 style="width:90px; padding:3px 6px; font-size:0.78rem; text-align:center; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:5px; color:#c084fc;"
-                onclick="this.select()"
-                onchange="updateGlobalPaintingCost('malowanieZewCena', this.value)">
+                data-action="updateGlobalPaintingCost" data-field="malowanieZewCena">
               <span class="ui-text-mute" style="color:#c084fc;">zł</span>
             </div>`;
         }
@@ -960,7 +952,7 @@ window.renderWellsList = function renderWellsList() {
                         : null;
                 if (wellOrder && wellOrder.orderNumber) {
                     wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
-                        onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
+                        data-action="navigateToOrderWell" data-order-id="${wellOrder.id}"
                         style="font-size:0.55rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
                     </span>`;
@@ -999,12 +991,12 @@ window.renderWellsList = function renderWellsList() {
               </div>`
                 : '';
 
-            html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
+            html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" data-action="selectWell" data-well-index="${i}">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
                 <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escapeHtml(w.name)}">${escapeHtml(w.name)}</div>
                 <div class="well-list-actions">
-                  <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-                  <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
+                  <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" data-action="duplicateWell" data-well-index="${i}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                  <button class="well-list-action del" title="Usuń" aria-label="Usuń" data-action="removeWell" data-well-index="${i}"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
               </div>
               ${badgesHtml}
@@ -1157,6 +1149,15 @@ window.updateSummary = function updateSummary() {
     // Height indicator
     updateHeightIndicator();
 
+    if (typeof registerCspAction === 'function') {
+        registerCspAction('selectWell', {
+            handler: function ({ wellIndex }) {
+                selectWell(parseInt(wellIndex, 10));
+            },
+            params: ['wellIndex']
+        });
+    }
+
     // Odśwież panel boczny z cenami studni (aby cena była zawsze aktualna)
     // Guard: pomijaj jeśli renderWellsList jest już w trakcie (np. z refreshAll)
     if (typeof renderWellsList === 'function' && !window._renderingWellsList) {
@@ -1165,3 +1166,46 @@ window.updateSummary = function updateSummary() {
         window._renderingWellsList = false;
     }
 };
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('updateDiscount', function (t) {
+        updateDiscount(t.dataset.dn, t.dataset.component, t.value);
+    });
+    registerCspAction('updateGlobalPehdDiscount', function (t) {
+        updateGlobalPehdDiscount(t.value);
+    });
+    registerCspAction('updateGlobalPaintingCost', function (t) {
+        updateGlobalPaintingCost(t.dataset.field, t.value);
+    });
+    registerCspAction('updateWellParam', function (t) {
+        var v = t.value;
+        if (
+            t.dataset.field === 'malowanieWewCena' ||
+            t.dataset.field === 'malowanieZewCena' ||
+            t.dataset.field === 'wkladkaOsadnikH'
+        )
+            v = parseFloat(v) || 0;
+        updateWellParam(t.dataset.field, v);
+    });
+    registerCspAction('updateWellParamQuick', function (t) {
+        updateWellParam(t.dataset.field, t.dataset.val);
+    });
+    registerCspAction('navigateToOrderWell', {
+        handler: function ({ orderId }) {
+            window.location.href = 'studnie.html?order=' + orderId;
+        },
+        params: ['orderId']
+    });
+    registerCspAction('duplicateWell', {
+        handler: function ({ wellIndex }) {
+            duplicateWell(parseInt(wellIndex, 10));
+        },
+        params: ['wellIndex']
+    });
+    registerCspAction('removeWell', {
+        handler: function ({ wellIndex }) {
+            removeWell(parseInt(wellIndex, 10));
+        },
+        params: ['wellIndex']
+    });
+}

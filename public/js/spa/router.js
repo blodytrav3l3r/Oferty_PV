@@ -116,7 +116,7 @@ const SpaRouter = (() => {
                 (s, i) => `
             <button class="nav-btn nav-tile nav-accent-${s.id}${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
-                onclick="${s.isLink ? `window.location.hash='${s.href}'` : `SpaRouter.showSection('${s.id}')`}">
+                data-action="${s.isLink ? 'spaNavLink' : 'spaShowSection'}"${s.isLink ? ` data-href="${s.href}"` : ` data-section="${s.id}"`}">
                 <span class="nav-tile-icon">${s.icon}</span>
                 <span class="nav-tile-text">${s.label}</span>
             </button>
@@ -363,12 +363,6 @@ const SpaRouter = (() => {
 
     async function init() {
         // Sprawdzenie autoryzacji
-        const token = getAuthToken();
-        if (!token) {
-            window.location.href = 'index.html';
-            return;
-        }
-
         try {
             const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
             const authData = await authRes.json();
@@ -445,6 +439,12 @@ const SpaRouter = (() => {
             });
         });
 
+        // CSP-safe: logout button listener (was inline onclick)
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => window.appLogout());
+        }
+
         await navigate();
     }
 
@@ -497,3 +497,12 @@ const SpaRouter = (() => {
     window.SpaRouter = api;
     return api;
 })();
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('spaNavLink', function (t) {
+        window.location.hash = t.dataset.href;
+    });
+    registerCspAction('spaShowSection', function (t) {
+        SpaRouter.showSection(t.dataset.section);
+    });
+}

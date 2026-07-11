@@ -16,9 +16,10 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
     } catch (err) {
         logger.error(
             'Server',
-            'Błąd inicjalizacji aplikacji:',
+            'KRYTYCZNY BŁĄD INICJALIZACJI:',
             err instanceof Error ? err.message : String(err)
         );
+        process.exit(1);
     }
 
     app.listen(PORT, HOST, () => {

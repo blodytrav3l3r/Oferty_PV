@@ -99,11 +99,6 @@ function setupNavigation() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Sprawdź autoryzację
-    const token = getAuthToken();
-    if (!token) {
-        window.location.href = 'index.html';
-        return;
-    }
     try {
         const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
         const authData = await authRes.json();
@@ -178,6 +173,113 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSection(tab);
     } else {
         showSection('builder');
+    }
+
+    // CSP actions registration (data-action dispatcher)
+    if (typeof registerCspAction === 'function') {
+        registerCspAction('logout', appLogout);
+        registerCspAction('phase-nav', {
+            handler: function (p) {
+                goToPhase(Number(p.phase));
+            },
+            params: ['phase']
+        });
+        registerCspAction('phase-next', phaseNext);
+        registerCspAction('phase-prev', phasePrev);
+        registerCspAction('show-section', {
+            handler: function (p) {
+                showSection(p.section);
+            },
+            params: ['section']
+        });
+        registerCspAction('transport-protection', {
+            handler: function (p) {
+                window.setZabezpieczenieTransportu(p.value === 'true');
+            },
+            params: ['value']
+        });
+        registerCspAction('input-select', function (t) {
+            t.select();
+        });
+        registerCspAction('toggle-catalog', function () {
+            toggleCatalog();
+        });
+        registerCspAction('toggle-rury-transport-mode', function () {
+            toggleRuryTransportMode();
+        });
+        registerCspAction('show-add-product-modal', function () {
+            showAddProductModal();
+        });
+        registerCspAction('save-price-list', function () {
+            savePriceList();
+        });
+        registerCspAction('export-rury-excel', function () {
+            exportRuryToExcel();
+        });
+        registerCspAction('import-rury-excel', function () {
+            document.getElementById('import-rury-excel').click();
+        });
+        registerCspAction('show-item-discount-modal', function () {
+            showItemDiscountModal();
+        });
+        registerCspAction('show-universal-print-modal', function () {
+            showUniversalPrintModalRury(editingOfferId);
+        });
+        registerCspAction('save-offer-or-order', function () {
+            saveOfferOrOrder();
+        });
+        registerCspAction('create-order-from-offer', function () {
+            createOrderFromOffer();
+        });
+        registerCspAction('show-clients-db', function () {
+            showClientsDb();
+        });
+        registerCspAction('save-client-to-db', function () {
+            saveClientToDb();
+        });
+        registerCspAction('change-offer-user', function () {
+            changeOfferUser();
+        });
+        registerCspAction('copy-karta-budowy', function () {
+            copyKartaBudowyFromOrder();
+        });
+        registerCspAction('add-custom-przejscie', function () {
+            addCustomPrzejscieRow();
+        });
+        registerCspAction('open-rury-transport-popup', function () {
+            openRuryTransportPopup();
+        });
+        registerCspAction('handle-rury-transport-cancel', function () {
+            handleRuryTransportCancel();
+        });
+        registerCspAction('handle-rury-transport-save', function () {
+            handleRuryTransportSave();
+        });
+        registerCspAction('sanitize-numeric', function (t) {
+            t.value = t.value.replace(/[^0-9]/g, '');
+        });
+        registerCspAction('rury-transport-form-change', function () {
+            onRuryTransportFormChange();
+        });
+        registerCspAction('toggle-all-items-for-order', function (t) {
+            toggleAllItemsForOrder(t.checked);
+        });
+        registerCspAction('toggle-inne-display', function (t) {
+            var id = t.dataset.targetId;
+            var el = document.getElementById(id);
+            if (el) el.style.display = t.value === 'Inne' ? 'block' : 'none';
+        });
+        registerCspAction('handle-przejscia-zamowione-change', function (t) {
+            handlePrzejsciaZamowioneChange(t);
+        });
+        registerCspAction('import-rury-from-excel', function (t) {
+            var ev = new Event('change');
+            Object.defineProperty(ev, 'target', { value: t });
+            importRuryFromExcel(ev);
+        });
+        registerCspAction('sync-rury-transport-from-modal', function () {
+            if (typeof syncRuryTransportFromModal === 'function') syncRuryTransportFromModal();
+        });
     }
 });
 

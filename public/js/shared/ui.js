@@ -70,30 +70,37 @@ function showToast(msg, type = 'info') {
     toast.setAttribute('aria-live', 'polite');
 
     const text = document.createElement('span');
-    // Bezpieczne: wyciągnij ikony Lucide przed eskejpowaniem HTML
-    const iconRegex = /<i\s+data-lucide="([^"]*)"\s*><\/i>/gi;
-    const icons = [];
-    const safe = msg.replace(iconRegex, (m) => {
-        icons.push(m);
-        return `\x00ICON${icons.length - 1}\x00`;
-    });
-    text.innerHTML = escapeHtml(safe).replace(
-        /\x00ICON(\d+)\x00/g,
-        (_, i) => icons[parseInt(i)] || ''
-    );
-    if (window.lucide) lucide.createIcons();
     text.style.flex = '1';
+    // DOM API: parse Lucide icons inline, textContent for safety
+    const iconRegex = /<i\s+data-lucide="([^"]*)"\s*><\/i>/gi;
+    let lastIndex = 0;
+    let match;
+    while ((match = iconRegex.exec(msg)) !== null) {
+        if (match.index > lastIndex) {
+            text.appendChild(document.createTextNode(msg.slice(lastIndex, match.index)));
+        }
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', match[1]);
+        text.appendChild(icon);
+        lastIndex = iconRegex.lastIndex;
+    }
+    if (lastIndex < msg.length) {
+        text.appendChild(document.createTextNode(msg.slice(lastIndex)));
+    }
     toast.appendChild(text);
 
     const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<i data-lucide="x" aria-hidden="true"></i>';
-    if (window.lucide) lucide.createIcons();
+    const closeIcon = document.createElement('i');
+    closeIcon.setAttribute('data-lucide', 'x');
+    closeIcon.setAttribute('aria-hidden', 'true');
+    closeBtn.appendChild(closeIcon);
     closeBtn.style.cssText =
         'background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;opacity:.7;';
     closeBtn.addEventListener('click', () => toast.remove());
     toast.appendChild(closeBtn);
 
     container.appendChild(toast);
+    if (window.lucide) lucide.createIcons({ root: toast });
     requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
         toast.classList.remove('show');
@@ -196,14 +203,7 @@ function showUserSelectionPopup(users, defaultUserId) {
                       ? '⭐'
                       : '<i data-lucide="user"></i>';
 
-            html += `<button class="user-select-btn" data-user-id="${u.id}" style="
-                display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
-                background:${isDefault ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(255,255,255,0.03)'};
-                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(255,255,255,0.06)'};
-                border-radius:10px; cursor:pointer; color:var(--text-primary); font:500 0.85rem Inter,sans-serif;
-                transition:all 0.15s; text-align:left; width:100%;
-            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb),0.4)';this.style.background='rgba(var(--accent-rgb),0.1)'"
-               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='rgba(255,255,255,0.03)'}">
+            html += `<button class="user-select-btn${isDefault ? ' is-default' : ''}" data-user-id="${u.id}">
                 <span style="font-size:1.1rem;">${roleBadge}</span>
                 <div class="flex-1">
                     <div style="font-weight:700;">${displayName}</div>
@@ -476,15 +476,24 @@ function createSaveIndicator(parent, opts = {}) {
     function render(state, text, color) {
         el.style.opacity = '1';
         el.style.color = color;
-        const icon =
+        el.textContent = '';
+        const iconName =
             state === 'saving'
-                ? '<i data-lucide="loader" style="width:14px;height:14px;animation:saveSpin 0.8s linear infinite"></i>'
+                ? 'loader'
                 : state === 'saved'
-                  ? '<i data-lucide="check" style="width:14px;height:14px"></i>'
+                  ? 'check'
                   : state === 'error'
-                    ? '<i data-lucide="alert-circle" style="width:14px;height:14px"></i>'
-                    : '<i data-lucide="circle" style="width:14px;height:14px"></i>';
-        el.innerHTML = `${icon}<span>${text}</span>`;
+                    ? 'alert-circle'
+                    : 'circle';
+        const iconEl = document.createElement('i');
+        iconEl.setAttribute('data-lucide', iconName);
+        iconEl.style.cssText =
+            'width:14px;height:14px;' +
+            (state === 'saving' ? 'animation:saveSpin 0.8s linear infinite;' : '');
+        el.appendChild(iconEl);
+        const span = document.createElement('span');
+        span.textContent = text;
+        el.appendChild(span);
         if (window.lucide) window.lucide.createIcons({ root: el });
     }
 
@@ -579,3 +588,7 @@ window.showModal = function (opts) {
     if (opts.onOpen) opts.onOpen();
     return overlay;
 };
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('closeModal', closeModal);
+}

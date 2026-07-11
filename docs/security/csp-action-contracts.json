@@ -1,0 +1,688 @@
+{
+    "meta": {
+        "version": "1",
+        "createdAt": "2026-07-11",
+        "sprint": "Sprint 3.4.3-B1",
+        "description": "Action contracts for CSP migration — every data-action must have a contract"
+    },
+    "actions": {
+        "closeModal": {
+            "description": "Close any modal dialog",
+            "params": [],
+            "handler": "closeModal",
+            "files": [
+                "public/js/shared/ui.js",
+                "public/js/shared/clientManager.js",
+                "public/js/studnie/pricelistManager.js",
+                "public/js/studnie/excelTableManager.js",
+                "public/js/studnie/wellPopups.js",
+                "public/js/studnie/offerManager.js",
+                "public/js/rury/pricelistUi.js",
+                "public/js/rury/offerCrud.js",
+                "public/js/rury/offerExports.js",
+                "public/js/rury/offerItems.js",
+                "public/js/sales/pvSalesUi.js"
+            ]
+        },
+        "addProduct": {
+            "description": "Add new product to pricelist (Rury)",
+            "params": [],
+            "handler": "addProduct",
+            "files": ["public/js/rury/pricelistUi.js"]
+        },
+        "toggleTransportBreakdown": {
+            "description": "Toggle transport cost breakdown in offer (Rury)",
+            "params": [],
+            "handler": "toggleTransportBreakdown",
+            "files": ["public/js/rury/transport.js"]
+        },
+        "recalculatePEHD": {
+            "description": "Recalculate PEHD prices in pricelist",
+            "params": [],
+            "handler": "recalculatePEHD",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "addPrzejsciaCategory": {
+            "description": "Add przejscia category in pricelist",
+            "params": [],
+            "handler": "addPrzejsciaCategory",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "addStudnieCategory": {
+            "description": "Add studnie category in pricelist",
+            "params": [],
+            "handler": "addStudnieCategory",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "addStudnieElement": {
+            "description": "Add element to studnie pricelist",
+            "params": [],
+            "handler": "addStudnieElement",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "togglePrzejsciaFields": {
+            "description": "Toggle przejscia-specific fields in add-element form",
+            "params": [],
+            "handler": "togglePrzejsciaFields",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "addStudnieProduct": {
+            "description": "Confirm adding product to studnie pricelist",
+            "params": [],
+            "handler": "addStudnieProduct",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "loadPrecoDefaults": {
+            "description": "Load default PRECO pricelist",
+            "params": [],
+            "handler": "loadPrecoDefaults",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "_excelToggleAddMenu": {
+            "description": "Toggle add-menu dropdown in Excel table",
+            "params": [],
+            "handler": "_excelToggleAddMenu",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelToggleFullscreen": {
+            "description": "Toggle fullscreen in Excel table",
+            "params": [],
+            "handler": "excelToggleFullscreen",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelSaveAll": {
+            "description": "Save all Excel edits and close",
+            "params": [],
+            "handler": "excelSaveAll",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "closeExcelTableModal": {
+            "description": "Close Excel table modal without saving",
+            "params": [],
+            "handler": "closeExcelTableModal",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelRemoveTransitionColumn": {
+            "description": "Remove last transition column",
+            "params": [],
+            "handler": "excelRemoveTransitionColumn",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelAddTransitionColumn": {
+            "description": "Add transition column",
+            "params": [],
+            "handler": "excelAddTransitionColumn",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "_excelCreateFromDialog": {
+            "description": "Create well from dialog in Excel",
+            "params": [],
+            "handler": "_excelCreateFromDialog",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "_excelImportPasteList": {
+            "description": "Import pasted list into Excel",
+            "params": [],
+            "handler": "_excelImportPasteList",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "cancelPrzejscieEdit": {
+            "description": "Cancel przejscie edit and close panel",
+            "params": [],
+            "handler": "cancelPrzejscieEdit",
+            "files": ["public/js/studnie/wellTransitions.js"]
+        },
+        "resetWellParamsToDefaults": {
+            "description": "Reset well parameters to defaults (Step 2)",
+            "params": [],
+            "handler": "resetWellParamsToDefaults",
+            "files": ["public/js/studnie/wellUI.js", "public/js/studnie/wellManager.js"]
+        },
+        "applyItemDiscounts": {
+            "description": "Apply discount to all offer items",
+            "params": [],
+            "handler": "applyItemDiscounts",
+            "files": ["public/js/rury/offerExports.js"]
+        },
+        "discountInput": {
+            "description": "Handle discount input in discount modal",
+            "params": ["index"],
+            "handler": "discountInput",
+            "files": ["public/js/rury/offerExports.js"]
+        },
+        "loadOffer": {
+            "description": "Load offer for editing (Rury)",
+            "params": ["offerId"],
+            "handler": "loadOffer",
+            "files": ["public/js/rury/offerCrud.js"]
+        },
+        "duplicateOffer": {
+            "description": "Duplicate offer (Rury)",
+            "params": ["offerId"],
+            "handler": "duplicateOffer",
+            "files": ["public/js/rury/offerCrud.js"]
+        },
+        "showOfferHistory": {
+            "description": "Show offer history modal (Rury)",
+            "params": ["offerId"],
+            "handler": "showOfferHistory",
+            "files": ["public/js/rury/offerCrud.js"]
+        },
+        "downloadExistingOffer": {
+            "description": "Download offer as JSON (Rury)",
+            "params": ["offerId"],
+            "handler": "downloadExistingOffer",
+            "files": ["public/js/rury/offerCrud.js"]
+        },
+        "exportOfferXlsx": {
+            "description": "Export offer as XLSX (Rury)",
+            "params": ["offerId"],
+            "handler": "exportOfferXlsx",
+            "files": ["public/js/rury/offerExports.js"]
+        },
+        "exportOfferPDF": {
+            "description": "Export offer as PDF (Rury)",
+            "params": ["offerId"],
+            "handler": "exportOfferPDF",
+            "files": ["public/js/rury/offerExports.js"]
+        },
+        "deleteOffer": {
+            "description": "Delete offer (Rury)",
+            "params": ["offerId"],
+            "handler": "deleteOffer",
+            "files": ["public/js/rury/offerCrud.js"]
+        },
+        "selectZakonczenie": {
+            "description": "Select ending (zakonczenie) for well (Studnie)",
+            "params": ["productId"],
+            "handler": "selectZakonczenie",
+            "files": ["public/js/studnie/wellActions.js", "public/js/studnie/wellPopups.js"]
+        },
+        "selectRedukcjaZakonczenie": {
+            "description": "Select reduction ending for well (Studnie)",
+            "params": ["productId"],
+            "handler": "selectRedukcjaZakonczenie",
+            "files": ["public/js/studnie/wellActions.js", "public/js/studnie/wellPopups.js"]
+        },
+        "selectRedukcjaChoice": {
+            "description": "Select reduction target DN (Studnie)",
+            "params": ["dn"],
+            "handler": "selectRedukcjaChoice",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmSortBy": {
+            "description": "Sort transition manager table by column",
+            "params": ["column"],
+            "handler": "tmSortBy",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmSelectFilterMaterial": {
+            "description": "Filter transition manager by material",
+            "params": ["filterVal"],
+            "handler": "tmSelectFilterMaterial",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmSelectFilterDn": {
+            "description": "Filter transition manager by DN",
+            "params": ["filterVal"],
+            "handler": "tmSelectFilterDn",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmSelectTargetCat": {
+            "description": "Select target category in transition manager",
+            "params": ["category"],
+            "handler": "tmSelectTargetCat",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "changeOfferUserFromListStudnie": {
+            "description": "Change assigned user for offer (Studnie)",
+            "params": ["offerId"],
+            "handler": "changeOfferUserFromListStudnie",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "loadSavedOfferStudnie": {
+            "description": "Load saved offer (Studnie)",
+            "params": ["offerId"],
+            "handler": "loadSavedOfferStudnie",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "deleteOfferStudnie": {
+            "description": "Delete offer (Studnie)",
+            "params": ["offerId"],
+            "handler": "deleteOfferStudnie",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "exportJSONStudnie": {
+            "description": "Export offer as JSON (Studnie)",
+            "params": ["offerId"],
+            "handler": "exportJSONStudnie",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "showOfferHistoryStudnie": {
+            "description": "Show offer history modal (Studnie)",
+            "params": ["offerId"],
+            "handler": "showOfferHistoryStudnie",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "restoreHistorySnapshot": {
+            "description": "Restore history snapshot (Studnie)",
+            "params": ["logId"],
+            "handler": "restoreHistorySnapshot",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "viewHistorySnapshot": {
+            "description": "View history snapshot (Studnie)",
+            "params": ["logId"],
+            "handler": "viewHistorySnapshot",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "deleteOrderStudnie": {
+            "description": "Delete order (Studnie)",
+            "params": ["orderId"],
+            "handler": "deleteOrderStudnie",
+            "files": ["public/js/studnie/orderManager.js"]
+        },
+        "excelSwitchTab": {
+            "description": "Switch tab in Excel table (Studnie)",
+            "params": ["tab"],
+            "handler": "excelSwitchTab",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "_excelBulkSetMode": {
+            "description": "Bulk set auto/manual mode for selected wells",
+            "params": ["enabled"],
+            "handler": "_excelBulkSetMode",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "_excelToggleWellAutoMode": {
+            "description": "Toggle auto/manual mode for a well (Excel)",
+            "params": ["wIdx"],
+            "handler": "_excelToggleWellAutoMode",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "_excelRunAutoSelectForWell": {
+            "description": "Run auto-select for a well (Excel)",
+            "params": ["wIdx"],
+            "handler": "_excelRunAutoSelectForWell",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelOpenWellParams": {
+            "description": "Open well params popup (Excel)",
+            "params": ["wIdx"],
+            "handler": "excelOpenWellParams",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelDuplicateWell": {
+            "description": "Duplicate well (Excel)",
+            "params": ["wIdx"],
+            "handler": "excelDuplicateWell",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelDeleteWell": {
+            "description": "Delete well (Excel)",
+            "params": ["wIdx"],
+            "handler": "excelDeleteWell",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "addOfferItem": {
+            "description": "Add item to offer (Rury)",
+            "params": ["productId"],
+            "handler": "addOfferItem",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "selectCatalogCategory": {
+            "description": "Select catalog category (Rury)",
+            "params": ["category"],
+            "handler": "selectCatalogCategory",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "removeOfferItem": {
+            "description": "Remove item from offer (Rury)",
+            "params": ["index"],
+            "handler": "removeOfferItem",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "copyProduct": {
+            "description": "Copy product in pricelist (Rury)",
+            "params": ["productId"],
+            "handler": "copyProduct",
+            "files": ["public/js/rury/pricelistUi.js"]
+        },
+        "deleteProduct": {
+            "description": "Delete product from pricelist (Rury)",
+            "params": ["productId"],
+            "handler": "deleteProduct",
+            "files": ["public/js/rury/pricelistUi.js"]
+        },
+        "addStudnieElement": {
+            "description": "Add element to studnie pricelist",
+            "params": ["groupKey"],
+            "handler": "addStudnieElement",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "deleteStudnieCategory": {
+            "description": "Delete category from studnie pricelist",
+            "params": ["groupKey"],
+            "handler": "deleteStudnieCategory",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "copyStudnieProduct": {
+            "description": "Copy product in studnie pricelist",
+            "params": ["id"],
+            "handler": "copyStudnieProduct",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "deleteStudnieProduct": {
+            "description": "Delete product from studnie pricelist",
+            "params": ["id"],
+            "handler": "deleteStudnieProduct",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "loadPrecoDefaults": {
+            "description": "Load PRECO defaults",
+            "params": [],
+            "handler": "loadPrecoDefaults",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "savePrecoFromUI": {
+            "description": "Save PRECO from UI",
+            "params": [],
+            "handler": "savePrecoFromUI",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "addPrecoKinetaRow": {
+            "description": "Add PRECO kineta row",
+            "params": ["dn"],
+            "handler": "addPrecoKinetaRow",
+            "files": ["public/js/studnie/pricelistManager.js"]
+        },
+        "editPrzejscie": {
+            "description": "Edit przejscie in transition renderer",
+            "params": ["globalIndex"],
+            "handler": "editPrzejscie",
+            "files": ["public/js/studnie/transitionRenderer.js"]
+        },
+        "removePrzejscieFromWell": {
+            "description": "Remove przejscie from well",
+            "params": ["globalIndex"],
+            "handler": "removePrzejscieFromWell",
+            "files": ["public/js/studnie/transitionRenderer.js"]
+        },
+        "openFlowTypePopup": {
+            "description": "Open flow type popup for przejscie",
+            "params": ["globalIndex"],
+            "handler": "openFlowTypePopup",
+            "files": ["public/js/studnie/transitionRenderer.js"]
+        },
+        "openChangePrzejscieTypePopup": {
+            "description": "Open change przejscie type popup",
+            "params": ["globalIndex"],
+            "handler": "openChangePrzejscieTypePopup",
+            "files": ["public/js/studnie/transitionRenderer.js"]
+        },
+        "openChangePrzejscieDnPopup": {
+            "description": "Open change przejscie DN popup",
+            "params": ["globalIndex"],
+            "handler": "openChangePrzejscieDnPopup",
+            "files": ["public/js/studnie/transitionRenderer.js"]
+        },
+        "openPrzejsciaVisibilityPopup": {
+            "description": "Open przejscia visibility popup",
+            "params": ["containerId"],
+            "handler": "openPrzejsciaVisibilityPopup",
+            "files": ["public/js/studnie/wellTransitions.js"]
+        },
+        "selectWell": {
+            "description": "Select well from list (Studnie)",
+            "params": ["wellIndex"],
+            "handler": "selectWell",
+            "files": ["public/js/studnie/wellUI.js"]
+        },
+        "printSingleZlecenie": {
+            "description": "Print single zlecenie (SPA)",
+            "params": ["safeId"],
+            "handler": "AppZlecenia.printSingleZlecenie",
+            "files": ["public/js/spa/zlecenia.js"]
+        },
+        "printSingleEtykieta": {
+            "description": "Print single etykieta (SPA)",
+            "params": ["safeId"],
+            "handler": "AppZlecenia.printSingleEtykieta",
+            "files": ["public/js/spa/zlecenia.js"]
+        },
+        "deleteOrder": {
+            "description": "Delete order (SPA)",
+            "params": ["safeId"],
+            "handler": "AppZlecenia.deleteOrder",
+            "files": ["public/js/spa/zlecenia.js"]
+        },
+        "loadLocalOffers": {
+            "description": "Load local offers from sales UI",
+            "params": [],
+            "handler": "window.pvSalesUI.loadLocalOffers",
+            "files": ["public/js/sales/pvSalesUi.js"]
+        },
+        "closeHistoryModal": {
+            "description": "Close offer history modal",
+            "params": [],
+            "handler": "closeHistoryModal",
+            "files": ["public/js/sales/pvSalesUi.js"]
+        },
+        "updateOrderSelectionCount": {
+            "description": "Update order selection count (Rury/Studnie)",
+            "params": [],
+            "handler": "updateOrderSelectionCount",
+            "files": ["public/js/rury/offerItems.js", "public/js/studnie/offerManager.js"]
+        },
+        "toggleAllWellsForOrder": {
+            "description": "Toggle all wells for order selection (Studnie)",
+            "params": [],
+            "handler": "toggleAllWellsForOrder",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "toggleAllOfferSummaryForOrder": {
+            "description": "Toggle all offer summary for order selection (Rury)",
+            "params": [],
+            "handler": "toggleAllOfferSummaryForOrder",
+            "files": ["public/js/rury/offerSummaryTab.js"]
+        },
+        "handleOfferPehdDiscountChange": {
+            "description": "Handle PEHD discount input change (Studnie)",
+            "params": [],
+            "handler": "handleOfferPehdDiscountChange",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "handlePaintingCostChange": {
+            "description": "Handle painting cost input change (Studnie)",
+            "params": ["field"],
+            "handler": "handlePaintingCostChange",
+            "files": ["public/js/studnie/offerManager.js"]
+        },
+        "updateItemMeters": {
+            "description": "Update item meters in offer (Rury)",
+            "params": ["itemIndex"],
+            "handler": "updateItemMeters",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "updateItemQuantity": {
+            "description": "Update item quantity in offer (Rury)",
+            "params": ["itemIndex"],
+            "handler": "updateItemQuantity",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "updateItemDiscount": {
+            "description": "Update item discount in offer (Rury)",
+            "params": ["itemIndex"],
+            "handler": "updateItemDiscount",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "updateItemSurcharge": {
+            "description": "Update item surcharge in offer (Rury)",
+            "params": ["itemIndex"],
+            "handler": "updateItemSurcharge",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "updateItemText": {
+            "description": "Update item text field in offer (Rury)",
+            "params": ["itemIndex"],
+            "handler": "updateItemText",
+            "files": ["public/js/rury/offerItems.js"]
+        },
+        "filterClientsDb": {
+            "description": "Filter clients database by search input",
+            "params": [],
+            "handler": "filterClientsDb",
+            "files": ["public/js/shared/clientManager.js"]
+        },
+        "recalcToggleRed": {
+            "description": "Toggle recalculation red flag (Studnie)",
+            "params": ["dn"],
+            "handler": "recalcToggleRed",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmApplyFilters": {
+            "description": "Apply transition manager filters",
+            "params": [],
+            "handler": "tmApplyFilters",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmToggleSelectAll": {
+            "description": "Toggle select all in transition manager",
+            "params": [],
+            "handler": "tmToggleSelectAll",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "tmToggleWell": {
+            "description": "Toggle well selection in transition manager",
+            "params": ["wellIndex"],
+            "handler": "tmToggleWell",
+            "files": ["public/js/studnie/wellPopups.js"]
+        },
+        "inlineUpdateAngles": {
+            "description": "Update inline przejscie angles",
+            "params": ["containerId"],
+            "handler": "inlineUpdateAngles",
+            "files": ["public/js/studnie/wellTransitions.js"]
+        },
+        "syncEditState": {
+            "description": "Sync edit state for przejscie editor",
+            "params": [],
+            "handler": "syncEditState",
+            "files": ["public/js/studnie/wellTransitions.js"]
+        },
+        "editUpdateAngles": {
+            "description": "Update przejscie angles in edit mode",
+            "params": ["index"],
+            "handler": "editUpdateAngles",
+            "files": ["public/js/studnie/wellTransitions.js"]
+        },
+        "updateDiscount": {
+            "description": "Update discount for well component (Studnie)",
+            "params": ["dn", "component"],
+            "handler": "updateDiscount",
+            "files": ["public/js/studnie/wellUI.js"]
+        },
+        "updateGlobalPehdDiscount": {
+            "description": "Update global PEHD discount (Studnie)",
+            "params": [],
+            "handler": "updateGlobalPehdDiscount",
+            "files": ["public/js/studnie/wellUI.js"]
+        },
+        "updateGlobalPaintingCost": {
+            "description": "Update global painting cost (Studnie)",
+            "params": ["field"],
+            "handler": "updateGlobalPaintingCost",
+            "files": ["public/js/studnie/wellUI.js"]
+        },
+        "updateWellParam": {
+            "description": "Update well parameter (Studnie)",
+            "params": ["field"],
+            "handler": "updateWellParam",
+            "files": ["public/js/studnie/wellUI.js"]
+        },
+        "excelFilterWells": {
+            "description": "Filter wells in Excel table by search input",
+            "params": [],
+            "handler": "excelFilterWells",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "toggleSelectAll": {
+            "description": "Toggle select all wells in Excel table",
+            "params": [],
+            "handler": "toggleSelectAll",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "excelOnRzednaChange": {
+            "description": "Handle rzędna change in Excel table",
+            "params": ["wIdx"],
+            "handler": "excelOnRzednaChange",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "syncCustomRow": {
+            "description": "Sync custom order row field change",
+            "params": [],
+            "handler": "syncCustomRow",
+            "files": ["public/js/rury/orderManager.js"]
+        },
+        "onZleceniaKatChange": {
+            "description": "Handle zlecenia kąt input change (Studnie)",
+            "params": [],
+            "handler": "onZleceniaKatChange",
+            "files": ["public/js/studnie/orderManager.js"]
+        },
+        "updateSubUsers": {
+            "description": "Toggle sub-user selection in dashboard",
+            "params": [],
+            "handler": "updateSubUsers",
+            "handledBy": "legacy",
+            "files": ["public/js/shared/dashboard.js"]
+        },
+        "startEditUser": {
+            "description": "Start editing a user in dashboard",
+            "params": ["userId"],
+            "handler": "startEditUser",
+            "handledBy": "legacy",
+            "files": ["public/js/shared/dashboard.js"]
+        },
+        "deleteUser": {
+            "description": "Delete a user in dashboard",
+            "params": ["userId"],
+            "handler": "deleteUser",
+            "handledBy": "legacy",
+            "files": ["public/js/shared/dashboard.js"]
+        },
+        "__upm_close": {
+            "description": "Close print modal (UPM)",
+            "params": [],
+            "handler": "__upm_close",
+            "handledBy": "legacy",
+            "files": ["public/js/shared/printModal.js"]
+        },
+        "${pdfAction}": {
+            "description": "Dynamic: export to PDF via print modal",
+            "params": ["id", "format"],
+            "handler": "dynamic",
+            "handledBy": "legacy",
+            "files": ["public/js/shared/printModal.js"]
+        },
+        "${docxAction}": {
+            "description": "Dynamic: export to DOCX via print modal",
+            "params": ["id", "format"],
+            "handler": "dynamic",
+            "handledBy": "legacy",
+            "files": ["public/js/shared/printModal.js"]
+        },
+        "excelOverlaySync": {
+            "description": "Dispatcher for overlay select change — reads data-oa / data-op-* and calls window[fn]",
+            "params": [],
+            "handler": "excelOverlaySync",
+            "files": ["public/js/studnie/excelTableManager.js"]
+        },
+        "offerSummaryCheckboxChange": {
+            "description": "Checkbox toggle in offer summary order comparison — updates selection count and pipes checkbox handler",
+            "params": [],
+            "handler": "offerSummaryCheckboxChange",
+            "files": ["public/js/rury/offerSummaryTab.js"]
+        }
+    }
+}

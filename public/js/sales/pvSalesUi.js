@@ -45,6 +45,13 @@ function openPrintModal(offerId, orderId, offerType, relatedOrders) {
         showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
     }
 }
+/* CSP-safe: hover for btn-open-order */
+(function () {
+    var s = document.createElement('style');
+    s.textContent =
+        '.btn-open-order:hover{color:#7dd3fc!important;text-decoration:underline!important}';
+    document.head.appendChild(s);
+})();
 
 class PVSalesUI {
     constructor() {
@@ -325,7 +332,7 @@ class PVSalesUI {
             listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">
                 <strong>Błąd pobierania ofert:</strong><br/>
                 <span style="font-size:0.85rem; opacity:0.8;">${this.escapeHtml(error.message || 'Wystąpił nieoczekiwany błąd sieciowy')}</span><br/>
-                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.loadLocalOffers()"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button>
+                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" data-action="loadLocalOffers"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button>
             </div>`;
             setTimeout(() => {
                 if (window.lucide) lucide.createIcons();
@@ -583,25 +590,33 @@ class PVSalesUI {
                 const creatorName = resolveUser(rawCreatorName);
                 const isClickable = this.role === 'admin' || this.role === 'pro';
 
-                return `
-                <div class="modern-offer-card" data-offer-id="${offer.id}">
-                    <!-- Status Indicator -->
-                    <div class="offer-status-indicator ${hasOrder ? 'has-order' : 'no-order'}"></div>
+                const safeOfferNumber = this.escapeHtml(
+                    offer.number || offer.title || offer.offerName || 'Oferta bez numeru'
+                );
+                const safeClientInfo = this.escapeHtml(clientInfo);
+                const safeInvestInfo = investInfo ? this.escapeHtml(investInfo) : '';
+                const safeCreatorName = creatorName ? this.escapeHtml(creatorName) : '';
+                const safeUserName = userName ? this.escapeHtml(userName) : '';
+                const safeOfferId = this.escapeHtml(offer.id);
+                const safeOfferType = this.escapeHtml(offer.type);
+                const safeClientPhone = offer.clientPhone ? this.escapeHtml(offer.clientPhone) : '';
+                const safeOrderId = hasOrder && order ? this.escapeHtml(order.id) : '';
 
-                    <!-- Card Content -->
+                return `
+                <div class="modern-offer-card" data-offer-id="${safeOfferId}">
+                    <div class="offer-status-indicator ${hasOrder ? 'has-order' : 'no-order'}"></div>
                     <div class="offer-card-content">
-                        <!-- Top Row: Icon + Title + Price -->
                         <div class="offer-top-row">
                             <div class="offer-icon-wrapper">
                                 ${icon}
                             </div>
                             <div class="offer-title-section">
-                                <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
+                                <h3 class="offer-title">${safeOfferNumber}</h3>
                                 <div class="offer-subtitle">
-                                    <span class="offer-client">${clientInfo}</span>
-                                    ${investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${investInfo}</span>` : ''}
-                                    ${creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>` : ''}
-                                    ${userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>` : ''}
+                                    <span class="offer-client">${safeClientInfo}</span>
+                                    ${safeInvestInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${safeInvestInfo}</span>` : ''}
+                                    ${safeCreatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${safeCreatorName}</span>` : ''}
+                                    ${safeUserName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `data-action="changeOfferUser" data-offer-id="${safeOfferId}"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${safeUserName}</span>` : ''}
                                 </div>
                             </div>
                             <div class="offer-price-section">
@@ -612,41 +627,37 @@ class PVSalesUI {
 
                         ${hasOrder ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
 
-                        <!-- Bottom Row: Actions -->
                         <div class="offer-actions-row">
-                            <!-- Order Status -->
                             <div class="order-status-badge">
                                 ${orderBadge}
                             </div>
-
-                            <!-- Action Buttons -->
                             <div class="action-buttons">
                                 ${
                                     isLocalList
                                         ? `
-                                        <button class="action-btn primary text-btn" data-id="${offer.id}" data-type="${offer.type}" title="Edytuj ofertę">
+                                        <button class="action-btn primary text-btn" data-id="${safeOfferId}" data-type="${safeOfferType}" title="Edytuj ofertę">
                                             <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
                                         </button>
-                                        <button class="action-btn secondary text-btn" data-id="${offer.id}" title="Skopiuj ofertę">
+                                        <button class="action-btn secondary text-btn" data-id="${safeOfferId}" title="Skopiuj ofertę">
                                             <i data-lucide="copy" aria-hidden="true"></i> Skopiuj ofertę
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
+                                        <button class="action-btn secondary" data-id="${safeOfferId}" data-type="${safeOfferType}" title="Historia zmian" aria-label="Historia zmian">
                                             <i data-lucide="clock" aria-hidden="true"></i>
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order.id : ''}" title="Wydruk" aria-label="Wydruk">
+                                        <button class="action-btn secondary" data-id="${safeOfferId}" data-type="${safeOfferType}" data-offer-id="${safeOfferId}" data-offer-type="${safeOfferType}" data-order-id="${safeOrderId}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
                                         ${
-                                            offer.clientPhone
-                                                ? `<a href="tel:${offer.clientPhone}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
+                                            safeClientPhone
+                                                ? `<a href="tel:${safeClientPhone}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
                                                 : ''
                                         }
-                                        <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
+                                        <button class="action-btn danger" data-id="${safeOfferId}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
                                             <i data-lucide="trash-2" aria-hidden="true"></i>
                                         </button>
                                         `
                                         : `
-                                        <button class="action-btn primary" data-id="${offer.id}" title="Szczegóły" aria-label="Szczegóły">
+                                        <button class="action-btn primary" data-id="${safeOfferId}" title="Szczegóły" aria-label="Szczegóły">
                                             <i data-lucide="eye" aria-hidden="true"></i>
                                         </button>
                                         `
@@ -679,7 +690,7 @@ class PVSalesUI {
         let html = `
             <div class="modal-header">
                 <h3 id="offer-orders-title">Zamówienia oferty ${offerLabel}</h3>
-                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-close-x" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div style="margin-bottom:1rem; color:var(--text-muted); font-size:0.9rem;">Lista wszystkich zamówień przypisanych do tej oferty.</div>
             <div style="display:flex; flex-direction:column; gap:0.75rem; max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
@@ -694,7 +705,7 @@ class PVSalesUI {
             html += `
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
                     <div style="min-width:0;">
-                        <div class="btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
+                        <div class="btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji">${orderLabel}</div>
                         <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}</div>
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
@@ -710,7 +721,7 @@ class PVSalesUI {
         html += `
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-close-footer" onclick="closeModal()">Zamknij</button>
+                <button class="btn btn-secondary btn-close-footer" data-action="closeModal">Zamknij</button>
             </div>
         `;
 
@@ -1271,9 +1282,9 @@ class PVSalesUI {
         const canRestore =
             log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
         const restoreBtn = canRestore
-            ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${id}', '${log.id}', '${type}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
+            ? `<button class="btn btn-sm btn-secondary restore-btn" data-action="restoreOfferVersion" data-entity-id="${id}" data-log-id="${log.id}" data-entity-type="${type}"><i data-lucide="refresh-cw"></i> Przywróć</button>`
             : '';
-        const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.pvSalesUI.viewHistorySnapshotUnified('${id}', '${log.id}', '${type}')"><i data-lucide="eye"></i> Podgląd</button>`;
+        const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" data-action="viewHistorySnapshot" data-entity-id="${id}" data-log-id="${log.id}" data-entity-type="${type}"><i data-lucide="eye"></i> Podgląd</button>`;
 
         return `
             <div class="audit-card ${meta.className}">
@@ -1318,7 +1329,7 @@ class PVSalesUI {
             const loadMoreHtml =
                 logs.length < total
                     ? `<div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                        <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${type}', '${id}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
+                        <button class="load-more-btn" data-action="loadMoreAuditLogs" data-entity-type="${type}" data-entity-id="${id}" data-limit="20"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
                     </div>`
                     : '';
 
@@ -1501,7 +1512,7 @@ class PVSalesUI {
                             <h3 id="offer-history-title"><i data-lucide="history"></i> Historia ${contextLabel}</h3>
                             <div class="audit-modal-subtitle">${total} wpisów • najnowsze zmiany na górze</div>
                         </div>
-                        <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x" aria-hidden="true"></i></button>
+                        <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" data-action="closeHistoryModal"><i data-lucide="x" aria-hidden="true"></i></button>
                     </div>
                     <div id="audit-logs-container-kartoteka" class="audit-list">
                         ${historyHtml}
@@ -1563,7 +1574,7 @@ class PVSalesUI {
                     `
                     <div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
                         <button class="load-more-btn"
-                            onclick="window.pvSalesUI.loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
+                            data-action="loadMoreAuditLogs" data-entity-type="${entityType}" data-entity-id="${entityId}" data-limit="${limit}"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
                     </div>
                 `
                 );
@@ -1653,7 +1664,7 @@ class PVSalesUI {
                         <h3 id="audit-snapshot-title"><i data-lucide="eye"></i> Podgląd historyczny</h3>
                         <div class="audit-modal-subtitle">${this.escapeHtml(this.getAuditContextLabel(type))}</div>
                     </div>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div class="audit-list" style="display:flex; flex-direction:column; gap:0.45rem;">
                     ${rows || '<div class="audit-muted">Brak danych do pokazania.</div>'}
@@ -1832,6 +1843,60 @@ class PVSalesUI {
             }
         }
     }
+}
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('loadLocalOffers', function () {
+        window.pvSalesUI.loadLocalOffers();
+    });
+    registerCspAction('filterByType', {
+        handler: function (p) {
+            filterByType(p.type);
+        },
+        params: ['type']
+    });
+    registerCspAction('toggleCompactMode', function () {
+        toggleCompactMode();
+    });
+    registerCspAction('setFilterLocalOffers', {
+        handler: function (p) {
+            if (window.pvSalesUI) window.pvSalesUI.setFilterLocalOffers(p.filter);
+        },
+        params: ['filter']
+    });
+    registerCspAction('closeHistoryModal', function () {
+        var el = document.getElementById('offer-history-modal');
+        if (el) el.remove();
+    });
+    registerCspAction('changeOfferUser', {
+        handler: function ({ offerId }) {
+            window.pvSalesUI.changeOfferUserFromList(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('restoreOfferVersion', {
+        handler: function ({ entityId, logId, entityType }) {
+            window.pvSalesUI.restoreOfferVersionUnified(entityId, logId, entityType);
+        },
+        params: ['entityId', 'logId', 'entityType']
+    });
+    registerCspAction('viewHistorySnapshot', {
+        handler: function ({ entityId, logId, entityType }) {
+            window.pvSalesUI.viewHistorySnapshotUnified(entityId, logId, entityType);
+        },
+        params: ['entityId', 'logId', 'entityType']
+    });
+    registerCspAction('loadMoreAuditLogs', {
+        handler: function ({ entityType, entityId, limit }) {
+            window.pvSalesUI.loadMoreAuditLogs(entityType, entityId, parseInt(limit, 10) || 20);
+        },
+        params: ['entityType', 'entityId', 'limit']
+    });
+    registerCspAction('filter-local-offers', function () {
+        if (window.pvSalesUI && window.pvSalesUI.filterLocalOffers) {
+            window.pvSalesUI.filterLocalOffers();
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

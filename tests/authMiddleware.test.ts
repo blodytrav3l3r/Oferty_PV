@@ -3,6 +3,7 @@ const mockPrisma = {
     sessions: {
         findUnique: jest.fn(),
         create: jest.fn(),
+        update: jest.fn(),
         delete: jest.fn()
     },
     users: {
@@ -21,6 +22,7 @@ jest.mock('../src/prismaClient', () => ({
 }));
 
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { requireAuth, requireAdmin, getSession, SESSION_MAX_AGE_MS } from '../src/middleware/auth';
 
@@ -46,7 +48,10 @@ describe('getSession', () => {
         const mockSession = {
             token: 'valid-token',
             userId: 'user1',
-            createdAt: BigInt(Date.now())
+            createdAt: BigInt(Date.now()),
+            lastUsedAt: BigInt(Date.now()),
+            expiresAt: BigInt(Date.now() + SESSION_MAX_AGE_MS),
+            revokedAt: null
         };
         mockPrisma.sessions.findUnique.mockResolvedValue(mockSession);
 
@@ -55,20 +60,34 @@ describe('getSession', () => {
         expect(result?.userId).toBe('user1');
     });
 
-    it('powinien usunąć wygasłą sesję i zwrócić null', async () => {
+    it('powinien odrzucić wygasłą sesję i zwrócić null', async () => {
         const expiredTime = BigInt(Date.now() - SESSION_MAX_AGE_MS - 1000);
         mockPrisma.sessions.findUnique.mockResolvedValue({
             token: 'expired-token',
             userId: 'user1',
-            createdAt: expiredTime
+            createdAt: expiredTime,
+            lastUsedAt: expiredTime,
+            expiresAt: BigInt(Date.now() - 1), // expired
+            revokedAt: null
         });
-        mockPrisma.sessions.delete.mockResolvedValue({});
 
         const result = await getSession('expired-token');
         expect(result).toBeNull();
-        expect(mockPrisma.sessions.delete).toHaveBeenCalledWith({
-            where: { token: 'expired-token' }
+        // Nie wywołuje delete — zwraca null, sesja zostaje w bazie (z expiresAt)
+    });
+
+    it('powinien odrzucić revoked sesję i zwrócić null', async () => {
+        mockPrisma.sessions.findUnique.mockResolvedValue({
+            token: 'revoked-token',
+            userId: 'user1',
+            createdAt: BigInt(Date.now()),
+            lastUsedAt: BigInt(Date.now()),
+            expiresAt: BigInt(Date.now() + SESSION_MAX_AGE_MS),
+            revokedAt: BigInt(Date.now())
         });
+
+        const result = await getSession('revoked-token');
+        expect(result).toBeNull();
     });
 
     it('powinien łagodnie obsługiwać błędy bazy danych', async () => {
@@ -99,10 +118,11 @@ describe('requireAuth', () => {
         mockPrisma.sessions.findUnique.mockResolvedValue(null);
 
         const app = express();
+        app.use(cookieParser());
         app.use(express.json());
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
 
-        const res = await request(app).get('/protected').set('x-auth-token', 'invalid-token');
+        const res = await request(app).get('/protected').set('Cookie', 'authToken=invalid-token');
 
         expect(res.statusCode).toBe(401);
     });
@@ -112,8 +132,12 @@ describe('requireAuth', () => {
         mockPrisma.sessions.findUnique.mockResolvedValue({
             token: 'valid-token',
             userId: 'user1',
-            createdAt: now
+            createdAt: now,
+            lastUsedAt: now,
+            expiresAt: BigInt(Date.now() + SESSION_MAX_AGE_MS),
+            revokedAt: null
         });
+        mockPrisma.sessions.update.mockResolvedValue({});
         mockPrisma.users.findUnique.mockResolvedValue({
             id: 'user1',
             username: 'testuser',
@@ -125,12 +149,13 @@ describe('requireAuth', () => {
         });
 
         const app = express();
+        app.use(cookieParser());
         app.use(express.json());
         app.get('/protected', requireAuth, (req, res) => {
             res.json({ user: req.user });
         });
 
-        const res = await request(app).get('/protected').set('x-auth-token', 'valid-token');
+        const res = await request(app).get('/protected').set('Cookie', 'authToken=valid-token');
 
         expect(res.statusCode).toBe(200);
         expect(res.body.user.username).toBe('testuser');
@@ -142,17 +167,44 @@ describe('requireAuth', () => {
         mockPrisma.sessions.findUnique.mockResolvedValue({
             token: 'valid-token',
             userId: 'deleted-user',
-            createdAt: now
+            createdAt: now,
+            lastUsedAt: now,
+            expiresAt: BigInt(Date.now() + SESSION_MAX_AGE_MS),
+            revokedAt: null
         });
         mockPrisma.users.findUnique.mockResolvedValue(null);
 
         const app = express();
+        app.use(cookieParser());
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
 
-        const res = await request(app).get('/protected').set('x-auth-token', 'valid-token');
+        const res = await request(app).get('/protected').set('Cookie', 'authToken=valid-token');
 
         expect(res.statusCode).toBe(401);
         expect(res.body.error).toContain('Użytkownik nie istnieje');
+    });
+
+    it('powinien ignorować X-Auth-Token header (czyta tylko cookie)', async () => {
+        const now = BigInt(Date.now());
+        mockPrisma.sessions.findUnique.mockResolvedValue({
+            token: 'header-token',
+            userId: 'user1',
+            createdAt: now,
+            lastUsedAt: now,
+            expiresAt: BigInt(Date.now() + SESSION_MAX_AGE_MS),
+            revokedAt: null
+        });
+        // Zwraca 401 mimo że X-Auth-Token jest ustawiony, bo middleware czyta tylko cookie
+        const app = express();
+        app.use(cookieParser());
+        app.use(express.json());
+        app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
+
+        const res = await request(app).get('/protected').set('x-auth-token', 'header-token');
+
+        // Nie ma cookie → 401, X-Auth-Token jest ignorowany
+        expect(res.statusCode).toBe(401);
+        expect(mockPrisma.sessions.findUnique).not.toHaveBeenCalled();
     });
 });
 

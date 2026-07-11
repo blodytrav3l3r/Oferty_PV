@@ -3,12 +3,6 @@
 let currentTypeFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = getAuthToken();
-    if (!token) {
-        window.location.href = 'index.html';
-        return;
-    }
-
     try {
         const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
         const authData = await authRes.json();

@@ -1,0 +1,530 @@
+[
+    {
+        "file": "app.js",
+        "line": 41,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(editingOfferAssignedUserName)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "app.js",
+        "line": 132,
+        "label": "FALSE_POSITIVE",
+        "confidence": "HIGH",
+        "reason": "textContent zamiast innerHTML",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/mlHealthDashboard.js",
+        "line": 83,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Ladowanie...'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/mlHealthDashboard.js",
+        "line": 88,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Nie mozna pobrac danych'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 60,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak dostepu do statystyk'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 66,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak dostepu do statystyk'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 122,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak wzorców'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 128,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak wzorców'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 133,
+        "label": "FIXED",
+        "confidence": "HIGH",
+        "reason": "REAL_XSS: dnFilter z user input — naprawione escapeHtml()",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 170,
+        "label": "SERVER_GENERATED",
+        "confidence": "HIGH",
+        "reason": "ML pipeline: patternType=enum, patternKey=hash, description=auto, confidence numeric",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 197,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'ML pipeline nieaktywny'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 292,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Trenowanie...'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 355,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "konkatenacja literałów, brak zmiennych",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 395,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Uruchamianie...'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "admin/aiDashboard.js",
+        "line": 401,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Uruchom Learning Cycle'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "sales/pvImportExportToolbar.js",
+        "line": 15,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "toolbar HTML — same literały",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "shared/clientManager.js",
+        "line": 157,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Baza klientów jest pusta'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "shared/clientManager.js",
+        "line": 163,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(q) na frazie wyszukiwania",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "import-export/shared/conflictModal.js",
+        "line": 13,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "window.escapeHtml(offerNumber)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "shared/dashboard.js",
+        "line": 15,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak innych użytkowników'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "shared/dashboard.js",
+        "line": 336,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(u.firstName || u.username)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "spa/zlecenia.js",
+        "line": 164,
+        "label": "FALSE_POSITIVE",
+        "confidence": "HIGH",
+        "reason": "linia 164 = 'headers: authHeaders()', nie innerHTML",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/globals.js",
+        "line": 115,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Zamówienie (krok 5)'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/offerItems.js",
+        "line": 90,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Ukryj katalog produktów'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/offerItems.js",
+        "line": 99,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Pokaż katalog produktów'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/offerItems.js",
+        "line": 126,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak produktów w tej kategorii'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/offerItems.js",
+        "line": 1015,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Zamówienie (krok 5)'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/orderManager.js",
+        "line": 504,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak produktów' + colspan numeric",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/orderManager.js",
+        "line": 843,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(orderData.orderNumber/offerNumber/id) + numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/orderManager.js",
+        "line": 884,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(orderData.orderNumber/offerNumber/id)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "rury/orderManager.js",
+        "line": 1033,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak przejść...'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/offerManager.js",
+        "line": 1800,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(editingOfferAssignedUserName)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/offerManager.js",
+        "line": 1896,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(offer.userName)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/offerManager.js",
+        "line": 2676,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(normalized.number || offer.id)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/offerManager.js",
+        "line": 2690,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(editingOfferAssignedUserName)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/orderManager.js",
+        "line": 1111,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak przejść szczelnych'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/orderManager.js",
+        "line": 2981,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak elementów'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/orderManager.js",
+        "line": 3145,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(well.name) + escapeHtml(well.dn) + fmtInt",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/excelTableManager.js",
+        "line": 3606,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Wklejanie...'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/excelTableManager.js",
+        "line": 5354,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "rows.length — integer",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/pricelistManager.js",
+        "line": 1563,
+        "label": "FALSE_POSITIVE",
+        "confidence": "HIGH",
+        "reason": "'const dns = [1000, 1200, ...]' — brak innerHTML",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/transitionRenderer.js",
+        "line": 351,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak przejść szczelnych'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellUI.js",
+        "line": 459,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Dodaj studnię aby edytować parametry'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellUI.js",
+        "line": 826,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "ikona chevron — literal",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellDiagram.js",
+        "line": 1004,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "SVG_COLORS.dnLabel — stała z obiektu",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellDiagram.js",
+        "line": 1032,
+        "label": "SERVER_GENERATED",
+        "confidence": "HIGH",
+        "reason": "6 zmiennych SVG — numeryczne lub stałe z kodu",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 192,
+        "label": "SERVER_GENERATED",
+        "confidence": "MEDIUM",
+        "reason": "shortName z p.name (katalog admin-only edit) lub ID oferty",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 197,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Zakończenie'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 223,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "targetDn = parseInt() — zawsze numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 261,
+        "label": "SERVER_GENERATED",
+        "confidence": "MEDIUM",
+        "reason": "shortName regex-wycięty z p.name (katalog admin-only edit)",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 266,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "targetDn — numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 287,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Psia buda' z check",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellPopups.js",
+        "line": 293,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Psia buda'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellActions.js",
+        "line": 106,
+        "label": "SAFE_ESCAPED",
+        "confidence": "HIGH",
+        "reason": "escapeHtml(e) na każdym configError",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellActions.js",
+        "line": 134,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Wysokość OK'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellActions.js",
+        "line": 138,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "diffM = toFixed(3).replace('.',',') — numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellActions.js",
+        "line": 141,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "diffM = toFixed(3).replace('.',',') — numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellActions.js",
+        "line": 784,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Dodaj studnię aby wybrać elementy'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellActions.js",
+        "line": 1132,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Kliknij kafelki powyżej'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellTransitions.js",
+        "line": 328,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "inpType, inpMode, step, val — zmienne lokalne z pętli, parseFloat",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellTransitions.js",
+        "line": 449,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak zdefiniowanych przejść'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellTransitions.js",
+        "line": 468,
+        "label": "SAFE_STATIC",
+        "confidence": "HIGH",
+        "reason": "literal 'Brak przejść szczelnych'",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellTransitions.js",
+        "line": 862,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "gons = toFixed(2) — zawsze numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellTransitions.js",
+        "line": 989,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "visibleCount = filter().length + allTypes.length — integer",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "studnie/wellTransitions.js",
+        "line": 1068,
+        "label": "SAFE_NUMERIC",
+        "confidence": "HIGH",
+        "reason": "gons = toFixed(2) — zawsze numeryczne",
+        "approved": "2026-07-11"
+    },
+    {
+        "file": "versionDisplay.js",
+        "line": 33,
+        "label": "SERVER_GENERATED",
+        "confidence": "HIGH",
+        "reason": "data.version z /api/version — VERSION + git rev-parse, 0 user input",
+        "approved": "2026-07-11"
+    }
+]

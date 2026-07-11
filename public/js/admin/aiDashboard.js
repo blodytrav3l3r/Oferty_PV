@@ -132,7 +132,7 @@
             if (!data.items || data.items.length === 0) {
                 container.innerHTML =
                     '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców dla DN=' +
-                    (dnFilter || 'all_dn') +
+                    escapeHtml(dnFilter || 'all_dn') +
                     '. Uruchom <strong>Learning Cycle</strong>.</div>';
                 return;
             }

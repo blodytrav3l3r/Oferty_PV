@@ -381,7 +381,7 @@ function renderOrderBanners(order, orderChanges) {
                 <span style="font-size:1.1rem;"><i data-lucide="package"></i></span>
                 <span style="font-size:0.75rem; font-weight:700; color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">ZAMÓWIENIE ${hasChanges ? '— ' + changeCount + ' studni zmienionych' : '— bez zmian'}</span>
             </div>
-            <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.65rem; padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
+            <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.65rem; padding:0.15rem 0.4rem;" data-action="saveOrderOrOfferStudnie"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;
     }
 
@@ -433,7 +433,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
     let html = `<div class="table-wrap"><table style="width:100%;">
       <thead>
         <tr>
-          ${showOrderSelection ? '<th style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" style="cursor:pointer; width:16px; height:16px;"></th>' : ''}
+          ${showOrderSelection ? '<th style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" data-action="toggleAllWellsForOrder" style="cursor:pointer; width:16px; height:16px;"></th>' : ''}
           <th style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
           <th style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
           <th style="width:100%;">Nazwa studni</th>
@@ -593,7 +593,7 @@ function renderWellHeaderRow(
     if (showOrderSelection) {
         checkbox = isOrdered
             ? '<td class="text-center"><i data-lucide="package-check" style="width:16px; height:16px; color:var(--accent-text);"></i></td>'
-            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" style="cursor:pointer; width:16px; height:16px;"></td>`;
+            : `<td class="text-center" data-action="stopPropagation"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" data-action="updateOrderSelectionCount" style="cursor:pointer; width:16px; height:16px;"></td>`;
     }
 
     // Przygotuj kolumny z porównaniem cen (tylko w trybie zamówienia)
@@ -616,7 +616,7 @@ function renderWellHeaderRow(
         priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
     }
 
-    return `<tr class="well-row-header" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
+    return `<tr class="well-row-header" style="${rowStyle}" data-action="toggleWellExpansion" data-well-index="${i}">
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
@@ -626,8 +626,8 @@ function renderWellHeaderRow(
         ${offerPriceCell}
         <td class="text-right" style="font-weight:800; color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
         ${priceDiffCell}
-        <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap; padding:0.5rem 0.75rem;">
-            <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size:0.7rem; padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
+        <td class="text-right" data-action="stopPropagation" style="white-space:nowrap; padding:0.5rem 0.75rem;">
+            <button class="btn btn-sm" data-action="editWell" data-well-index="${i}" title="Edytuj studnię" style="font-size:0.7rem; padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
                 <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Edytuj
             </button>
         </td>
@@ -659,7 +659,7 @@ function getWellBadges(change, isOrdered, well) {
                 ? getOrderForWellId(well.id, editingOfferIdStudnie)
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
-            html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
+            html += `<span data-action="navigateToOrder" data-order-id="${wellOrder.id}"
                 title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
                 style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb),0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb),0.4); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}
@@ -2411,12 +2411,12 @@ function renderSavedOffersStudnie() {
                             currentUser &&
                             (currentUser.role === 'admin' || currentUser.role === 'pro');
                         if (creatorName === assignedName && creatorName) {
-                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
+                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-offer-id="${oId}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
                         } else {
                             if (creatorName)
                                 html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${creatorName}</strong></span>`;
                             if (assignedName)
-                                html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${oId}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${assignedName}</strong></span>`;
+                                html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-offer-id="${oId}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${assignedName}</strong></span>`;
                         }
                         return html;
                     })()}
@@ -2436,12 +2436,12 @@ function renderSavedOffersStudnie() {
                 }
             </div>
             <div class="offer-actions">
-                <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${oId}')" title="Wczytaj" style="font-size:0.72rem; padding:0.3rem 0.6rem;">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: 700;" onclick="window.showUniversalPrintModal('${oId}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
-                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${oId}')" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${oId}')" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${oId}')" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${oId}')" title="Usuń" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+                <button class="btn btn-sm btn-primary" data-action="loadSavedOfferStudnie" data-offer-id="${oId}" title="Wczytaj" style="font-size:0.72rem; padding:0.3rem 0.6rem;">Wczytaj</button>
+                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: 700;" data-action="showUniversalPrintModal" data-offer-id="${oId}" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
+                <button class="btn btn-sm btn-secondary" data-action="exportJSONStudnie" data-offer-id="${oId}" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" data-action="changeOfferUserFromListStudnie" data-offer-id="${oId}" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistoryStudnie" data-offer-id="${oId}" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger" data-action="deleteOfferStudnie" data-offer-id="${oId}" title="Usuń" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
                 ${
                     hasOrder
                         ? (() => {
@@ -2449,8 +2449,8 @@ function renderSavedOffersStudnie() {
                               let buttonsHtml = '';
                               offerOrders.forEach((order) => {
                                   buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${order.id}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
-                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${order.id}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" data-action="navigateToOrder" data-order-id="${order.id}" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" data-action="deleteOrderStudnie" data-order-id="${order.id}" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
                                 `;
                               });
                               return buttonsHtml;
@@ -3010,13 +3010,13 @@ function renderAuditLogEntry(log) {
     const restoreBtnHtml =
         !isDelete && !isDiff
             ? `
-        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
+        <button class="btn btn-sm btn-secondary restore-btn" data-action="restoreHistorySnapshot" data-log-id="${log.id}"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
     `
             : '';
 
     const buttonsHtml = `
         <div style="display:flex; gap:0.4rem;">
-            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${log.id}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
+            <button class="btn btn-sm btn-secondary preview-btn" data-action="viewHistorySnapshot" data-log-id="${log.id}"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
             ${restoreBtnHtml}
         </div>
     `;
@@ -3064,7 +3064,7 @@ async function showOfferHistoryStudnie(id) {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${id}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
+                   <button class="load-more-btn" data-action="loadMoreAuditLogs" data-entity-type="studnia_oferta" data-entity-id="${id}" data-limit="20"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
                 : '';
 
@@ -3137,7 +3137,7 @@ async function showOfferHistoryStudnie(id) {
                     <h3 style="font-weight:800; color:#fff; margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                     ${historyHtml}
@@ -3187,7 +3187,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
+                    <button class="load-more-btn" data-action="loadMoreAuditLogs" data-entity-type="${entityType}" data-entity-id="${entityId}" data-limit="${limit}"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
             `
             );
@@ -3496,12 +3496,10 @@ function renderOfferDiscountsPopupContent() {
     const buildInputBlock = (dn, label, type, value, accentColor, borderColor) => `
         <div style="display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 100px;">
             <span style="font-size: 0.5rem; font-weight: 700; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.4px;">${label}</span>
-            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid ${borderColor}; background: rgba(0,0,0,0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
+            <div data-discount-wrapper data-accent="${accentColor}" data-border="${borderColor}" style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid ${borderColor}; background: rgba(0,0,0,0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;">
                 <input type="number" class="text-center offer-discount-input" 
                        value="${value}" 
-                       onfocus="this.dataset.oldValue=this.value; this.value='';"
-                       onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', '${type}', this.value);}"
-                       onkeydown="if(event.key==='Enter') this.blur();"
+                       data-action="handleOfferDiscountBlur" data-dn="${dn}" data-type="${type}"
                        style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: ${accentColor}; background: transparent; border: none; outline: none; box-shadow: none; text-align: center;">
                 <span style="font-size: 0.7rem; font-weight: 800; color: ${borderColor}; padding-right: 0.4rem; pointer-events: none;">%</span>
             </div>
@@ -3536,7 +3534,7 @@ function renderOfferDiscountsPopupContent() {
             .some((w) => w.kineta === 'preco' || w.kineta === 'precotop');
 
         html += `
-        <div style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb),0.2)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">
+        <div class="offer-card-hover" style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb),0.4);"></span>
@@ -3595,8 +3593,7 @@ function renderOfferDiscountsPopupContent() {
                             id="offer-pehd-discount"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
-                            oninput="handleOfferPehdDiscountChange(this.value)"
-                            onkeydown="if(event.key==='Enter') this.blur();"
+                            data-action="handleOfferPehdDiscountChange"
                             style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #38bdf8; background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: 0.7rem; font-weight: 800; color: rgba(14,165,233,0.5); padding-right: 0.4rem;">%</span>
                     </div>
@@ -3634,8 +3631,7 @@ function renderOfferDiscountsPopupContent() {
                             id="offer-mal-wew-cena"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
-                            oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
-                            onkeydown="if(event.key==='Enter') this.blur();"
+                            data-action="handlePaintingCostChange" data-field="malowanieWewCena"
                             style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
                     </div>
@@ -3651,8 +3647,7 @@ function renderOfferDiscountsPopupContent() {
                             id="offer-mal-zew-cena"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
-                            oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
-                            onkeydown="if(event.key==='Enter') this.blur();"
+                            data-action="handlePaintingCostChange" data-field="malowanieZewCena"
                             style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
                     </div>
@@ -3987,4 +3982,141 @@ document.addEventListener('DOMContentLoaded', function () {
             syncPaymentTerms(this, wizardPayment);
         });
     }
+
+    // Enter → blur for offer-discount-input (CSP-safe, inline handler replacement)
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.matches('.offer-discount-input')) {
+            e.target.blur();
+        }
+    });
+
+    // Focus → dataset backup + clear for offer-discount-input (CSP-safe)
+    document.addEventListener('focusin', function (e) {
+        if (e.target.matches('.offer-discount-input')) {
+            e.target.dataset.oldValue = e.target.value;
+            e.target.value = '';
+        }
+    });
+
+    // focusin/focusout dla wrappera rabatu (CSP-safe)
+    document.addEventListener('focusin', function (e) {
+        var w = e.target.closest('[data-discount-wrapper]');
+        if (w) {
+            w.style.borderColor = w.dataset.accent;
+            w.style.boxShadow = '0 0 10px ' + w.dataset.border;
+        }
+    });
+    document.addEventListener('focusout', function (e) {
+        var w = e.target.closest('[data-discount-wrapper]');
+        if (w) {
+            w.style.borderColor = w.dataset.border;
+            w.style.boxShadow = 'none';
+        }
+    });
+
+    // CSS hover dla kart oferty
+    (function () {
+        var s = document.createElement('style');
+        s.textContent =
+            '.offer-card-hover:hover{border-color:rgba(var(--accent-rgb),0.2)!important}';
+        document.head.appendChild(s);
+    })();
 });
+
+/* CSP Actions registrations */
+if (typeof registerCspAction === 'function') {
+    registerCspAction('changeOfferUserFromListStudnie', {
+        handler: function ({ offerId }) {
+            changeOfferUserFromListStudnie(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('loadSavedOfferStudnie', {
+        handler: function ({ offerId }) {
+            loadSavedOfferStudnie(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('deleteOfferStudnie', {
+        handler: function ({ offerId }) {
+            deleteOfferStudnie(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('exportJSONStudnie', {
+        handler: function ({ offerId }) {
+            exportJSONStudnie(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('showOfferHistoryStudnie', {
+        handler: function ({ offerId }) {
+            showOfferHistoryStudnie(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('restoreHistorySnapshot', {
+        handler: function ({ logId }) {
+            restoreHistorySnapshot(logId);
+        },
+        params: ['logId']
+    });
+    registerCspAction('viewHistorySnapshot', {
+        handler: function ({ logId }) {
+            viewHistorySnapshot(logId);
+        },
+        params: ['logId']
+    });
+    registerCspAction('toggleAllWellsForOrder', function (t) {
+        toggleAllWellsForOrder(t.checked);
+    });
+    registerCspAction('updateOrderSelectionCount', function (t) {
+        updateOrderSelectionCount();
+    });
+    registerCspAction('handleOfferPehdDiscountChange', function (t) {
+        handleOfferPehdDiscountChange(t.value);
+    });
+    registerCspAction('handlePaintingCostChange', function (t) {
+        handleOfferPaintingCostChange(t.dataset.field, t.value);
+    });
+    registerCspAction('saveOrderOrOfferStudnie', function () {
+        if (orderEditMode) {
+            if (typeof saveCurrentOrder === 'function') saveCurrentOrder();
+        } else {
+            if (typeof saveOrderStudnie === 'function') saveOrderStudnie();
+        }
+    });
+    registerCspAction('toggleWellExpansion', function (t) {
+        var idx = parseInt(t.dataset.wellIndex, 10);
+        if (!isNaN(idx)) toggleWellExpansion(idx, event);
+    });
+    registerCspAction('stopPropagation', function () {});
+    registerCspAction('editWell', function (t) {
+        var idx = parseInt(t.dataset.wellIndex, 10);
+        if (!isNaN(idx)) {
+            showSection('builder');
+            selectWell(idx);
+        }
+    });
+    registerCspAction('navigateToOrder', function (t) {
+        var orderId = t.dataset.orderId;
+        if (orderId) window.location.href = 'studnie.html?order=' + orderId;
+    });
+    registerCspAction('showUniversalPrintModal', function (t) {
+        var offerId = t.dataset.offerId;
+        if (offerId && window.showUniversalPrintModal) window.showUniversalPrintModal(offerId);
+    });
+    registerCspAction('handleOfferDiscountBlur', function (t) {
+        if (t.value === '') {
+            t.value = t.dataset.oldValue || '';
+        } else {
+            handleOfferDiscountChange(t.dataset.dn, t.dataset.type, t.value);
+        }
+    });
+    registerCspAction('loadMoreAuditLogs', {
+        handler: function ({ entityType, entityId, limit }) {
+            loadMoreAuditLogs(entityType, entityId, parseInt(limit, 10) || 20);
+        },
+        params: ['entityType', 'entityId', 'limit']
+    });
+}

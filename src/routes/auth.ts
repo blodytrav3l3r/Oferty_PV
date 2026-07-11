@@ -6,7 +6,7 @@ import {
     deleteSession,
     requireAuth,
     requireAdmin,
-    SESSION_MAX_AGE_MS,
+    COOKIE_OPTIONS,
     AuthenticatedRequest
 } from '../middleware/auth';
 import { LOGIN_LIMITER } from '../middleware/rateLimiters';
@@ -35,7 +35,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             return res.status(401).json({ error: 'Nieprawidłowy login lub hasło' });
         }
 
-        const token = await createSession(user.id);
+        const token = await createSession(user.id, req);
 
         let subUsers: string[] = [];
         try {
@@ -44,13 +44,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             subUsers = [];
         }
 
-        res.cookie('authToken', token, {
-            httpOnly: true, // true - cookie недоступний JavaScript
-            maxAge: SESSION_MAX_AGE_MS,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax', // lax zamiast strict dla nawigacji między stronami
-            path: '/'
-        });
+        res.cookie('authToken', token, COOKIE_OPTIONS);
         res.json({
             token,
             user: {
@@ -151,9 +145,9 @@ router.post(
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
     try {
-        const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
+        const token = req.cookies?.authToken;
         if (token) await deleteSession(token);
-        res.clearCookie('authToken');
+        res.clearCookie('authToken', { path: '/' });
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

@@ -92,7 +92,7 @@
                     <div id="header-user-info" class="rury-header-user">
                         <span id="header-username" class="rury-header-username"></span>
                         <span id="header-role-badge" class="rury-role-badge"></span>
-                        <button onclick="appLogout()" class="rury-btn-logout">Wyloguj</button>
+                        <button data-action="logout" class="rury-btn-logout">Wyloguj</button>
                     </div>
                 </div>
             </div>
@@ -103,27 +103,27 @@
             <div class="section active" id="section-builder">
                 <!-- Wizard indicator -->
                 <div class="wizard-indicator" id="wizard-indicator">
-                    <div class="wizard-step-dot active" data-step="1" onclick="goToPhase(1)">
+                    <div class="wizard-step-dot active" data-step="1" data-action="phase-nav" data-phase="1">
                         <div class="wizard-dot-number">1</div>
                         <div class="wizard-dot-label">Dane klienta</div>
                     </div>
                     <div class="wizard-step-line" id="wizard-line-1"></div>
-                    <div class="wizard-step-dot" data-step="2" onclick="goToPhase(2)">
+                    <div class="wizard-step-dot" data-step="2" data-action="phase-nav" data-phase="2">
                         <div class="wizard-dot-number">2</div>
                         <div class="wizard-dot-label">Produkty</div>
                     </div>
                     <div class="wizard-step-line" id="wizard-line-2"></div>
-                    <div class="wizard-step-dot" data-step="3" onclick="goToPhase(3)">
+                    <div class="wizard-step-dot" data-step="3" data-action="phase-nav" data-phase="3">
                         <div class="wizard-dot-number">3</div>
                         <div class="wizard-dot-label">Oferta</div>
                     </div>
                     <div class="wizard-step-line" id="wizard-line-3"></div>
-                    <div class="wizard-step-dot" data-step="4" onclick="goToPhase(4)">
+                    <div class="wizard-step-dot" data-step="4" data-action="phase-nav" data-phase="4">
                         <div class="wizard-dot-number">4</div>
                         <div class="wizard-dot-label">Karta budowy</div>
                     </div>
                     <div class="wizard-step-line" id="wizard-line-4"></div>
-                    <div class="wizard-step-dot" data-step="5" onclick="goToPhase(5)">
+                    <div class="wizard-step-dot" data-step="5" data-action="phase-nav" data-phase="5">
                         <div class="wizard-dot-number">5</div>
                         <div class="wizard-dot-label">Zamówienie</div>
                     </div>
@@ -175,14 +175,14 @@
                             <div class="gap-2" style="display: flex; margin-left: auto">
                                 <button
                                     class="btn btn-secondary btn-sm"
-                                    onclick="showClientsDb()"
+                                    data-action="show-clients-db"
                                     style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                                 >
                                     <i data-lucide="folder-open"></i> Wczytaj klienta
                                 </button>
                                 <button
                                     class="btn btn-primary btn-sm"
-                                    onclick="saveClientToDb()"
+                                    data-action="save-client-to-db"
                                     style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                                 >
                                     <i data-lucide="save"></i> Zapisz klienta
@@ -209,7 +209,7 @@
                                         class="wizard-form-input"
                                         id="client-nip"
                                         placeholder="1234567890"
-                                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                        data-action="sanitize-numeric"
                                     />
                                 </div>
                                 <div class="wizard-form-group">
@@ -297,7 +297,7 @@
                                         font-weight: 700;
                                         padding: 0.3rem 0.6rem;
                                     "
-                                    onclick="changeOfferUser()"
+                                    data-action="change-offer-user"
                                 >
                                     <i data-lucide="user"></i> Zmień opiekuna
                                 </button>
@@ -326,7 +326,7 @@
                                         step="1"
                                         id="transport-km"
                                         value="100"
-                                        oninput="onRuryTransportFormChange()"
+                                        data-action="rury-transport-form-change"
                                     />
                                 </div>
                                 <div class="wizard-form-group">
@@ -339,7 +339,7 @@
                                         step="0.1"
                                         id="transport-rate"
                                         value="10"
-                                        oninput="onRuryTransportFormChange()"
+                                        data-action="rury-transport-form-change"
                                     />
                                 </div>
                             </div>
@@ -378,8 +378,7 @@
                                             height: 34px;
                                         "
                                     >
-Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
-                                    >
+Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                 </div>
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="offer-validity"
@@ -389,14 +388,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                         class="wizard-form-input"
                                         id="offer-validity"
                                         value="7 dni"
-                                        onclick="this.select()"
+                                        data-action="input-select"
                                     />
                                 </div>
                             </div>
                             <div class="wizard-nav">
                                 <div></div>
-                                <button class="wizard-btn wizard-btn-next" onclick="phaseNext()">
-                                    Dalej →
+<button class="wizard-btn wizard-btn-next" data-action="phase-next">
+                                        Dalej →
                                 </button>
                             </div>
                         </div>
@@ -416,14 +415,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <button
                                         class="zt-toggle-btn zt-toggle-tak-btn active"
                                         id="zt-toggle-tak"
-                                        onclick="setZabezpieczenieTransportu(true)"
+                                        data-action="transport-protection" data-value="true"
                                     >
                                         TAK
                                     </button>
                                     <button
                                         class="zt-toggle-btn zt-toggle-nie-btn"
                                         id="zt-toggle-nie"
-                                        onclick="setZabezpieczenieTransportu(false)"
+                                        data-action="transport-protection" data-value="false"
                                     >
                                         NIE
                                     </button>
@@ -458,7 +457,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 class="btn btn-secondary offer-catalog-btn"
                                 id="toggle-catalog-btn"
-                                onclick="toggleCatalog()"
+                                data-action="toggle-catalog"
                             >
                                 <i data-lucide="folder-open"></i> Ukryj katalog produktów
                             </button>
@@ -490,14 +489,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <button
                                         class="zt-toggle-btn zt-toggle-tak-btn active"
                                         id="zt-toggle-tak-3"
-                                        onclick="setZabezpieczenieTransportu(true)"
+                                        data-action="transport-protection" data-value="true"
                                     >
                                         TAK
                                     </button>
                                     <button
                                         class="zt-toggle-btn zt-toggle-nie-btn"
                                         id="zt-toggle-nie-3"
-                                        onclick="setZabezpieczenieTransportu(false)"
+                                        data-action="transport-protection" data-value="false"
                                     >
                                         NIE
                                     </button>
@@ -514,7 +513,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 <input
                                                     type="checkbox"
                                                     id="select-all-items"
-                                                    onchange="toggleAllItemsForOrder(this.checked)"
+                                                    data-action="toggle-all-items-for-order"
                                                     style="
                                                         cursor: pointer;
                                                         width: 16px;
@@ -610,7 +609,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     type="button"
                                     id="step4-copy-toggle-btn"
                                     class="wizard-btn wizard-btn-secondary"
-                                    onclick="copyKartaBudowyFromOrder()"
+                                    data-action="copy-karta-budowy"
                                     style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
                                 >
                                     Kopiuj Kartę Budowy z zamówienia
@@ -994,12 +993,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <select
                                         id="step4-uszczelka-studni"
                                         class="form-input form-input-wide"
-                                        onchange="
-                                            document.getElementById(
-                                                'step4-uszczelka-studni-inne-wrap'
-                                            ).style.display =
-                                                this.value === 'Inne' ? 'block' : 'none'
-                                        "
+                                        data-action="toggle-inne-display"
+                                        data-target-id="step4-uszczelka-studni-inne-wrap"
                                     >
                                         <option value="Nie dotyczy">Nie dotyczy</option>
                                         <option value="Brak" selected>Brak</option>
@@ -1056,12 +1051,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <select
                                         id="step4-rodzaj-stopni"
                                         class="form-input form-input-wide"
-                                        onchange="
-                                            document.getElementById(
-                                                'step4-rodzaj-stopni-inne-wrap'
-                                            ).style.display =
-                                                this.value === 'Inne' ? 'block' : 'none'
-                                        "
+                                        data-action="toggle-inne-display"
+                                        data-target-id="step4-rodzaj-stopni-inne-wrap"
                                     >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Brak">Brak</option>
@@ -1119,12 +1110,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <select
                                         id="step4-kineta"
                                         class="form-input form-input-wide"
-                                        onchange="
-                                            document.getElementById(
-                                                'step4-kineta-inne-wrap'
-                                            ).style.display =
-                                                this.value === 'Inne' ? 'block' : 'none'
-                                        "
+                                        data-action="toggle-inne-display"
+                                        data-target-id="step4-kineta-inne-wrap"
                                     >
                                         <option value="Nie dotyczy">Nie dotyczy</option>
                                         <option value="Brak" selected>Brak</option>
@@ -1402,7 +1389,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <select
                                         id="step4-przejscia-zamowione"
                                         class="form-input form-input-wide"
-                                        onchange="handlePrzejsciaZamowioneChange(this)"
+                                        data-action="handle-przejscia-zamowione-change"
                                     >
                                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                                         <option value="Tak">Tak</option>
@@ -1524,8 +1511,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                         <button
                                             type="button"
                                             id="step4-add-custom-przejscie-btn"
-                                            onclick="addCustomPrzejscieRow()"
-                                            class="gap-1"
+                                            data-action="add-custom-przejscie"
+                                            class="gap-1 add-custom-btn"
                                             style="
                                                 display: flex;
                                                 align-items: center;
@@ -1540,14 +1527,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 transition: all 0.15s;
                                                 text-transform: uppercase;
                                                 letter-spacing: 0.3px;
-                                            "
-                                            onmouseenter="
-                                                this.style.background = 'rgba(139,92,246,0.25)';
-                                                this.style.borderColor = 'rgba(139,92,246,0.5)';
-                                            "
-                                            onmouseleave="
-                                                this.style.background = 'rgba(139,92,246,0.12)';
-                                                this.style.borderColor = 'rgba(139,92,246,0.3)';
                                             "
                                         >
                                             <i
@@ -1615,14 +1594,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <button
                                         class="zt-toggle-btn zt-toggle-tak-btn active"
                                         id="zt-toggle-tak-5"
-                                        onclick="setZabezpieczenieTransportu(true)"
+                                        data-action="transport-protection" data-value="true"
                                     >
                                         TAK
                                     </button>
                                     <button
                                         class="zt-toggle-btn zt-toggle-nie-btn"
                                         id="zt-toggle-nie-5"
-                                        onclick="setZabezpieczenieTransportu(false)"
+                                        data-action="transport-protection" data-value="false"
                                     >
                                         NIE
                                     </button>
@@ -1830,7 +1809,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             id="offer-tab-validity"
                             class="wizard-form-input"
                             style="width: 100%; font-size: 0.75rem; text-align: right"
-                            onclick="this.select()"
+                            data-action="input-select"
                         />
                     </div>
                 </div>
@@ -1848,14 +1827,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 <button
                                     class="zt-toggle-btn zt-toggle-tak-btn active"
                                     id="zt-toggle-tak-oferta"
-                                    onclick="setZabezpieczenieTransportu(true)"
+                                    data-action="transport-protection" data-value="true"
                                 >
                                     TAK
                                 </button>
                                 <button
                                     class="zt-toggle-btn zt-toggle-nie-btn"
                                     id="zt-toggle-nie-oferta"
-                                    onclick="setZabezpieczenieTransportu(false)"
+                                    data-action="transport-protection" data-value="false"
                                 >
                                     NIE
                                 </button>
@@ -1884,22 +1863,22 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             style="padding-left: 2.2rem"
                         />
                     </div>
-                    <button class="btn btn-primary" onclick="showAddProductModal()">
+                    <button class="btn btn-primary" data-action="show-add-product-modal">
                         <i data-lucide="plus"></i> Dodaj
                     </button>
                     <button
                         class="btn btn-secondary"
                         id="btn-save-pricelist"
-                        onclick="savePriceList()"
+                        data-action="save-price-list"
                     >
                         <i data-lucide="save"></i> Zapisz
                     </button>
-                    <button class="btn btn-secondary" onclick="exportRuryToExcel()">
+                    <button class="btn btn-secondary" data-action="export-rury-excel">
                         <i data-lucide="upload"></i> Eksportuj Excel
                     </button>
                     <button
                         class="btn btn-secondary"
-                        onclick="document.getElementById('import-rury-excel').click()"
+                        data-action="import-rury-excel"
                     >
                         <i data-lucide="download"></i> Importuj Excel
                     </button>
@@ -1908,7 +1887,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         id="import-rury-excel"
                         style="display: none"
                         accept=".xlsx,.xls"
-                        onchange="importRuryFromExcel(event)"
+                        data-action="import-rury-from-excel"
                     />
                 </div>
 
@@ -1921,7 +1900,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     <button
                         class="wizard-btn wizard-btn-prev"
                         id="wizard-nav-prev"
-                        onclick="phasePrev()"
+                        data-action="phase-prev"
                     >
                         <i data-lucide="chevron-left"></i> Wstecz
                     </button>
@@ -1931,7 +1910,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     <button
                         class="wizard-btn wizard-btn-next"
                         id="wizard-nav-next"
-                        onclick="phaseNext()"
+                        data-action="phase-next"
                     >
                         <i data-lucide="chevron-right"></i> Dalej
                     </button>
@@ -1949,10 +1928,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     </div>
                     <div
                         class="rury-summary-card has-borders"
-                        onclick="openRuryTransportPopup()"
+                        data-action="open-rury-transport-popup"
                         style="cursor: pointer; transition: background 0.2s"
-                        onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
-                        onmouseout="this.style.background = 'transparent'"
                         title="Kliknij aby zmienić koszt transportu"
                     >
                         <div class="rury-summary-label">Koszt transportu</div>
@@ -2014,7 +1991,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         class="rury-summary-card"
                         style="border-left: 1px solid var(--border-glass)"
                     >
-                        <button class="rury-btn-discount" onclick="showItemDiscountModal()">
+                        <button class="rury-btn-discount" data-action="show-item-discount-modal">
                             % Edytuj rabaty
                         </button>
                     </div>
@@ -2025,21 +2002,21 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     >
                         <button
                             class="rury-action-btn rury-action-btn--print"
-                            onclick="showUniversalPrintModalRury(editingOfferId)"
+                            data-action="show-universal-print-modal"
                         >
                             <i data-lucide="printer"></i> Wydruk
                         </button>
                         <button
                             class="rury-action-btn rury-action-btn--save"
                             id="btn-save-offer-order"
-                            onclick="saveOfferOrOrder()"
+                            data-action="save-offer-or-order"
                         >
                             <i data-lucide="save"></i> Zapisz ofertę
                         </button>
                         <button
                             class="rury-action-btn rury-action-btn--order"
                             id="btn-order-create"
-                            onclick="createOrderFromOffer()"
+                            data-action="create-order-from-offer"
                         >
                             <i data-lucide="shopping-cart"></i> Utwórz zamówienie
                         </button>
@@ -2056,6 +2033,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/shared/auth.js?v=3.0"></script>
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
+        <script src="js/shared/cspActions.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
         <script src="js/shared/api.js?v=3.0"></script>
         <script src="js/shared/clientManager.js?v=3.0"></script>
@@ -2077,19 +2055,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/rury/offerSummaryTab.js?v=3.0"></script>
         <script src="js/app.js?v=3.0"></script>
         <script src="js/shared/iconsSlim.js?v=3.1"></script>
-
-        <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
-        <script>
-            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
-            if (window.top === window.self) {
-                const module =
-                    location.pathname
-                        .split('/')
-                        .pop()
-                        .replace(/\.html?$/, '') || 'rury';
-                window.location.replace('/app.html#/' + module);
-            }
-        </script>
+        <script src="js/spa/redirectGuard.js?v=3.2"></script>
 
         <!-- ===== OFFER TRANSPORT MODAL (Rury) ===== -->
         <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000">
@@ -2130,7 +2096,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     </div>
                     <button
                         class="btn btn-icon"
-                        onclick="handleRuryTransportCancel()"
+                        data-action="handle-rury-transport-cancel"
                         style="color: var(--text-muted)"
                     >
                         <i data-lucide="x" style="width: 16px; height: 16px"></i>
@@ -2176,10 +2142,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     color: var(--text-heading);
                                 "
                                 min="0"
-                                oninput="
-                                    if (typeof syncRuryTransportFromModal === 'function')
-                                        syncRuryTransportFromModal();
-                                "
+                                data-action="sync-rury-transport-from-modal"
                             />
                         </div>
                         <div class="form-group" style="flex: 1; margin: 0">
@@ -2210,10 +2173,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 "
                                 min="0"
                                 step="0.01"
-                                oninput="
-                                    if (typeof syncRuryTransportFromModal === 'function')
-                                        syncRuryTransportFromModal();
-                                "
+                                data-action="sync-rury-transport-from-modal"
                             />
                         </div>
                     </div>
@@ -2233,7 +2193,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         <button
                             id="rury-transport-mode-btn"
                             type="button"
-                            onclick="toggleRuryTransportMode()"
+                            data-action="toggle-rury-transport-mode"
                             style="
                                 display: inline-flex;
                                 align-items: center;
@@ -2399,14 +2359,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                 >
                     <button
                         class="btn btn-secondary"
-                        onclick="handleRuryTransportCancel()"
+                        data-action="handle-rury-transport-cancel"
                         style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700"
                     >
                         Zamknij
                     </button>
                     <button
                         class="btn btn-primary"
-                        onclick="handleRuryTransportSave()"
+                        data-action="handle-rury-transport-save"
                         style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800"
                     >
                         <i

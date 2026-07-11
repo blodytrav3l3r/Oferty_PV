@@ -153,9 +153,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             );
         });
 
-        it('rury/offerCrud.js onclick strings używają exportKartaDirectRury_action', () => {
+        it('rury/offerCrud.js data-action używa exportKartaRury', () => {
             const src = readFile(path.join(PUBLIC, 'js', 'rury', 'offerCrud.js'));
-            expect(src).toMatch(/onclick="exportKartaDirectRury_action/);
+            expect(src).toMatch(/data-action="exportKartaRury"/);
         });
     });
 

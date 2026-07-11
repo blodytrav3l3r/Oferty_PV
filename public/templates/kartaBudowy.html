@@ -1,236 +1,313 @@
 <!doctype html>
 <html lang="pl">
-
-<head>
-    <meta charset="UTF-8" />
-    <title>Karta Budowy - Zamówienie</title>
-    <style>
-        @page {
-            size: A4 portrait;
-            margin: 10mm;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 10pt;
-            color: #1a1a2e;
-            background: #fff;
-            line-height: 1.4;
-        }
-
-        .page {
-            width: 100%;
-            max-width: 190mm;
-            margin: 0 auto;
-        }
-
-        /* ===== KARTA BUDOWY (bez naglowka/stopki firmowej) ===== */
-        .karta-title {
-            text-align: center;
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #999;
-        }
-        .karta-title-main {
-            font-size: 14pt;
-            font-weight: 700;
-            color: #1a1a2e;
-            letter-spacing: 1px;
-        }
-        .karta-title-nr {
-            font-size: 9pt;
-            font-weight: 600;
-            color: #555;
-            margin-top: 4px;
-        }
-
-        /* ===== SEKCJE DANYCH ===== */
-        .section-header {
-            font-size: 9pt;
-            font-weight: 700;
-            color: #fff;
-            background: #999;
-            padding: 3px 6px;
-            margin-top: 8px;
-            margin-bottom: 3px;
-            text-transform: uppercase;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1px 12px;
-            margin-bottom: 2px;
-            font-size: 9pt;
-        }
-
-        .info-row {
-            display: flex;
-            border-bottom: 1px dotted #ccc;
-            padding: 1px 0;
-        }
-
-        .info-label {
-            font-weight: 700;
-            color: #888;
-            width: 45%;
-        }
-
-        .info-value {
-            width: 55%;
-            color: #1a1a2e;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        .notes-box {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 8px;
-            font-size: 9pt;
-            min-height: 40px;
-        }
-
-        /* ===== TABELA PRZEJŚĆ ===== */
-        table.przejscia-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9pt;
-            margin-top: 6px;
-            margin-bottom: 6px;
-        }
-
-        table.przejscia-table th {
-            background: #999;
-            color: #fff;
-            padding: 2px 4px;
-            text-align: center;
-            font-size: 8pt;
-            font-weight: 700;
-            border: 0.5pt solid #999;
-        }
-
-        table.przejscia-table tr {
-            page-break-inside: avoid;
-        }
-
-        table.przejscia-table td {
-            padding: 2px 4px;
-            border: 0.5pt solid #ccc;
-            text-align: center;
-        }
-
-        table.przejscia-table tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        .total-row td {
-            font-weight: 700;
-            border-top: 2px solid #999;
-        }
-
-        .page-break {
-            page-break-before: always;
-        }
-
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+    <head>
+        <meta charset="UTF-8" />
+        <title>Karta Budowy - Zamówienie</title>
+        <style>
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
             }
-        }
-    </style>
-</head>
 
-<body>
-    <div class="page">
-        <table class="report-container" style="width: 100%; border: none">
-            <tbody>
-                <tr>
-                    <td style="border: none; padding: 0">
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-                        <!-- TYTUŁ: KARTA BUDOWY + numer zamowienia -->
-                        <div class="karta-title">
-                            <div class="karta-title-main">KARTA BUDOWY</div>
-                            <div class="karta-title-nr">Nr zamówienia: {{NR_ZAMOWIENIA}}</div>
-                        </div>
+            html,
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #1a1a2e;
+                background: #fff;
+                line-height: 1.4;
+            }
 
-                        <!-- INFO: PODSTAWOWE -->
-                        <div class="section-header">Podstawowe Informacje</div>
-                        <div class="info-grid">
-                            <div class="info-row"><div class="info-label">Nr powiązanej oferty:</div><div class="info-value">{{OFFER_NUMBERS}}</div></div>
-                            <div class="info-row"><div class="info-label">Data zamówienia:</div><div class="info-value">{{DATA_ZAMOWIENIA}}</div></div>
-                            <div class="info-row"><div class="info-label">Osoba kontaktowa:</div><div class="info-value">{{OSOBA_KONTAKT}}</div></div>
-                            <div class="info-row"><div class="info-label">Adres wysyłki:</div><div class="info-value">{{ADRES_WYSYLKI}}</div></div>
-                            <div class="info-row"><div class="info-label">E-mail (Faktura):</div><div class="info-value">{{EMAIL_FAKTURA}}</div></div>
-                            <div class="info-row"><div class="info-label">E-mail (e-Faktura):</div><div class="info-value">{{EMAIL_EFAKTURA}}</div></div>
-                        </div>
+            .page {
+                width: 100%;
+                max-width: 190mm;
+                margin: 0 auto;
+            }
 
-                        <!-- LOGISTYKA -->
-                        <div class="section-header">Logistyka i Płatności</div>
-                        <div class="info-grid">
-                            <div class="info-row"><div class="info-label">Warunki płatności:</div><div class="info-value">{{WARUNKI_PLATNOSCI}}</div></div>
-                            <div class="info-row"><div class="info-label">Ilość dni:</div><div class="info-value">{{ILOSC_DNI}}</div></div>
-                            <div class="info-row"><div class="info-label">Rodzaj transportu:</div><div class="info-value">{{RODZAJ_TRANSPORTU}}</div></div>
-                            <div class="info-row"><div class="info-label">Koszt transportu:</div><div class="info-value">{{WYLICZONY_TRANSPORT}}</div></div>
-                            <div class="info-row"><div class="info-label">Zabezpieczenie transportu:</div><div class="info-value">{{ZABEZPIECZENIE_TRANSPORTU}}</div></div>
-                            <div class="info-row"><div class="info-label">Ubezpieczenie:</div><div class="info-value">{{UBEZPIECZENIE}}</div></div>
-                        </div>
+            /* ===== KARTA BUDOWY (bez naglowka/stopki firmowej) ===== */
+            .karta-title {
+                text-align: center;
+                margin-bottom: 12px;
+                padding-bottom: 6px;
+                border-bottom: 2px solid #999;
+            }
+            .karta-title-main {
+                font-size: 14pt;
+                font-weight: 700;
+                color: #1a1a2e;
+                letter-spacing: 1px;
+            }
+            .karta-title-nr {
+                font-size: 9pt;
+                font-weight: 600;
+                color: #555;
+                margin-top: 4px;
+            }
 
-                        <!-- STUDNIA I BETON -->
-                        <div class="section-header">Studnia i Beton</div>
-                        <div class="info-grid">
-                            <div class="info-row"><div class="info-label">Rodzaj studni:</div><div class="info-value">{{RODZAJ_STUDNI}}</div></div>
-                            <div class="info-row"><div class="info-label">Właściwości betonu:</div><div class="info-value">{{WLASCIWOSCI_BETONU}}</div></div>
-                            <div class="info-row"><div class="info-label">Pozostałe właściwości:</div><div class="info-value">{{POZOSTALE_WLASCIWOSCI}}</div></div>
-                            <div class="info-row"><div class="info-label">Rodzaj stopni:</div><div class="info-value">{{RODZAJ_STOPNI}} {{RODZAJ_STOPNI_INNE}}</div></div>
-                            <div class="info-row"><div class="info-label">Uszczelka studni:</div><div class="info-value">{{USZCZELKA_STUDNI}} {{USZCZELKA_INNE}}</div></div>
-                        </div>
+            /* ===== SEKCJE DANYCH ===== */
+            .section-header {
+                font-size: 9pt;
+                font-weight: 700;
+                color: #fff;
+                background: #999;
+                padding: 3px 6px;
+                margin-top: 8px;
+                margin-bottom: 3px;
+                text-transform: uppercase;
+            }
 
-                        <!-- KINETA -->
-                        <div class="section-header">Kineta i Spocznik</div>
-                        <div class="info-grid">
-                            <div class="info-row"><div class="info-label">Kineta:</div><div class="info-value">{{KINETA}} {{KINETA_INNE}}</div></div>
-                            <div class="info-row"><div class="info-label">Redukcja kinety:</div><div class="info-value">{{REDUKCJA_KINETY}}</div></div>
-                            <div class="info-row"><div class="info-label">Usytuowanie:</div><div class="info-value">{{USYTUOWANIE}}</div></div>
-                            <div class="info-row"><div class="info-label">Wysokość spocznika:</div><div class="info-value">{{WYSOKOSC_SPOCZNIKA}}</div></div>
-                            <div class="info-row"><div class="info-label">Ślepa kineta:</div><div class="info-value">{{SLEPA_KINETA}} {{SLEPA_KINETA_UWAGI}}</div></div>
-                            <div class="info-row"><div class="info-label">Kaskada:</div><div class="info-value">{{KASKADA}} {{KASKADA_UWAGI}}</div></div>
-                        </div>
+            .info-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1px 12px;
+                margin-bottom: 2px;
+                font-size: 9pt;
+            }
 
-                        <!-- PRZEJŚCIA -->
-                        <div class="section-header">Przejścia</div>
-                        <div class="info-grid">
-                            <div class="info-row"><div class="info-label">Przejścia szczelne:</div><div class="info-value">{{PRZEJSCIA_SZCZELNE}}</div></div>
-                            <div class="info-row"><div class="info-label">Przejścia tulejowe:</div><div class="info-value">{{PRZEJSCIA_TULEJOWE}}</div></div>
-                            <div class="info-row"><div class="info-label">Przejścia zamówione w:</div><div class="info-value">{{PRZEJSCIA_ZAMOWIONE}}</div></div>
-                        </div>
+            .info-row {
+                display: flex;
+                border-bottom: 1px dotted #ccc;
+                padding: 1px 0;
+            }
 
-                        {{TABELA_PRZEJSCIA}}
+            .info-label {
+                font-weight: 700;
+                color: #888;
+                width: 45%;
+            }
 
-                        <!-- UWAGI -->
-                        <div class="section-header">Uwagi ogólne</div>
-                        <div class="notes-box">
-                            {{UWAGI_OGOLNE}}
-                        </div>
+            .info-value {
+                width: 55%;
+                color: #1a1a2e;
+            }
 
-                        {{RZECZYWISTA_ILOSC_PRZEJSC}}
+            .full-width {
+                grid-column: 1 / -1;
+            }
 
-                        {{ILOSC_ELEMENTOW_ZAMOWIENIA}}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</body>
+            .notes-box {
+                background: #f9f9f9;
+                border: 1px solid #ddd;
+                padding: 8px;
+                font-size: 9pt;
+                min-height: 40px;
+            }
 
+            /* ===== TABELA PRZEJŚĆ ===== */
+            table.przejscia-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 9pt;
+                margin-top: 6px;
+                margin-bottom: 6px;
+            }
+
+            table.przejscia-table th {
+                background: #999;
+                color: #fff;
+                padding: 2px 4px;
+                text-align: center;
+                font-size: 8pt;
+                font-weight: 700;
+                border: 0.5pt solid #999;
+            }
+
+            table.przejscia-table tr {
+                page-break-inside: avoid;
+            }
+
+            table.przejscia-table td {
+                padding: 2px 4px;
+                border: 0.5pt solid #ccc;
+                text-align: center;
+            }
+
+            table.przejscia-table tr:nth-child(even) {
+                background: #fafafa;
+            }
+
+            .total-row td {
+                font-weight: 700;
+                border-top: 2px solid #999;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="page">
+            <table class="report-container" style="width: 100%; border: none">
+                <tbody>
+                    <tr>
+                        <td style="border: none; padding: 0">
+                            <!-- TYTUŁ: KARTA BUDOWY + numer zamowienia -->
+                            <div class="karta-title">
+                                <div class="karta-title-main">KARTA BUDOWY</div>
+                                <div class="karta-title-nr">Nr zamówienia: {{NR_ZAMOWIENIA}}</div>
+                            </div>
+
+                            <!-- INFO: PODSTAWOWE -->
+                            <div class="section-header">Podstawowe Informacje</div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Nr powiązanej oferty:</div>
+                                    <div class="info-value">{{OFFER_NUMBERS}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Data zamówienia:</div>
+                                    <div class="info-value">{{DATA_ZAMOWIENIA}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Osoba kontaktowa:</div>
+                                    <div class="info-value">{{OSOBA_KONTAKT}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Adres wysyłki:</div>
+                                    <div class="info-value">{{ADRES_WYSYLKI}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">E-mail (Faktura):</div>
+                                    <div class="info-value">{{EMAIL_FAKTURA}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">E-mail (e-Faktura):</div>
+                                    <div class="info-value">{{EMAIL_EFAKTURA}}</div>
+                                </div>
+                            </div>
+
+                            <!-- LOGISTYKA -->
+                            <div class="section-header">Logistyka i Płatności</div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Warunki płatności:</div>
+                                    <div class="info-value">{{WARUNKI_PLATNOSCI}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Ilość dni:</div>
+                                    <div class="info-value">{{ILOSC_DNI}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Rodzaj transportu:</div>
+                                    <div class="info-value">{{RODZAJ_TRANSPORTU}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Koszt transportu:</div>
+                                    <div class="info-value">{{WYLICZONY_TRANSPORT}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Zabezpieczenie transportu:</div>
+                                    <div class="info-value">{{ZABEZPIECZENIE_TRANSPORTU}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Ubezpieczenie:</div>
+                                    <div class="info-value">{{UBEZPIECZENIE}}</div>
+                                </div>
+                            </div>
+
+                            <!-- STUDNIA I BETON -->
+                            <div class="section-header">Studnia i Beton</div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Rodzaj studni:</div>
+                                    <div class="info-value">{{RODZAJ_STUDNI}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Właściwości betonu:</div>
+                                    <div class="info-value">{{WLASCIWOSCI_BETONU}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Pozostałe właściwości:</div>
+                                    <div class="info-value">{{POZOSTALE_WLASCIWOSCI}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Rodzaj stopni:</div>
+                                    <div class="info-value">
+                                        {{RODZAJ_STOPNI}} {{RODZAJ_STOPNI_INNE}}
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Uszczelka studni:</div>
+                                    <div class="info-value">
+                                        {{USZCZELKA_STUDNI}} {{USZCZELKA_INNE}}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KINETA -->
+                            <div class="section-header">Kineta i Spocznik</div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Kineta:</div>
+                                    <div class="info-value">{{KINETA}} {{KINETA_INNE}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Redukcja kinety:</div>
+                                    <div class="info-value">{{REDUKCJA_KINETY}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Usytuowanie:</div>
+                                    <div class="info-value">{{USYTUOWANIE}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Wysokość spocznika:</div>
+                                    <div class="info-value">{{WYSOKOSC_SPOCZNIKA}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Ślepa kineta:</div>
+                                    <div class="info-value">
+                                        {{SLEPA_KINETA}} {{SLEPA_KINETA_UWAGI}}
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Kaskada:</div>
+                                    <div class="info-value">{{KASKADA}} {{KASKADA_UWAGI}}</div>
+                                </div>
+                            </div>
+
+                            <!-- PRZEJŚCIA -->
+                            <div class="section-header">Przejścia</div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Przejścia szczelne:</div>
+                                    <div class="info-value">{{PRZEJSCIA_SZCZELNE}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Przejścia tulejowe:</div>
+                                    <div class="info-value">{{PRZEJSCIA_TULEJOWE}}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Przejścia zamówione w:</div>
+                                    <div class="info-value">{{PRZEJSCIA_ZAMOWIONE}}</div>
+                                </div>
+                            </div>
+
+                            {{TABELA_PRZEJSCIA}}
+
+                            <!-- UWAGI -->
+                            <div class="section-header">Uwagi ogólne</div>
+                            <div class="notes-box">{{UWAGI_OGOLNE}}</div>
+
+                            {{RZECZYWISTA_ILOSC_PRZEJSC}} {{ILOSC_ELEMENTOW_ZAMOWIENIA}}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
 </html>

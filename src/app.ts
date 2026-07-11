@@ -12,8 +12,13 @@ import * as Sentry from '@sentry/node';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger';
 
-import { ensureAdminExists } from './middleware/auth';
-import { httpsRedirect, securityHeaders, charsetMiddleware } from './middleware/security';
+import { runStartupChecks } from './startup/index';
+import {
+    httpsRedirect,
+    securityHeaders,
+    cspReportOnly,
+    charsetMiddleware
+} from './middleware/security';
 import { createRateLimiter } from './middleware/rateLimiter';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
@@ -104,13 +109,15 @@ app.get('/api/docs.json', (_req, res) => {
 });
 
 /* ===== BEZPIECZEŃSTWO ===== */
+const cspMode = (process.env.CSP_MODE || 'permissive').toLowerCase();
+const allowUnsafeInline = cspMode !== 'enforce';
 app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'"],
-                scriptSrcAttr: ["'unsafe-inline'"],
+                scriptSrc: allowUnsafeInline ? ["'self'", "'unsafe-inline'"] : ["'self'"],
+                scriptSrcAttr: allowUnsafeInline ? ["'unsafe-inline'"] : ["'none'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
                 connectSrc: [
@@ -121,14 +128,17 @@ app.use(
                 ],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
+                baseUri: ["'self'"],
                 mediaSrc: ["'self'"],
-                frameSrc: ["'self'"]
+                frameSrc: ["'self'"],
+                reportUri: ['/api/security/csp-report']
             }
         },
         crossOriginEmbedderPolicy: false
     })
 );
 app.use(securityHeaders);
+app.use(cspReportOnly);
 app.use(charsetMiddleware);
 app.use(httpsRedirect);
 app.use(compression());
@@ -188,6 +198,7 @@ import telemetryRoutes from './routes/telemetry';
 import telemetryAiRoutes from './routes/telemetryAi';
 import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
 import featureFlagsRoutes from './routes/featureFlags';
+import cspReportRoutes from './routes/cspReport';
 import aiMlRoutes from './routes/telemetryAiMl';
 
 app.use('/api/auth', apiLimiter, authRoutes);
@@ -207,6 +218,7 @@ app.use('/api/offers-studnie', (req, res, next) => {
 
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
 app.use('/api/orders-rury', apiLimiter, ruryOrdersRoutes);
+app.use('/api/security/csp-report', cspReportRoutes);
 app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);
 app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
 app.use('/api/audit', apiLimiter, auditRoutes);
@@ -231,22 +243,18 @@ if (process.env.SENTRY_DSN) {
 export { initRuryProductsTable, initStudnieProductsTable };
 
 /**
- * Inicjalizacja aplikacji — seeding tabel produktowych, administracja i PRAGMA user_version.
+ * Inicjalizacja aplikacji — walidacja środowiska, baza danych, seeding produktów.
+ * Kolejność:
+ *   1. runStartupChecks() — env, SQLite (WAL, foreign_keys), konto admina
+ *   2. Seed tabel produktowych
+ *   3. Indeksy i czyszczenie audit logów
+ *   4. Cron Service (AI Learning Engine)
  */
 export async function initApp(): Promise<void> {
-    // Ustawienie wersji bazy danych (2.0.0 → 20000)
-    try {
-        await prisma.$executeRawUnsafe('PRAGMA user_version = 20000');
-        logger.info('Server', 'PRAGMA user_version ustawione na 20000');
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się ustawić PRAGMA user_version:',
-            err instanceof Error ? err.message : err
-        );
-    }
+    // Krok 1: Startup checks — env, SQLite, admin (rzuca błędem przy krytycznym niepowodzeniu)
+    await runStartupChecks();
 
-    // Seed tabel produktowych
+    // Krok 2: Seed tabel produktowych
     try {
         await initRuryProductsTable();
         logger.info('Server', 'productsRury — OK');
@@ -268,10 +276,7 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Admin
-    await ensureAdminExists();
-
-    // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
+    // Krok 3: Indeks na createdAt dla audit_logs
     try {
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;
     } catch {
@@ -287,7 +292,7 @@ export async function initApp(): Promise<void> {
         )
     );
 
-    // Cron Service - cykliczne zadania AI Learning Engine (pasywne, nie wplywa na solver JS)
+    // Krok 4: Cron Service — AI Learning Engine (pasywne, nie wpływa na solver JS)
     if (process.env.NODE_ENV !== 'test') {
         try {
             const { cronService } = await import('./utils/cronService');

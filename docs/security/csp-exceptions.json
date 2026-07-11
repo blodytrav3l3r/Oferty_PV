@@ -1,0 +1,11 @@
+[
+    {
+        "type": "javascript-uri",
+        "source": "public/js/sales/pvSalesUi.js:481",
+        "directive": "script-src-attr",
+        "reason": "javascript:void(0) used as button placeholder — harmless, not executable in CSP context. Replace with <button> in future refactor.",
+        "owner": "frontend",
+        "created": "2026-07-11",
+        "expires": "2026-12-31"
+    }
+]

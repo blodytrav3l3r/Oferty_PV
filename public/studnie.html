@@ -63,7 +63,7 @@
                             data-section="builder"
                             id="nav-builder"
                             style="--nav-accent: #10b981; --nav-glow: #0d2b22"
-                            onclick="showSection('builder')"
+                            data-action="show-section" data-section="builder"
                         >
                             <span class="nav-tile-icon"><i data-lucide="hard-hat"></i></span>
                             <span class="nav-tile-text">Konfiguracja</span>
@@ -73,7 +73,7 @@
                             data-section="offer"
                             id="nav-offer"
                             style="--nav-accent: #3b82f6; --nav-glow: #152040"
-                            onclick="showSection('offer')"
+                            data-action="show-section" data-section="offer"
                         >
                             <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
                             <span class="nav-tile-text">Oferta</span>
@@ -83,7 +83,7 @@
                             data-section="pricelist"
                             id="nav-pricelist"
                             style="--nav-accent: #8b5cf6; --nav-glow: #1e1540"
-                            onclick="showSection('pricelist')"
+                            data-action="show-section" data-section="pricelist"
                         >
                             <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
                             <span class="nav-tile-text">Cennik</span>
@@ -114,7 +114,7 @@
                         ></span>
 
                         <button
-                            onclick="appLogout()"
+                            data-action="logout" class="logout-btn"
                             style="
                                 padding: 0.35rem 0.8rem;
                                 border: 1px solid var(--border-glass);
@@ -126,14 +126,6 @@
                                     sans-serif;
                                 cursor: pointer;
                                 transition: all 0.2s;
-                            "
-                            onmouseenter="
-                                this.style.color = '#f87171';
-                                this.style.borderColor = '#3a1a1a';
-                            "
-                            onmouseleave="
-                                this.style.color = 'var(--text-muted)';
-                                this.style.borderColor = 'var(--border-glass)';
                             "
                         >
                             Wyloguj
@@ -189,17 +181,7 @@
                                     cursor: pointer;
                                 "
                                 title="Kliknij, aby usunąć studnię"
-                                onclick="removeWell(currentWellIndex)"
-                                onmouseenter="
-                                    if (window.svgDragStartIndex >= 0) {
-                                        this.style.background = 'rgba(239,68,68,0.3)';
-                                        this.style.borderColor = '#ef4444';
-                                    }
-                                "
-                                onmouseleave="
-                                    this.style.background = 'rgba(239,68,68,0.1)';
-                                    this.style.borderColor = 'rgba(239,68,68,0.4)';
-                                "
+                                data-action="remove-well"
                             >
                                 <div
                                     class="ws-label"
@@ -266,28 +248,28 @@
                             <div
                                 class="wizard-step-dot active"
                                 data-step="1"
-                                onclick="wizardNavStep(1)"
+                                data-action="wizard-nav" data-step="1"
                             >
                                 <div class="wizard-dot-number">1</div>
                                 <div class="wizard-dot-label">Dane klienta</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-1"></div>
-                            <div class="wizard-step-dot" data-step="2" onclick="wizardNavStep(2)">
+                            <div class="wizard-step-dot" data-step="2" data-action="wizard-nav" data-step="2">
                                 <div class="wizard-dot-number">2</div>
                                 <div class="wizard-dot-label">Parametry studni</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-2"></div>
-                            <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
+                            <div class="wizard-step-dot" data-step="3" data-action="wizard-nav" data-step="3">
                                 <div class="wizard-dot-number">3</div>
                                 <div class="wizard-dot-label">Oferta</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-3"></div>
-                            <div class="wizard-step-dot" data-step="4" onclick="wizardNavStep(4)">
+                            <div class="wizard-step-dot" data-step="4" data-action="wizard-nav" data-step="4">
                                 <div class="wizard-dot-number">4</div>
                                 <div class="wizard-dot-label">Karta budowy</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-4"></div>
-                            <div class="wizard-step-dot" data-step="5" onclick="wizardNavStep(5)">
+                            <div class="wizard-step-dot" data-step="5" data-action="wizard-nav" data-step="5">
                                 <div class="wizard-dot-number">5</div>
                                 <div class="wizard-dot-label">Zamówienie</div>
                             </div>
@@ -379,14 +361,14 @@
                                     <div class="gap-2" style="display: flex; margin-left: auto">
                                         <button
                                             class="btn btn-secondary btn-sm"
-                                            onclick="showClientsDb()"
+                                            data-action="show-clients-db"
                                             style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                                         >
                                             <i data-lucide="folder-open"></i> Wczytaj klienta
                                         </button>
                                         <button
                                             class="btn btn-primary btn-sm"
-                                            onclick="saveClientToDb()"
+                                            data-action="save-client-to-db"
                                             style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                                         >
                                             <i data-lucide="save"></i> Zapisz klienta
@@ -419,9 +401,7 @@
                                                 class="wizard-form-input"
                                                 id="client-nip"
                                                 placeholder="1234567890"
-                                                oninput="
-                                                    this.value = this.value.replace(/[^0-9]/g, '')
-                                                "
+                                                data-action="sanitize-numeric"
                                             />
                                         </div>
                                         <div class="wizard-form-group">
@@ -509,7 +489,7 @@
                                                 font-weight: 700;
                                                 padding: 0.3rem 0.6rem;
                                             "
-                                            onclick="changeOfferUser()"
+                                            data-action="change-offer-user"
                                         >
                                             <i data-lucide="user"></i> Zmień opiekuna
                                         </button>
@@ -602,8 +582,7 @@
                                                     height: 34px;
                                                 "
                                             >
-Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
-                                            >
+Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                         </div>
                                         <div class="wizard-form-group">
                                             <label class="wizard-form-label" for="offer-validity"
@@ -613,7 +592,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 class="wizard-form-input"
                                                 id="offer-validity"
                                                 value="7 dni"
-                                                onclick="this.select()"
+                                                data-action="input-select"
                                             />
                                         </div>
                                     </div>
@@ -622,7 +601,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <div></div>
                                     <button
                                         class="wizard-btn wizard-btn-next"
-                                        onclick="wizardNext()"
+                                        data-action="wizard-next"
                                     >
                                         Dalej →
                                     </button>
@@ -676,9 +655,32 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 </div>
                                 <div class="wizard-card-body">
                                     <!-- Baner dla ofert legacy bez zapisanego stanu kreatora -->
-                                    <div id="wizard-legacy-banner" class="gap-2" style="display:none; margin-bottom:0.8rem; padding:0.6rem 0.8rem; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); border-radius:8px; font-size:0.82rem; color:#fbbf24;">
-                                        <i data-lucide="info" style="width:1rem;height:1rem;vertical-align:middle;margin-right:0.3rem;"></i>
-                                        Ta oferta nie zawiera zapisanych parametrów ogólnych. Wybierz wartości poniżej — zostaną zapisane przy kolejnym zapisie oferty.
+                                    <div
+                                        id="wizard-legacy-banner"
+                                        class="gap-2"
+                                        style="
+                                            display: none;
+                                            margin-bottom: 0.8rem;
+                                            padding: 0.6rem 0.8rem;
+                                            background: rgba(245, 158, 11, 0.12);
+                                            border: 1px solid rgba(245, 158, 11, 0.25);
+                                            border-radius: 8px;
+                                            font-size: 0.82rem;
+                                            color: #fbbf24;
+                                        "
+                                    >
+                                        <i
+                                            data-lucide="info"
+                                            style="
+                                                width: 1rem;
+                                                height: 1rem;
+                                                vertical-align: middle;
+                                                margin-right: 0.3rem;
+                                            "
+                                        ></i>
+                                        Ta oferta nie zawiera zapisanych parametrów ogólnych.
+                                        Wybierz wartości poniżej — zostaną zapisane przy kolejnym
+                                        zapisie oferty.
                                     </div>
                                     <div
                                         class="gap-3"
@@ -910,7 +912,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                                 id="pehd-dennica"
                                                                 checked
                                                                 class="icon-check"
-                                                                onchange="validateWizardStep2()"
+                                                                data-action="validate-wizard-step2"
                                                             />
                                                             Dennica
                                                         </label>
@@ -920,7 +922,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                                 id="pehd-nadbudowa"
                                                                 checked
                                                                 class="icon-check"
-                                                                onchange="validateWizardStep2()"
+                                                                data-action="validate-wizard-step2"
                                                             />
                                                             Nadbudowa
                                                         </label>
@@ -930,7 +932,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                                 id="pehd-zwienczenie"
                                                                 checked
                                                                 class="icon-check"
-                                                                onchange="validateWizardStep2()"
+                                                                data-action="validate-wizard-step2"
                                                             />
                                                             Zwieńczenie
                                                         </label>
@@ -1111,13 +1113,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                     class="wizard-form-input"
                                                     id="powloka-name-w"
                                                     placeholder="Nazwa powłoki..."
-                                                    oninput="
-                                                        updateParamInput(
-                                                            'powlokaNameW',
-                                                            this.value
-                                                        );
-                                                        validateWizardStep2();
-                                                    "
+                                                    data-action="update-param-input"
+                                                    data-param="powlokaNameW"
                                                 />
                                             </div>
                                             <div
@@ -1134,13 +1131,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                     type="number"
                                                     step="0.01"
                                                     placeholder="Koszt za 1m²..."
-                                                    oninput="
-                                                        updateParamInput(
-                                                            'malowanieWewCena',
-                                                            this.value
-                                                        );
-                                                        validateWizardStep2();
-                                                    "
+                                                    data-action="update-param-input"
+                                                    data-param="malowanieWewCena"
                                                 />
                                             </div>
                                             <div
@@ -1155,13 +1147,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                     class="wizard-form-input"
                                                     id="powloka-name-z"
                                                     placeholder="Nazwa powłoki..."
-                                                    oninput="
-                                                        updateParamInput(
-                                                            'powlokaNameZ',
-                                                            this.value
-                                                        );
-                                                        validateWizardStep2();
-                                                    "
+                                                    data-action="update-param-input"
+                                                    data-param="powlokaNameZ"
                                                 />
                                             </div>
                                             <div
@@ -1178,13 +1165,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                     type="number"
                                                     step="0.01"
                                                     placeholder="Koszt za 1m²..."
-                                                    oninput="
-                                                        updateParamInput(
-                                                            'malowanieZewCena',
-                                                            this.value
-                                                        );
-                                                        validateWizardStep2();
-                                                    "
+                                                    data-action="update-param-input"
+                                                    data-param="malowanieZewCena"
                                                 />
                                             </div>
 
@@ -1634,13 +1616,13 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 <div class="wizard-nav">
                                     <button
                                         class="wizard-btn wizard-btn-prev"
-                                        onclick="wizardPrev()"
+                                        data-action="wizard-prev"
                                     >
                                         ← Wstecz
                                     </button>
                                     <button
                                         class="wizard-btn wizard-btn-apply"
-                                        onclick="applyGlobalParamsToAllWells()"
+                                        data-action="apply-global-params"
                                         id="btn-apply-global-params"
                                         style="
                                             background: rgba(245, 158, 11, 0.15);
@@ -1652,7 +1634,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     </button>
                                     <button
                                         class="wizard-btn wizard-btn-next"
-                                        onclick="wizardNext()"
+                                        data-action="wizard-next"
                                         id="wizard-next-step2"
                                         disabled
                                     >
@@ -1691,10 +1673,10 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     <strong id="wsb-params">—</strong></span
                                 >
 
-                                <button class="wizard-summary-edit" onclick="goToWizardStep(1)">
+                                <button class="wizard-summary-edit" data-action="goto-wizard-step" data-step="1">
                                     <i data-lucide="pencil"></i> Edytuj dane
                                 </button>
-                                <button class="wizard-summary-edit" onclick="goToWizardStep(2)">
+                                <button class="wizard-summary-edit" data-action="goto-wizard-step" data-step="2">
                                     <i data-lucide="settings"></i> Edytuj parametry
                                 </button>
                             </div>
@@ -1754,8 +1736,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 type="text"
                                                 id="input-well-numer"
                                                 placeholder="Nr studni"
-                                                oninput="updateWellNumer()"
-                                                onclick="this.select()"
+                                                data-action="input-select"
                                                 style="
                                                     width: 95px;
                                                     padding: 0.28rem 0.4rem;
@@ -1793,16 +1774,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 step="0.001"
                                                 id="input-rzedna-wlazu"
                                                 placeholder="100.50"
-                                                onblur="
-                                                    resolveFieldValue(this);
-                                                    updateElevations();
-                                                "
-                                                onclick="this.select()"
-                                                onkeydown="
-                                                    if (event.key === 'Enter') {
-                                                        this.blur();
-                                                    }
-                                                "
+                                                data-action="input-select"
                                                 style="
                                                     width: 95px;
                                                     padding: 0.28rem 0.4rem;
@@ -1833,16 +1805,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 step="0.001"
                                                 id="input-rzedna-dna"
                                                 placeholder="97.20"
-                                                onblur="
-                                                    resolveFieldValue(this);
-                                                    updateElevations();
-                                                "
-                                                onclick="this.select()"
-                                                onkeydown="
-                                                    if (event.key === 'Enter') {
-                                                        this.blur();
-                                                    }
-                                                "
+                                                data-action="input-select"
                                                 style="
                                                     width: 95px;
                                                     padding: 0.28rem 0.4rem;
@@ -1909,16 +1872,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 step="1"
                                                 id="input-doplata"
                                                 placeholder="0"
-                                                onblur="
-                                                    resolveFieldValue(this);
-                                                    updateDoplata();
-                                                "
-                                                onclick="this.select()"
-                                                onkeydown="
-                                                    if (event.key === 'Enter') {
-                                                        this.blur();
-                                                    }
-                                                "
+                                                data-action="input-select"
                                                 style="
                                                     width: 80px;
                                                     padding: 0.28rem 0.4rem;
@@ -1956,25 +1910,25 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             <div class="dn-selector mb-0">
                                                 <button
                                                     class="dn-btn active"
-                                                    onclick="selectDN(1000)"
+                                                    data-action="select-dn" data-dn="1000"
                                                 >
                                                     1000
                                                 </button>
-                                                <button class="dn-btn" onclick="selectDN(1200)">
+                                                <button class="dn-btn" data-action="select-dn" data-dn="1200">
                                                     1200
                                                 </button>
-                                                <button class="dn-btn" onclick="selectDN(1500)">
+                                                <button class="dn-btn" data-action="select-dn" data-dn="1500">
                                                     1500
                                                 </button>
-                                                <button class="dn-btn" onclick="selectDN(2000)">
+                                                <button class="dn-btn" data-action="select-dn" data-dn="2000">
                                                     2000
                                                 </button>
-                                                <button class="dn-btn" onclick="selectDN(2500)">
+                                                <button class="dn-btn" data-action="select-dn" data-dn="2500">
                                                     2500
                                                 </button>
                                                 <button
                                                     class="dn-btn"
-                                                    onclick="selectDN('styczna')"
+                                                    data-action="select-dn" data-dn="styczna"
                                                     style="
                                                         background: rgba(249, 115, 22, 0.15);
                                                         border-color: rgba(249, 115, 22, 0.3);
@@ -1989,7 +1943,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                         <div class="gap-1" style="display: flex">
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                onclick="toggleAutoLock()"
+                                                data-action="toggle-auto-lock"
                                                 id="btn-lock-auto"
                                                 style="
                                                     font-size: 0.8rem;
@@ -2001,7 +1955,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             </button>
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                onclick="toggleRedukcja()"
+                                                data-action="toggle-redukcja"
                                                 id="btn-redukcja"
                                                 style="
                                                     font-size: 0.8rem;
@@ -2013,7 +1967,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             </button>
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                onclick="togglePsiaBuda()"
+                                                data-action="toggle-psia-buda"
                                                 id="btn-psia-buda"
                                                 style="
                                                     font-size: 0.8rem;
@@ -2025,7 +1979,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             </button>
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                onclick="toggleStyczna1200()"
+                                                data-action="toggle-styczna-1200"
                                                 id="btn-styczna-1200"
                                                 style="
                                                     font-size: 0.8rem;
@@ -2056,7 +2010,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                     step="0.1"
                                                     min="0.5"
                                                     max="10"
-                                                    onchange="onRedukcjaMinChange(this.value)"
+                                                    data-action="redukcja-min-change"
                                                     style="
                                                         width: 3.2rem;
                                                         font-size: 0.75rem;
@@ -2077,7 +2031,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 >
                                                 <button
                                                     class="btn btn-secondary btn-sm"
-                                                    onclick="openRedukcjaZakonczeniePopup()"
+                                                    data-action="popup" data-name="redukcja-zakonczenie"
                                                     id="btn-redukcja-zak"
                                                     style="
                                                         font-size: 0.7rem;
@@ -2093,7 +2047,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             </div>
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                onclick="openZakonczeniePopup()"
+                                                data-action="popup" data-name="zakonczenie"
                                                 id="btn-zakonczenie"
                                                 style="
                                                     font-size: 0.8rem;
@@ -2108,19 +2062,40 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             </button>
                                             <button
                                                 class="btn btn-primary btn-sm"
-                                                onclick="autoSelectComponents()"
+                                                data-action="auto-select-components"
                                                 id="btn-auto-select"
                                                 style="font-size: 0.8rem; padding: 0.3rem 0.6rem"
                                             >
                                                 <i data-lucide="settings"></i> Auto
                                             </button>
-                                            <span id="ai-status-indicator" style="font-size:0.65rem; margin-left:0.3rem; white-space:nowrap; display:inline-flex; align-items:center; gap:3px; opacity:0.7" title="AI ranking — sprawdza status...">
-                                                <span id="ai-status-dot" style="width:6px;height:6px;border-radius:50%;display:inline-block;background:#6b7280"></span>
+                                            <span
+                                                id="ai-status-indicator"
+                                                style="
+                                                    font-size: 0.65rem;
+                                                    margin-left: 0.3rem;
+                                                    white-space: nowrap;
+                                                    display: inline-flex;
+                                                    align-items: center;
+                                                    gap: 3px;
+                                                    opacity: 0.7;
+                                                "
+                                                title="AI ranking — sprawdza status..."
+                                            >
+                                                <span
+                                                    id="ai-status-dot"
+                                                    style="
+                                                        width: 6px;
+                                                        height: 6px;
+                                                        border-radius: 50%;
+                                                        display: inline-block;
+                                                        background: #6b7280;
+                                                    "
+                                                ></span>
                                                 <span id="ai-status-text">AI...</span>
                                             </span>
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                onclick="clearWellConfig()"
+                                                data-action="clear-well-config"
                                                 style="font-size: 0.8rem; padding: 0.3rem 0.6rem"
                                             >
                                                 <i data-lucide="refresh-cw"></i>
@@ -2142,9 +2117,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             font-size: 0.78rem;
                                             padding: 0.15rem 0;
                                         "
-                                        onclick="
-                                            toggleCard('well-params-content', 'well-params-icon')
-                                        "
+                                        data-action="toggle-card" data-content-id="well-params-content" data-icon-id="well-params-icon"
                                     >
                                         <span
                                             ><i data-lucide="clipboard-list"></i> Parametry tej
@@ -2177,14 +2150,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 >
                                     <button
                                         class="b-tab-btn active"
-                                        onclick="switchBuilderTab('concrete')"
+                                        data-action="switch-builder-tab" data-tab="concrete"
                                         id="btab-concrete"
                                     >
                                         <i data-lucide="cylinder"></i> Prefabrykaty betonowe
                                     </button>
                                     <button
                                         class="b-tab-btn"
-                                        onclick="switchBuilderTab('transitions')"
+                                        data-action="switch-builder-tab" data-tab="transitions"
                                         id="btab-transitions"
                                     >
                                         <i data-lucide="droplets"></i> Przejścia szczelne
@@ -2205,7 +2178,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 font-size: 0.78rem;
                                                 padding: 0.15rem 0;
                                             "
-                                            onclick="toggleCard('tiles-content', 'tiles-icon')"
+                                            data-action="toggle-card" data-content-id="tiles-content" data-icon-id="tiles-icon"
                                         >
                                             <span
                                                 ><i data-lucide="brick-wall"></i> Wybór
@@ -2236,9 +2209,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 font-size: 0.78rem;
                                                 padding: 0.15rem 0;
                                             "
-                                            onclick="
-                                                toggleCard('well-config-wrap', 'well-config-icon')
-                                            "
+                                            data-action="toggle-card" data-content-id="well-config-wrap" data-icon-id="well-config-icon"
                                         >
                                             <span
                                                 ><i data-lucide="package"></i> Konfiguracja
@@ -2284,12 +2255,9 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 font-size: 0.78rem;
                                                 padding: 0.15rem 0;
                                             "
-                                            onclick="
-                                                window.toggleCard(
-                                                    'inline-przejscia-app-container',
-                                                    'przejscia-app-icon'
-                                                )
-                                            "
+                                            data-action="toggle-card"
+                                            data-content-id="inline-przejscia-app-container"
+                                            data-icon-id="przejscia-app-icon"
                                         >
                                             <span
                                                 ><i data-lucide="plus"></i> Dodaj Przejście
@@ -2500,7 +2468,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             type="button"
                                             id="step4-copy-toggle-btn"
                                             class="wizard-btn wizard-btn-secondary"
-                                            onclick="copyKartaBudowyFromOrder()"
+                                            data-action="copy-karta-budowy"
                                             style="
                                                 flex: 0 0 auto;
                                                 white-space: nowrap;
@@ -2905,12 +2873,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             <select
                                                 id="step4-uszczelka-studni"
                                                 class="form-input form-input-wide"
-                                                onchange="
-                                                    document.getElementById(
-                                                        'step4-uszczelka-studni-inne-wrap'
-                                                    ).style.display =
-                                                        this.value === 'Inne' ? 'block' : 'none'
-                                                "
+                                                data-action="toggle-inne-display"
+                                                data-target-id="step4-uszczelka-studni-inne-wrap"
                                             >
                                                 <option value="Nie dotyczy">Nie dotyczy</option>
                                                 <option value="Brak" selected>Brak</option>
@@ -2969,12 +2933,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             <select
                                                 id="step4-rodzaj-stopni"
                                                 class="form-input form-input-wide"
-                                                onchange="
-                                                    document.getElementById(
-                                                        'step4-rodzaj-stopni-inne-wrap'
-                                                    ).style.display =
-                                                        this.value === 'Inne' ? 'block' : 'none'
-                                                "
+                                                data-action="toggle-inne-display"
+                                                data-target-id="step4-rodzaj-stopni-inne-wrap"
                                             >
                                                 <option value="Nie dotyczy" selected>
                                                     Nie dotyczy
@@ -3038,12 +2998,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             <select
                                                 id="step4-kineta"
                                                 class="form-input form-input-wide"
-                                                onchange="
-                                                    document.getElementById(
-                                                        'step4-kineta-inne-wrap'
-                                                    ).style.display =
-                                                        this.value === 'Inne' ? 'block' : 'none'
-                                                "
+                                                data-action="toggle-inne-display"
+                                                data-target-id="step4-kineta-inne-wrap"
                                             >
                                                 <option value="Nie dotyczy">Nie dotyczy</option>
                                                 <option value="Brak" selected>Brak</option>
@@ -3356,7 +3312,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             <select
                                                 id="step4-przejscia-zamowione"
                                                 class="form-input form-input-wide"
-                                                onchange="handlePrzejsciaZamowioneChange(this)"
+                                                data-action="handle-przejscia-zamowione-change"
                                             >
                                                 <option value="Nie dotyczy" selected>
                                                     Nie dotyczy
@@ -3485,8 +3441,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 <button
                                                     type="button"
                                                     id="step4-add-custom-przejscie-btn"
-                                                    onclick="addCustomPrzejscieRow()"
-                                                    class="gap-1"
+                                                    data-action="add-custom-przejscie"
+                                                    class="gap-1 add-custom-btn"
                                                     style="
                                                         display: flex;
                                                         align-items: center;
@@ -3501,18 +3457,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                         transition: all 0.15s;
                                                         text-transform: uppercase;
                                                         letter-spacing: 0.3px;
-                                                    "
-                                                    onmouseenter="
-                                                        this.style.background =
-                                                            'rgba(139,92,246,0.25)';
-                                                        this.style.borderColor =
-                                                            'rgba(139,92,246,0.5)';
-                                                    "
-                                                    onmouseleave="
-                                                        this.style.background =
-                                                            'rgba(139,92,246,0.12)';
-                                                        this.style.borderColor =
-                                                            'rgba(139,92,246,0.3)';
                                                     "
                                                 >
                                                     <i
@@ -3601,7 +3545,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             gap: 0.4rem;
                                             line-height: 1.2;
                                         "
-                                        onclick="openExcelTableModal()"
+                                        data-action="open-excel-table-modal"
                                     >
                                         <span><i data-lucide="table"></i></span>
                                         <span
@@ -3640,7 +3584,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="window.openGlobalRecalcModal()"
+                                        data-action="open-global-recalc-modal"
                                     >
                                         <span class="fs-1"><i data-lucide="settings"></i></span>
                                         <span
@@ -3669,7 +3613,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="openTransitionManagerModal()"
+                                        data-action="open-transition-manager-modal"
                                     >
                                         <span class="fs-1"><i data-lucide="droplets"></i></span>
                                         <span
@@ -3696,7 +3640,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="saveOfferStudnie()"
+                                        data-action="save-offer-studnie"
                                     >
                                         <span class="fs-1"><i data-lucide="save"></i></span>
                                         <span
@@ -3726,7 +3670,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="saveCurrentOrder()"
+                                        data-action="save-current-order"
                                     >
                                         <span class="fs-1"><i data-lucide="save"></i></span>
                                         <span
@@ -3755,7 +3699,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="handlePrintClick()"
+                                        data-action="handle-print-click"
                                     >
                                         <span class="fs-1"><i data-lucide="printer"></i></span>
                                         <span
@@ -3784,7 +3728,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="createOrderFromOffer()"
+                                        data-action="create-order-from-offer"
                                     >
                                         <span class="fs-1"><i data-lucide="package"></i></span>
                                         <span
@@ -3814,7 +3758,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             justify-content: center;
                                             line-height: 1.2;
                                         "
-                                        onclick="openZleceniaProdukcyjne()"
+                                        data-action="open-zlecenia-produkcyjne"
                                     >
                                         <span class="fs-1"><i data-lucide="factory"></i></span>
                                         <span
@@ -3849,7 +3793,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        onclick="addNewWell(1000)"
+                                        data-action="add-new-well" data-dn="1000"
                                     >
                                         +1000
                                     </button>
@@ -3863,7 +3807,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        onclick="addNewWell(1200)"
+                                        data-action="add-new-well" data-dn="1200"
                                     >
                                         +1200
                                     </button>
@@ -3877,7 +3821,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        onclick="addNewWell(1500)"
+                                        data-action="add-new-well" data-dn="1500"
                                     >
                                         +1500
                                     </button>
@@ -3891,7 +3835,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        onclick="addNewWell(2000)"
+                                        data-action="add-new-well" data-dn="2000"
                                     >
                                         +2000
                                     </button>
@@ -3905,7 +3849,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        onclick="addNewWell(2500)"
+                                        data-action="add-new-well" data-dn="2500"
                                     >
                                         +2500
                                     </button>
@@ -3922,7 +3866,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        onclick="addNewWell('styczna')"
+                                        data-action="add-new-well" data-dn="styczna"
                                     >
                                         +Styczeń
                                     </button>
@@ -3942,7 +3886,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 >
                                     <button
                                         class="s-tab-btn active"
-                                        onclick="switchSidebarTab('list')"
+                                        data-action="switch-sidebar-tab" data-tab="list"
                                         id="stab-list"
                                         style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
                                     >
@@ -3955,7 +3899,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     </button>
                                     <button
                                         class="s-tab-btn"
-                                        onclick="switchSidebarTab('discounts')"
+                                        data-action="switch-sidebar-tab" data-tab="discounts"
                                         id="stab-discounts"
                                         style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
                                     >
@@ -3993,7 +3937,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             type="text"
                                             id="wells-search-input"
                                             placeholder="Szukaj po numerze..."
-                                            oninput="renderWellsList()"
+                                            data-action="render-wells-list"
                                             style="
                                                 width: 100%;
                                                 padding: 0.4rem 0.6rem;
@@ -4004,14 +3948,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                                 font-size: 0.75rem;
                                                 outline: none;
                                                 transition: all 0.2s;
-                                            "
-                                            onfocus="
-                                                this.style.borderColor = 'rgba(99,102,241,0.5)';
-                                                this.style.background = 'rgba(0,0,0,0.3)';
-                                            "
-                                            onblur="
-                                                this.style.borderColor = 'rgba(255,255,255,0.1)';
-                                                this.style.background = 'rgba(0,0,0,0.2)';
                                             "
                                         />
                                     </div>
@@ -4142,7 +4078,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         </label>
                         <button
                             class="btn btn-secondary btn-sm"
-                            onclick="generateOfferNotes()"
+                            data-action="generate-offer-notes"
                             style="font-size: 0.7rem; padding: 0.3rem 0.6rem"
                         >
                             <i data-lucide="refresh-cw" style="width: 12px; height: 12px"></i>
@@ -4183,7 +4119,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             id="offer-tab-validity"
                             class="wizard-form-input"
                             style="width: 100%; font-size: 0.75rem; text-align: right"
-                            onclick="this.select()"
+                            data-action="input-select"
                         />
                     </div>
                 </div>
@@ -4220,15 +4156,13 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         <!-- TRANSPORT -->
                         <div
                             class="summary-card"
-                            onclick="openTransportPopup()"
+                            data-action="open-transport-popup"
                             style="
                                 align-items: center;
                                 text-align: center;
                                 cursor: pointer;
                                 transition: background 0.2s;
                             "
-                            onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
-                            onmouseout="this.style.background = 'transparent'"
                         >
                             <div class="studnie-summary-label" style="width: 100%">
                                 Koszt transportu
@@ -4275,14 +4209,12 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         <!-- RABATY -->
                         <div
                             class="summary-card"
-                            onclick="openOfferDiscountsPopup()"
+                            data-action="open-offer-discounts-popup"
                             style="
                                 align-items: stretch;
                                 cursor: pointer;
                                 transition: background 0.2s;
                             "
-                            onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
-                            onmouseout="this.style.background = 'transparent'"
                         >
                             <!-- Header: Title -->
                             <div style="text-align: center; margin-bottom: 0.2rem">
@@ -4304,20 +4236,20 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 <button
                                     id="btn-save-studnie-offer"
                                     class="summary-action-btn summary-action-btn--save"
-                                    onclick="saveOfferStudnie()"
+                                    data-action="save-offer-studnie"
                                 >
                                     <i data-lucide="save"></i> Zapisz ofertę
                                 </button>
                                 <button
                                     id="btn-create-order-offer"
                                     class="summary-action-btn summary-action-btn--order"
-                                    onclick="createOrderFromOffer()"
+                                    data-action="create-order-from-offer"
                                 >
                                     <i data-lucide="package"></i> Utwórz zamówienie
                                 </button>
                                 <button
                                     class="summary-action-btn summary-action-btn--print"
-                                    onclick="showOfferExportChoice()"
+                                    data-action="show-offer-export-choice"
                                 >
                                     <i data-lucide="printer"></i> Wydruk
                                 </button>
@@ -4350,22 +4282,22 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         class="cennik-actions gap-2"
                         style="display: flex; justify-content: flex-end"
                     >
-                        <button class="btn btn-primary" onclick="showAddStudnieProductModal()">
+                        <button class="btn btn-primary" data-action="show-add-studnie-product-modal">
                             <i data-lucide="plus"></i> Dodaj
                         </button>
                         <button
                             class="btn btn-secondary"
                             id="btn-save-studnie-pricelist"
-                            onclick="saveStudniePriceList()"
+                            data-action="save-studnie-price-list"
                         >
                             <i data-lucide="save"></i> Zapisz
                         </button>
-                        <button class="btn btn-secondary" onclick="exportStudnieToExcel()">
+                        <button class="btn btn-secondary" data-action="export-studnie-excel">
                             <i data-lucide="upload"></i> Eksportuj Excel
                         </button>
                         <button
                             class="btn btn-secondary"
-                            onclick="document.getElementById('import-studnie-excel').click()"
+                            data-action="import-studnie-excel"
                         >
                             <i data-lucide="download"></i> Importuj Excel
                         </button>
@@ -4374,10 +4306,10 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             id="import-studnie-excel"
                             style="display: none"
                             accept=".xlsx,.xls"
-                            onchange="importStudnieFromExcel(event)"
+                            data-action="import-studnie-from-excel"
                         />
 
-                        <button class="btn btn-secondary" onclick="resetStudniePriceList()">
+                        <button class="btn btn-secondary" data-action="reset-studnie-price-list">
                             <i data-lucide="refresh-cw"></i> Reset
                         </button>
                     </div>
@@ -4389,74 +4321,74 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     <button
                         class="cennik-tab active"
                         data-tab="dn1000"
-                        onclick="selectCennikTab('dn1000')"
+                        data-action="cennik-tab" data-tab="dn1000"
                     >
                         <span class="cennik-tab-icon" style="background: #6366f1"></span> DN1000
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="dn1200"
-                        onclick="selectCennikTab('dn1200')"
+                        data-action="cennik-tab" data-tab="dn1200"
                     >
                         <span class="cennik-tab-icon" style="background: #8b5cf6"></span> DN1200
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="dn1500"
-                        onclick="selectCennikTab('dn1500')"
+                        data-action="cennik-tab" data-tab="dn1500"
                     >
                         <span class="cennik-tab-icon" style="background: #ec4899"></span> DN1500
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="dn2000"
-                        onclick="selectCennikTab('dn2000')"
+                        data-action="cennik-tab" data-tab="dn2000"
                     >
                         <span class="cennik-tab-icon" style="background: #f59e0b"></span> DN2000
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="dn2500"
-                        onclick="selectCennikTab('dn2500')"
+                        data-action="cennik-tab" data-tab="dn2500"
                     >
                         <span class="cennik-tab-icon" style="background: #ef4444"></span> DN2500
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="styczne"
-                        onclick="selectCennikTab('styczne')"
+                        data-action="cennik-tab" data-tab="styczne"
                     >
                         <span class="cennik-tab-icon" style="background: #f97316"></span> Styczne
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="dennicy"
-                        onclick="selectCennikTab('dennicy')"
+                        data-action="cennik-tab" data-tab="dennicy"
                     >
                         <span class="cennik-tab-icon" style="background: #10b981"></span> Dennicy
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="akcesoria"
-                        onclick="selectCennikTab('akcesoria')"
+                        data-action="cennik-tab" data-tab="akcesoria"
                     >
                         <span class="cennik-tab-icon" style="background: #64748b"></span> Akcesoria
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="przejscia"
-                        onclick="selectCennikTab('przejscia')"
+                        data-action="cennik-tab" data-tab="przejscia"
                     >
                         <span class="cennik-tab-icon" style="background: #14b8a6"></span> Przejścia
                     </button>
                     <button
                         class="cennik-tab"
                         data-tab="kinety"
-                        onclick="selectCennikTab('kinety')"
+                        data-action="cennik-tab" data-tab="kinety"
                     >
                         <span class="cennik-tab-icon" style="background: #8b5cf6"></span> Kinety
                     </button>
-                    <button class="cennik-tab" data-tab="preco" onclick="selectCennikTab('preco')">
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="preco">
                         <span class="cennik-tab-icon" style="background: #f43f5e"></span> Wkładki
                         PRECO
                     </button>
@@ -4471,7 +4403,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     <button
                         class="wizard-btn wizard-btn-prev"
                         id="studnie-nav-prev"
-                        onclick="wizardPrev()"
+                        data-action="wizard-prev"
                         style="display: none"
                     >
                         <i data-lucide="chevron-left"></i> Wstecz
@@ -4482,7 +4414,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     <button
                         class="wizard-btn wizard-btn-next"
                         id="studnie-nav-next"
-                        onclick="wizardNext()"
+                        data-action="wizard-next"
                     >
                         <i data-lucide="chevron-right"></i> Dalej
                     </button>
@@ -4535,7 +4467,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     </div>
                     <button
                         class="btn btn-icon"
-                        onclick="closeOfferDiscountsPopup()"
+                        data-action="close-offer-discounts-popup"
                         style="color: var(--text-muted); width: 28px; height: 28px"
                     >
                         <i data-lucide="x" style="width: 14px; height: 14px"></i>
@@ -4559,14 +4491,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                 >
                     <button
                         class="btn btn-secondary"
-                        onclick="handleOfferDiscountsCancel()"
+                        data-action="handle-offer-discounts-cancel"
                         style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700"
                     >
                         Zamknij
                     </button>
                     <button
                         class="btn btn-primary"
-                        onclick="handleOfferDiscountsSave()"
+                        data-action="handle-offer-discounts-save"
                         style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800"
                     >
                         <i
@@ -4624,7 +4556,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                     </div>
                     <button
                         class="btn btn-icon"
-                        onclick="handleOfferTransportCancel()"
+                        data-action="handle-offer-transport-cancel"
                         style="color: var(--text-muted); width: 28px; height: 28px"
                     >
                         <i data-lucide="x" style="width: 14px; height: 14px"></i>
@@ -4670,10 +4602,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                     color: var(--text-heading);
                                 "
                                 min="0"
-                                oninput="
-                                    if (typeof syncTransportFromModal === 'function')
-                                        syncTransportFromModal();
-                                "
+                                data-action="sync-transport-from-modal"
                             />
                         </div>
                         <div class="form-group" style="flex: 1; margin: 0">
@@ -4704,10 +4633,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 "
                                 min="0"
                                 step="0.01"
-                                oninput="
-                                    if (typeof syncTransportFromModal === 'function')
-                                        syncTransportFromModal();
-                                "
+                                data-action="sync-transport-from-modal"
                             />
                         </div>
                     </div>
@@ -4727,7 +4653,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         <button
                             id="transport-mode-btn"
                             type="button"
-                            onclick="toggleTransportMode()"
+                            data-action="toggle-transport-mode"
                             style="
                                 display: inline-flex;
                                 align-items: center;
@@ -4895,14 +4821,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                 >
                     <button
                         class="btn btn-secondary"
-                        onclick="handleOfferTransportCancel()"
+                        data-action="handle-offer-transport-cancel"
                         style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700"
                     >
                         Zamknij
                     </button>
                     <button
                         class="btn btn-primary"
-                        onclick="handleOfferTransportSave()"
+                        data-action="handle-offer-transport-save"
                         style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800"
                     >
                         <i
@@ -4989,7 +4915,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-generate-ordered"
                                 class="btn btn-sm zlecenia-header-btn"
-                                onclick="openBulkOrderSequencePopup()"
+                                data-action="open-bulk-order-sequence-popup"
                                 style="
                                     background: rgba(139, 92, 246, 0.15);
                                     border: 1px solid rgba(139, 92, 246, 0.4);
@@ -5001,7 +4927,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-accept"
                                 class="btn btn-sm zlecenia-header-btn"
-                                onclick="acceptProductionOrder()"
+                                data-action="accept-production-order"
                                 style="
                                     background: rgba(16, 185, 129, 0.15);
                                     border: 1px solid rgba(16, 185, 129, 0.4);
@@ -5013,7 +4939,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-revoke"
                                 class="btn btn-sm zlecenia-header-btn"
-                                onclick="revokeProductionOrder()"
+                                data-action="revoke-production-order"
                                 style="
                                     display: none;
                                     background: rgba(245, 158, 11, 0.12);
@@ -5026,7 +4952,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-delete"
                                 class="btn btn-sm zlecenia-header-btn"
-                                onclick="deleteSelectedProductionOrder()"
+                                data-action="delete-selected-production-order"
                                 style="
                                     background: rgba(239, 68, 68, 0.12);
                                     border: 1px solid rgba(239, 68, 68, 0.4);
@@ -5038,14 +4964,14 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-save"
                                 class="btn btn-sm btn-success zlecenia-header-btn"
-                                onclick="saveProductionOrder()"
+                                data-action="save-production-order"
                             >
                                 <i data-lucide="save"></i> Zapisz
                             </button>
                             <button
                                 id="zl-btn-print"
                                 class="btn btn-sm zlecenia-header-btn"
-                                onclick="printZlecenie()"
+                                data-action="print-zlecenie"
                                 style="
                                     background: rgba(99, 102, 241, 0.12);
                                     border: 1px solid rgba(99, 102, 241, 0.4);
@@ -5057,7 +4983,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-label"
                                 class="btn btn-sm zlecenia-header-btn"
-                                onclick="printEtykieta()"
+                                data-action="print-etykieta"
                                 style="
                                     background: rgba(14, 165, 233, 0.12);
                                     border: 1px solid rgba(14, 165, 233, 0.4);
@@ -5069,7 +4995,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             <button
                                 id="zl-btn-close"
                                 class="btn btn-sm btn-danger zlecenia-header-btn"
-                                onclick="closeZleceniaModal()"
+                                data-action="close-zlecenia-modal"
                             >
                                 <i data-lucide="x"></i> Zamknij
                             </button>
@@ -5108,7 +5034,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                             id="zlecenia-search"
                             class="form-input form-input-sm"
                             placeholder="Szukaj..."
-                            oninput="filterZleceniaList()"
+                            data-action="filter-zlecenia-list"
                             style="width: 100%"
                         />
                     </div>
@@ -5125,21 +5051,21 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                         <button
                             class="zlecenia-filter-btn active"
                             data-filter="all"
-                            onclick="setZleceniaFilter('all')"
+                            data-action="set-zlecenia-filter" data-filter="all"
                         >
                             <i data-lucide="folder-open"></i> Otwarte
                         </button>
                         <button
                             class="zlecenia-filter-btn"
                             data-filter="saved"
-                            onclick="setZleceniaFilter('saved')"
+                            data-action="set-zlecenia-filter" data-filter="saved"
                         >
                             <i data-lucide="save"></i> Zapisane
                         </button>
                         <button
                             class="zlecenia-filter-btn"
                             data-filter="accepted"
-                            onclick="setZleceniaFilter('accepted')"
+                            data-action="set-zlecenia-filter" data-filter="accepted"
                         >
                             <i data-lucide="lock"></i> Zaakceptowane
                         </button>
@@ -5152,14 +5078,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <div id="toast-container" class="toast-container"></div>
         <!-- Pasywny moduł telemetry AI (NIE zmienia solvera) -->
         <script src="/js/studnie/telemetryBridge.js?v=3.0"></script>
-        <!-- Rejestracja wersji solvera/reguł (raz na sesję) -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                if (typeof window.telemetryRegisterSolverVersion === 'function') {
-                    window.telemetryRegisterSolverVersion();
-                }
-            });
-        </script>
+        <!-- Rejestracja wersji solvera/reguł (raz na sesję) — auto-init wewnątrz telemetryBridge.js -->
         <script src="js/shared/xlsx.full.min.js"></script>
 
         <!-- PV script dependencies -->
@@ -5168,6 +5087,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/shared/auth.js?v=3.0"></script>
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
+        <script src="js/shared/cspActions.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
         <script src="js/shared/api.js?v=3.0"></script>
         <script src="js/shared/appState.js?v=3.0"></script>
@@ -5199,18 +5119,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/appStudnie.js?v=3.1"></script>
         <!-- Confirm modal is now created dynamically by appConfirm() in shared/ui.js -->
         <script src="js/shared/iconsSlim.js?v=3.1"></script>
-
-        <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
-        <script>
-            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
-            if (window.top === window.self) {
-                const module =
-                    location.pathname
-                        .split('/')
-                        .pop()
-                        .replace(/\.html?$/, '') || 'studnie';
-                window.location.replace('/app.html#/' + module);
-            }
-        </script>
+        <script src="js/spa/redirectGuard.js?v=3.2"></script>
     </body>
 </html>

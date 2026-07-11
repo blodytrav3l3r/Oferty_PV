@@ -221,30 +221,7 @@
                 }
             }
         </style>
-        <script>
-            /**
-             * Dopasowuje viewBox elementu SVG do rzeczywistych wymiarów tekstu.
-             * Dzięki temu tekst SVG automatycznie skaluje się do wielkości kontenera
-             * — działa identycznie na ekranie i w wydruku (wektor, nie piksele).
-             */
-            function fitSvgText(svgId) {
-                const svg = document.getElementById(svgId);
-                if (!svg) return;
-                const text = svg.querySelector('text');
-                if (!text) return;
-
-                const bbox = text.getBBox();
-                if (bbox.width === 0 || bbox.height === 0) return;
-
-                // Dodajemy niewielki padding (5% wysokości) żeby litery nie dotykały krawędzi
-                const padX = bbox.height * 0.1;
-                const padY = bbox.height * 0.1;
-                svg.setAttribute(
-                    'viewBox',
-                    `${bbox.x - padX} ${bbox.y - padY} ${bbox.width + 2 * padX} ${bbox.height + 2 * padY}`
-                );
-            }
-        </script>
+        <script src="../js/shared/etykietaFit.js?v=3.1"></script>
     </head>
     <body>
         <!-- ZNACZNIK POZIOMU STRONY (Wielokrotny wydruk operuje na tym bloku) -->
@@ -393,20 +370,6 @@
             </table>
         </div>
         <!-- KONIEC BLOKU "page" -->
-        <script>
-            // Dopasowanie viewBox SVG do tekstu — po pełnym załadowaniu czcionek
-            function runFit() {
-                fitSvgText('snr-svg');
-                fitSvgText('order-svg');
-            }
-            if (document.fonts && document.fonts.ready) {
-                document.fonts.ready.then(runFit);
-            } else {
-                setTimeout(runFit, 200);
-            }
-            // Fallback retry for slow font loading
-            setTimeout(runFit, 400);
-        </script>
         <script src="../js/shared/iconsSlim.js?v=3.1"></script>
     </body>
 </html>

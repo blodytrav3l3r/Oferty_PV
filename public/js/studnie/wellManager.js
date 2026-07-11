@@ -1921,4 +1921,8 @@ function calcWellStats(well) {
 
 window.getItemPriceBreakdown = getItemPriceBreakdown;
 
+if (typeof registerCspAction === 'function') {
+    registerCspAction('resetWellParamsToDefaults', window.resetWellParamsToDefaults);
+}
+
 // switchSidebarTab() przeniesiona do wellUI.js

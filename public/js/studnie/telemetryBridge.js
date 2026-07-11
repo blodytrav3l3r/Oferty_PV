@@ -282,4 +282,15 @@
             /* ignore */
         }
     };
+
+    // Auto-rejestracja wersji na starcie
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof window.telemetryRegisterSolverVersion === 'function') {
+                window.telemetryRegisterSolverVersion();
+            }
+        });
+    } else {
+        window.telemetryRegisterSolverVersion();
+    }
 })();

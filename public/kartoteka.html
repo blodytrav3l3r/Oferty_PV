@@ -79,7 +79,7 @@
                             "
                         ></span>
                         <button
-                            onclick="appLogout()"
+                            data-action="logout" class="logout-btn"
                             style="
                                 padding: 0.35rem 0.8rem;
                                 border: 1px solid var(--border-glass);
@@ -91,14 +91,6 @@
                                     sans-serif;
                                 cursor: pointer;
                                 transition: all 0.2s;
-                            "
-                            onmouseenter="
-                                this.style.color = 'var(--danger-hover)';
-                                this.style.borderColor = 'var(--danger-bg)';
-                            "
-                            onmouseleave="
-                                this.style.color = 'var(--text-muted)';
-                                this.style.borderColor = 'var(--border-glass)';
                             "
                         >
                             Wyloguj
@@ -147,7 +139,8 @@
                             <button
                                 class="btn btn-sm pv-type-filter-btn active"
                                 data-type-filter="all"
-                                onclick="filterByType('all')"
+                                data-action="filterByType"
+                                data-type="all"
                                 style="
                                     border-radius: 20px;
                                     padding: 0.35rem 0.9rem;
@@ -159,7 +152,8 @@
                             <button
                                 class="btn btn-sm btn-secondary pv-type-filter-btn"
                                 data-type-filter="offer"
-                                onclick="filterByType('offer')"
+                                data-action="filterByType"
+                                data-type="offer"
                                 style="
                                     border-radius: 20px;
                                     padding: 0.35rem 0.9rem;
@@ -171,7 +165,8 @@
                             <button
                                 class="btn btn-sm btn-secondary pv-type-filter-btn"
                                 data-type-filter="studnia_oferta"
-                                onclick="filterByType('studnia_oferta')"
+                                data-action="filterByType"
+                                data-type="studnia_oferta"
                                 style="
                                     border-radius: 20px;
                                     padding: 0.35rem 0.9rem;
@@ -204,9 +199,7 @@
                             <button
                                 class="btn btn-sm pv-filter-btn active"
                                 data-filter="all"
-                                onclick="
-                                    window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('all')
-                                "
+                                data-action="setFilterLocalOffers"
                                 style="
                                     border-radius: 20px;
                                     padding: 0.35rem 0.9rem;
@@ -218,10 +211,7 @@
                             <button
                                 class="btn btn-sm btn-secondary pv-filter-btn"
                                 data-filter="with_order"
-                                onclick="
-                                    window.pvSalesUI &&
-                                        window.pvSalesUI.setFilterLocalOffers('with_order')
-                                "
+                                data-action="setFilterLocalOffers"
                                 style="
                                     border-radius: 20px;
                                     padding: 0.35rem 0.9rem;
@@ -233,10 +223,7 @@
                             <button
                                 class="btn btn-sm btn-secondary pv-filter-btn"
                                 data-filter="without_order"
-                                onclick="
-                                    window.pvSalesUI &&
-                                        window.pvSalesUI.setFilterLocalOffers('without_order')
-                                "
+                                data-action="setFilterLocalOffers"
                                 style="
                                     border-radius: 20px;
                                     padding: 0.35rem 0.9rem;
@@ -251,7 +238,7 @@
                         <button
                             class="btn btn-sm btn-secondary"
                             id="btn-compact-mode"
-                            onclick="toggleCompactMode()"
+                            data-action="toggleCompactMode"
                             style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem"
                             title="Przełącz tryb kompaktowy"
                         >
@@ -314,17 +301,13 @@
                                         width: 100%;
                                         font-size: 0.8rem;
                                     "
-                                    oninput="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.filterLocalOffers &&
-                                            window.pvSalesUI.filterLocalOffers()
-                                    "
+                                    data-action="filter-local-offers"
                                 />
                             </div>
 
                             <button
                                 class="btn btn-secondary btn-sm"
-                                onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
+                                data-action="loadLocalOffers"
                                 title="Odśwież bazę ofert"
                                 style="
                                     border-radius: 20px;
@@ -394,9 +377,8 @@
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
-        <script>
-            if (typeof fetchGlobalUsers === 'function') fetchGlobalUsers();
-        </script>
+        <script src="js/shared/cspActions.js?v=3.0"></script>
+        <script src="js/sales/initKartoteka.js?v=3.0"></script>
         <script src="js/shared/printModal.js?v=3.0"></script>
         <link rel="stylesheet" href="css/printModal.css?v=3.0" />
         <script src="js/studnie/offerPrintManager.js?v=3.0"></script>
@@ -421,17 +403,6 @@
         <script src="js/import-export/studnie/externalExportTemplate.js?v=3.2"></script>
         <script src="js/import-export/studnie/transferJson.js?v=3.1"></script>
         <script src="js/sales/pvImportExportToolbar.js?v=3.2"></script>
-
-        <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> -->
-        <script>
-            if (window.top === window.self) {
-                const module =
-                    location.pathname
-                        .split('/')
-                        .pop()
-                        .replace(/\.html?$/, '') || 'kartoteka';
-                window.location.replace('/app.html#/' + module);
-            }
-        </script>
+        <script src="js/spa/redirectGuard.js?v=3.2"></script>
     </body>
 </html>

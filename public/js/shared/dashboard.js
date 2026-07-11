@@ -19,7 +19,7 @@ function toggleSubUsersList() {
                 .map(
                     (u) => `
                         <label class="sub-user-checkbox">
-                            <input type="checkbox" value="${escapeHtml(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
+                            <input type="checkbox" data-action="updateSubUsers" value="${escapeHtml(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''}>
                             ${u.firstName && u.lastName ? escapeHtml(u.firstName + ' ' + u.lastName) : escapeHtml(u.username)}
                         </label>
                     `
@@ -40,18 +40,29 @@ function updateSubUsers(checkbox) {
     }
 }
 
+document.addEventListener('change', (e) => {
+    const target = e.target.closest('[data-action="updateSubUsers"]');
+    if (!target) return;
+    updateSubUsers(target);
+});
+
+document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-action="startEditUser"],[data-action="deleteUser"]');
+    if (!target) return;
+    const userId = target.dataset.userId;
+    if (target.dataset.action === 'startEditUser') startEditUser(userId);
+    else if (target.dataset.action === 'deleteUser') deleteUser(userId);
+});
+
 window.addEventListener('DOMContentLoaded', async () => {
-    const token = getAuthToken();
-    if (token) {
-        try {
-            const res = await fetch('/api/auth/me', { headers: authHeaders() });
-            const data = await res.json();
-            if (data.user) {
-                showLoggedIn(data.user);
-                return;
-            }
-        } catch (e) {}
-    }
+    try {
+        const res = await fetch('/api/auth/me', { headers: authHeaders(), credentials: 'include' });
+        const data = await res.json();
+        if (data.user) {
+            showLoggedIn(data.user);
+            return;
+        }
+    } catch (e) {}
     showLogin();
 });
 
@@ -202,7 +213,6 @@ async function doLogin() {
             errorEl.textContent = data.error || 'Błąd logowania';
             return;
         }
-        localStorage.setItem('authToken', data.token);
         sessionStorage.setItem('user', JSON.stringify(data.user));
         showLoggedIn(data.user);
     } catch (e) {
@@ -212,9 +222,12 @@ async function doLogin() {
 
 async function doLogout() {
     try {
-        await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: authHeaders(),
+            credentials: 'include'
+        });
     } catch (e) {}
-    localStorage.removeItem('authToken');
     showLogin();
     document.getElementById('login-username').value = '';
     document.getElementById('login-password').value = '';
@@ -255,8 +268,8 @@ async function loadUsers() {
         <td class="cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td>
           <div class="admin-actions-cell">
-            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeHtml(u.id)}')"><i data-lucide="pencil"></i></button>
-            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeHtml(u.id)}')"><i data-lucide="trash-2"></i></button>` : ''}
+            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" data-action="startEditUser" data-user-id="${escapeHtml(u.id)}"><i data-lucide="pencil"></i></button>
+            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" data-action="deleteUser" data-user-id="${escapeHtml(u.id)}"><i data-lucide="trash-2"></i></button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -527,3 +540,27 @@ async function saveYearLetter() {
         alert('Błąd połączenia');
     }
 }
+
+// CSP-safe: button listeners (replaced inline onclick)
+document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) loginBtn.addEventListener('click', doLogin);
+
+    const logoutBtns = document.querySelectorAll('#dash-logout-btn, #dash-logout-btn2');
+    logoutBtns.forEach((btn) => btn.addEventListener('click', doLogout));
+
+    const changePwBtn = document.getElementById('change-password-btn');
+    if (changePwBtn) changePwBtn.addEventListener('click', showChangePassword);
+
+    const addUserBtn = document.getElementById('add-user-btn');
+    if (addUserBtn) addUserBtn.addEventListener('click', createUser);
+
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEditUser);
+
+    const yearLetterBtn = document.getElementById('year-letter-save-btn');
+    if (yearLetterBtn) yearLetterBtn.addEventListener('click', saveYearLetter);
+
+    const newUserRole = document.getElementById('new-user-role');
+    if (newUserRole) newUserRole.addEventListener('change', toggleSubUsersList);
+});

@@ -577,8 +577,8 @@ function copyTransportBreakdown() {
         .replace(/id="transport-breakdown-content"/g, 'id="order-transport-breakdown-content"')
         .replace(/id="transport-toggle-icon"/g, 'id="order-transport-toggle-icon"')
         .replace(
-            /onclick="toggleTransportBreakdown\(\)"/g,
-            'onclick="toggleOrderTransportBreakdown()"'
+            /data-action="toggleTransportBreakdown"/g,
+            'data-action="toggleOrderTransportBreakdown"'
         );
     if (window.lucide) lucide.createIcons({ root: dst });
 }
@@ -891,7 +891,7 @@ function renderStep2OrderBanner(orderData) {
         '</strong></span>' +
         '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text);">Dalej</strong> aby przejść do podsumowania.</span>' +
         '</div>' +
-        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>';
+        '<button class="btn btn-sm badge-ok" data-action="navigateToPhase5" style="padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>';
     const step2 = document.getElementById('wizard-step-2');
     if (step2 && step2.firstChild) {
         step2.insertBefore(banner, step2.firstChild);
@@ -1055,16 +1055,16 @@ function renderPrzejsciaDetailsTable(existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<input type="text" class="form-input" value="${row.rodzaj || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
+                        ? `<input type="text" class="form-input" value="${row.rodzaj || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" data-action="syncCustomRow" />`
                         : `<span class="fw-600">${row.rodzaj || '—'}</span>`
                 }
             </td>
-            <td><input type="text" class="form-input" value="${row.dnOd || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input" value="${row.dnDo || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="number" class="form-input" value="${row.ilosc || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input" value="${row.uwagi || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input" value="${row.dnOd || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" data-action="syncCustomRow" /></td>
+            <td><input type="text" class="form-input" value="${row.dnDo || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" data-action="syncCustomRow" /></td>
+            <td><input type="number" class="form-input" value="${row.ilosc || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" data-action="syncCustomRow" /></td>
+            <td><input type="text" class="form-input" value="${row.uwagi || ''}" style="width:100%;font-size:0.7rem;padding:0.2rem 0.4rem;" data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" data-action="syncCustomRow" /></td>
             <td>
-                <select class="form-input" style="width:100%;font-size:0.7rem;padding:0.2rem;" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)">
+                <select class="form-input" style="width:100%;font-size:0.7rem;padding:0.2rem;" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" data-action="syncCustomRow">
                     <option value="TAK" ${row.czyPrzejscie === 'TAK' ? 'selected' : ''}>TAK</option>
                     <option value="NIE" ${row.czyPrzejscie === 'NIE' ? 'selected' : ''}>NIE</option>
                 </select>
@@ -1072,7 +1072,7 @@ function renderPrzejsciaDetailsTable(existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size:0.65rem;padding:0.15rem 0.4rem;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>`
+                        ? `<button class="btn btn-sm btn-danger" data-action="removeCustomPrzejscieRow" data-idx="${row._idx}" style="font-size:0.65rem;padding:0.15rem 0.4rem;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>`
                         : '<span style="color:var(--text-muted);font-size:0.65rem;">z oferty</span>'
                 }
             </td>
@@ -1172,3 +1172,19 @@ function clearOrderEditState() {
     if (typeof hideOrderModeBanner === 'function') hideOrderModeBanner();
 }
 window.clearOrderEditState = clearOrderEditState;
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('syncCustomRow', function (t) {
+        _syncCustomRow(t);
+    });
+    registerCspAction('navigateToPhase5', function () {
+        goToPhase(5);
+    });
+    registerCspAction('removeCustomPrzejscieRow', {
+        handler: function ({ idx }) {
+            removePrzejscieRow('custom', parseInt(idx, 10));
+        },
+        params: ['idx']
+    });
+    registerCspAction('toggleOrderTransportBreakdown', window.toggleOrderTransportBreakdown);
+}

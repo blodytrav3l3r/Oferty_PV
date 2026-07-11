@@ -386,9 +386,14 @@ model recycled_production_numbers {
 }
 
 model sessions {
-  token     String @id
-  userId    String
-  createdAt BigInt
+  token      String  @id
+  userId     String
+  createdAt  BigInt
+  lastUsedAt BigInt?
+  ipAddress  String?
+  userAgent  String?
+  expiresAt  BigInt?
+  revokedAt  BigInt?
 }
 
 model settings {

@@ -204,18 +204,21 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 
 Podczas pracy z projektem korzystaj z poniższych komend:
 
-| Polecenie                    | Opis działania                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------- |
-| `npm run dev:backend`        | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev).           |
-| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.                        |
-| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych (jeśli są skonfigurowane).                  |
-| `npm run test:quick`         | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
-| `npm run test:alignment`     | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
-| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (tylko w katalogu `src/`).           |
-| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                   |
-| `npm run version:check`      | Sprawdza spójność numeracji wersji w pliku `VERSION`, `package.json` oraz `CHANGELOG.md`.   |
-| `npm run release:patch`      | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                    |
-| `npm run release:minor`      | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                        |
-| `npm run release:major`      | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                         |
-| `graphify query "<q>"`       | Wykonuje zapytanie do grafu wiedzy w celu znalezienia odpowiednich elementów kodu.          |
-| `graphify update .`          | Aktualizuje strukturę grafu wiedzy na podstawie bieżących plików projektu.                  |
+| Polecenie                        | Opis działania                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run dev:backend`            | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev).           |
+| `npm run typecheck`              | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.                        |
+| `npm run typecheck:frontend`     | Wykonuje analizę typów dla plików frontendowych (jeśli są skonfigurowane).                  |
+| `npm run test:quick`             | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
+| `npm run test:alignment`         | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
+| `npm run lint`                   | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (tylko w katalogu `src/`).           |
+| `npm run format`                 | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                   |
+| `npm run version:check`          | Sprawdza spójność numeracji wersji w pliku `VERSION`, `package.json` oraz `CHANGELOG.md`.   |
+| `npm run release:patch`          | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                    |
+| `npm run release:minor`          | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                        |
+| `npm run release:major`          | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                         |
+| `graphify query "<q>"`           | Wykonuje zapytanie do grafu wiedzy w celu znalezienia odpowiednich elementów kodu.          |
+| `graphify update .`              | Aktualizuje strukturę grafu wiedzy na podstawie bieżących plików projektu.                  |
+| `npm run audit:xss`              | Generuje raport XSS (docs/security/xss-audit.md) z Security Score, Debt, Gate, CWE/OWASP.   |
+| `docs/security/xss-ignore.json`  | Baza znanych fałszywych alarmów (False Positive Database) — ignorowane przy audycie.        |
+| `docs/security/xss-history.json` | Historia wyników Security Score między wersjami — śledzenie trendu.                         |

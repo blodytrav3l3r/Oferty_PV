@@ -1,0 +1,272 @@
+[
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 6,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 98,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 8,
+            "REVIEW": 56,
+            "INFO": 182,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 1,
+            "REVIEW": 0,
+            "INFO": 245,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 420
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 12
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 12
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 12
+    },
+    {
+        "date": "2026-07-11",
+        "score": 100,
+        "stats": {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "REVIEW": 0,
+            "INFO": 246,
+            "LOW": 0
+        },
+        "total": 246,
+        "escapeCoverage": 54,
+        "dynamicSinks": 28,
+        "escapedSinks": 15,
+        "handlerCount": 12
+    }
+]

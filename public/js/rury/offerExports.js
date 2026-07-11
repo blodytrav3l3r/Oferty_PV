@@ -128,7 +128,7 @@ function exportOfferPDF(id) {
     .letterhead-header { width: 100%; object-fit: contain; margin-bottom: 20px; display: block; }
     .letterhead-footer { width: 100%; object-fit: contain; margin-top: 20px; display: block; page-break-inside: avoid; }
   </style></head><body>
-  <img src="${window.location.origin}/images/letterhead-header.png" class="letterhead-header" onload="window._hLoaded=true" onerror="window._hLoaded=true" />
+  <img src="${window.location.origin}/images/letterhead-header.png" class="letterhead-header" />
   <div class="header-line" style="margin-top:20px;">
     <h1>OFERTA HANDLOWA</h1>
     <div style="display:flex;justify-content:space-between">
@@ -181,10 +181,36 @@ function exportOfferPDF(id) {
     <strong>Warunki płatności:</strong> ${offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.'}<br>
     <strong>Data ważności oferty:</strong> ${offer.validity || '7 dni'}
   </div>
-  <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
+  <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" />
   <div class="footer">Oferta wygenerowana automatycznie • WITROS</div>
   </body></html>`);
     printWin.document.close();
+    const hdr = printWin.document.querySelector('.letterhead-header');
+    const ftr = printWin.document.querySelector('.letterhead-footer');
+    if (hdr) {
+        if (hdr.complete && hdr.naturalWidth > 0) {
+            printWin._hLoaded = true;
+        } else {
+            hdr.onload = function () {
+                printWin._hLoaded = true;
+            };
+            hdr.onerror = function () {
+                printWin._hLoaded = true;
+            };
+        }
+    }
+    if (ftr) {
+        if (ftr.complete && ftr.naturalWidth > 0) {
+            printWin._fLoaded = true;
+        } else {
+            ftr.onload = function () {
+                printWin._fLoaded = true;
+            };
+            ftr.onerror = function () {
+                printWin._fLoaded = true;
+            };
+        }
+    }
     let rounds = 0;
     const checkInterval = setInterval(() => {
         rounds++;
@@ -215,7 +241,7 @@ function showItemDiscountModal() {
     <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
         <h3 id="item-discount-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <div style="overflow-y:auto; flex:1; padding-right:0.5rem;" id="discount-modal-list">
@@ -234,8 +260,8 @@ function showItemDiscountModal() {
           </div>
         </div>
         <div style="display:flex; gap: 1rem;">
-          <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-          <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600;">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+          <button class="btn btn-secondary" data-action="closeModal" style="padding: 0.75rem 1.5rem;">Anuluj</button>
+          <button class="btn btn-primary" data-action="applyItemDiscounts" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600;">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>`
@@ -328,10 +354,7 @@ function renderDiscountModalItems() {
           <span style="font-size:0.7rem; color:var(--text-muted);">Ilość: ${item.quantity}</span>
         </td>
         <td style="padding:0.4rem; text-align:center; vertical-align:middle;">
-          <input type="number" step="0.5" min="0" max="100" value="${d}" 
-            onclick="this.select()"
-            oninput="updateTempDiscount(${index}, this)"
-            onchange="checkGasketDiscount(${index}, this)"
+          <input type="number" step="0.5" min="0" max="100" data-action="discountInput" data-index="${index}" value="${d}" 
             style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius:4px; font-weight:700; color:var(--accent); background:var(--bg);">
           ${warningText}
         </td>
@@ -777,3 +800,39 @@ function importOfferFromXlsx() {
     });
     input.click();
 }
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('exportOfferXlsx', {
+        handler: function ({ offerId }) {
+            exportOfferXlsx(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('exportOfferPDF', {
+        handler: function ({ offerId }) {
+            exportOfferPDF(offerId);
+        },
+        params: ['offerId']
+    });
+}
+
+document.addEventListener('click', (e) => {
+    const target = e.target.closest(
+        '[data-action="closeModal"],[data-action="applyItemDiscounts"],[data-action="discountInput"]'
+    );
+    if (!target) return;
+    if (target.dataset.action === 'closeModal') closeModal();
+    else if (target.dataset.action === 'applyItemDiscounts') applyItemDiscounts();
+});
+
+document.addEventListener('input', (e) => {
+    const target = e.target.closest('[data-action="discountInput"]');
+    if (!target) return;
+    updateTempDiscount(parseInt(target.dataset.index), target);
+});
+
+document.addEventListener('change', (e) => {
+    const target = e.target.closest('[data-action="discountInput"]');
+    if (!target) return;
+    checkGasketDiscount(parseInt(target.dataset.index), target);
+});

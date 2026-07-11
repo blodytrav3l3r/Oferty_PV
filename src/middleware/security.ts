@@ -30,6 +30,24 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
 }
 
 /**
+ * Dodaje Content-Security-Policy-Report-Only jako osobny nagłówek.
+ * Nie modyfikuje istniejącego CSP — testuje przyszłą politykę bez blokowania.
+ */
+export function cspReportOnly(_req: Request, res: Response, next: NextFunction): void {
+    const mode = (process.env.CSP_MODE || 'permissive').toLowerCase();
+    if (mode !== 'report-only' && mode !== 'enforce') {
+        next();
+        return;
+    }
+    if (mode === 'report-only') {
+        const reportOnly =
+            "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self'; object-src 'none'; base-uri 'self'; report-uri /api/security/csp-report";
+        res.setHeader('Content-Security-Policy-Report-Only', reportOnly);
+    }
+    next();
+}
+
+/**
  * Wymusza charset=utf-8 w nagłówku Content-Type dla odpowiedzi tekstowych.
  * Zapobiega nieprawidłowemu dekodowaniu polskich znaków przez przeglądarkę.
  */

@@ -25,12 +25,6 @@ const AppZlecenia = (() => {
     /* ===== INIT ===== */
 
     async function init() {
-        const token = getAuthToken();
-        if (!token) {
-            window.location.href = 'index.html';
-            return;
-        }
-
         setupSearch();
         await loadOrders();
     }
@@ -339,20 +333,21 @@ const AppZlecenia = (() => {
                 };
 
                 const orderNum = o.productionOrderNumber
-                    ? `<span class="order-num">${o.productionOrderNumber}</span>`
+                    ? `<span class="order-num">${escapeHtml(o.productionOrderNumber)}</span>`
                     : `<span class="order-num-missing">— brak —</span>`;
 
-                const salesOrderLabel =
-                    o.dbSalesOrderNumber || o.salesOrderNumber
-                        ? `<span class="sales-order-badge">${o.dbSalesOrderNumber || o.salesOrderNumber}</span>`
-                        : '<span style="color:var(--text-muted); font-size:0.75rem;">—</span>';
+                const safeSalesOrder = o.dbSalesOrderNumber || o.salesOrderNumber;
+                const salesOrderLabel = safeSalesOrder
+                    ? `<span class="sales-order-badge">${escapeHtml(safeSalesOrder)}</span>`
+                    : '<span style="color:var(--text-muted); font-size:0.75rem;">—</span>';
 
-                const wellName = o.wellName || '—';
-                const projectName = o.projectName || o.obiekt || '';
-                const elementInfo =
+                const wellName = escapeHtml(o.wellName || '—');
+                const projectName = escapeHtml(o.projectName || o.obiekt || '');
+                const elementInfo = escapeHtml(
                     o.elementName ||
-                    o.productName ||
-                    (o.elementIndex !== undefined ? `Element #${o.elementIndex}` : '—');
+                        o.productName ||
+                        (o.elementIndex !== undefined ? `Element #${o.elementIndex}` : '—')
+                );
 
                 const isAccepted = o.status === 'accepted';
                 const isDraft = !isAccepted && o.id;
@@ -360,19 +355,29 @@ const AppZlecenia = (() => {
 
                 // Przyciski akcji
                 let actions = '';
+                const safeOfferId = escapeJsStr(o.offerId || '');
+                const safeWellId = escapeJsStr(o.wellId || '');
+                const safeElementIdx = escapeJsStr(
+                    o.elementIndex !== undefined ? o.elementIndex : ''
+                );
+                const safeSalesOrderId = escapeJsStr(o.dbSalesOrderId || '');
+                const safeId = escapeJsStr(o.id);
                 if (o.offerId) {
-                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${escapeJsStr(o.offerId)}', '${escapeJsStr(o.wellId || '')}', '${escapeJsStr(o.elementIndex !== undefined ? o.elementIndex : '')}', '${escapeJsStr(o.dbSalesOrderId || '')}')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>`;
+                    actions += `<button class="action-btn action-btn-edit" data-action="editProductionOrder" data-offer-id="${safeOfferId}" data-well-id="${safeWellId}" data-element-idx="${safeElementIdx}" data-sales-order-id="${safeSalesOrderId}" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>`;
                 }
-                actions += `<button class="action-btn" aria-label="Drukuj zlecenie" onclick="AppZlecenia.printSingleZlecenie('${escapeJsStr(o.id)}')" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>`;
-                actions += `<button class="action-btn" aria-label="Drukuj etykietę" onclick="AppZlecenia.printSingleEtykieta('${escapeJsStr(o.id)}')" title="Drukuj etykietę"><i data-lucide="tag" aria-hidden="true"></i></button>`;
+                actions += `<button class="action-btn" aria-label="Drukuj zlecenie" data-action="printSingleZlecenie" data-safe-id="${safeId}" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>`;
+                actions += `<button class="action-btn" aria-label="Drukuj etykietę" data-action="printSingleEtykieta" data-safe-id="${safeId}" title="Drukuj etykietę"><i data-lucide="tag" aria-hidden="true"></i></button>`;
                 if (isDraft) {
-                    actions += `<button class="action-btn action-btn-delete" aria-label="Usuń zlecenie" onclick="AppZlecenia.deleteOrder('${escapeJsStr(o.id)}')" title="Usuń zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>`;
+                    actions += `<button class="action-btn action-btn-delete" aria-label="Usuń zlecenie" data-action="deleteOrder" data-safe-id="${safeId}" title="Usuń zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>`;
                 }
+
+                const safeStatusClass = escapeHtml(statusConfig.class);
+                const safeStatusLabel = escapeHtml(statusConfig.label);
 
                 return `
                 <tr>
                     <td style="width:40px; text-align:center;">
-                        <input type="checkbox" class="zlecenia-row-cb" data-id="${escapeJsStr(o.id)}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${escapeJsStr(o.id)}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--accent-hover);">
+                        <input type="checkbox" class="zlecenia-row-cb" data-action="toggleSelectZlecenie" data-id="${safeId}" ${isChecked ? 'checked' : ''} style="cursor:pointer; width:16px; height:16px; accent-color:var(--accent-hover);">
                     </td>
                     <td>${orderNum}</td>
                     <td class="date-cell">${formatDate(o.createdAt)}</td>
@@ -382,9 +387,9 @@ const AppZlecenia = (() => {
                     </td>
                     <td>${salesOrderLabel}</td>
                     <td class="element-cell">${elementInfo}</td>
-                    <td><span class="person-badge person-handler"><i data-lucide="user" aria-hidden="true"></i> ${o.handlerName || '—'}</span></td>
-                    <td><span class="person-badge person-creator"><i data-lucide="settings" aria-hidden="true"></i> ${o.creatorName || '—'}</span></td>
-                    <td><span class="status-badge ${statusConfig.class}">${statusConfig.icon} ${statusConfig.label}</span></td>
+                    <td><span class="person-badge person-handler"><i data-lucide="user" aria-hidden="true"></i> ${escapeHtml(o.handlerName || '—')}</span></td>
+                    <td><span class="person-badge person-creator"><i data-lucide="settings" aria-hidden="true"></i> ${escapeHtml(o.creatorName || '—')}</span></td>
+                    <td><span class="status-badge ${safeStatusClass}">${statusConfig.icon} ${safeStatusLabel}</span></td>
                     <td style="text-align:right">
                         <div style="display:flex; gap:0.25rem; justify-content:flex-end;">
                             ${actions}
@@ -1200,6 +1205,54 @@ setTimeout(runAllFit, 400);
     };
 })();
 window.AppZlecenia = AppZlecenia;
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('zleceniaSetFilter', {
+        handler: function (p) {
+            AppZlecenia.setFilter(p.filter);
+        },
+        params: ['filter']
+    });
+    registerCspAction('zleceniaLoadOrders', function () {
+        AppZlecenia.loadOrders();
+    });
+    registerCspAction('zleceniaPrintBatchZlecenia', function () {
+        AppZlecenia.printBatchZlecenia();
+    });
+    registerCspAction('zleceniaPrintBatchEtykiety', function () {
+        AppZlecenia.printBatchEtykiety();
+    });
+    registerCspAction('zleceniaToggleSelectAll', function (t) {
+        AppZlecenia.toggleSelectAll(t);
+    });
+    registerCspAction('printSingleZlecenie', {
+        handler: function ({ safeId }) {
+            AppZlecenia.printSingleZlecenie(safeId);
+        },
+        params: ['safeId']
+    });
+    registerCspAction('printSingleEtykieta', {
+        handler: function ({ safeId }) {
+            AppZlecenia.printSingleEtykieta(safeId);
+        },
+        params: ['safeId']
+    });
+    registerCspAction('deleteOrder', {
+        handler: function ({ safeId }) {
+            AppZlecenia.deleteOrder(safeId);
+        },
+        params: ['safeId']
+    });
+    registerCspAction('editProductionOrder', {
+        handler: function ({ offerId, wellId, elementIdx, salesOrderId }) {
+            AppZlecenia.editOrder(offerId, wellId, elementIdx, salesOrderId);
+        },
+        params: ['offerId', 'wellId', 'elementIdx', 'salesOrderId']
+    });
+    registerCspAction('toggleSelectZlecenie', function (t) {
+        AppZlecenia.toggleSelect(t.dataset.id, t);
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     AppZlecenia.init();

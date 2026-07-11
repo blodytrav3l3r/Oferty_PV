@@ -23,28 +23,8 @@ class StorageService {
      * @returns {object}
      */
     getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        let token = null;
-
-        // Priorytet 1: funkcja globalna authHeaders() (jeśli dostępna z auth.js)
-        if (typeof window !== 'undefined' && typeof window.getAuthToken === 'function') {
-            token = window.getAuthToken();
-        }
-
-        // Priorytet 2: manualne sprawdzenie cookie/localStorage (jeśli auth.js nie załadowane)
-        if (!token) {
-            const match = document.cookie.match(/(?:^|;\s*)authToken=([^;]*)/);
-            if (match && match[1]) {
-                token = match[1];
-            } else if (typeof localStorage !== 'undefined') {
-                token = localStorage.getItem('authToken');
-            }
-        }
-
-        if (token) {
-            headers['X-Auth-Token'] = token;
-        }
-        return headers;
+        // Token jest wysyłany automatycznie przez httpOnly cookie (same-origin)
+        return { 'Content-Type': 'application/json' };
     }
 
     /**

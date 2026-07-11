@@ -1,5 +1,11 @@
 // @ts-check
 /* ===== Extracted to wellPopups.js ===== */
+(function () {
+    let s = document.createElement('style');
+    s.textContent =
+        '.wp-hover-btn{transition:all 0.12s}.wp-hover-btn:hover{background:var(--hb)!important;border-color:var(--hbc)!important;color:var(--hc)!important;transform:var(--ht,none)!important;box-shadow:var(--hs,none)!important}.wp-hover-border{transition:border-color 0.12s}.wp-hover-border:hover{border-color:var(--hbc)!important}.wp-hover-bg{transition:background 0.12s}.wp-hover-bg:hover{background:var(--hb)!important}[data-wp-active=\"false\"]:hover{border-color:rgba(99,102,241,0.3)!important}[data-wp-auto=\"false\"]:hover{border-color:rgba(99,102,241,0.3)!important}[data-wp-locked=\"false\"]:hover{border-color:rgba(16,185,129,0.35)!important;transform:translateY(-2px)!important;box-shadow:0 6px 20px rgba(0,0,0,0.3)!important}#tm-filter-search:focus{border-color:rgba(16,185,129,0.4)!important}';
+    document.head.appendChild(s);
+})();
 
 function openZakonczeniePopup() {
     const well = getCurrentWell();
@@ -63,7 +69,7 @@ function openZakonczeniePopup() {
         const typeLabel = typeLabels[p.componentType] || p.componentType;
 
         if (isDisabled) {
-            return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
+            return `<div data-action="showKonusPehdResolver" style="
                 padding:0.7rem 0.9rem; border-radius:10px; cursor:not-allowed; opacity:0.5;
                 border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
             ">
@@ -77,13 +83,12 @@ function openZakonczeniePopup() {
             </div>`;
         }
 
-        return `<div onclick="selectZakonczenie('${p.id}')" style="
+        return `<div data-action="selectZakonczenie" data-product-id="${p.id}" data-wp-active="${isActive}" style="
             padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
             background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
             ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-        " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-           onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
+        ">
             <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
                 <i data-lucide="${icon}" style="width:16px; height:16px; color:${isActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
                 <span style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</span>
@@ -108,14 +113,13 @@ function openZakonczeniePopup() {
         const sectionStyle =
             'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
 
-        tilesHtml += `<div onclick="selectZakonczenie(null)" style="
+        tilesHtml += `<div data-action="selectZakonczenie" data-wp-auto="${isAutoActive}" style="
             grid-column:1/ -1;
             padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
             background:${isAutoActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
             ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-        " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-           onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
+        ">
             <div style="display:flex; align-items:center; gap:0.4rem;">
                 <i data-lucide="refresh-cw" style="width:16px; height:16px; color:${isAutoActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
                 <span style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">Auto (Zakończenie DN${effectiveDn})</span>
@@ -171,7 +175,7 @@ function openZakonczeniePopup() {
         ${tilesHtml}
       </div>
       <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem; text-align:right;">
-        <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
+        <button class="btn btn-secondary" data-action="closeModal">Zamknij</button>
       </div>
     </div>`
     });
@@ -360,7 +364,7 @@ function openRedukcjaZakonczeniePopup() {
         const typeLabel = overrideLabel || typeLabels[p.componentType] || p.componentType;
 
         if (isDisabled) {
-            return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
+            return `<div data-action="showKonusPehdResolver" style="
                 padding:0.7rem 0.9rem; border-radius:10px; cursor:not-allowed; opacity:0.5;
                 border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
             ">
@@ -374,13 +378,12 @@ function openRedukcjaZakonczeniePopup() {
             </div>`;
         }
 
-        return `<div onclick="selectRedukcjaZakonczenie('${p.id}')" style="
+        return `<div data-action="selectRedukcjaZakonczenie" data-product-id="${p.id}" data-wp-active="${isActive}" style="
             padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
             border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
             background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
             ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-        " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-           onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
+        ">
             <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
                 <i data-lucide="${icon}" style="width:16px; height:16px; color:${isActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
                 <span style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</span>
@@ -396,14 +399,13 @@ function openRedukcjaZakonczeniePopup() {
 
     let tilesHtml = '';
     const isAutoActive = !currentZak;
-    tilesHtml += `<div onclick="selectRedukcjaZakonczenie(null)" style="
+    tilesHtml += `<div data-action="selectRedukcjaZakonczenie" data-wp-auto="${isAutoActive}" style="
         grid-column:1/ -1;
         padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
         border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
         background:${isAutoActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
         ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-    " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-       onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
+    ">
         <div style="display:flex; align-items:center; gap:0.4rem;">
             <i data-lucide="refresh-cw" style="width:16px; height:16px; color:${isAutoActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
             <span style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">Auto (Zakończenie DN${targetDn})</span>
@@ -458,7 +460,7 @@ function openRedukcjaZakonczeniePopup() {
         ${tilesHtml}
       </div>
       <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem; text-align:right;">
-        <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
+        <button class="btn btn-secondary" data-action="closeModal">Zamknij</button>
       </div>
     </div>`
     });
@@ -473,12 +475,11 @@ function showStycznaPopup(mode = 'select') {
     ].sort((a, b) => (a.dn || 0) - (b.dn || 0));
 
     const renderProductRow = (p) => `
-        <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${p.id}', '${mode}')" style="
+        <button class="styczna-product-btn wp-hover-btn" data-action="handleStycznaProductChoice" data-product-id="${p.id}" data-mode="${mode}" style="
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
             padding:0.55rem 0.8rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
             border-radius:8px; cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;
-        " onmouseenter="this.style.borderColor='rgba(249,115,22,0.5)'; this.style.background='rgba(249,115,22,0.1)'"
-           onmouseleave="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'">
+            --hb:rgba(249,115,22,0.1);--hbc:rgba(249,115,22,0.5);">
             <div>
                 <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary, #fff);">DN${p.dn}</div>
                 <div style="font-size:0.65rem; color:var(--text-muted, #888); margin-top:1px;">${p.name}</div>
@@ -507,7 +508,7 @@ function showStycznaPopup(mode = 'select') {
       <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(249,115,22,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
           <div id="styczna-title" style="font-size:1rem; font-weight:800; color:#f97316;"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
-          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" aria-label="Zamknij" data-action="closeModal" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
         ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}
@@ -618,19 +619,19 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
         </p>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
-            <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
+            <div data-action="resolveKonusPehd" data-well-index="${wellIndex}" data-type="plyta_din" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
                 <div style="font-weight:700; color:#e2e8f0; margin-bottom:0.4rem; font-size:1.15rem;">Płyta DIN</div>
                 <div style="font-size:0.8rem; color:#64748b; line-height:1.4;">Standardowa płyta nastudzienna.</div>
             </div>
             
-            <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
+            <div data-action="resolveKonusPehd" data-well-index="${wellIndex}" data-type="pierscien_odciazajacy" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
                 <div style="font-weight:700; color:#e2e8f0; margin-bottom:0.4rem; font-size:1.15rem;">Płyta + Pierścień</div>
                 <div style="font-size:0.8rem; color:#64748b; line-height:1.4;">Płyta zamykająca i pierścień odciążający.</div>
             </div>
         </div>
         
         <div style="margin-top:1.8rem; text-align:right;">
-            <button onclick="document.getElementById('pehd-konus-resolver').remove(); if(window.konusResolverCallback) window.konusResolverCallback();" class="pehd-btn-cancel" style="font-family:Inter,sans-serif; font-size:0.9rem;">Zostaw domyślne (Płyta DIN)</button>
+            <button data-action="resolveKonusPehdCancel" class="pehd-btn-cancel" style="font-family:Inter,sans-serif; font-size:0.9rem;">Zostaw domyślne (Płyta DIN)</button>
         </div>
     </div>
     `;
@@ -708,9 +709,8 @@ window.openGlobalRecalcModal = function () {
             let topTiles = candidates
                 .map(
                     (p) => `
-            <div class="fs-dn-tile" id="recalc-top-${dn}-${p.id}"
-                 style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
-                 onclick="window.recalcSelectTop(${dn}, '${p.id}')">
+            <div class="fs-dn-tile" id="recalc-top-${dn}-${p.id}" data-action="recalcSelectTop" data-dn="${dn}" data-id="${p.id}"
+                 style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);">
                 <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
             </div>`
                 )
@@ -718,9 +718,8 @@ window.openGlobalRecalcModal = function () {
 
             topTiles =
                 `
-            <div class="fs-dn-tile active" id="recalc-top-${dn}-auto"
-                 style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
-                 onclick="window.recalcSelectTop(${dn}, 'auto')">
+            <div class="fs-dn-tile active" id="recalc-top-${dn}-auto" data-action="recalcSelectTop" data-dn="${dn}" data-id="auto"
+                 style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);">
                 <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;"><i data-lucide="refresh-cw"></i> Auto (Domyślny)</div>
             </div>` + topTiles;
 
@@ -736,9 +735,8 @@ window.openGlobalRecalcModal = function () {
                 let redTiles = dn1000Cand
                     .map(
                         (p) => `
-                <div class="fs-dn-tile fs-red-tile-${dn}" id="recalc-redtop-${dn}-${p.id}"
-                     style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
-                     onclick="window.recalcSelectRedTop(${dn}, '${p.id}')">
+                <div class="fs-dn-tile fs-red-tile-${dn}" id="recalc-redtop-${dn}-${p.id}" data-action="recalcSelectRedTop" data-dn="${dn}" data-id="${p.id}"
+                     style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);">
                     <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
                 </div>`
                     )
@@ -746,16 +744,15 @@ window.openGlobalRecalcModal = function () {
 
                 redTiles =
                     `
-                <div class="fs-dn-tile active fs-red-tile-${dn}" id="recalc-redtop-${dn}-auto"
-                     style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
-                     onclick="window.recalcSelectRedTop(${dn}, 'auto')">
+                <div class="fs-dn-tile active fs-red-tile-${dn}" id="recalc-redtop-${dn}-auto" data-action="recalcSelectRedTop" data-dn="${dn}" data-id="auto"
+                     style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);">
                     <div style="font-size:0.65rem; font-weight:700; color:#a78bfa;"><i data-lucide="refresh-cw"></i> Auto (Konus)</div>
                 </div>` + redTiles;
 
                 reductionHtml = `
             <div style="margin-top:0.6rem;">
                 <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; cursor:pointer;">
-                    <input type="checkbox" id="recalc-use-red-${dn}" onchange="window.recalcToggleRed(${dn})" />
+                    <input type="checkbox" id="recalc-use-red-${dn}" data-action="recalcToggleRed" data-dn="${dn}" />
                     Wykonaj redukcję na DN1000
                 </label>
                 <div id="recalc-red-box-${dn}" style="display:none; margin-top:0.5rem; padding-left:1rem; border-left:2px solid var(--border);">
@@ -790,14 +787,14 @@ window.openGlobalRecalcModal = function () {
         titleId: 'global-recalc-title',
         html: `
     <div class="modal" style="width:700px; max-width:95vw; background:#111827;">
-      <div class="modal-header"><h3 id="global-recalc-title"><i data-lucide="settings" aria-hidden="true"></i> Automatycznie przelicz ofertę</h3><button class="btn-icon" aria-label="Zamknij" onclick="window.closeGlobalRecalcModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      <div class="modal-header"><h3 id="global-recalc-title"><i data-lucide="settings" aria-hidden="true"></i> Automatycznie przelicz ofertę</h3><button class="btn-icon" aria-label="Zamknij" data-action="closeGlobalRecalcModal"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div style="padding:1rem; max-height:65vh; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(99,102,241,0.4) transparent;">
         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">Ustaw preferencje dla poszczególnych średnic. Program zaktualizuje ustawienia zakończeń i ponownie wygeneruje układ elementów dla <strong>wszystkich studni w ofercie</strong> według reguł automatycznych.</p>
         ${groupsHtml}
       </div>
       <div style="padding:1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:0.5rem; background:rgba(0,0,0,0.2);">
-        <button class="btn btn-secondary" onclick="window.closeGlobalRecalcModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="window.applyGlobalRecalc()" style="background:var(--accent); color:#fff; font-weight:600;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przelicz wszystkie</button>
+        <button class="btn btn-secondary" data-action="closeGlobalRecalcModal">Anuluj</button>
+        <button class="btn btn-primary" data-action="applyGlobalRecalc" style="background:var(--accent); color:#fff; font-weight:600;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przelicz wszystkie</button>
       </div>
     </div>`
     });
@@ -921,7 +918,7 @@ function openRedukcjaChoicePopup() {
         <i data-lucide="chevrons-down" style="color:var(--accent);" aria-hidden="true"></i> Wybierz rodzaj redukcji
       </h3>
       <div style="display:flex; flex-direction:column; gap:0.6rem;">
-        <button onclick="selectRedukcjaChoice(1000)" style="
+        <button data-action="selectRedukcjaChoice" data-dn="1000" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
             border:2px solid ${isActive && currentTarget === 1000 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
             background:${isActive && currentTarget === 1000 ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
@@ -934,7 +931,7 @@ function openRedukcjaChoicePopup() {
         ${
             can1200
                 ? `
-        <button onclick="selectRedukcjaChoice(1200)" style="
+        <button data-action="selectRedukcjaChoice" data-dn="1200" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
             border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
             background:${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
@@ -947,7 +944,7 @@ function openRedukcjaChoicePopup() {
                 : ''
         }
 
-        <button onclick="selectRedukcjaChoice(null)" style="
+        <button data-action="selectRedukcjaChoice" data-dn="" style="
             padding:0.6rem; border-radius:8px; cursor:pointer; text-align:center; transition:all 0.2s;
             border:1px solid rgba(239, 68, 68, 0.3); background:rgba(239, 68, 68, 0.05); color:#ef4444; margin-top:0.4rem;
         ">
@@ -955,7 +952,7 @@ function openRedukcjaChoicePopup() {
         </button>
       </div>
       <div style="margin-top:1.2rem; text-align:right;">
-        <button class="btn btn-secondary btn-sm" onclick="closeModal()">Anuluj</button>
+        <button class="btn btn-secondary btn-sm" data-action="closeModal">Anuluj</button>
       </div>
     </div>`
     });
@@ -1116,7 +1113,7 @@ window.openTransitionManagerModal = function () {
       <!-- Nagłówek -->
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
         <h3 id="tm-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="window.closeTransitionManagerModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-action="closeTransitionManagerModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <!-- Sekcja filtrów -->
@@ -1124,16 +1121,16 @@ window.openTransitionManagerModal = function () {
          <div style="min-width:140px; flex:1;">
             <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Kategoria źródłowa</div>
             <div id="tm-filter-material-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
-               <div data-val="" onclick="tmSelectFilterMaterial('')"
-                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
-                    onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">Dowolna</div>
+                    <div data-action="tmSelectFilterMaterial" data-filter-val=""
+                    class="wp-hover-border"
+                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; --hbc:rgba(16,185,129,0.7);">Dowolna</div>
                ${[...allMaterials]
                    .sort()
                    .map((m) => {
                        const safe = m.replace(/'/g, "\\'");
-                       return `<div data-val="${safe}" onclick="tmSelectFilterMaterial('${safe}')"
-                      style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
-                      onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${m}</div>`;
+                       return `<div data-val="${safe}" data-action="tmSelectFilterMaterial" data-filter-val="${safe}"
+                       class="wp-hover-border"
+                       style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); --hbc:rgba(16,185,129,0.3);">${m}</div>`;
                    })
                    .join('')}
             </div>
@@ -1141,37 +1138,37 @@ window.openTransitionManagerModal = function () {
          <div style="min-width:90px;">
             <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Średnica DN</div>
             <div id="tm-filter-dn-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
-               <div data-val="" onclick="tmSelectFilterDn('')"
-                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
-                    onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">Dowolne</div>
+                <div data-action="tmSelectFilterDn" data-filter-val=""
+                    class="wp-hover-border"
+                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; --hbc:rgba(16,185,129,0.7);">Dowolne</div>
                ${[...allDNs]
                    .sort((a, b) => parseFloat(a) - parseFloat(b))
                    .map((dn) => {
                        const safe = String(dn).replace(/'/g, "\\'");
-                       return `<div data-val="${safe}" onclick="tmSelectFilterDn('${safe}')"
-                      style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
-                      onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${dn}</div>`;
+                       return `<div data-val="${safe}" data-action="tmSelectFilterDn" data-filter-val="${safe}"
+                       class="wp-hover-border"
+                       style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); --hbc:rgba(16,185,129,0.3);">${dn}</div>`;
                    })
                    .join('')}
             </div>
          </div>
          <div style="min-width:160px; flex:1;">
             <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Szukaj</div>
-            <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters()" style="width:100%; padding:0.25rem 0.4rem; font-size:0.65rem; background:#1a2536; border:1.5px solid rgba(255,255,255,0.06); border-radius:4px; color:var(--text-primary); outline:none; transition:all 0.12s;" onfocus="this.style.borderColor='rgba(16,185,129,0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.06)'">
+                         <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" data-action="tmApplyFilters"  style="width:100%; padding:0.25rem 0.4rem; font-size:0.65rem; background:#1a2536; border:1.5px solid rgba(255,255,255,0.06); border-radius:4px; color:var(--text-primary); outline:none; transition:all 0.12s;">
          </div>
       </div>
 
       <!-- Pasek narzędzi -->
       <div style="flex-shrink:0; display:flex; align-items:center; gap:0.75rem; padding:0.45rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.04); background:rgba(0,0,0,0.12); font-size:0.78rem; color:var(--text-muted);">
          <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; padding:0.2rem 0.5rem; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); border-radius:6px; color:var(--text-primary);">
-            <input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()" style="width:15px; height:15px; cursor:pointer;">
+                         <input type="checkbox" id="tm-select-all" data-action="tmToggleSelectAll"  style="width:15px; height:15px; cursor:pointer;">
             <span class="fw-500">Zaznacz wszystko</span>
          </label>
          <span style="opacity:0.2;">|</span>
          <span>Widoczne: <strong id="tm-visible-count" class="text-primary">0</strong></span>
          <span>Zaznaczone: <strong id="tm-selected-count" style="color:var(--accent);">0</strong></span>
          <div style="margin-left:auto; display:flex; align-items:center; gap:0.3rem;">
-            <button onclick="tmSortBy('wellName')" style="background:none; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:0.25rem 0.5rem; color:var(--text-muted); cursor:pointer; font-size:0.72rem; display:flex; align-items:center; gap:0.3rem; transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(16,185,129,0.3)';this.style.color='var(--text-primary)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--text-muted)'">
+            <button data-action="tmSortBy" data-column="wellName" class="wp-hover-btn" style="background:none; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:0.25rem 0.5rem; color:var(--text-muted); cursor:pointer; font-size:0.72rem; display:flex; align-items:center; gap:0.3rem; transition:all 0.15s; --hbc:rgba(16,185,129,0.3);--hc:var(--text-primary);">
                <span>↕</span> Sortuj A–Z
             </button>
          </div>
@@ -1193,21 +1190,21 @@ window.openTransitionManagerModal = function () {
             <div style="flex:1; min-width:200px;">
                <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Docelowa kategoria (na co zamienić)</div>
                <div id="tm-target-cat-tiles" style="display:flex; flex-wrap:wrap; gap:0.2rem;">
-                  <div data-val="" onclick="tmSelectTargetCat('')"
-                       style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; transition:all 0.12s;"
-                       onmouseenter="this.style.borderColor='rgba(16,185,129,0.7)'" onmouseleave="this.style.borderColor='rgba(16,185,129,0.55)'">— Wybierz —</div>
+                    <div data-action="tmSelectTargetCat"
+                        class="wp-hover-border"
+                        style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:600; background:rgba(16,185,129,0.2); border:1.5px solid rgba(16,185,129,0.55); color:#a7f3d0; --hbc:rgba(16,185,129,0.7);">— Wybierz —</div>
                   ${categories
                       .map((cat) => {
                           const safe = cat.replace(/'/g, "\\'");
-                          return `<div data-val="${safe}" onclick="tmSelectTargetCat('${safe}')"
-                         style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); transition:all 0.12s;"
-                         onmouseenter="this.style.borderColor='rgba(16,185,129,0.3)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">${cat}</div>`;
+                          return `<div data-val="${safe}" data-action="tmSelectTargetCat" data-category="${safe}"
+                          class="wp-hover-border"
+                          style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:500; background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.06); color:var(--text-primary); --hbc:rgba(16,185,129,0.3);">${cat}</div>`;
                       })
                       .join('')}
                </div>
             </div>
             <div style="flex-shrink:0;">
-               <button onclick="tmApplyChanges()" style="background:rgba(16,185,129,0.15); border:1.5px solid rgba(16,185,129,0.4); border-radius:5px; padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:#6ee7b7; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(16,185,129,0.25)'" onmouseleave="this.style.background='rgba(16,185,129,0.15)'">
+                <button data-action="tmApplyChanges" class="wp-hover-bg" style="background:rgba(16,185,129,0.15); border:1.5px solid rgba(16,185,129,0.4); border-radius:5px; padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:#6ee7b7; cursor:pointer; transition:all 0.15s; --hb:rgba(16,185,129,0.25);">
                   <i data-lucide="zap"></i> Zastosuj
                </button>
             </div>
@@ -1411,17 +1408,15 @@ window.tmRenderTable = function () {
                 const safeMaterial = tr.material.replace(/'/g, "\\'");
                 const locked = isWellLocked(w.wellIndex);
                 return `
-            <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
+            <div ${locked ? '' : `data-action="tmOpenEditTransitionPopup" data-well-idx="${w.wellIndex}" data-tr-idx="${tr.trIndex}"`}
                   style="background:${isSel ? 'rgba(16,185,129,0.15)' : '#1a2536'};
                          border:1px solid ${isSel ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'};
                          border-radius:8px; padding:0.4rem 0.45rem; ${locked ? 'cursor:default;' : 'cursor:pointer;'}
                          transition:all 0.2s; display:flex; flex-direction:column; gap:0.1rem;"
-                  ${locked ? '' : "onmouseenter=\"this.style.borderColor='rgba(16,185,129,0.35)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)'\""}
-                  ${locked ? '' : `onmouseleave="this.style.borderColor='${isSel ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'}';this.style.transform='none';this.style.boxShadow='none'"`}>
+                  data-wp-locked="${locked}" data-wp-sel="${isSel}">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:0.3rem;">
                 <div style="display:flex; align-items:center; gap:0.3rem; min-width:0; flex:1;">
-                  <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''}
-                         onclick="event.stopPropagation(); tmToggleTransition('${key}', this.checked)"
+                  <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''} data-action="tmToggleTransition" data-key="${key}"
                          style="width:14px; height:14px; cursor:pointer; margin:0; flex-shrink:0;" ${locked ? 'disabled' : ''}>
                   <span style="font-size:0.76rem; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeMaterial}">${tr.material}</span>
                   <span style="font-size:0.82rem; font-weight:800; color:#4ade80; flex-shrink:0;">DN${tr.dnRaw}</span>
@@ -1430,10 +1425,8 @@ window.tmRenderTable = function () {
                     locked
                         ? ''
                         : `
-                <button onclick="event.stopPropagation(); tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"
-                        style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.2); border-radius:4px; cursor:pointer; padding:0.05rem 0.3rem; color:#34d399; font-size:0.6rem; line-height:1.3; flex-shrink:0; transition:all 0.15s;"
-                        onmouseenter="this.style.background='rgba(16,185,129,0.25)'"
-                        onmouseleave="this.style.background='rgba(16,185,129,0.12)'">
+                <button data-action="tmOpenEditTransitionPopup" data-well-idx="${w.wellIndex}" data-tr-idx="${tr.trIndex}" class="wp-hover-bg"
+                        style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.2); border-radius:4px; cursor:pointer; padding:0.05rem 0.3rem; color:#34d399; font-size:0.6rem; line-height:1.3; flex-shrink:0; transition:all 0.15s; --hb:rgba(16,185,129,0.25);">
                   ✎
                 </button>`
                 }
@@ -1453,7 +1446,7 @@ window.tmRenderTable = function () {
         html += `
         <div style="background:#111827; border:1px solid ${wellLocked ? 'rgba(239,68,68,0.2)' : wellSomeSel ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)'}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
           <div style="display:flex; align-items:center; padding:0.55rem 0.75rem; background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.05);">
-            <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)"
+            <input type="checkbox" ${wellAllSel ? 'checked' : ''} data-action="tmToggleWell" data-well-index="${w.wellIndex}"
                    style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
             <div style="flex:1; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
               <span style="font-weight:700; color:var(--text-primary); font-size:0.85rem;">${w.wellName}</span>
@@ -1530,8 +1523,8 @@ window.tmToggleSelectAll = function () {
 let tmEditSelectedCat = null;
 let tmEditSelectedDn = null;
 
-window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
-    event.stopPropagation();
+window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, sourceEl) {
+    if (!sourceEl) return;
     if (isWellLocked(wellIdx)) {
         showToast(
             '<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zaakceptowane zlecenie produkcyjne.',
@@ -1558,7 +1551,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     const currentCat = currentP ? currentP.category : '';
     const currentDn = currentP ? currentP.dn : '';
 
-    const rect = event.currentTarget.getBoundingClientRect();
+    const rect = sourceEl.getBoundingClientRect();
     const popupW = 340;
     let left = Math.min(rect.left, window.innerWidth - popupW - 16);
     if (left < 8) left = 8;
@@ -1579,7 +1572,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     popup.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0.1rem 0.4rem;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:0.45rem;">
         <div><div style="font-weight:700;color:var(--text-primary);font-size:0.8rem;">Zmień przejście</div><div style="font-size:0.64rem;color:var(--text-muted);">Aktualnie: ${currentLabel}</div></div>
-        <button onclick="this.closest('#tm-edit-popup').remove()" style="background:rgba(255,255,255,0.05);border:none;border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:0.85rem;padding:0.1rem 0.35rem;line-height:1.3;">✕</button>
+        <button data-action="closeEditPopup" style="background:rgba(255,255,255,0.05);border:none;border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:0.85rem;padding:0.1rem 0.35rem;line-height:1.3;">✕</button>
       </div>
       <div style="display:flex;gap:0.5rem;">
         <div style="flex:1;min-width:0;">
@@ -1588,9 +1581,8 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
             ${categories
                 .map((cat) => {
                     const isCur = cat === currentCat;
-                    return `<div data-cat="${cat}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
-                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:${isCur ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#a7f3d0' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(16,185,129,0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(16,185,129,0.35)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'}'">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}${cat}</div>`;
+                    return `<div data-cat="${cat}" data-action="tmEditSelectType" data-well-idx="${wellIdx}" data-tr-idx="${trIdx}" data-wp-cur="${isCur}" class="wp-hover-border"
+                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:${isCur ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(16,185,129,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#a7f3d0' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(16,185,129,0.15);' : ''}--hbc:rgba(16,185,129,0.35);">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}${cat}</div>`;
                 })
                 .join('')}
           </div>
@@ -1601,9 +1593,8 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
             ${allDNs
                 .map((dn) => {
                     const isCur = dn === currentDn;
-                    return `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
-                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${isCur ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#6ee7b7' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(52,211,153,0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'}'">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}DN${dn}</div>`;
+                    return `<div data-dn="${dn}" data-action="tmEditSelectDN" data-well-idx="${wellIdx}" data-tr-idx="${trIdx}" data-wp-cur="${isCur}" class="wp-hover-border"
+                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${isCur ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.03)'};border:1.5px solid ${isCur ? 'rgba(52,211,153,0.55)' : 'rgba(255,255,255,0.06)'};color:${isCur ? '#6ee7b7' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(52,211,153,0.15);' : ''}--hbc:rgba(52,211,153,0.35);">${isCur ? '<span style="color:#34d399;font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}DN${dn}</div>`;
                 })
                 .join('')}
           </div>
@@ -1611,7 +1602,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
       </div>
       <div id="tm-edit-result" style="margin-top:0.45rem;padding:0.35rem 0.45rem;background:rgba(0,0,0,0.2);border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
         <span style="color:var(--text-muted);font-size:0.7rem;">Wybierz typ i średnicę</span>
-        <button id="tm-edit-apply-btn" style="display:none;background:#6366f1;border:none;border-radius:5px;padding:0.28rem 0.55rem;color:#fff;font-size:0.7rem;font-weight:600;cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>
+        <button id="tm-edit-apply-btn" data-action="tmEditApply" data-well-idx="${wellIdx}" data-tr-idx="${trIdx}" style="display:none;background:#6366f1;border:none;border-radius:5px;padding:0.28rem 0.55rem;color:#fff;font-size:0.7rem;font-weight:600;cursor:pointer;">Zastosuj</button>
       </div>`;
 
     document.body.appendChild(popup);
@@ -1657,7 +1648,7 @@ function tmEditSelectType(el, wellIdx, trIdx) {
     dnList.innerHTML = dns
         .map(
             (dn) =>
-                `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(52,211,153,0.35)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'"><span style="color:transparent;font-size:0.75rem;">◆</span>DN${dn}</div>`
+                `<div data-dn="${dn}" data-action="tmEditSelectDN" data-well-idx="${wellIdx}" data-tr-idx="${trIdx}" class="wp-hover-border" style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;--hbc:rgba(52,211,153,0.35);"><span style="color:transparent;font-size:0.75rem;">◆</span>DN${dn}</div>`
         )
         .join('');
 
@@ -1704,8 +1695,8 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
         );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
-            resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size:0.73rem;font-weight:600;">${product.category} DN${product.dn}</span><span style="color:#34d399;font-weight:700;margin-left:0.5rem;font-size:0.7rem;">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
-              <button style="background:#6366f1;border:none;border-radius:5px;padding:0.28rem 0.55rem;color:#fff;font-size:0.7rem;font-weight:600;cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>`;
+            resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size:0.73rem;font-weight:600;">${escapeHtml(product.category)} DN${escapeHtml(product.dn)}</span><span style="color:#34d399;font-weight:700;margin-left:0.5rem;font-size:0.7rem;">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
+              <button data-action="tmEditApply" data-well-idx="${wellIdx}" data-tr-idx="${trIdx}" style="background:#6366f1;border:none;border-radius:5px;padding:0.28rem 0.55rem;color:#fff;font-size:0.7rem;font-weight:600;cursor:pointer;">Zastosuj</button>`;
         }
     }
 }
@@ -1803,7 +1794,7 @@ window.tmUpdatePreview = function () {
         html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:#34d399; font-weight:800;">✅ Zostanie zamienione: ${replaceList.length}</span></div>`;
         html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">';
         replaceList.forEach((l) => {
-            html += `<span style="background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.2); color:#34d399; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${l}</span>`;
+            html += `<span style="background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.2); color:#34d399; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${escapeHtml(l)}</span>`;
         });
         html += '</div>';
     }
@@ -1811,7 +1802,7 @@ window.tmUpdatePreview = function () {
         html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:#f87171; font-weight:800;">⚠️ Brak odpowiednika w ${targetCat}: ${skipList.length}</span></div>`;
         html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">';
         skipList.forEach((l) => {
-            html += `<span style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${l}</span>`;
+            html += `<span style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#f87171; padding:0.1rem 0.4rem; border-radius:4px; font-size:0.72rem;">${escapeHtml(l)}</span>`;
         });
         html += '</div>';
     }
@@ -1946,7 +1937,7 @@ function showSkippedPopup(skippedDetails, targetCat) {
       <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(239,68,68,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:700px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
           <div id="skipped-title" style="font-size:1rem; font-weight:800; color:#f87171;"><i data-lucide="alert-triangle" aria-hidden="true"></i> Pominięte przejścia (${skippedDetails.length})</div>
-          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" aria-label="Zamknij" data-action="closeModal" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
             Poniższe przejścia nie zostały zamienione — w kategorii <strong>${targetCat}</strong> nie istnieje produkt o podanej średnicy.
@@ -1964,13 +1955,132 @@ function showSkippedPopup(skippedDetails, targetCat) {
             <tbody>${rowsHtml}</tbody>
         </table>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.08);">
-            <button class="btn btn-secondary" onclick="closeModal(); window.activatePreviewPanel && window.activatePreviewPanel()" style="font-size:0.8rem; padding:0.4rem 1rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399;">
+            <button class="btn btn-secondary" data-action="closeModalActivatePreview" style="font-size:0.8rem; padding:0.4rem 1rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399;">
                 <i data-lucide="arrow-left"></i> Wróć do menedżera
             </button>
-            <button class="btn btn-secondary" onclick="closeModal()" style="font-size:0.8rem; padding:0.4rem 1.2rem;">Zamknij</button>
+            <button class="btn btn-secondary" data-action="closeModal" style="font-size:0.8rem; padding:0.4rem 1.2rem;">Zamknij</button>
         </div>
       </div>
     `
     });
     if (window.lucide) window.lucide.createIcons();
+}
+
+/* CSP Actions registrations */
+if (typeof registerCspAction === 'function') {
+    registerCspAction('selectRedukcjaChoice', {
+        handler: function ({ dn }) {
+            selectRedukcjaChoice(dn ? parseInt(dn, 10) : null);
+        },
+        params: ['dn']
+    });
+    registerCspAction('tmSortBy', {
+        handler: function ({ column }) {
+            window.tmSortBy(column);
+        },
+        params: ['column']
+    });
+    registerCspAction('tmSelectFilterMaterial', {
+        handler: function ({ filterVal }) {
+            window.tmSelectFilterMaterial(filterVal);
+        },
+        params: ['filterVal']
+    });
+    registerCspAction('tmSelectFilterDn', {
+        handler: function ({ filterVal }) {
+            window.tmSelectFilterDn(filterVal);
+        },
+        params: ['filterVal']
+    });
+    registerCspAction('tmSelectTargetCat', {
+        handler: function ({ category }) {
+            window.tmSelectTargetCat(category);
+        },
+        params: ['category']
+    });
+    registerCspAction('recalcToggleRed', function (t) {
+        window.recalcToggleRed(parseInt(t.dataset.dn, 10));
+    });
+    registerCspAction('tmApplyFilters', tmApplyFilters);
+    registerCspAction('tmToggleSelectAll', tmToggleSelectAll);
+    registerCspAction('tmToggleWell', function (t) {
+        tmToggleWell(parseInt(t.dataset.wellIndex, 10), t.checked);
+    });
+    registerCspAction('showKonusPehdResolver', function () {
+        window.showKonusPehdResolverModal(currentWellIndex);
+    });
+    registerCspAction('handleStycznaProductChoice', {
+        handler: function ({ productId, mode }) {
+            handleStycznaProductChoice(productId, mode);
+        },
+        params: ['productId', 'mode']
+    });
+    registerCspAction('resolveKonusPehd', {
+        handler: function ({ wellIndex, type }) {
+            window.resolveKonusPehd(parseInt(wellIndex, 10), type);
+        },
+        params: ['wellIndex', 'type']
+    });
+    registerCspAction('resolveKonusPehdCancel', function () {
+        var el = document.getElementById('pehd-konus-resolver');
+        if (el) el.remove();
+        if (window.konusResolverCallback) window.konusResolverCallback();
+    });
+    registerCspAction('recalcSelectTop', {
+        handler: function ({ dn, id }) {
+            window.recalcSelectTop(parseInt(dn, 10), id);
+        },
+        params: ['dn', 'id']
+    });
+    registerCspAction('recalcSelectRedTop', {
+        handler: function ({ dn, id }) {
+            window.recalcSelectRedTop(parseInt(dn, 10), id);
+        },
+        params: ['dn', 'id']
+    });
+    registerCspAction('closeGlobalRecalcModal', function () {
+        window.closeGlobalRecalcModal();
+    });
+    registerCspAction('applyGlobalRecalc', function () {
+        window.applyGlobalRecalc();
+    });
+    registerCspAction('closeTransitionManagerModal', function () {
+        window.closeTransitionManagerModal();
+    });
+    registerCspAction('tmApplyChanges', function () {
+        window.tmApplyChanges();
+    });
+    registerCspAction('tmOpenEditTransitionPopup', function (el) {
+        window.tmOpenEditTransitionPopup(
+            parseInt(el.dataset.wellIdx, 10),
+            parseInt(el.dataset.trIdx, 10),
+            el
+        );
+    });
+    registerCspAction('tmToggleTransition', {
+        handler: function ({ key }, el) {
+            window.tmToggleTransition(key, el.checked);
+        },
+        params: ['key']
+    });
+    registerCspAction('closeEditPopup', function (el) {
+        var popup = el.closest('#tm-edit-popup');
+        if (popup) popup.remove();
+    });
+    registerCspAction('tmEditSelectType', function (el) {
+        tmEditSelectType(el, parseInt(el.dataset.wellIdx, 10), parseInt(el.dataset.trIdx, 10));
+    });
+    registerCspAction('tmEditSelectDN', function (el) {
+        tmEditSelectDN(el, parseInt(el.dataset.wellIdx, 10), parseInt(el.dataset.trIdx, 10));
+    });
+    registerCspAction('tmEditApply', {
+        handler: function ({ wellIdx, trIdx }) {
+            tmEditApply(parseInt(wellIdx, 10), parseInt(trIdx, 10));
+        },
+        params: ['wellIdx', 'trIdx']
+    });
+    registerCspAction('closeModalActivatePreview', function () {
+        closeModal();
+        if (window.activatePreviewPanel) window.activatePreviewPanel();
+    });
 }

@@ -390,24 +390,24 @@ function renderSavedOffers() {
         }
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-        <button class="btn btn-sm btn-primary" onclick="loadOffer('${o.id}')" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
-        <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${o.id}')" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
-        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${o.id}')" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-        <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${o.id}')" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${o.id}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
-        <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${o.id}')" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
+        <button class="btn btn-sm btn-primary" data-action="loadOffer" data-offer-id="${o.id}" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
+        <button class="btn btn-sm btn-secondary" data-action="duplicateOffer" data-offer-id="${o.id}" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
+        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistory" data-offer-id="${o.id}" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+        <button class="btn btn-sm btn-secondary" data-action="downloadExistingOffer" data-offer-id="${o.id}" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+        <button class="btn btn-sm btn-secondary" data-action="exportOfferXlsx" data-offer-id="${o.id}" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
+        <button class="btn btn-sm btn-success" data-action="exportOfferPDF" data-offer-id="${o.id}" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
         ${
             _hasOrder
                 ? _orderList
                       .map(
                           (ord) => `
-            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${ord.id}'" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
+            <button class="btn btn-sm" data-action="navigateToOrder" data-order-id="${ord.id}" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${escapeHtml(ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8))}
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'pdf')" style="background:rgba(var(--danger-rgb),0.15); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
+            <button class="btn btn-sm" data-action="exportKartaRury" data-order-id="${ord.id}" data-format="pdf" style="background:rgba(var(--danger-rgb),0.15); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${ord.id}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
+            <button class="btn btn-sm" data-action="exportKartaRury" data-order-id="${ord.id}" data-format="docx" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
                 <i data-lucide="edit"></i> Karta Word
             </button>
         `
@@ -415,7 +415,7 @@ function renderSavedOffers() {
                       .join('')
                 : ''
         }
-        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${o.id}')" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+        <button class="btn btn-sm btn-danger" data-action="deleteOffer" data-offer-id="${o.id}" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
       </div>
     </div>
   `;
@@ -658,7 +658,7 @@ function showOfferHistory(id) {
             <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.2rem;">Różnica do kolejnej wersji:</div>
             ${diffHtml}
             <div style="margin-top:0.6rem;">
-              <button class="btn btn-sm btn-secondary" onclick="restoreOfferVersion('${id}', ${i})">Pobierz do edycji</button>
+              <button class="btn btn-sm btn-secondary" data-action="restoreOfferVersion" data-offer-id="${id}" data-history-index="${i}">Pobierz do edycji</button>
             </div>
           </div>
         </div>
@@ -675,7 +675,7 @@ function showOfferHistory(id) {
     <div class="modal" style="max-width:800px; width:95%; border-radius:12px; max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
         <h3 id="offer-history-title" style="font-weight:700;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia zmian oferty: ${escapeHtml(offer.number)}</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="padding:1rem 0; overflow-y:auto; flex:1;">
         ${historyHtml}
@@ -729,4 +729,57 @@ function restoreOfferVersion(offerId, historyIndex) {
     if (typeof closeModal === 'function') closeModal();
     if (typeof window.showToast === 'function')
         window.showToast('Wersja z historii wczytana', 'success');
+}
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('loadOffer', {
+        handler: function ({ offerId }) {
+            loadOffer(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('duplicateOffer', {
+        handler: function ({ offerId }) {
+            duplicateOffer(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('showOfferHistory', {
+        handler: function ({ offerId }) {
+            showOfferHistory(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('downloadExistingOffer', {
+        handler: function ({ offerId }) {
+            downloadExistingOffer(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('deleteOffer', {
+        handler: function ({ offerId }) {
+            deleteOffer(offerId);
+        },
+        params: ['offerId']
+    });
+    registerCspAction('navigateToOrder', {
+        handler: function ({ orderId }) {
+            window.location.href = 'rury.html?order=' + orderId;
+        },
+        params: ['orderId']
+    });
+    registerCspAction('exportKartaRury', {
+        handler: function ({ orderId, format }) {
+            if (typeof exportKartaDirectRury_action === 'function') {
+                exportKartaDirectRury_action(orderId, format);
+            }
+        },
+        params: ['orderId', 'format']
+    });
+    registerCspAction('restoreOfferVersion', {
+        handler: function ({ offerId, historyIndex }) {
+            restoreOfferVersion(offerId, parseInt(historyIndex, 10));
+        },
+        params: ['offerId', 'historyIndex']
+    });
 }

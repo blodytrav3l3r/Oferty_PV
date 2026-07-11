@@ -23,7 +23,6 @@
 
         <main class="main">
             <div class="section active" id="section-zlecenia">
-
                 <div class="zlecenia-page">
                     <!-- Summary stats -->
                     <div class="zlecenia-stats" id="zlecenia-stats"></div>
@@ -36,21 +35,21 @@
                                 <button
                                     class="zlecenia-filter-tab active"
                                     data-filter="all"
-                                    onclick="AppZlecenia.setFilter('all')"
+                                    data-action="zleceniaSetFilter"
                                 >
                                     Wszystkie
                                 </button>
                                 <button
                                     class="zlecenia-filter-tab"
                                     data-filter="draft"
-                                    onclick="AppZlecenia.setFilter('draft')"
+                                    data-action="zleceniaSetFilter"
                                 >
                                     <i data-lucide="hourglass-2"></i> Oczekujące
                                 </button>
                                 <button
                                     class="zlecenia-filter-tab"
                                     data-filter="accepted"
-                                    onclick="AppZlecenia.setFilter('accepted')"
+                                    data-action="zleceniaSetFilter"
                                 >
                                     <i data-lucide="check-check"></i> Zatwierdzone
                                 </button>
@@ -92,7 +91,7 @@
 
                             <button
                                 class="btn btn-secondary btn-sm"
-                                onclick="AppZlecenia.loadOrders()"
+                                data-action="zleceniaLoadOrders"
                                 title="Odśwież bazę zleceń"
                                 style="flex-shrink: 0"
                             >
@@ -103,18 +102,19 @@
                         <!-- Batch action bar (visible when items selected) -->
                         <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
                             <div class="batch-info">
-                                <i data-lucide="check-check"></i> Zaznaczono: <span class="batch-count">0</span>
+                                <i data-lucide="check-check"></i> Zaznaczono:
+                                <span class="batch-count">0</span>
                             </div>
                             <div class="batch-actions">
                                 <button
                                     class="batch-btn batch-btn-print"
-                                    onclick="AppZlecenia.printBatchZlecenia()"
+                                    data-action="zleceniaPrintBatchZlecenia"
                                 >
                                     <i data-lucide="printer"></i> Drukuj zlecenia
                                 </button>
                                 <button
                                     class="batch-btn batch-btn-label"
-                                    onclick="AppZlecenia.printBatchEtykiety()"
+                                    data-action="zleceniaPrintBatchEtykiety"
                                 >
                                     <i data-lucide="tag"></i> Drukuj etykiety
                                 </button>
@@ -130,7 +130,7 @@
                                             <input
                                                 type="checkbox"
                                                 id="zlecenia-select-all"
-                                                onclick="AppZlecenia.toggleSelectAll(this)"
+                                                data-action="zleceniaToggleSelectAll"
                                                 style="
                                                     cursor: pointer;
                                                     width: 16px;
@@ -182,16 +182,9 @@
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
+        <script src="js/shared/cspActions.js?v=3.0"></script>
         <script src="js/spa/zlecenia.js?v=3.1"></script>
         <script src="js/shared/iconsSlim.js?v=3.1"></script>
-
-        <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> -->
-        <script>
-            if (window.top === window.self) {
-                const module =
-                    location.pathname.split('/').pop().replace(/\.html?$/, '') || 'zlecenia';
-                window.location.replace('/app.html#/' + module);
-            }
-        </script>
-</body>
+        <script src="js/spa/redirectGuard.js?v=3.2"></script>
+    </body>
 </html>

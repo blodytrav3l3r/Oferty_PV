@@ -72,7 +72,7 @@
                             id="connection-dot"
                             title="Sprawdzanie połączenia..."
                         ></span>
-                        <button class="dash-logout-btn" onclick="doLogout()">Wyloguj</button>
+                        <button class="dash-logout-btn" id="dash-logout-btn" type="button">Wyloguj</button>
                     </div>
                 </div>
             </div>
@@ -89,47 +89,21 @@
             <!-- Login Form -->
             <div id="login-section" class="login-box">
                 <h3><i data-lucide="lock"></i> Logowanie</h3>
-                <label
-                    for="login-username"
-                    style="
-                        position: absolute;
-                        width: 1px;
-                        height: 1px;
-                        padding: 0;
-                        margin: -1px;
-                        overflow: hidden;
-                        clip: rect(0, 0, 0, 0);
-                        border: 0;
-                    "
-                    >Login</label
-                >
+                <label for="login-username" class="sr-only">Login</label>
                 <input
                     type="text"
                     id="login-username"
                     placeholder="Login"
                     autocomplete="username"
                 />
-                <label
-                    for="login-password"
-                    style="
-                        position: absolute;
-                        width: 1px;
-                        height: 1px;
-                        padding: 0;
-                        margin: -1px;
-                        overflow: hidden;
-                        clip: rect(0, 0, 0, 0);
-                        border: 0;
-                    "
-                    >Hasło</label
-                >
+                <label for="login-password" class="sr-only">Hasło</label>
                 <input
                     type="password"
                     id="login-password"
                     placeholder="Hasło"
                     autocomplete="current-password"
                 />
-                <button class="login-btn" onclick="doLogin()">Zaloguj się</button>
+                <button class="login-btn" id="login-btn" type="button">Zaloguj się</button>
                 <div class="login-error" id="login-error"></div>
             </div>
 
@@ -148,10 +122,10 @@
                         <a href="app.html#/kartoteka" class="btn-hero btn-accent"
                             ><i data-lucide="folder-open"></i> Kartoteka</a
                         >
-                        <button class="btn-hero" onclick="showChangePassword()">
+                        <button class="btn-hero" id="change-password-btn" type="button">
                             <i data-lucide="key"></i> Hasło
                         </button>
-                        <button class="btn-hero btn-hero-danger" onclick="doLogout()">
+                        <button class="btn-hero btn-hero-danger" id="dash-logout-btn2" type="button">
                             <i data-lucide="log-out"></i> Wyloguj
                         </button>
                     </div>
@@ -216,19 +190,16 @@
                     </div>
 
                     <div class="admin-card system-card">
-                        <div style="display: flex; align-items: center; gap: 0.75rem">
-                            <span style="font-size: 1.5rem"><i data-lucide="calendar"></i></span>
-                            <div
-                                class="admin-title-group"
-                                style="font-size: 0.85rem; font-weight: 800"
-                            >
+                        <div class="admin-flex-row">
+                            <span class="admin-icon-lg"><i data-lucide="calendar"></i></span>
+                            <div class="admin-title-group admin-title-group-text">
                                 Litera roku:
                                 <span id="year-letter-preview" class="token-badge sysconfig-preview"
                                     >-</span
                                 >
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.6rem">
+                        <div class="admin-flex-row-sm">
                             <span id="year-letter-year" class="sysconfig-year"></span>
                             <input
                                 type="text"
@@ -236,11 +207,7 @@
                                 maxlength="1"
                                 class="sysconfig-input"
                             />
-                            <button
-                                class="btn-hero btn-accent"
-                                onclick="saveYearLetter()"
-                                style="padding: 0.4rem 1rem"
-                            >
+                            <button class="btn-hero btn-accent admin-btn-sm" id="year-letter-save-btn" type="button">
                                 Zapisz
                             </button>
                         </div>
@@ -305,7 +272,10 @@
 
                     <div class="admin-section-title">
                         <div class="admin-title-group">
-                            <h3><i data-lucide="user-plus"></i> <span id="form-heading">Nowy użytkownik</span></h3>
+                            <h3>
+                                <i data-lucide="user-plus"></i>
+                                <span id="form-heading">Nowy użytkownik</span>
+                            </h3>
                         </div>
                     </div>
 
@@ -314,38 +284,74 @@
                             <div class="uf-form">
                                 <!-- Dane osobowe -->
                                 <div class="uf-section">
-                                    <div class="uf-section-title"><i data-lucide="contact"></i> Dane osobowe</div>
+                                    <div class="uf-section-title">
+                                        <i data-lucide="contact"></i> Dane osobowe
+                                    </div>
                                     <div class="uf-grid">
                                         <div class="uf-field">
                                             <label for="new-user-firstname">Imię</label>
-                                            <input type="text" id="new-user-firstname" placeholder="Imię" class="glass-input" />
+                                            <input
+                                                type="text"
+                                                id="new-user-firstname"
+                                                placeholder="Imię"
+                                                class="glass-input"
+                                            />
                                         </div>
                                         <div class="uf-field">
                                             <label for="new-user-lastname">Nazwisko</label>
-                                            <input type="text" id="new-user-lastname" placeholder="Nazwisko" class="glass-input" />
+                                            <input
+                                                type="text"
+                                                id="new-user-lastname"
+                                                placeholder="Nazwisko"
+                                                class="glass-input"
+                                            />
                                         </div>
                                         <div class="uf-field">
                                             <label for="new-user-symbol">Symbol</label>
-                                            <input type="text" id="new-user-symbol" placeholder="Sym." title="Symbol w numeracji" class="glass-input" />
+                                            <input
+                                                type="text"
+                                                id="new-user-symbol"
+                                                placeholder="Sym."
+                                                title="Symbol w numeracji"
+                                                class="glass-input"
+                                            />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Dostęp -->
                                 <div class="uf-section">
-                                    <div class="uf-section-title"><i data-lucide="key-round"></i> Dostęp</div>
+                                    <div class="uf-section-title">
+                                        <i data-lucide="key-round"></i> Dostęp
+                                    </div>
                                     <div class="uf-grid">
                                         <div class="uf-field">
                                             <label for="new-user-login">Login</label>
-                                            <input type="text" id="new-user-login" placeholder="Login" autocomplete="username" class="glass-input" />
+                                            <input
+                                                type="text"
+                                                id="new-user-login"
+                                                placeholder="Login"
+                                                autocomplete="username"
+                                                class="glass-input"
+                                            />
                                         </div>
                                         <div class="uf-field">
                                             <label for="new-user-password">Hasło</label>
-                                            <input type="password" id="new-user-password" placeholder="Hasło" autocomplete="new-password" class="glass-input" />
+                                            <input
+                                                type="password"
+                                                id="new-user-password"
+                                                placeholder="Hasło"
+                                                autocomplete="new-password"
+                                                class="glass-input"
+                                            />
                                         </div>
                                         <div class="uf-field">
                                             <label for="new-user-role">Rola</label>
-                                            <select id="new-user-role" onchange="toggleSubUsersList()" class="glass-input">
+                                            <select
+                                                id="new-user-role"
+                                                
+                                                class="glass-input"
+                                            >
                                                 <option value="user">USER</option>
                                                 <option value="pro">PRO</option>
                                                 <option value="admin">ADMIN</option>
@@ -354,37 +360,72 @@
                                     </div>
 
                                     <div id="sub-users-container" class="hidden sub-users-compact">
-                                        <span class="sub-users-title"><i data-lucide="link"></i> Przypisani:</span>
-                                        <div id="sub-users-list" class="sub-users-list-compact"></div>
+                                        <span class="sub-users-title"
+                                            ><i data-lucide="link"></i> Przypisani:</span
+                                        >
+                                        <div
+                                            id="sub-users-list"
+                                            class="sub-users-list-compact"
+                                        ></div>
                                     </div>
                                 </div>
 
                                 <!-- Kontakt -->
                                 <div class="uf-section">
-                                    <div class="uf-section-title"><i data-lucide="mail"></i> Kontakt</div>
+                                    <div class="uf-section-title">
+                                        <i data-lucide="mail"></i> Kontakt
+                                    </div>
                                     <div class="uf-grid cols-2">
                                         <div class="uf-field">
                                             <label for="new-user-email">Email</label>
-                                            <input type="email" id="new-user-email" placeholder="Email" class="glass-input" />
+                                            <input
+                                                type="email"
+                                                id="new-user-email"
+                                                placeholder="Email"
+                                                class="glass-input"
+                                            />
                                         </div>
                                         <div class="uf-field">
                                             <label for="new-user-phone">Telefon</label>
-                                            <input type="text" id="new-user-phone" placeholder="Telefon" class="glass-input" />
+                                            <input
+                                                type="text"
+                                                id="new-user-phone"
+                                                placeholder="Telefon"
+                                                class="glass-input"
+                                            />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Numeracja -->
                                 <div class="uf-section">
-                                    <div class="uf-section-title"><i data-lucide="hash"></i> Numeracja</div>
+                                    <div class="uf-section-title">
+                                        <i data-lucide="hash"></i> Numeracja
+                                    </div>
                                     <div class="uf-grid cols-2">
                                         <div class="uf-field">
-                                            <label for="new-user-order-start">Nr Zamówień (start)</label>
-                                            <input type="number" id="new-user-order-start" value="1" title="Start Zamówień" class="glass-input" />
+                                            <label for="new-user-order-start"
+                                                >Nr Zamówień (start)</label
+                                            >
+                                            <input
+                                                type="number"
+                                                id="new-user-order-start"
+                                                value="1"
+                                                title="Start Zamówień"
+                                                class="glass-input"
+                                            />
                                         </div>
                                         <div class="uf-field">
-                                            <label for="new-user-prod-order-start">Nr Zleceń (start)</label>
-                                            <input type="number" id="new-user-prod-order-start" value="1" title="Start Zleceń" class="glass-input" />
+                                            <label for="new-user-prod-order-start"
+                                                >Nr Zleceń (start)</label
+                                            >
+                                            <input
+                                                type="number"
+                                                id="new-user-prod-order-start"
+                                                value="1"
+                                                title="Start Zleceń"
+                                                class="glass-input"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -394,10 +435,18 @@
                                 <span id="form-mode-label" class="admin-edit-badge hidden">
                                     <i data-lucide="pencil"></i> TRYB EDYCJI
                                 </span>
-                                <button id="add-user-btn" class="btn-hero btn-accent" onclick="createUser()">
+                                <button
+                                    id="add-user-btn"
+                                    class="btn-hero btn-accent"
+                                    type="button"
+                                >
                                     <i data-lucide="plus"></i> Dodaj
                                 </button>
-                                <button id="cancel-edit-btn" class="btn-hero btn-hero-cancel hidden" onclick="cancelEditUser()">
+                                <button
+                                    id="cancel-edit-btn"
+                                    class="btn-hero btn-hero-cancel hidden"
+                                    type="button"
+                                >
                                     Anuluj
                                 </button>
                             </div>
@@ -425,6 +474,7 @@
         <div class="footer">WITROS © 2026 • Generator Ofert</div>
 
         <script src="js/shared/ui.js?v=3.2"></script>
+        <script src="js/shared/cspActions.js?v=3.0"></script>
         <script src="js/shared/dashboard.js?v=3.2"></script>
         <script src="js/shared/iconsSlim.js?v=3.2"></script>
         <script src="js/admin/aiDashboard.js?v=3.2"></script>

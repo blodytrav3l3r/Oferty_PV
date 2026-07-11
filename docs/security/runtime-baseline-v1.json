@@ -1,0 +1,48 @@
+{
+    "baselineVersion": "runtime-v1",
+    "createdAt": "2026-07-11T16:00:17.266Z",
+    "sprint": "3.5A",
+    "inventory": {
+        "pending": 0,
+        "verified": 50,
+        "migrated": 299,
+        "ignored": 0,
+        "total": 349
+    },
+    "runtimeDisposition": {
+        "inlineHtml": 349,
+        "requiresRuntime": 0,
+        "safe": 0,
+        "falsePositive": 0
+    },
+    "dispatcher": {
+        "registeredActions": 106,
+        "undocumentedActions": 114,
+        "contractCoverage": 48
+    },
+    "templateScan": {
+        "sinkPoints": 243,
+        "inlineHandlerWarnings": 16,
+        "check6Mode": "warning"
+    },
+    "securityPolicy": {
+        "enforce": {
+            "scriptSrc": ["'self'", "'unsafe-inline'"],
+            "mode": "current-production"
+        },
+        "reportOnly": {
+            "scriptSrc": ["'self'"],
+            "mode": "future-target",
+            "removesUnsafeInline": true
+        }
+    },
+    "fileHashes": {
+        "cspActionsJs": "eb684159aff3",
+        "generateCspInventoryMjs": "eab5cf2962e6",
+        "securityTs": "ee0262a443bb",
+        "appTs": "bd77d789baa7",
+        "cspReportTs": "ac54fc7456ae",
+        "testCspGateMjs": "1fb7b8a660b4"
+    },
+    "purpose": "Pre CSP Report-Only observation baseline"
+}

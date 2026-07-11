@@ -1,0 +1,251 @@
+{
+    "meta": {
+        "version": 1,
+        "created": "2026-07-11",
+        "purpose": "Contract tests for CSP regression gate (--check mode)"
+    },
+    "scenarios": [
+        {
+            "name": "clean-run-passes",
+            "description": "Czysty przebieg: zmigrowane handlery poza raw-handlers.txt, żaden VERIFIED nie wrócił, żaden nowy handler nie powstał",
+            "v2Baseline": [
+                { "fingerprint": "aaa111", "status": "VERIFIED" },
+                { "fingerprint": "bbb222", "status": "VERIFIED" },
+                { "fingerprint": "ccc333", "status": "PENDING" }
+            ],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                },
+                {
+                    "fingerprint": "bbb222",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                },
+                {
+                    "fingerprint": "ccc333",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "REAL_CSP_HANDLER",
+                    "status": "PENDING",
+                    "file": "ok.js",
+                    "line": 10
+                }
+            ],
+            "expectedExit": 0,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 0
+        },
+        {
+            "name": "reintroduced-verified-fails",
+            "description": "VERIFIED fingerprint pojawia się ponownie jako realny inline handler → FAIL Check 2 (REINTRODUCTION)",
+            "v2Baseline": [
+                { "fingerprint": "aaa111", "status": "VERIFIED" },
+                { "fingerprint": "ddd444", "status": "PENDING" }
+            ],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "REAL_CSP_HANDLER",
+                    "status": "PENDING",
+                    "file": "reverted.js",
+                    "line": 42
+                },
+                {
+                    "fingerprint": "ddd444",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "REAL_CSP_HANDLER",
+                    "status": "PENDING",
+                    "file": "normal.js",
+                    "line": 5
+                }
+            ],
+            "expectedExit": 1,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 1
+        },
+        {
+            "name": "new-inline-handler-fails",
+            "description": "Nowy fingerprint spoza v2 baseline jako INLINE_HTML_HANDLER → FAIL Check 1 (NEW DEBT)",
+            "v2Baseline": [{ "fingerprint": "aaa111", "status": "VERIFIED" }],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                },
+                {
+                    "fingerprint": "zzz999",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "REAL_CSP_HANDLER",
+                    "status": "PENDING",
+                    "file": "newCode.js",
+                    "line": 66
+                }
+            ],
+            "expectedExit": 1,
+            "expectedCheck1New": 1,
+            "expectedCheck2Reverted": 0
+        },
+        {
+            "name": "both-failures-together",
+            "description": "Nowy handler i reintroduced handler jednocześnie → FAIL na obu checkach",
+            "v2Baseline": [
+                { "fingerprint": "aaa111", "status": "VERIFIED" },
+                { "fingerprint": "eee555", "status": "VERIFIED" }
+            ],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                },
+                {
+                    "fingerprint": "eee555",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "REAL_CSP_HANDLER",
+                    "status": "PENDING",
+                    "file": "reverted.js",
+                    "line": 15
+                },
+                {
+                    "fingerprint": "zzz999",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "REAL_CSP_HANDLER",
+                    "status": "PENDING",
+                    "file": "newCode.js",
+                    "line": 66
+                }
+            ],
+            "expectedExit": 1,
+            "expectedCheck1New": 1,
+            "expectedCheck2Reverted": 1
+        },
+        {
+            "name": "migrated-entry-not-false-positive",
+            "description": "VERIFIED fingerprint z v2 ale entry ma classification/status MIGRATED → NIE jest reintroduction (to preserved entry), nie jest nowym handlerem",
+            "v2Baseline": [{ "fingerprint": "aaa111", "status": "VERIFIED" }],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                }
+            ],
+            "expectedExit": 0,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 0
+        },
+        {
+            "name": "baseline-v1-compat",
+            "description": "Wersja z v1 baseline (array zamiast {meta, entries}) — backward compatibility",
+            "v2Baseline": [{ "fingerprint": "aaa111", "status": "VERIFIED" }],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                }
+            ],
+            "expectedExit": 0,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 0
+        },
+        {
+            "name": "unknown-action-fails",
+            "description": "data-action w kodzie nie ma kontraktu → FAIL Check 3",
+            "v2Baseline": [],
+            "currentEntries": [],
+            "contracts": {
+                "actions": {
+                    "closeModal": {
+                        "description": "Close modal",
+                        "params": [],
+                        "handler": "closeModal"
+                    }
+                }
+            },
+            "actionUsage": {
+                "closeModal": { "src": ["register"] },
+                "unknownAction": { "src": ["html"] }
+            },
+            "expectedExit": 1,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 0,
+            "expectedCheck3Unknown": 1
+        },
+        {
+            "name": "legacy-action-doesnt-fail",
+            "description": "data-action z handledBy:legacy → NIE jest nieznane, PASS",
+            "v2Baseline": [],
+            "currentEntries": [],
+            "contracts": {
+                "actions": {
+                    "closeModal": {
+                        "description": "Close modal",
+                        "params": [],
+                        "handler": "closeModal"
+                    },
+                    "legacyAction": {
+                        "description": "Legacy action",
+                        "params": [],
+                        "handler": "legacyHandler",
+                        "handledBy": "legacy"
+                    }
+                }
+            },
+            "actionUsage": {
+                "closeModal": { "src": ["register"] },
+                "legacyAction": { "src": ["html"] }
+            },
+            "expectedExit": 0,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 0,
+            "expectedCheck3Unknown": 0
+        },
+        {
+            "name": "all-three-checks-pass",
+            "description": "Migracja OK, reintroduction 0, unknown actions 0 → PASS",
+            "v2Baseline": [{ "fingerprint": "aaa111", "status": "VERIFIED" }],
+            "currentEntries": [
+                {
+                    "fingerprint": "aaa111",
+                    "classification": "INLINE_HTML_HANDLER",
+                    "subclassification": "MIGRATED",
+                    "status": "VERIFIED",
+                    "file": "migrated"
+                }
+            ],
+            "contracts": {
+                "actions": {
+                    "closeModal": {
+                        "description": "Close modal",
+                        "params": [],
+                        "handler": "closeModal"
+                    }
+                }
+            },
+            "actionUsage": {
+                "closeModal": { "src": ["register", "html"] }
+            },
+            "expectedExit": 0,
+            "expectedCheck1New": 0,
+            "expectedCheck2Reverted": 0,
+            "expectedCheck3Unknown": 0
+        }
+    ]
+}

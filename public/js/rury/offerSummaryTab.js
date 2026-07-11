@@ -139,7 +139,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         `<div class="table-wrap table-wrap-scroll"><table style="width:100%; table-layout:auto;">
       <thead>
         <tr>
-          <th style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" onchange="toggleAllOfferSummaryForOrder(this.checked)" style="cursor:pointer;width:16px;height:16px"></th>
+          <th style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" data-action="toggleAllOfferSummaryForOrder" style="cursor:pointer;width:16px;height:16px"></th>
           <th style="width:1%; min-width:36px; text-align:center; white-space:nowrap;">Lp.</th>
           <th style="min-width:200px; max-width:320px; white-space:nowrap;">Produkt</th>
           <th style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena jedn.</th>
@@ -221,10 +221,11 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const summDiamRaw = getProductDiameter(item.productId) || 0;
         const summDiamAttr = summDiamRaw > 0 ? `data-diameter="${summDiamRaw}"` : '';
         const summAutoClass = item.autoAdded ? ' offer-summary-auto' : '';
-        const summPipeHandler = item.autoAdded ? '' : ' onPipeCheckboxChange(this);';
+        const checkChangeAction = 'data-action="offerSummaryCheckboxChange"';
+        const autoAttr = item.autoAdded ? ' data-auto-added' : '';
         const summaryCheckboxCell = isOrdered
             ? '<td class="text-center"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>'
-            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" style="cursor:pointer;width:16px;height:16px"></td>`;
+            : `<td class="text-center"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} ${checkChangeAction}${autoAttr} style="cursor:pointer;width:16px;height:16px"></td>`;
 
         let offerCell = '';
         let diffCell = '';
@@ -319,3 +320,20 @@ window.updateOfferSummarySelectionCount = function () {
 
 // Udostępnij globalnie
 window.renderOfferSummaryTab = renderOfferSummaryTab;
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('toggleAllOfferSummaryForOrder', function (t) {
+        toggleAllOfferSummaryForOrder(t.checked);
+    });
+    registerCspAction('offerSummaryCheckboxChange', function (t) {
+        updateOfferSummarySelectionCount();
+        if (t.dataset.autoAdded === undefined) {
+            onPipeCheckboxChange(t);
+        }
+    });
+}
+document.addEventListener('click', function (e) {
+    if (e.target.closest('.offer-summary-checkbox')) {
+        e.stopPropagation();
+    }
+});

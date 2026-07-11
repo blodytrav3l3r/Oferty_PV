@@ -136,9 +136,9 @@ function renderStudniePriceList() {
 
     let html = `<div class="table-wrap">
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
-        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" onclick="recalculatePEHD()" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-left:0.3rem;">Przelicz</button></div>` : ''}
-        ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
-        <button class="btn btn-secondary" onclick="addStudnieElement()" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
+        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-left:0.3rem;">Przelicz</button></div>` : ''}
+        ${isPrzejscia ? `<button class="btn btn-secondary" data-action="addPrzejsciaCategory" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" data-action="addStudnieCategory" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
+        <button class="btn btn-secondary" data-action="addStudnieElement" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
         ${isKinety ? `<button class="btn btn-secondary" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne." style="font-size:0.8rem; padding:0.4rem 0.8rem; opacity:0.5; cursor:not-allowed;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
     </div>
     <table style="table-layout: fixed; width: 100%;">
@@ -208,9 +208,9 @@ function renderStudniePriceList() {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(99,102,241,0.06); font-size:0.85rem;">
             <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
-              <button class="btn-icon" title="Dodaj element do tej kategorii" aria-label="Dodaj element" onclick="addStudnieElement('${groupKey.replace(/'/g, "\\'")}')"
+              <button class="btn-icon" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group-key="${groupKey.replace(/'/g, "\\'")}"
                 style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="plus" aria-hidden="true"></i></button>
-              <button class="btn-icon del" title="Usuń całą kategorię" aria-label="Usuń kategorię" onclick="deleteStudnieCategory('${groupKey.replace(/'/g, "\\'")}')"
+              <button class="btn-icon del" title="Usuń całą kategorię" aria-label="Usuń kategorię" data-action="deleteStudnieCategory" data-group-key="${groupKey.replace(/'/g, "\\'")}"
                 style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="trash-2" aria-hidden="true"></i></button>
             </div>
           </div>
@@ -228,58 +228,58 @@ function renderStudniePriceList() {
 
         items.forEach((p) => {
             html += `<tr>
-        <td onclick="editStudnieCell(this,'id','${p.id}')" style="cursor:pointer; font-size:0.78rem; color:var(--text-muted);">${p.id}</td>
-        <td onclick="editStudnieCell(this,'name','${p.id}')" style="cursor:pointer; font-weight:500;">${p.name}</td>`;
+        <td data-action="editStudnieCell" data-field="id" data-id="${p.id}" style="cursor:pointer; font-size:0.78rem; color:var(--text-muted);">${p.id}</td>
+        <td data-action="editStudnieCell" data-field="name" data-id="${p.id}" style="cursor:pointer; font-weight:500;">${p.name}</td>`;
 
             if (isPrzejscia) {
                 html += `
-        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" onclick="editStudnieCell(this,'dn','${p.id}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'weight','${p.id}')" class="ui-pointer-bold">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasDol','${p.id}')" style="cursor:pointer;">${p.zapasDol != null ? fmtInt(p.zapasDol) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasGora','${p.id}')" style="cursor:pointer;">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasDolMin','${p.id}')" style="cursor:pointer; color:#fbbf24;">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasGoraMin','${p.id}')" style="cursor:pointer; color:#fbbf24;">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'active','${p.id}')" style="cursor:pointer; font-weight:700; color:${p.active !== 0 ? '#34d399' : '#f87171'};">${p.active !== 0 ? '1' : '0'}</td>
+        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" data-action="editStudnieCell" data-field="dn" data-id="${p.id}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="weight" data-id="${p.id}" class="ui-pointer-bold">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasDol" data-id="${p.id}" style="cursor:pointer;">${p.zapasDol != null ? fmtInt(p.zapasDol) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasGora" data-id="${p.id}" style="cursor:pointer;">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasDolMin" data-id="${p.id}" style="cursor:pointer; color:#fbbf24;">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasGoraMin" data-id="${p.id}" style="cursor:pointer; color:#fbbf24;">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="active" data-id="${p.id}" style="cursor:pointer; font-weight:700; color:${p.active !== 0 ? '#34d399' : '#f87171'};">${p.active !== 0 ? '1' : '0'}</td>
                `;
             } else if (isKinety) {
                 html += `
-        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" onclick="editStudnieCell(this,'dn','${p.id}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'spocznikH','${p.id}')" class="ui-pointer-bold">${p.spocznikH || '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'area','${p.id}')" class="ui-pointer-bold">${p.area != null ? fmt(p.area) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMin1','${p.id}')" class="ui-pointer-bold">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMax1','${p.id}')" class="ui-pointer-bold">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'cena1','${p.id}')" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMin2','${p.id}')" class="ui-pointer-bold">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMax2','${p.id}')" class="ui-pointer-bold">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'cena2','${p.id}')" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMin3','${p.id}')" class="ui-pointer-bold">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMax3','${p.id}')" class="ui-pointer-bold">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'cena3','${p.id}')" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
+        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" data-action="editStudnieCell" data-field="dn" data-id="${p.id}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="spocznikH" data-id="${p.id}" class="ui-pointer-bold">${p.spocznikH || '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="area" data-id="${p.id}" class="ui-pointer-bold">${p.area != null ? fmt(p.area) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMin1" data-id="${p.id}" class="ui-pointer-bold">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMax1" data-id="${p.id}" class="ui-pointer-bold">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="cena1" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMin2" data-id="${p.id}" class="ui-pointer-bold">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMax2" data-id="${p.id}" class="ui-pointer-bold">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="cena2" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMin3" data-id="${p.id}" class="ui-pointer-bold">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMax3" data-id="${p.id}" class="ui-pointer-bold">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="cena3" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
                 `;
             } else {
                 html += `
-        <td class="text-right" onclick="editStudnieCell(this,'height','${p.id}')" style="cursor:pointer; font-weight:600; color:#818cf8;">${p.height != null ? fmtInt(p.height) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'weight','${p.id}')" style="cursor:pointer;">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'area','${p.id}')" style="cursor:pointer;">${p.area != null ? fmt(p.area) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'areaExt','${p.id}')" style="cursor:pointer;">${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'transport','${p.id}')" style="cursor:pointer;">${p.transport != null ? fmtInt(p.transport) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="height" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:#818cf8;">${p.height != null ? fmtInt(p.height) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="weight" data-id="${p.id}" style="cursor:pointer;">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="area" data-id="${p.id}" style="cursor:pointer;">${p.area != null ? fmt(p.area) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="areaExt" data-id="${p.id}" style="cursor:pointer;">${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="transport" data-id="${p.id}" style="cursor:pointer;">${p.transport != null ? fmtInt(p.transport) : '—'}</td>
         <td class="text-right" style="color:var(--success);">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' ? '+' + fmtInt(Math.round(p.area * currentPehdPrice)) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'malowanieWewnetrzne','${p.id}')" style="cursor:pointer; color:var(--success);">${p.malowanieWewnetrzne != null ? '+' + fmtInt(p.malowanieWewnetrzne) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'malowanieZewnetrzne','${p.id}')" style="cursor:pointer; color:var(--success);">${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
-        <td class="text-right" ${p.componentType === 'dennica' ? `onclick="editStudnieCell(this,'doplataZelbet','${p.id}')" style="cursor:pointer; color:var(--success);"` : `class="ui-text-mute"`}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'doplataDrabNierdzewna','${p.id}')" style="cursor:pointer; color:var(--success);">${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'magazynWL','${p.id}')" style="cursor:pointer; font-weight:700; color:${p.magazynWL === 1 ? '#34d399' : '#f87171'};">${p.magazynWL === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'magazynKLB','${p.id}')" style="cursor:pointer; font-weight:700; color:${p.magazynKLB === 1 ? '#34d399' : '#f87171'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowa','${p.id}')" style="cursor:pointer; font-weight:700; color:${p.formaStandardowa === 1 ? '#34d399' : '#f87171'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowaKLB','${p.id}')" style="cursor:pointer; font-weight:700; color:${p.formaStandardowaKLB === 1 ? '#34d399' : '#f87171'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="malowanieWewnetrzne" data-id="${p.id}" style="cursor:pointer; color:var(--success);">${p.malowanieWewnetrzne != null ? '+' + fmtInt(p.malowanieWewnetrzne) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="malowanieZewnetrzne" data-id="${p.id}" style="cursor:pointer; color:var(--success);">${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
+        <td class="text-right" ${p.componentType === 'dennica' ? `data-action="editStudnieCell" data-field="doplataZelbet" data-id="${p.id}" style="cursor:pointer; color:var(--success);"` : `class="ui-text-mute"`}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="doplataDrabNierdzewna" data-id="${p.id}" style="cursor:pointer; color:var(--success);">${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="magazynWL" data-id="${p.id}" style="cursor:pointer; font-weight:700; color:${p.magazynWL === 1 ? '#34d399' : '#f87171'};">${p.magazynWL === 1 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="magazynKLB" data-id="${p.id}" style="cursor:pointer; font-weight:700; color:${p.magazynKLB === 1 ? '#34d399' : '#f87171'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="formaStandardowa" data-id="${p.id}" style="cursor:pointer; font-weight:700; color:${p.formaStandardowa === 1 ? '#34d399' : '#f87171'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="formaStandardowaKLB" data-id="${p.id}" style="cursor:pointer; font-weight:700; color:${p.formaStandardowaKLB === 1 ? '#34d399' : '#f87171'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
                `;
             }
 
             html += `
-        <td class="text-right" onclick="editStudnieCell(this,'price','${p.id}')" style="cursor:pointer; font-weight:700; color:var(--success);">${fmtInt(p.price)}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="price" data-id="${p.id}" style="cursor:pointer; font-weight:700; color:var(--success);">${fmtInt(p.price)}</td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyStudnieProduct('${p.id}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteStudnieProduct('${p.id}')"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyStudnieProduct" data-id="${p.id}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteStudnieProduct" data-id="${p.id}"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });
@@ -653,9 +653,9 @@ function showAddStudnieProductModal() {
     overlay.setAttribute('aria-modal', 'true');
     overlay.innerHTML = `
     <div class="modal">
-      <div class="modal-header"><h3><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      <div class="modal-header"><h3><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</h3><button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
-        <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map((c) => `<option value="${c}">${c}</option>`).join('')}</select>
+        <select class="form-select" id="np-category" data-action="togglePrzejsciaFields">${CATEGORIES_STUDNIE.map((c) => `<option value="${c}">${c}</option>`).join('')}</select>
         <input type="text" class="form-input" id="np-custom-category" placeholder="Nazwa nowej kategorii (np. W + PVC)" style="display:none; margin-top:0.5rem;" list="przejscia-cats-list">
         <datalist id="przejscia-cats-list">
             ${[
@@ -698,8 +698,8 @@ function showAddStudnieProductModal() {
         <div class="form-group"><label class="form-label">Zapas góra min mm</label><input class="form-input" id="np-zapasGoraMin" type="number" value="150"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="addStudnieProduct()">Dodaj element</button>
+        <button class="btn btn-secondary" data-action="closeModal">Anuluj</button>
+        <button class="btn btn-primary" data-action="addStudnieProduct">Dodaj element</button>
       </div>
     </div>`;
     document.body.appendChild(overlay);
@@ -1381,11 +1381,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Sprawdzenie autoryzacji
-    const token = getAuthToken();
-    if (!token) {
-        window.location.href = 'index.html';
-        return;
-    }
     try {
         const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
         const authData = await authRes.json();
@@ -1561,7 +1556,7 @@ function renderPrecoPriceList() {
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
         container.innerHTML =
-            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
+            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" data-action="loadPrecoDefaults" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
         return;
     }
 
@@ -1569,10 +1564,10 @@ function renderPrecoPriceList() {
 
     let html = `
     <div style="padding:0.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
-        <button class="btn btn-secondary" onclick="loadPrecoDefaults()" class="pill-sm">
+        <button class="btn btn-secondary" data-action="loadPrecoDefaults" class="pill-sm">
             <i data-lucide="refresh-cw" aria-hidden="true"></i> Załaduj domyślne
         </button>
-        <button class="btn btn-primary" onclick="savePrecoFromUI()" class="pill-sm">
+        <button class="btn btn-primary" data-action="savePrecoFromUI" class="pill-sm">
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
     </div>`;
@@ -1587,7 +1582,7 @@ function renderPrecoPriceList() {
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
         html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius:8px; overflow:hidden;">`;
-        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(244,63,94,0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:#f43f5e;">`;
+        html += `<div data-action="togglePrecoAccordion" data-dn="${dn}" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(244,63,94,0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:#f43f5e;">`;
         html += `<span><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
         html += `<span style="font-size:0.7rem; color:var(--text-muted);">${data.kinety.length} pozycji</span>`;
         html += `</div>`;
@@ -1596,7 +1591,7 @@ function renderPrecoPriceList() {
         // Tabela kinet
         html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">`;
         html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">Kinety — cena prosta / dod. wlot</div>`;
-        html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoKinetaRow(${dn})" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
+        html += `<button class="btn btn-secondary btn-sm" data-action="addPrecoKinetaRow" data-dn="${dn}" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
         html += `</div>`;
         html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>
             <th style="width:20%;">DN rury</th>
@@ -1609,7 +1604,7 @@ function renderPrecoPriceList() {
                 <td style="font-weight:600; color:#818cf8;"><input type="number" class="edit-input" style="width:100px;" value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.prosta}" data-preco-field="kinety.${i}.prosta" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.dodWlot}" data-preco-field="kinety.${i}.dodWlot" data-preco-dn="${dn}"></td>
-                <td class="text-center"><button class="btn-icon del" onclick="removePrecoKinetaRow(${dn}, ${i})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>
+                <td class="text-center"><button class="btn-icon del" data-action="removePrecoKinetaRow" data-dn="${dn}" data-index="${i}" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>
             </tr>`;
         });
         html += `</tbody></table>`;
@@ -1674,7 +1669,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
 
     let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0 0.3rem;">`;
     html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">${title}</div>`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoRangeRow(${dn}, '${fieldBase}')" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
+    html += `<button class="btn btn-secondary btn-sm" data-action="addPrecoRangeRow" data-dn="${dn}" data-field-base="${fieldBase}" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
     html += `</div>`;
 
     html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>`;
@@ -1683,14 +1678,14 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
         html += `<th style="padding:0.2rem 0.5rem;">
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
                 <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
-                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${g}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', '${g}', this.value)" title="Edytuj nazwę grupy">
-                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${g}')" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
+                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${g}" data-action="updatePrecoGrupaKey" data-dn="${dn}" data-field-base="${fieldBase}" data-old-key="${g}" title="Edytuj nazwę grupy">
+                <button class="btn-icon del" data-action="removePrecoGrupaCol" data-dn="${dn}" data-field-base="${fieldBase}" data-g="${g}" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
         </th>`;
     });
     html += `<th class="text-center" style="width:15%;">
         <div style="display:flex; justify-content:center; align-items:center; gap:0.3rem;">
-            <button class="btn btn-secondary btn-sm" onclick="addPrecoGrupaCol(${dn}, '${fieldBase}')" style="padding:0.1rem 0.3rem;" title="Dodaj grupę DN"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i></button>
+            <button class="btn btn-secondary btn-sm" data-action="addPrecoGrupaCol" data-dn="${dn}" data-field-base="${fieldBase}" style="padding:0.1rem 0.3rem;" title="Dodaj grupę DN"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i></button>
             <span>Akcje</span>
         </div>
     </th>`;
@@ -1708,7 +1703,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
             grupyKeys.forEach((g) => {
                 html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${g}" data-preco-dn="${dn}"></td>`;
             });
-            html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;
+            html += `<td class="text-center"><button class="btn-icon del" data-action="removePrecoRangeRow" data-dn="${dn}" data-field-base="${fieldBase}" data-index="${ri}" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;
             html += `</tr>`;
         });
     } else {
@@ -1872,4 +1867,98 @@ async function loadPrecoDefaults() {
         logger.error('pricelistManager', 'Błąd ładowania cennika PRECO:', e);
         showToast('Błąd sieci przy ładowaniu cennika PRECO', 'error');
     }
+}
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('recalculatePEHD', window.recalculatePEHD);
+    registerCspAction('addPrzejsciaCategory', addPrzejsciaCategory);
+    registerCspAction('addStudnieCategory', addStudnieCategory);
+    registerCspAction('addStudnieElement', {
+        handler: function ({ groupKey }) {
+            addStudnieElement(groupKey);
+        },
+        params: ['groupKey']
+    });
+    registerCspAction('deleteStudnieCategory', {
+        handler: function ({ groupKey }) {
+            deleteStudnieCategory(groupKey);
+        },
+        params: ['groupKey']
+    });
+    registerCspAction('copyStudnieProduct', {
+        handler: function ({ id }) {
+            copyStudnieProduct(id);
+        },
+        params: ['id']
+    });
+    registerCspAction('deleteStudnieProduct', {
+        handler: function ({ id }) {
+            deleteStudnieProduct(id);
+        },
+        params: ['id']
+    });
+    registerCspAction('togglePrzejsciaFields', window.togglePrzejsciaFields);
+    registerCspAction('addStudnieProduct', addStudnieProduct);
+    registerCspAction('loadPrecoDefaults', loadPrecoDefaults);
+    registerCspAction('savePrecoFromUI', savePrecoFromUI);
+    registerCspAction('addPrecoKinetaRow', {
+        handler: function ({ dn }) {
+            addPrecoKinetaRow(parseInt(dn, 10));
+        },
+        params: ['dn']
+    });
+    registerCspAction('editStudnieCell', {
+        handler: function ({ field, id }, target) {
+            editStudnieCell(target, field, id);
+        },
+        params: ['field', 'id']
+    });
+    registerCspAction('toggleMagazynField', {
+        handler: function ({ field, id }, target) {
+            toggleMagazynField(target, field, id);
+        },
+        params: ['field', 'id']
+    });
+    registerCspAction('togglePrecoAccordion', {
+        handler: function ({ dn }, target) {
+            togglePrecoAccordion(target, parseInt(dn, 10));
+        },
+        params: ['dn']
+    });
+    registerCspAction('removePrecoKinetaRow', {
+        handler: function ({ dn, index }) {
+            removePrecoKinetaRow(parseInt(dn, 10), parseInt(index, 10));
+        },
+        params: ['dn', 'index']
+    });
+    registerCspAction('addPrecoRangeRow', {
+        handler: function ({ dn, fieldBase }) {
+            addPrecoRangeRow(parseInt(dn, 10), fieldBase);
+        },
+        params: ['dn', 'fieldBase']
+    });
+    registerCspAction('updatePrecoGrupaKey', {
+        handler: function ({ dn, fieldBase, oldKey }, target) {
+            updatePrecoGrupaKey(parseInt(dn, 10), fieldBase, oldKey, target.value);
+        },
+        params: ['dn', 'fieldBase', 'oldKey']
+    });
+    registerCspAction('removePrecoGrupaCol', {
+        handler: function ({ dn, fieldBase, g }) {
+            removePrecoGrupaCol(parseInt(dn, 10), fieldBase, g);
+        },
+        params: ['dn', 'fieldBase', 'g']
+    });
+    registerCspAction('addPrecoGrupaCol', {
+        handler: function ({ dn, fieldBase }) {
+            addPrecoGrupaCol(parseInt(dn, 10), fieldBase);
+        },
+        params: ['dn', 'fieldBase']
+    });
+    registerCspAction('removePrecoRangeRow', {
+        handler: function ({ dn, fieldBase, index }) {
+            removePrecoRangeRow(parseInt(dn, 10), fieldBase, parseInt(index, 10));
+        },
+        params: ['dn', 'fieldBase', 'index']
+    });
 }

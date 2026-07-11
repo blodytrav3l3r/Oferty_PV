@@ -100,7 +100,7 @@ function renderInlinePrzejsciaApp(containerId) {
                 <div style="font-size:1.5rem; margin-bottom:0.5rem;"><i data-lucide="ban"></i></div>
                 <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
                 <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
-                <button class="btn btn-primary btn-sm" onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="padding:0.35rem 0.8rem; font-size:0.7rem;">
+                <button class="btn btn-primary btn-sm" data-action="openPrzejsciaVisibilityPopup" data-container-id="${containerId || ''}" style="padding:0.35rem 0.8rem; font-size:0.7rem;">
                     <i data-lucide="eye"></i>️ Pokaż przejścia (${allTypes.length} dostępnych)
                 </button>
             </div>
@@ -133,7 +133,7 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.4rem 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Rodzaj materiału</div>
-                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25); color:#a5b4fc; font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(99,102,241,0.2)';this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.25)'">${visibilityBtnLabel}</button>
+                <button data-action="openPrzejsciaVisibilityPopup" class="przejscia-vis-btn" data-container-id="${containerId || ''}" style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25); color:#a5b4fc; font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(99,102,241,0.4) transparent;">
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
@@ -141,13 +141,11 @@ function renderInlinePrzejsciaApp(containerId) {
                         .map((t) => {
                             const isActive = t === inlinePrzejsciaState.type;
                             return `
-                        <div onclick="window.inlineSetType('${t}', '${containerId || ''}')" 
+                        <div data-action="inlineSetType" data-type="${t}" data-container-id="${containerId || ''}"
                              style="padding:0.2rem 0.4rem; border-radius:6px; cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
                                     background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'};
                                     border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.06)'};
                                     ${isActive ? 'box-shadow:0 0 8px rgba(99,102,241,0.15);' : ''}"
-                             onmouseenter="if(!${isActive})this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.3)'"
-                             onmouseleave="if(!${isActive})this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)'"
                              title="${t}">
                              <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight:700; text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
                         </div>`;
@@ -167,14 +165,11 @@ function renderInlinePrzejsciaApp(containerId) {
                         const dnLabel =
                             typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
                         return `
-                    <div class="fs-dn-tile ${isActive ? 'active' : ''}" 
+                    <div class="fs-dn-tile ${isActive ? 'active' : ''}" data-action="inlineSetDN" data-dn-id="${p.id}" data-container-id="${containerId || ''}"
                          style="padding:0.2rem 0.4rem; text-align:center; cursor:pointer; border-radius:6px; height:44px; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;
                                 background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'};
                                 border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.06)'};
-                                ${isActive ? 'box-shadow:0 0 10px rgba(99,102,241,0.3);' : ''}"
-                         onmouseenter="if(!${isActive}){this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.3)'}"
-                         onmouseleave="if(!${isActive}){this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)'}"
-                         onclick="window.inlineSetDN('${p.id}', '${containerId || ''}')">
+                                ${isActive ? 'box-shadow:0 0 10px rgba(99,102,241,0.3);' : ''}">
                          <div class="${isActive ? 'color-accent' : ''}" style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight:800; text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
                     </div>
                 `;
@@ -195,21 +190,20 @@ function renderInlinePrzejsciaApp(containerId) {
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Rzędna [m]</div>
                     <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
-                           onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
                            value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
                            placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Kąt [°]</div>
-                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" data-action="inlineUpdateAngles" data-container-id="${containerId || 'main'}" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w kinecie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w mufie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px;">
                 </div>
 
                 <div class="text-center">
@@ -221,7 +215,7 @@ function renderInlinePrzejsciaApp(containerId) {
                     <div class="color-success" style="font-size:1.0rem; font-weight:700; padding:0.15rem 0;" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
                 </div>
                 <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                    <button class="btn btn-primary" onclick="window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; width:100%; justify-content:center; font-size:0.7rem; padding:0;"><i data-lucide="plus"></i> Dodaj</button>
+                    <button class="btn btn-primary" data-action="inlineFinish" data-context-id="${containerId || 'main'}" data-container-id="${containerId || ''}" style="height:26px; width:100%; justify-content:center; font-size:0.7rem; padding:0;"><i data-lucide="plus"></i> Dodaj</button>
                 </div>
             </div>
         </div>
@@ -325,7 +319,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             const inpType = useCalc ? 'text' : 'number';
             const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:#0f172a; color:#fff; border:1px solid #3b82f6; border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(59,130,246,0.5);" value="" data-action="saveQuickEdit" data-index="${index}" data-field="${field}">`;
             const inp = element.querySelector('input');
             inp.focus();
         };
@@ -627,7 +621,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                   </div>
                   <span style="font-size:0.75rem; font-weight:700; color:#60a5fa;">Edycja wariantu</span>
                 </div>
-                <button onclick="cancelPrzejscieEdit()" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-muted);"><i data-lucide="x"></i></button>
+                <button data-action="cancelPrzejscieEdit" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-muted);"><i data-lucide="x"></i></button>
               </div>
               
               <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Kategoria przejścia</div>
@@ -635,7 +629,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 ${allTypes
                     .map((t) => {
                         const isActive = t === editPrzejscieState.type;
-                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#93c5fd' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                        return `<div data-action="editInlineSetType" data-type="${t}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.08)'}; color:${isActive ? '#93c5fd' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
                     })
                     .join('')}
               </div>
@@ -647,7 +641,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         const isActive = pr.id === editPrzejscieState.dnId;
                         const dnLbl =
                             typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(34,197,94,0.6)' : 'rgba(255,255,255,0.08)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                        return `<div data-action="editInlineSetDN" data-dn-id="${pr.id}" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isActive ? 'rgba(34,197,94,0.6)' : 'rgba(255,255,255,0.08)'}; transition:all 0.15s;">${dnLbl}</div>`;
                     })
                     .join('')}
               </div>
@@ -655,19 +649,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                   <input type="text" inputmode="decimal" class="form-input" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" style="padding:0.35rem; font-size:0.75rem; text-align:center;" data-action="syncEditState">
                 </div>
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Kąt [°]</label>
-                   <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size:0.75rem; font-weight:800; text-align:center;">
+                    <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" data-action="editUpdateAngles" data-index="${index}" style="padding:0.35rem; font-size:0.75rem; font-weight:800; text-align:center;">
                 </div>
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                  <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" data-action="syncEditState">
                 </div>
                 <div>
                   <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                  <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" data-action="syncEditState">
                 </div>
               </div>
               
@@ -679,8 +673,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                   <span class="ui-text-mute">Gony: <strong id="edit-gony-${index}" style="color:var(--success);">${gons}<sup>g</sup></strong></span>
                 </div>
                 <div style="display:flex; gap:0.4rem;">
-                  <button onclick="cancelPrzejscieEdit()" style="padding:0.3rem 0.6rem; font-size:0.7rem; border-radius:5px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
-                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.7rem;"><i data-lucide="save"></i> Zapisz</button>
+                  <button data-action="cancelPrzejscieEdit" style="padding:0.3rem 0.6rem; font-size:0.7rem; border-radius:5px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
+                  <button data-action="savePrzejscieEdit" data-index="${index}" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.7rem;"><i data-lucide="save"></i> Zapisz</button>
                 </div>
               </div>
             </div>`;
@@ -907,7 +901,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
             const isVisible = visiblePrzejsciaTypes.has(t);
             return `
             <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}" 
-                 onclick="togglePrzejsciaTypeVisibility('${t.replace(/'/g, "\\\\'")}')"
+                 data-action="togglePrzejsciaTypeVisibility" data-type="${t.replace(/'/g, "\\'")}"
                  title="${t}">
                 <div class="przejscia-vis-tile-name">${t}</div>
             </div>`;
@@ -921,11 +915,11 @@ function openPrzejsciaVisibilityPopup(containerId) {
                     <h3 style="margin:0; font-size:0.85rem; font-weight:800; color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
                     <div class="przejscia-vis-counter" style="font-size:0.6rem; color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}</div>
                 </div>
-                <button onclick="closePrzejsciaVisibilityPopup('${containerId || ''}')" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; border-radius:4px; transition:all 0.15s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='var(--text-muted)'"><i data-lucide="x"></i></button>
+                <button data-action="closePrzejsciaVisibilityPopup" data-container-id="${containerId || ''}" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; border-radius:4px; transition:all 0.15s;"><i data-lucide="x"></i></button>
             </div>
             <div class="przejscia-vis-actions">
-                <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(true)">Pokaż wszystkie</button>
-                <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(false)">Ukryj wszystkie</button>
+                <button class="przejscia-vis-action-btn" data-action="setPrzejsciaVisibilityAll" data-visible="true">Pokaż wszystkie</button>
+                <button class="przejscia-vis-action-btn" data-action="setPrzejsciaVisibilityAll" data-visible="false">Ukryj wszystkie</button>
             </div>
             <div class="przejscia-vis-grid">
                 ${tilesHtml}
@@ -1147,18 +1141,18 @@ window.openFlowTypePopup = function (index) {
         modal = document.createElement('div');
         modal.id = 'flow-type-modal';
         modal.innerHTML = `
-        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('flow-type-modal').style.display='none'">
-           <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:300px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+        <div id="flow-type-modal-backdrop" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" data-action="closeModal" data-modal-id="flow-type-modal">
+           <div data-action="ignoreClick" style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:300px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
                <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz typ przepływu</h3>
                <div style="display:flex; gap:1rem; justify-content:center;">
-                  <button id="flow-wlot-btn" style="flex:1; background:rgba(59,130,246,0.2); color:#93c5fd; border:2px solid rgba(59,130,246,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(59,130,246,0.4)'" onmouseleave="this.style.background='rgba(59,130,246,0.2)'">
-                     <span style="font-size:2.5rem;"><i data-lucide="download"></i></span>WLOT
-                  </button>
-                  <button id="flow-wylot-btn" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:2px solid rgba(239,68,68,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.4)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">
-                     <span style="font-size:2.5rem;"><i data-lucide="upload"></i></span>WYLOT
-                  </button>
+                   <button id="flow-wlot-btn" style="flex:1; background:rgba(59,130,246,0.2); color:#93c5fd; border:2px solid rgba(59,130,246,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;">
+                      <span style="font-size:2.5rem;"><i data-lucide="download"></i></span>WLOT
+                   </button>
+                   <button id="flow-wylot-btn" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:2px solid rgba(239,68,68,0.6); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;">
+                      <span style="font-size:2.5rem;"><i data-lucide="upload"></i></span>WYLOT
+                   </button>
                </div>
-               <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('flow-type-modal').style.display='none'">Anuluj</button>
+               <button data-action="closeModal" data-modal-id="flow-type-modal" style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;">Anuluj</button>
            </div>
         </div>
         `;
@@ -1217,26 +1211,24 @@ window.openChangePrzejscieTypePopup = function (index) {
     }
 
     modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">
-       <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Zmień rodzaj przejścia</h3>
-           <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
-              ${allTypes
-                  .map((t) => {
-                      const isActive = t === currProduct.category;
-                      return `<button onclick="window.confirmChangePrzejscieType(${index}, '${t}')" 
-                           class="${isActive ? 'color-accent' : ''}"
-                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
-                                  background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'};
-                                  border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'};"
-                          onmouseenter="this.style.background='rgba(99,102,241,0.15)';this.style.borderColor='rgba(99,102,241,0.3)'"
-                          onmouseleave="this.style.background='${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'}';this.style.borderColor='${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'}'">\
-                       ${t}
-                   </button>`;
-                  })
-                  .join('')}
-           </div>
-           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">Anuluj</button>
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" data-action="closeModal" data-modal-id="change-prz-type-modal">
+       <div data-action="ignoreClick" style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Zmień rodzaj przejścia</h3>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
+               ${allTypes
+                   .map((t) => {
+                       const isActive = t === currProduct.category;
+                       return `<button data-action="confirmChangePrzejscieType" data-index="${index}" data-type="${t}" 
+                            class="${isActive ? 'color-accent' : ''}"
+                            style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
+                                   background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'};
+                                   border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'};">\
+                        ${t}
+                    </button>`;
+                   })
+                   .join('')}
+            </div>
+            <button data-action="closeModal" data-modal-id="change-prz-type-modal" style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;">Anuluj</button>
        </div>
     </div>
     `;
@@ -1297,28 +1289,26 @@ window.openChangePrzejscieDnPopup = function (index) {
     }
 
     modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
-       <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz średnicę (DN): ${currProduct.category}</h3>
-           <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
-              ${available
-                  .map((p) => {
-                      const isActive = p.id === currId;
-                      const dnLabel =
-                          typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
-                      return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${p.id}')" 
-                           class="${isActive ? 'color-accent' : ''}"
-                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
-                                  background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'};
-                                  border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'};"
-                          onmouseenter="this.style.background='rgba(99,102,241,0.15)';this.style.borderColor='rgba(99,102,241,0.3)'"
-                          onmouseleave="this.style.background='${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'}';this.style.borderColor='${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'}'">\
-                       ${dnLabel}
-                   </button>`;
-                  })
-                  .join('')}
-           </div>
-           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">Anuluj</button>
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" data-action="closeModal" data-modal-id="change-prz-dn-modal">
+       <div data-action="ignoreClick" style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz średnicę (DN): ${currProduct.category}</h3>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
+               ${available
+                   .map((p) => {
+                       const isActive = p.id === currId;
+                       const dnLabel =
+                           typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
+                       return `<button data-action="confirmChangePrzejscieDn" data-index="${index}" data-product-id="${p.id}" 
+                            class="${isActive ? 'color-accent' : ''}"
+                            style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
+                                   background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)'};
+                                   border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'};">\
+                        ${dnLabel}
+                    </button>`;
+                   })
+                   .join('')}
+            </div>
+            <button data-action="closeModal" data-modal-id="change-prz-dn-modal" style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); cursor:pointer;">Anuluj</button>
        </div>
     </div>
     `;
@@ -1345,3 +1335,114 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     window.refreshZleceniaModalIfActive();
     showToast('Zmieniono średnicę przejścia', 'success');
 };
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('cancelPrzejscieEdit', window.cancelPrzejscieEdit);
+    registerCspAction('openPrzejsciaVisibilityPopup', {
+        handler: function ({ containerId }) {
+            openPrzejsciaVisibilityPopup(containerId);
+        },
+        params: ['containerId']
+    });
+    registerCspAction('inlineUpdateAngles', function (t) {
+        window.inlineUpdateAngles(t.dataset.containerId);
+    });
+    registerCspAction('syncEditState', function () {
+        window.syncEditState();
+    });
+    registerCspAction('editUpdateAngles', function (t) {
+        editUpdateAngles(parseInt(t.dataset.index, 10));
+        window.syncEditState();
+    });
+
+    // New CSP actions from migration
+    registerCspAction('inlineSetType', {
+        handler: function ({ type, containerId }) {
+            window.inlineSetType(type, containerId);
+        },
+        params: ['type', 'containerId']
+    });
+    registerCspAction('inlineSetDN', {
+        handler: function ({ dnId, containerId }) {
+            window.inlineSetDN(dnId, containerId);
+        },
+        params: ['dnId', 'containerId']
+    });
+    registerCspAction('inlineFinish', {
+        handler: function ({ contextId, containerId }) {
+            window.inlineFinish(contextId, containerId);
+        },
+        params: ['contextId', 'containerId']
+    });
+    registerCspAction('saveQuickEdit', function (t) {
+        var index = parseInt(t.dataset.index, 10);
+        var field = t.dataset.field;
+        var value = t.value;
+        if (typeof window.saveQuickEdit === 'function') {
+            window.saveQuickEdit(index, field, value);
+        }
+    });
+    registerCspAction('editInlineSetType', {
+        handler: function ({ type }) {
+            window.editInlineSetType(type);
+        },
+        params: ['type']
+    });
+    registerCspAction('editInlineSetDN', {
+        handler: function ({ dnId }) {
+            window.editInlineSetDN(dnId);
+        },
+        params: ['dnId']
+    });
+    registerCspAction('savePrzejscieEdit', {
+        handler: function ({ index }) {
+            savePrzejscieEdit(parseInt(index, 10));
+        },
+        params: ['index']
+    });
+    registerCspAction('togglePrzejsciaTypeVisibility', {
+        handler: function ({ type }) {
+            togglePrzejsciaTypeVisibility(type);
+        },
+        params: ['type']
+    });
+    registerCspAction('closePrzejsciaVisibilityPopup', {
+        handler: function ({ containerId }) {
+            closePrzejsciaVisibilityPopup(containerId);
+        },
+        params: ['containerId']
+    });
+    registerCspAction('setPrzejsciaVisibilityAll', {
+        handler: function ({ visible }) {
+            setPrzejsciaVisibilityAll(visible === 'true');
+        },
+        params: ['visible']
+    });
+    registerCspAction('closeModal', {
+        handler: function ({ modalId }) {
+            var m = document.getElementById(modalId);
+            if (m) m.style.display = 'none';
+        },
+        params: ['modalId']
+    });
+    registerCspAction('ignoreClick', function () {});
+    registerCspAction('confirmChangePrzejscieType', {
+        handler: function ({ index, type }) {
+            window.confirmChangePrzejscieType(parseInt(index, 10), type);
+        },
+        params: ['index', 'type']
+    });
+    registerCspAction('confirmChangePrzejscieDn', {
+        handler: function ({ index, productId }) {
+            window.confirmChangePrzejscieDn(parseInt(index, 10), productId);
+        },
+        params: ['index', 'productId']
+    });
+}
+/* CSP-safe: CSS hover replacement */
+(function () {
+    var s = document.createElement('style');
+    s.textContent =
+        '.przejscia-vis-btn:hover{background:rgba(99,102,241,0.2)!important;border-color:rgba(99,102,241,0.4)!important}';
+    document.head.appendChild(s);
+})();

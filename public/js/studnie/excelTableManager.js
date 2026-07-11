@@ -1,6 +1,14 @@
 // @ts-check
 /* ===== EXCEL TABLE MANAGER — Tabela konfiguracyjna studni (Excel-style) ===== */
 
+/* CSP-safe: CSS hover with CSS variables (--hb = hover bg, --hc = hover color, --hbc = hover border-color, --hr = hover row bg) */
+(function () {
+    var s = document.createElement('style');
+    s.textContent =
+        '.excel-hover-btn{transition:all 0.1s}.excel-hover-btn:hover{background:var(--hb)!important;color:var(--hc,inherit)!important;border-color:var(--hbc,initial)!important}.excel-hover-row{transition:background 0.15s}.excel-hover-row:hover{background:var(--hr)!important}.excel-hover-color{transition:color 0.1s}.excel-hover-color:hover{color:var(--hc)!important}button[data-action="excelUpdateWellParam"][data-active="false"]:hover{border-color:rgba(99,102,241,0.3)!important;background:rgba(255,255,255,0.08)!important}';
+    document.head.appendChild(s);
+})();
+
 let _excelMaxTransitions = {}; /* per-tab: { '1000': 1, '1200': 1, ... } */
 let _excelActiveTab = '1000';
 let _excelCreatingLock = false;
@@ -1412,7 +1420,7 @@ function _excelCellInp(w) {
 }
 
 /* ===== OVERLAY SELECT ===== */
-function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
+function _excelOverlaySelectHtml(opts, curVal, actionDef, width, disabled) {
     var label = '';
     for (var i = 0; i < opts.length; i++) {
         if (opts[i][0] === curVal) {
@@ -1432,24 +1440,30 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
             '</option>';
     }
     var extraClass = disabled ? ' disabled' : '';
-    var wrapperEvents = disabled
-        ? ''
-        : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
-    var selectEvents = disabled
-        ? ' disabled'
-        : ' tabindex="-1" onchange="' +
-          (onChange || '').replace(/"/g, '&quot;') +
-          ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text"';
+    var selectAttrs = disabled ? ' disabled' : ' tabindex="-1" data-action="excelOverlaySync"';
+    if (actionDef && typeof actionDef === 'object') {
+        selectAttrs += ' data-oa="' + (actionDef.a || '').replace(/"/g, '&quot;') + '"';
+        if (actionDef.p) {
+            for (var k in actionDef.p) {
+                if (Object.prototype.hasOwnProperty.call(actionDef.p, k)) {
+                    selectAttrs +=
+                        ' data-op-' +
+                        k +
+                        '="' +
+                        String(actionDef.p[k]).replace(/"/g, '&quot;') +
+                        '"';
+                }
+            }
+        }
+    }
     return (
         '<div class="excel-sel-wrap' +
         extraClass +
         '" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' +
         (width ? 'width:' + width + 'px;' : '') +
-        '"' +
-        wrapperEvents +
-        '>' +
+        '">' +
         '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;"' +
-        selectEvents +
+        selectAttrs +
         '>' +
         optHtml +
         '</select>' +
@@ -1639,21 +1653,21 @@ function openExcelTableModal() {
             </div>
             <div style="display:flex;gap:0.4rem;align-items:center;">
                 <div style="position:relative;" id="excel-add-menu-container">
-                    <button onclick="_excelToggleAddMenu()" id="excel-add-btn" title="Dodaj studnię do bieżącej zakładki" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.25);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> + Dodaj</button>
+                    <button data-action="_excelToggleAddMenu" id="excel-add-btn" title="Dodaj studnię do bieżącej zakładki" style="background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.25);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="plus" style="width:12px;height:12px;"></i> + Dodaj</button>
                     <div id="excel-add-dropdown" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#161923;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:0.4rem;z-index:100;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
                         <label style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.4rem;font-size:0.65rem;color:#94a3b8;cursor:pointer;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:0.3rem;">
-                            <input type="checkbox" id="excel-auto-select-check" ${_excelAutoSelectEnabled ? 'checked' : ''} onchange="_excelAutoSelectEnabled=this.checked;window._excelAutoSelectEnabled=this.checked" style="accent-color:#6366f1;cursor:pointer;" />
+                            <input type="checkbox" id="excel-auto-select-check" ${_excelAutoSelectEnabled ? 'checked' : ''} data-action="excelToggleAutoSelect" style="accent-color:#6366f1;cursor:pointer;" />
                             Auto-dobór
                         </label>
-                        <button onclick="excelAddWellToTab();_excelToggleAddMenu()" style="display:block;width:100%;text-align:left;background:rgba(59,130,246,0.1);color:#93c5fd;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;margin-bottom:2px;transition:background 0.1s;" onmouseenter="this.style.background='rgba(59,130,246,0.2)'" onmouseleave="this.style.background='rgba(59,130,246,0.1)'">Szybko (puste)</button>
-                        <button onclick="excelShowAddDialog();_excelToggleAddMenu()" style="display:block;width:100%;text-align:left;background:rgba(255,255,255,0.04);color:#e2e8f0;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;margin-bottom:2px;transition:background 0.1s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.04)'">Ręcznie (parametry)</button>
-                        <button onclick="excelShowPasteDialog();_excelToggleAddMenu()" style="display:block;width:100%;text-align:left;background:rgba(255,255,255,0.04);color:#e2e8f0;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;transition:background 0.1s;" onmouseenter="this.style.background='rgba(255,255,255,0.08)'" onmouseleave="this.style.background='rgba(255,255,255,0.04)'">Wklej listę</button>
+                        <button data-action="excelAddWellToTabAndClose" class="excel-hover-btn" style="--hb:rgba(59,130,246,0.2);display:block;width:100%;text-align:left;background:rgba(59,130,246,0.1);color:#93c5fd;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;margin-bottom:2px;">Szybko (puste)</button>
+                        <button data-action="excelShowAddDialogAndClose" class="excel-hover-btn" style="--hb:rgba(255,255,255,0.08);display:block;width:100%;text-align:left;background:rgba(255,255,255,0.04);color:#e2e8f0;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;margin-bottom:2px;">Ręcznie (parametry)</button>
+                        <button data-action="excelShowPasteDialogAndClose" class="excel-hover-btn" style="--hb:rgba(255,255,255,0.08);display:block;width:100%;text-align:left;background:rgba(255,255,255,0.04);color:#e2e8f0;border:none;padding:0.3rem 0.5rem;border-radius:3px;font-size:0.65rem;cursor:pointer;font-weight:500;">Wklej listę</button>
                     </div>
                 </div>
-                <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" style="background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:0.25rem 0.4rem;font-size:0.6rem;color:#e2e8f0;outline:none;width:100px;" />
-                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
-                <button onclick="excelSaveAll()" id="excel-save-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
-                <button onclick="closeExcelTableModal()" title="Zamknij bez zapisywania" style="background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
+                <input type="text" id="excel-search-input" placeholder="Szukaj studni..." data-action="excelFilterWells" style="background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:0.25rem 0.4rem;font-size:0.6rem;color:#e2e8f0;outline:none;width:100px;" />
+                <button data-action="excelToggleFullscreen" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
+                <button data-action="excelSaveAll" id="excel-save-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
+                <button data-action="closeExcelTableModal" title="Zamknij bez zapisywania" style="background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
             </div>
         </div>
         <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;"></div>
@@ -1679,6 +1693,28 @@ function openExcelTableModal() {
         };
         document.addEventListener('keydown', _arrowHandler, true);
         /** @type {any} */ (container)._arrowHandler = _arrowHandler;
+        /* CSP-safe: Enter/Space na .excel-sel-wrap → showPicker */
+        container.addEventListener('keydown', function (e) {
+            var wrap = e.target.closest('.excel-sel-wrap');
+            if (!wrap) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                var s = wrap.querySelector('select');
+                if (typeof s.showPicker === 'function') {
+                    s.showPicker();
+                } else {
+                    s.focus();
+                    s.click();
+                }
+            }
+        });
+        /* CSP-safe: sync display text dla overlay select */
+        container.addEventListener('change', function (e) {
+            var sel = e.target.closest('.excel-sel-wrap select');
+            if (sel && sel.nextElementSibling) {
+                sel.nextElementSibling.textContent = sel.options[sel.selectedIndex].text;
+            }
+        });
         /* Delegowany focusin — aktywuje wiersz dla każdego elementu który dostanie focus */
         container.addEventListener('focusin', function (e) {
             var row = e.target.closest('tr[data-widx]');
@@ -1746,6 +1782,19 @@ function openExcelTableModal() {
         container.addEventListener('focusout', _excelOnFocusOut);
         document.addEventListener('scroll', _excelOnOverlayScroll, true);
         window.addEventListener('resize', _excelOnOverlayScroll);
+
+        /* CSP-safe: empty row Enter/blur → excelCreateFromEmpty */
+        container.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && e.target.id === 'excel-empty-name') {
+                e.preventDefault();
+                excelCreateFromEmpty();
+            }
+        });
+        container.addEventListener('focusout', function (e) {
+            if (e.target.id === 'excel-empty-name') {
+                excelCreateFromEmpty(e);
+            }
+        });
     }
 
     _excelActiveTab = DN_TABS[0];
@@ -1900,7 +1949,7 @@ function _excelRenderTabs() {
         const c = DN_COLORS[tab] || DN_COLORS['1000'];
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
-        html += `<button onclick="excelSwitchTab('${tab}')" style="
+        html += `<button data-action="excelSwitchTab" data-tab="${tab}" style="
             padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
             border-bottom:2px solid ${isActive ? c.border : c.border + '66'};
             background:${isActive ? c.activeBg : c.bg};
@@ -2146,10 +2195,10 @@ function _excelRenderTable(dn) {
     /* === KOLUMNA 0: Checkbox - select-all przeniesiony do H1 (gorny) === */
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></th>`;
+    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"><input type="checkbox" id="excel-select-all" data-action="toggleSelectAll" tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></th>`;
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
-    var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
-    var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
+    var _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" data-action="_excelBulkSetMode" data-enabled="true" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
+    var _bulkManualBtn = `<button type="button" id="excel-bulk-manual" data-action="_excelBulkSetMode" data-enabled="false" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
     h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(99,102,241,0.2);"><b style="color:#fbbf24;">A/M</b></th>`;
     h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
     h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
@@ -2186,10 +2235,10 @@ function _excelRenderTable(dn) {
     }
 
     // Przyciski +/-
-    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:#13151f;color:#ef4444;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='#ef4444'">−</button></th>`;
+    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button data-action="excelRemoveTransitionColumn" title="Usuń ostatnią kolumnę przejścia" class="excel-hover-color" style="--hc:#f87171;background:#13151f;color:#ef4444;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;">−</button></th>`;
     h2 += `<th style="${th2Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th style="${th3Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
-    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:#13151f;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#64748b'">+</button></th>`;
+    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button data-action="excelAddTransitionColumn" title="Dodaj kolumnę przejścia" class="excel-hover-color" style="--hc:#94a3b8;background:#13151f;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;">+</button></th>`;
     h2 += `<th style="${th2Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th style="${th3Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
 
@@ -2437,7 +2486,7 @@ function _excelRenderTable(dn) {
                     : '#141722';
         const przejscia = well.przejscia || [];
 
-        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" style="background:${rowBg};transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute('data-hover-bg')" onmouseleave="this.style.background=this.getAttribute('data-orig-bg')">`;
+        html += `<tr data-widx="${wIdx}" data-base-bg="${rowBg}" data-orig-bg="${rowBg}" data-hover-bg="${hoverBg}" data-active-bg="${isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645'}" class="excel-hover-row" style="--hr:${hoverBg};background:${rowBg};">`;
 
         const tdBase = `${_EXCEL_FONT}`;
 
@@ -2455,21 +2504,21 @@ function _excelRenderTable(dn) {
             : 'Manual (klik = przełącz na Auto)';
         const runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
         html += `<td style="${tdBase}background:${rowBg};text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;">
-            <button type="button" id="excel-mode-btn-${wIdx}" data-widx="${wIdx}" onclick="_excelToggleWellAutoMode(${wIdx})" title="${modeTitle}" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;height:18px;">${isAuto ? 'AUTO' : 'MANUAL'}</button>
-            <button type="button" id="excel-run-auto-${wIdx}" data-widx="${wIdx}" onclick="_excelRunAutoSelectForWell(${wIdx})" title="${isAuto ? 'Uruchom auto-dobór elementów dla tej studni' : 'Przełącz na Auto aby uruchomić'}" ${runDisabled} style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:${isAuto ? 'pointer' : 'not-allowed'};background:${isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)'};color:${isAuto ? '#c7d2fe' : '#64748b'};border:1px solid ${isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)'};height:18px;line-height:1;">\u25b6</button>
+            <button type="button" id="excel-mode-btn-${wIdx}" data-widx="${wIdx}" data-action="_excelToggleWellAutoMode" data-w-idx="${wIdx}" title="${modeTitle}" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:${autoBg};color:${autoColor};border:1px solid ${autoBg};font-weight:600;height:18px;">${isAuto ? 'AUTO' : 'MANUAL'}</button>
+            <button type="button" id="excel-run-auto-${wIdx}" data-widx="${wIdx}" data-action="_excelRunAutoSelectForWell" data-w-idx="${wIdx}" title="${isAuto ? 'Uruchom auto-dobór elementów dla tej studni' : 'Przełącz na Auto aby uruchomić'}" ${runDisabled} style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:${isAuto ? 'pointer' : 'not-allowed'};background:${isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)'};color:${isAuto ? '#c7d2fe' : '#64748b'};border:1px solid ${isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)'};height:18px;line-height:1;">\u25b6</button>
         </td>`;
 
         /* Lp. */
         html += `<td style="${tdBase}position:sticky;left:0;z-index:5;background:${rowBg};text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">${idx + 1}</td>`;
 
         /* Nr. Studni — edytowalny input + badge duplikatu, sticky */
-        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:${rowBg};border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" onchange="excelOnNameChange(${wIdx},this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:32px;z-index:5;background:${rowBg};border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="${escapeHtml(well.name)}" data-action="excelOnNameChange" data-w-idx="${wIdx}" style="${_excelCellInp(120)}text-align:left;width:118px;" /></td>`;
 
         /* Rz. Włazu */
-        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:162px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="${well.rzednaWlazu != null ? well.rzednaWlazu : ''}" data-action="excelOnRzednaChange" data-w-idx="${wIdx}" style="${_excelCellInp(72)}" /></td>`;
 
         /* Rz. Dna */
-        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" onchange="excelOnRzednaChange(${wIdx})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
+        html += `<td style="${tdBase}position:sticky;left:240px;z-index:5;background:${rowBg};text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="${well.rzednaDna != null ? well.rzednaDna : ''}" data-action="excelOnRzednaChange" data-w-idx="${wIdx}" style="${_excelCellInp(72)}" /></td>`;
 
         /* Wys. — auto */
         const height = _excelCalcWellHeight(well);
@@ -2508,7 +2557,7 @@ function _excelRenderTable(dn) {
             var typeHtml = _excelOverlaySelectHtml(
                 catOpts2,
                 activeCategory,
-                'excelOnPrzejscieTypeChange(' + wIdx + ',' + i + ',this.value)',
+                { a: 'excelOnPrzejscieTypeChange', p: { wIdx: wIdx, przIdx: i } },
                 120
             );
 
@@ -2528,12 +2577,12 @@ function _excelRenderTable(dn) {
             var dnHtml = _excelOverlaySelectHtml(
                 dnOpts2,
                 prz.productId,
-                'excelOnPrzejscieChange(' + wIdx + ',' + i + ",'productId',this.value)",
+                { a: 'excelOnPrzejscieChange', p: { wIdx: wIdx, przIdx: i, field: 'productId' } },
                 110
             );
 
-            html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${hasExplicitRzWl ? prz.rzednaWlaczenia : ''}" placeholder="${rzWlPlaceholder}" onchange="excelOnPrzejscieChange(${wIdx},${i},'rzednaWlaczenia',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(72)}" /></td>`;
-            html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" onchange="excelOnPrzejscieChange(${wIdx},${i},'angle',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;" /></td>`;
+            html += `<td style="${tdBase}text-align:right;"><input type="number" step="0.01" value="${hasExplicitRzWl ? prz.rzednaWlaczenia : ''}" placeholder="${rzWlPlaceholder}" data-action="excelOnPrzejscieChange" data-w-idx="${wIdx}" data-prz-idx="${i}" data-field="rzednaWlaczenia" style="${_excelCellInp(72)}" /></td>`;
+            html += `<td style="${tdBase}text-align:center;"><input type="number" step="1" value="${prz.angle != null ? prz.angle : ''}" data-action="excelOnPrzejscieChange" data-w-idx="${wIdx}" data-prz-idx="${i}" data-field="angle" style="${_excelCellInp(50)}text-align:center;" /></td>`;
             html += `<td style="${tdBase}text-align:left;">${typeHtml}</td>`;
             html += `<td style="${tdBase}text-align:left;">${dnHtml}</td>`;
         }
@@ -2563,7 +2612,7 @@ function _excelRenderTable(dn) {
             _excelOverlaySelectHtml(
                 wlazOpts2,
                 wlazVal,
-                'excelOnWlazChange(' + wIdx + ',this.value)',
+                { a: 'excelOnWlazChange', p: { wIdx: wIdx } },
                 62
             ) +
             '</td>';
@@ -2581,11 +2630,10 @@ function _excelRenderTable(dn) {
             );
             const pidArg = c.productId ? `'${c.productId}'` : 'null';
             const hArg = c.height != null ? c.height : 'null';
-            const redArg = c.fromReduction ? `,${well.redukcjaTargetDN || 1000}` : '';
             var disabledAttr = '';
             html +=
                 `<td style="${tdBase}text-align:center;min-width:95px;">` +
-                `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} oninput="excelOnCompChange(${wIdx},'${c.componentType}',${hArg},this.value,${pidArg}${redArg})" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="${_excelCellInp(50)}text-align:center;width:52px;" />` +
+                `<input type="number" min="0" step="1" value="${count || ''}"${disabledAttr} data-action="excelOnCompChange" data-w-idx="${wIdx}" data-comp-type="${c.componentType}" data-h-arg="${hArg}" data-pid-arg="${c.productId || ''}" data-red-dn="${c.fromReduction ? well.redukcjaTargetDN || 1000 : ''}" style="${_excelCellInp(50)}text-align:center;width:52px;" />` +
                 `</td>`;
         });
 
@@ -2627,7 +2675,7 @@ function _excelRenderTable(dn) {
                 _excelOverlaySelectHtml(
                     redOpts2,
                     redActive ? String(redTarget) : '',
-                    'excelOnReductionSelectChange(' + wIdx + ',this.value)',
+                    { a: 'excelOnReductionSelectChange', p: { wIdx: wIdx } },
                     105
                 ) +
                 '</td>';
@@ -2643,20 +2691,20 @@ function _excelRenderTable(dn) {
             _excelOverlaySelectHtml(
                 kinOpts2,
                 well.kineta || '',
-                'excelOnKinetaChange(' + wIdx + ',this.value)',
+                { a: 'excelOnKinetaChange', p: { wIdx: wIdx } },
                 90
             ) +
             '</td>';
 
         /* Psia buda */
-        html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.psiaBuda ? ' checked' : ''} onchange="excelOnPsiaBudaChange(${wIdx},this.checked)" style="accent-color:#f59e0b;cursor:pointer;" /></td>`;
+        html += `<td style="${tdBase}text-align:center;"><input type="checkbox"${well.psiaBuda ? ' checked' : ''} data-action="excelOnPsiaBudaChange" data-w-idx="${wIdx}" style="accent-color:#f59e0b;cursor:pointer;transform:scale(1.3);" /></td>`;
 
         /* Akcje: Param, Duplikuj, Usuń */
         html += `<td style="${tdBase}text-align:center;white-space:nowrap;">`;
         html += '<div style="display:flex;gap:2px;justify-content:center;">';
-        html += `<button onclick="excelOpenWellParams(${wIdx})" title="Parametry" style="background:#13151f;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background='rgba(129,140,248,0.1)'" onmouseleave="this.style.background='#13151f'"><i data-lucide="sliders" style="width:14px;height:14px;" aria-hidden="true"></i></button>`;
-        html += `<button onclick="excelDuplicateWell(${wIdx})" title="Duplikuj" style="background:#13151f;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background='rgba(96,165,250,0.1)'" onmouseleave="this.style.background='#13151f'"><i data-lucide="copy" style="width:14px;height:14px;" aria-hidden="true"></i></button>`;
-        html += `<button onclick="excelDeleteWell(${wIdx})" title="Usuń" style="background:#13151f;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.15rem 0.3rem;border-radius:2px;font-size:0.55rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='#13151f'"><i data-lucide="trash-2" style="width:14px;height:14px;" aria-hidden="true"></i></button>`;
+        html += `<button data-action="excelOpenWellParams" data-w-idx="${wIdx}" title="Parametry" class="excel-hover-btn" style="--hb:rgba(129,140,248,0.1);background:#13151f;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;"><i data-lucide="settings" style="width:16px;height:16px;" aria-hidden="true"></i></button>`;
+        html += `<button data-action="excelDuplicateWell" data-w-idx="${wIdx}" title="Duplikuj" class="excel-hover-btn" style="--hb:rgba(96,165,250,0.1);background:#13151f;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;"><i data-lucide="copy" style="width:16px;height:16px;" aria-hidden="true"></i></button>`;
+        html += `<button data-action="excelDeleteWell" data-w-idx="${wIdx}" title="Usuń" class="excel-hover-btn" style="--hb:rgba(239,68,68,0.15);background:#13151f;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;"><i data-lucide="trash-2" style="width:16px;height:16px;" aria-hidden="true"></i></button>`;
         html += '</div></td>';
 
         html += '</tr>';
@@ -2683,13 +2731,13 @@ function _excelRenderTable(dn) {
     html += `<td style="${tdEmpty}position:sticky;left:0;z-index:5;background:${emptyRowBg};text-align:center;color:#334155;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">—</td>`;
 
     /* Nazwa — sticky left */
-    html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Wpisz nazwę i Enter aby dodać" id="excel-empty-name" onkeydown="if(event.key==='Enter')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:32px;z-index:5;background:${emptyRowBg};"><input type="text" placeholder="Wpisz nazwę i Enter aby dodać" id="excel-empty-name" style="${_excelCellInp(125)}text-align:left;color:#94a3b8;" /></td>`;
 
     /* Rz. Włazu */
-    html += `<td style="${tdEmpty}position:sticky;left:162px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:162px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzw" style="${_excelCellInp(72)}" /></td>`;
 
     /* Rz. Dna */
-    html += `<td style="${tdEmpty}position:sticky;left:240px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="${_excelCellInp(72)}" /></td>`;
+    html += `<td style="${tdEmpty}position:sticky;left:240px;z-index:5;background:${emptyRowBg};text-align:right;"><input type="number" step="0.01" placeholder="—" id="excel-empty-rzd" style="${_excelCellInp(72)}" /></td>`;
 
     /* Wys. — placeholder */
     html += `<td style="${tdEmpty}position:sticky;left:318px;z-index:5;background:${emptyRowBg};text-align:center;color:#1e293b;" data-cell="height-empty">—</td>`;
@@ -3186,26 +3234,17 @@ function _excelPositionFocusOverlay(td) {
 }
 
 function _excelOnFocusIn(e) {
-    if (!_excelFocusOverlayEl) return;
     var target = e.target;
     if (!target) return;
+    /* CSP-safe: select + userEditing flag (replaces inline onfocus handlers) */
+    if (target.tagName === 'INPUT') target.select();
+    _excelUserEditing = true;
+    if (!_excelFocusOverlayEl) return;
     /* Dla overlay select: target = .excel-sel-wrap (lub inner button/input/select);
        szukamy td */
     var td = target.closest('td');
     if (!td) return;
     /* Wymazujemy timer jezeli jest */
-    if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
-    _excelFocusRaf = requestAnimationFrame(function () {
-        _excelFocusRaf = null;
-        _excelPositionFocusOverlay(td);
-    });
-}
-
-/* Alternatywna wersja - wywolywana bezposrednio dla overlay select (.excel-sel-wrap) */
-function _excelSelWrapFocus(selWrap) {
-    if (!_excelFocusOverlayEl) return;
-    var td = selWrap.closest('td');
-    if (!td) return;
     if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
     _excelFocusRaf = requestAnimationFrame(function () {
         _excelFocusRaf = null;
@@ -3238,6 +3277,13 @@ function _excelOnRowSelectChange(e) {
 }
 
 function _excelOnFocusOut(e) {
+    var target = e.target;
+    /* CSP-safe: restore cell styling + userEditing flag (replaces inline onblur handlers) */
+    if (target && target.tagName === 'INPUT') {
+        var td = target.closest('td');
+        if (td) td.style.boxShadow = '';
+    }
+    _excelUserEditing = false;
     if (!_excelFocusOverlayEl) return;
     /* Delay — sprawdzamy czy focus nie przeskoczyl do innej komórki w kontenerze */
     setTimeout(function () {
@@ -3858,22 +3904,6 @@ function excelCreateFromEmpty() {
 }
 
 /* ===== CELL FOCUS (Excel highlight) ===== */
-function excelCellFocus(el) {
-    if (el.tagName === 'INPUT') {
-        el.select();
-    }
-    _excelUserEditing = true; /* blokuje polling */
-    /* Wybór wiersza obsługuje delegowany focusin na container — nie dubluj logiki */
-}
-function excelCellBlur(el) {
-    /* Przywróć tło komórki z data-orig-bg na TD (nie na INPUT) */
-    if (el.tagName === 'INPUT') {
-        var td = el.closest('td');
-        if (td) td.style.boxShadow = '';
-    }
-    _excelUserEditing = false; /* wznawia polling */
-}
-
 /* ===== TAB KEY NAVIGATION ===== */
 function _excelHandleTab(e) {
     let target = e.target;
@@ -5060,7 +5090,7 @@ function excelOpenWellParams(wIdx) {
             bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};background:${active ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)'};color:${active ? '#a5b4fc' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(99,102,241,0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(99,102,241,0.3)';this.style.background='rgba(255,255,255,0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'}">${lbl}</button>`;
+                bodyHtml += `<button data-action="excelUpdateWellParam" data-active="${active}" data-w-idx="${wIdx}" data-param-key="${def.key}" data-param-val="${val}" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};background:${active ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)'};color:${active ? '#a5b4fc' : 'var(--text-secondary)'};display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(99,102,241,0.2);' : ''}">${lbl}</button>`;
             });
             bodyHtml += `</div></div>`;
 
@@ -5068,22 +5098,22 @@ function excelOpenWellParams(wIdx) {
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Nazwa p. wew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam('powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="powlokaNameW" data-w-idx="${wIdx}" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Koszt p. wew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="_excelUpdateWellParam('malowanieWewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="malowanieWewCena" data-w-idx="${wIdx}" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
             }
             /* Pola dodatkowe — malowanie zew. */
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Nazwa p. zew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="_excelUpdateWellParam('powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="powlokaNameZ" data-w-idx="${wIdx}" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Koszt p. zew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="_excelUpdateWellParam('malowanieZewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="malowanieZewCena" data-w-idx="${wIdx}" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
             }
         });
@@ -5093,13 +5123,13 @@ function excelOpenWellParams(wIdx) {
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <span style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">Parametry: ${escapeHtml(well.name)}</span>
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:#13151f;color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
+            <button data-action="closeExcelParamsPopup" style="background:#13151f;color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:#10131a;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:rgba(255,255,255,0.06);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.1);padding:0.4rem 1.2rem;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:600;">Zamknij</button>
+            <button data-action="closeExcelParamsPopup" style="background:rgba(255,255,255,0.06);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.1);padding:0.4rem 1.2rem;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:600;">Zamknij</button>
         </div>
     `;
 
@@ -5212,7 +5242,7 @@ function excelShowAddDialog() {
         '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:380px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">' +
         '<strong style="color:#e2e8f0;font-size:0.75rem;">Dodaj studnię</strong>' +
-        '<button onclick="document.getElementById(\'excel-add-dialog-overlay\').remove()" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>' +
+        '<button data-action="closeExcelAddDialog" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:80px 1fr;gap:0.5rem 0.7rem;font-size:0.65rem;color:#94a3b8;margin-bottom:1rem;">' +
         '<label>Nazwa</label><input id="dlg-name" type="text" placeholder="np. a1" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />' +
@@ -5223,8 +5253,8 @@ function excelShowAddDialog() {
         '<label>Rz. dna</label><input id="dlg-rzd" type="number" step="0.01" placeholder="np. 0.00" value="0" style="padding:0.3rem 0.5rem;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;" />' +
         '</div>' +
         '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:0.7rem;display:flex;gap:0.5rem;justify-content:flex-end;">' +
-        '<button onclick="document.getElementById(\'excel-add-dialog-overlay\').remove()" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>' +
-        '<button onclick="_excelCreateFromDialog()" style="padding:0.3rem 1rem;background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.3);border-radius:3px;color:#6ee7b7;font-size:0.65rem;font-weight:700;cursor:pointer;">Dodaj</button>' +
+        '<button data-action="closeExcelAddDialog" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>' +
+        '<button data-action="_excelCreateFromDialog" style="padding:0.3rem 1rem;background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.3);border-radius:3px;color:#6ee7b7;font-size:0.65rem;font-weight:700;cursor:pointer;">Dodaj</button>' +
         '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -5318,14 +5348,14 @@ function excelShowPasteDialog() {
         '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:420px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">' +
         '<strong style="color:#e2e8f0;font-size:0.75rem;">Wklej listę studni</strong>' +
-        '<button onclick="document.getElementById(\'excel-paste-dialog-overlay\').remove()" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>' +
+        '<button data-action="closeExcelPasteDialog" style="background:none;border:none;color:#64748b;font-size:0.8rem;cursor:pointer;">✕</button>' +
         '</div>' +
         '<div style="font-size:0.6rem;color:#64748b;margin-bottom:0.5rem;">Wklej dane z arkusza (TAB, przecinek, średnik, | lub odstęp)</div>' +
         '<textarea id="paste-textarea" style="width:100%;height:140px;padding:0.5rem;background:#0c0e14;border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:#e2e8f0;font-size:0.65rem;font-family:Consolas,Menlo,monospace;resize:vertical;white-space:pre;tab-size:2;" placeholder="Nazwa	DN	Rz.włazu	Rz.dna&#10;a1	1000	5.00	0.00&#10;a2	1000	4.50	0.00"></textarea>' +
         '<div id="paste-preview" style="font-size:0.6rem;color:#64748b;max-height:60px;overflow-y:auto;margin:0.3rem 0;padding:0.2rem;background:#0c0e14;border-radius:3px;"></div>' +
         '<div style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
-        '<button onclick="document.getElementById(\'excel-paste-dialog-overlay\').remove()" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>' +
-        '<button onclick="_excelImportPasteList()" style="padding:0.3rem 1rem;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3);border-radius:3px;color:#93c5fd;font-size:0.65rem;font-weight:700;cursor:pointer;">Importuj</button>' +
+        '<button data-action="closeExcelPasteDialog" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:3px;color:#94a3b8;font-size:0.65rem;cursor:pointer;">Anuluj</button>' +
+        '<button data-action="_excelImportPasteList" style="padding:0.3rem 1rem;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3);border-radius:3px;color:#93c5fd;font-size:0.65rem;font-weight:700;cursor:pointer;">Importuj</button>' +
         '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -5853,3 +5883,134 @@ window._excelSyncAutoManualUI = function () {
         fn._inProgress = false;
     }
 };
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('_excelToggleAddMenu', _excelToggleAddMenu);
+    registerCspAction('excelToggleFullscreen', excelToggleFullscreen);
+    registerCspAction('excelSaveAll', excelSaveAll);
+    registerCspAction('closeExcelTableModal', closeExcelTableModal);
+    registerCspAction('excelRemoveTransitionColumn', excelRemoveTransitionColumn);
+    registerCspAction('excelAddTransitionColumn', excelAddTransitionColumn);
+    registerCspAction('_excelCreateFromDialog', _excelCreateFromDialog);
+    registerCspAction('_excelImportPasteList', _excelImportPasteList);
+    registerCspAction('excelSwitchTab', {
+        handler: function ({ tab }) {
+            excelSwitchTab(tab);
+        },
+        params: ['tab']
+    });
+    registerCspAction('_excelBulkSetMode', {
+        handler: function ({ enabled }) {
+            _excelBulkSetMode(enabled);
+        },
+        params: ['enabled']
+    });
+    registerCspAction('_excelToggleWellAutoMode', {
+        handler: function ({ wIdx }) {
+            _excelToggleWellAutoMode(wIdx);
+        },
+        params: ['wIdx']
+    });
+    registerCspAction('_excelRunAutoSelectForWell', {
+        handler: function ({ wIdx }) {
+            _excelRunAutoSelectForWell(wIdx);
+        },
+        params: ['wIdx']
+    });
+    registerCspAction('excelOpenWellParams', {
+        handler: function ({ wIdx }) {
+            excelOpenWellParams(wIdx);
+        },
+        params: ['wIdx']
+    });
+    registerCspAction('excelDuplicateWell', {
+        handler: function ({ wIdx }) {
+            excelDuplicateWell(wIdx);
+        },
+        params: ['wIdx']
+    });
+    registerCspAction('excelDeleteWell', {
+        handler: function ({ wIdx }) {
+            excelDeleteWell(wIdx);
+        },
+        params: ['wIdx']
+    });
+    registerCspAction('excelFilterWells', function (t) {
+        excelFilterWells(t.value);
+    });
+    registerCspAction('toggleSelectAll', function (t) {
+        _excelToggleSelectAll(t.checked);
+    });
+    registerCspAction('excelOnRzednaChange', function (t) {
+        excelOnRzednaChange(parseInt(t.dataset.wIdx, 10));
+    });
+    registerCspAction('excelToggleAutoSelect', function (t) {
+        _excelAutoSelectEnabled = t.checked;
+        window._excelAutoSelectEnabled = t.checked;
+    });
+    registerCspAction('excelAddWellToTabAndClose', function () {
+        excelAddWellToTab();
+        _excelToggleAddMenu();
+    });
+    registerCspAction('excelShowAddDialogAndClose', function () {
+        excelShowAddDialog();
+        _excelToggleAddMenu();
+    });
+    registerCspAction('excelShowPasteDialogAndClose', function () {
+        excelShowPasteDialog();
+        _excelToggleAddMenu();
+    });
+    registerCspAction('excelUpdateWellParam', function (t) {
+        _excelUpdateWellParam(parseInt(t.dataset.wIdx, 10), t.dataset.paramKey, t.dataset.paramVal);
+    });
+    registerCspAction('excelUpdateWellParamAndRefresh', function (t) {
+        var wIdx = parseInt(t.dataset.wIdx, 10);
+        var field = t.dataset.paramField;
+        var value =
+            field === 'malowanieWewCena' || field === 'malowanieZewCena'
+                ? parseFloat(t.value) || 0
+                : t.value;
+        _excelUpdateWellParam(field, value);
+        excelRefreshParamsPopup(wIdx);
+    });
+    registerCspAction('excelOnCompChange', {
+        params: ['wIdx', 'compType', 'hArg', 'pidArg', 'redDn'],
+        handler: function (p, t) {
+            var wIdx = parseInt(p.wIdx, 10);
+            var componentType = p.compType;
+            var height = p.hArg === '' ? null : parseInt(p.hArg, 10);
+            var value = t.value;
+            var productId = p.pidArg || null;
+            var redDn = p.redDn === '' ? null : parseInt(p.redDn, 10);
+            excelOnCompChange(wIdx, componentType, height, value, productId, redDn);
+        }
+    });
+    registerCspAction('closeExcelParamsPopup', function () {
+        var el = document.getElementById('excel-params-popup');
+        if (el) el.remove();
+    });
+    registerCspAction('closeExcelAddDialog', function () {
+        var el = document.getElementById('excel-add-dialog-overlay');
+        if (el) el.remove();
+    });
+    registerCspAction('closeExcelPasteDialog', function () {
+        var el = document.getElementById('excel-paste-dialog-overlay');
+        if (el) el.remove();
+    });
+    /* Overlay select — dispatcher calls the callback stored in data-oa, params in data-op-* */
+    registerCspAction('excelOverlaySync', function (t) {
+        var fn = t.dataset.oa;
+        if (fn && typeof window[fn] === 'function') {
+            var args = [parseInt(t.dataset.opWIdx, 10), t.value];
+            if (t.dataset.opPrzIdx !== undefined)
+                args.splice(1, 0, parseInt(t.dataset.opPrzIdx, 10));
+            if (t.dataset.opField !== undefined) args.splice(2, 0, t.dataset.opField);
+            window[fn].apply(
+                null,
+                args.filter(function (a) {
+                    return !isNaN(a) || typeof a === 'string';
+                })
+            );
+        }
+    });
+}

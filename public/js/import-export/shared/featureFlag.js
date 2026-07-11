@@ -6,9 +6,6 @@ window.ImportExportFeatureFlag = {
             const opts = { credentials: 'include' };
             if (typeof authHeaders === 'function') {
                 opts.headers = authHeaders();
-            } else if (typeof window.getAuthToken === 'function') {
-                const t = window.getAuthToken();
-                if (t) opts.headers = { 'X-Auth-Token': t };
             }
             const r = await fetch('/api/feature-flags', opts);
             const j = await r.json();

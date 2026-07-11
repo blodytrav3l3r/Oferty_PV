@@ -65,63 +65,16 @@
                 </div>
 
                 <div class="header-right">
-                    <div
-                        id="header-user-info"
-                        style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem"
-                    >
+                    <div class="header-user-info" id="header-user-info">
+                        <span class="header-username" id="header-username"></span>
+                        <span class="header-role-badge" id="header-role-badge"></span>
+                        <span class="app-version-toolbar" id="app-version-toolbar"></span>
                         <span
-                            id="header-username"
-                            style="color: var(--text-secondary); font-weight: 500"
+                            class="connection-dot is-checking"
+                            id="connection-dot"
+                            title="Sprawdzanie połączenia..."
                         ></span>
-                        <span
-                            id="header-role-badge"
-                            style="
-                                font-size: 0.6rem;
-                                padding: 0.15rem 0.5rem;
-                                border-radius: 20px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 0.3px;
-                                margin-right: 0.5rem;
-                            "
-                        ></span>
-
-                        <span
-                            id="app-version-toolbar"
-                            style="
-                                color: var(--text-secondary);
-                                font-size: 0.7rem;
-                                padding: 0.35rem 0.5rem;
-                                opacity: 0.65;
-                                font-feature-settings: 'tnum';
-                            "
-                        ></span>
-                        <span class="connection-dot is-checking" id="connection-dot" title="Sprawdzanie połączenia..."></span>
-                        <button
-                            onclick="appLogout()"
-                            style="
-                                padding: 0.35rem 0.8rem;
-                                border: 1px solid var(--border-glass);
-                                border-radius: 6px;
-                                background: var(--bg-glass);
-                                color: var(--text-muted);
-                                font:
-                                    500 0.75rem 'Inter',
-                                    sans-serif;
-                                cursor: pointer;
-                                transition: all 0.2s;
-                            "
-                            onmouseenter="
-                                this.style.color = '#f87171';
-                                this.style.borderColor = '#3a1a1a';
-                            "
-                            onmouseleave="
-                                this.style.color = 'var(--text-muted)';
-                                this.style.borderColor = 'var(--border-glass)';
-                            "
-                        >
-                            Wyloguj
-                        </button>
+                        <button class="logout-btn" id="logout-btn" type="button">Wyloguj</button>
                     </div>
                 </div>
             </div>
@@ -134,6 +87,7 @@
         <script src="js/shared/auth.js?v=3.3"></script>
         <script src="js/shared/logger.js?v=3.0"></script>
         <script src="js/shared/constants.js?v=3.0"></script>
+        <script src="js/shared/cspActions.js?v=3.0"></script>
         <script src="js/shared/ui.js?v=3.0"></script>
 
         <!-- ═══════ ROUTER SPA ═══════ -->
