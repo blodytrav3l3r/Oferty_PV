@@ -612,8 +612,8 @@ function renderWellHeaderRow(
         priceDiffCell = `<td class="text-right" style="font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
     } else if (showPriceComparison) {
         // Puste komórki dla zachowania wyrównania kolumn (studnia NOWA bez ceny z oferty)
-        offerPriceCell = '<td class="text-right" class="pad-sm"></td>';
-        priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
+        offerPriceCell = '<td class="text-right pad-sm"></td>';
+        priceDiffCell = '<td class="text-right pad-sm"></td>';
     }
 
     return `<tr class="well-row-header" style="${rowStyle}" data-action="toggleWellExpansion" data-well-index="${i}">
@@ -1458,8 +1458,8 @@ function renderOfferSummaryFooter(
                     offerPriceCell = `<td class="text-right" style="font-size:0.8rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumOfferPrice)} PLN</td>`;
                     priceDiffCell = `<td class="text-right" style="font-size:0.8rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
                 } else {
-                    offerPriceCell = '<td class="text-right" class="pad-sm"></td>';
-                    priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
+                    offerPriceCell = '<td class="text-right pad-sm"></td>';
+                    priceDiffCell = '<td class="text-right pad-sm"></td>';
                 }
             }
 
@@ -4086,9 +4086,12 @@ if (typeof registerCspAction === 'function') {
             if (typeof saveOrderStudnie === 'function') saveOrderStudnie();
         }
     });
-    registerCspAction('toggleWellExpansion', function (t) {
-        var idx = parseInt(t.dataset.wellIndex, 10);
-        if (!isNaN(idx)) toggleWellExpansion(idx, event);
+    registerCspAction('toggleWellExpansion', {
+        handler: function (params, target, e) {
+            var idx = parseInt(params.wellIndex, 10);
+            if (!isNaN(idx)) toggleWellExpansion(idx, e);
+        },
+        params: ['wellIndex']
     });
     registerCspAction('stopPropagation', function () {});
     registerCspAction('editWell', function (t) {

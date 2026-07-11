@@ -234,7 +234,7 @@ function renderStudniePriceList() {
             if (isPrzejscia) {
                 html += `
         <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" data-action="editStudnieCell" data-field="dn" data-id="${p.id}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
-        <td class="text-right" data-action="editStudnieCell" data-field="weight" data-id="${p.id}" class="ui-pointer-bold">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
+        <td class="text-right ui-pointer-bold" data-action="editStudnieCell" data-field="weight" data-id="${p.id}">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
         <td class="text-right" data-action="editStudnieCell" data-field="zapasDol" data-id="${p.id}" style="cursor:pointer;">${p.zapasDol != null ? fmtInt(p.zapasDol) : '—'}</td>
         <td class="text-right" data-action="editStudnieCell" data-field="zapasGora" data-id="${p.id}" style="cursor:pointer;">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
         <td class="text-right" data-action="editStudnieCell" data-field="zapasDolMin" data-id="${p.id}" style="cursor:pointer; color:#fbbf24;">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
@@ -244,16 +244,16 @@ function renderStudniePriceList() {
             } else if (isKinety) {
                 html += `
         <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" data-action="editStudnieCell" data-field="dn" data-id="${p.id}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="spocznikH" data-id="${p.id}" class="ui-pointer-bold">${p.spocznikH || '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="area" data-id="${p.id}" class="ui-pointer-bold">${p.area != null ? fmt(p.area) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="hMin1" data-id="${p.id}" class="ui-pointer-bold">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="hMax1" data-id="${p.id}" class="ui-pointer-bold">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="spocznikH" data-id="${p.id}">${p.spocznikH || '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="area" data-id="${p.id}">${p.area != null ? fmt(p.area) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMin1" data-id="${p.id}">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMax1" data-id="${p.id}">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
         <td class="text-right" data-action="editStudnieCell" data-field="cena1" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="hMin2" data-id="${p.id}" class="ui-pointer-bold">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="hMax2" data-id="${p.id}" class="ui-pointer-bold">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMin2" data-id="${p.id}">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMax2" data-id="${p.id}">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
         <td class="text-right" data-action="editStudnieCell" data-field="cena2" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="hMin3" data-id="${p.id}" class="ui-pointer-bold">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
-        <td class="text-center" data-action="editStudnieCell" data-field="hMax3" data-id="${p.id}" class="ui-pointer-bold">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMin3" data-id="${p.id}">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
+        <td class="text-center ui-pointer-bold" data-action="editStudnieCell" data-field="hMax3" data-id="${p.id}">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
         <td class="text-right" data-action="editStudnieCell" data-field="cena3" data-id="${p.id}" style="cursor:pointer; font-weight:600; color:var(--success);">${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
                 `;
             } else {
@@ -626,6 +626,9 @@ async function deleteStudnieProduct(id) {
 }
 
 async function copyStudnieProduct(id) {
+    console.count('[DEBUG] copyStudnieProduct wywolane');
+    console.log('[DEBUG] copyStudnieProduct', { id: id, time: performance.now() });
+    console.trace('[DEBUG] Stack trace');
     const original = studnieProducts.find((p) => p.id === id);
     if (!original) return;
     let finalId = original.id + '-KOP';
@@ -1897,7 +1900,9 @@ if (typeof registerCspAction === 'function') {
         },
         params: ['id']
     });
-    registerCspAction('togglePrzejsciaFields', window.togglePrzejsciaFields);
+    registerCspAction('togglePrzejsciaFields', function () {
+        window.togglePrzejsciaFields();
+    });
     registerCspAction('addStudnieProduct', addStudnieProduct);
     registerCspAction('loadPrecoDefaults', loadPrecoDefaults);
     registerCspAction('savePrecoFromUI', savePrecoFromUI);

@@ -225,6 +225,6 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ## 8. Dług Techniczny — Znane Problemy
 
-| # | Problem | Status | Kryterium zamknięcia |
-|---|---------|--------|---------------------|
-| 1 | **`typecheck:frontend` usunięty z pre-push** — ~60 pre-existing błędów TS w `public/js/` (vanilla JS). Hook blokował push, maskując prawdziwe problemy. | Tymczasowo usunięty | Przywrócić do pre-push gdy `typecheck:frontend` przechodzi z wynikiem 0 lub sprawdzanie ograniczone do wspieranego zakresu plików |
+| #   | Problem                                                                                                                                                 | Status              | Kryterium zamknięcia                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **`typecheck:frontend` usunięty z pre-push** — ~60 pre-existing błędów TS w `public/js/` (vanilla JS). Hook blokował push, maskując prawdziwe problemy. | Tymczasowo usunięty | Przywrócić do pre-push gdy `typecheck:frontend` przechodzi z wynikiem 0 lub sprawdzanie ograniczone do wspieranego zakresu plików |

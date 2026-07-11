@@ -169,7 +169,7 @@ describe('runStartupChecks — integracja startupu', () => {
         //  7. PRAGMA busy_timeout (odczyt)  → result: [{ busy_timeout: 5000 }]
         //  8. PRAGMA user_version (odczyt)  → result: [{ user_version: 20000 }]
         mockPrisma.$queryRaw
-            .mockResolvedValueOnce([{ 'COUNT(*)': 10 }])  // table check — OK
+            .mockResolvedValueOnce([{ 'COUNT(*)': 10 }]) // table check — OK
             .mockResolvedValueOnce([{ foreign_keys: 1 }])
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([])
@@ -195,10 +195,10 @@ describe('runStartupChecks — integracja startupu', () => {
         process.env.DEFAULT_ADMIN_PASSWORD = 'bezpieczneHaslo12';
 
         mockPrisma.$queryRaw
-            .mockResolvedValueOnce([{ 'COUNT(*)': 10 }])   // table check — OK
-            .mockResolvedValueOnce([{ foreign_keys: 1 }])  // foreign_keys=ON
-            .mockResolvedValueOnce([])                      // busy_timeout=5000
-            .mockResolvedValueOnce([])                      // synchronous=NORMAL
+            .mockResolvedValueOnce([{ 'COUNT(*)': 10 }]) // table check — OK
+            .mockResolvedValueOnce([{ foreign_keys: 1 }]) // foreign_keys=ON
+            .mockResolvedValueOnce([]) // busy_timeout=5000
+            .mockResolvedValueOnce([]) // synchronous=NORMAL
             .mockResolvedValueOnce([{ journal_mode: 'delete' }]); // WAL fails
         mockPrisma.$executeRaw.mockResolvedValue([]);
         mockPrisma.users.findUnique.mockResolvedValue({ id: 'usr_admin', username: 'admin' });

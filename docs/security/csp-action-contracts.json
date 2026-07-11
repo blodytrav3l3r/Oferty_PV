@@ -8,115 +8,76 @@
     "actions": {
         "${docxAction}": {
             "description": "Dynamic: export to DOCX via print modal",
-            "params": [
-                "id",
-                "format"
-            ],
+            "params": ["id", "format"],
             "handler": "dynamic",
             "handledBy": "legacy",
-            "files": [
-                "public/js/shared/printModal.js"
-            ]
+            "files": ["public/js/shared/printModal.js"]
         },
         "${pdfAction}": {
             "description": "Dynamic: export to PDF via print modal",
-            "params": [
-                "id",
-                "format"
-            ],
+            "params": ["id", "format"],
             "handler": "dynamic",
             "handledBy": "legacy",
-            "files": [
-                "public/js/shared/printModal.js"
-            ]
+            "files": ["public/js/shared/printModal.js"]
         },
         "__upm_close": {
             "description": "Close print modal (UPM)",
             "params": [],
             "handler": "__upm_close",
             "handledBy": "legacy",
-            "files": [
-                "public/js/shared/printModal.js"
-            ]
+            "files": ["public/js/shared/printModal.js"]
         },
         "_excelBulkSetMode": {
             "description": "Bulk set auto/manual mode for selected wells",
-            "params": [
-                "enabled"
-            ],
+            "params": ["enabled"],
             "handler": "_excelBulkSetMode",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "_excelCreateFromDialog": {
             "description": "Create well from dialog in Excel",
             "params": [],
             "handler": "_excelCreateFromDialog",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "_excelImportPasteList": {
             "description": "Import pasted list into Excel",
             "params": [],
             "handler": "_excelImportPasteList",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "_excelRunAutoSelectForWell": {
             "description": "Run auto-select for a well (Excel)",
-            "params": [
-                "wIdx"
-            ],
+            "params": ["wIdx"],
             "handler": "_excelRunAutoSelectForWell",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "_excelToggleAddMenu": {
             "description": "Toggle add-menu dropdown in Excel table",
             "params": [],
             "handler": "_excelToggleAddMenu",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "_excelToggleWellAutoMode": {
             "description": "Toggle auto/manual mode for a well (Excel)",
-            "params": [
-                "wIdx"
-            ],
+            "params": ["wIdx"],
             "handler": "_excelToggleWellAutoMode",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "accept-production-order": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "activateQuickEdit": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "globalIndex",
-                "field"
-            ],
+            "params": ["globalIndex", "field"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/transitionRenderer.js"
-            ]
+            "files": ["public/js/studnie/transitionRenderer.js"]
         },
         "add-custom-przejscie": {
             "description": "TODO",
@@ -124,223 +85,149 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "add-new-well": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "add-well-component": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId"
-            ],
+            "params": ["productId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellActions.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js"]
         },
         "addOfferItem": {
             "description": "Add item to offer (Rury)",
-            "params": [
-                "productId"
-            ],
+            "params": ["productId"],
             "handler": "addOfferItem",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "addPehdToPipe": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "index",
-                "pehdType"
-            ],
+            "params": ["index", "pehdType"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "addPrecoGrupaCol": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "fieldBase"
-            ],
+            "params": ["dn", "fieldBase"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "addPrecoKinetaRow": {
             "description": "Add PRECO kineta row",
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "addPrecoKinetaRow",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "addPrecoRangeRow": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "fieldBase"
-            ],
+            "params": ["dn", "fieldBase"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "addProduct": {
             "description": "Add new product to pricelist (Rury)",
             "params": [],
             "handler": "addProduct",
-            "files": [
-                "public/js/rury/pricelistUi.js"
-            ]
+            "files": ["public/js/rury/pricelistUi.js"]
         },
         "addPrzejsciaCategory": {
             "description": "Add przejscia category in pricelist",
             "params": [],
             "handler": "addPrzejsciaCategory",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "addStudnieCategory": {
             "description": "Add studnie category in pricelist",
             "params": [],
             "handler": "addStudnieCategory",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "addStudnieElement": {
             "description": "Add element to studnie pricelist",
-            "params": [
-                "groupKey"
-            ],
+            "params": ["groupKey"],
             "handler": "addStudnieElement",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "addStudnieProduct": {
             "description": "Confirm adding product to studnie pricelist",
             "params": [],
             "handler": "addStudnieProduct",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "apply-global-params": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "applyGlobalRecalc": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "key"
-            ],
+            "params": ["key"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "applyItemDiscounts": {
             "description": "Apply discount to all offer items",
             "params": [],
             "handler": "applyItemDiscounts",
-            "files": [
-                "public/js/rury/offerExports.js"
-            ]
+            "files": ["public/js/rury/offerExports.js"]
         },
         "auto-select-components": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "bulkSeqInput": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "cancelEditClient": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "clientId"
-            ],
+            "params": ["clientId"],
             "handler": "TODO",
-            "files": [
-                "public/js/shared/clientManager.js"
-            ]
+            "files": ["public/js/shared/clientManager.js"]
         },
         "cancelPrzejscieEdit": {
             "description": "Cancel przejscie edit and close panel",
             "params": [],
             "handler": "cancelPrzejscieEdit",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "cennik-tab": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "tab"
-            ],
+            "params": ["tab"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "change-offer-user": {
             "description": "TODO",
@@ -348,93 +235,61 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "changeOfferUser": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "TODO",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "changeOfferUserFromListStudnie": {
             "description": "Change assigned user for offer (Studnie)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "changeOfferUserFromListStudnie",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "clear-well-config": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "close-offer-discounts-popup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "close-zlecenia-modal": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "closeBulkOrderPopup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "closeEditPopup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIdx",
-                "trIdx"
-            ],
+            "params": ["wellIdx", "trIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "closeExcelAddDialog": {
             "description": "TODO",
@@ -442,9 +297,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "closeExcelParamsPopup": {
             "description": "TODO",
@@ -452,9 +305,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "closeExcelPasteDialog": {
             "description": "TODO",
@@ -462,37 +313,27 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "closeExcelTableModal": {
             "description": "Close Excel table modal without saving",
             "params": [],
             "handler": "closeExcelTableModal",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "closeGlobalRecalcModal": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "key"
-            ],
+            "params": ["key"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "closeHistoryModal": {
             "description": "Close offer history modal",
             "params": [],
             "handler": "closeHistoryModal",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "closeKartaExportModal": {
             "description": "TODO",
@@ -500,9 +341,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "closeModal": {
             "description": "Close any modal dialog",
@@ -528,72 +367,47 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "closePrzejsciaVisibilityPopup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "containerId"
-            ],
+            "params": ["containerId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "closeTransitionManagerModal": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "key"
-            ],
+            "params": ["key"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "confirmChangePrzejscieDn": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "index",
-                "productId"
-            ],
+            "params": ["index", "productId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "confirmChangePrzejscieType": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "index",
-                "type"
-            ],
+            "params": ["index", "type"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "confirmPipeLength": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId",
-                "editIndex"
-            ],
+            "params": ["productId", "editIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "copy-karta-budowy": {
             "description": "TODO",
@@ -601,30 +415,19 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "copyProduct": {
             "description": "Copy product in pricelist (Rury)",
-            "params": [
-                "productId"
-            ],
+            "params": ["productId"],
             "handler": "copyProduct",
-            "files": [
-                "public/js/rury/pricelistUi.js"
-            ]
+            "files": ["public/js/rury/pricelistUi.js"]
         },
         "copyStudnieProduct": {
             "description": "Copy product in studnie pricelist",
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "copyStudnieProduct",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "create-order-from-offer": {
             "description": "TODO",
@@ -632,147 +435,92 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "delete-selected-production-order": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "deleteClientFromDb": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "clientId"
-            ],
+            "params": ["clientId"],
             "handler": "TODO",
-            "files": [
-                "public/js/shared/clientManager.js"
-            ]
+            "files": ["public/js/shared/clientManager.js"]
         },
         "deleteOffer": {
             "description": "Delete offer (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "deleteOffer",
-            "files": [
-                "public/js/rury/offerCrud.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js"]
         },
         "deleteOfferStudnie": {
             "description": "Delete offer (Studnie)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "deleteOfferStudnie",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "deleteOrder": {
             "description": "Delete order (SPA)",
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "AppZlecenia.deleteOrder",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "deleteOrderStudnie": {
             "description": "Delete order (Studnie)",
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "deleteOrderStudnie",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "deleteProduct": {
             "description": "Delete product from pricelist (Rury)",
-            "params": [
-                "productId"
-            ],
+            "params": ["productId"],
             "handler": "deleteProduct",
-            "files": [
-                "public/js/rury/pricelistUi.js"
-            ]
+            "files": ["public/js/rury/pricelistUi.js"]
         },
         "deleteProductionOrderFromList": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "poId"
-            ],
+            "params": ["poId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "deleteStudnieCategory": {
             "description": "Delete category from studnie pricelist",
-            "params": [
-                "groupKey"
-            ],
+            "params": ["groupKey"],
             "handler": "deleteStudnieCategory",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "deleteStudnieProduct": {
             "description": "Delete product from studnie pricelist",
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "deleteStudnieProduct",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "deleteUser": {
             "description": "Delete a user in dashboard",
-            "params": [
-                "userId"
-            ],
+            "params": ["userId"],
             "handler": "deleteUser",
             "handledBy": "legacy",
-            "files": [
-                "public/js/shared/dashboard.js"
-            ]
+            "files": ["public/js/shared/dashboard.js"]
         },
         "discountInput": {
             "description": "Handle discount input in discount modal",
-            "params": [
-                "index"
-            ],
+            "params": ["index"],
             "handler": "discountInput",
-            "files": [
-                "public/js/rury/offerExports.js"
-            ]
+            "files": ["public/js/rury/offerExports.js"]
         },
         "downloadExistingOffer": {
             "description": "Download offer as JSON (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "downloadExistingOffer",
-            "files": [
-                "public/js/rury/offerCrud.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js"]
         },
         "drag-drop-well": {
             "description": "TODO",
@@ -780,376 +528,227 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "duplicateOffer": {
             "description": "Duplicate offer (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "duplicateOffer",
-            "files": [
-                "public/js/rury/offerCrud.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js"]
         },
         "duplicateWell": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIndex"
-            ],
+            "params": ["wellIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "editClientInDb": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "clientId"
-            ],
+            "params": ["clientId"],
             "handler": "TODO",
-            "files": [
-                "public/js/shared/clientManager.js"
-            ]
+            "files": ["public/js/shared/clientManager.js"]
         },
         "editField": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "id",
-                "field"
-            ],
+            "params": ["id", "field"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/pricelistUi.js"
-            ]
+            "files": ["public/js/rury/pricelistUi.js"]
         },
         "editInlineSetDN": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dnId"
-            ],
+            "params": ["dnId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "editInlineSetType": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "type"
-            ],
+            "params": ["type"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "editProductionOrder": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "offerId",
-                "wellId",
-                "elementIdx",
-                "salesOrderId"
-            ],
+            "params": ["offerId", "wellId", "elementIdx", "salesOrderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "editPrzejscie": {
             "description": "Edit przejscie in transition renderer",
-            "params": [
-                "globalIndex"
-            ],
+            "params": ["globalIndex"],
             "handler": "editPrzejscie",
-            "files": [
-                "public/js/studnie/transitionRenderer.js"
-            ]
+            "files": ["public/js/studnie/transitionRenderer.js"]
         },
         "editStudnieCell": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "field",
-                "id"
-            ],
+            "params": ["field", "id"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "editUpdateAngles": {
             "description": "Update przejscie angles in edit mode",
-            "params": [
-                "index"
-            ],
+            "params": ["index"],
             "handler": "editUpdateAngles",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "editWell": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "excelAddTransitionColumn": {
             "description": "Add transition column",
             "params": [],
             "handler": "excelAddTransitionColumn",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelAddWellToTabAndClose": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelDeleteWell": {
             "description": "Delete well (Excel)",
-            "params": [
-                "wIdx"
-            ],
+            "params": ["wIdx"],
             "handler": "excelDeleteWell",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelDuplicateWell": {
             "description": "Duplicate well (Excel)",
-            "params": [
-                "wIdx"
-            ],
+            "params": ["wIdx"],
             "handler": "excelDuplicateWell",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelFilterWells": {
             "description": "Filter wells in Excel table by search input",
             "params": [],
             "handler": "excelFilterWells",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelOnCompChange": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelOnRzednaChange": {
             "description": "Handle rzędna change in Excel table",
-            "params": [
-                "wIdx"
-            ],
+            "params": ["wIdx"],
             "handler": "excelOnRzednaChange",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelOpenWellParams": {
             "description": "Open well params popup (Excel)",
-            "params": [
-                "wIdx"
-            ],
+            "params": ["wIdx"],
             "handler": "excelOpenWellParams",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelOverlaySync": {
             "description": "Dispatcher for overlay select change — reads data-oa / data-op-* and calls window[fn]",
             "params": [],
             "handler": "excelOverlaySync",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelRemoveTransitionColumn": {
             "description": "Remove last transition column",
             "params": [],
             "handler": "excelRemoveTransitionColumn",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelSaveAll": {
             "description": "Save all Excel edits and close",
             "params": [],
             "handler": "excelSaveAll",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelShowAddDialogAndClose": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelShowPasteDialogAndClose": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelSwitchTab": {
             "description": "Switch tab in Excel table (Studnie)",
-            "params": [
-                "tab"
-            ],
+            "params": ["tab"],
             "handler": "excelSwitchTab",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelToggleAutoSelect": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelToggleFullscreen": {
             "description": "Toggle fullscreen in Excel table",
             "params": [],
             "handler": "excelToggleFullscreen",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelUpdateWellParam": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "excelUpdateWellParamAndRefresh": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wIdx",
-                "compType",
-                "hArg",
-                "pidArg",
-                "redDn"
-            ],
+            "params": ["wIdx", "compType", "hArg", "pidArg", "redDn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "executeBulkFromPopup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "exitPreviewMode": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "zlIdx"
-            ],
+            "params": ["zlIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "export-rury-excel": {
             "description": "TODO",
@@ -1157,88 +756,57 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "export-studnie-excel": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "exportJSONStudnie": {
             "description": "Export offer as JSON (Studnie)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "exportJSONStudnie",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "exportKartaRury": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId",
-                "format"
-            ],
+            "params": ["orderId", "format"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerCrud.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js"]
         },
         "exportKartaToPDF": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "exportKartaToWord": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "exportOfferPDF": {
             "description": "Export offer as PDF (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "exportOfferPDF",
-            "files": [
-                "public/js/rury/offerExports.js"
-            ]
+            "files": ["public/js/rury/offerExports.js"]
         },
         "exportOfferXlsx": {
             "description": "Export offer as XLSX (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "exportOfferXlsx",
-            "files": [
-                "public/js/rury/offerExports.js"
-            ]
+            "files": ["public/js/rury/offerExports.js"]
         },
         "filter-local-offers": {
             "description": "TODO",
@@ -1246,9 +814,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "filter-zlecenia-list": {
             "description": "TODO",
@@ -1256,29 +822,21 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "filterByType": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "type"
-            ],
+            "params": ["type"],
             "handler": "TODO",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "filterClientsDb": {
             "description": "Filter clients database by search input",
             "params": [],
             "handler": "filterClientsDb",
-            "files": [
-                "public/js/shared/clientManager.js"
-            ]
+            "files": ["public/js/shared/clientManager.js"]
         },
         "generate-offer-notes": {
             "description": "TODO",
@@ -1286,81 +844,55 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "goto-wizard-step": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "step"
-            ],
+            "params": ["step"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "handle-offer-discounts-cancel": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "handle-offer-discounts-save": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "handle-offer-transport-cancel": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "handle-offer-transport-save": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "handle-print-click": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "handle-przejscia-zamowione-change": {
             "description": "TODO",
@@ -1368,10 +900,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "handle-rury-transport-cancel": {
             "description": "TODO",
@@ -1379,9 +908,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "handle-rury-transport-save": {
             "description": "TODO",
@@ -1389,67 +916,43 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "handleOfferDiscountBlur": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "handleOfferPehdDiscountChange": {
             "description": "Handle PEHD discount input change (Studnie)",
             "params": [],
             "handler": "handleOfferPehdDiscountChange",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "handlePaintingCostChange": {
             "description": "Handle painting cost input change (Studnie)",
-            "params": [
-                "field"
-            ],
+            "params": ["field"],
             "handler": "handlePaintingCostChange",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "handleStycznaProductChoice": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId",
-                "mode"
-            ],
+            "params": ["productId", "mode"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "ignoreClick": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "index",
-                "type"
-            ],
+            "params": ["index", "type"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "import-rury-excel": {
             "description": "TODO",
@@ -1457,9 +960,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "import-rury-from-excel": {
             "description": "TODO",
@@ -1467,21 +968,15 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "import-studnie-excel": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "import-studnie-from-excel": {
             "description": "TODO",
@@ -1489,58 +984,37 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "inlineFinish": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "contextId",
-                "containerId"
-            ],
+            "params": ["contextId", "containerId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "inlineSetDN": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dnId",
-                "containerId"
-            ],
+            "params": ["dnId", "containerId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "inlineSetType": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "type",
-                "containerId"
-            ],
+            "params": ["type", "containerId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "inlineUpdateAngles": {
             "description": "Update inline przejscie angles",
-            "params": [
-                "containerId"
-            ],
+            "params": ["containerId"],
             "handler": "inlineUpdateAngles",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "input-select": {
             "description": "TODO",
@@ -1548,176 +1022,115 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "loadLocalOffers": {
             "description": "Load local offers from sales UI",
             "params": [],
             "handler": "window.pvSalesUI.loadLocalOffers",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "loadMoreAuditLogs": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/sales/pvSalesUi.js",
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js", "public/js/studnie/offerManager.js"]
         },
         "loadOffer": {
             "description": "Load offer for editing (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "loadOffer",
-            "files": [
-                "public/js/rury/offerCrud.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js"]
         },
         "loadPrecoDefaults": {
             "description": "Load PRECO defaults",
             "params": [],
             "handler": "loadPrecoDefaults",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "loadSavedOfferStudnie": {
             "description": "Load saved offer (Studnie)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "loadSavedOfferStudnie",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "logout": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "phase"
-            ],
+            "params": ["phase"],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "move-well-down": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "cfgIdx"
-            ],
+            "params": ["cfgIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellActions.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js"]
         },
         "move-well-up": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "cfgIdx"
-            ],
+            "params": ["cfgIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellActions.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js"]
         },
         "moveZleceniaComponent": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "zlIdx",
-                "direction"
-            ],
+            "params": ["zlIdx", "direction"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "navigateToOrder": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerCrud.js",
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js", "public/js/studnie/offerManager.js"]
         },
         "navigateToOrderWell": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "navigateToPhase5": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "idx"
-            ],
+            "params": ["idx"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/orderManager.js"
-            ]
+            "files": ["public/js/rury/orderManager.js"]
         },
         "offerSummaryCheckboxChange": {
             "description": "Checkbox toggle in offer summary order comparison — updates selection count and pipes checkbox handler",
             "params": [],
             "handler": "offerSummaryCheckboxChange",
-            "files": [
-                "public/js/rury/offerSummaryTab.js"
-            ]
+            "files": ["public/js/rury/offerSummaryTab.js"]
         },
         "onZleceniaKatChange": {
             "description": "Handle zlecenia kąt input change (Studnie)",
             "params": [],
             "handler": "onZleceniaKatChange",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "open-bulk-order-sequence-popup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "open-excel-table-modal": {
             "description": "TODO",
@@ -1725,9 +1138,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "open-global-recalc-modal": {
             "description": "TODO",
@@ -1735,21 +1146,15 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "open-offer-discounts-popup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "open-rury-transport-popup": {
             "description": "TODO",
@@ -1757,9 +1162,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "open-transition-manager-modal": {
             "description": "TODO",
@@ -1767,9 +1170,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "open-transport-popup": {
             "description": "TODO",
@@ -1777,180 +1178,115 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "open-zlecenia-produkcyjne": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "openChangePrzejscieDnPopup": {
             "description": "Open change przejscie DN popup",
-            "params": [
-                "globalIndex"
-            ],
+            "params": ["globalIndex"],
             "handler": "openChangePrzejscieDnPopup",
-            "files": [
-                "public/js/studnie/transitionRenderer.js"
-            ]
+            "files": ["public/js/studnie/transitionRenderer.js"]
         },
         "openChangePrzejscieTypePopup": {
             "description": "Open change przejscie type popup",
-            "params": [
-                "globalIndex"
-            ],
+            "params": ["globalIndex"],
             "handler": "openChangePrzejscieTypePopup",
-            "files": [
-                "public/js/studnie/transitionRenderer.js"
-            ]
+            "files": ["public/js/studnie/transitionRenderer.js"]
         },
         "openFlowTypePopup": {
             "description": "Open flow type popup for przejscie",
-            "params": [
-                "globalIndex"
-            ],
+            "params": ["globalIndex"],
             "handler": "openFlowTypePopup",
-            "files": [
-                "public/js/studnie/transitionRenderer.js"
-            ]
+            "files": ["public/js/studnie/transitionRenderer.js"]
         },
         "openPrzejsciaVisibilityPopup": {
             "description": "Open przejscia visibility popup",
-            "params": [
-                "containerId"
-            ],
+            "params": ["containerId"],
             "handler": "openPrzejsciaVisibilityPopup",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "phase-nav": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "phase"
-            ],
+            "params": ["phase"],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "phase-next": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "section"
-            ],
+            "params": ["section"],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "phase-prev": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "section"
-            ],
+            "params": ["section"],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "pipeCheckboxChange": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "index",
-                "pehdType"
-            ],
+            "params": ["index", "pehdType"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "pipeLengthStepDown": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId",
-                "editIndex"
-            ],
+            "params": ["productId", "editIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "pipeLengthStepUp": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId",
-                "editIndex"
-            ],
+            "params": ["productId", "editIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "print-etykieta": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "print-zlecenie": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "printSingleEtykieta": {
             "description": "Print single etykieta (SPA)",
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "AppZlecenia.printSingleEtykieta",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "printSingleZlecenie": {
             "description": "Print single zlecenie (SPA)",
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "AppZlecenia.printSingleZlecenie",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "pszCzyChange": {
             "description": "TODO",
@@ -1958,9 +1294,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "pszDeleteRow": {
             "description": "TODO",
@@ -1968,9 +1302,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "pszDnInputChange": {
             "description": "TODO",
@@ -1978,9 +1310,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "pszDnSelectChange": {
             "description": "TODO",
@@ -1988,9 +1318,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "pszRodzajCatChange": {
             "description": "TODO",
@@ -1998,9 +1326,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "pszRodzajCustomChange": {
             "description": "TODO",
@@ -2008,9 +1334,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "pszUwagiChange": {
             "description": "TODO",
@@ -2018,53 +1342,35 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "recalcSelectRedTop": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "id"
-            ],
+            "params": ["dn", "id"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "recalcSelectTop": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "id"
-            ],
+            "params": ["dn", "id"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "recalcToggleRed": {
             "description": "Toggle recalculation red flag (Studnie)",
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "recalcToggleRed",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "recalculatePEHD": {
             "description": "Recalculate PEHD prices in pricelist",
             "params": [],
             "handler": "recalculatePEHD",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "redukcja-min-change": {
             "description": "TODO",
@@ -2072,118 +1378,75 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "remove-well": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "remove-well-component": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "cfgIdx"
-            ],
+            "params": ["cfgIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellActions.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js"]
         },
         "removeCustomPrzejscieRow": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "idx"
-            ],
+            "params": ["idx"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/orderManager.js"
-            ]
+            "files": ["public/js/rury/orderManager.js"]
         },
         "removeOfferItem": {
             "description": "Remove item from offer (Rury)",
-            "params": [
-                "index"
-            ],
+            "params": ["index"],
             "handler": "removeOfferItem",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "removePrecoGrupaCol": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "fieldBase",
-                "g"
-            ],
+            "params": ["dn", "fieldBase", "g"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "removePrecoKinetaRow": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "index"
-            ],
+            "params": ["dn", "index"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "removePrecoRangeRow": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "fieldBase",
-                "index"
-            ],
+            "params": ["dn", "fieldBase", "index"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "removePrzejscieFromWell": {
             "description": "Remove przejscie from well",
-            "params": [
-                "globalIndex"
-            ],
+            "params": ["globalIndex"],
             "handler": "removePrzejscieFromWell",
-            "files": [
-                "public/js/studnie/transitionRenderer.js"
-            ]
+            "files": ["public/js/studnie/transitionRenderer.js"]
         },
         "removeWell": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIndex"
-            ],
+            "params": ["wellIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "render-wells-list": {
             "description": "TODO",
@@ -2191,92 +1454,59 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "reset-studnie-price-list": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "resetWellParamsToDefaults": {
             "description": "Reset well parameters to defaults (Step 2)",
             "params": [],
             "handler": "resetWellParamsToDefaults",
-            "files": [
-                "public/js/studnie/wellUI.js",
-                "public/js/studnie/wellManager.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js", "public/js/studnie/wellManager.js"]
         },
         "resolveKonusPehd": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIndex",
-                "type"
-            ],
+            "params": ["wellIndex", "type"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "resolveKonusPehdCancel": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "id"
-            ],
+            "params": ["dn", "id"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "restoreHistorySnapshot": {
             "description": "Restore history snapshot (Studnie)",
-            "params": [
-                "logId"
-            ],
+            "params": ["logId"],
             "handler": "restoreHistorySnapshot",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "restoreOfferVersion": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "offerId",
-                "historyIndex"
-            ],
+            "params": ["offerId", "historyIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerCrud.js",
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js", "public/js/sales/pvSalesUi.js"]
         },
         "revoke-production-order": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "rury-transport-form-change": {
             "description": "TODO",
@@ -2284,9 +1514,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "sanitize-numeric": {
             "description": "TODO",
@@ -2294,10 +1522,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "save-client-to-db": {
             "description": "TODO",
@@ -2305,22 +1530,15 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "save-current-order": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "save-offer-or-order": {
             "description": "TODO",
@@ -2328,21 +1546,15 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "save-offer-studnie": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "save-price-list": {
             "description": "TODO",
@@ -2350,240 +1562,155 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "save-production-order": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "save-studnie-price-list": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "saveEditedClient": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "clientId"
-            ],
+            "params": ["clientId"],
             "handler": "TODO",
-            "files": [
-                "public/js/shared/clientManager.js"
-            ]
+            "files": ["public/js/shared/clientManager.js"]
         },
         "saveOrderOrOfferStudnie": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "savePrecoFromUI": {
             "description": "Save PRECO from UI",
             "params": [],
             "handler": "savePrecoFromUI",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "savePrzejscieEdit": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "index"
-            ],
+            "params": ["index"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "saveQuickEdit": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "type"
-            ],
+            "params": ["type"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "select-dn": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "selectAndKatChange": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "value"
-            ],
+            "params": ["value"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "selectCatalogCategory": {
             "description": "Select catalog category (Rury)",
-            "params": [
-                "category"
-            ],
+            "params": ["category"],
             "handler": "selectCatalogCategory",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "selectRedukcjaChoice": {
             "description": "Select reduction target DN (Studnie)",
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "selectRedukcjaChoice",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "selectRedukcjaZakonczenie": {
             "description": "Select reduction ending for well (Studnie)",
-            "params": [
-                "productId"
-            ],
+            "params": ["productId"],
             "handler": "selectRedukcjaZakonczenie",
-            "files": [
-                "public/js/studnie/wellActions.js",
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js", "public/js/studnie/wellPopups.js"]
         },
         "selectWell": {
             "description": "Select well from list (Studnie)",
-            "params": [
-                "wellIndex"
-            ],
+            "params": ["wellIndex"],
             "handler": "selectWell",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "selectZakonczenie": {
             "description": "Select ending (zakonczenie) for well (Studnie)",
-            "params": [
-                "productId"
-            ],
+            "params": ["productId"],
             "handler": "selectZakonczenie",
-            "files": [
-                "public/js/studnie/wellActions.js",
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js", "public/js/studnie/wellPopups.js"]
         },
         "selectZleceniaElement": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "zlIdx"
-            ],
+            "params": ["zlIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "selectZleceniaTile": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "targetId",
-                "value"
-            ],
+            "params": ["targetId", "value"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "set-zlecenia-filter": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "setFilterLocalOffers": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "setKatStopni": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "value"
-            ],
+            "params": ["value"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "setPrzejsciaVisibilityAll": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "visible"
-            ],
+            "params": ["visible"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "show-add-product-modal": {
             "description": "TODO",
@@ -2591,21 +1718,15 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "show-add-studnie-product-modal": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "show-clients-db": {
             "description": "TODO",
@@ -2613,10 +1734,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "show-item-discount-modal": {
             "description": "TODO",
@@ -2624,34 +1742,23 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "show-offer-export-choice": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "show-section": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "section"
-            ],
+            "params": ["section"],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "show-universal-print-modal": {
             "description": "TODO",
@@ -2659,69 +1766,43 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "showKonusPehdResolver": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId",
-                "mode"
-            ],
+            "params": ["productId", "mode"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "showOfferHistory": {
             "description": "Show offer history modal (Rury)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "showOfferHistory",
-            "files": [
-                "public/js/rury/offerCrud.js"
-            ]
+            "files": ["public/js/rury/offerCrud.js"]
         },
         "showOfferHistoryStudnie": {
             "description": "Show offer history modal (Studnie)",
-            "params": [
-                "offerId"
-            ],
+            "params": ["offerId"],
             "handler": "showOfferHistoryStudnie",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "showPipeLengthModal": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "productId",
-                "itemIndex"
-            ],
+            "params": ["productId", "itemIndex"],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "showUniversalPrintModal": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "spaNavLink": {
             "description": "TODO",
@@ -2729,9 +1810,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/router.js"
-            ]
+            "files": ["public/js/spa/router.js"]
         },
         "spaShowSection": {
             "description": "TODO",
@@ -2739,58 +1818,38 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/router.js"
-            ]
+            "files": ["public/js/spa/router.js"]
         },
         "startEditUser": {
             "description": "Start editing a user in dashboard",
-            "params": [
-                "userId"
-            ],
+            "params": ["userId"],
             "handler": "startEditUser",
             "handledBy": "legacy",
-            "files": [
-                "public/js/shared/dashboard.js"
-            ]
+            "files": ["public/js/shared/dashboard.js"]
         },
         "stopPropagation": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "switch-builder-tab": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "tab"
-            ],
+            "params": ["tab"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "switch-sidebar-tab": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "tab"
-            ],
+            "params": ["tab"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "sync-rury-transport-from-modal": {
             "description": "TODO",
@@ -2798,9 +1857,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "sync-transport-from-modal": {
             "description": "TODO",
@@ -2808,166 +1865,109 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "syncCustomRow": {
             "description": "Sync custom order row field change",
             "params": [],
             "handler": "syncCustomRow",
-            "files": [
-                "public/js/rury/orderManager.js"
-            ]
+            "files": ["public/js/rury/orderManager.js"]
         },
         "syncEditState": {
             "description": "Sync edit state for przejscie editor",
             "params": [],
             "handler": "syncEditState",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "tmApplyChanges": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "key"
-            ],
+            "params": ["key"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmApplyFilters": {
             "description": "Apply transition manager filters",
             "params": [],
             "handler": "tmApplyFilters",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmEditApply": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIdx",
-                "trIdx"
-            ],
+            "params": ["wellIdx", "trIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmEditSelectDN": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIdx",
-                "trIdx"
-            ],
+            "params": ["wellIdx", "trIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmEditSelectType": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "wellIdx",
-                "trIdx"
-            ],
+            "params": ["wellIdx", "trIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmOpenEditTransitionPopup": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "key"
-            ],
+            "params": ["key"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmSelectFilterDn": {
             "description": "Filter transition manager by DN",
-            "params": [
-                "filterVal"
-            ],
+            "params": ["filterVal"],
             "handler": "tmSelectFilterDn",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmSelectFilterMaterial": {
             "description": "Filter transition manager by material",
-            "params": [
-                "filterVal"
-            ],
+            "params": ["filterVal"],
             "handler": "tmSelectFilterMaterial",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmSelectTargetCat": {
             "description": "Select target category in transition manager",
-            "params": [
-                "category"
-            ],
+            "params": ["category"],
             "handler": "tmSelectTargetCat",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmSortBy": {
             "description": "Sort transition manager table by column",
-            "params": [
-                "column"
-            ],
+            "params": ["column"],
             "handler": "tmSortBy",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmToggleSelectAll": {
             "description": "Toggle select all in transition manager",
             "params": [],
             "handler": "tmToggleSelectAll",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmToggleTransition": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "key"
-            ],
+            "params": ["key"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "tmToggleWell": {
             "description": "Toggle well selection in transition manager",
-            "params": [
-                "wellIndex"
-            ],
+            "params": ["wellIndex"],
             "handler": "tmToggleWell",
-            "files": [
-                "public/js/studnie/wellPopups.js"
-            ]
+            "files": ["public/js/studnie/wellPopups.js"]
         },
         "toggle-all-items-for-order": {
             "description": "TODO",
@@ -2975,33 +1975,23 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "toggle-auto-lock": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "toggle-card": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "toggle-catalog": {
             "description": "TODO",
@@ -3009,9 +1999,7 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "toggle-inne-display": {
             "description": "TODO",
@@ -3019,58 +2007,39 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js",
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/app.js", "public/js/appStudnie.js"]
         },
         "toggle-liner-pehd": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "cfgIdx"
-            ],
+            "params": ["cfgIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellActions.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js"]
         },
         "toggle-liner-preco": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "cfgIdx"
-            ],
+            "params": ["cfgIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellActions.js"
-            ]
+            "files": ["public/js/studnie/wellActions.js"]
         },
         "toggle-psia-buda": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "toggle-redukcja": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "toggle-rury-transport-mode": {
             "description": "TODO",
@@ -3078,124 +2047,83 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "toggle-styczna-1200": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "id"
-            ],
+            "params": ["id"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "toggle-transport-mode": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "toggleAllOfferSummaryForOrder": {
             "description": "Toggle all offer summary for order selection (Rury)",
             "params": [],
             "handler": "toggleAllOfferSummaryForOrder",
-            "files": [
-                "public/js/rury/offerSummaryTab.js"
-            ]
+            "files": ["public/js/rury/offerSummaryTab.js"]
         },
         "toggleAllWellsForOrder": {
             "description": "Toggle all wells for order selection (Studnie)",
             "params": [],
             "handler": "toggleAllWellsForOrder",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "toggleBulkSeqItem": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "toggleCard": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "targetId",
-                "value"
-            ],
+            "params": ["targetId", "value"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "toggleCompactMode": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/sales/pvSalesUi.js"
-            ]
+            "files": ["public/js/sales/pvSalesUi.js"]
         },
         "toggleDaneElementu": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "zlIdx"
-            ],
+            "params": ["zlIdx"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "toggleDaneZlecenia": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "targetId",
-                "value"
-            ],
+            "params": ["targetId", "value"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "toggleMagazynField": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "field",
-                "id"
-            ],
+            "params": ["field", "id"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "toggleOrderTransportBreakdown": {
             "description": "TODO",
@@ -3203,49 +2131,35 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/rury/orderManager.js"
-            ]
+            "files": ["public/js/rury/orderManager.js"]
         },
         "togglePrecoAccordion": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn"
-            ],
+            "params": ["dn"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "togglePrzejsciaFields": {
             "description": "Toggle przejscia-specific fields in add-element form",
             "params": [],
             "handler": "togglePrzejsciaFields",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "togglePrzejsciaTypeVisibility": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "type"
-            ],
+            "params": ["type"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellTransitions.js"
-            ]
+            "files": ["public/js/studnie/wellTransitions.js"]
         },
         "toggleSelectAll": {
             "description": "Toggle select all wells in Excel table",
             "params": [],
             "handler": "toggleSelectAll",
-            "files": [
-                "public/js/studnie/excelTableManager.js"
-            ]
+            "files": ["public/js/studnie/excelTableManager.js"]
         },
         "toggleSelectZlecenie": {
             "description": "TODO",
@@ -3253,43 +2167,29 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "toggleTransportBreakdown": {
             "description": "Toggle transport cost breakdown in offer (Rury)",
             "params": [],
             "handler": "toggleTransportBreakdown",
-            "files": [
-                "public/js/rury/transport.js"
-            ]
+            "files": ["public/js/rury/transport.js"]
         },
         "toggleWellExpansion": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "entityType",
-                "entityId",
-                "limit"
-            ],
+            "params": ["entityType", "entityId", "limit"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "transport-protection": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "value"
-            ],
+            "params": ["value"],
             "handler": "TODO",
-            "files": [
-                "public/js/app.js"
-            ]
+            "files": ["public/js/app.js"]
         },
         "update-param-input": {
             "description": "TODO",
@@ -3297,142 +2197,90 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "updateDiscount": {
             "description": "Update discount for well component (Studnie)",
-            "params": [
-                "dn",
-                "component"
-            ],
+            "params": ["dn", "component"],
             "handler": "updateDiscount",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "updateGlobalPaintingCost": {
             "description": "Update global painting cost (Studnie)",
-            "params": [
-                "field"
-            ],
+            "params": ["field"],
             "handler": "updateGlobalPaintingCost",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "updateGlobalPehdDiscount": {
             "description": "Update global PEHD discount (Studnie)",
             "params": [],
             "handler": "updateGlobalPehdDiscount",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "updateItemDiscount": {
             "description": "Update item discount in offer (Rury)",
-            "params": [
-                "itemIndex"
-            ],
+            "params": ["itemIndex"],
             "handler": "updateItemDiscount",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "updateItemMeters": {
             "description": "Update item meters in offer (Rury)",
-            "params": [
-                "itemIndex"
-            ],
+            "params": ["itemIndex"],
             "handler": "updateItemMeters",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "updateItemQuantity": {
             "description": "Update item quantity in offer (Rury)",
-            "params": [
-                "itemIndex"
-            ],
+            "params": ["itemIndex"],
             "handler": "updateItemQuantity",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "updateItemSurcharge": {
             "description": "Update item surcharge in offer (Rury)",
-            "params": [
-                "itemIndex"
-            ],
+            "params": ["itemIndex"],
             "handler": "updateItemSurcharge",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "updateItemText": {
             "description": "Update item text field in offer (Rury)",
-            "params": [
-                "itemIndex"
-            ],
+            "params": ["itemIndex"],
             "handler": "updateItemText",
-            "files": [
-                "public/js/rury/offerItems.js"
-            ]
+            "files": ["public/js/rury/offerItems.js"]
         },
         "updateOrderSelectionCount": {
             "description": "Update order selection count (Rury/Studnie)",
             "params": [],
             "handler": "updateOrderSelectionCount",
-            "files": [
-                "public/js/rury/offerItems.js",
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/rury/offerItems.js", "public/js/studnie/offerManager.js"]
         },
         "updatePrecoGrupaKey": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "dn",
-                "fieldBase",
-                "oldKey"
-            ],
+            "params": ["dn", "fieldBase", "oldKey"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/pricelistManager.js"
-            ]
+            "files": ["public/js/studnie/pricelistManager.js"]
         },
         "updateSubUsers": {
             "description": "Toggle sub-user selection in dashboard",
             "params": [],
             "handler": "updateSubUsers",
             "handledBy": "legacy",
-            "files": [
-                "public/js/shared/dashboard.js"
-            ]
+            "files": ["public/js/shared/dashboard.js"]
         },
         "updateWellParam": {
             "description": "Update well parameter (Studnie)",
-            "params": [
-                "field"
-            ],
+            "params": ["field"],
             "handler": "updateWellParam",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "updateWellParamQuick": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "orderId"
-            ],
+            "params": ["orderId"],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/wellUI.js"
-            ]
+            "files": ["public/js/studnie/wellUI.js"]
         },
         "validate-wizard-step2": {
             "description": "TODO",
@@ -3440,55 +2288,37 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "viewHistorySnapshot": {
             "description": "View history snapshot (Studnie)",
-            "params": [
-                "logId"
-            ],
+            "params": ["logId"],
             "handler": "viewHistorySnapshot",
-            "files": [
-                "public/js/studnie/offerManager.js"
-            ]
+            "files": ["public/js/studnie/offerManager.js"]
         },
         "wizard-nav": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "step"
-            ],
+            "params": ["step"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "wizard-next": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "step"
-            ],
+            "params": ["step"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "wizard-prev": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "step"
-            ],
+            "params": ["step"],
             "handler": "TODO",
-            "files": [
-                "public/js/appStudnie.js"
-            ]
+            "files": ["public/js/appStudnie.js"]
         },
         "zlCfgDrag": {
             "description": "TODO",
@@ -3496,69 +2326,47 @@
             "reviewed": false,
             "params": [],
             "handler": "TODO",
-            "files": [
-                "public/js/studnie/orderManager.js"
-            ]
+            "files": ["public/js/studnie/orderManager.js"]
         },
         "zleceniaLoadOrders": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "zleceniaPrintBatchEtykiety": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "zleceniaPrintBatchZlecenia": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "zleceniaSetFilter": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "filter"
-            ],
+            "params": ["filter"],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         },
         "zleceniaToggleSelectAll": {
             "description": "TODO",
             "generated": true,
             "reviewed": false,
-            "params": [
-                "safeId"
-            ],
+            "params": ["safeId"],
             "handler": "TODO",
-            "files": [
-                "public/js/spa/zlecenia.js"
-            ]
+            "files": ["public/js/spa/zlecenia.js"]
         }
     }
 }

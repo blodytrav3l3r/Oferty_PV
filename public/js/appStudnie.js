@@ -61,7 +61,7 @@ function registerCspActions() {
     });
     registerCspAction('cennik-tab', {
         handler: function (p) {
-            cennikTab(p.tab);
+            selectCennikTab(p.tab);
         },
         params: ['tab']
     });
@@ -87,10 +87,10 @@ function registerCspActions() {
         saveStudniePriceList();
     });
     registerCspAction('export-studnie-excel', function () {
-        exportStudnieExcel();
+        exportStudnieToExcel();
     });
     registerCspAction('import-studnie-excel', function () {
-        importStudnieExcel();
+        document.getElementById('import-studnie-excel').click();
     });
     registerCspAction('apply-global-params', function () {
         applyGlobalParamsToAllWells();

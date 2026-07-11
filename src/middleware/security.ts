@@ -41,7 +41,7 @@ export function cspReportOnly(_req: Request, res: Response, next: NextFunction):
     }
     if (mode === 'report-only') {
         const reportOnly =
-            "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self'; object-src 'none'; base-uri 'self'; report-uri /api/security/csp-report";
+            "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; report-uri /api/security/csp-report";
         res.setHeader('Content-Security-Policy-Report-Only', reportOnly);
     }
     next();
