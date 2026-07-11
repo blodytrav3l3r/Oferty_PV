@@ -159,14 +159,20 @@ describe('runStartupChecks — integracja startupu', () => {
         process.env.DEFAULT_ADMIN_PASSWORD = 'bezpieczneHaslo12';
         process.env.NODE_ENV = 'development';
 
-        // Kolejność zgodna z databaseCheck:
-        // 1. PRAGMA foreign_keys=ON → queryRaw
-        // 2. PRAGMA journal_mode=WAL → queryRaw
-        // 3. PRAGMA busy_timeout → queryRaw
-        // 4. PRAGMA user_version → queryRaw
+        // Kolejność zgodna z databaseCheck (7× $queryRaw):
+        //  1. PRAGMA foreign_keys=ON        → result: [{ foreign_keys: 1 }]
+        //  2. PRAGMA busy_timeout=5000      → (void, result ignored)
+        //  3. PRAGMA synchronous=NORMAL    → (void, result ignored)
+        //  4. PRAGMA journal_mode=WAL       → result: [{ journal_mode: 'wal' }]
+        //  5. PRAGMA user_version=20000     → (void, result ignored)
+        //  6. PRAGMA busy_timeout (odczyt)  → result: [{ busy_timeout: 5000 }]
+        //  7. PRAGMA user_version (odczyt)  → result: [{ user_version: 20000 }]
         mockPrisma.$queryRaw
             .mockResolvedValueOnce([{ foreign_keys: 1 }])
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
             .mockResolvedValueOnce([{ journal_mode: 'wal' }])
+            .mockResolvedValueOnce([])
             .mockResolvedValueOnce([{ busy_timeout: 5000 }])
             .mockResolvedValueOnce([{ user_version: 20000 }]);
         mockPrisma.$executeRaw.mockResolvedValue([]);

@@ -5098,22 +5098,22 @@ function excelOpenWellParams(wIdx) {
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Nazwa p. wew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="powlokaNameW" data-w-idx="${wIdx}" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" data-select-on-click="true" data-action="excelUpdateWellParamAndRefresh" data-param-field="powlokaNameW" data-w-idx="${wIdx}" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Koszt p. wew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="malowanieWewCena" data-w-idx="${wIdx}" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-select-on-click="true" data-action="excelUpdateWellParamAndRefresh" data-param-field="malowanieWewCena" data-w-idx="${wIdx}" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
             }
             /* Pola dodatkowe — malowanie zew. */
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Nazwa p. zew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="powlokaNameZ" data-w-idx="${wIdx}" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" data-select-on-click="true" data-action="excelUpdateWellParamAndRefresh" data-param-field="powlokaNameZ" data-w-idx="${wIdx}" placeholder="Nazwa powłoki..." style="flex:1;max-width:260px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;min-height:32px;margin-top:0.3rem;">`;
                 bodyHtml += `<span style="font-size:0.85rem;color:var(--text-muted);font-weight:700;white-space:nowrap;min-width:185px;text-align:left;">Koszt p. zew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" data-action="excelUpdateWellParamAndRefresh" data-param-field="malowanieZewCena" data-w-idx="${wIdx}" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-select-on-click="true" data-action="excelUpdateWellParamAndRefresh" data-param-field="malowanieZewCena" data-w-idx="${wIdx}" placeholder="PLN / m²" style="width:100px;height:36px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);padding:0 0.7rem;font-size:0.85rem;border-radius:6px;">`;
                 bodyHtml += `</div>`;
             }
         });

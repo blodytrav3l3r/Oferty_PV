@@ -19,17 +19,17 @@ _Ostatnia aktualizacja: 2026-07-11_
 
 ## KPI Dashboard
 
-| Metryka                  |                                     Wartość |
-| ------------------------ | ------------------------------------------: |
-| Zarejestrowane akcje     |                                         108 |
-| Użyte w HTML             |                                         107 |
-| Nieużywane kontrakty     |                                           1 |
-| Undocumented             |                                         118 |
-| Action contract coverage |                                         48% |
-| Z parametrami            |                                          68 |
-| Śr. parametrów/akcję     |                                         0.7 |
-| Max parametrów           |                                           2 |
-| Hotspot (plik)           | public/js/studnie/excelTableManager.js (29) |
+| Metryka                  |                      Wartość |
+| ------------------------ | ---------------------------: |
+| Zarejestrowane akcje     |                          108 |
+| Użyte w HTML             |                          107 |
+| Nieużywane kontrakty     |                            1 |
+| Undocumented             |                          118 |
+| Action contract coverage |                          48% |
+| Z parametrami            |                           68 |
+| Śr. parametrów/akcję     |                          0.7 |
+| Max parametrów           |                            2 |
+| Hotspot (plik)           | public/js/appStudnie.js (68) |
 
 ## Klasyfikacja
 

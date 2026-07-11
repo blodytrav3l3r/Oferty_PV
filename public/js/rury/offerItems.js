@@ -727,13 +727,13 @@ function renderOfferItems() {
           <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
           <td style="text-align:right"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onclick="this.select()" data-action="updateItemMeters" data-item-index="${i}" title="Metry bieżące"${lockAttr}> m`
+                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" data-select-on-click="true" data-action="updateItemMeters" data-item-index="${i}" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onclick="this.select()" data-action="updateItemQuantity" data-item-index="${i}"${lockAttr}> szt.</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" data-action="updateItemDiscount" data-item-index="${i}"${lockAttr}>%</span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" data-select-on-click="true" data-action="updateItemQuantity" data-item-index="${i}"${lockAttr}> szt.</span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" data-select-on-click="true" data-action="updateItemDiscount" data-item-index="${i}"${lockAttr}>%</span></td>
           <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(unitTotal)}</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" data-action="updateItemSurcharge" data-item-index="${i}"${lockAttr}></span></td>
+          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" data-select-on-click="true" data-action="updateItemSurcharge" data-item-index="${i}"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight:600"><span class="text-center-block">${fmt(netto)}</span></td>
           <td style="text-align:right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${item.commercialVersion || ''}" data-action="updateItemText" data-item-index="${i}" placeholder="Notatki"${lockAttr}></span></td>

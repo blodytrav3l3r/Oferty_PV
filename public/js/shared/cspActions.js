@@ -153,4 +153,12 @@ document.addEventListener('dragover', dispatchCspAction);
 document.addEventListener('drop', dispatchCspAction);
 document.addEventListener('dragend', dispatchCspAction);
 
+// Delegated select-on-click for inputs
+document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.matches && t.matches('[data-select-on-click="true"]')) {
+        t.select();
+    }
+});
+
 window.registerCspAction = registerCspAction;

@@ -3592,7 +3592,7 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                             id="offer-pehd-discount"
                             class="text-center offer-discount-input"
-                            onclick="this.select()"
+                            data-select-on-click="true"
                             data-action="handleOfferPehdDiscountChange"
                             style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #38bdf8; background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: 0.7rem; font-weight: 800; color: rgba(14,165,233,0.5); padding-right: 0.4rem;">%</span>
@@ -3630,7 +3630,7 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
                             class="text-center offer-discount-input"
-                            onclick="this.select()"
+                            data-select-on-click="true"
                             data-action="handlePaintingCostChange" data-field="malowanieWewCena"
                             style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
@@ -3646,7 +3646,7 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
                             class="text-center offer-discount-input"
-                            onclick="this.select()"
+                            data-select-on-click="true"
                             data-action="handlePaintingCostChange" data-field="malowanieZewCena"
                             style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>

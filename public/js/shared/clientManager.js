@@ -122,7 +122,6 @@ function showClientsDb() {
         <div style="display:flex; gap:0.5rem; align-items:center;">
           <div style="position:relative; flex:1;">
             <input type="text" id="clients-search-input" placeholder="Szukaj po nazwie lub NIP..." 
-               data-action="filterClientsDb"
               style="width:100%; padding:0.6rem 0.8rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; outline:none; transition:border-color 0.2s;">
           </div>
         </div>
@@ -132,7 +131,15 @@ function showClientsDb() {
     });
 
     renderClientsDbList('');
-    setTimeout(() => document.getElementById('clients-search-input')?.focus(), 100);
+    var searchInput = document.getElementById('clients-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            filterClientsDb(this.value);
+        });
+        setTimeout(function () {
+            searchInput.focus();
+        }, 100);
+    }
 }
 
 /* ===== FILTROWANIE ===== */

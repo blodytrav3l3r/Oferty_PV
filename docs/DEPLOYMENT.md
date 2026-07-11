@@ -16,6 +16,7 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 | `NODE_ENV`               | Środowisko: `development` / `production`           | Nie      | `production`                            |
 | `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (tylko pierwsze uruchomienie) | **Tak**  | `bezpieczne-haslo-123`                  |
 | `DATABASE_URL`           | Ścieżka do bazy SQLite                             | Nie      | `file:../data/app_database.sqlite`      |
+| `CSP_MODE`               | Tryb CSP: `permissive` / `report-only` / `enforce` | Nie      | `report-only`                           |
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów                 | Nie      | `https://...@o....ingest.sentry.io/...` |
 
 ---

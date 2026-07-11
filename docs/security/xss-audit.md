@@ -3,7 +3,7 @@
 **Data**: 2026-07-11
 **Generator**: `scripts/generate-xss-audit.js`
 **Ignore DB**: `docs/security/xss-ignore.json` (66 suppressed)
-**Classification**: `docs/security/xss-classification.json` (246 entries)
+**Classification**: `docs/security/xss-classification.json` (0 entries)
 **Zakres**: `public/js/**/*.js` — innerHTML, insertAdjacentHTML, outerHTML, onclick/onchange/oninput/onmouseenter/onmouseleave/onerror/onload handlers
 
 ---
@@ -14,29 +14,25 @@
 
 **100/100**
 
-| ⚪ **INFO** | 246 |
-
 ### Escape Coverage (tooling metric)
 
 > Udział dynamicznych sinków (konkatenacja lub template literal) zabezpieczonych `escapeHtml()`. Nie odzwierciedla rzeczywistego poziomu bezpieczeństwa — statyczne literały liczone jako nieosłonięte zaniżają wynik.
 
-**54%** (15/28 dynamiczne innerHTML/insertAdjacentHTML z escapeHtml)
+**100%** (0/0 dynamiczne innerHTML/insertAdjacentHTML z escapeHtml)
 
 | Dynamiczne sinki | Z escapeHtml | Coverage |
 | ---------------- | ------------ | -------- |
-| 28               | 15           | 54%      |
+| 0                | 0            | 100%     |
 
 ### CSP Readiness (tooling metric)
 
-**12** total inline event handlers (XSS003)
+**0** total inline event handlers (XSS003)
 Przed usunięciem `'unsafe-inline'` z CSP wszystkie muszą być przeniesione do `addEventListener` lub event delegation.
 
 ### Security Debt
 
 | Sprint | Total | HIGH | MEDIUM | REVIEW |
 | ------ | ----- | ---- | ------ | ------ |
-| -      | 180   | 0    | 0      | 0      |
-| S2     | 66    | 0    | 0      | 0      |
 
 ### Scanner Gate
 
@@ -46,7 +42,7 @@ Przed usunięciem `'unsafe-inline'` z CSP wszystkie muszą być przeniesione do 
 | HIGH = 0       | 0     | 0       | ✅     |
 | MEDIUM ≤ 10    | ≤ 10  | 0       | ✅     |
 | REVIEW = 0     | 0     | 0       | ✅     |
-| Coverage ≥ 95% | ≥ 95% | 54      | ❌     |
+| Coverage ≥ 95% | ≥ 95% | 100     | ✅     |
 
 ### Delta (vs poprzednie uruchomienie)
 
@@ -57,7 +53,7 @@ Przed usunięciem `'unsafe-inline'` z CSP wszystkie muszą być przeniesione do 
 | HIGH     | 0          | 0       | ➡️ 0   |
 | MEDIUM   | 0          | 0       | ➡️ 0   |
 | REVIEW   | 0          | 0       | ➡️ 0   |
-| Coverage | 54%        | 54%     | ➡️ 0%  |
+| Coverage | 100%       | 100%    | ➡️ 0%  |
 
 ### Trend
 
@@ -79,6 +75,9 @@ Przed usunięciem `'unsafe-inline'` z CSP wszystkie muszą być przeniesione do 
 | 2026-07-11 | 100   | 246   | 0    | 0      | 0      | 54%      |
 | 2026-07-11 | 100   | 246   | 0    | 0      | 0      | 54%      |
 | 2026-07-11 | 100   | 246   | 0    | 0      | 0      | 54%      |
+| 2026-07-11 | 100   | 0     | 0    | 0      | 0      | 100%     |
+| 2026-07-11 | 100   | 0     | 0    | 0      | 0      | 100%     |
+| 2026-07-11 | 100   | 0     | 0    | 0      | 0      | 100%     |
 
 ## Reguły audytu
 
@@ -91,268 +90,7 @@ Przed usunięciem `'unsafe-inline'` z CSP wszystkie muszą być przeniesione do 
 
 ## Sinks
 
-**246 total** | ⚪ INFO 246
-
-### Info (SAFE)
-
-**Info (SAFE)** — 246 pozycji (66 ignored)
-
-| ID      | Reguła | Plik                                  | Linia | Sink               | Źródło    | Trust        | Pewność | CWE | OWASP | Decyzja | Sprint |
-| ------- | ------ | ------------------------------------- | ----- | ------------------ | --------- | ------------ | ------- | --- | ----- | ------- | ------ |
-| XSS-001 | —      | appStudnie.js                         | 44    | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-002 | —      | app.js                                | 41    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-003 | —      | app.js                                | 73    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-004 | —      | app.js                                | 132   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-005 | —      | versionDisplay.js                     | 33    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-006 | —      | versionDisplay.js                     | 35    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-007 | —      | versionDisplay.js                     | 40    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-008 | —      | admin\mlHealthDashboard.js            | 83    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-009 | —      | admin\mlHealthDashboard.js            | 88    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-010 | —      | admin\mlHealthDashboard.js            | 154   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-011 | —      | admin\aiDashboard.js                  | 60    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-012 | —      | admin\aiDashboard.js                  | 66    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-013 | —      | admin\aiDashboard.js                  | 106   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-014 | —      | admin\aiDashboard.js                  | 122   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-015 | —      | admin\aiDashboard.js                  | 128   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-016 | —      | admin\aiDashboard.js                  | 133   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-017 | —      | admin\aiDashboard.js                  | 170   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-018 | —      | admin\aiDashboard.js                  | 190   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-019 | —      | admin\aiDashboard.js                  | 197   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-020 | —      | admin\aiDashboard.js                  | 278   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-021 | —      | admin\aiDashboard.js                  | 292   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-022 | —      | admin\aiDashboard.js                  | 298   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-023 | —      | admin\aiDashboard.js                  | 311   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-024 | —      | admin\aiDashboard.js                  | 330   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-025 | —      | admin\aiDashboard.js                  | 343   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-026 | —      | admin\aiDashboard.js                  | 355   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-027 | —      | admin\aiDashboard.js                  | 395   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-028 | —      | admin\aiDashboard.js                  | 401   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-029 | —      | admin\aiDashboard.js                  | 419   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-030 | —      | sales\kartotekaInit.js                | 25    | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-031 | —      | sales\kartotekaInit.js                | 88    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-032 | —      | sales\pvImportExportToolbar.js        | 15    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-033 | —      | sales\pvImportExportToolbar.js        | 210   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-034 | —      | sales\pvImportExportToolbar.js        | 221   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-035 | —      | sales\pvImportExportToolbar.js        | 226   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-036 | —      | sales\pvSalesUi.js                    | 210   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-037 | —      | sales\pvSalesUi.js                    | 314   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-038 | —      | sales\pvSalesUi.js                    | 325   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-039 | —      | sales\pvSalesUi.js                    | 422   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-040 | —      | sales\pvSalesUi.js                    | 426   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-041 | —      | sales\pvSalesUi.js                    | 1561  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-042 | —      | sales\pvSalesUi.js                    | 1565  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-043 | —      | studnie\excelTableManager.js          | 1611  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-044 | —      | studnie\excelTableManager.js          | 1912  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-045 | —      | studnie\excelTableManager.js          | 2736  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-046 | —      | studnie\excelTableManager.js          | 3606  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-047 | —      | studnie\excelTableManager.js          | 5093  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-048 | —      | studnie\excelTableManager.js          | 5229  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-049 | —      | studnie\excelTableManager.js          | 5330  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-050 | —      | studnie\excelTableManager.js          | 5354  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-051 | —      | shared\clientManager.js               | 157   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-052 | —      | shared\clientManager.js               | 163   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-053 | —      | shared\clientManager.js               | 174   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-054 | —      | shared\clientManager.js               | 215   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-055 | —      | shared\clientManager.js               | 245   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-056 | —      | shared\clientManager.js               | 256   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-057 | —      | import-export\shared\conflictModal.js | 13    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-058 | —      | shared\dashboard.js                   | 15    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-059 | —      | shared\dashboard.js                   | 18    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-060 | —      | shared\dashboard.js                   | 67    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-061 | —      | shared\dashboard.js                   | 74    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-062 | —      | shared\dashboard.js                   | 234   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-063 | —      | shared\dashboard.js                   | 241   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-064 | —      | shared\dashboard.js                   | 336   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-065 | —      | shared\dashboard.js                   | 342   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-066 | —      | shared\dashboard.js                   | 377   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-067 | —      | spa\zlecenia.js                       | 88    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-068 | —      | spa\zlecenia.js                       | 164   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-069 | —      | spa\zlecenia.js                       | 186   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-070 | —      | spa\zlecenia.js                       | 219   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-071 | —      | spa\zlecenia.js                       | 328   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-072 | —      | spa\zlecenia.js                       | 409   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-073 | —      | shared\iconsSlim.js                   | 12    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-074 | —      | shared\iconsSlim.js                   | 426   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-075 | —      | rury\offerCrud.js                     | 135   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-076 | —      | rury\offerCrud.js                     | 277   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-077 | —      | rury\offerCrud.js                     | 286   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-078 | —      | rury\offerCrud.js                     | 292   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-079 | —      | rury\offerCrud.js                     | 310   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-080 | —      | rury\offerCrud.js                     | 424   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-081 | —      | rury\offerCrud.js                     | 517   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-082 | —      | rury\offerCrud.js                     | 527   | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-083 | —      | rury\offerCrud.js                     | 529   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-084 | —      | rury\offerCrud.js                     | 536   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-085 | —      | spa\router.js                         | 69    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-086 | —      | spa\router.js                         | 102   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-087 | —      | spa\router.js                         | 114   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-088 | —      | spa\router.js                         | 138   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-089 | —      | rury\offerExports.js                  | 345   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-090 | —      | studnie\globals.js                    | 75    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-091 | —      | studnie\globals.js                    | 115   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-092 | —      | studnie\globals.js                    | 121   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-093 | —      | studnie\globals.js                    | 125   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-094 | —      | rury\offerItems.js                    | 35    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-095 | —      | rury\offerItems.js                    | 90    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-096 | —      | rury\offerItems.js                    | 99    | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-097 | —      | rury\offerItems.js                    | 108   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-098 | —      | rury\offerItems.js                    | 126   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-099 | —      | rury\offerItems.js                    | 167   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-100 | —      | rury\offerItems.js                    | 550   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-101 | —      | rury\offerItems.js                    | 616   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-102 | —      | rury\offerItems.js                    | 739   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-103 | —      | rury\offerItems.js                    | 1015  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-104 | —      | rury\offerItems.js                    | 1021  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-105 | —      | rury\offerItems.js                    | 1025  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-106 | —      | shared\printModal.js                  | 223   | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-107 | —      | rury\offerSummaryTab.js               | 58    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-108 | —      | rury\offerSummaryTab.js               | 297   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-109 | —      | shared\ui.js                          | 10    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-110 | —      | shared\ui.js                          | 151   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-111 | —      | shared\ui.js                          | 570   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-112 | —      | studnie\offerManager.js               | 38    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-113 | —      | studnie\offerManager.js               | 52    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-114 | —      | studnie\offerManager.js               | 65    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-115 | —      | studnie\offerManager.js               | 1520  | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-116 | —      | studnie\offerManager.js               | 1524  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-117 | —      | studnie\offerManager.js               | 1531  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-118 | —      | studnie\offerManager.js               | 1535  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-119 | —      | studnie\offerManager.js               | 1658  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-120 | —      | studnie\offerManager.js               | 1800  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-121 | —      | studnie\offerManager.js               | 1896  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-122 | —      | studnie\offerManager.js               | 1988  | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-123 | —      | studnie\offerManager.js               | 2313  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-124 | —      | studnie\offerManager.js               | 2315  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-125 | —      | studnie\offerManager.js               | 2323  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-126 | —      | studnie\offerManager.js               | 2341  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-127 | —      | studnie\offerManager.js               | 2347  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-128 | —      | studnie\offerManager.js               | 2676  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-129 | —      | studnie\offerManager.js               | 2681  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-130 | —      | studnie\offerManager.js               | 2690  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-131 | —      | studnie\offerManager.js               | 2693  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-132 | —      | studnie\offerManager.js               | 3071  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-133 | —      | studnie\offerManager.js               | 3182  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-134 | —      | studnie\offerManager.js               | 3186  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-135 | —      | studnie\offerManager.js               | 3448  | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-136 | —      | studnie\offerManager.js               | 3455  | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-137 | —      | studnie\offerManager.js               | 3677  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-138 | —      | studnie\offerManager.js               | 3783  | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-139 | —      | rury\orderManager.js                  | 500   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-140 | —      | rury\orderManager.js                  | 504   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-141 | —      | rury\orderManager.js                  | 510   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-142 | —      | rury\orderManager.js                  | 536   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-143 | —      | rury\orderManager.js                  | 576   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-144 | —      | rury\orderManager.js                  | 843   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-145 | —      | rury\orderManager.js                  | 884   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-146 | —      | rury\orderManager.js                  | 923   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-147 | —      | rury\orderManager.js                  | 1033  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-148 | —      | rury\orderManager.js                  | 1083  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-149 | —      | rury\pricelistUi.js                   | 13    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-150 | —      | rury\pricelistUi.js                   | 86    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-151 | —      | studnie\orderManager.js               | 690   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-152 | —      | studnie\orderManager.js               | 710   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-153 | —      | studnie\orderManager.js               | 1111  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-154 | —      | studnie\orderManager.js               | 1141  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-155 | —      | studnie\orderManager.js               | 1226  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-156 | —      | studnie\orderManager.js               | 2205  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-157 | —      | studnie\orderManager.js               | 2358  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-158 | —      | studnie\orderManager.js               | 2666  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-159 | —      | studnie\orderManager.js               | 2948  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-160 | —      | studnie\orderManager.js               | 2981  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-161 | —      | studnie\orderManager.js               | 3039  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-162 | —      | studnie\orderManager.js               | 3145  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-163 | —      | studnie\orderManager.js               | 3499  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-164 | —      | studnie\orderManager.js               | 3504  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-165 | —      | studnie\orderManager.js               | 4722  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-166 | —      | studnie\orderManager.js               | 4849  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-167 | —      | studnie\orderManager.js               | 4863  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-168 | —      | studnie\orderManager.js               | 5050  | insertAdjacentHTML | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-169 | —      | studnie\pricelistManager.js           | 21    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-170 | —      | studnie\pricelistManager.js           | 296   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-171 | —      | studnie\pricelistManager.js           | 654   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-172 | —      | studnie\pricelistManager.js           | 1563  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-173 | —      | studnie\pricelistManager.js           | 1658  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-174 | —      | rury\transport.js                     | 168   | innerHTML          | NUMERIC   | trusted      | high    | —   | —     | leave   | -      |
-| XSS-175 | —      | rury\transport.js                     | 189   | innerHTML          | NUMERIC   | trusted      | high    | —   | —     | leave   | -      |
-| XSS-176 | —      | rury\transport.js                     | 319   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-177 | —      | rury\transport.js                     | 394   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-178 | —      | rury\transport.js                     | 648   | innerHTML          | NUMERIC   | trusted      | high    | —   | —     | leave   | -      |
-| XSS-179 | —      | rury\transport.js                     | 692   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-180 | —      | rury\wizard.js                        | 54    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-181 | —      | rury\wizard.js                        | 69    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-182 | —      | rury\wizard.js                        | 78    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-183 | —      | rury\wizard.js                        | 97    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-184 | —      | studnie\transitionRenderer.js         | 351   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-185 | —      | studnie\transitionRenderer.js         | 356   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-186 | —      | studnie\wellUI.js                     | 60    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-187 | —      | studnie\wellUI.js                     | 93    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-188 | —      | studnie\wellUI.js                     | 459   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-189 | —      | studnie\wellUI.js                     | 548   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-190 | —      | studnie\wellUI.js                     | 558   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-191 | —      | studnie\wellUI.js                     | 567   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-192 | —      | studnie\wellUI.js                     | 574   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-193 | —      | studnie\wellUI.js                     | 592   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-194 | —      | studnie\wellUI.js                     | 781   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-195 | —      | studnie\wellUI.js                     | 826   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-196 | —      | studnie\wellUI.js                     | 1035  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-197 | —      | studnie\wellDiagram.js                | 993   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-198 | —      | studnie\wellDiagram.js                | 1004  | innerHTML          | USER_DATA | untrusted    | medium  | —   | —     | fix     | S2     |
-| XSS-199 | —      | studnie\wellDiagram.js                | 1032  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-200 | —      | studnie\wellPopups.js                 | 192   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-201 | —      | studnie\wellPopups.js                 | 197   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-202 | —      | studnie\wellPopups.js                 | 223   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-203 | —      | studnie\wellPopups.js                 | 230   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-204 | —      | studnie\wellPopups.js                 | 261   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-205 | —      | studnie\wellPopups.js                 | 266   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-206 | —      | studnie\wellPopups.js                 | 287   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-207 | —      | studnie\wellPopups.js                 | 293   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-208 | —      | studnie\wellPopups.js                 | 846   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-209 | —      | studnie\wellPopups.js                 | 901   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-210 | —      | studnie\wellPopups.js                 | 1482  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-211 | —      | studnie\wellPopups.js                 | 1579  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-212 | —      | studnie\wellPopups.js                 | 1636  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-213 | —      | studnie\wellPopups.js                 | 1657  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-214 | —      | studnie\wellPopups.js                 | 1707  | innerHTML          | DATABASE  | semi-trusted | high    | —   | —     | leave   | -      |
-| XSS-215 | —      | studnie\wellPopups.js                 | 1819  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-216 | —      | studnie\wellActions.js                | 94    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-217 | —      | studnie\wellActions.js                | 96    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-218 | —      | studnie\wellActions.js                | 106   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-219 | —      | studnie\wellActions.js                | 134   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-220 | —      | studnie\wellActions.js                | 138   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-221 | —      | studnie\wellActions.js                | 141   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-222 | —      | studnie\wellActions.js                | 145   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-223 | —      | studnie\wellActions.js                | 784   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-224 | —      | studnie\wellActions.js                | 1095  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-225 | —      | studnie\wellActions.js                | 1132  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-226 | —      | studnie\wellActions.js                | 1532  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-227 | —      | studnie\wellActions.js                | 1772  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-228 | —      | studnie\wellActions.js                | 1775  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-229 | —      | studnie\wellTransitions.js            | 98    | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-230 | —      | studnie\wellTransitions.js            | 131   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-231 | —      | studnie\wellTransitions.js            | 328   | innerHTML          | USER_DATA | untrusted    | medium  | —   | —     | fix     | S2     |
-| XSS-232 | —      | studnie\wellTransitions.js            | 449   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-233 | —      | studnie\wellTransitions.js            | 468   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-234 | —      | studnie\wellTransitions.js            | 715   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-235 | —      | studnie\wellTransitions.js            | 862   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-236 | —      | studnie\wellTransitions.js            | 873   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-237 | —      | studnie\wellTransitions.js            | 917   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-238 | —      | studnie\wellTransitions.js            | 989   | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-239 | —      | studnie\wellTransitions.js            | 1068  | innerHTML          | UNKNOWN   | unknown      | low     | —   | —     | review  | S2     |
-| XSS-240 | —      | studnie\wellTransitions.js            | 1149  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-241 | —      | studnie\wellTransitions.js            | 1219  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-242 | —      | studnie\wellTransitions.js            | 1299  | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-243 | —      | studnie\uiHelpers.js                  | 288   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-244 | —      | studnie\uiHelpers.js                  | 331   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-245 | —      | studnie\uiHelpers.js                  | 336   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-| XSS-246 | —      | studnie\uiHelpers.js                  | 349   | innerHTML          | STATIC    | trusted      | high    | —   | —     | leave   | -      |
-
-## Inline event handlers (XSS003)
-
-**12** total (inline HTML `onclick="..."` + DOM property `el.onclick = fn`)
-
-| Type      | Count |
-| --------- | ----- |
-| `unknown` | 12    |
+**0 total**
 
 ## Additional sinks
 
