@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import prisma from '../prismaClient';
 import { startupLogger } from './startupLogger';
 
@@ -10,6 +11,28 @@ export interface DatabaseHealth {
 
 export async function initDatabase(): Promise<DatabaseHealth> {
     startupLogger.info('Inicjalizacja bazy danych SQLite...');
+
+    // Auto-inicjalizacja — jeśli tabel nie ma, uruchom prisma db push
+    try {
+        await prisma.$queryRaw`SELECT COUNT(*) FROM ProductsRury LIMIT 1`;
+    } catch {
+        startupLogger.warn('Brak tabel — inicjalizacja schematu...');
+        try {
+            execSync('npx prisma db push --skip-generate', {
+                cwd: process.cwd(),
+                stdio: 'inherit'
+            });
+            startupLogger.success('Schemat załadowany');
+        } catch (e) {
+            throw new Error(
+                'Auto-inicjalizacja bazy nie powiodła się. ' +
+                    'Uruchom ręcznie: npm run setup\n' +
+                    (e instanceof Error ? e.message : String(e))
+            );
+        }
+    }
+
+    startupLogger.info('Konfiguracja PRAGMA SQLite...');
 
     // Krok 1: Foreign keys — integralność relacyjna (przed WAL, bo dotyczy połączenia)
     const fkResult = await prisma.$queryRaw<Array<{ foreign_keys: number }>>`

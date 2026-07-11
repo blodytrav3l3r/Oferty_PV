@@ -60,6 +60,7 @@
         "release:major": "standard-version --release-as major",
         "release:dry": "standard-version --dry-run",
         "release:first": "standard-version --first-release",
+        "setup": "node scripts/setup-db.mjs",
         "encoding:check": "node scripts/encoding-integrity.js check",
         "encoding:fix": "node scripts/encoding-integrity.js fix",
         "encoding:staged": "node scripts/encoding-integrity.js staged",

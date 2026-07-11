@@ -30,14 +30,10 @@ async function main() {
 
     const ruryData = readJson('seed_rury.json');
     const studnieData = readJson('seed_studnie.json');
-    const precoData = readJson('seed_preco.json');
 
-    // ── Wyczyść stare dane w nowych tabelach ──
+    // ── Wyczyść stare dane ──
     await prisma.productsRury.deleteMany();
     await prisma.productsStudnie.deleteMany();
-    await prisma.precoKinety.deleteMany();
-    await prisma.precoZakresy.deleteMany();
-    await prisma.precoKonfig.deleteMany();
 
     await prisma.$transaction(async (tx) => {
         // ── CategoriesRury ──
@@ -148,73 +144,6 @@ async function main() {
         await tx.productsStudnie.createMany({
             data: studnieProducts
         });
-
-        // ── PRECO ──
-        const precoConfig = precoData[0];
-        const dnSizes = ['1000', '1200', '1500', '2000', '2500'];
-
-        await tx.precoKonfig.createMany({
-            data: dnSizes.map((dnStr) => ({
-                dnStudni: parseInt(dnStr),
-                skrzynkaWlazowa: precoConfig[dnStr].skrzynkaWlazowa,
-                cenaPelnaWysMB: precoConfig[dnStr].cenaPelnaWysMB,
-                cenaDnoOsadnika: precoConfig[dnStr].cenaDnoOsadnika
-            }))
-        });
-
-        const kinetyData: Array<{
-            dnStudni: number;
-            dnRury: number;
-            prosta: number;
-            dodWlot: number;
-        }> = [];
-        for (const dnStr of dnSizes) {
-            for (const k of precoConfig[dnStr].kinety) {
-                kinetyData.push({
-                    dnStudni: parseInt(dnStr),
-                    dnRury: k.dn,
-                    prosta: k.prosta,
-                    dodWlot: k.dodWlot
-                });
-            }
-        }
-        await tx.precoKinety.createMany({ data: kinetyData });
-
-        const zakresyTypes = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
-        const seenZakresy = new Set<string>();
-        const zakresyData: Array<{
-            dnStudni: number;
-            typ: string;
-            minVal: number;
-            maxVal: number;
-            grupaDn: string;
-            cena: number;
-        }> = [];
-
-        for (const dnStr of dnSizes) {
-            const dnStudni = parseInt(dnStr);
-            for (const typ of zakresyTypes) {
-                const arr: Array<{ min: number; max: number; grupy: Record<string, number> }> =
-                    precoConfig[dnStr][typ];
-                for (const entry of arr) {
-                    for (const [grupaDn, cena] of Object.entries(entry.grupy)) {
-                        const key = `${dnStudni}|${typ}|${entry.min}|${entry.max}|${grupaDn}`;
-                        if (!seenZakresy.has(key)) {
-                            seenZakresy.add(key);
-                            zakresyData.push({
-                                dnStudni,
-                                typ,
-                                minVal: entry.min,
-                                maxVal: entry.max,
-                                grupaDn,
-                                cena
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        await tx.precoZakresy.createMany({ data: zakresyData });
     });
 
     console.log('Seeding complete');
