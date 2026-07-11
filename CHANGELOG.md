@@ -4,6 +4,31 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.6.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.5.0...v1.6.0) (2026-07-11)
+
+
+### Features
+
+* **backend:** hardening, paginacja, indeksy DB ([68097e8](https://github.com/blodytrav3l3r/Oferty_PV/commit/68097e8424d763d3959e2bd10735c4a848e8bf11))
+* **build:** automatyczny cache-bust z VERSION przez postbump ([f640714](https://github.com/blodytrav3l3r/Oferty_PV/commit/f640714ec991f74c6901d488c17b44804c62b307))
+* **csp:** enforce Content-Security-Policy - migrate 214 inline event handlers to data-action pattern ([f8fa654](https://github.com/blodytrav3l3r/Oferty_PV/commit/f8fa6547aa082dc74f76d49bd37237addf6e2241))
+* **multiple:** implementacja Phases 1-3 - XSS, N+1, legacy cleanup, ML guards, audit fixes ([75c50fb](https://github.com/blodytrav3l3r/Oferty_PV/commit/75c50fbfbcf4e2b5838d9869d198b3a613e96e0e))
+* **studnie:** centralne odświeżenie konfiguratora po zapisie cennika ([7d3f8e8](https://github.com/blodytrav3l3r/Oferty_PV/commit/7d3f8e8da6fd8dfd8e8485c173bf13a72c6c7164))
+* **studnie:** włączenie dual-ranking AI w solverze studni (shadow mode) ([8b123b4](https://github.com/blodytrav3l3r/Oferty_PV/commit/8b123b4c85636d10254947ff9b6df282d68ad2cc))
+* **ui:** animowany znacznik statusu przy przycisku Wyloguj ([218b977](https://github.com/blodytrav3l3r/Oferty_PV/commit/218b977c34b41d757ceac0760026315b5048a1a4))
+
+
+### Bug Fixes
+
+* **studnie:** bump cache-busting v=3.80→3.81 po fixie pustego wiersza ([d0dab57](https://github.com/blodytrav3l3r/Oferty_PV/commit/d0dab57450862fb51a07171dfc43cc0b945b8951))
+* **studnie:** naprawa błędów TS w JSDoc - mlRewardHooks, wellConfigRules, wellSolver ([4f54480](https://github.com/blodytrav3l3r/Oferty_PV/commit/4f544800e26cd68383510140d796514e9171a19e))
+* **studnie:** usuń nadmiarowe przerwy między belkami a panelami bocznymi ([7c92c7f](https://github.com/blodytrav3l3r/Oferty_PV/commit/7c92c7f9dadec277da8bd1cd95169c0aad8e7a16))
+* **studnie:** wyrównanie kolumn w pustym wierszu tabeli Excel ([d94d845](https://github.com/blodytrav3l3r/Oferty_PV/commit/d94d84568b365681f39f9c8049ae6e625253696b)), closes [#16](https://github.com/blodytrav3l3r/Oferty_PV/issues/16)
+* **test:** port test:alignment 5174→5173 zgodnie z vite.config.js ([777833e](https://github.com/blodytrav3l3r/Oferty_PV/commit/777833e3778b6f079462b9939c0d97729130e48a))
+* **tests:** poprawa testu dashboard .uf-grid i komentarzy PL w CSS ([225615e](https://github.com/blodytrav3l3r/Oferty_PV/commit/225615e3f2b5407ebaf1d1dc3342b7fda04c518f))
+* typowanie result w refreshStudnieData ([a84457a](https://github.com/blodytrav3l3r/Oferty_PV/commit/a84457a613d5115d518fa5a82ebe5c428e825581))
+* zamiana \ na \ (SQL injection test) ([0204d36](https://github.com/blodytrav3l3r/Oferty_PV/commit/0204d36084ab6b9ccb48eb697958be837b3055de))
+
 ## [1.5.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.4.0...v1.5.0) (2026-07-07)
 
 ### Features
