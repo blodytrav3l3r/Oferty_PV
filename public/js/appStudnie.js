@@ -377,6 +377,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         registerCspAction('redukcja-min-change', function (t) {
             onRedukcjaMinChange(t.value);
         });
+        registerCspAction('drag-drop-well', function (t, p, ev) {
+            if (ev.type === 'dragover') {
+                ev.preventDefault();
+                allowDropWellComponent(ev);
+            } else if (ev.type === 'dragleave') dragLeaveWellComponent(ev);
+            else if (ev.type === 'drop') {
+                ev.preventDefault();
+                dropWellComponent(ev);
+            }
+        });
     }
 
     // Direct event listeners for well input fields (CSP-safe, no inline handlers)
