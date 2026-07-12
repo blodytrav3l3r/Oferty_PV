@@ -67,6 +67,9 @@
         "encoding:check": "node scripts/encoding-integrity.js check",
         "encoding:fix": "node scripts/encoding-integrity.js fix",
         "encoding:staged": "node scripts/encoding-integrity.js staged",
+        "postinstall": "graphify update . 2>nul || echo graphify not installed -- skip",
+        "graphify:update": "graphify update .",
+        "graphify:query": "graphify query",
         "prepare": "husky"
     },
     "engines": {
