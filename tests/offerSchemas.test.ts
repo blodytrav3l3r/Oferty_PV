@@ -1,12 +1,14 @@
 import {
     offerItemSchema,
+    offerCreateSchema,
+    offersBatchSchema
+} from '../src/validators/rurySchemas';
+import {
     wellDataSchema,
     passageConfigSchema,
-    offerCreateSchema,
     offerStudnieCreateSchema,
-    offersBatchSchema,
     offersStudnieBatchSchema
-} from '../src/validators/offerSchemas';
+} from '../src/validators/studnieSchemas';
 
 // ─── offerItemSchema ────────────────────────────────────────────────
 

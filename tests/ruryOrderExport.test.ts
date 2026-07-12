@@ -77,11 +77,14 @@ jest.mock('../src/prismaClient', () => ({
 jest.mock('../src/services/pdfGenerator', () => ({
     generateRuryOrderPDF: jest.fn().mockResolvedValue(Buffer.from('RURY-ZAM-PDF-MOCK')),
     generateRuryPDFFromContext: jest.fn().mockResolvedValue(Buffer.from('PDF-MOCK')),
-    generateKartaBudowyRuryPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-RURY-PDF-MOCK')),
     lookupOfferUsers: jest.fn().mockResolvedValue({
         authorUser: null,
         guardianUser: null
     })
+}));
+
+jest.mock('../src/services/pdf/pdfStudnieBuilder', () => ({
+    generateKartaBudowyRuryPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-RURY-PDF-MOCK'))
 }));
 
 jest.mock('../src/services/docx', () => ({

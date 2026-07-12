@@ -8,7 +8,8 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
-import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
+import { paginationQuerySchema } from '../../validators/offerSchemas';
+import { offersStudnieBatchSchema } from '../../validators/studnieSchemas';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);

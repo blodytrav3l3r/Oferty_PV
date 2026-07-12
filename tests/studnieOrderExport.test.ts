@@ -53,8 +53,11 @@ jest.mock('../src/utils/roleFilter', () => ({
     buildRoleWhereSql: jest.fn().mockReturnValue('')
 }));
 
+jest.mock('../src/services/pdf/pdfStudnieBuilder', () => ({
+    generateKartaBudowyPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-PDF-MOCK'))
+}));
+
 jest.mock('../src/services/pdfGenerator', () => ({
-    generateKartaBudowyPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-PDF-MOCK')),
     generateStudniePDFFromContext: jest.fn().mockResolvedValue(Buffer.from('PDF-MOCK')),
     generateStudnieOrderPDF: jest.fn().mockResolvedValue(Buffer.from('ORDER-PDF-MOCK')),
     lookupOfferUsers: jest.fn().mockResolvedValue({
@@ -86,9 +89,12 @@ jest.mock('../src/prismaClient', () => ({
     }
 }));
 
+jest.mock('../src/services/pdf/pdfStudnieBuilder', () => ({
+    generateKartaBudowyPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-PDF-MOCK'))
+}));
+
 jest.mock('../src/services/pdfGenerator', () => ({
     generateStudnieOrderPDF: jest.fn().mockResolvedValue(Buffer.from('ZAM-PDF-MOCK')),
-    generateKartaBudowyPDF: jest.fn().mockResolvedValue(Buffer.from('KARTA-PDF-MOCK')),
     generateStudniePDFFromContext: jest.fn().mockResolvedValue(Buffer.from('PDF-MOCK')),
     lookupOfferUsers: jest.fn().mockResolvedValue({
         authorUser: null,
@@ -103,7 +109,8 @@ jest.mock('../src/services/docx', () => ({
 }));
 
 import prisma from '../src/prismaClient';
-import { generateStudnieOrderPDF, generateKartaBudowyPDF } from '../src/services/pdfGenerator';
+import { generateStudnieOrderPDF } from '../src/services/pdfGenerator';
+import { generateKartaBudowyPDF } from '../src/services/pdf/pdfStudnieBuilder';
 import { generateStudnieOrderDOCX, generateKartaBudowyDOCX } from '../src/services/docx';
 
 const mockOrder = {

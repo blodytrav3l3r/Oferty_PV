@@ -6,7 +6,7 @@
  */
 import express from 'express';
 import studnieOrdersRouter from './studnieOrders';
-import ruryOrdersRouter from './ruryOrders';
+import ruryOrdersRouter from './rury';
 import productionRouter from './production';
 import numberingRouter from './numbering';
 

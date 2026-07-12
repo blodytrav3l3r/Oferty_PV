@@ -114,7 +114,7 @@ router.put(
 
             let newPassword = user.password;
             if (password) {
-                newPassword = await bcrypt.hash(password, 10);
+                newPassword = await bcrypt.hash(password, 12);
             }
 
             const newRole = role || user.role;

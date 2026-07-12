@@ -12,7 +12,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import {
     productionOrdersBatchSchema,
     productionOrderCreateSchema
-} from '../../validators/offerSchemas';
+} from '../../validators/studnieSchemas';
 
 const router = express.Router();
 

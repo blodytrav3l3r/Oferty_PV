@@ -9,7 +9,8 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { OfferMapped } from '../../types/models';
-import { offersBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
+import { paginationQuerySchema } from '../../validators/offerSchemas';
+import { offersBatchSchema } from '../../validators/rurySchemas';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
