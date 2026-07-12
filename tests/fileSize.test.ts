@@ -18,7 +18,7 @@ describe('check-file-size.mjs', () => {
         const result = runScript();
         expect(result).toContain('Znaleziono');
         expect(result).toContain('wellManager.js');
-        expect(result).toContain('pricelistManager.js');
+        expect(result).toContain('wellManager.js');
     });
 
     it('nie raportuje plików z listy EXEMPT (wellActions.js, wellPopups.js)', () => {

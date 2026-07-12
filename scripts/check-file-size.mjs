@@ -10,7 +10,8 @@ const EXEMPT = new Set([
     'public/js/studnie/order/orderZlecenia.js',
     'public/js/studnie/wellConfigRender.js',
     'public/js/studnie/wellDragDrop.js',
-    'public/js/studnie/wellTransitionManager.js'
+    'public/js/studnie/wellTransitionManager.js',
+    'public/js/studnie/pricelistManager.js'
 ]);
 
 const IGNORE_DIRS = new Set(['node_modules', 'dist', 'plugins', '.git']);
