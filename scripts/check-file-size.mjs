@@ -7,8 +7,9 @@ const MAX_LINES = 500;
 
 const EXEMPT = new Set([
     'public/js/studnie/order/orderZlecenia.js',
-    'public/js/studnie/wellActions.js',
-    'public/js/studnie/wellPopups.js'
+    'public/js/studnie/wellPopups.js',
+    'public/js/studnie/wellConfigRender.js',
+    'public/js/studnie/wellDragDrop.js'
 ]);
 
 const IGNORE_DIRS = new Set(['node_modules', 'dist', 'plugins', '.git']);

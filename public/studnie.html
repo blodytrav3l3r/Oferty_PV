@@ -63,7 +63,8 @@
                             data-section="builder"
                             id="nav-builder"
                             style="--nav-accent: #10b981; --nav-glow: #0d2b22"
-                            data-action="show-section" data-section="builder"
+                            data-action="show-section"
+                            data-section="builder"
                         >
                             <span class="nav-tile-icon"><i data-lucide="hard-hat"></i></span>
                             <span class="nav-tile-text">Konfiguracja</span>
@@ -73,7 +74,8 @@
                             data-section="offer"
                             id="nav-offer"
                             style="--nav-accent: #3b82f6; --nav-glow: #152040"
-                            data-action="show-section" data-section="offer"
+                            data-action="show-section"
+                            data-section="offer"
                         >
                             <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
                             <span class="nav-tile-text">Oferta</span>
@@ -83,7 +85,8 @@
                             data-section="pricelist"
                             id="nav-pricelist"
                             style="--nav-accent: #8b5cf6; --nav-glow: #1e1540"
-                            data-action="show-section" data-section="pricelist"
+                            data-action="show-section"
+                            data-section="pricelist"
                         >
                             <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
                             <span class="nav-tile-text">Cennik</span>
@@ -114,7 +117,8 @@
                         ></span>
 
                         <button
-                            data-action="logout" class="logout-btn"
+                            data-action="logout"
+                            class="logout-btn"
                             style="
                                 padding: 0.35rem 0.8rem;
                                 border: 1px solid var(--border-glass);
@@ -246,28 +250,49 @@
                             <div
                                 class="wizard-step-dot active"
                                 data-step="1"
-                                data-action="wizard-nav" data-step="1"
+                                data-action="wizard-nav"
+                                data-step="1"
                             >
                                 <div class="wizard-dot-number">1</div>
                                 <div class="wizard-dot-label">Dane klienta</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-1"></div>
-                            <div class="wizard-step-dot" data-step="2" data-action="wizard-nav" data-step="2">
+                            <div
+                                class="wizard-step-dot"
+                                data-step="2"
+                                data-action="wizard-nav"
+                                data-step="2"
+                            >
                                 <div class="wizard-dot-number">2</div>
                                 <div class="wizard-dot-label">Parametry studni</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-2"></div>
-                            <div class="wizard-step-dot" data-step="3" data-action="wizard-nav" data-step="3">
+                            <div
+                                class="wizard-step-dot"
+                                data-step="3"
+                                data-action="wizard-nav"
+                                data-step="3"
+                            >
                                 <div class="wizard-dot-number">3</div>
                                 <div class="wizard-dot-label">Oferta</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-3"></div>
-                            <div class="wizard-step-dot" data-step="4" data-action="wizard-nav" data-step="4">
+                            <div
+                                class="wizard-step-dot"
+                                data-step="4"
+                                data-action="wizard-nav"
+                                data-step="4"
+                            >
                                 <div class="wizard-dot-number">4</div>
                                 <div class="wizard-dot-label">Karta budowy</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-4"></div>
-                            <div class="wizard-step-dot" data-step="5" data-action="wizard-nav" data-step="5">
+                            <div
+                                class="wizard-step-dot"
+                                data-step="5"
+                                data-action="wizard-nav"
+                                data-step="5"
+                            >
                                 <div class="wizard-dot-number">5</div>
                                 <div class="wizard-dot-label">Zamówienie</div>
                             </div>
@@ -1671,10 +1696,18 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                     <strong id="wsb-params">—</strong></span
                                 >
 
-                                <button class="wizard-summary-edit" data-action="goto-wizard-step" data-step="1">
+                                <button
+                                    class="wizard-summary-edit"
+                                    data-action="goto-wizard-step"
+                                    data-step="1"
+                                >
                                     <i data-lucide="pencil"></i> Edytuj dane
                                 </button>
-                                <button class="wizard-summary-edit" data-action="goto-wizard-step" data-step="2">
+                                <button
+                                    class="wizard-summary-edit"
+                                    data-action="goto-wizard-step"
+                                    data-step="2"
+                                >
                                     <i data-lucide="settings"></i> Edytuj parametry
                                 </button>
                             </div>
@@ -1908,25 +1941,43 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             <div class="dn-selector mb-0">
                                                 <button
                                                     class="dn-btn active"
-                                                    data-action="select-dn" data-dn="1000"
+                                                    data-action="select-dn"
+                                                    data-dn="1000"
                                                 >
                                                     1000
                                                 </button>
-                                                <button class="dn-btn" data-action="select-dn" data-dn="1200">
+                                                <button
+                                                    class="dn-btn"
+                                                    data-action="select-dn"
+                                                    data-dn="1200"
+                                                >
                                                     1200
                                                 </button>
-                                                <button class="dn-btn" data-action="select-dn" data-dn="1500">
+                                                <button
+                                                    class="dn-btn"
+                                                    data-action="select-dn"
+                                                    data-dn="1500"
+                                                >
                                                     1500
                                                 </button>
-                                                <button class="dn-btn" data-action="select-dn" data-dn="2000">
+                                                <button
+                                                    class="dn-btn"
+                                                    data-action="select-dn"
+                                                    data-dn="2000"
+                                                >
                                                     2000
                                                 </button>
-                                                <button class="dn-btn" data-action="select-dn" data-dn="2500">
+                                                <button
+                                                    class="dn-btn"
+                                                    data-action="select-dn"
+                                                    data-dn="2500"
+                                                >
                                                     2500
                                                 </button>
                                                 <button
                                                     class="dn-btn"
-                                                    data-action="select-dn" data-dn="styczna"
+                                                    data-action="select-dn"
+                                                    data-dn="styczna"
                                                     style="
                                                         background: rgba(249, 115, 22, 0.15);
                                                         border-color: rgba(249, 115, 22, 0.3);
@@ -2029,7 +2080,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                                 >
                                                 <button
                                                     class="btn btn-secondary btn-sm"
-                                                    data-action="popup" data-name="redukcja-zakonczenie"
+                                                    data-action="popup"
+                                                    data-name="redukcja-zakonczenie"
                                                     id="btn-redukcja-zak"
                                                     style="
                                                         font-size: 0.7rem;
@@ -2045,7 +2097,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             </div>
                                             <button
                                                 class="btn btn-secondary btn-sm"
-                                                data-action="popup" data-name="zakonczenie"
+                                                data-action="popup"
+                                                data-name="zakonczenie"
                                                 id="btn-zakonczenie"
                                                 style="
                                                     font-size: 0.8rem;
@@ -2115,7 +2168,9 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             font-size: 0.78rem;
                                             padding: 0.15rem 0;
                                         "
-                                        data-action="toggle-card" data-content-id="well-params-content" data-icon-id="well-params-icon"
+                                        data-action="toggle-card"
+                                        data-content-id="well-params-content"
+                                        data-icon-id="well-params-icon"
                                     >
                                         <span
                                             ><i data-lucide="clipboard-list"></i> Parametry tej
@@ -2148,14 +2203,16 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                 >
                                     <button
                                         class="b-tab-btn active"
-                                        data-action="switch-builder-tab" data-tab="concrete"
+                                        data-action="switch-builder-tab"
+                                        data-tab="concrete"
                                         id="btab-concrete"
                                     >
                                         <i data-lucide="cylinder"></i> Prefabrykaty betonowe
                                     </button>
                                     <button
                                         class="b-tab-btn"
-                                        data-action="switch-builder-tab" data-tab="transitions"
+                                        data-action="switch-builder-tab"
+                                        data-tab="transitions"
                                         id="btab-transitions"
                                     >
                                         <i data-lucide="droplets"></i> Przejścia szczelne
@@ -2176,7 +2233,9 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                                 font-size: 0.78rem;
                                                 padding: 0.15rem 0;
                                             "
-                                            data-action="toggle-card" data-content-id="tiles-content" data-icon-id="tiles-icon"
+                                            data-action="toggle-card"
+                                            data-content-id="tiles-content"
+                                            data-icon-id="tiles-icon"
                                         >
                                             <span
                                                 ><i data-lucide="brick-wall"></i> Wybór
@@ -2207,7 +2266,9 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                                 font-size: 0.78rem;
                                                 padding: 0.15rem 0;
                                             "
-                                            data-action="toggle-card" data-content-id="well-config-wrap" data-icon-id="well-config-icon"
+                                            data-action="toggle-card"
+                                            data-content-id="well-config-wrap"
+                                            data-icon-id="well-config-icon"
                                         >
                                             <span
                                                 ><i data-lucide="package"></i> Konfiguracja
@@ -3791,7 +3852,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        data-action="add-new-well" data-dn="1000"
+                                        data-action="add-new-well"
+                                        data-dn="1000"
                                     >
                                         +1000
                                     </button>
@@ -3805,7 +3867,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        data-action="add-new-well" data-dn="1200"
+                                        data-action="add-new-well"
+                                        data-dn="1200"
                                     >
                                         +1200
                                     </button>
@@ -3819,7 +3882,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        data-action="add-new-well" data-dn="1500"
+                                        data-action="add-new-well"
+                                        data-dn="1500"
                                     >
                                         +1500
                                     </button>
@@ -3833,7 +3897,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        data-action="add-new-well" data-dn="2000"
+                                        data-action="add-new-well"
+                                        data-dn="2000"
                                     >
                                         +2000
                                     </button>
@@ -3847,7 +3912,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        data-action="add-new-well" data-dn="2500"
+                                        data-action="add-new-well"
+                                        data-dn="2500"
                                     >
                                         +2500
                                     </button>
@@ -3864,7 +3930,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                             align-items: center;
                                             justify-content: center;
                                         "
-                                        data-action="add-new-well" data-dn="styczna"
+                                        data-action="add-new-well"
+                                        data-dn="styczna"
                                     >
                                         +Styczeń
                                     </button>
@@ -3884,7 +3951,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                 >
                                     <button
                                         class="s-tab-btn active"
-                                        data-action="switch-sidebar-tab" data-tab="list"
+                                        data-action="switch-sidebar-tab"
+                                        data-tab="list"
                                         id="stab-list"
                                         style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
                                     >
@@ -3897,7 +3965,8 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                     </button>
                                     <button
                                         class="s-tab-btn"
-                                        data-action="switch-sidebar-tab" data-tab="discounts"
+                                        data-action="switch-sidebar-tab"
+                                        data-tab="discounts"
                                         id="stab-discounts"
                                         style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
                                     >
@@ -4280,7 +4349,10 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                         class="cennik-actions gap-2"
                         style="display: flex; justify-content: flex-end"
                     >
-                        <button class="btn btn-primary" data-action="show-add-studnie-product-modal">
+                        <button
+                            class="btn btn-primary"
+                            data-action="show-add-studnie-product-modal"
+                        >
                             <i data-lucide="plus"></i> Dodaj
                         </button>
                         <button
@@ -4293,10 +4365,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                         <button class="btn btn-secondary" data-action="export-studnie-excel">
                             <i data-lucide="upload"></i> Eksportuj Excel
                         </button>
-                        <button
-                            class="btn btn-secondary"
-                            data-action="import-studnie-excel"
-                        >
+                        <button class="btn btn-secondary" data-action="import-studnie-excel">
                             <i data-lucide="download"></i> Importuj Excel
                         </button>
                         <input
@@ -4316,64 +4385,34 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                     class="cennik-tabs gap-1"
                     style="display: flex; margin-bottom: 0.8rem; flex-wrap: wrap"
                 >
-                    <button
-                        class="cennik-tab active"
-                        data-action="cennik-tab" data-tab="dn1000"
-                    >
+                    <button class="cennik-tab active" data-action="cennik-tab" data-tab="dn1000">
                         <span class="cennik-tab-icon" style="background: #6366f1"></span> DN1000
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="dn1200"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="dn1200">
                         <span class="cennik-tab-icon" style="background: #8b5cf6"></span> DN1200
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="dn1500"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="dn1500">
                         <span class="cennik-tab-icon" style="background: #ec4899"></span> DN1500
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="dn2000"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="dn2000">
                         <span class="cennik-tab-icon" style="background: #f59e0b"></span> DN2000
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="dn2500"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="dn2500">
                         <span class="cennik-tab-icon" style="background: #ef4444"></span> DN2500
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="styczne"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="styczne">
                         <span class="cennik-tab-icon" style="background: #f97316"></span> Styczne
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="dennicy"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="dennicy">
                         <span class="cennik-tab-icon" style="background: #10b981"></span> Dennicy
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="akcesoria"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="akcesoria">
                         <span class="cennik-tab-icon" style="background: #64748b"></span> Akcesoria
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="przejscia"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="przejscia">
                         <span class="cennik-tab-icon" style="background: #14b8a6"></span> Przejścia
                     </button>
-                    <button
-                        class="cennik-tab"
-                        data-action="cennik-tab" data-tab="kinety"
-                    >
+                    <button class="cennik-tab" data-action="cennik-tab" data-tab="kinety">
                         <span class="cennik-tab-icon" style="background: #8b5cf6"></span> Kinety
                     </button>
                     <button class="cennik-tab" data-action="cennik-tab" data-tab="preco">
@@ -4398,10 +4437,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                 </div>
                 <span class="wizard-step-info" id="studnie-nav-step-info">Krok 1 z 5</span>
                 <div class="wizard-nav-right">
-                    <button
-                        class="wizard-btn wizard-btn-next"
-                        id="studnie-nav-next"
-                    >
+                    <button class="wizard-btn wizard-btn-next" id="studnie-nav-next">
                         <i data-lucide="chevron-right"></i> Dalej
                     </button>
                 </div>
@@ -5037,21 +5073,24 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                         <button
                             class="zlecenia-filter-btn active"
                             data-filter="all"
-                            data-action="set-zlecenia-filter" data-filter="all"
+                            data-action="set-zlecenia-filter"
+                            data-filter="all"
                         >
                             <i data-lucide="folder-open"></i> Otwarte
                         </button>
                         <button
                             class="zlecenia-filter-btn"
                             data-filter="saved"
-                            data-action="set-zlecenia-filter" data-filter="saved"
+                            data-action="set-zlecenia-filter"
+                            data-filter="saved"
                         >
                             <i data-lucide="save"></i> Zapisane
                         </button>
                         <button
                             class="zlecenia-filter-btn"
                             data-filter="accepted"
-                            data-action="set-zlecenia-filter" data-filter="accepted"
+                            data-action="set-zlecenia-filter"
+                            data-filter="accepted"
                         >
                             <i data-lucide="lock"></i> Zaakceptowane
                         </button>
@@ -5083,11 +5122,16 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
         <script src="js/studnie/uiHelpers.js?v=1.6.0"></script>
         <script src="js/studnie/pricelistManager.js?v=1.6.0"></script>
         <script src="js/studnie/precoCalcCore.js?v=1.6.0"></script>
+        <script src="js/studnie/wellSelection.js?v=1.6.0"></script>
         <script src="js/studnie/wellManager.js?v=1.6.0"></script>
         <script src="js/studnie/wellConfigRules.js?v=1.6.0"></script>
         <script src="js/studnie/wellSolver.js?v=1.6.0"></script>
         <script src="js/studnie/wellTransitions.js?v=1.6.0"></script>
         <script src="js/studnie/wellPopups.js?v=1.6.0"></script>
+        <script src="js/studnie/wellElevation.js?v=1.6.0"></script>
+        <script src="js/studnie/wellConfigRender.js?v=1.6.0"></script>
+        <script src="js/studnie/wellConfigCrud.js?v=1.6.0"></script>
+        <script src="js/studnie/wellDragDrop.js?v=1.6.0"></script>
         <script src="js/studnie/wellActions.js?v=1.6.0"></script>
         <script src="js/studnie/wellUI.js?v=1.6.0"></script>
         <script src="js/studnie/transitionRenderer.js?v=1.6.0"></script>
