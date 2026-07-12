@@ -178,9 +178,19 @@ if (NODE_ENV === 'production') {
 }
 
 /* ===== LIMITOWANIE ŻĄDAŃ API ===== */
+/**
+ * Globalny limiter API (brutto dla wszystkich endpointów).
+ * Limit: 1000 zapytań / 15 minut ≈ 66/min.
+ * Jest to limit bezpieczeństwa przed DDoS — nie powinien kolidować
+ * z dedykowanymi limiterami (WRITE_LIMITER 60/min, EXPORT_LIMITER 20/min, itp.),
+ * które są bardziej restrykcyjne i działają per-route.
+ *
+ * UWAGA: Telemetria dashboardowa (READ_LIMITER, 600/min) może pollować intensywnie —
+ * jeśli pojawią się 429 błędy na /api/telemetry*, zwiększyć maxHits.
+ */
 const apiLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minut
-    maxHits: 300,
+    maxHits: 1000,
     message: 'Zbyt wiele żądań. Odczekaj chwilę.'
 });
 
@@ -211,28 +221,28 @@ app.use('/api/users-for-assignment', (req, res, next) => {
     userRoutes(req, res, next);
 });
 
-app.use('/api/products', productRoutes);
-app.use('/api/products-studnie', productStudnieRoutes);
-app.use('/api/offers-rury', offerRoutes);
-app.use('/api/offers-studnie', (req, res, next) => {
+app.use('/api/products', apiLimiter, productRoutes);
+app.use('/api/products-studnie', apiLimiter, productStudnieRoutes);
+app.use('/api/offers-rury', apiLimiter, offerRoutes);
+app.use('/api/offers-studnie', apiLimiter, (req, res, next) => {
     req.url = '/studnie' + req.url;
     offerRoutes(req, res, next);
 });
 
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
 app.use('/api/orders-rury', apiLimiter, ruryOrdersRoutes);
-app.use('/api/security/csp-report', cspReportRoutes);
 app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);
 app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
 app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);
-app.use('/api/telemetry', telemetryRoutes);
-// Nowy moduł telemetry AI - pasywny zapis konfiguracji, zdarzeń i wersji
-app.use('/api/telemetry', telemetryAiRoutes);
-// Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
-app.use('/api/telemetry', telemetryAiDashboardRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
-app.use('/api/feature-flags', featureFlagsRoutes);
+app.use('/api/feature-flags', apiLimiter, featureFlagsRoutes);
+
+// CSP report i telemetry mają własne limitery z wyższym limitem (READ_LIMITER 600/min)
+app.use('/api/security/csp-report', cspReportRoutes);
+app.use('/api/telemetry', telemetryRoutes);
+app.use('/api/telemetry', telemetryAiRoutes);
+app.use('/api/telemetry', telemetryAiDashboardRoutes);
 app.use('/api', aiMlRoutes); // ML prediction API
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */

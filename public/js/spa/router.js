@@ -215,6 +215,7 @@ const SpaRouter = (() => {
         const iframe = document.createElement('iframe');
         iframe.id = 'spa-iframe-' + module;
         iframe.className = 'spa-module-iframe';
+        iframe.loading = 'lazy';
 
         const { params } = parseHash();
         let src = config.src;

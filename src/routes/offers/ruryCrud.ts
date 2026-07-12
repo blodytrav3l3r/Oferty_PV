@@ -17,12 +17,25 @@ const uuidv4 = crypto.randomUUID.bind(crypto);
 
 const writeOffersLimiter = WRITE_LIMITER;
 
+const ALLOWED_SORT_COLS: Record<string, string> = {
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    offer_number: 'offer_number'
+};
+const ALLOWED_SORT_DIRS: Record<string, 'asc' | 'desc'> = {
+    asc: 'asc',
+    desc: 'desc'
+};
+
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const pq = paginationQuerySchema.parse(req.query);
         const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
-        const orderBy = pq.sort ? { [pq.sort]: pq.order } : { createdAt: 'desc' as const };
+
+        const sortCol = ALLOWED_SORT_COLS[pq.sort || 'createdAt'] || 'createdAt';
+        const sortDir = ALLOWED_SORT_DIRS[pq.order] || 'desc';
+        const orderBy = { [sortCol]: sortDir };
         const [offers, totalCount] = await Promise.all([
             prisma.offers_rel.findMany({
                 where: roleClause,

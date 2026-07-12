@@ -16,6 +16,9 @@ const uuidv4 = crypto.randomUUID.bind(crypto);
 
 const writeOffersLimiter = WRITE_LIMITER;
 
+const ALLOWED_SORT_COLS = new Set(['createdAt', 'updatedAt', 'offer_number']);
+const ALLOWED_SORT_DIRS = new Set(['ASC', 'DESC']);
+
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -27,13 +30,16 @@ router.get('/studnie', requireAuth, async (req, res) => {
             role: authReq.user?.role
         });
 
-        const validSortMap: Record<string, string> = {
-            createdAt: '"createdAt"',
-            updatedAt: '"updatedAt"',
-            offer_number: '"offer_number"'
-        };
-        const sortCol = validSortMap[pq.sort || 'createdAt'] || '"createdAt"';
+        const sortColRaw = pq.sort || 'createdAt';
+        if (!ALLOWED_SORT_COLS.has(sortColRaw)) {
+            return res.status(400).json({ error: `Invalid sort column: ${sortColRaw}` });
+        }
+        const sortCol = `"${sortColRaw}"`;
+
         const sortDir = pq.order === 'asc' ? 'ASC' : 'DESC';
+        if (!ALLOWED_SORT_DIRS.has(sortDir)) {
+            return res.status(400).json({ error: `Invalid sort direction: ${sortDir}` });
+        }
 
         const offers = await prisma.$queryRaw<
             Array<{
