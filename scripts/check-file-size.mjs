@@ -6,7 +6,6 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const MAX_LINES = 500;
 
 const EXEMPT = new Set([
-    'public/js/studnie/orderManager.js',
     'public/js/studnie/order/orderZlecenia.js',
     'public/js/studnie/wellActions.js',
     'public/js/studnie/wellPopups.js'
