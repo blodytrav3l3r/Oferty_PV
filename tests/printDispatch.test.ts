@@ -18,8 +18,20 @@ import * as vm from 'vm';
 
 const PUBLIC = path.join(__dirname, '..', 'public');
 const KARTOTEKA_HTML = path.join(PUBLIC, 'kartoteka.html');
-const STUDNIE_PM_CORE = path.join(PUBLIC, 'js', 'studnie', 'offerPrintManager', 'offerPrintManagerCore.js');
-const STUDNIE_PM_ACTIONS = path.join(PUBLIC, 'js', 'studnie', 'offerPrintManager', 'offerPrintManagerActions.js');
+const STUDNIE_PM_CORE = path.join(
+    PUBLIC,
+    'js',
+    'studnie',
+    'offerPrintManager',
+    'offerPrintManagerCore.js'
+);
+const STUDNIE_PM_ACTIONS = path.join(
+    PUBLIC,
+    'js',
+    'studnie',
+    'offerPrintManager',
+    'offerPrintManagerActions.js'
+);
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
 const PV_SALES_ORDERS = path.join(PUBLIC, 'js', 'sales', 'pvSalesOrders.js');
@@ -401,7 +413,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         }
 
         it('STUDNIE: exportOfferDirect_action wywołuje /api/offers-studnie/{id}/export-pdf', async () => {
-            const { fetchCalls, window } = loadInVm([STUDNIE_PM_CORE, STUDNIE_PM_ACTIONS], () => okResponse());
+            const { fetchCalls, window } = loadInVm([STUDNIE_PM_CORE, STUDNIE_PM_ACTIONS], () =>
+                okResponse()
+            );
             const fn = window.exportOfferDirect_action as (
                 id: string,
                 fmt: 'pdf' | 'docx'
@@ -415,7 +429,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('STUDNIE: exportOfferDirect_action docx → /api/offers-studnie/{id}/export-docx', async () => {
-            const { fetchCalls, window } = loadInVm([STUDNIE_PM_CORE, STUDNIE_PM_ACTIONS], () => okResponse());
+            const { fetchCalls, window } = loadInVm([STUDNIE_PM_CORE, STUDNIE_PM_ACTIONS], () =>
+                okResponse()
+            );
             const fn = window.exportOfferDirect_action as (
                 id: string,
                 fmt: string
@@ -498,7 +514,11 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             sandbox.window = sandbox;
             sandbox.globalThis = sandbox;
             const context = vm.createContext(sandbox);
-            vm.runInContext(readFile(STUDNIE_PM_CORE) + '\n' + readFile(STUDNIE_PM_ACTIONS), context, { filename: STUDNIE_PM_CORE + '+' + STUDNIE_PM_ACTIONS });
+            vm.runInContext(
+                readFile(STUDNIE_PM_CORE) + '\n' + readFile(STUDNIE_PM_ACTIONS),
+                context,
+                { filename: STUDNIE_PM_CORE + '+' + STUDNIE_PM_ACTIONS }
+            );
 
             const fn = (sandbox.window as Record<string, unknown>).exportOfferDirect_action as (
                 id: string,
