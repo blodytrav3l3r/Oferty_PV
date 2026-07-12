@@ -3,10 +3,12 @@
  * wellSolver.js — Rdzeń algorytmiczny doboru elementów studni
  *
  * Zawiera wyłącznie logikę solvera:
- * - applyDrilledRings()       — zamiana kręgów na wiercone (OT)
  * - autoSelectComponents()    — główny punkt wejścia auto-doboru (JS solver)
  * - runJsAutoSelection()      — lokalny solver (JS)
- * - recalculateWellErrors()   — walidacja luzów przejść
+ *
+ * Funkcje pomocnicze wyodrębnione do podmodułów w wellSolver/:
+ * - wellSolverOT.js           — buildConfigSegments(), applyDrilledRings()
+ * - wellSolverValidation.js   — recalculateWellErrors()
  *
  * Zależności globalne: studnieProducts, wells, currentWellIndex,
  *   getCurrentWell(), getAvailableProducts(), filterByWellParams(),
@@ -16,171 +18,6 @@
  *   renderWellConfig(), renderWellDiagram(), updateSummary(),
  *   updateHeightIndicator(), refreshAll(), showToast(), fmtInt()
  */
-
-/* ===== KRĘGI WIERCONE (OT) ===== */
-
-/**
- * Buduje tablicę segmentów z konfiguracji (odwróconej).
- */
-function buildConfigSegments(configItems, psiaBuda) {
-    let y = 0;
-    let lastWasD = !!psiaBuda;
-    return configItems.map((item) => {
-        const prod = studnieProducts.find((p) => p.id === item.productId);
-        let h = prod ? parseFloat(prod.height) || 0 : 0;
-        if (prod && prod.componentType === 'dennica' && lastWasD) {
-            h -= 100;
-        }
-        const seg = {
-            itemBase: item,
-            start: y,
-            end: y + h,
-            type: prod ? prod.componentType : ''
-        };
-        y += h;
-        lastWasD = prod && prod.componentType === 'dennica';
-        return seg;
-    });
-}
-
-/**
- * Po zbudowaniu segmentów, sprawdza czy przejście (otwór) jest WEWNĄTRZ kręgu
- * i zamienia zwykły krag na krag_ot (wiercony) w odpowiednim segmencie.
- *
- * ZASADY:
- * 1. Otwór OT tylko gdy przejście faktycznie jest WEWNĄTRZ tego kręgu (środek otworu)
- * 2. Zamiana na OT musi zachować tę samą wysokość kręgu (nie zmienia totalnej wysokości)
- * 3. Jeśli otwór wychodzi na łączenie dennicy i kręgu → zwraca flagę needsTallerDennica
- *
- * Zwraca { items: kregItems[], needsTallerDennica: boolean }
- */
-function applyDrilledRings(kregItems, segments, well, availProducts) {
-    const result = { items: kregItems, needsTallerDennica: false };
-    if (!well.przejscia || well.przejscia.length === 0) {
-        // Zwróć KLON aby caller mógł bezpiecznie zrobić splice na oryginalnej tablicy
-        result.items = structuredClone(kregItems);
-        return result;
-    }
-    const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
-    const newItems = structuredClone(kregItems);
-    const usedSegIndices = new Set();
-
-    for (const pr of well.przejscia) {
-        let pel = parseFloat(pr.rzednaWlaczenia);
-        if (isNaN(pel)) continue;
-        const mmFromBottom = (pel - rzDna) * 1000;
-        const pprod = studnieProducts.find((x) => x.id === pr.productId);
-        if (!pprod) continue;
-
-        // Przebuduj wysokość krawędzi dennic z uwzględnieniem redukcji dennic piętrowych
-        let currentDennicaEnd = 0;
-        let cy = 0;
-        let lastWasD = !!well.psiaBuda;
-        const configReversed = [...newItems].reverse();
-        for (const item of configReversed) {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) continue;
-            let h = p.height || 0;
-            if (p.componentType === 'dennica' && lastWasD) h -= 100;
-            if (p.componentType === 'dennica') currentDennicaEnd = cy + h;
-            cy += h;
-            lastWasD = p.componentType === 'dennica';
-        }
-
-        let prDN =
-            typeof pprod.dn === 'string' && pprod.dn.includes('/')
-                ? parseFloat(pprod.dn.split('/')[1]) || 160
-                : parseFloat(pprod.dn) || 160;
-
-        const holeCenter = mmFromBottom + prDN / 2;
-
-        // Sprawdź, czy otwór przesuwa się przez połączenie dennicy i kręgu
-        if (
-            currentDennicaEnd > 0 &&
-            mmFromBottom < currentDennicaEnd &&
-            mmFromBottom + prDN > currentDennicaEnd
-        ) {
-            result.needsTallerDennica = true;
-        }
-
-        // Sprawdź, czy środek otworu znajduje się w całości wewnątrz dennicy — OT nie jest potrzebne
-        if (currentDennicaEnd > 0 && holeCenter < currentDennicaEnd) continue;
-
-        // Znajdź, który segment kręgu zawiera środek otworu
-        for (let si = 1; si < segments.length; si++) {
-            const seg = segments[si];
-            if (seg.type !== 'krag' && seg.type !== 'krag_ot') continue;
-            if (holeCenter >= seg.start && holeCenter < seg.end && !usedSegIndices.has(si)) {
-                usedSegIndices.add(si);
-
-                let segCount = 0;
-                for (let ki = 0; ki < newItems.length; ki++) {
-                    const kp = studnieProducts.find((p) => p.id === newItems[ki].productId);
-                    if (!kp || (kp.componentType !== 'krag' && kp.componentType !== 'krag_ot'))
-                        continue;
-                    for (let q = 0; q < newItems[ki].quantity; q++) {
-                        segCount++;
-                        if (segCount === si) {
-                            const otProd = availProducts.find((p) => {
-                                const isOt =
-                                    p.componentType === 'krag_ot' ||
-                                    (p.id && String(p.id).toLowerCase().endsWith('ot')) ||
-                                    (p.name && String(p.name).toLowerCase().includes('wiercony')) ||
-                                    (p.name && String(p.name).toLowerCase().includes('z otworem'));
-                                return (
-                                    isOt &&
-                                    p.dn === kp.dn &&
-                                    p.height === kp.height &&
-                                    (p.componentType === 'krag' || p.componentType === 'krag_ot')
-                                );
-                            });
-                            if (otProd) {
-                                if (newItems[ki].quantity === 1) {
-                                    newItems[ki].productId = otProd.id;
-                                } else {
-                                    newItems[ki].quantity--;
-                                    newItems.splice(ki + 1, 0, {
-                                        productId: otProd.id,
-                                        quantity: 1
-                                    });
-                                }
-                            } else {
-                                const dynamicOtId = kp.id + '_OT';
-                                if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-                                    const dynamicProd = structuredClone(kp);
-                                    dynamicProd.id = dynamicOtId;
-                                    dynamicProd.componentType = 'krag_ot';
-                                    if (!dynamicProd.name.includes(' wiercony')) {
-                                        dynamicProd.name = dynamicProd.name.replace(
-                                            'Krąg',
-                                            'Krąg wiercony'
-                                        );
-                                    }
-                                    studnieProducts.push(dynamicProd);
-                                }
-
-                                if (newItems[ki].quantity === 1) {
-                                    newItems[ki].productId = dynamicOtId;
-                                } else {
-                                    newItems[ki].quantity--;
-                                    newItems.splice(ki + 1, 0, {
-                                        productId: dynamicOtId,
-                                        quantity: 1
-                                    });
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    if (segCount >= si) break;
-                }
-                break;
-            }
-        }
-    }
-    result.items = newItems;
-    return result;
-}
 
 /* ===== GŁÓWNY PUNKT WEJŚCIA AUTO-DOBORU ===== */
 let isAutoSelectRunning = false;
@@ -446,7 +283,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // --- Budowa konfiguracji zakończenia górnego ---
     const topConfigs = [];
     const buildTopConfig = (topP) => {
-        let items = [];
+        const items = [];
         let h = 0;
         let lbl = '';
         if (
@@ -523,16 +360,16 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     // KROK 3: Przejścia — oblicz minimalne wymagania
-    let holes = (well.przejscia || []).map((p) => {
-        let pel = parseFloat(p.rzednaWlaczenia);
+    const holes = (well.przejscia || []).map((p) => {
+        const pel = parseFloat(p.rzednaWlaczenia);
         let prDN = 160;
-        let prod = availProducts.find((x) => x.id === p.productId);
+        const prod = availProducts.find((x) => x.id === p.productId);
         if (prod && typeof prod.dn === 'string' && prod.dn.includes('/'))
             prDN = parseFloat(prod.dn.split('/')[1]) || 160;
         else if (prod && prod.dn != null) prDN = parseFloat(prod.dn) || 160;
 
-        let bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
-        let center = bottomEdge + prDN / 2;
+        const bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
+        const center = bottomEdge + prDN / 2;
 
         const parseHoleClearance = (val, fallback = 300) => {
             if (val === undefined || val === null || val === '') return fallback;
@@ -656,7 +493,8 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 (p.name.includes('/' + targetDn) || p.name.includes(' DN' + targetDn))
         );
     }
-    let canReduce = well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
+    const canReduce =
+        well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
 
     // Jeżeli mamy redukcję, zmień effectiveDn dla górnej części studni (nad płytą)
     const upperDn = canReduce ? targetDn : effectiveDn;
@@ -726,7 +564,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     function fillKregiGreedy(target, kList) {
-        let kItems = [];
+        const kItems = [];
         let filled = 0;
         if (target > 0) {
             let left = target;
@@ -786,14 +624,14 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
     // KROK 6: Walidacja przejść
     function checkConflicts(kItems, denH, reduceH, topItems) {
-        let segs = [];
+        const segs = [];
         let y = 0;
         segs.push({ type: 'dennica', h: denH, start: 0, end: denH });
         y += denH;
 
         let lastWasDennica = !!well.psiaBuda;
 
-        for (let k of kItems) {
+        for (const k of kItems) {
             let actualH = k._h;
             const kp = studnieProducts.find((p) => p.id === k.productId);
             if (kp && kp.componentType === 'dennica' && lastWasDennica) {
@@ -810,7 +648,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 lastWasDennica = kp.componentType === 'dennica';
             }
         }
-        for (let t of [...topItems].reverse()) {
+        for (const t of [...topItems].reverse()) {
             const tp = studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
                 let actualH = tp.height;
@@ -826,7 +664,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
         let isMinimal = false;
         let valid = true;
-        let errors = [];
+        const errors = [];
 
         holes.forEach((h) => {
             const hTop = h.z + h.ruraDz;
@@ -898,11 +736,11 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     // KROK 7: Solver — szuka najlepszej kombinacji
     // Zwraca tablicę kandydatów posortowaną rosnąco (niższy score = lepszy)
     function solve(tolBelow, tolAbove, maxAvr, skipHolesValid) {
-        let candidates = [];
+        const candidates = [];
 
         for (const topCfg of topConfigs) {
             for (const dennicaItem of dennicy) {
-                let denIsMin = dennicaItem.height < maxReqH;
+                const denIsMin = dennicaItem.height < maxReqH;
 
                 let effDenH = dennicaItem.height;
                 if (well.psiaBuda) effDenH -= 100;
@@ -949,7 +787,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 let score = scoreResult.score;
                 score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                let runErrors = [...conf.errors];
+                const runErrors = [...conf.errors];
                 if (isOutOfBounds)
                     runErrors.push(
                         `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
@@ -979,7 +817,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
 
         // --- Redukcja DN1000 / DN1200 ---
         if (canReduce) {
-            let topRedItems = [];
+            const topRedItems = [];
             let topRedH = 0;
             const redTargetProducts = availProducts.filter((p) => parseInt(p.dn) === targetDn);
             const redTopProducts = redTargetProducts.filter((p) =>
@@ -1050,12 +888,12 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             if (well.przejscia && well.przejscia.length > 0) {
                 const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
                 for (const pr of well.przejscia) {
-                    let pel = parseFloat(pr.rzednaWlaczenia);
+                    const pel = parseFloat(pr.rzednaWlaczenia);
                     if (!isNaN(pel)) {
                         const holeBottom = (pel - rzDna) * 1000; // rzednaWlaczenia = dolna krawędź rury
                         const pprod = studnieProducts.find((x) => x.id === pr.productId);
                         if (pprod) {
-                            let prDN =
+                            const prDN =
                                 typeof pprod.dn === 'string' && pprod.dn.includes('/')
                                     ? parseFloat(pprod.dn.split('/')[1]) || 160
                                     : parseFloat(pprod.dn) || 160;
@@ -1071,13 +909,13 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                 }
             }
 
-            let minLowerTotal = Math.max(well.redukcjaMinH || 0, maxHoleTop);
+            const minLowerTotal = Math.max(well.redukcjaMinH || 0, maxHoleTop);
             let dynamicMinBottom = minLowerTotal;
             let lift = 0;
             while (lift < 40) {
                 // Zwiększono z 15 do 40, aby obsłużyć studnie do 12m+
                 for (const dennicaItem of dennicy) {
-                    let bottomNeed = Math.max(dynamicMinBottom - dennicaItem.height, 0);
+                    const bottomNeed = Math.max(dynamicMinBottom - dennicaItem.height, 0);
 
                     // Wymuszamy tolBelow=0 dla dolnej części, aby zachować twardy limit minLowerTotal (redukcjaMinH)
                     const bKregi = fillKregiDP(
@@ -1109,7 +947,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     const diff = currentTotal + avrH - requiredMm;
                     const isOutOfBounds = diff < -90 || diff > 20;
 
-                    let redKItems = [];
+                    const redKItems = [];
                     bKregi.kItems.forEach((k) => redKItems.push(k));
                     redKItems.push({
                         productId: reductionPlate.id,
@@ -1159,7 +997,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
                     let score = scoreResult.score;
                     score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                    let runErrors = [...conf.errors];
+                    const runErrors = [...conf.errors];
                     if (isOutOfBounds)
                         runErrors.push(
                             `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
@@ -1311,7 +1149,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         ? solution.kregItems
         : [...solution.kregItems].reverse();
 
-    let newConfig = [
+    const newConfig = [
         ...wlazItems,
         ...solution.avrItems,
         ...otherTopItems,
@@ -1384,127 +1222,4 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
         fallback,
         fallbackReason
     };
-}
-
-/* ===== WALIDACJA LUZÓW PRZEJŚĆ ===== */
-function recalculateWellErrors(well) {
-    if (!well) return;
-
-    // Wyczyść błędy dotyczące luzów z poprzedniego wywołania
-    let liveErrors = well.configErrors
-        ? well.configErrors.filter(
-              (e) => !e.includes('Błąd zapasu') && !e.includes('nie spełnia zapasów')
-          )
-        : [];
-
-    // --- WALIDACJA LUZÓW NA ŻYWO ---
-    if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
-        const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
-        if (rzDna !== null && !isNaN(rzDna)) {
-            const segments = [];
-            let cy = 0;
-            let lastWasDennica = !!well.psiaBuda;
-            const configReversed = [...well.config].reverse();
-            for (const item of configReversed) {
-                const p = studnieProducts.find((pr) => pr.id === item.productId);
-                if (!p || !p.height) continue;
-                const qty = item.quantity || 1;
-                for (let i = 0; i < qty; i++) {
-                    let actualHeight = p.height || 0;
-                    if (p.componentType === 'dennica' && lastWasDennica) {
-                        actualHeight -= 100;
-                    }
-
-                    segments.push({
-                        type: p.componentType,
-                        start: cy,
-                        end: cy + actualHeight,
-                        product: p,
-                        name: p.name
-                    });
-                    cy += actualHeight;
-                    if (p.componentType !== 'uszczelka') {
-                        lastWasDennica = p.componentType === 'dennica';
-                    }
-                }
-            }
-
-            const przZegarowe = well.przejscia
-                .map((pr, idx) => ({ pr, origIdx: idx }))
-                .sort((a, b) => {
-                    return (parseFloat(a.pr.angle) || 0) - (parseFloat(b.pr.angle) || 0);
-                });
-
-            przZegarowe.forEach(({ pr }, porzadekIdx) => {
-                const pel = parseFloat(pr.rzednaWlaczenia);
-                if (isNaN(pel)) return;
-
-                const pprod = studnieProducts.find((x) => x.id === pr.productId);
-                if (!pprod) return;
-
-                let dn_val = 160;
-                if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-                    dn_val = parseFloat(pprod.dn.split('/')[1]) || 160;
-                } else if (pprod.dn) {
-                    dn_val = parseFloat(pprod.dn) || 160;
-                }
-
-                const parseClearance = (val, defVal) => {
-                    if (val === undefined || val === null || val === '') return defVal;
-                    const p = parseFloat(val);
-                    return isNaN(p) ? defVal : p;
-                };
-                const zg_req = parseClearance(pprod.zapasGora, 300);
-                const zd_req = parseClearance(pprod.zapasDol, 300);
-                const zd_req_min = parseClearance(pprod.zapasDolMin, 150);
-                const zg_req_min = parseClearance(pprod.zapasGoraMin, 150);
-                const hc_invert = (pel - rzDna) * 1000; // hole bottom
-                const hole_center = hc_invert + dn_val / 2; // Python: hole_center
-                const hole_top = hc_invert + dn_val; // Python: hole_top
-
-                const typStr =
-                    pr.flowType === FLOW_TYPES.WYLOT ? FLOW_TYPES.WYLOT : FLOW_TYPES.DOLOT;
-                const displayType = `nr ${porzadekIdx + 1} (${typStr} DN${dn_val}, rodzaj: ${pprod.name})`;
-
-                // Python: używa hole_center do znalezienia segmentu, nie hole_bottom
-                for (let segIdx = 0; segIdx < segments.length; segIdx++) {
-                    const seg = segments[segIdx];
-                    if (hole_center >= seg.start && hole_center < seg.end) {
-                        const bottomClearance = hc_invert - seg.start; // Python: bottom_clearance
-                        const topClearance = seg.end - hole_top; // Python: top_clearance
-
-                        // Python: is_bottom_most = (idx == 0)
-                        const isBottomMost = segIdx === 0;
-                        // Python: is_pipe_near_bottom = is_bottom_most and bottom_clearance < z_dol
-                        const isNearBottom = isBottomMost && bottomClearance < zd_req;
-                        // Python: eff_z_dol = -9999.0 if is_pipe_near_bottom else z_dol
-                        const effZdReq = isNearBottom ? -9999 : zd_req;
-                        const effZdReqMin = isNearBottom ? -9999 : zd_req_min;
-
-                        // Python: if bottom_clearance >= eff_z_dol and top_clearance >= z_gora → OK
-                        const standardOk = bottomClearance >= effZdReq && topClearance >= zg_req;
-                        // Python: elif bottom_clearance >= eff_z_dol_min and top_clearance >= z_gora_min → minimal
-                        const minimalOk =
-                            !standardOk &&
-                            bottomClearance >= effZdReqMin &&
-                            topClearance >= zg_req_min;
-
-                        if (!standardOk && !minimalOk) {
-                            // Python: errors.append — ZA MAŁY ZAPAS
-                            const errStr = `Błąd zapasu w "${seg.name}" dla przejścia ${displayType} (wymagane: dół≥${effZdReq}mm góra≥${zg_req}mm, aktualne: dół=${Math.round(bottomClearance)}mm góra=${Math.round(topClearance)}mm)`;
-                            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
-                        } else if (minimalOk) {
-                            // Python: used_minimal → append "zastosowano luzy minimalne"
-                            const noteStr = `Przejście ${displayType} w "${seg.name}": zastosowano luzy minimalne (dół=${Math.round(bottomClearance)}mm, góra=${Math.round(topClearance)}mm)`;
-                            if (!liveErrors.includes(noteStr)) liveErrors.push(noteStr);
-                        }
-                        break;
-                    }
-                }
-            });
-        }
-    }
-    well.configErrors = [...new Set(liveErrors)];
-    well.configStatus =
-        well.configErrors.length > 0 ? 'ERROR' : well.configSource ? 'OK' : well.configStatus || '';
 }
