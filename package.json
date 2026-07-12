@@ -19,6 +19,7 @@
         "lint": "eslint src/**/*.{js,ts}",
         "lint:fix": "eslint src/**/*.{js,ts} --fix",
         "lint:frontend": "eslint public/js --ext .js",
+        "lint:file-size": "node scripts/check-file-size.mjs",
         "typecheck": "tsc --noEmit",
         "typecheck:frontend": "tsc -p tsconfig.frontend.json",
         "format": "prettier --write \"**/*.{js,ts,json,md}\"",

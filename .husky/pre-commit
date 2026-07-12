@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Pre-commit — sprawdza zgodność z planem Excel przed lint-staged
+# Pre-commit — quality gates przed lint-staged
 . "$(dirname "$0")/_/husky.sh"
+
+npm run lint:file-size
 
 python scripts/excel-validator.py
 EXIT_CODE=$?
