@@ -34,6 +34,7 @@ const STUDNIE_PM_ACTIONS = path.join(
 );
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
+const PV_SALES_UI_RENDER = path.join(PUBLIC, 'js', 'sales', 'pvSalesUiRender.js');
 const PV_SALES_ORDERS = path.join(PUBLIC, 'js', 'sales', 'pvSalesOrders.js');
 
 function readFile(p: string): string {
@@ -71,7 +72,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: pvSalesUi.js + pvSalesOrders.js dispatch on offerType', () => {
         let src: string;
         beforeAll(() => {
-            src = readCombined(PV_SALES_UI, PV_SALES_ORDERS);
+            src = readCombined(PV_SALES_UI, PV_SALES_UI_RENDER, PV_SALES_ORDERS);
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
@@ -175,7 +176,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: pvSalesUi.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
         let src: string;
         beforeAll(() => {
-            src = readCombined(PV_SALES_UI, PV_SALES_ORDERS);
+            src = readCombined(PV_SALES_UI, PV_SALES_UI_RENDER, PV_SALES_ORDERS);
         });
 
         it('dispatch inferuje rury z offerType === "rura_oferta" + legacy "offer" + ID prefix', () => {
@@ -240,7 +241,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: openPrintModal przekazuje relatedOrders z ordersMap (kartoteka fix)', () => {
         let src: string;
         beforeAll(() => {
-            src = readCombined(PV_SALES_UI, PV_SALES_ORDERS);
+            src = readCombined(PV_SALES_UI, PV_SALES_UI_RENDER, PV_SALES_ORDERS);
         });
 
         it('openPrintModal akceptuje 4. param relatedOrders', () => {
