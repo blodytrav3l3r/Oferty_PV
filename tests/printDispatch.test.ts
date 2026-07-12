@@ -21,9 +21,14 @@ const KARTOTEKA_HTML = path.join(PUBLIC, 'kartoteka.html');
 const STUDNIE_PM = path.join(PUBLIC, 'js', 'studnie', 'offerPrintManager.js');
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
+const PV_SALES_ORDERS = path.join(PUBLIC, 'js', 'sales', 'pvSalesOrders.js');
 
 function readFile(p: string): string {
     return fs.readFileSync(p, 'utf-8');
+}
+
+function readCombined(...paths: string[]): string {
+    return paths.map((p) => fs.readFileSync(p, 'utf-8')).join('\n');
 }
 
 describe('Print dispatch — regression (kartoteka rury offers)', () => {
@@ -50,22 +55,19 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: pvSalesUi.js dispatch on offerType', () => {
+    describe('Static: pvSalesUi.js + pvSalesOrders.js dispatch on offerType', () => {
         let src: string;
         beforeAll(() => {
-            src = readFile(PV_SALES_UI);
+            src = readCombined(PV_SALES_UI, PV_SALES_ORDERS);
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
-            // openPrintModal: isRuryOfferFromTypeOrId → showUniversalPrintModalRury
-            // Sprawdza że wywołanie modal buildera dla rur przechodzi przez openPrintModal
             const pattern =
                 /isRuryOfferFromTypeOrId[\s\S]{0,500}showUniversalPrintModalRury\s*\(\s*offerId/;
             expect(src).toMatch(pattern);
         });
 
         it('.btn-karta-budowy ma data-offer-type (dispatch Karta Budowy)', () => {
-            // Sprawdza template HTML btn-karta-budowy
             const pattern =
                 /class="action-btn success btn-karta-budowy"[\s\S]{0,200}data-offer-type/;
             expect(src).toMatch(pattern);
@@ -78,8 +80,6 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('modal .btn-print-order handler dispatchuje przez openPrintModal', () => {
-            // Po unifikacji: btn-print-order wywołuje openPrintModal (nie inline logic)
-            // Listener jest w showOfferOrdersPopup (overlay), 596 chars dalej od forEach()
             const pattern =
                 /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
             expect(src).toMatch(pattern);
@@ -162,7 +162,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: pvSalesUi.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
         let src: string;
         beforeAll(() => {
-            src = readFile(PV_SALES_UI);
+            src = readCombined(PV_SALES_UI, PV_SALES_ORDERS);
         });
 
         it('dispatch inferuje rury z offerType === "rura_oferta" + legacy "offer" + ID prefix', () => {
@@ -227,7 +227,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: openPrintModal przekazuje relatedOrders z ordersMap (kartoteka fix)', () => {
         let src: string;
         beforeAll(() => {
-            src = readFile(PV_SALES_UI);
+            src = readCombined(PV_SALES_UI, PV_SALES_ORDERS);
         });
 
         it('openPrintModal akceptuje 4. param relatedOrders', () => {

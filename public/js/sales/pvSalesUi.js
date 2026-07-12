@@ -1,40 +1,30 @@
 // @ts-check
 // Wersja 2.0 - Zarzadzanie zamowieniami w Kartotece
 import { storageService } from '../shared/StorageService.js';
+import { pvSalesAuditMixin } from './pvSalesAudit.js';
+import { pvSalesOrdersMixin } from './pvSalesOrders.js';
 
 /**
  * Inferuje, czy oferta jest rurą (vs studnią) na podstawie pola type
  * oraz fallbacków dla legacy danych.
- *  - 'rura_oferta' → rury (aktualny typ)
- *  - 'offer'       → rury (legacy typ używany przed rename)
- *  - id oferty zaczynające się od 'offer_rury_' → rury (heurystyka po ID)
- * Wszystkie pozostałe (w tym 'studnia_oferta' i brak danych) → studnie.
  */
-function isRuryOfferFromTypeOrId(offerType, offerId) {
+window.isRuryOfferFromTypeOrId = function isRuryOfferFromTypeOrId(offerType, offerId) {
     if (offerType === 'rura_oferta' || offerType === 'offer') return true;
     if (offerId && /^offer_rury_/.test(offerId)) return true;
     return false;
-}
+};
 
 /**
  * Wspólna funkcja otwierająca uniwersalny modal wydruku
- * (public/js/shared/printModal.js). Wywoływana ze wszystkich
- * przycisków wydruku w kartotece (główny wiersz, per-order
- * "Karta budowy", popup "Karta") — gwarantuje identyczny popup
- * niezależnie od ścieżki.
- *
- * @param {string|null} offerId   ID oferty (lub null jeśli niedostępne)
- * @param {string|null} orderId   ID zamówienia (lub '' jeśli brak)
- * @param {string|null} offerType 'rura_oferta' | 'offer' (legacy) | 'studnia_oferta' | null
  */
-function openPrintModal(offerId, orderId, offerType, relatedOrders) {
+window.openPrintModal = function openPrintModal(offerId, orderId, offerType, relatedOrders) {
     if (!offerId && !orderId) {
         if (typeof showToast === 'function') {
             showToast('Brak identyfikatora oferty/zamówienia do wydruku', 'error');
         }
         return;
     }
-    const isRury = isRuryOfferFromTypeOrId(offerType, offerId);
+    const isRury = window.isRuryOfferFromTypeOrId(offerType, offerId);
     const safeOrderId = orderId || '';
     const safeRelatedOrders = Array.isArray(relatedOrders) ? relatedOrders : null;
     if (isRury && typeof window.showUniversalPrintModalRury === 'function') {
@@ -44,7 +34,8 @@ function openPrintModal(offerId, orderId, offerType, relatedOrders) {
     } else if (typeof showToast === 'function') {
         showToast('Funkcja wydruku nie jest dostępna w tym widoku.', 'info');
     }
-}
+};
+
 /* CSP-safe: hover for btn-open-order */
 (function () {
     var s = document.createElement('style');
@@ -56,17 +47,16 @@ function openPrintModal(offerId, orderId, offerType, relatedOrders) {
 class PVSalesUI {
     constructor() {
         this.syncManager = null;
-        this.allLocalOffers = []; // Przechowalnia do filtrowania
+        this.allLocalOffers = [];
         this.isSyncUpToDate = true;
-        this.ordersMap = new Map(); // offerId -> order
-        this.currentFilter = 'all'; // 'all', 'with_order', 'without_order'
-        this.currentTypeFilter = 'all'; // 'all', 'offer', 'studnia_oferta'
+        this.ordersMap = new Map();
+        this.currentFilter = 'all';
+        this.currentTypeFilter = 'all';
         this.autoRefreshInterval = null;
 
         this.init();
     }
 
-    /** Pomocnik do normalizacji ID */
     normalizeId(id) {
         if (!id) return '';
         return String(id);
@@ -79,106 +69,6 @@ class PVSalesUI {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
-    }
-
-    formatOrderLabel(order) {
-        return this.escapeHtml(
-            order?.orderNumber ||
-                order?.offerNumber ||
-                (order?.id ? String(order.id).substring(0, 8) : 'Zamówienie')
-        );
-    }
-
-    getOrderChangeInfo(order) {
-        const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
-        const originalPrice = Number(
-            order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
-        );
-        const changed = Math.abs(currentPrice - originalPrice) > 0.01;
-        return { changed, currentPrice, originalPrice };
-    }
-
-    /**
-     * Przelicza koszt transportu dla zamówienia rur na podstawie aktualnych pozycji.
-     *
-     * Deleguje do calculateTransports() z transport.js (bin-packing z konsolidacją).
-     *
-     * @param {Array} items pozycje zamówienia (z `weight`, `transport`, `quantity`, `autoAdded`)
-     * @param {number} transportKm km na kurs
-     * @param {number} transportRate PLN/km
-     * @returns {number} łączny koszt transportu (PLN)
-     */
-    recalculateRuryTransportCost(items, transportKm, transportRate) {
-        const costPerTrip = (Number(transportKm) || 0) * (Number(transportRate) || 0);
-        if (costPerTrip <= 0) return 0;
-        const calcItems = (items || [])
-            .filter((i) => !i.autoAdded && Number(i.weight) > 0 && Number(i.quantity) > 0)
-            .map((i) => ({
-                weight: Number(i.weight),
-                transport: Number(i.transport),
-                quantity: Number(i.quantity)
-            }));
-        if (calcItems.length === 0) return 0;
-        const result = calculateTransportTrips(calcItems);
-        return result.totalTrips * costPerTrip;
-    }
-
-    /**
-     * Oblicza aktualną wartość netto zamówienia Z TRANSPORTEM włącznie.
-     *
-     * Studnie: suma `wellsExport[].totalPrice` (= price + transportCost per studnia).
-     *          Te pole jest aktualizowane przy każdym zapisie oferty i zawiera
-     *          zarówno cenę konfiguracji jak i koszt transportu rozdzielony na studnie.
-     *          Fallback: order.totalNetto (zachowane dla kompatybilności z legacy).
-     *
-     * Rury: suma produktów + przeliczony transport (bin-packing z wag pozycji).
-     *   - products = Σ (unitPrice * (1 - discount/100) + surcharge + pehdCostPerUnit) * quantity
-     *   - transport = recalculateRuryTransportCost(items, transportKm, transportRate)
-     *     (per-item `transport` z cennika może być nieaktualny po modyfikacji ilości,
-     *      więc liczymy koszt od zera z aktualnych wag i `transport` per-unit)
-     *   - final = products + transport
-     *   Zamówienia rur nie zapisują pola totalNetto — wartość musi być liczona w locie.
-     *
-     * @param {object} order obiekt zamówienia
-     * @param {string} [offerType] typ oferty ('rura_oferta' | 'offer' | 'studnia_oferta')
-     * @returns {number} wartość netto (z transportem)
-     */
-    computeOrderValueWithTransport(order, offerType) {
-        if (!order) return 0;
-        const isStudnie = offerType === 'studnia_oferta' || order.wells || order.wellsExport;
-        if (isStudnie) {
-            const exportData = order.wellsExport || (order.data && order.data.wellsExport);
-            if (Array.isArray(exportData) && exportData.length > 0) {
-                return exportData.reduce((sum, w) => sum + (Number(w.totalPrice) || 0), 0);
-            }
-            return Number(order.totalNetto || order.totalBrutto || 0);
-        }
-        const items = order.items || [];
-        if (items.length === 0) {
-            return Number(order.totalNetto || order.totalBrutto || 0);
-        }
-        const productsTotal = items.reduce((sum, item) => {
-            const unitBase =
-                (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
-            const surcharge = Number(item.surcharge) || 0;
-            const pehdCost = Number(item.pehdCostPerUnit) || 0;
-            return sum + (unitBase + surcharge + pehdCost) * (Number(item.quantity) || 0);
-        }, 0);
-        const transportCost = this.recalculateRuryTransportCost(
-            items,
-            order.transportKm,
-            order.transportRate
-        );
-        return productsTotal + transportCost;
-    }
-
-    findOrderById(orderId) {
-        const needle = this.normalizeId(orderId);
-        for (const [offerId, orders] of this.ordersMap.entries()) {
-            const order = (orders || []).find((item) => this.normalizeId(item.id) === needle);
-            if (order) return { offerId, order };
-        }
-        return { offerId: '', order: null };
     }
 
     async init() {
@@ -199,7 +89,6 @@ class PVSalesUI {
             this.role = user.role || 'user';
             logger.info('pvSalesUi', 'Inicjalizacja dla użytkownika:', user.username);
 
-            // Inicjalizacja StorageService
             await storageService.init();
 
             this.attachEventListeners();
@@ -218,80 +107,7 @@ class PVSalesUI {
         }
     }
 
-    attachEventListeners() {
-        // Zdarzenia do ogólnych akcji (wyszukiwanie lokalne ma oninput w HTML)
-    }
-
-    async loadOrdersMap() {
-        try {
-            const headers =
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' };
-            const timestamp = Date.now();
-
-            this.ordersMap.clear();
-            let totalOrders = 0;
-
-            // Studnie
-            const studnieResp = await fetch(`/api/orders-studnie?t=${timestamp}`, { headers });
-            if (studnieResp.ok) {
-                const json = await studnieResp.json();
-                (json.data || []).forEach((order) => {
-                    const offId = order.offerId || order.offerStudnieId || order.offer_id;
-                    if (!offId) return;
-                    const key = this.normalizeId(offId);
-                    const list = this.ordersMap.get(key) || [];
-                    list.push(order);
-                    this.ordersMap.set(key, list);
-                    totalOrders++;
-                });
-            }
-
-            // Rury
-            const ruryResp = await fetch(`/api/orders-rury?t=${timestamp}`, { headers });
-            if (ruryResp.ok) {
-                const json = await ruryResp.json();
-                (json.data || []).forEach((order) => {
-                    const offId = order.offerId;
-                    if (!offId) return;
-                    const key = this.normalizeId(offId);
-                    const list = this.ordersMap.get(key) || [];
-                    list.push(order);
-                    this.ordersMap.set(key, list);
-                    totalOrders++;
-                });
-            }
-
-            logger.info(
-                'pvSalesUi',
-                `[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`
-            );
-        } catch (error) {
-            logger.warn('pvSalesUi', 'Nie udało się pobrać zamówień:', error.message);
-        }
-    }
-
-    /**
-     * Sprawdza czy oferta ma zamówienie — najpierw z mapy API, potem z pól oferty.
-     * @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }}
-     */
-    getOrderForOffer(offer) {
-        const offerId = this.normalizeId(offer.id);
-        const orders =
-            offerId && this.ordersMap.has(offerId) ? [...this.ordersMap.get(offerId)] : [];
-
-        if (orders.length > 0) {
-            return { hasOrder: true, orders, order: orders[0] };
-        }
-
-        if (offer.hasOrder && offer.orderId) {
-            const fallbackOrder = { id: offer.orderId, orderNumber: offer.orderNumber || '' };
-            return { hasOrder: true, orders: [fallbackOrder], order: fallbackOrder };
-        }
-
-        return { hasOrder: false, orders: [], order: null };
-    }
+    attachEventListeners() {}
 
     async loadLocalOffers() {
         const listDiv = document.getElementById('pv-local-offers-list');
@@ -305,11 +121,9 @@ class PVSalesUI {
 
         logger.info('pvSalesUi', 'loadLocalOffers: Rozpoczęcie pobierania...');
         try {
-            // Zawsze najpierw pobierzmy najświeższą mapę zamówień (omijanie cache'u)
             logger.info('pvSalesUi', 'loadLocalOffers: Pobieranie mapy zamówień...');
             await this.loadOrdersMap();
 
-            // Pobieramy oferty przez StorageService
             logger.info('pvSalesUi', 'loadLocalOffers: Wywołanie storageService.getOffers()...');
             const docs = await storageService.getOffers();
             logger.info(
@@ -361,18 +175,15 @@ class PVSalesUI {
 
         const query = input.value.trim().toLowerCase();
 
-        // Aktualizacja UI przycisku filtra statusu
         document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
             if (btn.dataset.filter === this.currentFilter) btn.classList.add('active');
             else btn.classList.remove('active');
         });
 
         const filtered = this.allLocalOffers.filter((offer) => {
-            // Filtr typu (poziom kartoteki)
             if (this.currentTypeFilter !== 'all' && offer.type !== this.currentTypeFilter)
                 return false;
 
-            // Wyszukiwanie tekstowe
             const num = (offer.number || offer.title || offer.offerName || '').toLowerCase();
             const client = (
                 offer.clientName ||
@@ -414,7 +225,6 @@ class PVSalesUI {
                 userStr.includes(query) ||
                 matchesOrderNumber;
 
-            // Filtr statusu
             if (!matchesText) return false;
 
             if (this.currentFilter !== 'all') {
@@ -437,7 +247,6 @@ class PVSalesUI {
     setFilterLocalOffers(filterType) {
         this.currentFilter = filterType;
 
-        // Aktualizacja UI przycisku filtru
         document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === filterType);
             if (btn.dataset.filter === filterType) {
@@ -460,7 +269,6 @@ class PVSalesUI {
             .map((offer) => {
                 const isAdminOrPro = this.role === 'admin' || this.role === 'pro';
 
-                // Sprawdź czy oferta ma zamówienie
                 const { hasOrder, orders, order } = this.getOrderForOffer(offer);
                 const orderList = orders && orders.length > 0 ? orders : [];
                 const orderCount = orderList.length;
@@ -519,7 +327,6 @@ class PVSalesUI {
                 const isWell = offer.type === 'studnia_oferta';
                 let priceVal = 0;
 
-                // Dla studni wolimy obliczyć sumę z wellsExport, bo tam jest już transport per studnia
                 if (isWell && (offer.wellsExport || (offer.data && offer.data.wellsExport))) {
                     const exportData = offer.wellsExport || offer.data.wellsExport;
                     priceVal = exportData.reduce((sum, w) => sum + (w.totalPrice || 0), 0);
@@ -671,126 +478,7 @@ class PVSalesUI {
             .join('');
     }
 
-    showOfferOrdersPopup(offerId) {
-        const offerKey = this.normalizeId(offerId);
-        const offer = this.allLocalOffers.find((o) => this.normalizeId(o.id) === offerKey);
-        const orders =
-            offerKey && this.ordersMap.has(offerKey) ? [...this.ordersMap.get(offerKey)] : [];
-
-        if (!orders || orders.length === 0) {
-            showToast('Brak zamówień powiązanych z tą ofertą.', 'info');
-            return;
-        }
-
-        const offerLabel =
-            offer && (offer.number || offer.title || offer.offerName)
-                ? offer.number || offer.title || offer.offerName
-                : 'Oferta';
-
-        let html = `
-            <div class="modal-header">
-                <h3 id="offer-orders-title">Zamówienia oferty ${offerLabel}</h3>
-                <button class="btn-icon btn-close-x" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
-            </div>
-            <div style="margin-bottom:1rem; color:var(--text-muted); font-size:0.9rem;">Lista wszystkich zamówień przypisanych do tej oferty.</div>
-            <div style="display:flex; flex-direction:column; gap:0.75rem; max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
-        `;
-
-        orders.forEach((ord) => {
-            const createdAt = ord.createdAt
-                ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
-                : 'brak daty';
-            const orderLabel = this.formatOrderLabel(ord);
-
-            html += `
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
-                    <div style="min-width:0;">
-                        <div class="btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji">${orderLabel}</div>
-                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}</div>
-                    </div>
-                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
-                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(offer?.type || (/^offer_rury_/.test(offerKey) ? 'rura_oferta' : 'studnia_oferta'))}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
-                        <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${this.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Historia</button>
-                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary btn-close-footer" data-action="closeModal">Zamknij</button>
-            </div>
-        `;
-
-        const overlay = showModal({
-            id: 'offer-orders-modal',
-            titleId: 'offer-orders-title',
-            html: `<div class="modal">${html}</div>`
-        });
-
-        try {
-            if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
-        } catch (err) {
-            logger.error('pvSalesUi', 'Lucide icons error in showOfferOrdersPopup:', err);
-        }
-
-        // Attach modal closing event listeners
-        overlay.querySelectorAll('.btn-open-order').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const buttonEl = e.target.closest('.btn-open-order');
-                const orderId = buttonEl.getAttribute('data-order-id');
-                const offerType = buttonEl.getAttribute('data-offer-type');
-                closeModal();
-                if (window.parent && window.parent.SpaRouter) {
-                    window.parent.SpaRouter.openOfferInModule(offerType, orderId, 'order');
-                } else if (window.SpaRouter) {
-                    window.SpaRouter.openOfferInModule(offerType, orderId, 'order');
-                } else {
-                    const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
-                    window.location.href = `app.html#/${targetModule}?order=${orderId}`;
-                }
-            });
-        });
-
-        overlay.querySelectorAll('.btn-print-order').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const buttonEl = e.target.closest('button');
-                const orderId = buttonEl.getAttribute('data-order-id');
-                const offerId = buttonEl.getAttribute('data-offer-id');
-                const offerType = buttonEl.getAttribute('data-offer-type');
-                const relatedOrders =
-                    this.ordersMap && offerId
-                        ? [...(this.ordersMap.get(this.normalizeId(offerId)) || [])]
-                        : null;
-                openPrintModal(offerId, orderId, offerType, relatedOrders);
-            });
-        });
-
-        overlay.querySelectorAll('.btn-modal-history-order').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                const buttonEl = e.target.closest('button');
-                const orderId = buttonEl.getAttribute('data-order-id');
-                closeModal();
-                this.showOfferHistoryUnified(String(orderId), 'order');
-            });
-        });
-
-        overlay.querySelectorAll('.btn-modal-delete-order').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
-                const buttonEl = e.target.closest('button');
-                const orderId = buttonEl.getAttribute('data-order-id');
-                const offerType = buttonEl.getAttribute('data-offer-type');
-                closeModal();
-                await this.deleteOrderUnified(orderId, offerType);
-            });
-        });
-    }
-
     attachActionListeners(container) {
-        // Guard: zapobiega wielokrotnemu dodawaniu tego samego listenera do kontenera
         if (container._pvActionListenersAttached) return;
         container._pvActionListenersAttached = true;
 
@@ -809,10 +497,8 @@ class PVSalesUI {
 
             const title = (btn.title || '').toLowerCase();
 
-            // Phone links — let default browser behavior
             if (btn.tagName === 'A' && btn.getAttribute('href')?.startsWith('tel:')) return;
 
-            // ---- ORDER BADGE ----
             if (btn.classList.contains('btn-order-badge')) {
                 e.preventDefault();
                 const badgeOfferId = btn.getAttribute('data-offer-id');
@@ -820,7 +506,6 @@ class PVSalesUI {
                 return;
             }
 
-            // ---- EDIT ORDER ----
             if (btn.classList.contains('btn-edit-order')) {
                 e.preventDefault();
                 const editOrderId = btn.getAttribute('data-order-id');
@@ -845,19 +530,16 @@ class PVSalesUI {
                 return;
             }
 
-            // ---- CHANGE OWNER ----
             if (btn.classList.contains('btn-change-owner')) {
                 this.changeOfferUserFromList(btn.getAttribute('data-id'));
                 return;
             }
 
-            // ---- Standard data attributes ----
             const id = btn.getAttribute('data-id');
             const typeAttr = btn.getAttribute('data-type');
             const orderId = btn.getAttribute('data-order-id');
             const offerType = btn.getAttribute('data-offer-type');
 
-            // ---- EDIT / SZCZEGÓŁY ----
             if (
                 title.includes('edytuj') ||
                 title.includes('szczegóły') ||
@@ -889,19 +571,16 @@ class PVSalesUI {
                 return;
             }
 
-            // ---- COPY ----
             if (title.includes('kopiuj') || title.includes('skopiuj')) {
                 await this.copyOfferWithVersion(id);
                 return;
             }
 
-            // ---- HISTORY (offer) ----
             if (title.includes('historia zmian') && !title.includes('zamówienia')) {
                 this.showOfferHistoryUnified(String(id), typeAttr || 'studnia_oferta');
                 return;
             }
 
-            // ---- PRINT / EXPORT / KARTA BUDOWY ----
             if (
                 title.includes('wydruk') ||
                 title.includes('drukuj') ||
@@ -914,23 +593,25 @@ class PVSalesUI {
                     this.ordersMap && printOfferId
                         ? [...(this.ordersMap.get(this.normalizeId(printOfferId)) || [])]
                         : null;
-                openPrintModal(printOfferId, printOrderId, printOfferType, printRelatedOrders);
+                window.openPrintModal(
+                    printOfferId,
+                    printOrderId,
+                    printOfferType,
+                    printRelatedOrders
+                );
                 return;
             }
 
-            // ---- DELETE ORDER ----
             if (title.includes('usuń zam') || title.includes('usun zam')) {
                 await this.deleteOrderUnified(orderId, offerType);
                 return;
             }
 
-            // ---- HISTORY (order) ----
             if (title.includes('hist. zam') || title.includes('historia zmian zamówienia')) {
                 this.showOfferHistoryUnified(String(orderId), 'order');
                 return;
             }
 
-            // ---- DELETE OFFER ----
             if (title.includes('usuń') || title.includes('usun')) {
                 if (!btn.disabled) {
                     await this.deleteOfferWithConfirmation(id);
@@ -938,84 +619,6 @@ class PVSalesUI {
                 return;
             }
         });
-    }
-
-    async deleteOrderUnified(orderId, offerType) {
-        const foundOrder = this.findOrderById(orderId);
-        const offerIdForOrder = foundOrder.offerId || '';
-        const visibleOrderCount = offerIdForOrder
-            ? (this.ordersMap.get(offerIdForOrder) || []).length
-            : 1;
-        const willUnlockOffer = visibleOrderCount <= 1;
-
-        if (
-            !(await appConfirm(
-                `Czy na pewno chcesz USUNĄĆ to zamówienie?\n\n${willUnlockOffer ? 'Po usunięciu ostatniego zamówienia oferta zostanie odblokowana do edycji.' : 'Oferta ma też inne zamówienia, więc pozostanie oznaczona jako zamówiona.'}`,
-                { title: 'Usuwanie zamówienia', type: 'danger', okText: 'Usuń' }
-            ))
-        ) {
-            return;
-        }
-
-        try {
-            const endpoint =
-                offerType === 'studnia_oferta'
-                    ? `/api/orders-studnie/${encodeURIComponent(orderId)}`
-                    : `/api/orders-rury/${encodeURIComponent(orderId)}`;
-            const headers =
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' };
-
-            const response = await fetch(endpoint, { method: 'DELETE', headers });
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data.error || 'Nie udało się usunąć zamówienia z serwera');
-            }
-
-            await this.loadOrdersMap();
-            const remainingOrders = offerIdForOrder
-                ? this.ordersMap.get(offerIdForOrder) || []
-                : [];
-            const shouldUnlockOffer = offerIdForOrder && remainingOrders.length === 0;
-
-            if (shouldUnlockOffer) {
-                const offers = await storageService.getOffers([offerType]);
-                const offerWrapper = offers.find(
-                    (o) => this.normalizeId(o.id) === this.normalizeId(offerIdForOrder)
-                );
-                const rawOffer = offerWrapper?.data || offerWrapper;
-
-                if (rawOffer) {
-                    logger.info('pvSalesUi', 'Odblokowywanie oferty:', offerWrapper.id);
-                    rawOffer.id = offerWrapper.id;
-                    rawOffer.type = offerWrapper.type || offerType;
-                    rawOffer.state =
-                        offerWrapper.status === 'active' ? 'final' : rawOffer.state || 'draft';
-                    rawOffer.hasOrder = false;
-                    delete rawOffer.orderId;
-                    delete rawOffer.orderNumber;
-
-                    await storageService.saveOffer(rawOffer);
-                }
-            }
-
-            if (typeof window.showToast === 'function') {
-                window.showToast(
-                    shouldUnlockOffer
-                        ? 'Zamówienie zostało usunięte. Oferta jest ponownie edytowalna.'
-                        : 'Zamówienie zostało usunięte.',
-                    'info'
-                );
-            }
-
-            await this.loadLocalOffers();
-        } catch (error) {
-            logger.error('pvSalesUi', 'Błąd podczas usuwania zamówienia:', error);
-            if (typeof window.showToast === 'function') {
-                window.showToast('Błąd podczas usuwania zamówienia: ' + error.message, 'error');
-            }
-        }
     }
 
     async deleteOfferWithConfirmation(id) {
@@ -1033,7 +636,7 @@ class PVSalesUI {
             if (typeof window.showToast === 'function') {
                 window.showToast('Oferta została usunięta.', 'success');
             }
-            this.loadLocalOffers(); // Odświeżenie listy ofert
+            this.loadLocalOffers();
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd podczas usuwania:', error);
             if (typeof window.showToast === 'function') {
@@ -1096,623 +699,6 @@ class PVSalesUI {
         }
     }
 
-    getAuditContextLabel(type) {
-        if (type === 'order') return 'zamówienia';
-        if (type === 'production_order') return 'zlecenia produkcyjnego';
-        if (type === 'offer') return 'oferty rury';
-        return 'oferty studni';
-    }
-
-    getAuditActionMeta(log) {
-        const isDiff = log.newData && log.newData._diffMode === true;
-        if (log.action === 'delete') {
-            return {
-                className: 'action-delete',
-                icon: 'trash-2',
-                label: 'Usunięto',
-                tone: 'danger'
-            };
-        }
-        if (log.action === 'create') {
-            return {
-                className: 'action-create',
-                icon: 'sparkles',
-                label: 'Utworzono',
-                tone: 'create'
-            };
-        }
-        if (isDiff) {
-            return { className: 'action-diff', icon: 'pencil', label: 'Zmieniono', tone: 'diff' };
-        }
-        return { className: 'action-update', icon: 'save', label: 'Zapisano', tone: 'update' };
-    }
-
-    getAuditFieldLabel(key) {
-        const labels = {
-            totalBrutto: 'Wartość brutto',
-            totalNetto: 'Wartość netto',
-            totalTotalNetto: 'Wartość netto',
-            originalTotalNetto: 'Pierwotna wartość netto',
-            originalTotalTotalNetto: 'Pierwotna wartość netto',
-            clientName: 'Klient',
-            company: 'Firma',
-            nip: 'NIP',
-            contact: 'Kontakt',
-            address: 'Adres',
-            investName: 'Inwestycja',
-            budowa: 'Budowa',
-            userId: 'Opiekun',
-            orderNumber: 'Numer zamówienia',
-            offerNumber: 'Numer oferty',
-            status: 'Status',
-            state: 'Status',
-            kartaBudowy: 'Karta budowy',
-            transportType: 'Rodzaj transportu',
-            paymentTerms: 'Warunki płatności',
-            invoiceEmails: 'E-maile do faktury',
-            efakturaEmails: 'E-faktura',
-            wells: 'Studnie',
-            wellsExport: 'Pozycje studni',
-            products: 'Produkty',
-            visiblePrzejsciaTypes: 'Widoczne typy przejść',
-            originalSnapshot: 'Pierwotna migawka',
-            transportKm: 'Kilometry transportu',
-            transportRate: 'Stawka transportu',
-            updatedAt: 'Ostatnia zmiana',
-            createdAt: 'Utworzono',
-            createdBy: 'Utworzył',
-            totalWeight: 'Waga łączna',
-            wellDiscounts: 'Rabaty studni'
-        };
-        return labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
-    }
-
-    formatAuditValue(value) {
-        if (value === undefined || value === null || value === '') return 'brak';
-        if (typeof value === 'number') {
-            const formatter =
-                typeof window.fmt === 'function'
-                    ? window.fmt
-                    : (val) =>
-                          Number(val || 0)
-                              .toFixed(2)
-                              .replace('.', ',');
-            return formatter(value);
-        }
-        if (typeof value === 'boolean') return value ? 'tak' : 'nie';
-        if (Array.isArray(value)) return `${value.length} poz.`;
-        if (typeof value === 'object') return 'zmieniono dane';
-        return this.escapeHtml(value);
-    }
-
-    getAuditSnapshotTitle(data, type) {
-        if (!data || typeof data !== 'object') return this.getAuditContextLabel(type);
-        return (
-            data.orderNumber ||
-            data.offerNumber ||
-            data.number ||
-            data.offer_number ||
-            data.clientName ||
-            data.company ||
-            this.getAuditContextLabel(type)
-        );
-    }
-
-    getAuditSnapshotSummary(data, type) {
-        if (!data || typeof data !== 'object') return 'Brak szczegółów w tym wpisie.';
-        const parts = [];
-        const money = data.totalBrutto || data.totalNetto || data.totalTotalNetto;
-        if (money) parts.push(`wartość: ${this.formatAuditValue(Number(money))} PLN`);
-        if (data.clientName || data.company)
-            parts.push(`klient: ${this.escapeHtml(data.clientName || data.company)}`);
-        if (data.orderNumber) parts.push(`zamówienie: ${this.escapeHtml(data.orderNumber)}`);
-        if (data.offerNumber || data.number)
-            parts.push(`oferta: ${this.escapeHtml(data.offerNumber || data.number)}`);
-        if (type === 'order' && data.kartaBudowy) parts.push('zawiera kartę budowy');
-        return parts.length ? parts.join(' • ') : 'Zapisano pełną migawkę dokumentu.';
-    }
-
-    getBusinessChanges(log) {
-        const data = log.newData || {};
-        const oldData = log.oldData || {};
-        const keys = Object.keys(data).filter((key) => key !== '_diffMode');
-        const priority = [
-            'totalBrutto',
-            'totalNetto',
-            'totalTotalNetto',
-            'clientName',
-            'company',
-            'orderNumber',
-            'status',
-            'state',
-            'userId',
-            'kartaBudowy',
-            'wellsExport',
-            'wells',
-            'products'
-        ];
-        const orderedKeys = [
-            ...priority.filter((key) => keys.includes(key)),
-            ...keys.filter((key) => !priority.includes(key))
-        ];
-
-        return orderedKeys.slice(0, 6).map((key) => ({
-            key,
-            label: this.getAuditFieldLabel(key),
-            oldValue: oldData[key],
-            newValue: data[key]
-        }));
-    }
-
-    renderAuditEntry(log, id, type) {
-        const meta = this.getAuditActionMeta(log);
-        const data = log.newData || {};
-        const oldData = log.oldData || {};
-        const isDiff = data._diffMode === true;
-        const source = log.action === 'delete' ? oldData : data;
-        const title = this.escapeHtml(this.getAuditSnapshotTitle(source, type));
-        const summary = this.escapeHtml(this.getAuditSnapshotSummary(source, type));
-        const date = log.createdAt ? new Date(log.createdAt).toLocaleString('pl-PL') : 'brak daty';
-        const author = this.escapeHtml(log.userName || log.userId || 'System');
-
-        let detailsHtml = '';
-        if (isDiff) {
-            const changes = this.getBusinessChanges(log);
-            detailsHtml = changes.length
-                ? changes
-                      .map(
-                          (change) => `
-                            <div class="audit-change-row">
-                                <span class="audit-change-name">${this.escapeHtml(change.label)}</span>
-                                <span class="audit-change-values">
-                                    <span class="audit-old">${this.formatAuditValue(change.oldValue)}</span>
-                                    <i data-lucide="arrow-right"></i>
-                                    <span class="audit-new">${this.formatAuditValue(change.newValue)}</span>
-                                </span>
-                            </div>`
-                      )
-                      .join('')
-                : '<div class="audit-muted">Zmieniono dokument, ale brak czytelnych pól do pokazania.</div>';
-        } else if (log.action === 'delete') {
-            detailsHtml = `<div class="audit-muted danger-text">Usunięto dokument. Migawka sprzed usunięcia jest dostępna w podglądzie.</div>`;
-        } else {
-            detailsHtml = `<div class="audit-muted">${summary}</div>`;
-        }
-
-        const canRestore =
-            log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
-        const restoreBtn = canRestore
-            ? `<button class="btn btn-sm btn-secondary restore-btn" data-action="restoreOfferVersion" data-entity-id="${id}" data-log-id="${log.id}" data-entity-type="${type}"><i data-lucide="refresh-cw"></i> Przywróć</button>`
-            : '';
-        const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" data-action="viewHistorySnapshot" data-entity-id="${id}" data-log-id="${log.id}" data-entity-type="${type}"><i data-lucide="eye"></i> Podgląd</button>`;
-
-        return `
-            <div class="audit-card ${meta.className}">
-                <div class="audit-card-header">
-                    <div class="audit-title-wrap">
-                        <span class="audit-badge ${meta.tone}"><i data-lucide="${meta.icon}"></i> ${meta.label}</span>
-                        <div>
-                            <div class="audit-entry-title">${title}</div>
-                            <div class="audit-entry-subtitle">${date} • ${author}</div>
-                        </div>
-                    </div>
-                    <div class="audit-actions">${previewBtn}${restoreBtn}</div>
-                </div>
-                <div class="audit-card-body">${detailsHtml}</div>
-            </div>
-        `;
-    }
-
-    async showOfferHistoryUnified(id, type = 'studnia_oferta') {
-        try {
-            const headers =
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' };
-            const res = await fetch(`/api/audit/${type}/${id}?limit=20&offset=0`, { headers });
-            const json = await res.json();
-            const logs = json.data || [];
-            const total = json.total || 0;
-
-            if (logs.length === 0) {
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Brak historii dla tego elementu', 'info');
-                }
-                return;
-            }
-
-            const existing = document.getElementById('offer-history-modal');
-            if (existing) existing.remove();
-
-            const contextLabel = this.getAuditContextLabel(type);
-            const historyHtml = logs.map((log) => this.renderAuditEntry(log, id, type)).join('');
-            const loadMoreHtml =
-                logs.length < total
-                    ? `<div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                        <button class="load-more-btn" data-action="loadMoreAuditLogs" data-entity-type="${type}" data-entity-id="${id}" data-limit="20"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
-                    </div>`
-                    : '';
-
-            const overlayHtml = `
-                <style>
-                    .audit-modal-inner {
-                        width: 100vw;
-                        height: 100vh;
-                        max-width: none;
-                        max-height: none;
-                        display: flex;
-                        flex-direction: column;
-                        border-radius: 0;
-                        background: #0f172a;
-                        border: 0;
-                        box-shadow: none;
-                        overflow: hidden;
-                    }
-                    .audit-modal-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        gap: 1rem;
-                        padding: 1rem 1.25rem;
-                        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-                        background: rgba(15, 23, 42, 0.96);
-                    }
-                    .audit-modal-header h3 {
-                        margin: 0;
-                        color: var(--text-primary);
-                        font-size: 1rem;
-                        display: flex;
-                        align-items: center;
-                        gap: 0.55rem;
-                    }
-                    .audit-modal-subtitle {
-                        color: var(--text-secondary);
-                        font-size: 0.78rem;
-                        margin-top: 0.18rem;
-                    }
-                    .audit-list {
-                        padding: 1rem 1.25rem 1.25rem;
-                        overflow-y: auto;
-                    }
-                    .audit-card {
-                        position: relative;
-                        padding: 0.9rem 1rem;
-                        margin-bottom: 0.75rem;
-                        border-radius: 8px;
-                        background: rgba(30, 41, 59, 0.62);
-                        border: 1px solid rgba(148, 163, 184, 0.12);
-                    }
-                    .audit-card::before {
-                        content: '';
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        bottom: 0;
-                        width: 4px;
-                    }
-                    .audit-card.action-create::before { background: var(--accent-hover); }
-                    .audit-card.action-update::before { background: var(--success-hover); }
-                    .audit-card.action-diff::before { background: var(--warn-hover); }
-                    .audit-card.action-delete::before { background: var(--danger-hover); }
-                    .audit-card-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: flex-start;
-                        gap: 1rem;
-                        margin-bottom: 0.75rem;
-                    }
-                    .audit-title-wrap {
-                        display: flex;
-                        align-items: flex-start;
-                        gap: 0.7rem;
-                        min-width: 0;
-                    }
-                    .audit-badge {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 0.35rem;
-                        height: 28px;
-                        padding: 0 0.6rem;
-                        border-radius: 999px;
-                        font-size: 0.72rem;
-                        font-weight: 800;
-                        white-space: nowrap;
-                    }
-                    .audit-badge i { width: 13px; height: 13px; }
-                    .audit-badge.create { background: rgba(var(--accent-hover-rgb), 0.14); color: var(--accent-text); border: 1px solid rgba(var(--accent-hover-rgb), 0.25); }
-                    .audit-badge.update { background: rgba(var(--success-rgb), 0.12); color: var(--success-hover); border: 1px solid rgba(var(--success-rgb), 0.22); }
-                    .audit-badge.diff { background: rgba(var(--warn-rgb), 0.12); color: var(--warn-hover); border: 1px solid rgba(var(--warn-rgb), 0.25); }
-                    .audit-badge.danger { background: rgba(var(--danger-rgb), 0.12); color: var(--danger-hover); border: 1px solid rgba(var(--danger-rgb), 0.25); }
-                    .audit-entry-title {
-                        color: var(--text-primary);
-                        font-size: 0.92rem;
-                        font-weight: 750;
-                        line-height: 1.25;
-                    }
-                    .audit-entry-subtitle {
-                        color: var(--text-secondary);
-                        font-size: 0.76rem;
-                        margin-top: 0.2rem;
-                    }
-                    .audit-card-body {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 0.45rem;
-                        padding-left: 0.1rem;
-                    }
-                    .audit-change-row {
-                        display: grid;
-                        grid-template-columns: minmax(130px, 210px) 1fr;
-                        gap: 0.75rem;
-                        align-items: center;
-                        padding: 0.45rem 0.55rem;
-                        border-radius: 7px;
-                        background: rgba(15, 23, 42, 0.5);
-                    }
-                    .audit-change-name {
-                        color: var(--border);
-                        font-size: 0.78rem;
-                        font-weight: 700;
-                    }
-                    .audit-change-values {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 0.45rem;
-                        min-width: 0;
-                        color: var(--text-primary);
-                        font-size: 0.8rem;
-                    }
-                    .audit-change-values i { width: 13px; height: 13px; color: var(--text-muted); flex: 0 0 auto; }
-                    .audit-old {
-                        color: var(--text-secondary);
-                        text-decoration: line-through;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                    }
-                    .audit-new {
-                        color: var(--success-hover);
-                        font-weight: 800;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                    }
-                    .audit-muted { color: var(--border); font-size: 0.84rem; }
-                    .danger-text { color: #fca5a5; }
-                    .audit-actions {
-                        display: flex;
-                        gap: 0.4rem;
-                        flex-wrap: wrap;
-                        justify-content: flex-end;
-                    }
-                    .preview-btn,
-                    .restore-btn,
-                    .load-more-btn {
-                        border-radius: 7px;
-                        font-weight: 700;
-                    }
-                    .load-more-btn {
-                        background: rgba(var(--accent-rgb),0.14);
-                        border: 1px solid rgba(var(--accent-rgb),0.3);
-                        color: var(--accent-text);
-                        padding: 0.55rem 1.1rem;
-                        cursor: pointer;
-                    }
-                    .audit-load-more-wrap { text-align: center; padding: 0.75rem 0 0.25rem; }
-                    @media (max-width: 720px) {
-                        .audit-card-header,
-                        .audit-title-wrap { flex-direction: column; }
-                        .audit-actions { justify-content: flex-start; }
-                        .audit-change-row { grid-template-columns: 1fr; gap: 0.25rem; }
-                    }
-                </style>
-                <div class="modal audit-modal-inner">
-                    <div class="audit-modal-header">
-                        <div>
-                            <h3 id="offer-history-title"><i data-lucide="history"></i> Historia ${contextLabel}</h3>
-                            <div class="audit-modal-subtitle">${total} wpisów • najnowsze zmiany na górze</div>
-                        </div>
-                        <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" data-action="closeHistoryModal"><i data-lucide="x" aria-hidden="true"></i></button>
-                    </div>
-                    <div id="audit-logs-container-kartoteka" class="audit-list">
-                        ${historyHtml}
-                        ${loadMoreHtml}
-                    </div>
-                </div>
-            `;
-
-            const overlay = showModal({
-                id: 'offer-history-modal',
-                titleId: 'offer-history-title',
-                html: overlayHtml
-            });
-            if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
-
-            this.currentAuditLogs = logs;
-            this.currentAuditOffset = logs.length;
-            this.currentAuditEntityId = id;
-            this.currentAuditEntityType = type;
-            this._renderEntry = (log) => this.renderAuditEntry(log, id, type);
-        } catch (error) {
-            logger.error('pvSalesUi', 'Błąd wyświetlania historii:', error);
-            if (typeof window.showToast === 'function') {
-                window.showToast('Błąd pobierania historii', 'error');
-            }
-        }
-    }
-
-    async loadMoreAuditLogs(entityType, entityId, limit) {
-        try {
-            const offset = this.currentAuditOffset || 0;
-            const headers =
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' };
-            const res = await fetch(
-                `/api/audit/${entityType}/${entityId}?limit=${limit}&offset=${offset}`,
-                { headers }
-            );
-            const json = await res.json();
-            const newLogs = json.data || [];
-            const total = json.total || 0;
-
-            if (newLogs.length === 0) return;
-
-            this.currentAuditLogs = [...(this.currentAuditLogs || []), ...newLogs];
-            this.currentAuditOffset = offset + newLogs.length;
-
-            const container = document.getElementById('audit-logs-container-kartoteka');
-            const wrap = document.getElementById('audit-load-more-wrap-kartoteka');
-            if (wrap) wrap.remove();
-
-            container.insertAdjacentHTML('beforeend', newLogs.map(this._renderEntry).join(''));
-
-            if (this.currentAuditOffset < total) {
-                const remaining = total - this.currentAuditOffset;
-                container.insertAdjacentHTML(
-                    'beforeend',
-                    `
-                    <div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                        <button class="load-more-btn"
-                            data-action="loadMoreAuditLogs" data-entity-type="${entityType}" data-entity-id="${entityId}" data-limit="${limit}"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
-                    </div>
-                `
-                );
-            }
-            if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
-        } catch (e) {
-            logger.error('pvSalesUi', 'Błąd ładowania logów:', e);
-        }
-    }
-
-    async restoreOfferVersionUnified(offerId, logId, type) {
-        try {
-            const log = this.currentAuditLogs?.find((l) => l.id === logId);
-            if (!log || !log.newData) return;
-
-            const snapshot = log.newData;
-            const isStudnia = type === 'studnia_oferta';
-            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-
-            if (isStudnia && !currentPage.includes('studnie.html')) {
-                if (
-                    await appConfirm(
-                        'Aby przywrócić tę wersję studni, musisz przejść do edytora STUDNIE. Przejść teraz?',
-                        { title: 'Przekierowanie', type: 'info', okText: 'Przejdź' }
-                    )
-                ) {
-                    sessionStorage.setItem(
-                        'pending_restore',
-                        JSON.stringify({ type, data: snapshot })
-                    );
-                    window.location.href = `studnie.html?edit=${offerId}&restore=true`;
-                }
-                return;
-            }
-
-            if (isStudnia && typeof window.loadSavedOfferStudnie === 'function') {
-                window.loadSavedOfferStudnie(snapshot);
-            } else if (!isStudnia && typeof window.loadSavedOfferData === 'function') {
-                window.loadSavedOfferData(snapshot, offerId);
-            }
-
-            const modal = document.getElementById('offer-history-modal');
-            if (modal) modal.remove();
-
-            if (typeof window.showToast === 'function')
-                window.showToast('Wersja przywrócona do edytora.', 'success');
-        } catch (error) {
-            logger.error('pvSalesUi', 'Błąd przywracania wersji:', error);
-        }
-    }
-
-    showAuditSnapshotModal(data, type) {
-        const existing = document.getElementById('audit-snapshot-modal');
-        if (existing) existing.remove();
-
-        const rows = Object.entries(data || {})
-            .filter(([key]) => !['history', '_diffMode'].includes(key))
-            .slice(0, 40)
-            .map(
-                ([key, value]) => `
-                    <div class="audit-change-row">
-                        <span class="audit-change-name">${this.escapeHtml(this.getAuditFieldLabel(key))}</span>
-                        <span class="audit-change-values"><span class="audit-new">${this.formatAuditValue(value)}</span></span>
-                    </div>`
-            )
-            .join('');
-
-        showModal({
-            id: 'audit-snapshot-modal',
-            titleId: 'audit-snapshot-title',
-            html: `
-            <style>
-                #audit-snapshot-modal .audit-modal-inner { width:100vw; height:100vh; max-width:none; max-height:none; background:#0f172a; border:0; border-radius:0; box-shadow:none; display:flex; flex-direction:column; }
-                #audit-snapshot-modal .audit-modal-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid rgba(148,163,184,0.12); }
-                #audit-snapshot-modal .audit-modal-header h3 { margin:0; color:var(--text-primary); font-size:1rem; display:flex; align-items:center; gap:0.55rem; }
-                #audit-snapshot-modal .audit-modal-subtitle { color:var(--text-secondary); font-size:0.78rem; margin-top:0.18rem; }
-                #audit-snapshot-modal .audit-list { padding:1rem 1.25rem 1.25rem; overflow-y:auto; }
-                #audit-snapshot-modal .audit-change-row { display:grid; grid-template-columns:minmax(130px,210px) 1fr; gap:0.75rem; align-items:center; padding:0.45rem 0.55rem; border-radius:7px; background:rgba(15,23,42,0.5); }
-                #audit-snapshot-modal .audit-change-name { color:var(--border); font-size:0.78rem; font-weight:700; }
-                #audit-snapshot-modal .audit-change-values { min-width:0; color:var(--text-primary); font-size:0.8rem; }
-                #audit-snapshot-modal .audit-new { color:var(--success-hover); font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
-                #audit-snapshot-modal .audit-muted { color:var(--border); font-size:0.84rem; }
-            </style>
-            <div class="modal audit-modal-inner" style="width:100vw; height:100vh; max-width:none; max-height:none; overflow:hidden;">
-                <div class="audit-modal-header">
-                    <div>
-                        <h3 id="audit-snapshot-title"><i data-lucide="eye"></i> Podgląd historyczny</h3>
-                        <div class="audit-modal-subtitle">${this.escapeHtml(this.getAuditContextLabel(type))}</div>
-                    </div>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
-                </div>
-                <div class="audit-list" style="display:flex; flex-direction:column; gap:0.45rem;">
-                    ${rows || '<div class="audit-muted">Brak danych do pokazania.</div>'}
-                </div>
-            </div>
-        `
-        });
-        if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
-    }
-
-    async viewHistorySnapshotUnified(id, logId, type) {
-        try {
-            const headers =
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' };
-            const res = await fetch(`/api/audit/rebuild/${type}/${id}/${logId}`, { headers });
-
-            if (!res.ok) {
-                const errJson = await res.json().catch(() => ({}));
-                throw new Error(errJson.error || 'Błąd odbudowy historycznej wersji.');
-            }
-
-            const json = await res.json();
-            const rebuiltData = json.data;
-
-            const modal = document.getElementById('offer-history-modal');
-            if (modal) modal.remove();
-
-            const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith(
-                'kartoteka'
-            );
-            if (type === 'order' || type === 'production_order' || isKartoteka) {
-                this.showAuditSnapshotModal(rebuiltData, type);
-                return;
-            }
-
-            if (typeof window.showToast === 'function') {
-                window.showToast('Wczytano wersję historyczną do testowego podglądu.', 'info');
-            }
-
-            this.openOfferForEdit(rebuiltData, id, type);
-        } catch (error) {
-            logger.error('pvSalesUi', 'Błąd podglądu historii:', error);
-            if (typeof window.showToast === 'function') window.showToast(error.message, 'error');
-        }
-    }
-
     async copyOfferWithVersion(id) {
         try {
             const offer = await storageService.getOfferById(id);
@@ -1722,10 +708,8 @@ class PVSalesUI {
                 return;
             }
 
-            // Głęboka kopia
             const newOffer = structuredClone(offer);
 
-            // Wyczyść ID i metadane
             delete newOffer.id;
             delete newOffer.createdAt;
             delete newOffer.updatedAt;
@@ -1736,11 +720,9 @@ class PVSalesUI {
 
             newOffer.id = 'L_COPY_' + Date.now().toString(36);
 
-            // Logika wersji
             const oldNumber = newOffer.number || newOffer.offerNumber || '';
             let newNumber = oldNumber;
 
-            // Szukamy końcówki /v2, /V2
             const versionMatch = oldNumber.match(/\/v(\d+)$/i);
             if (versionMatch) {
                 const currentVersion = parseInt(versionMatch[1], 10);
@@ -1760,9 +742,8 @@ class PVSalesUI {
                 window.showToast(`Utworzono kopię: ${newNumber}`, 'success');
             }
 
-            // Przeładuj listę
             await this.loadLocalOffers();
-            this.filterLocalOffers(); // Zaaplikuj aktualny filtr jeśli istnieje
+            this.filterLocalOffers();
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd podczas kopiowania oferty:', error);
             if (typeof window.showToast === 'function') {
@@ -1809,7 +790,6 @@ class PVSalesUI {
 
                 await storageService.saveOffer(currentOffer);
 
-                // Propagate opiekun change to associated order
                 const normalizedId = this.normalizeId(offerId);
                 const linkedOrders = this.ordersMap ? this.ordersMap.get(normalizedId) : null;
                 const linkedOrder = Array.isArray(linkedOrders) ? linkedOrders[0] : linkedOrders;
@@ -1844,6 +824,9 @@ class PVSalesUI {
         }
     }
 }
+
+Object.assign(PVSalesUI.prototype, pvSalesAuditMixin);
+Object.assign(PVSalesUI.prototype, pvSalesOrdersMixin);
 
 if (typeof registerCspAction === 'function') {
     registerCspAction('loadLocalOffers', function () {
@@ -1900,7 +883,6 @@ if (typeof registerCspAction === 'function') {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicjalizacja na stronie kartoteki (brak przycisku nav-sales, zawsze widoczny)
     const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith('kartoteka');
     const navSales = document.getElementById('nav-sales');
 
