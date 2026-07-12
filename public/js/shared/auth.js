@@ -27,8 +27,13 @@ function setAuthToken(_token) {
  * Token autoryzacji jest wysyłany automatycznie przez httpOnly cookie.
  * @returns {object}
  */
+function getCsrfToken() {
+    const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
+    return match ? match[1] : '';
+}
+
 function authHeaders() {
-    return { 'Content-Type': 'application/json' };
+    return { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() };
 }
 
 /**
@@ -98,3 +103,6 @@ if (typeof window !== 'undefined') {
         }
     });
 }
+
+window.getCsrfToken = getCsrfToken;
+window.authHeaders = authHeaders;

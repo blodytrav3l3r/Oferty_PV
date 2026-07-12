@@ -143,7 +143,7 @@ describe('Users Routes', () => {
                 });
 
             expect(res.statusCode).toBe(200);
-            expect(bcrypt.hash).toHaveBeenCalledWith('newpassword', 10);
+            expect(bcrypt.hash).toHaveBeenCalledWith('newpassword', 12);
             expect(prisma.users.update).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: { id: 'user-id' },

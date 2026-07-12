@@ -20,6 +20,7 @@ import {
     charsetMiddleware
 } from './middleware/security';
 import { createRateLimiter } from './middleware/rateLimiter';
+import { setCsrfCookie, csrfProtection } from './middleware/csrf';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
 import { requestLogger } from './middleware/requestLogger';
@@ -146,6 +147,8 @@ app.use(compression());
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+app.use('/api', setCsrfCookie);
+app.use('/api', csrfProtection);
 
 // Cachowanie: wyłączone w dev, włączone w produkcji
 const staticDir = 'public';
@@ -189,7 +192,7 @@ import productStudnieRoutes, { initStudnieProductsTable } from './routes/product
 import precoPricingRoutes from './routes/precoPricingV2';
 import offerRoutes from './routes/offers/index';
 import orderRoutes from './routes/orders/index';
-import ruryOrdersRoutes from './routes/orders/ruryOrders';
+import ruryOrdersRoutes from './routes/orders/rury';
 import clientRoutes from './routes/clients';
 import pvMarketplaceRoutes from './routes/pvMarketplace';
 import auditRoutes from './routes/audit';

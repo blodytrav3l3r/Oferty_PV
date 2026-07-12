@@ -18,9 +18,9 @@ describe('securityHeaders', () => {
         expect(res.headers['x-content-type-options']).toBe('nosniff');
     });
 
-    it('powinien ustawić nagłówek X-XSS-Protection', async () => {
+    it('nie powinien ustawiać przestarzałego nagłówka X-XSS-Protection (deprecation)', async () => {
         const res = await request(app).get('/test');
-        expect(res.headers['x-xss-protection']).toBe('1; mode=block');
+        expect(res.headers['x-xss-protection']).toBeUndefined();
     });
 
     it('powinien ustawić nagłówek Referrer-Policy', async () => {

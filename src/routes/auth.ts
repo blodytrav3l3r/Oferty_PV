@@ -6,6 +6,7 @@ import {
     deleteSession,
     requireAuth,
     requireAdmin,
+    rotateSession,
     COOKIE_OPTIONS,
     AuthenticatedRequest
 } from '../middleware/auth';
@@ -96,7 +97,7 @@ router.post(
                 return res.status(409).json({ error: 'Użytkownik o takim loginie już istnieje' });
             }
 
-            const hash = await bcrypt.hash(password, 10);
+            const hash = await bcrypt.hash(password, 12);
             const userId = 'user_' + Date.now();
             const subUsersString = Array.isArray(subUsers) ? JSON.stringify(subUsers) : '[]';
 
@@ -181,11 +182,25 @@ router.post(
                 return res.status(401).json({ error: 'Nieprawidłowe stare hasło' });
             }
 
-            const hash = await bcrypt.hash(newPassword, 10);
+            const hash = await bcrypt.hash(newPassword, 12);
             await prisma.users.update({
                 where: { id: authReq.user!.id },
                 data: { password: hash }
             });
+
+            const currentToken = req.cookies?.authToken;
+            if (currentToken) {
+                await prisma.sessions.updateMany({
+                    where: {
+                        userId: authReq.user!.id,
+                        token: { not: currentToken },
+                        revokedAt: null
+                    },
+                    data: { revokedAt: Date.now() }
+                });
+                const newToken = await rotateSession(currentToken, authReq.user!.id, req);
+                res.cookie('authToken', newToken, COOKIE_OPTIONS);
+            }
 
             res.json({ ok: true });
         } catch (e: unknown) {

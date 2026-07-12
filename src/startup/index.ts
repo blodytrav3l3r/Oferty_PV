@@ -53,6 +53,10 @@ export async function runStartupChecks(): Promise<StartupReport> {
     const cspMode = (process.env.CSP_MODE || 'report-only').toLowerCase();
     startupLogger.valueLast('CSP', `mode=${cspMode}`);
     startupLogger.info('');
+    if (process.env.NODE_ENV === 'production' && cspMode !== 'enforce') {
+        startupLogger.warn('CSP nie jest w trybie enforce w produkcji!');
+    }
+
     startupLogger.info('Admin:');
     startupLogger.valueLast('Status', '✓');
 
